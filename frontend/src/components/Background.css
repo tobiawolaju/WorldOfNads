@@ -1,0 +1,19 @@
+.pattern-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    opacity: 0.4;
+    overflow: hidden;
+}
+
+.pattern-tile {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    background-image: url(../../public/w.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+}

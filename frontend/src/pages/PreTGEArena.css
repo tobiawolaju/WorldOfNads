@@ -1,0 +1,110 @@
+.pretge-container {
+  text-align: center;
+  padding: 40px 20px;
+  font-family: 'Font1', sans-serif;
+}
+
+.pretge-title {
+  color: rgb(255, 154, 204);
+  text-decoration: underline;
+  text-decoration-color: #27044e;
+  font-size: clamp(3rem, 5vw, 4rem);
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.pretge-intro {
+  max-width: 700px;
+  margin: 0 auto 50px auto;
+  color: rgba(0, 0, 0, 0.75);
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+}
+
+.pretge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.pretge-card {
+  background: linear-gradient(180deg, #fcf0ff, #f9e7ff);
+  border: 1px solid #e3b6ff;
+  border-radius: 20px;
+  padding: 25px;
+  text-align: left;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.pretge-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.pretge-project-name {
+  font-size: 1.7rem;
+  font-weight: bold;
+  color: #27044e;
+  margin-bottom: 5px;
+}
+
+.pretge-tagline {
+  font-size: 1rem;
+  color: #a03bb7;
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.pretge-description {
+  color: rgba(0, 0, 0, 0.75);
+  font-size: 1rem;
+  margin-bottom: 15px;
+}
+
+.pretge-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.pretge-stage {
+  background: #ff9acc;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+.pretge-launch {
+  font-weight: 500;
+}
+
+
+.pretge-logo {
+  width: 70px;
+  height: 70px;
+  border-radius: 12px;
+  object-fit: cover;
+  margin-bottom: 10px;
+  border: 2px solid #e3b6ff;
+}
+
+.pretge-handle {
+  text-align: right;
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+.pretge-handle a {
+  color: #a03bb7;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.pretge-handle a:hover {
+  color: #27044e;
+}
+

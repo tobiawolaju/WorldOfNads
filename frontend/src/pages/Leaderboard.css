@@ -1,0 +1,133 @@
+.leaderboard-container {
+  text-align: center;
+  padding: 20px;
+  font-family: 'Font1', sans-serif;
+  color: #222;
+}
+
+.leaderboard-title {
+  color: rgb(255, 154, 204);
+  text-decoration: underline;
+  text-decoration-color: #27044e;
+  font-size: clamp(3.5rem, 5vw, 4rem);
+  font-weight: bold;
+  margin-bottom: 40px;
+}
+
+.leaderboard-content {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  padding:0px;
+  align-items: flex-start;
+}
+
+/* Left grid */
+.interaction-grid {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  height: 500px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.interaction-rect {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 150px;
+  min-height: 120px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  border: 2px solid white; /* ✅ white border */
+}
+
+.interaction-rect:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+.interaction-rect.active {
+  outline: 3px solid #ffffff;
+  z-index: 2;
+  transform: scale(1.05);
+}
+
+.rect-label {
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  background: rgba(243, 243, 243, 0.062);
+  font-size: 1rem;
+  backdrop-filter: blur(3px);
+}
+
+.proj-name {
+  display: block;
+  font-weight: bold;
+  color:#ffffff;
+}
+
+.proj-interactions {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  color:#ffffffa4;
+}
+
+/* Right side leaderboard */
+.user-leaderboard {
+  flex: 0.7;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  padding: 0px;
+}
+
+.user-leaderboard h2 {
+  margin-bottom: 20px;
+  color: #27044e;
+  font-size: 1.8rem;
+  padding: 8px;
+}
+
+.user-leaderboard ul {
+  list-style: none;
+  padding: 8px;
+  margin: 0;
+}
+
+.user-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 1.1rem;
+}
+
+.user-entry .rank {
+  font-weight: bold;
+  color: #a03bb7;
+}
+
+.user-entry .won {
+  color: #444;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .leaderboard-content {
+    flex-direction: column;
+  }
+
+  .interaction-grid {
+    height: auto;
+  }
+
+  .user-leaderboard {
+    width: 100%;
+  }
+}

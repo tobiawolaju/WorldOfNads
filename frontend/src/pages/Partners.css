@@ -1,0 +1,84 @@
+.partners-container {
+  text-align: center;
+  padding: 80px 20px;
+  font-family: 'Font1', sans-serif;
+ color: #111;
+}
+
+.partners-title {
+ font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 800;
+  margin-bottom: 20px;
+  font-family: Font2;
+  color: #000000;
+}
+
+.partners-description {
+  color: #8a8a8a;
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  margin-bottom: 50px;
+  max-width: 750px;
+  margin-inline: auto;
+  line-height: 1.6;
+}
+
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 35px;
+  justify-content: center;
+  align-items: stretch;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.partner-card {
+  border-radius: 18px;
+  border: 1px solid rgba(150, 120, 255, 0.15);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 25px 20px;
+  transition: all 0.25s ease;
+}
+
+.partner-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(150, 120, 255, 0.35);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.partner-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+  border: 1px solid rgba(200, 200, 255, 0.2);
+}
+
+.partner-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 4px;
+}
+
+.partner-handle {
+  font-size: 0.9rem;
+  color: #7d5fff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.partner-handle:hover {
+  color: #ff8ad9;
+}
+
+.partner-role {
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: 8px;
+  line-height: 1.4;
+}

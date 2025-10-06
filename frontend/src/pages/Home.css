@@ -1,0 +1,54 @@
+/* 1️⃣ Font faces */
+@font-face {
+  font-family: 'Font1'; /* use this name in your CSS */
+  src: url('/font1.ttf') format('truetype'); /* public/ is root in React */
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Font2';
+  src: url('/font2.ttf') format('truetype');
+  font-display: swap;
+}
+
+/* 2️⃣ Global reset + background */
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(0deg, #ffffff, #fffdf4);
+  overflow-x: hidden;
+  font-family: 'Font1', sans-serif; /* default body font */
+}
+
+/* 3️⃣ Title styling */
+.title {
+  color: #ff9acb;
+  font-size: 20vw;
+  font-family: 'Font2', sans-serif;
+  font-weight: bold;
+  margin-bottom: 0;
+}
+
+.play {
+  font-family: 'Font1', sans-serif;
+  font-weight: bold;
+}
+
+/* 4️⃣ Responsive text sizes */
+.text-body {
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.text-heading {
+  font-size: clamp(1rem, 4vw, 2rem);
+}
+
+/* 5️⃣ Center the hero section content */
+.hero-center {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
