@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import "./Partners.css";
 
 const Partners: React.FC = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+
   const partners = [
     {
       name: "Azuki",
@@ -47,30 +49,56 @@ const Partners: React.FC = () => {
     },
   ];
 
+  // Filter partners based on search term
+  const filteredPartners = partners.filter((partner) =>
+    partner.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="partners-container">
       <div style={{ height: "60px" }}></div>
 
       <h1 className="partners-title">Our Partners</h1>
       <p className="partners-description">
-     The  9999 projects built on monad that makes WONs WONs </p>
+        The 9999 projects built on Monad that makes WONs WONs
+      </p>
+
+      <div className="search-wrapper">
+        <input
+          type="text"
+          placeholder="Search for a partner..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="partner-search"
+        />
+      </div>
 
       <div className="partners-grid">
-        {partners.map((partner, index) => (
-          <div key={index} className="partner-card">
-            <img src={partner.logo} alt={partner.name} className="partner-logo" />
-            <p className="partner-name">{partner.name}</p>
-            <a
-              href={`https://x.com/${partner.handle.replace("@", "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="partner-handle"
-            >
-              {partner.handle}
-            </a>
-            <p className="partner-role">{partner.role}</p>
-          </div>
-        ))}
+        {filteredPartners.length > 0 ? (
+          filteredPartners.map((partner, index) => (
+            <div key={index} className="partner-card">
+              <img
+                src={partner.logo}
+                alt={partner.name}
+                className="partner-logo"
+              />
+              <p className="partner-name">{partner.name}</p>
+              <a
+                href={`https://x.com/${partner.handle.replace("@", "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="partner-handle"
+              >
+                {partner.handle}
+              </a>
+              <p className="partner-role">{partner.role}</p>
+            </div>
+          ))
+        ) : (
+          <p style={{ marginTop: "40px", color: "#777" }}>
+            No matching partners found.
+          </p>
+        )}
       </div>
     </div>
   );

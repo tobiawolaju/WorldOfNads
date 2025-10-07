@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import "./PreTGEArena.css";
 
 function PreTGEArena() {
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [projects] = useState([
     {
       name: "NovaForge",
@@ -45,36 +47,66 @@ function PreTGEArena() {
     },
   ]);
 
+  // Filter projects by search input (case-insensitive)
+  const filteredProjects = projects.filter((project) =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="pretge-container">
       <div style={{ height: "60px" }}></div>
-          <h1 className="partners-title">Pre Token GA</h1>
-      <p className="partners-description">
-        Be the first to discover the next moon ride</p>
 
-      {/* Project grid */}
+      <h1 className="partners-title">Pre Token GA</h1>
+      <p className="partners-description">
+        Be the first to discover the next moon ride
+      </p>
+
+      {/* Search Bar */}
+      <div className="search-wrapper">
+        <input
+          type="text"
+          placeholder="Search for a project..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="partner-search"
+        />
+      </div>
+
+      {/* Project Grid */}
       <div className="pretge-grid">
-        {projects.map((project, index) => (
-          <div key={index} className="pretge-card">
-            <img src={project.logo} alt={project.name} className="pretge-logo" />
-            <h2 className="pretge-project-name">{project.name}</h2>
-            <p className="pretge-tagline">{project.tagline}</p>
-            <p className="pretge-description">{project.description}</p>
-            <div className="pretge-meta">
-              <span className="pretge-stage">{project.stage}</span>
-              <span className="pretge-launch">Launch: {project.launchDate}</span>
+        {filteredProjects.length > 0 ? (
+          filteredProjects.map((project, index) => (
+            <div key={index} className="pretge-card">
+              <img
+                src={project.logo}
+                alt={project.name}
+                className="pretge-logo"
+              />
+              <h2 className="pretge-project-name">{project.name}</h2>
+              <p className="pretge-tagline">{project.tagline}</p>
+              <p className="pretge-description">{project.description}</p>
+              <div className="pretge-meta">
+                <span className="pretge-stage">{project.stage}</span>
+                <span className="pretge-launch">
+                  Launch: {project.launchDate}
+                </span>
+              </div>
+              <p className="pretge-handle">
+                <a
+                  href={`https://twitter.com/${project.xHandle.replace("@", "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {project.xHandle}
+                </a>
+              </p>
             </div>
-            <p className="pretge-handle">
-              <a
-                href={`https://twitter.com/${project.xHandle.replace("@", "")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {project.xHandle}
-              </a>
-            </p>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p style={{ marginTop: "40px", color: "#777" }}>
+            No matching projects found.
+          </p>
+        )}
       </div>
     </div>
   );
