@@ -12,10 +12,10 @@ import { FullScreenLoader } from "./components/ui/fullscreen-loader";
 
 // Pages
 import Home from "./pages/Home";
-import Crew from "./pages/Crew";
+import Crew from "./pages/DexSwap";
 import PreTGEArena from "./pages/PreTGEArena";
-import Roadmap from "./pages/Roadmap";
-import Community from "./pages/Community";
+import Roadmap from "./pages/Leaderboard";
+import Community from "./pages/FAQ";
 import Partners from "./pages/Partners";
 import Dashboard from "./pages/Dashboard";
 import Play from "./pages/Play";
