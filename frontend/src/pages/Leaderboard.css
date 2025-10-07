@@ -217,7 +217,7 @@
   margin-inline: auto;
   position: sticky;
   top:60px;
-  z-index: 999;
+  z-index: 500;
   scale: 0.9;
 }
 
