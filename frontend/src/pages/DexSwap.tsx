@@ -53,9 +53,10 @@ const DexSwap: React.FC = () => {
     <div className="swap-container">
       <div style={{ height: "60px" }}></div>
 
-      <p className="swap-subtitle">
-        Swap your WON tokens for USDC or vice versa
-      </p>
+<p className="swap-subtitle">
+  Instantly swap WON for USDC — your bridge between the World of Nads and the wider crypto world.
+</p>
+
 
       <div className="swap-card">
         <div className="swap-row">
