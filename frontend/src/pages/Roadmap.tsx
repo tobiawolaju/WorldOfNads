@@ -28,16 +28,6 @@ const Leaderboard: React.FC = () => {
     { name: "HoloLink", interactions: 70, trend: [50, 55, 60, 65, 68, 70, 75], logo: "/logos/ape.png" },
     { name: "DriftLabs", interactions: 150, trend: [130, 135, 145, 150, 155, 160, 170], logo: "/logos/ape.png" },
     { name: "Cryovault", interactions: 100, trend: [80, 90, 95, 100, 105, 110, 108], logo: "/logos/ape.png" },
-    { name: "SpectraX", interactions: 130, trend: [115, 120, 125, 130, 128, 135, 140], logo: "/logos/ape.png" },
-    { name: "Vertex One", interactions: 60, trend: [40, 45, 50, 55, 60, 65, 70], logo: "/logos/ape.png" },
-    { name: "Flux Matrix", interactions: 90, trend: [75, 80, 85, 90, 88, 92, 95], logo: "/logos/ape.png" },
-    { name: "OmniBridge", interactions: 155, trend: [130, 135, 145, 150, 155, 160, 165], logo: "/logos/ape.png" },
-    { name: "NeuraStream", interactions: 105, trend: [90, 95, 100, 105, 110, 115, 120], logo: "/logos/ape.png" },
-    { name: "EtherNova", interactions: 115, trend: [95, 100, 105, 110, 115, 120, 125], logo: "/logos/ape.png" },
-    { name: "PulseEdge", interactions: 125, trend: [100, 105, 110, 120, 125, 130, 140], logo: "/logos/ape.png" },
-    { name: "ChronaNet", interactions: 85, trend: [60, 65, 75, 80, 85, 88, 90], logo: "/logos/ape.png" },
-    { name: "AetherField", interactions: 65, trend: [40, 45, 50, 60, 65, 62, 70], logo: "/logos/ape.png" },
-    { name: "Quantra Labs", interactions: 135, trend: [120, 125, 130, 135, 140, 145, 150], logo: "/logos/ape.png" },
   ];
 
   const allUsers: User[] = [
@@ -47,25 +37,14 @@ const Leaderboard: React.FC = () => {
     { username: "0xDataGhost", won: 360, project: "NovaForge", pfp: "/logos/ape.png" },
     { username: "0xVoidHero", won: 320, project: "Orion Frontier", pfp: "/logos/ape.png" },
     { username: "0xMoonSmith", won: 270, project: "Astra Dawn", pfp: "/logos/ape.png" },
-    { username: "0xSeraph", won: 260, project: "EchoDrift", pfp: "/logos/ape.png" },
-    { username: "0xWarden", won: 190, project: "Mythra Protocol", pfp: "/logos/ape.png" },
-    { username: "0xLunaByte", won: 400, project: "LumaCore", pfp: "/logos/ape.png" },
-    { username: "0xHexKnight", won: 380, project: "ZephyrNet", pfp: "/logos/ape.png" },
-    { username: "0xDrifter", won: 420, project: "DriftLabs", pfp: "/logos/ape.png" },
-    { username: "0xCryoMage", won: 350, project: "Cryovault", pfp: "/logos/ape.png" },
-    { username: "0xSpecter", won: 310, project: "SpectraX", pfp: "/logos/ape.png" },
-    { username: "0xVertex", won: 295, project: "Vertex One", pfp: "/logos/ape.png" },
-    { username: "0xFluxor", won: 270, project: "Flux Matrix", pfp: "/logos/ape.png" },
-    { username: "0xOmniSoul", won: 390, project: "OmniBridge", pfp: "/logos/ape.png" },
-    { username: "0xNeura", won: 330, project: "NeuraStream", pfp: "/logos/ape.png" },
-    { username: "0xEtherLord", won: 345, project: "EtherNova", pfp: "/logos/ape.png" },
-    { username: "0xPulseMaster", won: 375, project: "PulseEdge", pfp: "/logos/ape.png" },
-    { username: "0xChrona", won: 290, project: "ChronaNet", pfp: "/logos/ape.png" },
-    { username: "0xAetherian", won: 315, project: "AetherField", pfp: "/logos/ape.png" },
-    { username: "0xQuantix", won: 405, project: "Quantra Labs", pfp: "/logos/ape.png" },
   ];
 
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredProjects = projects.filter((p) =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const filteredUsers = selectedProject
     ? allUsers.filter((u) => u.project === selectedProject)
@@ -90,61 +69,93 @@ const Leaderboard: React.FC = () => {
   return (
     <div className="leaderboard-container">
       <div style={{ height: "60px" }} />
+
+      {/* Search Bar */}
+      <div className="search-wrapper">
+        <input
+          type="text"
+          placeholder="Search for a project..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="partner-search"
+        />
+      </div>
+
       <div className="leaderboard-content">
         {/* Left side */}
         <div className="interaction-grid">
-          {projects.map((proj, i) => {
-            const color = getColor(proj.interactions);
-            const isActive = selectedProject === proj.name;
-            const chartData = proj.trend.map((val, idx) => ({ day: idx + 1, value: val }));
+          {filteredProjects.length > 0 ? (
+            filteredProjects.map((proj, i) => {
+              const color = getColor(proj.interactions);
+              const isActive = selectedProject === proj.name;
+              const chartData = proj.trend.map((val, idx) => ({
+                day: idx + 1,
+                value: val,
+              }));
 
-            return (
-              <div
-                key={i}
-                className={`interaction-rect ${isActive ? "active" : ""}`}
-                style={{
-                  flexGrow: proj.interactions / 10,
-                  backgroundColor: color,
-                  opacity: selectedProject && !isActive ? 0.5 : 1,
-                }}
-                onClick={() => handleProjectClick(proj.name)}
-              >
-                <div className="mini-chart">
-                  <ResponsiveContainer width="100%" height={50}>
-                    <LineChart data={chartData}>
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#ffd700"
-                        strokeWidth={2}
-                        dot={false}
-                        isAnimationActive={true}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          background: "rgba(255,255,255,0.8)",
-                          borderRadius: "6px",
-                          color: "#000",
-                        }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="rect-label">
-                  <div className="proj-label-flex">
-                    <img src={proj.logo} alt={proj.name} className="proj-logo" />
-                    <span className="proj-name">{proj.name}</span>
+              return (
+                <div
+                  key={i}
+                  className={`interaction-rect ${isActive ? "active" : ""}`}
+                  style={{
+                    flexGrow: proj.interactions / 10,
+                    backgroundColor: color,
+                    opacity: selectedProject && !isActive ? 0.5 : 1,
+                    border: "2px solid white",
+                    cursor: "pointer",
+                    position: "relative",
+                  }}
+                  onClick={() => handleProjectClick(proj.name)}
+                >
+                  <div className="mini-chart">
+                    <ResponsiveContainer width="100%" height={50}>
+                      <LineChart data={chartData}>
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          stroke="#ffd700"
+                          strokeWidth={2}
+                          dot={false}
+                          isAnimationActive={true}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: "rgba(255,255,255,0.8)",
+                            borderRadius: "6px",
+                            color: "#000",
+                          }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
-                  <span className="proj-interactions">{proj.interactions} interactions</span>
+                  <div className="rect-label">
+                    <img
+                      src={proj.logo}
+                      alt={proj.name}
+                      className="proj-logo"
+                    />
+                    <span className="proj-name">{proj.name}</span>
+                    <span className="proj-interactions">
+                      {proj.interactions} interactions
+                    </span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          ) : (
+            <p style={{ color: "#fff", textAlign: "center", width: "100%" }}>
+              No matching projects found.
+            </p>
+          )}
         </div>
 
         {/* Right side leaderboard */}
         <div className="user-leaderboard">
-          <h2>{selectedProject ? `${selectedProject} Top Users` : "Global Rankings"}</h2>
+          <h2>
+            {selectedProject
+              ? `${selectedProject} Top Users`
+              : "Global Rankings"}
+          </h2>
           <ul>
             {filteredUsers.map((user, i) => (
               <li key={i} className="user-entry">
