@@ -2,11 +2,11 @@
   text-align: center;
   padding: 80px 20px;
   font-family: 'Font1', sans-serif;
- color: #111;
+  color: #111;
 }
 
 .partners-title {
- font-size: 15vw;
+  font-size: 15vw;
   font-weight: 800;
   margin-bottom: 20px;
   font-family: Font2;
@@ -37,15 +37,18 @@
   border: 1px solid rgba(150, 120, 255, 0.15);
   background: rgba(255, 255, 255, 0.6);
   padding: 25px 20px;
-  transition: all 0.25s ease;
+  transition: all 0.5s ease;
 }
 
+/* --- Updated Hover Styles --- */
 .partner-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(150, 120, 255, 0.35);
-  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-5px);
+  background: rgb(0, 0, 0);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  border-color: transparent;
 }
 
+/* --- Elements inside partner card --- */
 .partner-logo {
   width: 80px;
   height: 80px;
@@ -62,18 +65,7 @@
   font-weight: 700;
   color: #222;
   margin-bottom: 4px;
-}
-
-.partner-handle {
-  font-size: 0.9rem;
-  color: #7d5fff;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.partner-handle:hover {
-  color: #ff8ad9;
+  transition: all 0.25s ease;
 }
 
 .partner-role {
@@ -81,19 +73,53 @@
   color: #555;
   margin-top: 8px;
   line-height: 1.4;
+  transition: all 0.25s ease;
 }
 
+.partner-handle {
+  font-size: 0.9rem;
+  color: #7d5fff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
 
+/* --- Hover Text Effects --- */
 
+.partner-card:hover .partner-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0px;
+  border: 1px solid rgba(200, 200, 255, 0.2);
+}
 
+.partner-card:hover .partner-name {
+  color: #ffffff;
+  font-family: Font2;
+  font-size: 1.5rem;
+}
 
+.partner-card:hover .partner-role {
+  color: #ffffff;
+}
 
+.partner-card:hover .partner-handle {
+  background-color: #ffffff36;
+  padding: 3px 10px;
+  border-radius: 50px;
+  color: #ffffff;
+}
 
+/* --- Optional: keep handle link hover transition too --- */
+.partner-handle:hover {
+  color: #ff8ad9;
+}
 
-
-
-
-
+/* --- Search bar --- */
 .search-wrapper {
   margin-bottom: 40px;
   max-width: 500px;
