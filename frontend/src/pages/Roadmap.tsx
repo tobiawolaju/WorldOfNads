@@ -1,9 +1,16 @@
 import React, { useState } from "react";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
 import "./Leaderboard.css";
 
 interface Project {
   name: string;
   interactions: number;
+  trend: number[]; // 7 data points for chart
 }
 
 interface User {
@@ -14,26 +21,26 @@ interface User {
 
 const Leaderboard: React.FC = () => {
   const projects: Project[] = [
-    { name: "NovaForge", interactions: 120 },
-    { name: "EchoDrift", interactions: 95 },
-    { name: "Mythra Protocol", interactions: 160 },
-    { name: "Orion Frontier", interactions: 80 },
-    { name: "Astra Dawn", interactions: 45 },
-    { name: "LumaCore", interactions: 140 },
-    { name: "ZephyrNet", interactions: 110 },
-    { name: "HoloLink", interactions: 70 },
-    { name: "DriftLabs", interactions: 150 },
-    { name: "Cryovault", interactions: 100 },
-    { name: "SpectraX", interactions: 130 },
-    { name: "Vertex One", interactions: 60 },
-    { name: "Flux Matrix", interactions: 90 },
-    { name: "OmniBridge", interactions: 155 },
-    { name: "NeuraStream", interactions: 105 },
-    { name: "EtherNova", interactions: 115 },
-    { name: "PulseEdge", interactions: 125 },
-    { name: "ChronaNet", interactions: 85 },
-    { name: "AetherField", interactions: 65 },
-    { name: "Quantra Labs", interactions: 135 },
+    { name: "NovaForge", interactions: 120, trend: [100, 110, 95, 120, 130, 125, 140] },
+    { name: "EchoDrift", interactions: 95, trend: [70, 80, 90, 85, 95, 100, 110] },
+    { name: "Mythra Protocol", interactions: 160, trend: [150, 155, 140, 160, 170, 165, 180] },
+    { name: "Orion Frontier", interactions: 80, trend: [60, 65, 70, 75, 80, 78, 85] },
+    { name: "Astra Dawn", interactions: 45, trend: [30, 35, 40, 45, 42, 48, 50] },
+    { name: "LumaCore", interactions: 140, trend: [120, 130, 125, 135, 145, 150, 155] },
+    { name: "ZephyrNet", interactions: 110, trend: [90, 95, 100, 110, 120, 115, 125] },
+    { name: "HoloLink", interactions: 70, trend: [50, 55, 60, 65, 68, 70, 75] },
+    { name: "DriftLabs", interactions: 150, trend: [130, 135, 145, 150, 155, 160, 170] },
+    { name: "Cryovault", interactions: 100, trend: [80, 90, 95, 100, 105, 110, 108] },
+    { name: "SpectraX", interactions: 130, trend: [115, 120, 125, 130, 128, 135, 140] },
+    { name: "Vertex One", interactions: 60, trend: [40, 45, 50, 55, 60, 65, 70] },
+    { name: "Flux Matrix", interactions: 90, trend: [75, 80, 85, 90, 88, 92, 95] },
+    { name: "OmniBridge", interactions: 155, trend: [130, 135, 145, 150, 155, 160, 165] },
+    { name: "NeuraStream", interactions: 105, trend: [90, 95, 100, 105, 110, 115, 120] },
+    { name: "EtherNova", interactions: 115, trend: [95, 100, 105, 110, 115, 120, 125] },
+    { name: "PulseEdge", interactions: 125, trend: [100, 105, 110, 120, 125, 130, 140] },
+    { name: "ChronaNet", interactions: 85, trend: [60, 65, 75, 80, 85, 88, 90] },
+    { name: "AetherField", interactions: 65, trend: [40, 45, 50, 60, 65, 62, 70] },
+    { name: "Quantra Labs", interactions: 135, trend: [120, 125, 130, 135, 140, 145, 150] },
   ];
 
   const allUsers: User[] = [
@@ -87,26 +94,49 @@ const Leaderboard: React.FC = () => {
     <div className="leaderboard-container">
       <div style={{ height: "60px" }} />
       <div className="leaderboard-content">
-        {/* Left side: proportional rectangles */}
+        {/* Left side */}
         <div className="interaction-grid">
           {projects.map((proj, i) => {
-            const flexGrow = proj.interactions / 10;
             const color = getColor(proj.interactions);
             const isActive = selectedProject === proj.name;
+            const chartData = proj.trend.map((val, idx) => ({ day: idx + 1, value: val }));
 
             return (
               <div
                 key={i}
                 className={`interaction-rect ${isActive ? "active" : ""}`}
                 style={{
-                  flexGrow,
+                  flexGrow: proj.interactions / 10,
                   backgroundColor: color,
                   opacity: selectedProject && !isActive ? 0.5 : 1,
                   border: "2px solid white",
                   cursor: "pointer",
+                  position: "relative",
                 }}
                 onClick={() => handleProjectClick(proj.name)}
               >
+                <div className="mini-chart">
+                  <ResponsiveContainer width="100%" height={50}>
+                    <LineChart data={chartData}>
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#ffd700" // gold/yellow line for contrast
+                        strokeWidth={2}
+                        dot={false}
+                        isAnimationActive={true}
+                      />
+
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(255,255,255,0.8)",
+                          borderRadius: "6px",
+                          color: "#000",
+                        }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
                 <div className="rect-label">
                   <span className="proj-name">{proj.name}</span>
                   <span className="proj-interactions">
@@ -118,7 +148,7 @@ const Leaderboard: React.FC = () => {
           })}
         </div>
 
-        {/* Right side: User leaderboard */}
+        {/* Right side leaderboard */}
         <div className="user-leaderboard">
           <h2>
             {selectedProject

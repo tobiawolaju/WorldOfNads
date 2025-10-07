@@ -38,12 +38,17 @@
   align-items: flex-end;
   justify-content: center;
   min-width: 150px;
-  min-height: 120px;
+  min-height: 140px; /* increased from 120px */
   cursor: pointer;
   transition: all 0.3s ease;
   color: white;
-  border: 2px solid white; /* ✅ white border */
+  border: 2px solid white;
+  position: relative; /* ensure chart positioning works */
+  overflow: hidden;
+  padding: 0px;
+  padding-bottom: 8px;
 }
+
 
 .interaction-rect:hover {
   transform: scale(1.02);
@@ -131,3 +136,22 @@
     width: 100%;
   }
 }
+
+
+
+.mini-chart {
+  padding: 0px;
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 100%;
+  height: 60px; /* make sure it has actual height */
+  z-index: 2; /* chart above background */
+  pointer-events: none;
+  mix-blend-mode: screen; /* makes white stroke visible on colored bg */
+}
+
+
+
+
+

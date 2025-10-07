@@ -11,14 +11,14 @@ const TopNavbar = () => {
   };
 
   // Map route paths to text for display
-  const pageTextMap: Record<string, string> = {
-    '/': '', // Home shows only image
-    '/pre-tge-arena': 'Pre-TGE Arena',
-    '/roadmap': 'Project Leaderboards',
-    '/crew': 'Swap',
-    '/partners': 'Partners',
-    '/community': 'FAQ',
-  };
+const pageTextMap: Record<string, string> = {
+  '/': '', // Home shows only image
+  '/pre-tge-arena': 'Pre-TGE Arena',
+  '/roadmap': 'Leaderboards', // Two leaderboards (main with each value having children as list of players in ranking)
+  '/crew': 'Won Dex', // This was Swap
+  '/partners': 'Partners',
+  '/community': 'FAQ',
+};
 
   const currentText = pageTextMap[location.pathname] || '';
 
@@ -59,16 +59,16 @@ const TopNavbar = () => {
       Pre-TGE Arena
     </NavLink>
     <NavLink to="/roadmap" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-      Project Leaderboards
+    Leaderboards
     </NavLink>
     <NavLink to="/crew" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-      Swap
+    Won Dex
     </NavLink>
     <NavLink to="/partners" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-      Partners
+    Partners
     </NavLink>
     <NavLink to="/community" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-      FAQ
+    FAQ
     </NavLink>
   </div>
 
@@ -93,10 +93,10 @@ const TopNavbar = () => {
             Pre-TGE Arena
           </NavLink>
           <NavLink to="/roadmap" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-            Project Leaderboards
+          Leaderboards
           </NavLink>
           <NavLink to="/crew" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-            Swap
+          Won Dex
           </NavLink>
           <NavLink to="/partners" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
             Partners
