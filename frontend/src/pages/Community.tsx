@@ -44,7 +44,7 @@ const FAQ: React.FC = () => {
   return (
     <div className="faq-container">
       <div style={{ height: "60px" }}></div>
-      <h1 className="faq-header">Frequently Asked Questions</h1>
+      <h1 className="faq-header">FA Questions</h1>
 
       <div className="faq-list">
         {faqs.map((item, index) => (

@@ -48,6 +48,10 @@ function PreTGEArena() {
   return (
     <div className="pretge-container">
       <div style={{ height: "60px" }}></div>
+          <h1 className="partners-title">Pre Token GA</h1>
+      <p className="partners-description">
+        Be the first to discover the next moon ride</p>
+
       {/* Project grid */}
       <div className="pretge-grid">
         {projects.map((project, index) => (

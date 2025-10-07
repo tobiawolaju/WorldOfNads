@@ -35,7 +35,6 @@ const Home: React.FC = () => {
     color: "#ffffff",
     position: "relative",
     overflow: "hidden",
-    border: "2px solid #d9ceff",
   };
 
   const handlePlay = async (): Promise<void> => {
@@ -73,7 +72,7 @@ const Home: React.FC = () => {
           justifyContent: "center",
         }}
       >
-        <h1 className="title" style={{ fontFamily: "Font2", fontSize: "48px" }}>
+        <h1 className="title">
           1.2k Nads
         </h1>
       </div>
@@ -146,7 +145,7 @@ const Home: React.FC = () => {
               position: relative;
               overflow: hidden;
               animation: pulseScale 2.4s ease-in-out infinite alternate;
-              box-shadow: 0 0 20px #907cff;
+              
               z-index: 1;
             }
 

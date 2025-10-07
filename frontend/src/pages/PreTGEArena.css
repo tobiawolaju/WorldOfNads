@@ -5,12 +5,11 @@
 }
 
 .pretge-title {
-  color: rgb(255, 154, 204);
-  text-decoration: underline;
-  text-decoration-color: #27044e;
-  font-size: clamp(3rem, 5vw, 4rem);
-  font-weight: bold;
-  margin-bottom: 10px;
+ font-size: 15vw;
+  font-weight: 800;
+  margin-bottom: 20px;
+  font-family: Font2;
+  color: #000000;
 }
 
 .pretge-intro {
@@ -29,19 +28,58 @@
 }
 
 .pretge-card {
-  background: linear-gradient(180deg, #fcf0ff, #f9e7ff);
-  border: 1px solid #e3b6ff;
-  border-radius: 20px;
-  padding: 25px;
-  text-align: left;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+  border-radius: 18px;
+  border: 1px solid rgba(150, 120, 255, 0.15);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 25px 20px;
+  transition: all 0.25s ease;
 }
 
 .pretge-card:hover {
   transform: translateY(-5px);
+  background: rgb(179, 65, 255);
+  transition: all 0.25s ease;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
+
+/* Text color changes on hover */
+.pretge-card:hover .pretge-project-name {
+  color: #ffffff;
+  font-family: Font2;
+  font-size: 2.5rem;
+}
+
+.pretge-card:hover .pretge-tagline {
+  color: #ffffff69;
+}
+.pretge-card:hover .pretge-description {
+  color: #ffffff;
+}
+
+.pretge-card:hover .pretge-meta{
+  color: #fffffd;
+  font-size: large;
+  font-weight: bold;
+}
+
+.pretge-card:hover .pretge-stage{
+background-color: #ffffff;
+color: #000000;
+}
+
+.pretge-card:hover .pretge-handle a{
+background-color: #ffffff36;
+padding: 3px 10px;
+border-radius: 50px;
+color: #ffffff;
+}
+
+
+
+
+
+
+
 
 .pretge-project-name {
   font-size: 1.7rem;
@@ -50,12 +88,15 @@
   margin-bottom: 5px;
 }
 
+
 .pretge-tagline {
   font-size: 1rem;
-  color: #a03bb7;
+  color: #00000069;
   font-style: italic;
   margin-bottom: 10px;
 }
+
+
 
 .pretge-description {
   color: rgba(0, 0, 0, 0.75);
@@ -71,7 +112,7 @@
 }
 
 .pretge-stage {
-  background: #ff9acc;
+  background: #9d51ff;
   color: white;
   padding: 5px 12px;
   border-radius: 10px;
@@ -89,7 +130,7 @@
   border-radius: 12px;
   object-fit: cover;
   margin-bottom: 10px;
-  border: 2px solid #e3b6ff;
+  border: 2px solid #e7e7e7;
 }
 
 .pretge-handle {
@@ -99,7 +140,7 @@
 }
 
 .pretge-handle a {
-  color: #a03bb7;
+  color: #585bff;
   text-decoration: none;
   transition: color 0.2s ease;
 }

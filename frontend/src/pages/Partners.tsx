@@ -53,9 +53,7 @@ const Partners: React.FC = () => {
 
       <h1 className="partners-title">Our Partners</h1>
       <p className="partners-description">
-        Collaborating with visionary teams shaping the decentralized future.
-        Together, we’re building a more open, powerful, and connected on-chain world.
-      </p>
+     The  9999 projects built on monad that makes WONs WONs </p>
 
       <div className="partners-grid">
         {partners.map((partner, index) => (

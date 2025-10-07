@@ -7,10 +7,11 @@
 }
 
 .faq-header {
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 700;
-  color: #111;
-  margin-bottom: 40px;
+ font-size: 15vw;
+  font-weight: 800;
+  margin-bottom: 20px;
+  font-family: Font2;
+  color: #000000;
 }
 
 .faq-list {
