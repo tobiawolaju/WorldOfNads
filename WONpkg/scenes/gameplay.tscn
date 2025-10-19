@@ -1,0 +1,67 @@
+[gd_scene load_steps=9 format=3 uid="uid://b48njcleqy6m3"]
+
+[ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_l1v76"]
+[ext_resource type="Texture2D" uid="uid://bmnn8os4dness" path="res://assets/images/bg1.jpg" id="3_l1v76"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ct7aa"]
+albedo_color = Color(0.5636256, 0.5636255, 0.5636255, 1)
+metallic = 0.5
+metallic_specular = 1.0
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_00tan"]
+size = Vector2(100, 100)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_l1v76"]
+size = Vector3(100, 1, 100)
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ct7aa"]
+panorama = ExtResource("3_l1v76")
+
+[sub_resource type="Sky" id="Sky_ocj2s"]
+sky_material = SubResource("PanoramaSkyMaterial_ct7aa")
+
+[sub_resource type="Environment" id="Environment_00tan"]
+background_mode = 2
+sky = SubResource("Sky_ocj2s")
+sky_custom_fov = 124.7
+sky_rotation = Vector3(-0.62831855, -0.02617994, -4.712389)
+glow_enabled = true
+glow_intensity = 0.25
+glow_bloom = 0.1
+glow_hdr_luminance_cap = 10.0
+fog_enabled = true
+fog_mode = 1
+fog_light_color = Color(0.57215196, 0.6843882, 0.9787771, 1)
+fog_density = 1.0
+fog_sky_affect = 0.5
+fog_depth_begin = 1.0
+fog_depth_end = 25.0
+volumetric_fog_albedo = Color(0.29411766, 0.2627451, 1, 1)
+
+[node name="Gameplayer" type="Node3D"]
+
+[node name="PlayerManager" type="Node3D" parent="."]
+script = ExtResource("1_l1v76")
+
+[node name="GroundMesh" type="StaticBody3D" parent="PlayerManager"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5161849, 0)
+
+[node name="floor" type="MeshInstance3D" parent="PlayerManager/GroundMesh"]
+material_override = SubResource("StandardMaterial3D_ct7aa")
+mesh = SubResource("PlaneMesh_00tan")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerManager/GroundMesh"]
+shape = SubResource("BoxShape3D_l1v76")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="PlayerManager"]
+environment = SubResource("Environment_00tan")
+
+[node name="Camera3D" type="Camera3D" parent="PlayerManager"]
+transform = Transform3D(1, 0, 0, 0, 0.9842574, 0.1767412, 0, -0.1767412, 0.9842574, 0, 0.051921308, 0.18706155)
+fov = 120.0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.99322146, -0.110632636, -0.035658754, 0.11623737, 0.9453303, 0.3046958, 0, -0.3067753, 0.951782, 0, 0.81719303, 2.8723717)
+light_color = Color(1, 0.7611074, 0.5848961, 1)
+light_energy = 2.0
+shadow_enabled = true

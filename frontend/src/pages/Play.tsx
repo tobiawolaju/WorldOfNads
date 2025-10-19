@@ -1,7 +1,24 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 
 const Play: React.FC = () => {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const username = "SIrNigga that is black"; // Example, could come from props or state
+
+  useEffect(() => {
+    // Wait for iframe to load, then send message
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const handleLoad = () => {
+      iframe.contentWindow?.postMessage(
+        { type: "set_username", value: username },
+        "*"
+      );
+    };
+
+    iframe.addEventListener("load", handleLoad);
+    return () => iframe.removeEventListener("load", handleLoad);
+  }, []);
 
   return (
     <div className="play-container">

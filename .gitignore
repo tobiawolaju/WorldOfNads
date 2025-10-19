@@ -47,3 +47,28 @@ frontend/.env
 # Misc
 # ────────────────
 *.tsbuildinfo
+
+# ────────────────
+# Godot
+# ────────────────
+/WONpkg/.godot/
+/WONpkg/export_presets.cfg
+/WONpkg/icon.svg.import
+/WONpkg/*.translation
+
+# Godot - Exported binaries
+/WONpkg/builds/
+/WONpkg/*.o
+/WONpkg/*.so
+/WONpkg/*.a
+/WONpkg/*.dll
+/WONpkg/*.pdb
+/WONpkg/*.app
+/WONpkg/*.apk
+/WONpkg/*.ipa
+/WONpkg/*.xap
+/WONpkg/*.exe
+/WONpkg/*.dmg
+/WONpkg/*.pkg
+/WONpkg/*.deb
+/WONpkg/*.rpm

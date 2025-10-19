@@ -1,0 +1,16 @@
+{
+  "name": "multiplayer-server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "uuid": "^13.0.0",
+    "ws": "^8.18.3"
+  }
+}
