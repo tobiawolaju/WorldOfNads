@@ -24,7 +24,7 @@ const wss = new WebSocketServer({
     // This function provides CORS protection.
     // It will be updated with your actual Vercel URL.
     const allowedOrigins = [
-      'YOUR_VERCEL_URL_HERE', // e.g., 'https://my-awesome-game.vercel.app'
+      'https://worldofnads.vercel.app', // e.g., 'https://my-awesome-vercel.app'
       'http://localhost:8060',  // The default for Godot's HTML5 export testing
       undefined // Allow connections from non-browser clients (like the Godot editor itself)
     ];
