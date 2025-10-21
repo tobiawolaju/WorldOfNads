@@ -24,14 +24,15 @@ var last_tap_time = 0.0
 var double_tap_interval = 0.3  # Seconds between taps
 var last_tap_position = Vector2.ZERO
 
+
 func _ready():
 	var viewport_size = get_viewport().get_visible_rect().size
 	var center_x = viewport_size.x / 2
 	var bottom_y = viewport_size.y - 150
-
 	var touch_joystick = get_node("../../TouchJoyStick")
 	touch_joystick.position = Vector2(center_x, bottom_y)
 	touch_joystick.scale = Vector2(0.8, 0.8)
+	touch_joystick.visible = false
 
 	radiusJoyStick = global_scale.x * texture.get_size().x / 2
 	radiusJoyBase = get_node("../JoyBase").global_scale.x * $"../JoyBase".texture.get_size().x / 2
@@ -39,12 +40,41 @@ func _ready():
 
 
 func _input(event):
-	if event is InputEventScreenDrag:
+	var touch_joystick = get_node("../../TouchJoyStick")
+	var viewport_size = get_viewport().get_visible_rect().size
+
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			# Only activate joystick if touch is in lower half
+			if event.position.y > viewport_size.y / 2:
+				touch_joystick.position = event.position
+				global_position = event.position
+				touchInsideJoystick = true
+				touch_joystick.visible = true
+
+				# Handle double-tap jump
+				_check_double_tap(event.position)
+			else:
+				# Touch in upper half — ignore joystick completely
+				touchInsideJoystick = false
+		else:
+			# Release only if joystick was active
+			if touchInsideJoystick:
+				if return_to_center:
+					position = Vector2.ZERO
+					_release_all_keys()
+				emit_signal("joystick_released")
+				touch_joystick.visible = false
+			touchInsideJoystick = false
+
+	elif event is InputEventScreenDrag:
 		if touchInsideJoystick:
 			position += event.relative
 			if position.length() > maxRadius:
 				position = position.normalized() * maxRadius
 			emit_signal("joystick_moved", position)
+
+			touch_joystick.visible = true
 
 			# Re-enable return to center once joystick is being used
 			if not return_to_center:
@@ -52,16 +82,6 @@ func _input(event):
 
 			# Simulate movement input actions
 			_update_input_from_joystick(position)
-
-	elif event is InputEventScreenTouch:
-		if event.pressed:
-			touchInsideJoystick = (event.position - global_position).length() <= radiusJoyStick
-			_check_double_tap(event.position)
-		else:
-			if return_to_center:
-				position = Vector2.ZERO
-				_release_all_keys()
-			emit_signal("joystick_released")
 
 
 func _process(delta):
@@ -118,5 +138,6 @@ func _check_double_tap(tap_pos: Vector2):
 		_press_key("jump")
 		await get_tree().create_timer(0.2).timeout
 		_release_key("jump")
+
 	last_tap_time = now
 	last_tap_position = tap_pos
