@@ -1,6 +1,8 @@
 // server.js
-// Authoritative server, now ready for Render and local development.
+// Final version with HTTP Server for WebSocket Upgrades.
+// This is the correct way to deploy on a "Web Service" platform like Render.
 
+import { createServer } from 'http'; // We need the built-in HTTP server
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 
@@ -15,40 +17,30 @@ const JUMP_VELOCITY = 4.5;
 // --- Server State ---
 const players = {};
 
-// --- Server Initialization ---
-const wss = new WebSocketServer({
-  port: PORT,
-  // This is crucial for Render to accept connections from the internet.
-  host: '0.0.0.0', 
-  verifyClient: (info, callback) => {
-    // This function provides CORS protection.
-    // It will be updated with your actual Vercel URL.
-    const allowedOrigins = [
-      'https://worldofnads.vercel.app', // e.g., 'https://my-awesome-vercel.app'
-      'http://localhost:8060',  // The default for Godot's HTML5 export testing
-      undefined // Allow connections from non-browser clients (like the Godot editor itself)
-    ];
-    
-    const origin = info.origin;
+// --- HTTP Server Setup ---
+// We create a basic HTTP server. It won't serve any webpages.
+// Its only job is to listen for the WebSocket upgrade request.
+const server = createServer();
 
-    // For local testing, origin will be undefined. We must allow this.
-    if (allowedOrigins.includes(origin)) {
-      console.log(`Connection from origin ${origin || 'local editor'} accepted.`);
-      callback(true); // Accept the connection.
-    } else {
-      console.log(`Connection from origin ${origin} rejected.`);
-      callback(false, 403, 'Forbidden'); // Reject the connection.
-    }
-  }
+// --- WebSocket Server Setup ---
+// We attach the WebSocket server to the HTTP server, but tell it not to listen on its own.
+const wss = new WebSocketServer({ noServer: true });
+
+console.log(`🚀 Server starting on port ${PORT}...`);
+
+// --- The "Upgrade" Logic ---
+server.on('upgrade', (req, socket, head) => {
+  // This event fires when a client sends the "Upgrade: websocket" header.
+  
+  // We can add origin checks here for security if needed, but for now, we'll accept all.
+  // This is the "hand-off". The HTTP server gives the connection to the WebSocket server.
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit('connection', ws, req);
+  });
 });
 
-console.log(`🚀 WebSocket server starting on port ${PORT}...`);
 
-wss.on('listening', () => {
-  console.log(`✅ Server is live and listening on port ${PORT}`);
-});
-
-// --- Connection Handling ---
+// --- Connection Handling (This part is exactly the same as before) ---
 wss.on('connection', (ws, req) => {
   const playerId = randomUUID();
   players[playerId] = {
@@ -63,7 +55,7 @@ wss.on('connection', (ws, req) => {
 
   ws.send(JSON.stringify({ type: 'connect', id: playerId }));
 
-  // --- Message Handling ---
+  // Message Handling
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message.toString());
@@ -85,46 +77,39 @@ wss.on('connection', (ws, req) => {
     }
   });
 
+  // Disconnection Handling
   ws.on('close', () => {
     console.log(`💀 Player disconnected: ${playerId}`);
     delete players[playerId];
   });
 });
 
-// --- Server Game Loop ---
+// --- Server Game Loop (Exactly the same as before) ---
 const gameLoop = () => {
   const delta = 1 / TICK_RATE;
 
   for (const playerId in players) {
     const player = players[playerId];
+    // ... (rest of game loop logic is identical)
     const inputs = player.inputs;
-    
-    // Movement Physics
     const rotationY = player.rotationY;
     const forwardX = Math.sin(rotationY);
     const forwardZ = Math.cos(rotationY);
-
     let moveX = 0;
     let moveZ = 0;
-
     if (inputs.forward) { moveX -= forwardX; moveZ -= forwardZ; }
     if (inputs.back)    { moveX += forwardX; moveZ += forwardZ; }
     if (inputs.left)    { moveX -= forwardZ; moveZ += forwardX; }
     if (inputs.right)   { moveX += forwardZ; moveZ -= forwardX; }
-    
     const magnitude = Math.sqrt(moveX * moveX + moveZ * moveZ);
     if (magnitude > 0) {
         moveX = (moveX / magnitude) * PLAYER_SPEED * delta;
         moveZ = (moveZ / magnitude) * PLAYER_SPEED * delta;
     }
-    
     player.x += moveX;
     player.z += moveZ;
-
-    // Gravity Physics
     player.velocityY -= GRAVITY * delta;
     player.y += player.velocityY * delta;
-
     if (player.y < 0) {
         player.y = 0;
         player.velocityY = 0;
@@ -148,3 +133,9 @@ const gameLoop = () => {
 };
 
 setInterval(gameLoop, 1000 / TICK_RATE);
+
+// --- Start the HTTP Server ---
+// The HTTP server now listens on the port, and the WebSocket server is attached to it.
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server is live and listening on port ${PORT}`);
+});
