@@ -1,13 +1,11 @@
 // server.js
-// Final version with HTTP Server for WebSocket Upgrades.
-// This is the correct way to deploy on a "Web Service" platform like Render.
+// Final Production Version with Health Check to prevent Render from spinning down.
 
-import { createServer } from 'http'; // We need the built-in HTTP server
+import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 
 // --- Configuration ---
-// Render provides the PORT as an environment variable. Fallback to 8080 for local use.
 const PORT = process.env.PORT || 8080;
 const TICK_RATE = 20;
 const PLAYER_SPEED = 4.5;
@@ -18,22 +16,30 @@ const JUMP_VELOCITY = 4.5;
 const players = {};
 
 // --- HTTP Server Setup ---
-// We create a basic HTTP server. It won't serve any webpages.
-// Its only job is to listen for the WebSocket upgrade request.
-const server = createServer();
+// We now add a request listener to handle health checks.
+const server = createServer((req, res) => {
+  // This is the health check endpoint.
+  // Render's health checker sends a GET request to the root path '/'.
+  if (req.method === 'GET' && req.url === '/') {
+    // Respond with a 200 OK status code and a simple message.
+    // The status code is the only thing Render cares about.
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Server is alive and healthy!\n');
+    return;
+  }
+  
+  // For any other HTTP request, we can just respond with a 404 Not Found.
+  res.writeHead(404);
+  res.end();
+});
 
 // --- WebSocket Server Setup ---
-// We attach the WebSocket server to the HTTP server, but tell it not to listen on its own.
 const wss = new WebSocketServer({ noServer: true });
 
 console.log(`🚀 Server starting on port ${PORT}...`);
 
-// --- The "Upgrade" Logic ---
+// --- The "Upgrade" Logic (Handles WebSocket connections) ---
 server.on('upgrade', (req, socket, head) => {
-  // This event fires when a client sends the "Upgrade: websocket" header.
-  
-  // We can add origin checks here for security if needed, but for now, we'll accept all.
-  // This is the "hand-off". The HTTP server gives the connection to the WebSocket server.
   wss.handleUpgrade(req, socket, head, (ws) => {
     wss.emit('connection', ws, req);
   });
@@ -59,13 +65,11 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message.toString());
-
       if (data.type === 'input') {
         const player = players[data.player_id];
         if (player) {
           player.inputs = data.inputs;
           player.rotationY = data.rotation_y;
-          
           if (data.inputs.jump && player.onGround) {
             player.velocityY = JUMP_VELOCITY;
             player.onGround = false;
@@ -87,10 +91,8 @@ wss.on('connection', (ws, req) => {
 // --- Server Game Loop (Exactly the same as before) ---
 const gameLoop = () => {
   const delta = 1 / TICK_RATE;
-
   for (const playerId in players) {
     const player = players[playerId];
-    // ... (rest of game loop logic is identical)
     const inputs = player.inputs;
     const rotationY = player.rotationY;
     const forwardX = Math.sin(rotationY);
@@ -116,8 +118,6 @@ const gameLoop = () => {
         player.onGround = true;
     }
   }
-
-  // Broadcast State
   const stateData = {
     type: 'state',
     players: Object.values(players).map(p => ({
@@ -135,7 +135,6 @@ const gameLoop = () => {
 setInterval(gameLoop, 1000 / TICK_RATE);
 
 // --- Start the HTTP Server ---
-// The HTTP server now listens on the port, and the WebSocket server is attached to it.
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server is live and listening on port ${PORT}`);
 });
