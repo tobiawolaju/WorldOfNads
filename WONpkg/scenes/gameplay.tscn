@@ -103,6 +103,9 @@ environment = SubResource("Environment_00tan")
 transform = Transform3D(1, 0, 0, 0, 0.9842574, 0.1767412, 0, -0.1767412, 0.9842574, 0, 0.051921308, 0.18706155)
 fov = 120.0
 
+[node name="FallbackTimer" type="Timer" parent="PlayerManager"]
+one_shot = true
+
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.99322146, -0.110632636, -0.035658754, 0.11623737, 0.9453303, 0.3046958, 0, -0.3067753, 0.951782, 0, 0.81719303, 2.8723717)
 light_color = Color(1, 0.7611074, 0.5848961, 1)

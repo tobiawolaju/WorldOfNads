@@ -1,41 +1,76 @@
-# Main.gd (Corrected)
-# Manages the world, server connection, and spawning/updating players.
-
 extends Node3D
 
-@export var server_url := "ws://localhost:8080"
+# --- SERVER URLS ---
+const LIVE_URL = "wss://worldofnads.onrender.com"
+const LOCAL_URL = "ws://localhost:8080"
+
 @export var player_scene: PackedScene = preload("res://scenes/components/Player.tscn")
 
+# --- NETWORK & STATE VARIABLES ---
 var ws := WebSocketPeer.new()
 var connected := false
 var player_id := ""
-var players := {} # Dictionary to store player nodes by their ID
+var players := {}
 var local_player: Node3D
+const CORRECTION_THRESHOLD = 0.1
 
-# --- FIX #2: ADD A THRESHOLD FOR SERVER RECONCILIATION ---
-# We only correct the local player if they are out of sync by this much.
-const CORRECTION_THRESHOLD = 0.1 # 10 cm
+# --- FALLBACK LOGIC ---
+var is_connecting_to_live = true
+var connection_attempted = false
+@onready var fallback_timer: Timer = $FallbackTimer
 
 func _ready():
-	print("🌐 Connecting to server...")
-	var err = ws.connect_to_url(server_url)
+	# Connect the timer's timeout signal to our fallback function.
+	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
+	# Start the connection process.
+	_attempt_connection()
+
+func _attempt_connection():
+	var url_to_try = LIVE_URL if is_connecting_to_live else LOCAL_URL
+	var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
+	
+	print("🌐 Attempting to connect to %s server: %s" % [server_type, url_to_try])
+	
+	var err = ws.connect_to_url(url_to_try)
 	if err != OK:
-		push_error("Failed to connect: %s" % err)
+		push_error("Failed to initiate connection: %s" % err)
+		if is_connecting_to_live:
+			_trigger_fallback()
 	else:
-		print("Connecting...")
+		connection_attempted = true
 
 func _process(delta):
-	if ws.get_ready_state() == WebSocketPeer.STATE_CLOSED:
+	if not connection_attempted:
 		return
 
 	ws.poll()
-
 	var state = ws.get_ready_state()
+
 	if state == WebSocketPeer.STATE_OPEN and not connected:
-		print("✅ Connected to server!")
 		connected = true
+		var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
+		print("✅ Connected to %s server!" % server_type)
 	
-	_receive_messages()
+	elif state == WebSocketPeer.STATE_CLOSED:
+		if connected:
+			print("❌ Disconnected from server.")
+			connected = false
+			connection_attempted = false
+		elif is_connecting_to_live:
+			print("❌ Live server connection failed.")
+			_trigger_fallback()
+	
+	if connected:
+		_receive_messages()
+
+func _trigger_fallback():
+	is_connecting_to_live = false
+	connection_attempted = false
+	print("⏳ Starting fallback to local server in 1 second...")
+	fallback_timer.start(1.0)
+
+func _on_fallback_timer_timeout():
+	_attempt_connection()
 
 func _receive_messages():
 	while ws.get_available_packet_count() > 0:
@@ -63,27 +98,26 @@ func _update_world_state(players_state):
 		var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
 		var server_rot_y = p_state["rotationY"]
 
-		# --- FIX #3: IMPLEMENT SERVER RECONCILIATION FOR THE LOCAL PLAYER ---
+		# Server Reconciliation for the LOCAL player (Horizontal only)
 		if id == player_id:
 			if local_player:
 				var client_pos = local_player.global_transform.origin
-				var distance = client_pos.distance_to(server_pos)
+				var client_pos_2d = Vector2(client_pos.x, client_pos.z)
+				var server_pos_2d = Vector2(server_pos.x, server_pos.z)
 				
-				# If the client has drifted too far from the server's reality...
-				if distance > CORRECTION_THRESHOLD:
-					# ...smoothly pull them back to the correct position.
-					local_player.global_transform.origin = client_pos.lerp(server_pos, 0.1)
-			continue # Done with local player, move to the next one.
+				if client_pos_2d.distance_to(server_pos_2d) > CORRECTION_THRESHOLD:
+					var corrected_pos = Vector3(server_pos.x, client_pos.y, server_pos.z)
+					local_player.global_transform.origin = client_pos.lerp(corrected_pos, 0.2)
+			continue
 
-		# --- Logic for REMOTE players remains the same ---
+		# State updates for REMOTE players
 		if not players.has(id):
 			_spawn_player(id, false)
 
 		if players.has(id):
 			var node = players[id]
-			
-			# --- FIX #4: USE A SOFTER LERP FOR SMOOTHER REMOTE PLAYERS ---
 			node.global_transform.origin = node.global_transform.origin.lerp(server_pos, 0.3)
+			# In this architecture, we rotate the entire CharacterBody of remote players
 			node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
 
 	# Remove disconnected players
@@ -109,6 +143,6 @@ func _spawn_player(id: String, is_local := false):
 
 func _remove_player(id: String):
 	if players.has(id):
+		if players[id].is_queued_for_deletion(): return
 		players[id].queue_free()
 		players.erase(id)
-		print("💀 Player removed:", id)
