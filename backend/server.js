@@ -1,5 +1,5 @@
-// server.js
-// Final Production Version - CLIENT AUTHORITATIVE MODEL
+  // server.js
+// Final Production Version - CLIENT AUTHORITATIVE MODEL with Animation Sync
 
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
@@ -7,11 +7,9 @@ import { randomUUID } from 'crypto';
 
 // --- Configuration ---
 const PORT = process.env.PORT || 8080;
-// We broadcast the game state 20 times per second.
 const BROADCAST_RATE = 20;
 
 // --- Server State ---
-// The server only stores the last known state of each player.
 const players = {};
 
 // --- HTTP Server Setup (for health checks from Render) ---
@@ -39,28 +37,26 @@ server.on('upgrade', (req, socket, head) => {
 // --- Connection Handling ---
 wss.on('connection', (ws, req) => {
   const playerId = randomUUID();
-  // Player state is now very simple and will be overwritten by the client.
-  players[playerId] = { id: playerId, x: 0, y: 0, z: 0, rotationY: 0 };
+  // Add 'animation' to the default player state
+  players[playerId] = { id: playerId, x: 0, y: 0, z: 0, rotationY: 0, animation: "idle" };
   
   console.log(`🎮 Player connected: ${playerId}`);
 
-  // Send the new player their unique ID.
   ws.send(JSON.stringify({ type: 'connect', id: playerId }));
 
   // --- Message Handling ---
-  // The server no longer simulates. It just accepts the client's state.
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message.toString());
-      // We expect a new message type: 'update_state'
       if (data.type === 'update_state') {
         const player = players[data.player_id];
         if (player) {
-          // Directly update the server's copy of the player's state.
           player.x = data.x;
           player.y = data.y;
           player.z = data.z;
           player.rotationY = data.rotation_y;
+          // Store the animation state sent by the client
+          player.animation = data.animation;
         }
       }
     } catch (error) {
@@ -76,11 +72,9 @@ wss.on('connection', (ws, req) => {
 });
 
 // --- Server Broadcast Loop ---
-// This loop's only job is to send everyone the latest state of all players.
 const broadcastLoop = () => {
   const stateData = {
     type: 'state',
-    // We can just send the values of the players object directly.
     players: Object.values(players),
   };
   const stateString = JSON.stringify(stateData);

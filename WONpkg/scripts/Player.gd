@@ -1,4 +1,3 @@
-
 # Player.gd
 extends CharacterBody3D
 
@@ -39,7 +38,6 @@ func _ready() -> void:
 	_play_idle()
 
 func _process(delta: float):
-	# This ensures the name label is set even if the player_id is assigned late.
 	name_label.text = player_id.substr(0, 8)
 
 func _input(event: InputEvent) -> void:
@@ -125,20 +123,18 @@ func _update_camera(delta: float) -> void:
 	camera.look_at(target_pos, Vector3.UP)
 
 # --- NETWORK FUNCTION ---
-# We now send our absolute state instead of inputs.
 func _send_state_to_server() -> void:
 	if not root or not root.ws:
 		return
 	if root.ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		var data = {
-			"type": "update_state", # New message type
+			"type": "update_state",
 			"player_id": player_id,
-			# We send our final, absolute position because we are the authority.
 			"x": global_transform.origin.x,
 			"y": global_transform.origin.y,
 			"z": global_transform.origin.z,
-			# We send the camera's rotation so other players can see where we are looking.
-			"rotation_y": cam_rot_y
+			# This is the corrected line:
+			"rotation_y": mesh.rotation.y
 		}
 		root.ws.send_text(JSON.stringify(data))
 
