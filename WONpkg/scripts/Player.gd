@@ -151,6 +151,8 @@ func _update_camera(delta: float) -> void:
 	camera.look_at(target_pos, Vector3.UP)
 
 
+# File: Player.gd
+
 func _send_input_to_server() -> void:
 	if not root or not root.ws:
 		return
@@ -159,10 +161,12 @@ func _send_input_to_server() -> void:
 			"type": "input",
 			"player_id": player_id,
 			"inputs": inputs,
-			"rotation_y": rotation.y
+			# --- THE FIX ---
+			# Send the camera's horizontal rotation (cam_rot_y), which determines
+			# the actual direction of player movement on the client.
+			"rotation_y": cam_rot_y
 		}
 		root.ws.send_text(JSON.stringify(data))
-
 
 # === Animation Handlers ===
 func _handle_animations(move_dir: Vector3) -> void:

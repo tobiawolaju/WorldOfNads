@@ -1,5 +1,5 @@
 // server.js
-// Final Production Version with Health Check to prevent Render from spinning down.
+// Final Production Version with Health Check and Vertical State Sync
 
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
@@ -16,19 +16,12 @@ const JUMP_VELOCITY = 4.5;
 const players = {};
 
 // --- HTTP Server Setup ---
-// We now add a request listener to handle health checks.
 const server = createServer((req, res) => {
-  // This is the health check endpoint.
-  // Render's health checker sends a GET request to the root path '/'.
   if (req.method === 'GET' && req.url === '/') {
-    // Respond with a 200 OK status code and a simple message.
-    // The status code is the only thing Render cares about.
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('Server is alive and healthy!\n');
     return;
   }
-  
-  // For any other HTTP request, we can just respond with a 404 Not Found.
   res.writeHead(404);
   res.end();
 });
@@ -38,15 +31,13 @@ const wss = new WebSocketServer({ noServer: true });
 
 console.log(`🚀 Server starting on port ${PORT}...`);
 
-// --- The "Upgrade" Logic (Handles WebSocket connections) ---
 server.on('upgrade', (req, socket, head) => {
   wss.handleUpgrade(req, socket, head, (ws) => {
     wss.emit('connection', ws, req);
   });
 });
 
-
-// --- Connection Handling (This part is exactly the same as before) ---
+// --- Connection Handling ---
 wss.on('connection', (ws, req) => {
   const playerId = randomUUID();
   players[playerId] = {
@@ -88,7 +79,7 @@ wss.on('connection', (ws, req) => {
   });
 });
 
-// --- Server Game Loop (Exactly the same as before) ---
+// --- Server Game Loop ---
 const gameLoop = () => {
   const delta = 1 / TICK_RATE;
   for (const playerId in players) {
@@ -122,6 +113,9 @@ const gameLoop = () => {
     type: 'state',
     players: Object.values(players).map(p => ({
       id: p.id, x: p.x, y: p.y, z: p.z, rotationY: p.rotationY,
+      // --- CHANGE: Send vertical state for better reconciliation ---
+      velocityY: p.velocityY,
+      onGround: p.onGround,
     })),
   };
   const stateString = JSON.stringify(stateData);

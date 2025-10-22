@@ -102,8 +102,8 @@ func _update_world_state(players_state):
 		if id == player_id:
 			if local_player:
 				var client_pos = local_player.global_transform.origin
-				var client_pos_2d = Vector2(client_pos.x, client_pos.z)
-				var server_pos_2d = Vector2(server_pos.x, server_pos.z)
+				var client_pos_2d = Vector2( client_pos.x, client_pos.z)
+				var server_pos_2d = Vector2( server_pos.x, server_pos.z)
 				
 				if client_pos_2d.distance_to(server_pos_2d) > CORRECTION_THRESHOLD:
 					var corrected_pos = Vector3(server_pos.x, client_pos.y, server_pos.z)
@@ -124,6 +124,7 @@ func _update_world_state(players_state):
 	for id in players.keys():
 		if id != player_id and not id in received_ids:
 			_remove_player(id)
+
 
 func _spawn_player(id: String, is_local := false):
 	var player = player_scene.instantiate()
