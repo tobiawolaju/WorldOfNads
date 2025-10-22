@@ -26,6 +26,7 @@ var is_local: bool = false
 var velocity_y: float = 0.0
 var cam_rot_x: float = deg_to_rad(30)
 var cam_rot_y: float = 0.0
+var current_animation: String = "idle" # Track current animation state
 
 var player_id: String = "" :
 	set(new_id):
@@ -96,8 +97,8 @@ func _physics_process(delta: float) -> void:
 		mesh.rotation.y = lerp_angle(mesh.rotation.y, target_yaw, delta * 10.0)
 
 	_update_camera(delta)
-	_send_state_to_server()
 	_handle_animations(move_direction)
+	_send_state_to_server() # Called after handle_animations to send the latest state
 
 func _update_camera(delta: float) -> void:
 	var target_pos: Vector3 = global_transform.origin + Vector3(0, 1.5, 0)
@@ -110,7 +111,6 @@ func _update_camera(delta: float) -> void:
 	) * camera_distance
 
 	var desired_cam_pos: Vector3 = target_pos + cam_target_offset
-
 	var space_state = get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(target_pos, desired_cam_pos)
 	query.exclude = [self]
@@ -133,16 +133,34 @@ func _send_state_to_server() -> void:
 			"x": global_transform.origin.x,
 			"y": global_transform.origin.y,
 			"z": global_transform.origin.z,
-			# This is the corrected line:
-			"rotation_y": mesh.rotation.y
+			"rotation_y": mesh.rotation.y,
+			"animation": current_animation # Send the current animation state
 		}
 		root.ws.send_text(JSON.stringify(data))
 
 # === Animation Handlers ===
+# This public function is called by WorldManager on remote players
+func set_animation_state(new_state: String):
+	# The local player handles its own animations, so ignore this call for them.
+	if is_local: return
+	# Don't restart an animation that is already playing.
+	if new_state == current_animation: return
+
+	current_animation = new_state
+	if new_state == "running":
+		_play_running()
+	else: # Default to idle
+		_play_idle()
+
+# This function determines and plays animations for the LOCAL player only.
 func _handle_animations(move_dir: Vector3) -> void:
+	if not is_local: return
+
 	if move_dir.length() > 0.1:
+		current_animation = "running"
 		_play_running()
 	else:
+		current_animation = "idle"
 		_play_idle()
 
 func _play_running() -> void:

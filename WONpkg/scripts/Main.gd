@@ -90,25 +90,23 @@ func _update_world_state(players_state):
 		var id = p_state["id"]
 		received_ids.append(id)
 		
-		# The local player is the authority, so we ignore any state updates for ourself.
 		if id == player_id:
 			continue
 
-		# Spawn remote players if they don't exist yet.
 		if not players.has(id):
 			_spawn_player(id, false)
 
-		# Apply interpolated state updates to remote players.
 		if players.has(id):
 			var node = players[id]
 			var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
 			var server_rot_y = p_state["rotationY"]
-			# Smoothly move remote players to their latest known position.
-			node.global_transform.origin = node.global_transform.origin.lerp(server_pos, 0.3)
-			# Smoothly rotate remote players to face their latest known direction.
-			node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
+			var server_anim = p_state["animation"]
 
-	# Remove any players that are no longer in the server's state message.
+			node.global_transform.origin = node.global_transform.origin.lerp(server_pos, 0.3)
+			node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
+			# Tell the remote player's script to update its animation
+			node.set_animation_state(server_anim)
+
 	for id in players.keys():
 		if id != player_id and not id in received_ids:
 			_remove_player(id)
@@ -133,3 +131,4 @@ func _remove_player(id: String):
 		if players[id].is_queued_for_deletion(): return
 		players[id].queue_free()
 		players.erase(id)
+		
