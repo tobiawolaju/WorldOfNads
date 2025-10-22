@@ -1,5 +1,5 @@
 // server.js
-// Final Production Version with Health Check and Vertical State Sync
+// Final Production Version - CLIENT AUTHORITATIVE MODEL
 
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
@@ -7,15 +7,14 @@ import { randomUUID } from 'crypto';
 
 // --- Configuration ---
 const PORT = process.env.PORT || 8080;
-const TICK_RATE = 20;
-const PLAYER_SPEED = 4.5;
-const GRAVITY = 9.8;
-const JUMP_VELOCITY = 4.5;
+// We broadcast the game state 20 times per second.
+const BROADCAST_RATE = 20;
 
 // --- Server State ---
+// The server only stores the last known state of each player.
 const players = {};
 
-// --- HTTP Server Setup ---
+// --- HTTP Server Setup (for health checks from Render) ---
 const server = createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/') {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -40,31 +39,28 @@ server.on('upgrade', (req, socket, head) => {
 // --- Connection Handling ---
 wss.on('connection', (ws, req) => {
   const playerId = randomUUID();
-  players[playerId] = {
-    id: playerId,
-    x: 0, y: 0, z: 0,
-    rotationY: 0,
-    velocityY: 0,
-    onGround: true,
-    inputs: { forward: false, back: false, left: false, right: false, jump: false },
-  };
+  // Player state is now very simple and will be overwritten by the client.
+  players[playerId] = { id: playerId, x: 0, y: 0, z: 0, rotationY: 0 };
+  
   console.log(`🎮 Player connected: ${playerId}`);
 
+  // Send the new player their unique ID.
   ws.send(JSON.stringify({ type: 'connect', id: playerId }));
 
-  // Message Handling
+  // --- Message Handling ---
+  // The server no longer simulates. It just accepts the client's state.
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message.toString());
-      if (data.type === 'input') {
+      // We expect a new message type: 'update_state'
+      if (data.type === 'update_state') {
         const player = players[data.player_id];
         if (player) {
-          player.inputs = data.inputs;
+          // Directly update the server's copy of the player's state.
+          player.x = data.x;
+          player.y = data.y;
+          player.z = data.z;
           player.rotationY = data.rotation_y;
-          if (data.inputs.jump && player.onGround) {
-            player.velocityY = JUMP_VELOCITY;
-            player.onGround = false;
-          }
         }
       }
     } catch (error) {
@@ -79,46 +75,16 @@ wss.on('connection', (ws, req) => {
   });
 });
 
-// --- Server Game Loop ---
-const gameLoop = () => {
-  const delta = 1 / TICK_RATE;
-  for (const playerId in players) {
-    const player = players[playerId];
-    const inputs = player.inputs;
-    const rotationY = player.rotationY;
-    const forwardX = Math.sin(rotationY);
-    const forwardZ = Math.cos(rotationY);
-    let moveX = 0;
-    let moveZ = 0;
-    if (inputs.forward) { moveX -= forwardX; moveZ -= forwardZ; }
-    if (inputs.back)    { moveX += forwardX; moveZ += forwardZ; }
-    if (inputs.left)    { moveX -= forwardZ; moveZ += forwardX; }
-    if (inputs.right)   { moveX += forwardZ; moveZ -= forwardX; }
-    const magnitude = Math.sqrt(moveX * moveX + moveZ * moveZ);
-    if (magnitude > 0) {
-        moveX = (moveX / magnitude) * PLAYER_SPEED * delta;
-        moveZ = (moveZ / magnitude) * PLAYER_SPEED * delta;
-    }
-    player.x += moveX;
-    player.z += moveZ;
-    player.velocityY -= GRAVITY * delta;
-    player.y += player.velocityY * delta;
-    if (player.y < 0) {
-        player.y = 0;
-        player.velocityY = 0;
-        player.onGround = true;
-    }
-  }
+// --- Server Broadcast Loop ---
+// This loop's only job is to send everyone the latest state of all players.
+const broadcastLoop = () => {
   const stateData = {
     type: 'state',
-    players: Object.values(players).map(p => ({
-      id: p.id, x: p.x, y: p.y, z: p.z, rotationY: p.rotationY,
-      // --- CHANGE: Send vertical state for better reconciliation ---
-      velocityY: p.velocityY,
-      onGround: p.onGround,
-    })),
+    // We can just send the values of the players object directly.
+    players: Object.values(players),
   };
   const stateString = JSON.stringify(stateData);
+
   wss.clients.forEach((client) => {
     if (client.readyState === 1) { // WebSocket.OPEN
       client.send(stateString);
@@ -126,7 +92,7 @@ const gameLoop = () => {
   });
 };
 
-setInterval(gameLoop, 1000 / TICK_RATE);
+setInterval(broadcastLoop, 1000 / BROADCAST_RATE);
 
 // --- Start the HTTP Server ---
 server.listen(PORT, '0.0.0.0', () => {
