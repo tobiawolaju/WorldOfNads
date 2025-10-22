@@ -1,3 +1,4 @@
+# WorldManager.gd
 extends Node3D
 
 # --- SERVER URLS ---
@@ -12,7 +13,11 @@ var connected := false
 var player_id := ""
 var players := {}
 var local_player: Node3D
-const CORRECTION_THRESHOLD = 0.1
+
+# --- CHANGE: Increased threshold to prevent jitter from minor latency ---
+# This value should be larger than the distance a player moves in one server tick.
+# Player Speed (4.5) / Tick Rate (20) = 0.225. We set it slightly higher.
+const CORRECTION_THRESHOLD = 0.3
 
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live = true
@@ -20,17 +25,13 @@ var connection_attempted = false
 @onready var fallback_timer: Timer = $FallbackTimer
 
 func _ready():
-	# Connect the timer's timeout signal to our fallback function.
 	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
-	# Start the connection process.
 	_attempt_connection()
 
 func _attempt_connection():
 	var url_to_try = LIVE_URL if is_connecting_to_live else LOCAL_URL
 	var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
-	
 	print("🌐 Attempting to connect to %s server: %s" % [server_type, url_to_try])
-	
 	var err = ws.connect_to_url(url_to_try)
 	if err != OK:
 		push_error("Failed to initiate connection: %s" % err)
@@ -40,17 +41,13 @@ func _attempt_connection():
 		connection_attempted = true
 
 func _process(delta):
-	if not connection_attempted:
-		return
-
+	if not connection_attempted: return
 	ws.poll()
 	var state = ws.get_ready_state()
-
 	if state == WebSocketPeer.STATE_OPEN and not connected:
 		connected = true
 		var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
 		print("✅ Connected to %s server!" % server_type)
-	
 	elif state == WebSocketPeer.STATE_CLOSED:
 		if connected:
 			print("❌ Disconnected from server.")
@@ -59,7 +56,6 @@ func _process(delta):
 		elif is_connecting_to_live:
 			print("❌ Live server connection failed.")
 			_trigger_fallback()
-	
 	if connected:
 		_receive_messages()
 
@@ -79,7 +75,6 @@ func _receive_messages():
 		var raw_string = raw_packet.get_string_from_utf8()
 		var data = JSON.parse_string(raw_string)
 		if typeof(data) != TYPE_DICTIONARY: continue
-
 		match data.get("type"):
 			"connect":
 				player_id = data["id"]
@@ -95,29 +90,23 @@ func _update_world_state(players_state):
 		var id = p_state["id"]
 		received_ids.append(id)
 		
-		var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
-		var server_rot_y = p_state["rotationY"]
-
-		# Server Reconciliation for the LOCAL player (Horizontal only)
+		# --- CHANGE: Server Reconciliation logic is now cleaner and delegates to the player ---
 		if id == player_id:
 			if local_player:
-				var client_pos = local_player.global_transform.origin
-				var client_pos_2d = Vector2( client_pos.x, client_pos.z)
-				var server_pos_2d = Vector2( server_pos.x, server_pos.z)
-				
-				if client_pos_2d.distance_to(server_pos_2d) > CORRECTION_THRESHOLD:
-					var corrected_pos = Vector3(server_pos.x, client_pos.y, server_pos.z)
-					local_player.global_transform.origin = client_pos.lerp(corrected_pos, 0.2)
+				var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
+				var server_vel_y = p_state["velocityY"]
+				# Call the new reconcile function on the player script
+				local_player.reconcile_state(server_pos, server_vel_y)
 			continue
 
 		# State updates for REMOTE players
 		if not players.has(id):
 			_spawn_player(id, false)
-
 		if players.has(id):
 			var node = players[id]
+			var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
+			var server_rot_y = p_state["rotationY"]
 			node.global_transform.origin = node.global_transform.origin.lerp(server_pos, 0.3)
-			# In this architecture, we rotate the entire CharacterBody of remote players
 			node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
 
 	# Remove disconnected players
@@ -125,16 +114,13 @@ func _update_world_state(players_state):
 		if id != player_id and not id in received_ids:
 			_remove_player(id)
 
-
 func _spawn_player(id: String, is_local := false):
 	var player = player_scene.instantiate()
 	player.name = "Player_%s" % id
 	add_child(player)
-
 	player.player_id = id
 	player.is_local = is_local
 	player.root = self
-
 	if is_local:
 		local_player = player
 		print("🧍 Local player spawned:", id)
