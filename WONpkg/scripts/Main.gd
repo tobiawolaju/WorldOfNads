@@ -12,12 +12,6 @@ var ws := WebSocketPeer.new()
 var connected := false
 var player_id := ""
 var players := {}
-var local_player: Node3D
-
-# --- CHANGE: Increased threshold to prevent jitter from minor latency ---
-# This value should be larger than the distance a player moves in one server tick.
-# Player Speed (4.5) / Tick Rate (20) = 0.225. We set it slightly higher.
-const CORRECTION_THRESHOLD = 0.3
 
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live = true
@@ -41,13 +35,17 @@ func _attempt_connection():
 		connection_attempted = true
 
 func _process(delta):
-	if not connection_attempted: return
+	if not connection_attempted:
+		return
+
 	ws.poll()
 	var state = ws.get_ready_state()
+
 	if state == WebSocketPeer.STATE_OPEN and not connected:
 		connected = true
 		var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
 		print("✅ Connected to %s server!" % server_type)
+	
 	elif state == WebSocketPeer.STATE_CLOSED:
 		if connected:
 			print("❌ Disconnected from server.")
@@ -56,6 +54,7 @@ func _process(delta):
 		elif is_connecting_to_live:
 			print("❌ Live server connection failed.")
 			_trigger_fallback()
+	
 	if connected:
 		_receive_messages()
 
@@ -75,6 +74,7 @@ func _receive_messages():
 		var raw_string = raw_packet.get_string_from_utf8()
 		var data = JSON.parse_string(raw_string)
 		if typeof(data) != TYPE_DICTIONARY: continue
+
 		match data.get("type"):
 			"connect":
 				player_id = data["id"]
@@ -90,26 +90,25 @@ func _update_world_state(players_state):
 		var id = p_state["id"]
 		received_ids.append(id)
 		
-		# --- CHANGE: Server Reconciliation logic is now cleaner and delegates to the player ---
+		# The local player is the authority, so we ignore any state updates for ourself.
 		if id == player_id:
-			if local_player:
-				var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
-				var server_vel_y = p_state["velocityY"]
-				# Call the new reconcile function on the player script
-				local_player.reconcile_state(server_pos, server_vel_y)
 			continue
 
-		# State updates for REMOTE players
+		# Spawn remote players if they don't exist yet.
 		if not players.has(id):
 			_spawn_player(id, false)
+
+		# Apply interpolated state updates to remote players.
 		if players.has(id):
 			var node = players[id]
 			var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
 			var server_rot_y = p_state["rotationY"]
+			# Smoothly move remote players to their latest known position.
 			node.global_transform.origin = node.global_transform.origin.lerp(server_pos, 0.3)
+			# Smoothly rotate remote players to face their latest known direction.
 			node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
 
-	# Remove disconnected players
+	# Remove any players that are no longer in the server's state message.
 	for id in players.keys():
 		if id != player_id and not id in received_ids:
 			_remove_player(id)
@@ -118,11 +117,12 @@ func _spawn_player(id: String, is_local := false):
 	var player = player_scene.instantiate()
 	player.name = "Player_%s" % id
 	add_child(player)
+
 	player.player_id = id
 	player.is_local = is_local
 	player.root = self
+
 	if is_local:
-		local_player = player
 		print("🧍 Local player spawned:", id)
 	else:
 		print("👤 Remote player spawned:", id)
