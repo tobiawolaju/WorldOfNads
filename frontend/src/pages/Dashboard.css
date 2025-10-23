@@ -85,7 +85,7 @@
 }
 
 .play-button {
-  background: #000;
+  background: #9900ff;
   color: #fff;
   font-family: Font2;
   font-weight: 700;
@@ -99,7 +99,7 @@
 }
 
 .play-button:hover {
-  background: #222;
+  background: #bf00ff;
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
