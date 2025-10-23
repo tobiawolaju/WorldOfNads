@@ -45,15 +45,27 @@ func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
 
+	var viewport_size = get_viewport().get_visible_rect().size
+
+	# 👇 Ignore any touch or drag from lower part of the screen (joystick area)
+	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+		if event.position.y > viewport_size.y * 0.6:
+			return  # ignore touches in lower 40% of the screen
+
+	# --- CAMERA ROTATION ---
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		cam_rot_y -= event.relative.x * 0.005
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.005, min_pitch, max_pitch)
 
+	# --- CAMERA ZOOM ---
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
 			camera_distance = clamp(camera_distance - 0.5, min_zoom, max_zoom)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
 			camera_distance = clamp(camera_distance + 0.5, min_zoom, max_zoom)
+
+
+
 
 func _physics_process(delta: float) -> void:
 	if not is_local:
