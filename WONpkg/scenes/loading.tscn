@@ -18,6 +18,7 @@ offset_right = 1250.0
 offset_bottom = 1250.0
 grow_horizontal = 2
 grow_vertical = 2
+color = Color(1, 0.011764706, 1, 1)
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
