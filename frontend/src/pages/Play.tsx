@@ -29,7 +29,7 @@ const Play: React.FC = () => {
         style={{
           border: "none",
           width: "100%",
-          height: "100%",
+          height: "100vh",
           padding:"0px",
           margin:"0px"
         }}
