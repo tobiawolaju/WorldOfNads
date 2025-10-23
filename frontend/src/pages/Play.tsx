@@ -25,11 +25,13 @@ const Play: React.FC = () => {
       <iframe
         ref={iframeRef}
         src="/godot/index.html"
-        title="Godot Game"
+        title="World of Nads"
         style={{
           border: "none",
           width: "100%",
-          height: "100vh",
+          height: "100%",
+          padding:"0px",
+          margin:"0px"
         }}
       />
     </div>

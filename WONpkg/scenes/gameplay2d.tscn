@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://bj8bka4230iqa"]
 
-[ext_resource type="PackedScene" uid="uid://b48njcleqy6m3" path="res://scenes/gameplay.tscn" id="1_1iwhs"]
+[ext_resource type="PackedScene" uid="uid://b48njcleqy6m3" path="res://scenes/gameplay3d.tscn" id="1_1iwhs"]
 [ext_resource type="Texture2D" uid="uid://c32ce524dwv4m" path="res://assets/images/white_circle.png" id="2_cqgoe"]
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/joystick.gd" id="3_1iwhs"]
 
@@ -65,3 +65,4 @@ texture = ExtResource("2_cqgoe")
 script = ExtResource("3_1iwhs")
 
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer"]
+[editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/CharacterBody3D"]

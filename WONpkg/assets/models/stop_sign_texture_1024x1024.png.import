@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://0ucmr7xwu32d"
-path.s3tc="res://.godot/imported/lips.png-f895604d30d807ee3eb107f5cd0eb6a1.s3tc.ctex"
-path.etc2="res://.godot/imported/lips.png-f895604d30d807ee3eb107f5cd0eb6a1.etc2.ctex"
+uid="uid://w5ldcc8yjkgr"
+path.s3tc="res://.godot/imported/stop_sign_texture_1024x1024.png-a9a34c61322fb948c3d32d3e06f2a136.s3tc.ctex"
+path.etc2="res://.godot/imported/stop_sign_texture_1024x1024.png-a9a34c61322fb948c3d32d3e06f2a136.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/models/nad/lips.png"
-dest_files=["res://.godot/imported/lips.png-f895604d30d807ee3eb107f5cd0eb6a1.s3tc.ctex", "res://.godot/imported/lips.png-f895604d30d807ee3eb107f5cd0eb6a1.etc2.ctex"]
+source_file="res://assets/models/stop_sign_texture_1024x1024.png"
+dest_files=["res://.godot/imported/stop_sign_texture_1024x1024.png-a9a34c61322fb948c3d32d3e06f2a136.s3tc.ctex", "res://.godot/imported/stop_sign_texture_1024x1024.png-a9a34c61322fb948c3d32d3e06f2a136.etc2.ctex"]
 
 [params]
 

@@ -2,18 +2,21 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://0ucmr7xwu32d"
-path.s3tc="res://.godot/imported/lips.png-f895604d30d807ee3eb107f5cd0eb6a1.s3tc.ctex"
-path.etc2="res://.godot/imported/lips.png-f895604d30d807ee3eb107f5cd0eb6a1.etc2.ctex"
+uid="uid://d20rxp171yt4w"
+path.s3tc="res://.godot/imported/model_0.png-1c5c1e67cf335a92947fa17ce4201199.s3tc.ctex"
+path.etc2="res://.godot/imported/model_0.png-1c5c1e67cf335a92947fa17ce4201199.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
+generator_parameters={
+"md5": "a702e1d1e51aac6f62e0ed5b7f34b55f"
+}
 
 [deps]
 
-source_file="res://assets/models/nad/lips.png"
-dest_files=["res://.godot/imported/lips.png-f895604d30d807ee3eb107f5cd0eb6a1.s3tc.ctex", "res://.godot/imported/lips.png-f895604d30d807ee3eb107f5cd0eb6a1.etc2.ctex"]
+source_file="res://assets/models/model_0.png"
+dest_files=["res://.godot/imported/model_0.png-1c5c1e67cf335a92947fa17ce4201199.s3tc.ctex", "res://.godot/imported/model_0.png-1c5c1e67cf335a92947fa17ce4201199.etc2.ctex"]
 
 [params]
 
