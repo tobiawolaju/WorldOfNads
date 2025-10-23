@@ -2,47 +2,60 @@ import React from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useNavigate } from "react-router-dom";
 import { FullScreenLoader } from "../components/ui/fullscreen-loader";
+import "./dashboard.css";
 
 const Dashboard: React.FC = () => {
   const { ready, authenticated, user, logout } = usePrivy();
   const navigate = useNavigate();
 
   if (!ready) return <FullScreenLoader />;
-  if (!authenticated) return null; // handled by router redirect
+  if (!authenticated || !user) return null;
+
+  const twitter = user.linkedAccounts?.find((acc) => acc.type === "twitter_oauth");
+  const wallets = user.linkedAccounts?.filter((acc) => acc.type === "wallet") || [];
 
   return (
-    <div className="bg-[#E0E7FF66] min-h-screen flex flex-col justify-between p-6">
-      {/* Main content */}
-      <main className="flex-grow flex justify-center items-center">
-        <div className="max-w-3xl w-full bg-white/70 backdrop-blur-md rounded-2xl shadow-lg p-8 border border-indigo-100">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
-            User Dashboard
-          </h2>
+    <div className="dashboard-container">
+      <div className="dashboard-card">
+        <img
+          src={twitter?.profilePictureUrl || "/default-avatar.png"}
+          alt="Profile"
+          className="profile-picture"
+        />
+        <h2 className="username">
+          {twitter?.name || "Player"} <span>@{twitter?.username}</span>
+        </h2>
 
-          <div className="overflow-auto max-h-[70vh] rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <pre className="text-sm text-gray-800 whitespace-pre-wrap break-words">
-              {JSON.stringify(user, null, 2)}
-            </pre>
-          </div>
+        <div className="wallets-section">
+          <h3 className="wallets-title">Connected Wallets</h3>
+          {wallets.length > 0 ? (
+            wallets.map((w, idx) => (
+              <div className="wallet-item" key={idx}>
+                <span>{w.chainType.toUpperCase()}</span>
+                <code>{w.address}</code>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-400">No wallets connected</p>
+          )}
         </div>
-      </main>
 
-      {/* Footer buttons */}
-      <footer className="flex justify-center gap-6 py-6">
-        <button
-          onClick={() => navigate("/play")}
-          className="px-6 py-3 bg-indigo-600 text-white text-lg rounded-full shadow-md hover:bg-indigo-700 transition"
-        >
-          Join Match
-        </button>
+        <div className="balance-section">
+          <span className="balance-label">Balance</span>
+          <span className="balance-value">Coming soon 💎</span>
+        </div>
 
-        <button
-          onClick={logout}
-          className="px-6 py-3 bg-red-500 text-white text-lg rounded-full shadow-md hover:bg-red-600 transition"
-        >
-          Logout
-        </button>
-      </footer>
+        <div className="buttons">
+          <button className="play-button" onClick={() => navigate("/play")}>
+            ▶ Play
+          </button>
+          <button className="logout-button" onClick={logout}>
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <p className="footer-text">World of Nad — Web3 Arena Awaits ⚔️</p>
     </div>
   );
 };
