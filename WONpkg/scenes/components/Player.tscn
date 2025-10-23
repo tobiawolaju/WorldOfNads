@@ -5448,11 +5448,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 shape = SubResource("CapsuleShape3D_hqo6i")
 
 [node name="Label3D" type="Label3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.5995064, -0.015254736, 0.06358477)
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0.6120912, 0)
 billboard = 1
 double_sided = false
-modulate = Color(0.33488923, 0.3572025, 0.29811966, 1)
-outline_modulate = Color(6.116308, 6.116308, 4.143508, 1)
+modulate = Color(0.33333334, 0.35686275, 0.29803923, 1)
+outline_modulate = Color(6.116308, 6.116308, 4.143508, 0.45882353)
 text = "@keone"
 font_size = 150
 outline_size = 100
