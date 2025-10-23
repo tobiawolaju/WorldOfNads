@@ -17,7 +17,9 @@ const Dashboard: React.FC = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-card">
-        <img
+      
+      <div style={{display:"flex"}}>
+          <img
           src={twitter?.profilePictureUrl || "/default-avatar.png"}
           alt="Profile"
           className="profile-picture"
@@ -25,6 +27,9 @@ const Dashboard: React.FC = () => {
         <h2 className="username">
           {twitter?.name || "Player"} <span>@{twitter?.username}</span>
         </h2>
+        </div>
+
+      
 
         <div className="wallets-section">
           <h3 className="wallets-title">Connected Wallets</h3>
@@ -41,8 +46,8 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="balance-section">
-          <span className="balance-label">Balance</span>
-          <span className="balance-value">Coming soon 💎</span>
+          <span className="balance-label">Earned WONs</span>
+          <span className="balance-value">30K WONs</span>
         </div>
 
         <div className="buttons">
@@ -55,7 +60,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <p className="footer-text">World of Nad — Web3 Arena Awaits ⚔️</p>
     </div>
   );
 };
