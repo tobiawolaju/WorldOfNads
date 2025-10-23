@@ -2,7 +2,7 @@ import React from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useNavigate } from "react-router-dom";
 import { FullScreenLoader } from "../components/ui/fullscreen-loader";
-import "./dashboard.css";
+import "./Dashboard.css";
 
 const Dashboard: React.FC = () => {
   const { ready, authenticated, user, logout } = usePrivy();
