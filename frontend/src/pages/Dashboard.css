@@ -1,10 +1,12 @@
+/* --- Dashboard Container --- */
 .dashboard-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: start;
   min-height: 100vh;
-  padding: 40px 20px;font-family: 'Font1', sans-serif;
+  padding: 40px 20px;
+  font-family: 'Font1', sans-serif;
   color: #111;
 }
 
@@ -23,24 +25,21 @@
   border-radius: 24px;
   object-fit: cover;
   box-shadow: 0 8px 24px rgba(153, 0, 255, 0.2);
-  margin-top: 60px;
-  margin-bottom: 16px;
+  margin: 60px 0 16px;
 }
 
 .username {
   font-size: 2rem;
   font-weight: 800;
-  color: #111;
 }
 
 .user-handle {
   font-size: 1rem;
   color: #777;
-  margin-top: 4px;
-  margin-bottom: 14px;
+  margin: 4px 0 14px;
 }
 
-/* --- Game Aura: WON Balance --- */
+/* --- WON Balance --- */
 .won-balance {
   position: relative;
   background: linear-gradient(90deg, #a000ff, #c600ff, #ff00d9);
@@ -52,16 +51,16 @@
   font-weight: 800;
   font-size: 1.1rem;
   letter-spacing: 0.5px;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 16px rgba(166, 0, 255, 0.6);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6),
+               0 0 16px rgba(166, 0, 255, 0.6);
   box-shadow: 0 0 20px rgba(153, 0, 255, 0.4);
   overflow: hidden;
   transition: transform 0.3s ease;
 }
 
 @keyframes wonGlow {
-  0% { background-position: 0% 50%; }
+  0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
 }
 
 .won-balance::before {
@@ -77,9 +76,8 @@
 }
 
 @keyframes wonShine {
-  0% { transform: translateX(-60%) rotate(0deg); opacity: 0.7; }
+  0%, 100% { transform: translateX(-60%) rotate(0deg); opacity: 0.7; }
   50% { transform: translateX(60%) rotate(180deg); opacity: 1; }
-  100% { transform: translateX(-60%) rotate(360deg); opacity: 0.7; }
 }
 
 .won-balance:hover {
@@ -92,7 +90,6 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 16px;
-  color: #000;
 }
 
 .matches-scroll {
@@ -103,19 +100,15 @@
   scroll-snap-type: x mandatory;
   width: 100%;
   justify-content: flex-start;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   scroll-behavior: smooth;
   overscroll-behavior-x: contain;
   position: relative;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* Hide default scrollbar */
-.matches-scroll::-webkit-scrollbar {
-  display: none;
-}
+.matches-scroll::-webkit-scrollbar { display: none; }
 
-/* Edge fade */
 .matches-scroll::before,
 .matches-scroll::after {
   content: "";
@@ -139,21 +132,32 @@
 
 /* --- Match Cards --- */
 .match-card {
-  background: #fffef4;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 20px;
   min-width: 260px;
   flex-shrink: 0;
   padding: 24px;
   text-align: center;
   scroll-snap-align: start;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid rgba(153, 0, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.match-card.live {
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
 .match-card:hover {
-  transform: translateY(-4px) rotate3d(1, 1, 0, 3deg);
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.25);
 }
 
+/* --- Sponsor Info --- */
 .sponsor-info {
   display: flex;
   flex-direction: column;
@@ -181,14 +185,15 @@
   margin-bottom: 16px;
 }
 
+/* --- Match Buttons --- */
 .match-button {
   font-family: font2;
   border: none;
   border-radius: 12px;
   padding: 10px 26px;
   cursor: pointer;
-  font-weight: 100;
   font-size: 1.5rem;
+  font-weight: 100;
   transition: all 0.25s ease;
 }
 
@@ -211,28 +216,7 @@
   transform: scale(1.05);
 }
 
-/* --- Logout Button --- */
-.logout-button {
-  margin-top: 40px;
-  color: #555;
-  background: #f9f9f9;
-  border: 1px solid #eee;
-  font-weight: 600;
-  padding: 12px 30px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.logout-button:hover {
-  background: #ff5252;
-  color: #fff;
-  box-shadow: 0 6px 16px rgba(255, 82, 82, 0.2);
-}
-
-
-
-
+/* --- Wallets Section --- */
 .wallets-section {
   display: flex;
   flex-direction: row;
@@ -259,4 +243,23 @@
 .no-wallet {
   font-size: 0.85rem;
   color: #777;
+}
+
+/* --- Logout Button --- */
+.logout-button {
+  margin-top: 40px;
+  color: #555;
+  background: #f9f9f9;
+  border: 1px solid #eee;
+  font-weight: 600;
+  padding: 12px 30px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+  background: #ff5252;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(255, 82, 82, 0.2);
 }
