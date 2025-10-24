@@ -18,8 +18,8 @@
 }
 
 .profile-picture {
-  width: 100px;
-  height: 100px;
+  width: 70px;
+  height: 70px;
   border-radius: 24px;
   object-fit: cover;
   box-shadow: 0 8px 24px rgba(153, 0, 255, 0.2);
@@ -139,7 +139,7 @@
 
 /* --- Match Cards --- */
 .match-card {
-  background: #fff;
+  background: #fffef4;
   border-radius: 20px;
   min-width: 260px;
   flex-shrink: 0;
