@@ -2,164 +2,263 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
+  justify-content: start;
+  min-height: 100vh;
+  padding: 40px 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f9f6ff 100%);
   font-family: 'Font1', sans-serif;
   color: #111;
-  background: #fff;
-  min-height: 100vh;
 }
 
-.dashboard-card {
-  background: #fafafa;
-  border-radius: 16px;
-  padding: 40px;
-  width: 100%;
-  max-width: 480px;
-    text-align: center;
-  transition: all 0.3s ease;
-}
-
-.dashboard-card:hover {
-  background: #f6f6f6;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+/* --- Profile Section --- */
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 40px;
 }
 
 .profile-picture {
-  width: 60px;
-  height: 60px;
-  border-radius: 10px;
+  width: 100px;
+  height: 100px;
+  border-radius: 24px;
   object-fit: cover;
+  box-shadow: 0 8px 24px rgba(153, 0, 255, 0.2);
+  margin-top: 60px;
+  margin-bottom: 16px;
 }
 
 .username {
-  font-family: Font1;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #000;
-  margin-bottom: 10px;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111;
 }
 
-.username span {
-  display: block;
+.user-handle {
   font-size: 1rem;
   color: #777;
   margin-top: 4px;
+  margin-bottom: 14px;
 }
 
-.wallets-section {
-  margin: 20px 0;
-  text-align: left;
-}
-
-.wallets-title {
-  font-family: Font1;
+/* --- Game Aura: WON Balance --- */
+.won-balance {
+  position: relative;
+  background: linear-gradient(90deg, #a000ff, #c600ff, #ff00d9);
+  background-size: 300% 300%;
+  animation: wonGlow 5s ease infinite;
+  color: #fff;
+  padding: 10px 28px;
+  border-radius: 30px;
+  font-weight: 800;
   font-size: 1.1rem;
-  font-weight: 600;
-  color: #111;
-  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 16px rgba(166, 0, 255, 0.6);
+  box-shadow: 0 0 20px rgba(153, 0, 255, 0.4);
+  overflow: hidden;
+  transition: transform 0.3s ease;
 }
 
-.wallet-item {
-  background: #fff;
-  border-radius: 10px;
-  padding: 12px 15px;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
-  font-size: 0.95rem;
-  color: #444;
-  transition: all 0.2s ease;
+@keyframes wonGlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.won-balance::before {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -20%;
+  width: 140%;
+  height: 180%;
+  background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%);
+  animation: wonShine 6s infinite linear;
+  pointer-events: none;
+}
+
+@keyframes wonShine {
+  0% { transform: translateX(-60%) rotate(0deg); opacity: 0.7; }
+  50% { transform: translateX(60%) rotate(180deg); opacity: 1; }
+  100% { transform: translateX(-60%) rotate(360deg); opacity: 0.7; }
+}
+
+.won-balance:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(153, 0, 255, 0.6);
+}
+
+/* --- Matches Section --- */
+.matches-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #000;
+}
+
+.matches-scroll {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  /* overflow protection */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-x: auto;
+  gap: 24px;
+  padding: 10px 0 20px;
+  scroll-snap-type: x mandatory;
+  width: 100%;
+  justify-content: flex-start;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  position: relative;
 }
 
-.wallet-item code {
-  font-family: monospace;
-  font-size: 0.9rem;
-  background: none;
-  border: none;
-  color: #333;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 230px;
-  display: inline-block;
+/* Hide default scrollbar */
+.matches-scroll::-webkit-scrollbar {
+  display: none;
 }
 
-.wallet-item:hover {
-  background: #f6f6f6;
+/* Edge fade */
+.matches-scroll::before,
+.matches-scroll::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 60px;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
 }
 
-.balance-section {
-  margin: 20px 0 30px;
-  font-size: 1rem;
-  color: #333;
+.matches-scroll::before {
+  left: 0;
+  background: linear-gradient(to right, #ffffff 60%, transparent);
 }
 
-.balance-label {
-  font-weight: 600;
-  color: #00000077;
-  margin-right: 5px;
-  font-size: x-large;
+.matches-scroll::after {
+  right: 0;
+  background: linear-gradient(to left, #ffffff 60%, transparent);
 }
 
-.balance-value {
-  color: #650bff;
-  font-size: x-large;
-  font-weight: bold;
+/* --- Match Cards --- */
+.match-card {
+  background: #fff;
+  border-radius: 20px;
+  min-width: 260px;
+  flex-shrink: 0;
+  padding: 24px;
+  text-align: center;
+  scroll-snap-align: start;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(153, 0, 255, 0.08);
 }
 
-.buttons {
+.match-card:hover {
+  transform: translateY(-4px) rotate3d(1, 1, 0, 3deg);
+}
+
+.sponsor-info {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   align-items: center;
+  margin-bottom: 14px;
 }
 
-.play-button {
-  background: #9900ff;
-  color: #fff;
-  font-family: Font2;
-  font-weight: 200;
-  font-size: 1.2rem;
-  padding: 14px 40px;
+.sponsor-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  object-fit: cover;
+  margin-bottom: 8px;
+}
+
+.reward {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #650bff;
+}
+
+.time {
+  font-size: 0.9rem;
+  color: #777;
+  margin-bottom: 16px;
+}
+
+.match-button {
+  font-family: font2;
   border: none;
   border-radius: 12px;
+  padding: 10px 26px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  font-weight: 100;
+  font-size: 1.5rem;
+  transition: all 0.25s ease;
 }
 
-.play-button:hover {
-  background: #bf00ff;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+.match-button.live {
+  background: #9900ff;
+  color: #fff;
 }
 
+.match-button.upcoming {
+  background: #f2e6ff;
+  color: #650bff;
+}
+
+.match-button.ended {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.match-button:hover {
+  transform: scale(1.05);
+}
+
+/* --- Logout Button --- */
 .logout-button {
-  color: #0000008c;
+  margin-top: 40px;
+  color: #555;
+  background: #f9f9f9;
+  border: 1px solid #eee;
   font-weight: 600;
   padding: 12px 30px;
-  border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .logout-button:hover {
   background: #ff5252;
-  transform: translateY(-1px);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(255, 82, 82, 0.2);
 }
 
-.footer-text {
-  margin-top: 40px;
-  font-family: Font2;
-  font-size: 0.95rem;
-  color: #666;
-  letter-spacing: 0.5px;
+
+
+
+.wallets-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 12px;
+  gap: 4px;
+}
+
+.wallet-item {
+  background: #f3f3f3;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #333;
+}
+
+.wallet-item:hover {
+  background: #ddd;
+  transform: scale(1.03);
+}
+
+.no-wallet {
+  font-size: 0.85rem;
+  color: #777;
 }
