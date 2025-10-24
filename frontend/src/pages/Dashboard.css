@@ -146,10 +146,6 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
-.match-card.live {
-  border: 1.5px solid #fff;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-}
 
 .match-card:hover {
   transform: translateY(-6px) scale(1.03);
