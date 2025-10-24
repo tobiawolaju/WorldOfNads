@@ -4,9 +4,7 @@
   align-items: center;
   justify-content: start;
   min-height: 100vh;
-  padding: 40px 20px;
-  background: linear-gradient(180deg, #ffffff 0%, #f9f6ff 100%);
-  font-family: 'Font1', sans-serif;
+  padding: 40px 20px;font-family: 'Font1', sans-serif;
   color: #111;
 }
 
