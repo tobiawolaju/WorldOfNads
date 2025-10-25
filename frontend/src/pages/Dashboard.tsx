@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useNavigate } from "react-router-dom";
 import { FullScreenLoader } from "../components/ui/fullscreen-loader";
@@ -6,33 +6,33 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import "./Dashboard.css";
 
-const Cube = () => {
-  return (
-    <mesh rotation={[0.4, 0.6, 0]}>
-      <boxGeometry args={[1.4, 1.4, 1.4]} />
-      <meshStandardMaterial color="#a000ff" metalness={0.4} roughness={0.3} />
-    </mesh>
-  );
-};
+const Character = () => (
+  <mesh rotation={[0.4, 0.6, 0]}>
+    <boxGeometry args={[1.4, 2, 1.4]} />
+    <meshStandardMaterial color="#a000ff" metalness={0.4} roughness={0.3} />
+  </mesh>
+);
 
-const Dashboard: React.FC = () => {
+export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
   const navigate = useNavigate();
   const [earned, setEarned] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [selectedMatch, setSelectedMatch] = useState<number | null>(null);
+
+  const [tab, setTab] = useState<"events" | "results">("events");
+  const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("upcoming");
 
   useEffect(() => {
     let start = 0;
     const end = 30000;
-    const duration = 1500;
-    const stepTime = 15;
-    const step = Math.ceil(end / (duration / stepTime));
-
     const interval = setInterval(() => {
-      start += step;
-      if (start >= end) { start = end; clearInterval(interval); }
+      start += 400;
+      if (start >= end) {
+        start = end;
+        clearInterval(interval);
+      }
       setEarned(start);
-    }, stepTime);
+    }, 20);
   }, []);
 
   if (!ready) return <FullScreenLoader />;
@@ -40,99 +40,100 @@ const Dashboard: React.FC = () => {
 
   const twitter = user.linkedAccounts?.find((acc) => acc.type === "twitter_oauth");
   const wallets = user.linkedAccounts?.filter((acc) => acc.type === "wallet") || [];
+  const truncateAddress = (addr: string) => addr.slice(0, 6) + "..." + addr.slice(-4);
 
-  const truncateAddress = (addr: string) =>
-    addr.slice(0, 6) + "..." + addr.slice(-4);
+const matches = [
+  // --- LIVE EVENTS ---
+  { id: 9, sponsor: "World of Nads", reward: "50,000 WONs", status: "live", time: "Live Now" },
+  { id: 10, sponsor: "Iron Legion Arena", reward: "22,000 WONs", status: "live", time: "Live Now" },
+  { id: 11, sponsor: "House of Havoc", reward: "14,500 WONs", status: "live", time: "Live Now" },
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert("Wallet address copied!");
-  };
+  // --- UPCOMING EVENTS ---
+  { id: 1, sponsor: "Kitio Labs", reward: "5,000 WONs", status: "upcoming", time: "Starts in 3h" },
+  { id: 2, sponsor: "Monad Testnet", reward: "10,000 WONs", status: "upcoming", time: "Starts in 5h" },
+  { id: 3, sponsor: "Astra Robotics", reward: "7,500 WONs", status: "upcoming", time: "Tomorrow 14:00" },
+  { id: 4, sponsor: "Covenant Core", reward: "25,000 WONs", status: "upcoming", time: "Tomorrow 18:30" },
+  { id: 5, sponsor: "NOVA Protocol", reward: "13,000 WONs", status: "upcoming", time: "In 2 Days" },
+  { id: 6, sponsor: "EtherGuard Guild", reward: "9,800 WONs", status: "upcoming", time: "In 3 Days" },
 
-  const matches = [
-    { id: 9, sponsor: "World of Nads", logo: "/w.png", reward: "50,000 WONs", status: "live", time: "Live Now", button: "Play" },
-    { id: 1, sponsor: "Kitio Labs", logo: "/w.png", reward: "5,000 WONs", status: "upcoming", time: "Starts in 3h", button: "Join" },
-    { id: 2, sponsor: "Monad Testnet", logo: "/w.png", reward: "10,000 WONs", status: "upcoming", time: "Starts in 5h", button: "Join" },
-    // ...
-  ];
+  // --- COMPLETED EVENTS ---
+  { id: 7, sponsor: "Blocksmith Arena", reward: "6,400 WONs", status: "completed", time: "Completed" },
+  { id: 8, sponsor: "Elysium Works", reward: "18,200 WONs", status: "completed", time: "Completed" },
+  { id: 12, sponsor: "MEGA Labs Clash", reward: "33,000 WONs", status: "completed", time: "Completed" },
+  { id: 13, sponsor: "Dark Circuit League", reward: "20,000 WONs", status: "completed", time: "Completed" },
+  { id: 14, sponsor: "CryptoThrone Trials", reward: "42,000 WONs", status: "completed", time: "Completed" }
+];
 
-  const liveMatch = matches.find((m) => m.status === "live");
 
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-
-    const liveIndex = matches.findIndex((m) => m.status === "live");
-    if (liveIndex === -1) return;
-
-    const cardWidth = 280;
-    container.scrollTo({ left: liveIndex * cardWidth, behavior: "smooth" });
-  }, []);
+  const filteredMatches = matches.filter(m => m.status === filter);
 
   return (
     <div className="dashboard-wrapper">
-      {/* LEFT SIDE – Avatar + Stats */}
-      <div className="left-panel">
-        <div className="profile-section">
-          <img
-            src={twitter?.profilePictureUrl || "/default-avatar.png"}
-            alt="Profile"
-            className="profile-picture"
-          />
-          <h2 className="username">{twitter?.name || "Player"}</h2>
-          <p className="user-handle">@{twitter?.username}</p>
 
-          <div className="wallets-section">
-            {wallets.length > 0 ? (
-              wallets.map((w, i) => (
-                <div key={i} className="wallet-item" onClick={() => copyToClipboard(w.address)}>
-                  {truncateAddress(w.address)}
-                </div>
-              ))
-            ) : (
-              <p className="no-wallet">No wallet connected</p>
-            )}
-          </div>
+      {/* FIXED PLAYER PANEL */}
+      <div className="fixed-player-info">
+        <img src={twitter?.profilePictureUrl || "/default-avatar.png"} className="label-avatar" />
+        <div className="label-name">{twitter?.name || "Player"}</div>
+        <div className="label-handle">@{twitter?.username}</div>
 
-          <div className="won-balance">🏅 {earned.toLocaleString()} WONs Earned</div>
-
-          <button className="logout-button" onClick={logout}>Logout</button>
+        <div className="label-wallets">
+          {wallets.map((w, i) => <div key={i}>{truncateAddress(w.address)}</div>)}
         </div>
+
+        <div className="label-earned">{earned.toLocaleString()} WONs Earned</div>
+        <button className="logout-button-fixed" onClick={logout}>Logout</button>
       </div>
 
-      {/* CENTER – Character Display */}
-      <div className="character-view">
-        <Canvas camera={{ position: [3, 3, 3] }}>
+      {/* 3D CHARACTER VIEW */}
+      <div className="left-3d-section">
+        <Canvas camera={{ position: [3, 3, 4] }}>
           <ambientLight intensity={1.2} />
           <directionalLight position={[5, 5, 5]} intensity={1.2} />
-          <Cube />
-          <OrbitControls enableZoom={false} />
+          <Character />
+          <OrbitControls enableZoom={false} enablePan={false} />
         </Canvas>
       </div>
 
-      {/* RIGHT – Matches */}
-      <div className="matches-panel">
-        <h2 className="mode-title">Matches</h2>
+      {/* RIGHT PANEL */}
+      <div className="right-info-section">
+        
+        {/* Tabs */}
+        <div className="tabs">
+          <div className={tab === "events" ? "tab active" : "tab"} onClick={() => setTab("events")}>Events</div>
+          <div className={tab === "results" ? "tab active" : "tab"} onClick={() => setTab("results")}>Results</div>
+        </div>
 
-        <div className="matches-scroll" ref={scrollRef}>
-          {matches.map((m) => (
-            <div key={m.id} className={`match-card ${m.status}`}>
-              <img src={m.logo} alt={m.sponsor} className="sponsor-logo" />
+        {/* Filters */}
+        <div className="filters">
+          <span className={filter === "upcoming" ? "filter active" : "filter"} onClick={() => setFilter("upcoming")}>Upcoming</span>
+          <span className={filter === "live" ? "filter active" : "filter"} onClick={() => setFilter("live")}>Live</span>
+          <span className={filter === "completed" ? "filter active" : "filter"} onClick={() => setFilter("completed")}>Completed</span>
+        </div>
+
+        <div className="matches-carousel">
+          {filteredMatches.map(m => (
+            <div
+              key={m.id}
+              className={`match-card ${selectedMatch === m.id ? "selected" : ""}`}
+              onClick={() => setSelectedMatch(m.id)}
+            >
               <h3>{m.sponsor}</h3>
               <p className="reward">{m.reward}</p>
               <p className="time">{m.time}</p>
-
-              {m.id === liveMatch?.id && (
-                <button className="match-button live" onClick={() => navigate("/play")}>
-                  Play
-                </button>
-              )}
             </div>
           ))}
         </div>
+
       </div>
+
+      {/* PLAY BUTTON */}
+      <button
+        className={`play-fixed ${selectedMatch ? "active" : "disabled"}`}
+        onClick={() => selectedMatch && navigate("/play")}
+      >
+        <span>PLAY</span>
+      </button>
+
     </div>
   );
-};
-
-export default Dashboard;
+}

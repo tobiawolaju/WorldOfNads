@@ -1,55 +1,107 @@
+/* --- GLOBAL WRAPPER --- */
 .dashboard-wrapper {
   display: flex;
   width: 100vw;
   height: 100vh;
-  background: white;
+  background: #ffffff;
   font-family: 'Font1', sans-serif;
+  overflow: hidden;
 }
 
-/* --- LEFT SIDE --- */
-.left-panel {
-  width: 22%;
-  padding: 30px;
-  border-right: 1px solid #eee;
+/* ===== DESKTOP LAYOUT ===== */
+.left-3d-section {
+  width: 50%;
+  height: 100%;
+  background: radial-gradient(circle at center, #ffffff 0%, #ffffff 90%);
   display: flex;
+  align-items: center;
   justify-content: center;
 }
-.profile-section { text-align: center; }
+
+.right-info-section {
+  width: 50%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #ddd;
+  padding: 8px;
+  padding-top: 60px;
+  overflow-y: auto;
+}
+
+/* Profile */
+.profile-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
 .profile-picture {
-  width: 80px; height: 80px; border-radius: 24px;
-  margin-bottom: 12px; object-fit: cover;
+  width: 90px;
+  height: 90px;
+  border-radius: 20px;
+  object-fit: cover;
+  margin-bottom: 12px;
 }
 
-/* --- MID (3D Character) --- */
-.character-view {
-  width: 38%;
-  background: linear-gradient(135deg, #ffffff 10%, #f7eaff 100%);
-  display: flex; align-items: center; justify-content: center;
+.username {
+  font-size: 1.4rem;
+  font-weight: 700;
 }
 
-/* --- RIGHT SIDE --- */
-.matches-panel {
-  width: 40%;
-  padding: 30px;
+.user-handle {
+  font-size: .9rem;
+  opacity: 0.6;
+  margin-bottom: 10px;
 }
+
+/* Wallet */
+.wallets-section {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  justify-content: center;
+}
+
+.wallet-item {
+  cursor: pointer;
+  padding: 6px 12px;
+  background: #fafafa;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+.wallet-item:hover {
+  transform: scale(1.03);
+  background: #eee;
+}
+
+/* Matches */
+.mode-title {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
 .matches-scroll {
   display: flex;
   overflow-x: auto;
-  gap: 20px;
+  gap: 16px;
   padding-top: 10px;
+  scrollbar-width: none;
 }
+.matches-scroll::-webkit-scrollbar { display: none; }
+
 .match-card {
   min-width: 180px;
-  padding: 18px;
   border-radius: 18px;
+  padding: 18px;
   text-align: center;
   background: #fff;
   border: 1px solid #eee;
-  transition: 0.25s;
+  transition: 0.25s ease;
 }
 .match-card:hover { transform: translateY(-6px); }
 
-/* Glow card for LIVE */
 .match-card.live {
   border: 2px solid #a000ff;
   box-shadow: 0 0 14px rgba(160,0,255,0.4);
@@ -60,24 +112,234 @@
   border-radius: 10px;
   color: white;
   padding: 8px 26px;
-  font-size: 1rem;
+  margin-top: 8px;
   cursor: pointer;
+  transition: 0.2s;
 }
-.match-button.live:hover { transform: scale(1.05); }
+.match-button.live:hover { transform: scale(1.06); }
 
-.won-balance {
-  margin-top: 14px;
-  font-weight: 700;
-  color: #a000ff;
-}
 .logout-button {
   margin-top: 22px;
   padding: 10px 20px;
   background: #eee;
   border-radius: 12px;
   cursor: pointer;
+  transition: 0.25s;
 }
 .logout-button:hover {
   background: #ff5252;
   color: white;
+}
+
+/* ===== MOBILE LAYOUT ===== */
+@media (max-width: 768px) {
+  .dashboard-wrapper {
+    flex-direction: column;
+  }
+
+  .left-3d-section {
+    width: 100%;
+    height: 50%;
+  }
+
+  .right-info-section {
+    width: 100%;
+    height: 50%;
+    border-left: none;
+    border-top: 1px solid #ddd;
+  }
+}
+
+
+
+
+
+/* --- 3D Floating Player Label --- */
+.floating-label {
+  background: rgba(255, 255, 255, 0.88);
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid #ddd;
+  backdrop-filter: blur(6px);
+  text-align: left;
+  font-family: 'Font1', sans-serif;
+  width: 170px;
+}
+
+.label-avatar {
+  width:20px;
+  height: 20px;
+  border-radius: 100px;
+  object-fit: cover;
+  margin-bottom: 8px;
+}
+
+.label-name {
+  font-weight: 700;
+}
+
+.label-handle {
+  opacity: 0.6;
+  margin-bottom: 6px;
+}
+
+.label-wallets {
+  opacity: 0.85;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.label-earned {
+  color: #a000ff;
+  margin-top: 4px;
+}
+
+
+
+
+
+
+
+
+
+/* --- FIXED PLAYER CARD (TOP LEFT) --- */
+.fixed-player-info {
+  position: fixed;
+  top: 80px;
+  left: 20px;
+  z-index: 20;
+  font-size: small;
+  font-family: font1;
+}
+
+
+
+/* --- FIXED PLAY BUTTON (BOTTOM RIGHT) --- */
+.play-fixed {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+
+  /* Button Shape */
+  padding: 4px 50px;
+  border: none;
+  border-radius: 0;
+  background: #a000ff;
+  color: white;
+  cursor: pointer;
+  z-index: 20;
+
+  /* Font */
+  font-family: font2;
+  font-weight: bold;
+  font-size: 2.2rem;
+
+  /* Shape distortion */
+  transform: skew(-15deg);
+  transition: 0.25s ease;
+}
+
+/* Fix text skew so it stays straight */
+.play-fixed span {
+  display: inline-block;
+  transform: skew(15deg);
+}
+
+/* Disabled State */
+.play-fixed.disabled {
+  background: #ffffff;
+  color: #000000;
+  cursor: not-allowed;
+  transform: skew(-15deg);
+}
+
+/* Active hover effects */
+.play-fixed.active:hover {
+  transform: skew(-15deg) scale(1.05);
+  box-shadow: 0 0 20px rgba(160, 0, 255, 0.5);
+}
+
+
+
+
+
+
+/* Highlight selected match */
+.match-card.selected {
+  border: 3px solid #a000ff;
+  box-shadow: 0 0 14px rgba(160,0,255,0.4);
+}
+
+
+
+
+
+/* --- TABS --- */
+.tabs {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 12px;
+  font-family: font2;
+  font-size: 1.4rem;
+  user-select: none;
+}
+.tab {
+  opacity: 0.35;
+  cursor: pointer;
+  transition: 0.25s;
+}
+.tab.active {
+  opacity: 1;
+  color: #a000ff;
+  transform: translateY(-2px);
+}
+
+/* --- FILTERS --- */
+.filters {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.filter {
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: 0.25s;
+}
+.filter.active {
+  opacity: 1;
+  background: #a000ff;
+  color: white;
+}
+
+/* --- MATCH CARDS --- */
+.matches-carousel {
+  display: flex;
+  gap: 22px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-top: 10px;
+  padding-bottom: 12px;
+}
+.matches-carousel::-webkit-scrollbar { display: none; }
+
+.match-card {
+  scroll-snap-align: center;
+  width: 40vh;
+  height: 25vh;
+  padding:4px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.06);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.122);
+  cursor: pointer;
+  transition: 0.25s ease;
+  text-align: center;
+}
+.match-card:hover { transform: translateY(-6px) scale(1.03); }
+
+.match-card.selected {
+  border: 3px solid #a000ff;
+  box-shadow: 0 0 14px rgba(160,0,255,0.4);
 }
