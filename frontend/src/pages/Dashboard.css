@@ -23,7 +23,6 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid #ddd;
   padding: 8px;
   padding-top: 60px;
   overflow-y: auto;
@@ -167,9 +166,9 @@
 }
 
 .label-avatar {
-  width:20px;
-  height: 20px;
-  border-radius: 100px;
+  width:40px;
+  height:40px;
+  border-radius: 5px;
   object-fit: cover;
   margin-bottom: 8px;
 }
@@ -208,7 +207,7 @@
   top: 80px;
   left: 20px;
   z-index: 20;
-  font-size: small;
+  font-size: medium;
   font-family: font1;
 }
 
@@ -220,37 +219,33 @@
   bottom: 20px;
   right: 20px;
 
-  /* Button Shape */
   padding: 4px 50px;
-  border: none;
+  border: 8px solid rgba(255, 255, 255, 0.407);   /* ← White border when purple */
   border-radius: 0;
-  background: #a000ff;
+  background: #f700ff;
   color: white;
   cursor: pointer;
   z-index: 20;
 
-  /* Font */
   font-family: font2;
   font-weight: bold;
   font-size: 2.2rem;
 
-  /* Shape distortion */
   transform: skew(-15deg);
   transition: 0.25s ease;
 }
 
-/* Fix text skew so it stays straight */
 .play-fixed span {
   display: inline-block;
   transform: skew(15deg);
 }
 
-/* Disabled State */
+/* Disabled / Active White Background State */
 .play-fixed.disabled {
-  background: #ffffff;
-  color: #000000;
+  background: #000000;
+  color: #ffffff;
+  border: 8px solid rgba(255, 255, 255, 0.197);  /* ← Black border when white */
   cursor: not-allowed;
-  transform: skew(-15deg);
 }
 
 /* Active hover effects */
@@ -258,18 +253,6 @@
   transform: skew(-15deg) scale(1.05);
   box-shadow: 0 0 20px rgba(160, 0, 255, 0.5);
 }
-
-
-
-
-
-
-/* Highlight selected match */
-.match-card.selected {
-  border: 3px solid #a000ff;
-  box-shadow: 0 0 14px rgba(160,0,255,0.4);
-}
-
 
 
 
@@ -313,7 +296,13 @@
   color: white;
 }
 
-/* --- MATCH CARDS --- */
+
+
+
+
+
+
+
 .matches-carousel {
   display: flex;
   gap: 22px;
@@ -321,18 +310,21 @@
   scroll-snap-type: x mandatory;
   padding-top: 10px;
   padding-bottom: 12px;
+  scroll-behavior: smooth; /* ← ADDED */
 }
 .matches-carousel::-webkit-scrollbar { display: none; }
 
 .match-card {
   scroll-snap-align: center;
-  width: 40vh;
-  height: 25vh;
+  width: 20vh;
+  height: 20vh;
+  min-width: 20vh;
+  min-height: 20vh;
+  max-width: 20vh;
+  max-height: 20vh;
   padding:4px;
   border-radius: 10px;
-  background: rgba(0,0,0,0.06);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(0, 0, 0, 0.122);
+  background: rgb(255, 255, 255);
   cursor: pointer;
   transition: 0.25s ease;
   text-align: center;
@@ -340,6 +332,11 @@
 .match-card:hover { transform: translateY(-6px) scale(1.03); }
 
 .match-card.selected {
-  border: 3px solid #a000ff;
-  box-shadow: 0 0 14px rgba(160,0,255,0.4);
+  width: 25vh;
+  height: 25vh;
+  min-width: 25vh;
+  min-height: 25vh;
+  max-width: 25vh;
+  max-height: 25vh;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.146);
 }
