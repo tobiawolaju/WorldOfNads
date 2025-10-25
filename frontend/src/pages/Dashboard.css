@@ -235,7 +235,7 @@
 
   font-family: font2;
   font-weight: bold;
-  font-size: 2.2rem;
+  font-size: 1.5rem;
 
   transform: skew(-15deg);
   transition: 0.25s ease;
@@ -304,6 +304,8 @@
   gap: 22px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
+  padding-top: 0px;
+  padding-bottom: 12px;
   padding: 0px;
   scroll-behavior: smooth; /* ← ADDED */
 }
