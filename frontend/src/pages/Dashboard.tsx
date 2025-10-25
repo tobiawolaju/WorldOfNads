@@ -180,7 +180,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard-wrapper">
       <div className="left-3d-section">
-        <Canvas camera={{ position: [8, 8, 8] }}>
+        <Canvas camera={{ position: [, 8, 8] }}>
           <ambientLight intensity={1.2} />
           <directionalLight position={[5, 5, 5]} intensity={1.2} />
           <IdCard twitter={twitter} wallets={wallets} earned={earned} onLogout={logout} />
