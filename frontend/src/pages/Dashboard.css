@@ -149,56 +149,64 @@
   }
 }
 
-
-
-
-
-/* --- 3D Floating Player Label --- */
-.floating-label {
-  background: rgba(255, 255, 255, 0.88);
-  padding: 14px 18px;
-  border-radius: 14px;
+/* --- 3D ID Card --- */
+.id-card-container {
+  width: 300px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
   border: 1px solid #ddd;
-  backdrop-filter: blur(6px);
-  text-align: left;
+  backdrop-filter: blur(10px);
+  text-align: center;
   font-family: 'Font1', sans-serif;
-  width: 170px;
 }
 
-.label-avatar {
-  width:40px;
-  height:40px;
-  border-radius: 5px;
+.id-card-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 8px;
+  margin-bottom: 15px;
 }
 
-.label-name {
+.id-card-name {
   font-weight: 700;
+  font-size: 1.2rem;
+  margin-bottom: 5px;
 }
 
-.label-handle {
-  opacity: 0.6;
-  margin-bottom: 6px;
+.id-card-handle {
+  opacity: 0.7;
+  margin-bottom: 10px;
 }
 
-.label-wallets {
-  opacity: 0.85;
-  margin-bottom: 8px;
-  line-height: 1.3;
+.id-card-wallets {
+  opacity: 0.9;
+  line-height: 1.4;
+  margin-bottom: 15px;
 }
 
-.label-earned {
+.id-card-earned {
   color: #a000ff;
-  margin-top: 4px;
+  font-weight: bold;
+  margin-top: 10px;
+  font-size: 1.1rem;
 }
 
+.id-card-logout-button {
+  margin-top: 20px;
+  padding: 10px 25px;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
 
-
-
-
-
-
+.id-card-logout-button:hover {
+  background-color: #ff1a1a;
+}
 
 
 /* --- FIXED PLAYER CARD (TOP LEFT) --- */
@@ -210,8 +218,6 @@
   font-size: medium;
   font-family: font1;
 }
-
-
 
 /* --- FIXED PLAY BUTTON (BOTTOM RIGHT) --- */
 .play-fixed {
@@ -254,9 +260,6 @@
   box-shadow: 0 0 20px rgba(160, 0, 255, 0.5);
 }
 
-
-
-
 /* --- TABS --- */
 .tabs {
   display: flex;
@@ -296,20 +299,12 @@
   color: white;
 }
 
-
-
-
-
-
-
-
 .matches-carousel {
   display: flex;
   gap: 22px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding-top: 10px;
-  padding-bottom: 12px;
+  padding: 0px;
   scroll-behavior: smooth; /* ← ADDED */
 }
 .matches-carousel::-webkit-scrollbar { display: none; }
@@ -328,15 +323,10 @@
   cursor: pointer;
   transition: 0.25s ease;
   text-align: center;
+  margin:10px
 }
 .match-card:hover { transform: translateY(-6px) scale(1.03); }
 
 .match-card.selected {
-  width: 25vh;
-  height: 25vh;
-  min-width: 25vh;
-  min-height: 25vh;
-  max-width: 25vh;
-  max-height: 25vh;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.146);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.146);
 }
