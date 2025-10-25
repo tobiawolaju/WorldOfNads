@@ -12,6 +12,8 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@privy-io/react-auth": "^2.24.0",
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^9.4.0",
     "@solana-program/system": "0.7.0",
     "@solana-program/token": "0.5.1",
     "@solana/kit": "2.3.0",
@@ -25,6 +27,7 @@
     "react-toastify": "^11.0.5",
     "recharts": "^3.2.1",
     "tailwindcss": "^4.1.13",
+    "three": "^0.180.0",
     "viem": "^2.37.5"
   },
   "devDependencies": {
