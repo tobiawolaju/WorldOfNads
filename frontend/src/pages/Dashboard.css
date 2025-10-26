@@ -169,7 +169,7 @@
 
 .matches-carousel {
   display: flex;
-  gap: 22px;
+  gap: 2.5px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   padding-top: 0px;
@@ -196,14 +196,15 @@
   cursor: pointer;
   transition: 0.25s ease;
   text-align: center;
-  margin:10px;
+  margin:0px;
   border: 3px solid #00000029;
   border-radius: 5px;
+  scale: 0.8;
 }
 
 
 .match-card:hover {
-   transform: translateY(-6px) scale(1.03); }
+   transform: translateY(-6px) scale(1.05); }
 
 .match-card.selected {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.146);
