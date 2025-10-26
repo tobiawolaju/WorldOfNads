@@ -44,21 +44,7 @@
 }
 .matches-scroll::-webkit-scrollbar { display: none; }
 
-.match-card {
-  min-width: 180px;
-  border-radius: 18px;
-  padding: 18px;
-  text-align: center;
-  background: #fff;
-  border: 1px solid #eee;
-  transition: 0.25s ease;
-}
-.match-card:hover { transform: translateY(-6px); }
 
-.match-card.live {
-  border: 2px solid #a000ff;
-  box-shadow: 0 0 14px rgba(160,0,255,0.4);
-}
 
 .match-button.live {
   background: #a000ff;
@@ -205,9 +191,11 @@
   transition: 0.25s ease;
   text-align: center;
   margin:10px;
-  border: 10px solid #fff;
+  border: 10px solid #faeeff;
   border-radius: 5px;
 }
+
+
 .match-card:hover {
    transform: translateY(-6px) scale(1.03); }
 
