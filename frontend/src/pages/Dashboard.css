@@ -234,101 +234,85 @@
 
 
 /* --- Simple Clean ID Card --- *//* --- Monad Premium ID Card --- */
+/* === GLASS UI FRONT PANEL === */
 .id-card-container {
-  position: relative;
-  width: 280px;
-  height: 340px;
-  padding: 22px;
-  background: #00000000
-  text-align: center;
-  font-family: 'Font1', sans-serif;
-  color: #ffffff;
-  transform-style: preserve-3d;
-  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  box-shadow: 0 8px 35px rgba(0, 0, 0, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.border{
-  border: none;
-  background: #FF9ACA;
+.id-card-inner {
   width: 240px;
   height: 300px;
-transform: skew(2.5deg);
-}
-
-/* Decorative subtle shine */
-.id-card-container::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 60%);
-  opacity: 0.18;
-  transform: rotate(25deg);
-  pointer-events: none;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding-top: 20px;
+  position: relative;
 }
 
 /* Avatar */
 .id-card-avatar {
   width: 80px;
   height: 80px;
+  border-radius: 50%;
   object-fit: cover;
-  position: relative;
-  top:-10px;
-  right:10px;
+  margin-bottom: 8px;
 }
 
 /* Name */
 .id-card-name {
   font-weight: 700;
   font-size: 1.25rem;
-  letter-spacing: 0.4px;
   margin-bottom: 2px;
 }
 
 /* Handle */
 .id-card-handle {
   font-size: 0.9rem;
-  opacity: 0.9;
-  margin-bottom: 14px;
+  opacity: 0.85;
+  margin-bottom: 12px;
 }
 
 /* Wallets */
 .id-card-wallets {
   font-size: 0.83rem;
+  opacity: 0.85;
   margin-bottom: 16px;
-  line-height: 1.35;
-  opacity: 0.9;
 }
 
 /* Earned */
 .id-card-earned {
   font-family: font2;
-  font-weight: 100;
-  font-size: 2.0rem;
-  margin: 2px;
+  font-size: 2rem;
+  margin-top: 6px;
 }
 
-/* Floating Logout Button */
+/* Logout Button */
 .id-card-logout-button {
   position: absolute;
   top: 10px;
   right: 10px;
-  padding: 6px 14px;
+  padding: 6px 16px;
+  border-radius: 12px;
   border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.25);
   color: #ffffff;
-  font-weight: bolder;
-  font-size: 1.5rem;
-  backdrop-filter: blur(12px);
+  font-size: 1.3rem;
   cursor: pointer;
-  transition: 0.25s ease;
+  backdrop-filter: blur(6px);
+  transition: 0.25s;
 }
-
 .id-card-logout-button:hover {
-  background: rgba(255, 255, 255, 0.38);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.4);
   transform: translateY(-2px);
 }
