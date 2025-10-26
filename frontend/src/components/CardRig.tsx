@@ -11,7 +11,7 @@ export default function CardRig({ children }: Props) {
   const group = useRef<THREE.Group>(null!);
 
   useFrame(() => {
-    const factor = 0.1; // 10% motion — adjust if needed
+    const factor = 0.01; // 10% motion — adjust if needed
 
     group.current.rotation.x = camera.rotation.x * factor;
     group.current.rotation.y = camera.rotation.y * factor;
