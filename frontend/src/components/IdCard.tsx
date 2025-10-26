@@ -54,6 +54,7 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
     {/* === UI LAYER === */}
     <Html
       transform
+						center
       occlude
       position={[0, 0, 0.07]}
       zIndexRange={[0, 0]}
