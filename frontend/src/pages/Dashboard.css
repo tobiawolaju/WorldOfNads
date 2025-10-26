@@ -152,7 +152,7 @@
 }
 .tab.active {
   opacity: 1;
-  color: #a000ff;
+  color: #d68fff;
   transform: translateY(-2px);
 }
 
@@ -171,8 +171,8 @@
 }
 .filter.active {
   opacity: 1;
-  background: #a000ff;
-  color: white;
+  background: #3c183d20;
+  color: rgb(48, 48, 48);
 }
 
 .matches-carousel {
