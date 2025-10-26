@@ -249,7 +249,7 @@
   justify-content: center;
 position: relative;
 top:-20px;
-color: #ffffff;
+color: #000000;
 }
 
 .id-card-inner {
@@ -275,28 +275,28 @@ color: #ffffff;
 /* Name */
 .id-card-name {
   font-weight: 700;
-  font-size: 1.25rem;
+  font-size: 1rem;
   margin-bottom: 2px;
 }
 
 /* Handle */
 .id-card-handle {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   opacity: 0.85;
   margin-bottom: 12px;
 }
 
 /* Wallets */
 .id-card-wallets {
-  font-size: 0.83rem;
+  font-size: 0.8rem;
   opacity: 0.85;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 /* Earned */
 .id-card-earned {
   font-family: font2;
-  font-size: 2rem;
+  font-size: 1.5rem;
   margin-top: 6px;
 }
 
