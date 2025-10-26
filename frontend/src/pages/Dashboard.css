@@ -92,40 +92,35 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-
-  padding: 4px 50px;
-  border: 8px solid rgba(255, 255, 255, 0.407);   /* ← White border when purple */
-  border-radius: 0;
-  background: #a375ff;
+background: hsl(249, 100%, 74%);
   color: white;
   cursor: pointer;
   z-index: 20;
-
-  font-family: font2;
+  font-family: font1;
   font-weight: bold;
-  font-size: 1.5rem;
-
-  transform: skew(-15deg);
+  font-size: 20px;
+  border-radius: 50px;
+  height: 50px;
+  margin: 10px;
+  padding: 5px, 30px;
   transition: 0.25s ease;
+  width:120px;
 }
 
-.play-fixed span {
-  display: inline-block;
-  transform: skew(15deg);
-}
+
+
 
 /* Disabled / Active White Background State */
 .play-fixed.disabled {
-  background: #000000;
-  color: #ffffff;
+  background: hsl(249, 100%, 93%);
+  color: #000000;
   border: 8px solid rgba(255, 255, 255, 0.197);  /* ← Black border when white */
   cursor: not-allowed;
 }
 
 /* Active hover effects */
 .play-fixed.active:hover {
-  transform: skew(-15deg) scale(1.05);
-  box-shadow: 0 0 20px rgba(160, 0, 255, 0.5);
+  border: 8px solid rgba(255, 255, 255, 0.407);
 }
 
 /* --- TABS --- */
@@ -167,16 +162,57 @@
   color: rgb(48, 48, 48);
 }
 
+
+
+
+/* Wrapper stays fixed and holds the fade */
+.matches-wrapper {
+  position: relative;
+  overflow: hidden; /* ← VERY IMPORTANT */
+}
+
+/* Your scrolling container */
 .matches-carousel {
   display: flex;
   gap: 2.5px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding-top: 0px;
-  padding-bottom: 12px;
   padding: 0px;
-  scroll-behavior: smooth; /* ← ADDED */
+  scroll-behavior: smooth;
+  background: #ffffff;
 }
+
+/* Hide scrollbar */
+.matches-carousel::-webkit-scrollbar { display: none; }
+.matches-carousel { scrollbar-width: none; }
+
+/* Fades now anchor correctly */
+.matches-wrapper::before,
+.matches-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 60px; /* Adjust fade width */
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* LEFT Fade */
+.matches-wrapper::before {
+  left: 0;
+  background: linear-gradient(to right, #ffffff 0%, rgba(255,255,255,0) 100%);
+}
+
+/* RIGHT Fade */
+.matches-wrapper::after {
+  right: 0;
+  background: linear-gradient(to left, #ffffff 0%, rgba(255,255,255,0) 100%);
+}
+
+
+
+
 .matches-carousel::-webkit-scrollbar { display: none; }
 
 
@@ -191,16 +227,33 @@
   max-width: 18vh;
   max-height: 20vh;
   padding: 4px;
-  background: rgb(239, 239, 239);
   color: #000000;
   cursor: pointer;
   transition: 0.25s ease;
-  text-align: center;
   margin: 10px;
-  border: 10px solid #ffffff;
+  border: 8px solid #ffffff;
   border-radius: 5px;
-  transform: skew(-2.5deg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative; /* ← KEEP */
+  overflow: hidden;   /* ← Important so overlay fits edge-to-edge */
 }
+
+/* Dark gradient overlay for readable text */
+.match-card-overlay {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.55));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 10px;
+  color: white;
+  text-shadow: 0px 2px 6px rgba(0, 0, 0, 0.6);
+  font-size: x-small;
+}
+
 
 /* Desktop */
 @media (min-width: 768px) {
@@ -221,7 +274,10 @@
    transform: translateY(-6px) scale(1.05); }
 
 .match-card.selected {
+ transform: translateY(-6px) scale(1.05);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.146);
+  border: 1.5px solid #ffffff;
+  transform: skew(-1.5deg);
 }
 
 
@@ -239,7 +295,7 @@
   width: 280px;
   height: 360px;
   border-radius: 0px;
-  background: rgba(255,255,255,0.4);
+  background: rgba(255, 255, 255, 0.404);
   border: 1px solid rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(14px) saturate(180%);
   -webkit-backdrop-filter: blur(14px) saturate(180%);
@@ -249,18 +305,18 @@
   justify-content: center;
 position: relative;
 top:-20px;
-color: #FF9ACA;
+color: #ffffff;
 }
 
 .id-card-inner {
   width: 240px;
   height: 310px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(187, 0, 255, 0.513);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   padding: 10px;
   position: relative;
+  transform: skew(2deg);
 }
 
 /* Avatar */
@@ -310,7 +366,7 @@ color: #FF9ACA;
   border-radius: 12px;
   border: none;
   background: rgba(255, 255, 255, 0.25);
-  color: #FF9ACA;
+  color: #000000;
   font-size: 1.3rem;
   cursor: pointer;
   backdrop-filter: blur(6px);

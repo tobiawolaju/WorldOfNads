@@ -54,10 +54,6 @@ export const ThreeScene: React.FC<Props> = ({ twitter, wallets, earned, onLogout
 
       <OrbitControls
         enableZoom={false}
-        minAzimuthAngle={-Math.PI / 18}
-        maxAzimuthAngle={Math.PI / 18}
-        minPolarAngle={Math.PI / 2 - 0.05}
-								maxPolarAngle={Math.PI / 2 + 0.05}
       />
     </Canvas>
   );

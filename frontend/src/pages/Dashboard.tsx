@@ -21,7 +21,9 @@ type Match = {
   reward: string;
   status: "upcoming" | "live" | "completed";
   time: string;
+  image: string; // ← NEW
 };
+
 
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
@@ -58,22 +60,23 @@ export default function Dashboard() {
   const twitter = user.linkedAccounts?.find((acc) => acc.type === "twitter_oauth") as Twitter | undefined;
   const wallets = (user.linkedAccounts?.filter((acc) => acc.type === "wallet") || []) as Wallet[];
 
-  const matches: Match[] = [
-    { id: 9, sponsor: "World of Nads", reward: "50,000 WONs", status: "live", time: "Live Now" },
-    { id: 10, sponsor: "Iron Legion Arena", reward: "22,000 WONs", status: "Live", time: "Live Now" },
-    { id: 11, sponsor: "House of Havoc", reward: "14,500 WONs", status: "live", time: "Live Now" },
-    { id: 1, sponsor: "Kitio Labs", reward: "5,000 WONs", status: "upcoming", time: "Starts in 3h" },
-    { id: 2, sponsor: "Monad Testnet", reward: "10,000 WONs", status: "upcoming", time: "Starts in 5h" },
-    { id: 3, sponsor: "Astra Robotics", reward: "7,500 WONs", status: "upcoming", time: "Tomorrow 14:00" },
-    { id: 4, sponsor: "Covenant Core", reward: "25,000 WONs", status: "upcoming", time: "Tomorrow 18:30" },
-    { id: 5, sponsor: "NOVA Protocol", reward: "13,000 WONs", status: "upcoming", time: "In 2 Days" },
-    { id: 6, sponsor: "EtherGuard Guild", reward: "9,800 WONs", status: "upcoming", time: "In 3 Days" },
-    { id: 7, sponsor: "Blocksmith Arena", reward: "6,400 WONs", status: "completed", time: "Completed" },
-    { id: 8, sponsor: "Elysium Works", reward: "18,200 WONs", status: "completed", time: "Completed" },
-    { id: 12, sponsor: "MEGA Labs Clash", reward: "33,000 WONs", status: "completed", time: "Completed" },
-    { id: 13, sponsor: "Dark Circuit League", reward: "20,000 WONs", status: "completed", time: "Completed" },
-    { id: 14, sponsor: "CryptoThrone Trials", reward: "42,000 WONs", status: "completed", time: "Completed" },
-  ];
+const matches: Match[] = [
+  { id: 9, sponsor: "World of Nads", reward: "50,000 WONs", status: "live", time: "Live Now", image: "logos/blur.png" },
+  { id: 10, sponsor: "Iron Legion Arena", reward: "22,000 WONs", status: "live", time: "Live Now", image: "logos/blur.png" },
+  { id: 11, sponsor: "House of Havoc", reward: "14,500 WONs", status: "live", time: "Live Now", image: "logos/blur.png" },
+  { id: 1, sponsor: "Kitio Labs", reward: "5,000 WONs", status: "upcoming", time: "Starts in 3h", image: "logos/blur.png" },
+  { id: 2, sponsor: "Monad Testnet", reward: "10,000 WONs", status: "upcoming", time: "Starts in 5h", image: "logos/blur.png" },
+  { id: 3, sponsor: "Astra Robotics", reward: "7,500 WONs", status: "upcoming", time: "Tomorrow 14:00", image: "logos/blur.png" },
+  { id: 4, sponsor: "Covenant Core", reward: "25,000 WONs", status: "upcoming", time: "Tomorrow 18:30", image: "logos/blur.png" },
+  { id: 5, sponsor: "NOVA Protocol", reward: "13,000 WONs", status: "upcoming", time: "In 2 Days", image: "logos/blur.png" },
+  { id: 6, sponsor: "EtherGuard Guild", reward: "9,800 WONs", status: "upcoming", time: "In 3 Days", image: "logos/blur.png" },
+  { id: 7, sponsor: "Blocksmith Arena", reward: "6,400 WONs", status: "completed", time: "Completed", image: "logos/blur.png" },
+  { id: 8, sponsor: "Elysium Works", reward: "18,200 WONs", status: "completed", time: "Completed", image: "logos/blur.png" },
+  { id: 12, sponsor: "MEGA Labs Clash", reward: "33,000 WONs", status: "completed", time: "Completed", image: "logos/blur.png" },
+  { id: 13, sponsor: "Dark Circuit League", reward: "20,000 WONs", status: "completed", time: "Completed", image: "logos/blur.png" },
+  { id: 14, sponsor: "CryptoThrone Trials", reward: "42,000 WONs", status: "completed", time: "Completed", image: "logos/blur.png" },
+];
+
 
   const filteredMatches = matches.filter((m) => m.status === filter);
 
@@ -134,26 +137,35 @@ export default function Dashboard() {
           <span className={filter === "completed" ? "filter active" : "filter"} onClick={() => setFilter("completed")}>Completed</span>
         </div>
 
-        <div className="matches-carousel" ref={carouselRef}>
+<div className="matches-wrapper">
+   <div className="matches-carousel" ref={carouselRef}>
           {filteredMatches.map(m => (
-            <div
-              key={m.id}
-              data-id={m.id}
-              className={`match-card ${selectedMatch === m.id ? "selected" : ""}`}
-              onClick={(e) => {
-                e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center" });
-                isManuallyScrolling.current = true;
-                setSelectedMatch(m.id);
-                setTimeout(() => (isManuallyScrolling.current = false), 800);
-              }}
-            >
-              <h3>{m.sponsor}</h3>
-              <p className="reward">{m.reward}</p>
-              <p className="time">{m.time}</p>
-            </div>
+            
+          <div
+  key={m.id}
+  data-id={m.id}
+  className={`match-card ${selectedMatch === m.id ? "selected" : ""}`}
+  style={{ backgroundImage: `url(${m.image})` }}
+  onClick={(e) => {
+    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center" });
+    isManuallyScrolling.current = true;
+    setSelectedMatch(m.id);
+    setTimeout(() => (isManuallyScrolling.current = false), 800);
+  }}
+>
+  <div className="match-card-overlay">
+    <h3>{m.sponsor}</h3>
+    <p className="reward">{m.reward}</p>
+    <p className="time">{m.time}</p>
+  </div>
+</div>
+
+
           ))}
         </div>
       </div>
+</div>
+     
 
       <button
         className={`play-fixed ${selectedMatch ? "active" : "disabled"}`}
