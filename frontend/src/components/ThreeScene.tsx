@@ -2,6 +2,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useFBX } from "@react-three/drei";
 import { IdCard } from "./IdCard";
+import CardRig from "./CardRig";
 
 function Model() {
   const model = useFBX("/banana.fbx");
@@ -40,22 +41,23 @@ export const ThreeScene: React.FC<Props> = ({ twitter, wallets, earned, onLogout
   }, []);
 
   return (
-    <Canvas camera={{ position: [0, 0, cameraZ] }}>
-      <ambientLight intensity={2} />
-      <directionalLight position={[5, 5, 5]} intensity={2} />
-
+<Canvas dpr={[1, 2]} camera={{ position: [0, 0, cameraZ] }}>
+  <ambientLight intensity={3} />
+  <directionalLight position={[5, 5, 5]} intensity={1.0} />
       <Suspense fallback={null}>
         <Model />
       </Suspense>
 
-      <IdCard twitter={twitter} wallets={wallets} earned={earned} onLogout={onLogout} />
+     <CardRig>
+  <IdCard twitter={twitter} wallets={wallets} earned={earned} onLogout={onLogout} />
+</CardRig>
 
       <OrbitControls
         enableZoom={false}
         minAzimuthAngle={-Math.PI / 18}
         maxAzimuthAngle={Math.PI / 18}
-        minPolarAngle={Math.PI / 4}
-        maxPolarAngle={(3 * Math.PI) / 4}
+        minPolarAngle={Math.PI / 2 - 0.05}
+								maxPolarAngle={Math.PI / 2 + 0.05}
       />
     </Canvas>
   );
