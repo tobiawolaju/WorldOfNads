@@ -19,23 +19,21 @@ interface IdCardProps {
 }
 export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogout }) => (
   <group
-    position={[0, 0, 5]}
+    position={[0, 0, 2.5]}
     rotation={[0, 0, 0]} // ✅ rotate the card
   >
     <mesh>
-      <boxGeometry args={[7, 8, 0.12]} />
+      <boxGeometry args={[7, 9, 0.12]} />
       <meshStandardMaterial
-        color="#5a00a6"
-        roughness={0.35}
-        metalness={0.25}
-        opacity={0.5}
+        color="#ffffff5d"
+        roughness={0}
+        metalness={0}
       />
     </mesh>
 
     <mesh position={[0, 0, -0.07]}>
-      <planeGeometry args={[7, 8]} />
-      <meshStandardMaterial color="#1f0034" 
-      opacity={0.5}/>
+      <planeGeometry args={[7, 9]} />
+      <meshStandardMaterial color="#ffffff5d" />
     </mesh>
 
     <Html
@@ -49,6 +47,9 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
       }}
     >
       <div className="id-card-container">
+        <div className="border">
+
+     
         <button className="id-card-logout-button" onClick={onLogout}>
           Logout
         </button>
@@ -73,7 +74,8 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
         <div className="id-card-earned">
           {earned.toLocaleString()} MON Earned
         </div>
-      </div>
+        </div>
+           </div>
     </Html>
   </group>
 );

@@ -192,21 +192,24 @@
 
 .match-card {
   scroll-snap-align: center;
-  width: 20vh;
+  width: 18vh;
   height: 20vh;
-  min-width: 20vh;
+  min-width: 18vh;
   min-height: 20vh;
-  max-width: 20vh;
+  max-width: 18vh;
   max-height: 20vh;
   padding:4px;
-  border-radius: 10px;
-  background: rgb(255, 255, 255);
+  background: rgb(226, 203, 255);
+  color: #000000;
   cursor: pointer;
   transition: 0.25s ease;
   text-align: center;
-  margin:10px
+  margin:10px;
+  border: 10px solid #fff;
+  border-radius: 5px;
 }
-.match-card:hover { transform: translateY(-6px) scale(1.03); }
+.match-card:hover {
+   transform: translateY(-6px) scale(1.03); }
 
 .match-card.selected {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.146);
@@ -225,14 +228,21 @@
 .id-card-container {
   position: relative;
   width: 280px;
-  height: 320px;
+  height: 340px;
   padding: 22px;
-  background: linear-gradient(145deg, #e100ff 0%, #3f00a8 100%);
+  background: linear-gradient(145deg, #ffffff00 0%, #e0cdff00 100%);
   text-align: center;
   font-family: 'Font1', sans-serif;
   color: #ffffff;
   transform-style: preserve-3d;
   overflow: hidden;
+}
+
+.border{
+  border: none;
+  background: #8934ffb6;
+  width: 240px;
+  height: 300px;
 }
 
 /* Decorative subtle shine */
@@ -251,12 +261,12 @@
 
 /* Avatar */
 .id-card-avatar {
-  width: 240px;
-  height: 200px;
-  border-radius: 14px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
-  border: 2px solid rgba(255,255,255,0.5);
-  margin-bottom: 14px;
+  position: relative;
+  top:-10px;
+  right:10px;
 }
 
 /* Name */
@@ -284,10 +294,10 @@
 
 /* Earned */
 .id-card-earned {
-  font-weight: 700;
-  font-size: 1.05rem;
-  margin-top: 4px;
-  margin-bottom: 18px;
+  font-family: font2;
+  font-weight: 100;
+  font-size: 2.0rem;
+  margin: 2px;
 }
 
 /* Floating Logout Button */
@@ -300,8 +310,8 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.18);
   color: #ffffff;
-  font-weight: 600;
-  font-size: 0.8rem;
+  font-weight: bolder;
+  font-size: 1.5rem;
   backdrop-filter: blur(12px);
   cursor: pointer;
   transition: 0.25s ease;
