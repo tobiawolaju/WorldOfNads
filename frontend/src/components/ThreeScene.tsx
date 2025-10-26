@@ -40,10 +40,9 @@ export const ThreeScene: React.FC<Props> = ({ twitter, wallets, earned, onLogout
   }, []);
 
   return (
-    <Canvas camera={{ position: [0, 0, cameraZ] }}>
-      <ambientLight intensity={2} />
-      <directionalLight position={[5, 5, 5]} intensity={2} />
-
+<Canvas dpr={[1, 2]} camera={{ position: [0, 0, cameraZ] }}>
+  <ambientLight intensity={3} />
+  <directionalLight position={[5, 5, 5]} intensity={1.0} />
       <Suspense fallback={null}>
         <Model />
       </Suspense>
