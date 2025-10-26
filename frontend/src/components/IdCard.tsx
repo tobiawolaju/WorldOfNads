@@ -20,7 +20,7 @@ interface IdCardProps {
 export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogout }) => (
   <group
     position={[0, 0, 5]}
-    rotation={[-0.5, 0.5, -0.25]} // ✅ rotate the card
+    rotation={[0, 0, 0]} // ✅ rotate the card
   >
     <mesh>
       <boxGeometry args={[7, 8, 0.12]} />
