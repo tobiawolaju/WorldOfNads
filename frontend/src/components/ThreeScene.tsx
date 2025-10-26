@@ -2,6 +2,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useFBX } from "@react-three/drei";
 import { IdCard } from "./IdCard";
+import CardRig from "./CardRig";
 
 function Model() {
   const model = useFBX("/banana.fbx");
