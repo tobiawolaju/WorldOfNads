@@ -82,6 +82,7 @@
     border-left: none;
     border-top: 1px solid #ddd;
   }
+
 }
 
 
@@ -130,6 +131,12 @@ background: hsl(249, 100%, 74%);
   font-size: 2rem;
   user-select: none;
 }
+@media (max-width:768px){
+  .tabs{
+  margin-top:-40px;
+  }
+}
+
 .tab {
   opacity: 0.35;
   cursor: pointer;
@@ -239,6 +246,7 @@ background: hsl(249, 100%, 74%);
   background-repeat: no-repeat;
   position: relative; /* ← KEEP */
   overflow: hidden;   /* ← Important so overlay fits edge-to-edge */
+  transform: skew(-2deg);
 }
 
 /* Dark gradient overlay for readable text */
@@ -273,16 +281,18 @@ background: hsl(249, 100%, 74%);
 
 
 .match-card:hover {
+   transform: skew(-2deg);
  transform: translateY(6px) scale(1.05);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.146);
-  border: 8px solid #5601ff4a;
+  border: 8px solid #e99aff61;
   border-radius: 0px;
  }
 
 .match-card.selected {
+   transform: skew(-2deg);
  transform: translateY(6px) scale(1.05);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.146);
-  border: 8px solid #fb01ff;
+  border: 8px solid #9c7eff;
   border-radius: 0px;
 }
 
