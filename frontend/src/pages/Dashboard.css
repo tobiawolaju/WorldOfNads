@@ -239,7 +239,7 @@
   width: 280px;
   height: 340px;
   padding: 22px;
-  background: linear-gradient(145deg, #FF9ACA 0%, #FF83E9 100%);
+  background: linear-gradient(145deg, #FFFFFF 0%, #FFFFFF 100%);
   text-align: center;
   font-family: 'Font1', sans-serif;
   color: #ffffff;
@@ -249,9 +249,10 @@
 
 .border{
   border: none;
-  background: #8934ffb6;
+  background: #FF9ACA;
   width: 240px;
   height: 300px;
+transform: skew(2.5deg);
 }
 
 /* Decorative subtle shine */
