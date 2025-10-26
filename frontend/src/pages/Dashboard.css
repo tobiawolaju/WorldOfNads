@@ -227,13 +227,7 @@
   width: 280px;
   height: 320px;
   padding: 22px;
-  background: linear-gradient(145deg, #7c00ff 0%, #3f00a8 100%);
-  border-radius: 14px;
-  border: 2.5px solid rgba(255, 255, 255, 0.18);
-  box-shadow:
-    0 0 20px rgba(132, 0, 255, 0.45),
-    inset 0 0 40px rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(18px);
+  background: linear-gradient(145deg, #e100ff 0%, #3f00a8 100%);
   text-align: center;
   font-family: 'Font1', sans-serif;
   color: #ffffff;

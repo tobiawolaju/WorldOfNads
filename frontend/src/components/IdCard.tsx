@@ -28,12 +28,14 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
         color="#5a00a6"
         roughness={0.35}
         metalness={0.25}
+        opacity={0.5}
       />
     </mesh>
 
     <mesh position={[0, 0, -0.07]}>
       <planeGeometry args={[7, 8]} />
-      <meshStandardMaterial color="#1f0034" />
+      <meshStandardMaterial color="#1f0034" 
+      opacity={0.5}/>
     </mesh>
 
     <Html
