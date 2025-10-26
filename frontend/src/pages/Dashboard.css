@@ -270,6 +270,7 @@
 
 /* Avatar */
 .id-card-avatar {
+  border: 3 solid #8934ffb6;
   width: 80px;
   height: 80px;
   object-fit: cover;
