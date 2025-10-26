@@ -47,7 +47,9 @@ export const ThreeScene: React.FC<Props> = ({ twitter, wallets, earned, onLogout
         <Model />
       </Suspense>
 
-      <IdCard twitter={twitter} wallets={wallets} earned={earned} onLogout={onLogout} />
+     <CardRig>
+  <IdCard twitter={twitter} wallets={wallets} earned={earned} onLogout={onLogout} />
+</CardRig>
 
       <OrbitControls
         enableZoom={false}
