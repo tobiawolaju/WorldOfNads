@@ -284,7 +284,7 @@ background: hsl(249, 100%, 74%);
    transform: skew(-2deg);
  transform: translateY(6px) scale(1.05);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.146);
-  border: 8px solid #e99aff61;
+  border: 8px solid #ffffff61;
   border-radius: 0px;
  }
 
@@ -292,7 +292,7 @@ background: hsl(249, 100%, 74%);
    transform: skew(-2deg);
  transform: translateY(6px) scale(1.05);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.146);
-  border: 8px solid #9c7eff;
+  border: 8px solid #ffffff;
   border-radius: 0px;
 }
 
