@@ -37,15 +37,16 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
     </mesh>
 
     <Html
-      transform
-      occlude
-      position={[0, 0, 0.07]}
-      style={{
-        width: "280px",
-        height: "320px",
-        userSelect: "none",
-      }}
-    >
+  transform
+  occlude
+  position={[0, 0, 0.07]}
+  zIndexRange={[0, 0]}   
+  style={{
+    width: "280px",
+    height: "320px",
+    userSelect: "none",
+  }}
+>
       <div className="id-card-container">
         <div className="border">
 
