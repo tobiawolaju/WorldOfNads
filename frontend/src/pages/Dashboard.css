@@ -259,7 +259,7 @@ color: #FF9ACA;
   background: rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  padding-top: 20px;
+  padding: 10px;
   position: relative;
 }
 
