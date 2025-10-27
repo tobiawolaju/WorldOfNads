@@ -146,12 +146,25 @@ const matches: Match[] = [
   data-id={m.id}
   className={`match-card ${selectedMatch === m.id ? "selected" : ""}`}
   style={{ backgroundImage: `url(${m.image})` }}
-  onClick={(e) => {
-    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center" });
-    isManuallyScrolling.current = true;
-    setSelectedMatch(m.id);
-    setTimeout(() => (isManuallyScrolling.current = false), 800);
-  }}
+ onClick={(e) => {
+  const card = e.currentTarget;
+  const carousel = carouselRef.current;
+  if (!carousel) return;
+
+  const target = card.offsetLeft - (carousel.offsetWidth / 2) + (card.offsetWidth / 2);
+
+  carousel.scrollTo({
+    left: target,
+    behavior: "smooth",
+  });
+
+  isManuallyScrolling.current = true;
+  setSelectedMatch(m.id);
+  setTimeout(() => (isManuallyScrolling.current = false), 600);
+}}
+
+
+
 >
   <div className="match-card-overlay">
     <h3>{m.sponsor}</h3>
