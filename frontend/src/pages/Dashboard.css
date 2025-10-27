@@ -267,6 +267,7 @@ background: hsl(249, 100%, 74%);
   text-shadow: 0px 2px 6px rgba(0, 0, 0, 0.6);
   font-size: small;
  transform: scale(0.7);
+ opacity: 0;
 }
 
 
