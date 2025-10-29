@@ -54,9 +54,6 @@ const Home: React.FC = () => {
     <div
       className="home-container"
       style={{
-        backgroundColor: "#ffffff",
-        color: "#000000",
-        minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",

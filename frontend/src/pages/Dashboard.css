@@ -183,10 +183,10 @@ background: hsl(249, 100%, 74%);
 /* Your scrolling container */
 .matches-carousel {
   display: flex;
-  gap: 20px;
+  gap: 10px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding: 20px;
+  padding: 10px;
   scroll-behavior: smooth;
   background: rgba(255, 255, 255, 0);
 }
@@ -246,6 +246,7 @@ background: hsl(249, 100%, 74%);
     opacity 0.4s ease;
   opacity: 0.5;
   background-size:contain;
+  scale: 0.9;
 }
 
 .match-card:hover {
@@ -286,7 +287,7 @@ background: hsl(249, 100%, 74%);
   justify-content: flex-end;
   padding: 14px;
   font-family:font2;
-  font-size: 1.2rem;
+  font-size: 1.rem;
   font-weight: 100;
   color: #ffffff;
   letter-spacing: 0.5px;

@@ -15,7 +15,6 @@
 body {
   margin: 0;
   padding: 0;
-  background: linear-gradient(0deg, #ffffff, #fffdf4);
   overflow-x: hidden;
   font-family: 'Font1', sans-serif; /* default body font */
 }
