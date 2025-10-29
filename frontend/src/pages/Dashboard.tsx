@@ -61,20 +61,20 @@ export default function Dashboard() {
   const wallets = (user.linkedAccounts?.filter((acc) => acc.type === "wallet") || []) as Wallet[];
 
 const matches: Match[] = [
-  { id: 9, sponsor: "World of Nads", reward: "50,000 WONs", status: "live", time: "Live Now", image: "logos/blur.png" },
-  { id: 10, sponsor: "Iron Legion Arena", reward: "22,000 WONs", status: "live", time: "Live Now", image: "logos/blur.png" },
-  { id: 11, sponsor: "House of Havoc", reward: "14,500 WONs", status: "live", time: "Live Now", image: "logos/blur.png" },
-  { id: 1, sponsor: "Kitio Labs", reward: "5,000 WONs", status: "upcoming", time: "Starts in 3h", image: "logos/blur.png" },
-  { id: 2, sponsor: "Monad Testnet", reward: "10,000 WONs", status: "upcoming", time: "Starts in 5h", image: "logos/blur.png" },
-  { id: 3, sponsor: "Astra Robotics", reward: "7,500 WONs", status: "upcoming", time: "Tomorrow 14:00", image: "logos/blur.png" },
-  { id: 4, sponsor: "Covenant Core", reward: "25,000 WONs", status: "upcoming", time: "Tomorrow 18:30", image: "logos/blur.png" },
-  { id: 5, sponsor: "NOVA Protocol", reward: "13,000 WONs", status: "upcoming", time: "In 2 Days", image: "logos/blur.png" },
-  { id: 6, sponsor: "EtherGuard Guild", reward: "9,800 WONs", status: "upcoming", time: "In 3 Days", image: "logos/blur.png" },
-  { id: 7, sponsor: "Blocksmith Arena", reward: "6,400 WONs", status: "completed", time: "Completed", image: "logos/blur.png" },
-  { id: 8, sponsor: "Elysium Works", reward: "18,200 WONs", status: "completed", time: "Completed", image: "logos/blur.png" },
-  { id: 12, sponsor: "MEGA Labs Clash", reward: "33,000 WONs", status: "completed", time: "Completed", image: "logos/blur.png" },
-  { id: 13, sponsor: "Dark Circuit League", reward: "20,000 WONs", status: "completed", time: "Completed", image: "logos/blur.png" },
-  { id: 14, sponsor: "CryptoThrone Trials", reward: "42,000 WONs", status: "completed", time: "Completed", image: "logos/blur.png" },
+  { id: 9, sponsor: "World of Nads", reward: "50,000 WONs", status: "live", time: "Live Now", image: "logos/card.jpg" },
+  { id: 10, sponsor: "Iron Legion Arena", reward: "22,000 WONs", status: "live", time: "Live Now", image: "logos/card.jpg" },
+  { id: 11, sponsor: "House of Havoc", reward: "14,500 WONs", status: "live", time: "Live Now", image: "logos/card.jpg" },
+  { id: 1, sponsor: "Kitio Labs", reward: "5,000 WONs", status: "upcoming", time: "Starts in 3h", image: "logos/card.jpg" },
+  { id: 2, sponsor: "Monad Testnet", reward: "10,000 WONs", status: "upcoming", time: "Starts in 5h", image: "logos/card.jpg" },
+  { id: 3, sponsor: "Astra Robotics", reward: "7,500 WONs", status: "upcoming", time: "Tomorrow 14:00", image: "logos/card.jpg" },
+  { id: 4, sponsor: "Covenant Core", reward: "25,000 WONs", status: "upcoming", time: "Tomorrow 18:30", image: "logos/card.jpg" },
+  { id: 5, sponsor: "NOVA Protocol", reward: "13,000 WONs", status: "upcoming", time: "In 2 Days", image: "logos/card.jpg" },
+  { id: 6, sponsor: "EtherGuard Guild", reward: "9,800 WONs", status: "upcoming", time: "In 3 Days", image: "logos/card.jpg" },
+  { id: 7, sponsor: "Blocksmith Arena", reward: "6,400 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
+  { id: 8, sponsor: "Elysium Works", reward: "18,200 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
+  { id: 12, sponsor: "MEGA Labs Clash", reward: "33,000 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
+  { id: 13, sponsor: "Dark Circuit League", reward: "20,000 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
+  { id: 14, sponsor: "CryptoThrone Trials", reward: "42,000 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
 ];
 
 
