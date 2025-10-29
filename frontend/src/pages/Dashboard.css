@@ -128,7 +128,7 @@ background: hsl(249, 100%, 74%);
   display: flex;
   gap: 20px;
   font-family: font2;
-  font-size: 2rem;
+  font-size: 1.2rem;
   user-select: none;
 }
 @media (max-width:768px){
@@ -153,11 +153,12 @@ background: hsl(249, 100%, 74%);
 /* --- FILTERS --- */
 .filters {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   margin-bottom: 24px;
 }
 .filter {
-  padding: 4px 10px;
+  font-size: 0.8rem;
+  padding: 2px 5px;
   border-radius: 8px;
   cursor: pointer;
   opacity: 0.5;
