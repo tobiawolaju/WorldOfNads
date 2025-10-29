@@ -328,13 +328,13 @@ background: hsl(249, 100%, 74%);
   justify-content: center;
 position: relative;
 top:-20px;
-color: #000000;
+color: #ffffff;
 }
 
 .id-card-inner {
   width: 240px;
   height: 310px;
-  background: rgba(255, 255, 255, 0.513);
+  background: rgb(153, 98, 255);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   padding: 10px;
@@ -346,7 +346,7 @@ color: #000000;
 .id-card-avatar {
   width: 80px;
   height: 80px;
-  border-radius: 10px;
+  border-radius: 100px;
   object-fit: cover;
   margin-bottom: 8px;
 }
@@ -388,13 +388,14 @@ color: #000000;
   border-radius: 12px;
   border: none;
   background: rgba(255, 255, 255, 0.25);
-  color: #000000;
+  color: #ffffff;
   font-size: 1.3rem;
   cursor: pointer;
   backdrop-filter: blur(6px);
   transition: 0.25s;
 }
 .id-card-logout-button:hover {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.685);
   transform: translateY(-2px);
+  color:#000000
 }

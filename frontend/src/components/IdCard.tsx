@@ -19,7 +19,7 @@ interface IdCardProps {
 }
 
 export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogout }) => (
-  <group position={[0, -3, 2.5]} rotation={[0, 0, 0]}>
+  <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
     
     {/* === GLASS BODY (3D OBJECT) === */}
     <mesh>
