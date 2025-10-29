@@ -166,12 +166,15 @@ const matches: Match[] = [
 
 
 >
-  <div className="match-card-overlay">
-    <h3>{m.sponsor}</h3>
-    <p className="reward">{m.reward}</p>
-    <p className="time">{m.time}</p>
-  </div>
+ 
+<div className="match-card-overlay">
+  <h3 className="match-sponsor">{m.sponsor}</h3>
+  <p className="match-reward">{m.reward}</p>
+  <p className="match-time">{m.time}</p>
 </div>
+
+</div>
+
 
 
           ))}
