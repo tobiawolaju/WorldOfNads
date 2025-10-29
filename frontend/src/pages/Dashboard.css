@@ -245,6 +245,7 @@ background: hsl(249, 100%, 74%);
     box-shadow 0.3s ease,
     opacity 0.4s ease;
   opacity: 0.5;
+  background-size:contain;
 }
 
 .match-card:hover {
@@ -266,7 +267,7 @@ background: hsl(249, 100%, 74%);
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.25), transparent 70%);
+  background: radial-gradient(circle at top left, rgba(255, 0, 191, 0.397), transparent 70%);
   mix-blend-mode: overlay;
   opacity: 0.6;
   transition: opacity 0.3s ease;
@@ -279,13 +280,14 @@ background: hsl(249, 100%, 74%);
 .match-card-overlay {
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.384));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(219, 11, 209, 0.384));
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding: 14px;
-  font-size: large;
-  font-weight: bolder;
+  font-family:font2;
+  font-size: 1.2rem;
+  font-weight: 100;
   color: #ffffff;
   letter-spacing: 0.5px;
 }
