@@ -1,0 +1,65 @@
+[gd_scene load_steps=3 format=3 uid="uid://sa5je5ejkj2m"]
+
+[ext_resource type="Script" uid="uid://ctqewgg1jqfs1" path="res://scripts/Home.gd" id="1_yc7uc"]
+[ext_resource type="Texture2D" uid="uid://cm7cx3kar1i1g" path="res://assets/images/w.png" id="2_dhqfv"]
+
+[node name="Home" type="Node2D"]
+script = ExtResource("1_yc7uc")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -750.0
+offset_top = -750.0
+offset_right = 1250.0
+offset_bottom = 1250.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer"]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Node" type="Node" parent="CanvasLayer/BoxContainer"]
+
+[node name="ProgressBar" type="ProgressBar" parent="CanvasLayer/BoxContainer/Node"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -161.0
+offset_top = -44.0
+offset_right = 160.0
+offset_bottom = -35.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.9490196, 1, 0.9490196, 1)
+show_percentage = false
+
+[node name="Node" type="Node" parent="."]
+
+[node name="BoxContainer" type="BoxContainer" parent="Node"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="W" type="Sprite2D" parent="Node/BoxContainer"]
+scale = Vector2(0.063, 0.06)
+texture = ExtResource("2_dhqfv")
+offset = Vector2(248.415, 0)
