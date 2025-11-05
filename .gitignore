@@ -72,3 +72,25 @@ frontend/.env
 /WONpkg/*.pkg
 /WONpkg/*.deb
 /WONpkg/*.rpm
+
+#Contracts
+# Node modules
+contract/node_modules
+
+# Compilation output
+contract/dist
+
+# pnpm deploy output
+contract/bundle
+
+# Hardhat Build Artifacts
+contract/artifacts
+
+# Hardhat compilation (v2) support directory
+contract/cache
+
+# Typechain output
+contract/types
+
+# Hardhat coverage reports
+contract/coverage
