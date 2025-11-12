@@ -43,7 +43,7 @@
 /* --- Updated Hover Styles --- */
 .partner-card:hover {
   transform: translateY(-5px);
-  background: rgb(0, 0, 0);
+  background: rgb(162, 0, 255);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
   border-color: transparent;
 }
