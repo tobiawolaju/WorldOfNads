@@ -39,7 +39,7 @@ const Careers: React.FC = () => {
 
             {/* --- NEW SECTION: Current Team Members --- */}
             <div className="careers-section team-section">
-                <h2>Meet the Team Shaping the Nads</h2>
+                <h2>Meet the Team Shaping the WONs</h2>
                 <div className="team-grid">
                     {teamMembers.map((member, index) => (
                         <div key={index} className="team-member-card">

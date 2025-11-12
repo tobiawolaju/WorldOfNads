@@ -216,28 +216,30 @@
     text-align: center;
 }
 
+
+
+
+
 .careers-cta {
     display: inline-block;
     padding: 15px 40px;
-    font-size: 1.2rem;
-    font-weight: 700;
+  font-family: font1;
+  font-weight: bold;
+  font-size: 20px;
     text-decoration: none;
-    background-color: #000000; 
+background: hsl(249, 100%, 74%);
     color: #ffffff;
-    border-radius: 10px;
+    border-radius: 50px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 0 0 #444; 
+
 }
 
 .careers-cta:hover {
-    background-color: #111111;
-    transform: translateY(-2px); 
-    box-shadow: 0 6px 0 0 #444;
+ border: 8px solid rgba(255, 255, 255, 0.407);
 }
 
 .careers-cta:active {
     transform: translateY(2px); 
-    box-shadow: 0 2px 0 0 #444;
 }
 
 /* --- Responsive Adjustments --- */
