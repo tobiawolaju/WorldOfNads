@@ -12,13 +12,15 @@ const TopNavbar = () => {
 
   // Map route paths to text for display
 const pageTextMap: Record<string, string> = {
-  '/': '', // Home shows only image
+  '/': '',
   '/pre-tge-arena': 'Pre-TGE Arena',
-  '/roadmap': 'Leaderboards', // Two leaderboards (main with each value having children as list of players in ranking)
-  '/crew': 'Won Dex', // This was Swap
+  '/roadmap': 'Leaderboards',
+  '/crew': 'Won Dex',
   '/partners': 'Partners',
   '/community': 'FAQ',
+  '/careers': 'Careers',
 };
+
 
   const currentText = pageTextMap[location.pathname] || '';
 
@@ -70,6 +72,9 @@ const pageTextMap: Record<string, string> = {
     <NavLink to="/community" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
     FAQ
     </NavLink>
+      <NavLink to="/careers" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
+    Careers
+    </NavLink>
   </div>
 
   {/* Hamburger Menu Button */ }
@@ -104,6 +109,11 @@ const pageTextMap: Record<string, string> = {
           <NavLink to="/community" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
             FAQ
           </NavLink>
+
+           <NavLink to="/careers" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
+            Careers
+          </NavLink>
+
         </div>
       </div>
     )

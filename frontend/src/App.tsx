@@ -19,6 +19,7 @@ import Community from "./pages/FAQ";
 import Partners from "./pages/Partners";
 import Dashboard from "./pages/Dashboard";
 import Play from "./pages/Play";
+import Careers from "./pages/Careers";
 
 const AppContent: React.FC = () => {
   const { ready, authenticated, login } = usePrivy();
@@ -46,6 +47,7 @@ const AppContent: React.FC = () => {
             <Route path="/roadmap" element={<Roadmap />} />
             <Route path="/community" element={<Community />} />
             <Route path="/partners" element={<Partners />} />
+            <Route path="/careers" element={<Careers />} />
 
             {/* Protected Routes */}
             <Route
