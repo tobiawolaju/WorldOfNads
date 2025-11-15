@@ -2,6 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import "./Home.css";
+import { FaDiscord } from "react-icons/fa";
+
 
 const Home: React.FC = () => {
   const { ready, authenticated, login } = usePrivy();
@@ -74,6 +76,34 @@ const Home: React.FC = () => {
         </h1>
       </div>
 
+      {/* Contents Section */}
+      <div>
+        {/* --- WHAT'S ON WONS SECTION --- */}
+        <section className="wons-section">
+          <div className="wons-grid">
+            <div className="wons-card">
+            </div>
+
+            <div className="wons-card">
+           </div>
+
+            <div className="wons-card">
+            </div>
+
+            <div className="wons-card">
+            </div>
+          </div>
+        </section>
+
+
+      </div>
+
+
+
+
+
+
+
       {/* Footer Section */}
       <footer
         style={{
@@ -88,16 +118,17 @@ const Home: React.FC = () => {
 
         {/* Button container */}
         <div className="footer-buttons">
-          <a
-            href="https://discord.gg/z4SUdrKayb"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={discordBtn}
-            className="discord-btn"
-            title="Join Discord"
-          >
-            Discord
-          </a>
+        <a
+  href="https://discord.gg/z4SUdrKayb"
+  target="_blank"
+  rel="noopener noreferrer"
+  style={discordBtn}
+  className="discord-btn"
+  title="Join Discord"
+>
+  <FaDiscord size={28} />
+</a>
+
 
           <button
             onClick={handlePlay}
