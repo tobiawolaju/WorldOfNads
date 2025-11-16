@@ -1,5 +1,5 @@
-import React, { Suspense, useEffect, useMemo, useState, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useFBX } from "@react-three/drei";
 import * as THREE from "three";
 import CardRig from "./CardRig";
@@ -42,47 +42,10 @@ const Chicken: React.FC<ChickenProps> = ({ position, rotation, scale = 15 }) => 
   );
 };
 
-// --- Component to add subtle rotation oscillation ---
-const SubtleRotation: React.FC<{ controlsRef: React.RefObject<OrbitControls> }> = ({ controlsRef }) => {
-  const time = useRef(0);
-
-  // Amplitude in radians (0.5 degrees is very small)
-  const rotationAmplitudeX = THREE.MathUtils.degToRad(0.5);
-  const rotationAmplitudeY = THREE.MathUtils.degToRad(0.5);
-  
-  // Phase offset for Y rotation to make it slightly different from X
-  const rotationPhaseYOffset = Math.PI / 4; // Offset by 45 degrees
-
-  useFrame((state, delta) => {
-    if (controlsRef.current) {
-      time.current += delta;
-
-      // Calculate sine wave rotation
-      const oscillationX = Math.sin(time.current * 0.5) * rotationAmplitudeX; // Slower oscillation
-      const oscillationY = Math.sin(time.current * 0.5 + rotationPhaseYOffset) * rotationAmplitudeY; // Slower oscillation with phase offset
-
-      // Apply the oscillation to the existing rotation from OrbitControls
-      // We are modifying the target rotation of the controls
-      controlsRef.current.target.rotation.x = controlsRef.current.target.rotation.x + oscillationX;
-      controlsRef.current.target.rotation.y = controlsRef.current.target.rotation.y + oscillationY;
-      
-      // Ensure the target rotation doesn't go too wild
-      controlsRef.current.target.rotation.x = THREE.MathUtils.clamp(controlsRef.current.target.rotation.x, -0.2, 0.2);
-      controlsRef.current.target.rotation.y = THREE.MathUtils.clamp(controlsRef.current.target.rotation.y, -0.2, 0.2);
-
-      // Update the camera's rotation based on the target's rotation
-      state.camera.lookAt(controlsRef.current.target.position);
-    }
-  });
-
-  return null; // This component doesn't render anything itself
-};
-
 
 // --- Main Scene Component ---
 export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned, onLogout }) => {
   const [cameraZ, setCameraZ] = useState(18);
-  const orbitControlsRef = useRef<OrbitControls>(null); // Ref for OrbitControls
 
   useEffect(() => {
     const handleResize = () => {
@@ -93,10 +56,12 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // --- NEW: Variables for chicken generation ---
   const chickenCount = 6;
-  const radius = 12;
-  const randomSeed = 12345;
+  const radius = 12; // How far the chickens are from the center card
+  const randomSeed = 12345; // A seed for deterministic randomness
 
+  // A simple seedable pseudo-random number generator (LCG)
   const createRandomGenerator = (seed: number) => {
       return () => {
           seed = (seed * 1664525 + 1013904223) % 4294967296;
@@ -104,21 +69,27 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
       };
   };
 
+  // --- NEW: Generate chicken positions and rotations ---
+  // useMemo ensures this expensive calculation only runs once.
   const chickens = useMemo(() => {
       const random = createRandomGenerator(randomSeed);
       return Array.from({ length: chickenCount }).map((_, i) => {
-          const theta = random() * 2 * Math.PI;
-          const phi = Math.acos(2 * random() - 1);
+          // Generate random angles for spherical coordinates
+          const theta = random() * 2 * Math.PI; // Azimuthal angle (0 to 2π)
+          const phi = Math.acos(2 * random() - 1); // Polar angle (0 to π)
 
+          // Convert spherical to Cartesian (x, y, z) coordinates
           const x = radius * Math.sin(phi) * Math.cos(theta);
           const y = radius * Math.sin(phi) * Math.sin(theta);
           const z = radius * Math.cos(phi);
 
+          // Give each chicken a random rotation
           const rotX = random() * 2 * Math.PI;
           const rotY = random() * 2 * Math.PI;
           const rotZ = random() * 2 * Math.PI;
           
-          const scale = 5 + random() * 5;
+          // Give each chicken a slightly random scale for variety
+          const scale = 5 + random() * 5; // Random scale between 5 and 10
 
           return {
               key: i,
@@ -127,7 +98,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
               scale: scale,
           };
       });
-  }, [chickenCount, radius, randomSeed]);
+  }, [chickenCount, radius, randomSeed]); // Re-run if these variables change
 
   return (
     <Canvas
@@ -146,6 +117,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
       <directionalLight position={[5, 5, 5]} intensity={1.0} />
 
       <Suspense fallback={null}>
+        {/* The central ID Card */}
         <CardRig>
           <IdCard
             twitter={twitter}
@@ -155,26 +127,13 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
           />
         </CardRig>
         
+        {/* --- NEW: Render the generated chickens --- */}
         {chickens.map(chickenProps => (
           <Chicken {...chickenProps} />
         ))}
       </Suspense>
 
-      {/* --- MODIFIED OrbitControls --- */}
-      <OrbitControls
-        ref={orbitControlsRef}
-        enableZoom={false}
-        autoRotate={false}
-        // Set a minimum and maximum rotation to keep the oscillation contained
-        minPolarAngle={Math.PI / 4} // Prevent looking too far down
-        maxPolarAngle={Math.PI - Math.PI / 4} // Prevent looking too far up
-        minAzimuthAngle={-Infinity} // Allow full horizontal rotation
-        maxAzimuthAngle={Infinity}
-        rotateSpeed={0.2} // Adjust this to control manual rotation speed
-      />
-
-      {/* --- NEW: Add the subtle rotation component --- */}
-      {orbitControlsRef.current && <SubtleRotation controlsRef={orbitControlsRef} />}
+      <OrbitControls enableZoom={false} autoRotate={false} />
     </Canvas>
   );
 };
