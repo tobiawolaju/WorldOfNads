@@ -3,12 +3,35 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useFBX } from "@react-three/drei";
 import * as THREE from "three";
 
+// --- Import the components you created ---
+import CardRig from "./CardRig"; 
+import { IdCard } from "./IdCard";
+
+// --- Define prop types for the component ---
+interface Twitter {
+  profilePictureUrl?: string;
+  name?: string;
+  username?: string;
+}
+
+interface Wallet {
+  address: string;
+}
+
+interface ThreeSceneProps {
+  twitter: Twitter | undefined;
+  wallets: Wallet[];
+  earned: number;
+  onLogout: () => void;
+}
+
+
+// This component is fine, no changes needed here.
 interface ChickenProps {
   position: [number, number, number];
   rotation: [number, number, number];
   scale?: number;
 }
-
 const Chicken: React.FC<ChickenProps> = ({ position, rotation, scale = 15}) => {
   const fbx = useFBX("/Chicken.fbx");
   const model = fbx.clone();
@@ -23,12 +46,15 @@ const Chicken: React.FC<ChickenProps> = ({ position, rotation, scale = 15}) => {
   );
 };
 
-export const ThreeScene: React.FC = () => {
-  const [cameraZ, setCameraZ] = useState(10);
+
+// --- Update the ThreeScene component to accept and use the props ---
+export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned, onLogout }) => {
+  const [cameraZ, setCameraZ] = useState(18); // Default to desktop zoom
 
   useEffect(() => {
     const handleResize = () => {
-      setCameraZ(window.innerWidth < 768 ? 14 : 18);
+      // Adjust camera zoom based on screen width
+      setCameraZ(window.innerWidth < 768 ? 24 : 18);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -52,11 +78,24 @@ export const ThreeScene: React.FC = () => {
       <directionalLight position={[5, 5, 5]} intensity={1.0} />
 
       <Suspense fallback={null}>
-        {/* 🐔 Single Chicken at Center */}
-        <Chicken position={[0, 0, 0]} rotation={[0, Math.PI, 0]} scale={10} />
+        {/* --- THIS IS THE PART THAT WAS MISSING --- */}
+        {/* The CardRig provides the subtle follow-mouse effect */}
+        <CardRig>
+          {/* The IdCard displays the user data */}
+          <IdCard 
+            twitter={twitter} 
+            wallets={wallets} 
+            earned={earned} 
+            onLogout={onLogout} 
+          />
+        </CardRig>
+        
+        {/* The Chicken was in the center [0,0,0], so it would block the card.
+            I've commented it out. You can reposition it if you like. */}
+        {/* <Chicken position={[5, 0, -5]} rotation={[0, Math.PI / 2, 0]} scale={10} /> */}
       </Suspense>
 
-      {/* 🧭 OrbitControls - manual rotation only, zoom disabled */}
+      {/* OrbitControls allow the user to rotate the scene */}
       <OrbitControls enableZoom={false} autoRotate={false} />
     </Canvas>
   );
