@@ -107,6 +107,9 @@ background: hsl(249, 100%, 74%);
   padding: 5px, 30px;
   transition: 0.25s ease;
   width:120px;
+  opacity: 1;
+  border: none;
+  cursor: pointer;
 }
 
 
@@ -114,10 +117,11 @@ background: hsl(249, 100%, 74%);
 
 /* Disabled / Active White Background State */
 .play-fixed.disabled {
-  background: hsl(249, 100%, 93%);
-  color: #000000;
+background: hsl(249, 100%, 74%);
+  color: #ffffff;
   border: 8px solid rgba(255, 255, 255, 0.197);  /* ← Black border when white */
   cursor: not-allowed;
+  opacity:0.5;
 }
 
 /* Active hover effects */

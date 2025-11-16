@@ -49,8 +49,7 @@ const Home: React.FC = () => {
     // 3. Animate buttons on hover (no change)
     const animateButtonHover = (target: Element, glowColor: string) => {
       gsap.to(target, {
-        scale: 1.05,
-        boxShadow: `0 0 25px 5px ${glowColor}`,
+       border: '8px solid rgba(255, 255, 255, 0.197)',
         duration: 0.3,
         ease: "power1.inOut",
       });
@@ -58,8 +57,7 @@ const Home: React.FC = () => {
 
     const resetButtonHover = (target: Element) => {
       gsap.to(target, {
-        scale: 1,
-        boxShadow: "0 0 0 0 rgba(0,0,0,0)",
+      border:'none',
         duration: 0.3,
         ease: "power1.inOut",
       });
@@ -115,6 +113,7 @@ const Home: React.FC = () => {
     textDecoration: "none",
     padding: "5px 30px",
     fontFamily: "Font1",
+    fontWeight:"bold",
   };
 
   const discordBtn: React.CSSProperties = {
@@ -244,35 +243,7 @@ const Home: React.FC = () => {
                 justify-content: center;
               }
             }
-
-            /* PLAY BUTTON STYLES */
-            .play-btn {
-              position: relative;
-              overflow: hidden;
-              z-index: 1;
-              /* Removed CSS animation to let GSAP handle it */
-            }
-
-            /* STAR BACKGROUND LAYER */
-            .play-btn .stars {
-              position: absolute;
-              inset: 0;
-              background: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.2) 0%, transparent 40%),
-                          radial-gradient(circle at 80% 60%, rgba(255,158,242,0.2) 0%, transparent 20%),
-                          radial-gradient(circle at 50% 80%, rgba(255,158,242,0.15) 0%, transparent 20%);
-              background-size: 200% 200%;
-              border-radius: 50px;
-              z-index: 0;
-              filter: blur(0);
-              pointer-events: none;
-              opacity: 0.6; /* GSAP will animate this */
-            }
-            
-            /* TEXT ABOVE THE STARS */
-            .play-btn span {
-              position: relative;
-              z-index: 1;
-            }
+        
           `}
         </style>
       </footer>
