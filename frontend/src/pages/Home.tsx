@@ -75,16 +75,7 @@ const Home: React.FC = () => {
         playBtn.addEventListener("mouseleave", () => resetButtonHover(playBtn));
     }
 
-    // 4. Animate the .stars layer with a subtle twinkle (no change)
-    gsap.to(".stars", {
-      duration: 4,
-      backgroundPosition: "100% 50%",
-      opacity: 1,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-    });
-
+   
     // Cleanup event listeners on component unmount
     return () => {
         if (discordBtn) {
@@ -100,7 +91,7 @@ const Home: React.FC = () => {
   }, { scope: container }); // Scope GSAP selectors to the container ref
 
   const btnBase: React.CSSProperties = {
-    width: "auto",
+    width: "120px",
     height: "50px",
     border: "none",
     borderRadius: "50px",
@@ -120,6 +111,8 @@ const Home: React.FC = () => {
     ...btnBase,
     backgroundColor: "#907cff",
     color: "#ffffff",
+    width: "60px",
+    padding:'5px'
   };
 
   const playBtn: React.CSSProperties = {

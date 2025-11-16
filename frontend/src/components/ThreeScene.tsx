@@ -49,7 +49,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
 
   useEffect(() => {
     const handleResize = () => {
-      setCameraZ(window.innerWidth < 768 ? 24 : 20);
+      setCameraZ(window.innerWidth < 768 ? 24 : 100);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
