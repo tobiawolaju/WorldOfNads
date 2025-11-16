@@ -24,7 +24,6 @@ type Match = {
   image: string; // ← NEW
 };
 
-
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
   const navigate = useNavigate();
@@ -34,9 +33,17 @@ export default function Dashboard() {
   const [tab, setTab] = useState<"events" | "results">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("upcoming");
 
+  // --- New state for the play button ---
+  const [playButtonState, setPlayButtonState] = useState<"idle" | "counting">("idle");
+  const [elapsedTime, setElapsedTime] = useState(0);
+
   const carouselRef = useRef<HTMLDivElement>(null);
   const isManuallyScrolling = useRef<boolean>(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  
+  // --- Refs for the countdown timers ---
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Earned balance animation
   useEffect(() => {
@@ -53,6 +60,45 @@ export default function Dashboard() {
 
     return () => clearInterval(interval);
   }, []);
+  
+  // --- Cleanup timers on component unmount ---
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
+    };
+  }, []);
+
+
+  const handlePlayClick = () => {
+    // Do nothing if no match is selected
+    if (!selectedMatch) return;
+
+    if (playButtonState === "idle") {
+      // --- Start the countdown ---
+      setPlayButtonState("counting");
+      setElapsedTime(0);
+
+      // Timer to update the displayed time
+      intervalRef.current = setInterval(() => {
+        setElapsedTime(prevTime => prevTime + 0.1);
+      }, 100);
+      
+      // Timer to navigate after 15 seconds
+      navigationTimeoutRef.current = setTimeout(() => {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setPlayButtonState("idle");
+        navigate("/play");
+      }, 15000);
+
+    } else if (playButtonState === "counting") {
+      // --- Cancel the countdown ---
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
+      setPlayButtonState("idle");
+    }
+  };
+
 
   if (!ready) return <FullScreenLoader />;
   if (!authenticated || !user) return null;
@@ -60,22 +106,22 @@ export default function Dashboard() {
   const twitter = user.linkedAccounts?.find((acc) => acc.type === "twitter_oauth") as Twitter | undefined;
   const wallets = (user.linkedAccounts?.filter((acc) => acc.type === "wallet") || []) as Wallet[];
 
-const matches: Match[] = [
-  { id: 9, sponsor: "World of Nads", reward: "50,000 WONs", status: "live", time: "Live Now", image: "logos/card.jpg" },
-  { id: 10, sponsor: "Iron Legion Arena", reward: "22,000 WONs", status: "live", time: "Live Now", image: "logos/card.jpg" },
-  { id: 11, sponsor: "House of Havoc", reward: "14,500 WONs", status: "live", time: "Live Now", image: "logos/card.jpg" },
-  { id: 1, sponsor: "Kitio Labs", reward: "5,000 WONs", status: "upcoming", time: "Starts in 3h", image: "logos/card.jpg" },
-  { id: 2, sponsor: "Monad Testnet", reward: "10,000 WONs", status: "upcoming", time: "Starts in 5h", image: "logos/card.jpg" },
-  { id: 3, sponsor: "Astra Robotics", reward: "7,500 WONs", status: "upcoming", time: "Tomorrow 14:00", image: "logos/card.jpg" },
-  { id: 4, sponsor: "Covenant Core", reward: "25,000 WONs", status: "upcoming", time: "Tomorrow 18:30", image: "logos/card.jpg" },
-  { id: 5, sponsor: "NOVA Protocol", reward: "13,000 WONs", status: "upcoming", time: "In 2 Days", image: "logos/card.jpg" },
-  { id: 6, sponsor: "EtherGuard Guild", reward: "9,800 WONs", status: "upcoming", time: "In 3 Days", image: "logos/card.jpg" },
-  { id: 7, sponsor: "Blocksmith Arena", reward: "6,400 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
-  { id: 8, sponsor: "Elysium Works", reward: "18,200 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
-  { id: 12, sponsor: "MEGA Labs Clash", reward: "33,000 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
-  { id: 13, sponsor: "Dark Circuit League", reward: "20,000 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
-  { id: 14, sponsor: "CryptoThrone Trials", reward: "42,000 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
-];
+  const matches: Match[] = [
+      { id: 9, sponsor: "World of Nads", reward: "50,000 WONs", status: "live", time: "Live Now", image: "logos/card.jpg" },
+      { id: 10, sponsor: "Iron Legion Arena", reward: "22,000 WONs", status: "live", time: "Live Now", image: "logos/card.jpg" },
+      { id: 11, sponsor: "House of Havoc", reward: "14,500 WONs", status: "live", time: "Live Now", image: "logos/card.jpg" },
+      { id: 1, sponsor: "Kitio Labs", reward: "5,000 WONs", status: "upcoming", time: "Starts in 3h", image: "logos/card.jpg" },
+      { id: 2, sponsor: "Monad Testnet", reward: "10,000 WONs", status: "upcoming", time: "Starts in 5h", image: "logos/card.jpg" },
+      { id: 3, sponsor: "Astra Robotics", reward: "7,500 WONs", status: "upcoming", time: "Tomorrow 14:00", image: "logos/card.jpg" },
+      { id: 4, sponsor: "Covenant Core", reward: "25,000 WONs", status: "upcoming", time: "Tomorrow 18:30", image: "logos/card.jpg" },
+      { id: 5, sponsor: "NOVA Protocol", reward: "13,000 WONs", status: "upcoming", time: "In 2 Days", image: "logos/card.jpg" },
+      { id: 6, sponsor: "EtherGuard Guild", reward: "9,800 WONs", status: "upcoming", time: "In 3 Days", image: "logos/card.jpg" },
+      { id: 7, sponsor: "Blocksmith Arena", reward: "6,400 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
+      { id: 8, sponsor: "Elysium Works", reward: "18,200 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
+      { id: 12, sponsor: "MEGA Labs Clash", reward: "33,000 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
+      { id: 13, sponsor: "Dark Circuit League", reward: "20,000 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
+      { id: 14, sponsor: "CryptoThrone Trials", reward: "42,000 WONs", status: "completed", time: "Completed", image: "logos/card.jpg" },
+  ];
 
 
   const filteredMatches = matches.filter((m) => m.status === filter);
@@ -137,57 +183,46 @@ const matches: Match[] = [
           <span className={filter === "completed" ? "filter active" : "filter"} onClick={() => setFilter("completed")}>Completed</span>
         </div>
 
-<div className="matches-wrapper">
-   <div className="matches-carousel" ref={carouselRef}>
-          {filteredMatches.map(m => (
-            
-          <div
-  key={m.id}
-  data-id={m.id}
-  className={`match-card ${selectedMatch === m.id ? "selected" : ""}`}
-  style={{ backgroundImage: `url(${m.image})` }}
- onClick={(e) => {
-  const card = e.currentTarget;
-  const carousel = carouselRef.current;
-  if (!carousel) return;
-
-  const target = card.offsetLeft - (carousel.offsetWidth / 2) + (card.offsetWidth / 2);
-
-  carousel.scrollTo({
-    left: target,
-    behavior: "smooth",
-  });
-
-  isManuallyScrolling.current = true;
-  setSelectedMatch(m.id);
-  setTimeout(() => (isManuallyScrolling.current = false), 600);
-}}
-
-
-
->
- 
-<div className="match-card-overlay">
-  <h3 className="match-sponsor">{m.sponsor}</h3>
-  <p className="match-reward">{m.reward}</p>
-  <p className="match-time">{m.time}</p>
-</div>
-
-</div>
-
-
-
-          ))}
+        <div className="matches-wrapper">
+          <div className="matches-carousel" ref={carouselRef}>
+            {filteredMatches.map(m => (
+              <div
+                key={m.id}
+                data-id={m.id}
+                className={`match-card ${selectedMatch === m.id ? "selected" : ""}`}
+                style={{ backgroundImage: `url(${m.image})` }}
+                onClick={(e) => {
+                  const card = e.currentTarget;
+                  const carousel = carouselRef.current;
+                  if (!carousel) return;
+                  const target = card.offsetLeft - (carousel.offsetWidth / 2) + (card.offsetWidth / 2);
+                  carousel.scrollTo({ left: target, behavior: "smooth" });
+                  isManuallyScrolling.current = true;
+                  setSelectedMatch(m.id);
+                  setTimeout(() => (isManuallyScrolling.current = false), 600);
+                }}
+              >
+                <div className="match-card-overlay">
+                  <h3 className="match-sponsor">{m.sponsor}</h3>
+                  <p className="match-reward">{m.reward}</p>
+                  <p className="match-time">{m.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-</div>
-     
 
       <button
-        className={`play-fixed ${selectedMatch ? "active" : "disabled"}`}
-        onClick={() => selectedMatch && navigate("/play")}
+        className={`play-fixed ${selectedMatch ? "active" : "disabled"} ${playButtonState === 'counting' ? 'counting' : ''}`}
+        onClick={handlePlayClick}
+        disabled={!selectedMatch}
       >
-        <span>PLAY</span>
+        {playButtonState === "counting" ? (
+          <span>{elapsedTime.toFixed(1)}s Cancel</span>
+        ) : (
+          <span>PLAY</span>
+        )}
       </button>
     </div>
   );

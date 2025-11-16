@@ -1,13 +1,105 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import "./Home.css";
 import { FaDiscord } from "react-icons/fa";
-import {useGSAP} from "@gsap/react"
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+// Register the ScrollTrigger plugin
+gsap.registerPlugin(ScrollTrigger);
 
 const Home: React.FC = () => {
   const { ready, authenticated, login } = usePrivy();
   const navigate = useNavigate();
+
+  // Refs for GSAP animations
+  const container = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const discordBtnRef = useRef<HTMLAnchorElement>(null);
+  const playBtnRef = useRef<HTMLButtonElement>(null);
+
+  // GSAP animations
+  useGSAP(() => {
+    // 1. Animate .title on page load (no change)
+    gsap.from(titleRef.current, {
+      duration: 1.5,
+      opacity: 0,
+      y: 50,
+      ease: "power3.out",
+      delay: 0.2,
+    });
+
+    // 2. Animate .wons-card elements tied to scroll position
+    gsap.from(".wons-card", {
+      opacity: 0,
+      y: 100,
+      rotation: -5,
+      stagger: 0.1, // A smaller stagger often feels better with scrub
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: ".wons-grid",
+        start: "top bottom-=100", // Start when top of grid is 100px from bottom of viewport
+        end: "center center",    // End when center of grid hits viewport center
+        scrub: 1,                // <-- KEY CHANGE: Ties animation to scrollbar
+      }
+    });
+
+    // 3. Animate buttons on hover (no change)
+    const animateButtonHover = (target: Element, glowColor: string) => {
+      gsap.to(target, {
+        scale: 1.05,
+        boxShadow: `0 0 25px 5px ${glowColor}`,
+        duration: 0.3,
+        ease: "power1.inOut",
+      });
+    };
+
+    const resetButtonHover = (target: Element) => {
+      gsap.to(target, {
+        scale: 1,
+        boxShadow: "0 0 0 0 rgba(0,0,0,0)",
+        duration: 0.3,
+        ease: "power1.inOut",
+      });
+    };
+
+    const discordBtn = discordBtnRef.current;
+    if (discordBtn) {
+        discordBtn.addEventListener("mouseenter", () => animateButtonHover(discordBtn, "rgba(110, 89, 255, 0.7)"));
+        discordBtn.addEventListener("mouseleave", () => resetButtonHover(discordBtn));
+    }
+
+    const playBtn = playBtnRef.current;
+    if (playBtn) {
+        playBtn.addEventListener("mouseenter", () => animateButtonHover(playBtn, "rgba(110, 89, 255, 0.7)"));
+        playBtn.addEventListener("mouseleave", () => resetButtonHover(playBtn));
+    }
+
+    // 4. Animate the .stars layer with a subtle twinkle (no change)
+    gsap.to(".stars", {
+      duration: 4,
+      backgroundPosition: "100% 50%",
+      opacity: 1,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+
+    // Cleanup event listeners on component unmount
+    return () => {
+        if (discordBtn) {
+            discordBtn.removeEventListener("mouseenter", () => animateButtonHover(discordBtn, "rgba(110, 89, 255, 0.7)"));
+            discordBtn.removeEventListener("mouseleave", () => resetButtonHover(discordBtn));
+        }
+        if (playBtn) {
+            playBtn.removeEventListener("mouseenter", () => animateButtonHover(playBtn, "rgba(110, 89, 255, 0.7)"));
+            playBtn.removeEventListener("mouseleave", () => resetButtonHover(playBtn));
+        }
+    };
+
+  }, { scope: container }); // Scope GSAP selectors to the container ref
 
   const btnBase: React.CSSProperties = {
     width: "auto",
@@ -54,6 +146,7 @@ const Home: React.FC = () => {
 
   return (
     <div
+      ref={container}
       className="home-container"
       style={{
         display: "flex",
@@ -71,7 +164,7 @@ const Home: React.FC = () => {
           justifyContent: "center",
         }}
       >
-        <h1 className="title">
+        <h1 className="title" ref={titleRef}>
           1.2k Nads
         </h1>
       </div>
@@ -81,28 +174,13 @@ const Home: React.FC = () => {
         {/* --- WHAT'S ON WONS SECTION --- */}
         <section className="wons-section">
           <div className="wons-grid">
-            <div className="wons-card">
-            </div>
-
-            <div className="wons-card">
-           </div>
-
-            <div className="wons-card">
-            </div>
-
-            <div className="wons-card">
-            </div>
+            <div className="wons-card"></div>
+            <div className="wons-card"></div>
+            <div className="wons-card"></div>
+            <div className="wons-card"></div>
           </div>
         </section>
-
-
       </div>
-
-
-
-
-
-
 
       {/* Footer Section */}
       <footer
@@ -115,22 +193,21 @@ const Home: React.FC = () => {
         }}
       >
         &copy; {new Date().getFullYear()} WON – All rights reserved
-
         {/* Button container */}
         <div className="footer-buttons">
-        <a
-  href="https://discord.gg/z4SUdrKayb"
-  target="_blank"
-  rel="noopener noreferrer"
-  style={discordBtn}
-  className="discord-btn"
-  title="Join Discord"
->
-  <FaDiscord size={28} />
-</a>
-
-
+          <a
+            ref={discordBtnRef}
+            href="https://discord.gg/z4SUdrKayb"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={discordBtn}
+            className="discord-btn"
+            title="Join Discord"
+          >
+            <FaDiscord size={28} />
+          </a>
           <button
+            ref={playBtnRef}
             onClick={handlePlay}
             style={playBtn}
             className="play-btn"
@@ -168,18 +245,12 @@ const Home: React.FC = () => {
               }
             }
 
-            /* PLAY BUTTON EFFECTS */
+            /* PLAY BUTTON STYLES */
             .play-btn {
               position: relative;
               overflow: hidden;
-              animation: pulseScale 2.4s ease-in-out infinite alternate;
-              
               z-index: 1;
-            }
-
-            @keyframes pulseScale {
-              0% { transform: scale(0.95); }
-              100% { transform: scale(1); }
+              /* Removed CSS animation to let GSAP handle it */
             }
 
             /* STAR BACKGROUND LAYER */
@@ -190,24 +261,13 @@ const Home: React.FC = () => {
                           radial-gradient(circle at 80% 60%, rgba(255,158,242,0.2) 0%, transparent 20%),
                           radial-gradient(circle at 50% 80%, rgba(255,158,242,0.15) 0%, transparent 20%);
               background-size: 200% 200%;
-              animation: twinkle 4s infinite ease-in-out alternate;
               border-radius: 50px;
               z-index: 0;
               filter: blur(0);
               pointer-events: none;
+              opacity: 0.6; /* GSAP will animate this */
             }
-
-            @keyframes twinkle {
-              0% {
-                opacity: 0.6;
-                background-position: 0% 50%;
-              }
-              100% {
-                opacity: 1;
-                background-position: 100% 50%;
-              }
-            }
-
+            
             /* TEXT ABOVE THE STARS */
             .play-btn span {
               position: relative;

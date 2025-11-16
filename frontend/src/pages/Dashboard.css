@@ -414,3 +414,65 @@ color: #ffffff;
   transform: translateY(-2px);
   color:#000000
 }
+
+
+
+
+
+
+/* --- PLAY BUTTON - COUNTDOWN STATE --- */
+
+/* Add a keyframes animation for the border rotation */
+@keyframes rotate-border {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.play-fixed.counting {
+background: hsl(249, 100%, 74%);/* Dark background for contrast */
+  color: #ffffff;
+  width: 160px; /* Wider to fit the new text */
+  overflow: hidden; /* Important: keeps the pseudo-element contained */
+
+}
+
+/* This is the gradient layer that will spin */
+.play-fixed.counting:hover::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 50%,
+    #ffffff 75%, /* Purple */
+    #6200ff 90%, /* Pink */
+    #ffffff 100% 
+  );
+  animation: rotate-border 4s linear infinite;
+}
+
+/* This creates an inner background, making the spinning '::before' look like a border */
+.play-fixed.counting::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 4px; /* This value determines the border thickness */
+background: hsl(249, 100%, 74%); /* Must match the button's background */
+  border-radius: 50px; /* Should match the button's border-radius */
+}
+
+/* Ensure the text content is on top of all pseudo-elements */
+.play-fixed.counting span {
+  position: relative;
+  z-index: 2;
+}
