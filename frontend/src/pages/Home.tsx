@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import "./Home.css";
 import { FaDiscord } from "react-icons/fa";
-
+import {useGSAP} from "@gsap/react"
 
 const Home: React.FC = () => {
   const { ready, authenticated, login } = usePrivy();
