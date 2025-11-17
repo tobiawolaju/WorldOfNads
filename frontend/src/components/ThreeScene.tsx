@@ -42,25 +42,35 @@ const Chicken: React.FC<ChickenProps> = ({ position, rotation, scale = 15 }) => 
   );
 };
 
-// --- Nad Model Component ---
+// --- Nad Model Component with automatic scale ---
 interface NadModelProps {
   position?: [number, number, number];
   rotation?: [number, number, number];
-  scale?: number;
+  targetSize?: number; // largest dimension in Three.js units
 }
 const NadModel: React.FC<NadModelProps> = ({
   position = [0, 0, 0],
   rotation = [0, 0, 0],
-  scale = 1,
+  targetSize = 5,
 }) => {
   const fbx = useFBX("/Nad.fbx");
   const model = fbx.clone();
+
+  // Compute bounding box
+  const box = new THREE.Box3().setFromObject(model);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+
+  // Normalize largest dimension to targetSize
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const normalizedScale = targetSize / maxDim;
+
   return (
     <primitive
       object={model}
       position={position}
       rotation={rotation}
-      scale={new THREE.Vector3(scale, scale, scale)}
+      scale={new THREE.Vector3(normalizedScale, normalizedScale, normalizedScale)}
     />
   );
 };
@@ -80,7 +90,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
 
   // --- Chicken setup ---
   const chickenCount = 6;
-  const radius = 12; 
+  const radius = 12;
   const randomSeed = 12345;
 
   const createRandomGenerator = (seed: number) => () => {
@@ -113,6 +123,11 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
     });
   }, [chickenCount, radius, randomSeed]);
 
+  // Desired target size for Nad model
+  const nadTargetSize = 5;
+  // Offset the card to be in front of Nad model
+  const cardOffsetZ = nadTargetSize / 2 + 1; // 1 unit in front
+
   return (
     <Canvas
       dpr={[1, 2]}
@@ -126,11 +141,11 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
 
       <Suspense fallback={null}>
         {/* Center Nad Model */}
-        <NadModel scale={0.01} /> 
+        <NadModel targetSize={nadTargetSize} />
 
-        {/* Offset ID Card slightly along Z */}
+        {/* Offset ID Card slightly in front of Nad model */}
         <CardRig>
-          <group position={[0, 0, 3]}> {/* Adjust this offset as needed */}
+          <group position={[0, 0, cardOffsetZ]}>
             <IdCard
               twitter={twitter}
               wallets={wallets}
@@ -142,7 +157,12 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
 
         {/* Chickens around */}
         {chickens.map(chickenProps => (
-          <Chicken {...chickenProps} />
+          <Chicken
+            key={chickenProps.key}
+            position={chickenProps.position}
+            rotation={chickenProps.rotation}
+            scale={chickenProps.scale}
+          />
         ))}
       </Suspense>
 
