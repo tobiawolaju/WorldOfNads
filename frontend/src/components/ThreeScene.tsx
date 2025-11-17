@@ -7,38 +7,42 @@ import * as THREE from "three";
 interface NadModelProps {
   position?: [number, number, number];
   rotation?: [number, number, number];
-  scale?: number;
+  scale?: number; // additional multiplier
 }
 const NadModel: React.FC<NadModelProps> = ({
-  position = [0, 0, 15],
-  rotation = [0, 2, 0],
-  scale = 10,
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  scale = 1,
 }) => {
   const fbx = useFBX("/nad.fbx");
   const model = fbx.clone();
 
-  // Only disable frustum culling; don't move or translate meshes
   React.useEffect(() => {
+    // Disable frustum culling for safety
     model.traverse((child: any) => {
-      if (child.isMesh) {
-        child.frustumCulled = false;
-      }
+      if (child.isMesh) child.frustumCulled = false;
     });
-  }, [model]);
 
-  return (
-    <primitive
-      object={model}
-      position={position}
-      rotation={rotation}
-      scale={new THREE.Vector3(scale, scale, scale)}
-    />
-  );
+    // Compute bounding box of the entire FBX
+    const box = new THREE.Box3().setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+
+    // Center model so all parts are around origin
+    model.position.sub(center);
+
+    // Scale model to reasonable size
+    const maxSize = Math.max(size.x, size.y, size.z);
+    const scaleFactor = 20 / maxSize; // Adjust "20" for visible size
+    model.scale.setScalar(scale * scaleFactor);
+  }, [model, scale]);
+
+  return <primitive object={model} position={position} rotation={rotation} />;
 };
 
 // --- Main Scene ---
 export const ThreeScene: React.FC = () => {
-  const [cameraZ, setCameraZ] = useState(50); // pull back to see big Nad
+  const [cameraZ, setCameraZ] = useState(50);
 
   useEffect(() => {
     const handleResize = () => {
@@ -63,7 +67,7 @@ export const ThreeScene: React.FC = () => {
       <directionalLight position={[5, 5, 5]} intensity={1.0} />
 
       <Suspense fallback={null}>
-        <NadModel scale={10} position={[0, 0, 15]} rotation={[0, 2, 0]} />
+        <NadModel scale={1} position={[0, 0, 0]} rotation={[0, 0, 0]} />
       </Suspense>
 
       <OrbitControls
