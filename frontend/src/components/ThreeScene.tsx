@@ -10,9 +10,9 @@ interface NadModelProps {
   scale?: number;
 }
 const NadModel: React.FC<NadModelProps> = ({
-  position = [0, 0, 10],
-  rotation = [0, 20, 0],
-  scale = 100,
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  scale = 1,
 }) => {
   const fbx = useFBX("/nad.fbx");
   const model = fbx.clone();
@@ -42,7 +42,7 @@ export const ThreeScene: React.FC = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      setCameraZ(window.innerWidth < 768 ? 50 : 50);
+      setCameraZ(window.innerWidth < 768 ? 4 : 3);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -52,7 +52,7 @@ export const ThreeScene: React.FC = () => {
   return (
     <Canvas
       dpr={[1, 2]}
-      camera={{ position: [0, 0, cameraZ] }}
+      camera={{ position: [0,0, cameraZ] }}
       gl={{ alpha: true, preserveDrawingBuffer: true }}
       style={{ background: "none", pointerEvents: "auto" }}
       onCreated={({ gl }) => {
