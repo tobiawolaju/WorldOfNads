@@ -230,13 +230,13 @@ background: hsl(249, 100%, 74%);
 /* LEFT Fade */
 .matches-wrapper::before {
   left: 0;
-  background: linear-gradient(to right, #ffffff 0%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(to right, #ffffff94 0%, rgba(255,255,255,0) 100%);
 }
 
 /* RIGHT Fade */
 .matches-wrapper::after {
   right: 0;
-  background: linear-gradient(to left, #ffffff 0%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(to left, #ffffff94 0%, rgba(255,255,255,0) 100%);
 }
 
 
@@ -286,9 +286,9 @@ background: hsl(249, 100%, 74%);
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at top left, rgba(255, 0, 191, 0.397), transparent 70%);
+  background: radial-gradient(circle at top left, rgba(0, 0, 0, 0.397), transparent 70%);
   mix-blend-mode: overlay;
-  opacity: 0.6;
+  opacity: 0.8;
   transition: opacity 0.3s ease;
 }
 .match-card:hover::after {
@@ -299,7 +299,7 @@ background: hsl(249, 100%, 74%);
 .match-card-overlay {
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(219, 11, 209, 0.384));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.384));
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -313,18 +313,20 @@ background: hsl(249, 100%, 74%);
 /* Sponsor Title */
 .match-sponsor {
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: bolder;
+  font-family: font1;
   text-transform: uppercase;
   margin-bottom: 4px;
-  color: #fff;
+  color: #ffffff;
 }
 
 /* Reward Text */
 .match-reward {
+  font-family: font1;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #ffd500;
-  text-shadow: 0 0 6px rgb(183, 0, 255);
+  color: #ffffff;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.281);
   margin-bottom: 2px;
 }
 

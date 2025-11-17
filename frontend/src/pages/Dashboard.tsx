@@ -99,25 +99,25 @@ export default function Dashboard() {
   const wallets = (user.linkedAccounts?.filter(acc => acc.type === "wallet") || []) as Wallet[];
 
   // MATCHES
-  const matches: Match[] = [
- {
-  id: 1,
-  sponsor: "Monad",
-  reward: "10 MON",
-  status: "upcoming",
-  time: "Upcoming",
-  image: "logos/card.jpg",
-  description: "Explore every protocol on Monad inside a living 3D world and earn real assets for discovering, completing quests, and uncovering hidden gems.",
-  url: "https://x.com/monad_xyz"
-},
-{
+const matches: Match[] = [
+  {
+    id: 1,
+    sponsor: "Monad",
+    reward: "10 MON",
+    status: "upcoming",
+    time: "Upcoming",
+    image: "https://pbs.twimg.com/profile_images/1861739634428174336/26FzLLyr.jpg",
+    description: "Monad is a high-performance EVM-compatible Layer 1 blockchain with 10,000 TPS, 1-second block times, and sub-cent fees.",
+    url: "https://x.com/monad_xyz"
+  },
+  {
     id: 17,
     sponsor: "LootGO",
     reward: "50,000 WONs",
     status: "live",
     time: "Live Now",
-    image: "logos/card.jpg",
-    description: "Fast-paced reward drops from one of the biggest on-chain discovery apps.",
+    image: "https://pbs.twimg.com/profile_images/1947490514921488384/TLSJg7Z5.jpg",
+    description: "Discover → Play → Earn. The ultimate on-chain discovery app. Turn every interaction into real rewards.",
     url: "https://x.com/lootgo_official"
   },
   {
@@ -125,9 +125,9 @@ export default function Dashboard() {
     sponsor: "Nad.fun",
     reward: "22,000 WONs",
     status: "live",
-    time: "Liveitems Now",
-    image: "logos/card.jpg",
-    description: "The wildest memefuel arena on-chain, unleashing chaos every match.",
+    time: "Live Now",
+    image: "https://pbs.twimg.com/profile_images/1827607782356619264/Owr-840k.jpg",
+    description: "The most degenerate memecoin arena on Monad. Launch, pump, snipe, rug — pure chaos, zero mercy.",
     url: "https://x.com/naddotfun"
   },
   {
@@ -136,8 +136,8 @@ export default function Dashboard() {
     reward: "14,500 WONs",
     status: "live",
     time: "Live Now",
-    image: "logos/card.jpg",
-    description: "Mobile-first Web3 experience powering rapid-fire rewards challenges.",
+    image: "https://pbs.twimg.com/profile_images/1889975983941591040/NeddfENS.jpg",
+    description: "Web3 in your pocket. The fastest mobile gateway to on-chain games, rewards, and social quests.",
     url: "https://x.com/kizzymobile"
   },
   {
@@ -146,8 +146,8 @@ export default function Dashboard() {
     reward: "5,000 WONs",
     status: "upcoming",
     time: "Starts in 3h",
-    image: "logos/card.jpg",
-    description: "A lightning-fast perp exchange dropping competitive trading rewards.",
+    image: "https://pbs.twimg.com/profile_images/1950962142917619714/R7Cj_qk7.jpg",
+    description: "Lightning-fast perpetuals on Monad. Up to 100x leverage, deep liquidity, zero gas drama.",
     url: "https://x.com/KuruExchange"
   },
   {
@@ -156,8 +156,8 @@ export default function Dashboard() {
     reward: "10,000 WONs",
     status: "upcoming",
     time: "Starts in 5h",
-    image: "logos/card.jpg",
-    description: "A top-tier gaming world bringing immersive quests with big rewards.",
+    image: "https://pbs.twimg.com/profile_images/1667436896480563200/8YPmbLbv.png",
+    description: "An open-world MMORPG where you fight, farm, craft, and own your destiny across infinite lands.",
     url: "https://x.com/LumiterraGame"
   },
   {
@@ -166,8 +166,8 @@ export default function Dashboard() {
     reward: "7,500 WONs",
     status: "upcoming",
     time: "Tomorrow: 14:00",
-    image: "logos/card.jpg",
-    description: "High-stakes prediction battles for sharp bettors and sports fans.",
+    image: "https://pbs.twimg.com/profile_images/1836024387042004992/YKdDMkOG.jpg",
+    description: "Prediction markets & sports betting on-chain. Bet with leverage, earn with accuracy.",
     url: "https://x.com/Levr_Bet"
   },
   {
@@ -176,8 +176,8 @@ export default function Dashboard() {
     reward: "25,000 WONs",
     status: "upcoming",
     time: "Tomorrow: 18:30",
-    image: "logos/card.jpg",
-    description: "A new-wave exchange hosting rapid-fire trading and reward clashes.",
+    image: "https://pbs.twimg.com/profile_images/1974759389354491904/2vcC-dd4.jpg",
+    description: "Next-gen perpetuals & spot trading on Monad. Fast. Cheap. Ruthless execution.",
     url: "https://x.com/DrakeExchange"
   },
   {
@@ -186,8 +186,8 @@ export default function Dashboard() {
     reward: "13,000 WONs",
     status: "upcoming",
     time: "In 2 Days",
-    image: "logos/card.jpg",
-    description: "A deep-dive blockchain explorer with gamified on-chain discovery.",
+    image: "https://pbs.twimg.com/profile_images/1796709016808394752/C91LWB9H.jpg",
+    description: "The most powerful Monad block explorer. Real-time analytics, mempool sniper, gamified quests.",
     url: "https://x.com/ExploreOmnia"
   },
   {
@@ -196,8 +196,8 @@ export default function Dashboard() {
     reward: "9,800 WONs",
     status: "upcoming",
     time: "In 3 Days",
-    image: "logos/card.jpg",
-    description: "A powerful trading terminal turning precision into rewards.",
+    image: "https://pbs.twimg.com/profile_images/1957497669959761920/IMS0lJhe.jpg",
+    description: "Advanced trading terminal for Monad. Sniping, copy-trading, AI signals, limit orders that actually fill.",
     url: "https://x.com/seertrade"
   },
   {
@@ -206,8 +206,8 @@ export default function Dashboard() {
     reward: "6,400 WONs",
     status: "completed",
     time: "Completed",
-    image: "logos/card.jpg",
-    description: "Simple, automated trading boosts that wrapped up in style.",
+    image: "https://pbs.twimg.com/profile_images/1973421191202209797/qRXSiR5e.jpg",
+    description: "Set it and forget it. Automated DCA, grid, and martingale bots for Monad degens.",
     url: "https://x.com/MondayTrade_"
   },
   {
@@ -216,8 +216,8 @@ export default function Dashboard() {
     reward: "18,200 WONs",
     status: "completed",
     time: "Completed",
-    image: "logos/card.jpg",
-    description: "Social trading powered by flows, signals, and crowd-backed rewards.",
+    image: "https://pbs.twimg.com/profile_images/1893386930605211648/-APwnLNM.jpg",
+    description: "Social trading on Monad. Follow top traders, copy flows, split profits, climb the leaderboard.",
     url: "https://x.com/symphonyio"
   },
   {
@@ -226,8 +226,8 @@ export default function Dashboard() {
     reward: "33,000 WONs",
     status: "completed",
     time: "Completed",
-    image: "logos/card.jpg",
-    description: "AI-powered movement challenges that brought intense competition.",
+    image: "https://pbs.twimg.com/profile_images/1947607859702673408/hpZ89aya.jpg",
+    description: "AI-powered on-chain movement battles. Run, jump, dodge — turn your activity into crypto.",
     url: "https://x.com/KINETK_AI"
   },
   {
@@ -236,8 +236,8 @@ export default function Dashboard() {
     reward: "20,000 WONs",
     status: "completed",
     time: "Completed",
-    image: "logos/card.jpg",
-    description: "A mafia-style social game where deception won the biggest rewards.",
+    image: "https://pbs.twimg.com/profile_images/1967887075316994050/STzEqU1y.jpg",
+    description: "The ultimate Telegram mafia game. Lie, betray, vote out — last don standing wins the pot.",
     url: "https://x.com/TeleMafia"
   },
   {
@@ -246,8 +246,8 @@ export default function Dashboard() {
     reward: "42,000 WONs",
     status: "completed",
     time: "Completed",
-    image: "logos/card.jpg",
-    description: "Cute chaos and high-volume events from the Fluffle universe.",
+    image: "https://pbs.twimg.com/profile_images/1972672305336569856/JLjBcagi.jpg",
+    description: "Home of the cutest (and most savage) bunnies on Monad. Collect, breed, battle, fluff.",
     url: "https://x.com/fluffleworld"
   },
   {
@@ -256,8 +256,8 @@ export default function Dashboard() {
     reward: "18,000 WONs",
     status: "completed",
     time: "Completed",
-    image: "logos/card.jpg",
-    description: "Brotherhood-driven gaming where bros battled for victory.",
+    image: "https://pbs.twimg.com/profile_images/1983519855279042560/ntgzrOaU.jpg",
+    description: "For the bros, by the bros. Gaming, memes, gains — pure brotherhood on Monad.",
     url: "https://x.com/bro_dot_fun"
   },
   {
@@ -266,8 +266,8 @@ export default function Dashboard() {
     reward: "55,000 WONs",
     status: "completed",
     time: "Completed",
-    image: "logos/card.jpg",
-    description: "Elite sports betting tournaments with massive prize pools.",
+    image: "https://pbs.twimg.com/profile_images/1802788848956506112/KJnlcaQj.jpg",
+    description: "Elite on-chain sports betting. Parlay everything, leverage your takes, get paid instantly.",
     url: "https://x.com/RareBetSports"
   }
 ];
