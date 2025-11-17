@@ -32,21 +32,17 @@ const Home: React.FC = () => {
     });
 
     // 2. Animate .wons-card elements tied to scroll position
- gsap.from(".wons-card", {
+  gsap.from(".wons-card", {
   opacity: 0,
-  y: 200,
-  rotation: -15,        // stronger rotation
-  rotateX: 25,          // 3D tilt
-  scale: 0.85,          // slight zoom-in effect
-  transformOrigin: "center center",
-  stagger: 0.15,
-  ease: "power3.out",
-
+  y: 0,
+  rotation: (i) => gsap.utils.random(-10,5), // 🔥 random per card
+  stagger: 0.1,
+  ease: "power2.out",
   scrollTrigger: {
     trigger: ".wons-grid",
-    start: "top bottom-=20",
+    start: "top bottom-=100",
     end: "top center",
-    scrub: 1,           // ties everything to scroll
+    scrub: 1,
   }
 });
 
