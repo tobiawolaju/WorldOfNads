@@ -60,7 +60,7 @@ export const ThreeScene = ({ twitter, wallets, earned, onLogout }) => {
 
   useEffect(() => {
     const handleResize = () =>
-      setCameraZ(window.innerWidth < 768 ? 2 : 3);
+      setCameraZ(window.innerWidth < 768 ? 9 : 8);
 
     handleResize();
     window.addEventListener("resize", handleResize);
