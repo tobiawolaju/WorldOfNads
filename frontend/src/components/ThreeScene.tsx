@@ -45,11 +45,11 @@ const Chicken: React.FC<ChickenProps> = ({ position, rotation, scale = 15 }) => 
 
 // --- Main Scene Component ---
 export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned, onLogout }) => {
-  const [cameraZ, setCameraZ] = useState(18);
+  const [cameraZ, setCameraZ] = useState(22);
 
   useEffect(() => {
     const handleResize = () => {
-      setCameraZ(window.innerWidth < 768 ? 24 : 100);
+      setCameraZ(window.innerWidth < 768 ? 22 : 20);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -133,7 +133,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
         ))}
       </Suspense>
 
-      <OrbitControls enableZoom={false} autoRotate={false} />
+      <OrbitControls enableZoom={true} autoRotate={false} />
     </Canvas>
   );
 };
