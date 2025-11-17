@@ -24,27 +24,32 @@ const Home: React.FC = () => {
   useGSAP(() => {
     // 1. Animate .title on page load (no change)
     gsap.from(titleRef.current, {
-      duration: 1.5,
+      duration: 2.0,
       opacity: 0,
       y: 50,
       ease: "power3.out",
-      delay: 0.2,
+      delay: 0.5,
     });
 
     // 2. Animate .wons-card elements tied to scroll position
-    gsap.from(".wons-card", {
-      opacity: 0,
-      y: 100,
-      rotation: -5,
-      stagger: 0.1, // A smaller stagger often feels better with scrub
-      ease: "power2.out",
-      scrollTrigger: {
-        trigger: ".wons-grid",
-        start: "top bottom-=100", // Start when top of grid is 100px from bottom of viewport
-        end: "center center",    // End when center of grid hits viewport center
-        scrub: 1,                // <-- KEY CHANGE: Ties animation to scrollbar
-      }
-    });
+ gsap.from(".wons-card", {
+  opacity: 0,
+  y: 200,
+  rotation: -15,        // stronger rotation
+  rotateX: 25,          // 3D tilt
+  scale: 0.85,          // slight zoom-in effect
+  transformOrigin: "center center",
+  stagger: 0.15,
+  ease: "power3.out",
+
+  scrollTrigger: {
+    trigger: ".wons-grid",
+    start: "top bottom-=20",
+    end: "top center",
+    scrub: 1,           // ties everything to scroll
+  }
+});
+
 
     // 3. Animate buttons on hover (no change)
     const animateButtonHover = (target: Element, glowColor: string) => {
