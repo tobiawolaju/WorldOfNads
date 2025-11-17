@@ -42,7 +42,7 @@ export const ThreeScene: React.FC = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      setCameraZ(window.innerWidth < 768 ? 4 : 3);
+      setCameraZ(window.innerWidth < 768 ? 8 : 4);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
