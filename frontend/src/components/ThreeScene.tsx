@@ -51,9 +51,9 @@ interface NadModelProps {
 const NadModel: React.FC<NadModelProps> = ({
   position = [0, 0, 3],
   rotation = [0, 2, 0],
-  scale = 0.1,
+  scale = 5, // scaled 5x larger
 }) => {
-  const fbx = useFBX("/Nad.fbx");
+  const fbx = useFBX("/nad.fbx");
   const model = fbx.clone();
   return (
     <primitive
@@ -126,11 +126,11 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
 
       <Suspense fallback={null}>
         {/* Center Nad Model */}
-        <NadModel scale={1} /> 
+        <NadModel scale={5} /> 
 
         {/* Offset ID Card slightly along Z */}
         <CardRig>
-          <group position={[0, 0, 3]}> {/* Adjust this offset as needed */}
+          <group position={[0, 0, 3]}>
             <IdCard
               twitter={twitter}
               wallets={wallets}
@@ -152,8 +152,6 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
         enableRotate={true}
         mouseButtons={{
           LEFT: THREE.MOUSE.ROTATE,
-          MIDDLE: null,
-          RIGHT: null,
         }}
       />
     </Canvas>
