@@ -50,7 +50,7 @@ interface NadModelProps {
 }
 const NadModel: React.FC<NadModelProps> = ({
   position = [0, 0, 3],
-  rotation = [0, 0, 0],
+  rotation = [0, 2, 0],
   scale = 0.1,
 }) => {
   const fbx = useFBX("/Nad.fbx");
