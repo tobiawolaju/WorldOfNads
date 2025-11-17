@@ -9,6 +9,7 @@ const NadModel = () => {
 
   // Apply simple scale
   model.scale.set(0.5, 0.5, 0.5);
+  model.position.set(0,0,0);
 
   return <primitive object={model} />;
 };
