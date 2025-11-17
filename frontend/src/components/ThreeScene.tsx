@@ -42,11 +42,11 @@ const Chicken: React.FC<ChickenProps> = ({ position, rotation, scale = 15 }) => 
   );
 };
 
-// --- Nad Model Component with automatic scale ---
+// --- Nad Model Component with proper scaling & centering ---
 interface NadModelProps {
   position?: [number, number, number];
   rotation?: [number, number, number];
-  targetSize?: number; // largest dimension in Three.js units
+  targetSize?: number; // max dimension in Three.js units
 }
 const NadModel: React.FC<NadModelProps> = ({
   position = [0, 0, 0],
@@ -60,18 +60,20 @@ const NadModel: React.FC<NadModelProps> = ({
   const box = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
   box.getSize(size);
+  const center = new THREE.Vector3();
+  box.getCenter(center);
 
-  // Normalize largest dimension to targetSize
+  // Center the model at 0,0,0
+  model.position.sub(center);
+
+  // Compute scale factor to fit targetSize
   const maxDim = Math.max(size.x, size.y, size.z);
-  const normalizedScale = targetSize / maxDim;
+  const scaleFactor = targetSize / maxDim;
 
   return (
-    <primitive
-      object={model}
-      position={position}
-      rotation={rotation}
-      scale={new THREE.Vector3(normalizedScale, normalizedScale, normalizedScale)}
-    />
+    <group position={position} rotation={rotation} scale={[scaleFactor, scaleFactor, scaleFactor]}>
+      <primitive object={model} />
+    </group>
   );
 };
 
@@ -123,10 +125,10 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
     });
   }, [chickenCount, radius, randomSeed]);
 
-  // Desired target size for Nad model
+  // Nad model target size
   const nadTargetSize = 5;
-  // Offset the card to be in front of Nad model
-  const cardOffsetZ = nadTargetSize / 2 + 1; // 1 unit in front
+  // Card offset slightly in front of Nad model
+  const cardOffsetZ = nadTargetSize / 2 + 1;
 
   return (
     <Canvas
@@ -143,7 +145,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
         {/* Center Nad Model */}
         <NadModel targetSize={nadTargetSize} />
 
-        {/* Offset ID Card slightly in front of Nad model */}
+        {/* ID Card slightly in front of Nad model */}
         <CardRig>
           <group position={[0, 0, cardOffsetZ]}>
             <IdCard
