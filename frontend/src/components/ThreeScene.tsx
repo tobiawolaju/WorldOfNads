@@ -43,8 +43,6 @@ export const ThreeScene: React.FC = () => {
         enableRotate={true}
         mouseButtons={{
           LEFT: THREE.MOUSE.ROTATE,
-          MIDDLE: null,
-          RIGHT: null,
         }}
       />
     </Canvas>
