@@ -133,7 +133,17 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
         ))}
       </Suspense>
 
-      <OrbitControls enableZoom={true} autoRotate={false} />
-    </Canvas>
+      <OrbitControls 
+  enableZoom={false}
+  enablePan={false}
+  enableRotate={true}   // keep rotation only
+  mouseButtons={{
+    LEFT: THREE.MOUSE.ROTATE,
+    MIDDLE: null,
+    RIGHT: null,
+  }}
+/>
+
+      </Canvas>
   );
 };
