@@ -100,147 +100,178 @@ export default function Dashboard() {
 
   // MATCHES
   const matches: Match[] = [
-    {
-      id: 9,
-      sponsor: "World of Nads",
-      reward: "50,000 WONs",
-      status: "live",
-      time: "Live Now",
-      image: "logos/card.jpg",
-      description: "A chaotic arena where agility and strategy collide in every round.",
-      url: "https://twitter.com/worldofnads"
-    },
-    {
-      id: 10,
-      sponsor: "Iron Legion Arena",
-      reward: "22,000 WONs",
-      status: "live",
-      time: "Live Now",
-      image: "logos/card.jpg",
-      description: "Metal, might, and mechanical warriors in a high-stakes showdown.",
-      url: "https://twitter.com/ironlegionarena"
-    },
-    {
-      id: 11,
-      sponsor: "House of Havoc",
-      reward: "14,500 WONs",
-      status: "live",
-      time: "Live Now",
-      image: "logos/card.jpg",
-      description: "Pure destruction and unpredictable matchups inside the Havoc halls.",
-      url: "https://twitter.com/houseofhavoc"
-    },
-    {
-      id: 1,
-      sponsor: "Kitio Labs",
-      reward: "5,000 WONs",
-      status: "upcoming",
-      time: "Starts in 3h",
-      image: "logos/card.jpg",
-      description: "Experimental combat simulations powered by cutting-edge tech.",
-      url: "https://twitter.com/kitiolabs"
-    },
-    {
-      id: 2,
-      sponsor: "Monad Testnet",
-      reward: "10,000 WONs",
-      status: "upcoming",
-      time: "Starts in 5h",
-      image: "logos/card.jpg",
-      description: "High-speed duels hosted on next-gen blockchain infrastructure.",
-      url: "https://twitter.com/monad_xyz"
-    },
-    {
-      id: 3,
-      sponsor: "Astra Robotics",
-      reward: "7,500 WONs",
-      status: "upcoming",
-      time: "Tomorrow 14:00",
-      image: "logos/card.jpg",
-      description: "Precision robotic challengers engineered for flawless combat.",
-      url: "https://twitter.com/astrarobotics"
-    },
-    {
-      id: 4,
-      sponsor: "Covenant Core",
-      reward: "25,000 WONs",
-      status: "upcoming",
-      time: "Tomorrow 18:30",
-      image: "logos/card.jpg",
-      description: "Strategic alliances clash in a battle of factions and power.",
-      url: "https://twitter.com/covenantcore"
-    },
-    {
-      id: 5,
-      sponsor: "NOVA Protocol",
-      reward: "13,000 WONs",
-      status: "upcoming",
-      time: "In 2 Days",
-      image: "logos/card.jpg",
-      description: "A cosmic-themed arena where energy, timing, and skill decide all.",
-      url: "https://twitter.com/novaprotocol"
-    },
-    {
-      id: 6,
-      sponsor: "EtherGuard Guild",
-      reward: "9,800 WONs",
-      status: "upcoming",
-      time: "In 3 Days",
-      image: "logos/card.jpg",
-      description: "Guardians of the digital realm face off in tactical matchups.",
-      url: "https://twitter.com/etherguardguild"
-    },
-    {
-      id: 7,
-      sponsor: "Blocksmith Arena",
-      reward: "6,400 WONs",
-      status: "completed",
-      time: "Completed",
-      image: "logos/card.jpg",
-      description: "Forged champions battled in a handcrafted arena of steel and code.",
-      url: "https://twitter.com/blocksmitharena"
-    },
-    {
-      id: 8,
-      sponsor: "Elysium Works",
-      reward: "18,200 WONs",
-      status: "completed",
-      time: "Completed",
-      image: "logos/card.jpg",
-      description: "A serene battlefield where elegance meets efficient destruction.",
-      url: "https://twitter.com/elysiumworks"
-    },
-    {
-      id: 12,
-      sponsor: "MEGA Labs Clash",
-      reward: "33,000 WONs",
-      status: "completed",
-      time: "Completed",
-      image: "logos/card.jpg",
-      description: "Massive-scale prototypes unleashed in an ultimate tech duel.",
-      url: "https://twitter.com/megalabs"
-    },
-    {
-      id: 13,
-      sponsor: "Dark Circuit League",
-      reward: "20,000 WONs",
-      status: "completed",
-      time: "Completed",
-      image: "logos/card.jpg",
-      description: "Shadow-tier competitors fought through electrifying circuits.",
-      url: "https://twitter.com/darkcircuitleague"
-    },
-    {
-      id: 14,
-      sponsor: "CryptoThrone Trials",
-      reward: "42,000 WONs",
-      status: "completed",
-      time: "Completed",
-      image: "logos/card.jpg",
-      description: "Only the strongest contenders advanced toward the digital throne.",
-      url: "https://twitter.com/cryptothronetrials"
-    }
-  ];
+ {
+  id: 1,
+  sponsor: "Monad",
+  reward: "10 MON",
+  status: "upcoming",
+  time: "Upcoming",
+  image: "logos/card.jpg",
+  description: "Explore every protocol on Monad inside a living 3D world and earn real assets for discovering, completing quests, and uncovering hidden gems.",
+  url: "https://x.com/monad_xyz"
+},
+{
+    id: 17,
+    sponsor: "LootGO",
+    reward: "50,000 WONs",
+    status: "live",
+    time: "Live Now",
+    image: "logos/card.jpg",
+    description: "Fast-paced reward drops from one of the biggest on-chain discovery apps.",
+    url: "https://x.com/lootgo_official"
+  },
+  {
+    id: 2,
+    sponsor: "Nad.fun",
+    reward: "22,000 WONs",
+    status: "live",
+    time: "Liveitems Now",
+    image: "logos/card.jpg",
+    description: "The wildest memefuel arena on-chain, unleashing chaos every match.",
+    url: "https://x.com/naddotfun"
+  },
+  {
+    id: 3,
+    sponsor: "Kizzy Mobile",
+    reward: "14,500 WONs",
+    status: "live",
+    time: "Live Now",
+    image: "logos/card.jpg",
+    description: "Mobile-first Web3 experience powering rapid-fire rewards challenges.",
+    url: "https://x.com/kizzymobile"
+  },
+  {
+    id: 4,
+    sponsor: "Kuru Exchange",
+    reward: "5,000 WONs",
+    status: "upcoming",
+    time: "Starts in 3h",
+    image: "logos/card.jpg",
+    description: "A lightning-fast perp exchange dropping competitive trading rewards.",
+    url: "https://x.com/KuruExchange"
+  },
+  {
+    id: 5,
+    sponsor: "Lumiterra",
+    reward: "10,000 WONs",
+    status: "upcoming",
+    time: "Starts in 5h",
+    image: "logos/card.jpg",
+    description: "A top-tier gaming world bringing immersive quests with big rewards.",
+    url: "https://x.com/LumiterraGame"
+  },
+  {
+    id: 6,
+    sponsor: "Levr Bet",
+    reward: "7,500 WONs",
+    status: "upcoming",
+    time: "Tomorrow: 14:00",
+    image: "logos/card.jpg",
+    description: "High-stakes prediction battles for sharp bettors and sports fans.",
+    url: "https://x.com/Levr_Bet"
+  },
+  {
+    id: 7,
+    sponsor: "Drake Exchange",
+    reward: "25,000 WONs",
+    status: "upcoming",
+    time: "Tomorrow: 18:30",
+    image: "logos/card.jpg",
+    description: "A new-wave exchange hosting rapid-fire trading and reward clashes.",
+    url: "https://x.com/DrakeExchange"
+  },
+  {
+    id: 8,
+    sponsor: "Omnia Explorer",
+    reward: "13,000 WONs",
+    status: "upcoming",
+    time: "In 2 Days",
+    image: "logos/card.jpg",
+    description: "A deep-dive blockchain explorer with gamified on-chain discovery.",
+    url: "https://x.com/ExploreOmnia"
+  },
+  {
+    id: 9,
+    sponsor: "SeerTrade",
+    reward: "9,800 WONs",
+    status: "upcoming",
+    time: "In 3 Days",
+    image: "logos/card.jpg",
+    description: "A powerful trading terminal turning precision into rewards.",
+    url: "https://x.com/seertrade"
+  },
+  {
+    id: 10,
+    sponsor: "Monday Trade",
+    reward: "6,400 WONs",
+    status: "completed",
+    time: "Completed",
+    image: "logos/card.jpg",
+    description: "Simple, automated trading boosts that wrapped up in style.",
+    url: "https://x.com/MondayTrade_"
+  },
+  {
+    id: 11,
+    sponsor: "Symphony",
+    reward: "18,200 WONs",
+    status: "completed",
+    time: "Completed",
+    image: "logos/card.jpg",
+    description: "Social trading powered by flows, signals, and crowd-backed rewards.",
+    url: "https://x.com/symphonyio"
+  },
+  {
+    id: 12,
+    sponsor: "Kinetik AI",
+    reward: "33,000 WONs",
+    status: "completed",
+    time: "Completed",
+    image: "logos/card.jpg",
+    description: "AI-powered movement challenges that brought intense competition.",
+    url: "https://x.com/KINETK_AI"
+  },
+  {
+    id: 13,
+    sponsor: "TeleMafia",
+    reward: "20,000 WONs",
+    status: "completed",
+    time: "Completed",
+    image: "logos/card.jpg",
+    description: "A mafia-style social game where deception won the biggest rewards.",
+    url: "https://x.com/TeleMafia"
+  },
+  {
+    id: 14,
+    sponsor: "Fluffle World",
+    reward: "42,000 WONs",
+    status: "completed",
+    time: "Completed",
+    image: "logos/card.jpg",
+    description: "Cute chaos and high-volume events from the Fluffle universe.",
+    url: "https://x.com/fluffleworld"
+  },
+  {
+    id: 15,
+    sponsor: "BRO.fun",
+    reward: "18,000 WONs",
+    status: "completed",
+    time: "Completed",
+    image: "logos/card.jpg",
+    description: "Brotherhood-driven gaming where bros battled for victory.",
+    url: "https://x.com/bro_dot_fun"
+  },
+  {
+    id: 16,
+    sponsor: "RareBet Sports",
+    reward: "55,000 WONs",
+    status: "completed",
+    time: "Completed",
+    image: "logos/card.jpg",
+    description: "Elite sports betting tournaments with massive prize pools.",
+    url: "https://x.com/RareBetSports"
+  }
+];
+
 
   const filteredMatches = matches.filter(m => m.status === filter);
 
