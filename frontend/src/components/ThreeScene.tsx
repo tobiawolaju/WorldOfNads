@@ -1,7 +1,8 @@
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useFBX } from "@react-three/drei";
-import { SkeletonUtils } from "three/examples/jsm/utils/SkeletonUtils.js";
+
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import * as THREE from "three";
 
 // === MODEL COMPONENT ===
