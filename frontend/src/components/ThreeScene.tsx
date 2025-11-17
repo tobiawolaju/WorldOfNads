@@ -126,7 +126,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
 
       <Suspense fallback={null}>
         {/* Center Nad Model */}
-        <NadModel scale={0.1} /> 
+        <NadModel scale={0.01} /> 
 
         {/* Offset ID Card slightly along Z */}
         <CardRig>
