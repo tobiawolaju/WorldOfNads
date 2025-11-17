@@ -2,7 +2,7 @@
 .dashboard-wrapper {
   display: flex;
   width: 100vw;
-  height: auto;
+  height: 100vh;
   font-family: 'Font1', sans-serif;
   overflow: hidden;
 }
@@ -75,12 +75,12 @@
 
   .left-3d-section {
     width: 100%;
-    height: 50%;
+    height: 40%;
   }
 
   .right-info-section {
     width: 100%;
-    height: 50%;
+    height: 60%;
     border-left: none;
     border-top: none;
   }
