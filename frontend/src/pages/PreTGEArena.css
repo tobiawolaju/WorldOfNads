@@ -149,3 +149,178 @@ color: #ffffff;
   color: #27044e;
 }
 
+
+
+
+
+.pretge-container {
+  text-align: center;
+  padding: 40px 20px;
+  font-family: "Font1", sans-serif;
+}
+
+.pretge-title {
+  font-size: 15vw;
+  font-weight: 800;
+  margin-bottom: 20px;
+  font-family: Font2;
+  color: #000000;
+}
+
+.pretge-intro {
+  max-width: 700px;
+  margin: 0 auto 50px auto;
+  color: rgba(0, 0, 0, 0.75);
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+}
+
+.pretge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.pretge-card {
+  border-radius: 18px;
+  border: 1px solid rgba(150, 120, 255, 0.15);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 25px 20px;
+  transition: all 0.25s ease;
+}
+
+.pretge-card:hover {
+  transform: translateY(-5px);
+  background: rgb(179, 65, 255);
+  transition: all 0.25s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+/* Text color changes on hover */
+.pretge-card:hover .pretge-project-name {
+  color: #ffffff;
+  font-family: Font2;
+  font-size: 2.5rem;
+}
+
+.pretge-card:hover .pretge-tagline {
+  color: #ffffff69;
+}
+.pretge-card:hover .pretge-description {
+  color: #ffffff;
+}
+
+.pretge-card:hover .pretge-meta {
+  color: #fffffd;
+  font-size: large;
+  font-weight: bold;
+}
+
+.pretge-card:hover .pretge-stage {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.pretge-card:hover .pretge-handle a {
+  background-color: #ffffff36;
+  padding: 3px 10px;
+  border-radius: 50px;
+  color: #ffffff;
+}
+
+.pretge-project-name {
+  font-size: 1.7rem;
+  font-weight: bold;
+  color: #27044e;
+  margin-bottom: 5px;
+}
+
+.pretge-tagline {
+  font-size: 1rem;
+  color: #00000069;
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.pretge-description {
+  color: rgba(0, 0, 0, 0.75);
+  font-size: 1rem;
+  margin-bottom: 15px;
+}
+
+.pretge-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.pretge-stage {
+  background: #9d51ff;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 10px;
+  font-weight: bold;
+  text-transform: capitalize; /* Makes 'live', 'upcoming' look nicer */
+}
+
+.pretge-launch {
+  font-weight: 500;
+}
+
+.pretge-logo {
+  width: 70px;
+  height: 70px;
+  border-radius: 12px;
+  object-fit: cover;
+  margin-bottom: 10px;
+  border: 2px solid #e7e7e7;
+}
+
+.pretge-handle {
+  text-align: right;
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+.pretge-handle a {
+  color: #585bff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.pretge-handle a:hover {
+  color: #27044e;
+}
+
+/* --- NEW STYLES FOR FILTER BUTTONS --- */
+
+.filter-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.filter-buttons button {
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: 1px solid #9d51ff;
+  background-color: #f0e6ff;
+  color: #9d51ff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: "Font1", sans-serif; /* Consistent font */
+}
+
+.filter-buttons button:hover {
+  background-color: #e0c8ff;
+}
+
+.filter-buttons button.active {
+  background-color: #9d51ff;
+  color: white;
+}

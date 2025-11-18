@@ -8,7 +8,7 @@ const DexSwap: React.FC = () => {
   const [toAmount, setToAmount] = useState<string>("");
 
   // Dummy conversion rate
-  const conversionRate: number = 2.32; // 1 WON = 2.32 USDC
+  const conversionRate: number = 3.32; // 1 WON = 2.32 USDC
 
   const handleSwapDirection = (): void => {
     setFromToken(toToken);
@@ -39,6 +39,11 @@ const DexSwap: React.FC = () => {
     }
   };
 
+  const handleSelectWallet = (): void => {
+    // This is where you would trigger your wallet connection logic
+    alert("Wallet selection modal would open here.");
+  };
+
   const handleSwap = (): void => {
     const amountNum = parseFloat(fromAmount);
     if (!amountNum || amountNum <= 0) {
@@ -53,10 +58,10 @@ const DexSwap: React.FC = () => {
     <div className="swap-container">
       <div style={{ height: "60px" }}></div>
 
-<p className="swap-subtitle">
-  Instantly swap WON for USDC — your bridge between the World of Nads and the wider crypto world.
-</p>
-
+      <p className="swap-subtitle">
+        Instantly swap WON for USDC — your bridge between the World of Nads and
+        the wider crypto world.
+      </p>
 
       <div className="swap-card">
         <div className="swap-row">
@@ -77,6 +82,11 @@ const DexSwap: React.FC = () => {
           <label>{toToken}</label>
           <input type="number" value={toAmount} readOnly />
         </div>
+
+        {/* --- Select Wallet Button --- */}
+        <button className="select-wallet-btn" onClick={handleSelectWallet}>
+          Select Wallet
+        </button>
 
         <button className="swap-btn" onClick={handleSwap}>
           Swap

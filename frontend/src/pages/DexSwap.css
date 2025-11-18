@@ -1,7 +1,7 @@
 .swap-container {
   text-align: center;
   padding: 20px;
-  font-family: 'Font1', sans-serif;
+  font-family: "Font1", sans-serif;
 }
 
 .swap-title {
@@ -68,6 +68,24 @@
   transform: rotate(180deg);
 }
 
+/* --- New Button Style --- */
+.select-wallet-btn {
+  background: #ffffff;
+  border: 1px solid #dcdcdc; /* Light border for definition */
+  border-radius: 50px;
+  color: #333333; /* Dark text for contrast */
+  font-weight: bold;
+  padding: 12px 40px;
+  cursor: pointer;
+  transition: 0.3s ease;
+  width: 100%;
+}
+
+.select-wallet-btn:hover {
+  transform: scale(1.05);
+  background: #f7f7f7; /* Slight color change on hover */
+}
+
 .swap-btn {
   background: linear-gradient(90deg, #7a3eff, #b48cff);
   border: none;
@@ -78,6 +96,7 @@
   cursor: pointer;
   transition: 0.3s ease;
   width: 100%;
+  margin-top: 15px; /* Added margin for spacing */
 }
 
 .swap-btn:hover {

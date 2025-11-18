@@ -118,7 +118,7 @@ export default function Dashboard() {
   const wallets = (user.linkedAccounts?.filter(acc => acc.type === "wallet") || []) as Wallet[];
 
   // MATCHES
-const matches: Match[] = [
+ const matches: Match[] = [
   {
     id: 1,
     sponsor: "Monad",
