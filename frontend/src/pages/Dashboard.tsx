@@ -69,6 +69,17 @@ export default function Dashboard() {
     };
   }, []);
 
+
+  // Auto-scroll match details into view when a match is selected
+useEffect(() => {
+  if (!selectedMatch) return;
+  window.scrollTo({
+    top: document.body.scrollHeight,
+    behavior: "smooth",
+  });
+}, [selectedMatch]);
+
+
   const handlePlayClick = () => {
     if (!selectedMatch) return;
 
