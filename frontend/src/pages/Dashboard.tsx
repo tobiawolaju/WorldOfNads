@@ -71,17 +71,25 @@ export default function Dashboard() {
 
 
   // Auto-scroll match details into view when a match is selected
-useEffect(() => {
-  if (!selectedMatch) return;
-  window.scrollTo({
-    top: document.body.scrollHeight,
-    behavior: "smooth",
-  });
-}, [selectedMatch]);
+  useEffect(() => {
+    if (!selectedMatch) return;
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [selectedMatch]);
 
 
   const handlePlayClick = () => {
     if (!selectedMatch) return;
+
+    // --- MODIFICATION START ---
+    // Smooth scroll to the top of the page when play/cancel is clicked
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+    // --- MODIFICATION END ---
 
     if (playButtonState === "idle") {
       setPlayButtonState("counting");
