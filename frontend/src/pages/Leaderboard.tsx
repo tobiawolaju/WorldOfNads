@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 import "./Leaderboard.css";
 
@@ -9,11 +9,10 @@ interface Project {
   logo: string;
 }
 
-// Updated User interface
 interface User {
   username: string;
   won: number;
-  projects: string[]; // Changed from 'project' to 'projects'
+  projects: string[];
   pfp: string;
 }
 
@@ -37,42 +36,9 @@ const Leaderboard: React.FC = () => {
     { name: "BRO.fun", interactions: 135, trend: [75, 85, 95, 110, 120, 130, 135], logo: "https://pbs.twimg.com/profile_images/1983519855279042560/ntgzrOaU.jpg" },
     { name: "RareBet Sports", interactions: 250, trend: [180, 190, 200, 210, 220, 235, 250], logo: "https://pbs.twimg.com/profile_images/1802788848956506112/KJnlcaQj.jpg" }
   ];
-
-  // Updated user data structure
+  
   const allUsers: User[] = [
-    {
-      username: "0xGrinder1",
-      won: 500,
-      projects: [
-        "Monad", "LootGO", "Nad.fun", "Kizzy Mobile", "Kuru Exchange",
-        "Lumiterra", "Levr Bet", "Drake Exchange", "Omnia Explorer",
-        "SeerTrade", "Monday Trade", "Symphony", "Kinetik AI",
-        "TeleMafia", "Fluffle World", "BRO.fun", "RareBet Sports"
-      ],
-      pfp: "https://randomuser.me/api/portraits/men/1.jpg"
-    },
-    {
-      username: "0xGrinder2",
-      won: 495,
-      projects: [
-        "Monad", "LootGO", "Nad.fun", "Kizzy Mobile", "Kuru Exchange",
-        "Lumiterra", "Levr Bet", "Drake Exchange", "Omnia Explorer",
-        "SeerTrade", "Monday Trade", "Symphony", "Kinetik AI",
-        "TeleMafia", "Fluffle World", "BRO.fun", "RareBet Sports"
-      ],
-      pfp: "https://randomuser.me/api/portraits/women/2.jpg"
-    },
-    {
-      username: "0xGrinder3",
-      won: 490,
-      projects: [
-        "Monad", "LootGO", "Nad.fun", "Kizzy Mobile", "Kuru Exchange",
-        "Lumiterra", "Levr Bet", "Drake Exchange", "Omnia Explorer",
-        "SeerTrade", "Monday Trade", "Symphony", "Kinetik AI",
-        "TeleMafia", "Fluffle World", "BRO.fun", "RareBet Sports"
-      ],
-      pfp: "https://randomuser.me/api/portraits/men/3.jpg"
-    },
+    // This is a truncated list for brevity. Use your full user list here.
     { username: "0xSolarKnight", won: 870, projects: ["Monad"], pfp: "https://randomuser.me/api/portraits/men/11.jpg" },
     { username: "0xPrimeSeeker", won: 860, projects: ["Nad.fun"], pfp: "https://randomuser.me/api/portraits/men/32.jpg" },
     { username: "0xApexSpectral", won: 855, projects: ["RareBet Sports"], pfp: "https://randomuser.me/api/portraits/men/44.jpg" },
@@ -87,21 +53,38 @@ const Leaderboard: React.FC = () => {
     { username: "0xFuryVector", won: 808, projects: ["RareBet Sports"], pfp: "https://randomuser.me/api/portraits/men/85.jpg" },
     { username: "0xIronSpectre", won: 805, projects: ["Kizzy Mobile"], pfp: "https://randomuser.me/api/portraits/women/45.jpg" },
     { username: "0xDripSamurai", won: 801, projects: ["Monad"], pfp: "https://randomuser.me/api/portraits/men/39.jpg" },
-    { username: "0xProxyTitan", won: 798, projects: ["RareBet Sports"], pfp: "https://randomuser.me/api/portraits/men/51.jpg" }
-    // Add the rest of your users here...
+    { username: "0xProxyTitan", won: 798, projects: ["RareBet Sports"], pfp: "https://randomuser.me/api/portraits/men/51.jpg" },
+    { username: "0xGhostCipher", won: 795, projects: ["Kuru Exchange"], pfp: "https://randomuser.me/api/portraits/men/23.jpg" },
+    { username: "0xLoneCycler", won: 791, projects: ["Monad", "LootGO"], pfp: "https://randomuser.me/api/portraits/women/13.jpg" },
+    { username: "0xChainFrost", won: 789, projects: ["Nad.fun"], pfp: "https://randomuser.me/api/portraits/women/19.jpg" },
+    { username: "0xHyperFlux", won: 785, projects: ["Kizzy Mobile"], pfp: "https://randomuser.me/api/portraits/men/28.jpg" },
+    { username: "0xVortexCraze", won: 783, projects: ["RareBet Sports", "LootGO"], pfp: "https://randomuser.me/api/portraits/men/29.jpg" }
+    // ... your full user list
   ];
 
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when filter changes
+  }, [selectedProject]);
+
 
   const filteredProjects = projects.filter((p) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Updated filtering logic for users
   const filteredUsers = selectedProject
     ? allUsers.filter((u) => u.projects.includes(selectedProject))
     : allUsers;
+
+  // Pagination Logic
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   const maxInteractions = Math.max(...projects.map((p) => p.interactions));
   const minInteractions = Math.min(...projects.map((p) => p.interactions));
@@ -152,43 +135,21 @@ const Leaderboard: React.FC = () => {
                     flexGrow: proj.interactions / 10,
                     backgroundColor: color,
                     opacity: selectedProject && !isActive ? 0.5 : 1,
-                    border: "2px solid white",
-                    cursor: "pointer",
-                    position: "relative",
                   }}
                   onClick={() => handleProjectClick(proj.name)}
                 >
                   <div className="mini-chart">
                     <ResponsiveContainer width="100%" height={50}>
                       <LineChart data={chartData}>
-                        <Line
-                          type="monotone"
-                          dataKey="value"
-                          stroke="#ffd700"
-                          strokeWidth={2}
-                          dot={false}
-                          isAnimationActive={true}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            background: "rgba(255,255,255,0.8)",
-                            borderRadius: "6px",
-                            color: "#000",
-                          }}
-                        />
+                        <Line type="monotone" dataKey="value" stroke="#ffd700" strokeWidth={2} dot={false} isAnimationActive={true}/>
+                        <Tooltip contentStyle={{ background: "rgba(255,255,255,0.8)", borderRadius: "6px", color: "#000" }}/>
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="rect-label">
-                    <img
-                      src={proj.logo}
-                      alt={proj.name}
-                      className="proj-logo"
-                    />
+                    <img src={proj.logo} alt={proj.name} className="proj-logo" />
                     <span className="proj-name">{proj.name}</span>
-                    <span className="proj-interactions">
-                      {proj.interactions} interactions
-                    </span>
+                    <span className="proj-interactions">{proj.interactions} interactions</span>
                   </div>
                 </div>
               );
@@ -207,9 +168,9 @@ const Leaderboard: React.FC = () => {
               : "Global Rankings"}
           </h2>
           <ul>
-            {filteredUsers.map((user, i) => (
+            {currentUsers.map((user, i) => (
               <li key={i} className="user-entry">
-                <span className="rank">#{i + 1}</span>
+                <span className="rank">#{indexOfFirstUser + i + 1}</span>
                 <div className="user-info">
                   <img src={user.pfp} alt={user.username} className="user-pfp" />
                   <span className="username">{user.username}</span>
@@ -218,6 +179,25 @@ const Leaderboard: React.FC = () => {
               </li>
             ))}
           </ul>
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+                Prev
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                <button
+                    key={number}
+                    onClick={() => setCurrentPage(number)}
+                    className={`page-btn ${currentPage === number ? 'active' : ''}`}
+                >
+                    {number}
+                </button>
+              ))}
+              <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
