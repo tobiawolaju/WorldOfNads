@@ -5,92 +5,191 @@ import { OrbitControls, useFBX } from "@react-three/drei";
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import * as THREE from "three";
 
-// === MODEL COMPONENT ===
-const NadModel = () => {
+import CardRig from "./CardRig";
+import { IdCard } from "./IdCard";
+
+// --- Prop Types ---
+interface Twitter {
+  profilePictureUrl?: string;
+  name?: string;
+  username?: string;
+}
+
+interface Wallet {
+  address: string;
+}
+
+interface ThreeSceneProps {
+  twitter: Twitter | undefined;
+  wallets: Wallet[];
+  earned: number;
+  onLogout: () => void;
+}
+
+// --- Chicken Component ---
+interface ChickenProps {
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale?: number;
+}
+const Chicken: React.FC<ChickenProps> = ({ position, rotation, scale = 6 }) => { // Scaled down by 60% from 15
+  const fbx = useFBX("/Chicken.fbx");
+  // Simple clone is fine since there's no animation rig
+  const model = useMemo(() => fbx.clone(), [fbx]);
+  return (
+    <primitive
+      object={model}
+      position={position}
+      rotation={rotation}
+      scale={scale} // Apply scale directly
+    />
+  );
+};
+
+// --- Animated Nad Model Component ---
+interface NadModelProps {
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: number;
+}
+const NadModel: React.FC<NadModelProps> = ({
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  scale = 1,
+}) => {
   const fbx = useFBX("/nad.fbx");
 
-  // Clone FBX to fix skeleton issues
+  // Clone FBX using SkeletonUtils to preserve animation rig
   const model = useMemo(() => SkeletonUtils.clone(fbx), [fbx]);
-
-  // Mixer for animations
   const mixer = useMemo(() => new THREE.AnimationMixer(model), [model]);
 
-  // Center & scale automatically
+  // Auto-center and normalize scale internally
   useEffect(() => {
-    // Compute bounding box
     const box = new THREE.Box3().setFromObject(model);
     const size = new THREE.Vector3();
     box.getSize(size);
-
-    // Scale model to roughly 1 unit tall
     const maxDim = Math.max(size.x, size.y, size.z);
-    const scaleFactor = 1 / maxDim;
-    model.scale.setScalar(scaleFactor);
-
-    // Center model at origin
+    if (maxDim > 0) {
+      const scaleFactor = 1 / maxDim;
+      model.scale.setScalar(scaleFactor);
+    }
     const center = new THREE.Vector3();
     box.getCenter(center);
-    model.position.sub(center.multiplyScalar(scaleFactor));
+    model.position.sub(center.multiplyScalar(model.scale.x));
   }, [model]);
 
-  // Play first animation in loop
+  // Play first animation
   useEffect(() => {
-    if (!model.animations || model.animations.length === 0) {
-      console.warn("No animations found in FBX");
-      return;
-    }
-
-    console.log("Animations:", model.animations.map(a => a.name));
-
+    if (!model.animations || model.animations.length === 0) return;
     const action = mixer.clipAction(model.animations[0]);
-    action.loop = THREE.LoopRepeat;
     action.play();
-
     return () => mixer.stopAllAction();
-  }, [model, mixer]);
+  }, [mixer, model.animations]);
 
-  // Update mixer every frame
+  // Update mixer on each frame
   useFrame((_, delta) => mixer.update(delta));
 
-  return <primitive object={model} />;
+  return (
+    <primitive
+      object={model}
+      position={position}
+      rotation={rotation}
+      scale={scale}
+    />
+  );
 };
 
-// === MAIN SCENE ===
-export const ThreeScene = ({ twitter, wallets, earned, onLogout }) => {
-  const [cameraZ, setCameraZ] = useState(3);
+
+// --- Main Scene Component ---
+export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned, onLogout }) => {
+  const [cameraZ, setCameraZ] = useState(22);
 
   useEffect(() => {
-    const handleResize = () =>
-      setCameraZ(window.innerWidth < 768 ? 2 : 2);
-
+    const handleResize = () => {
+      setCameraZ(window.innerWidth < 768 ? 5 : 4);
+    };
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // --- Chicken setup ---
+  const chickenCount = 6;
+  const radius = 6;
+  const randomSeed = 12345;
+
+  const createRandomGenerator = (seed: number) => () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+
+  const chickens = useMemo(() => {
+    const random = createRandomGenerator(randomSeed);
+    return Array.from({ length: chickenCount }).map((_, i) => {
+      const theta = random() * 2 * Math.PI;
+      const phi = Math.acos(2 * random() - 1);
+
+      const x = radius * Math.sin(phi) * Math.cos(theta);
+      const y = radius * Math.sin(phi) * Math.sin(theta);
+      const z = radius * Math.cos(phi);
+
+      const rotX = random() * 2 * Math.PI;
+      const rotY = random() * 2 * Math.PI;
+      const rotZ = random() * 2 * Math.PI;
+
+      const scale = 2 + random() * 2; // Scaled down by 60% from (5 + random() * 5)
+
+      return {
+        key: i,
+        position: [x, y, z] as [number, number, number],
+        rotation: [rotX, rotY, rotZ] as [number, number, number],
+        scale,
+      };
+    });
+  }, [chickenCount, radius, randomSeed]);
+
   return (
     <Canvas
       dpr={[1, 2]}
-      camera={{ position: [0, 1.5, cameraZ], fov: 45 }}
+      camera={{ position: [0, 0, cameraZ] }}
       gl={{ alpha: true, preserveDrawingBuffer: true }}
       style={{ background: "none", pointerEvents: "auto" }}
-      onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
+      onCreated={({ gl }) => { gl.setClearColor(0x000000, 0); }}
     >
       <ambientLight intensity={3} />
-      <directionalLight intensity={1} position={[5, 5, 5]} />
+      <directionalLight position={[5, 5, 5]} intensity={1.0} />
 
       <Suspense fallback={null}>
-        <NadModel />
+        {/* Center Animated Nad Model - MOVED DOWN */}
+        <NadModel scale={0.5} position={[0, -2, 0]} />
+
+        {/* Offset ID Card slightly along Z */}
+        <CardRig>
+          {/* The group is scaled down by 60% to affect the IdCard */}
+          <group rotation={[-0.5,1,1]} position={[4, 0.5, 0]} scale={0.3}>
+            <IdCard
+              twitter={twitter}
+              wallets={wallets}
+              earned={earned}
+              onLogout={onLogout}
+            />
+          </group>
+        </CardRig>
+
+        {/* Chickens around */}
+        {chickens.map(chickenProps => (
+          <Chicken {...chickenProps} />
+        ))}
       </Suspense>
 
       <OrbitControls
         enableZoom={true}
-        enablePan={false}
+        enablePan={true}
         enableRotate={true}
         mouseButtons={{
           LEFT: THREE.MOUSE.ROTATE,
-          RIGHT: null,
           MIDDLE: null,
+          RIGHT: null,
         }}
       />
     </Canvas>
