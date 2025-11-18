@@ -17,24 +17,25 @@ interface User {
 }
 
 const Leaderboard: React.FC = () => {
+  // --- UPDATED PROJECT DATA WITH 15-DAY REALISTIC TRENDS ---
   const projects: Project[] = [
-    { name: "Monad", interactions: 185, trend: [120, 140, 150, 160, 170, 180, 185], logo: "https://pbs.twimg.com/profile_images/1861739634428174336/26FzLLyr.jpg" },
-    { name: "LootGO", interactions: 260, trend: [180, 190, 210, 230, 240, 255, 260], logo: "https://pbs.twimg.com/profile_images/1947490514921488384/TLSJg7Z5.jpg" },
-    { name: "Nad.fun", interactions: 300, trend: [200, 220, 240, 260, 280, 290, 300], logo: "https://pbs.twimg.com/profile_images/1827607782356619264/Owr-840k.jpg" },
-    { name: "Kizzy Mobile", interactions: 155, trend: [90, 100, 110, 120, 135, 145, 155], logo: "https://pbs.twimg.com/profile_images/1889975983941591040/NeddfENS.jpg" },
-    { name: "Kuru Exchange", interactions: 130, trend: [70, 80, 95, 105, 115, 125, 130], logo: "https://pbs.twimg.com/profile_images/1950962142917619714/R7Cj_qk7.jpg" },
-    { name: "Lumiterra", interactions: 175, trend: [110, 120, 130, 145, 155, 165, 175], logo: "https://pbs.twimg.com/profile_images/1667436896480563200/8YPmbLbv.png" },
-    { name: "Levr Bet", interactions: 90, trend: [50, 60, 65, 70, 75, 85, 90], logo: "https://pbs.twimg.com/profile_images/1836024387042004992/YKdDMkOG.jpg" },
-    { name: "Drake Exchange", interactions: 210, trend: [150, 160, 170, 180, 190, 200, 210], logo: "https://pbs.twimg.com/profile_images/1974759389354491904/2vcC-dd4.jpg" },
-    { name: "Omnia Explorer", interactions: 140, trend: [80, 90, 95, 110, 120, 135, 140], logo: "https://pbs.twimg.com/profile_images/1796709016808394752/C91LWB9H.jpg" },
-    { name: "SeerTrade", interactions: 125, trend: [70, 75, 85, 95, 105, 115, 125], logo: "https://pbs.twimg.com/profile_images/1957497669959761920/IMS0lJhe.jpg" },
-    { name: "Monday Trade", interactions: 105, trend: [60, 70, 75, 85, 90, 95, 105], logo: "https://pbs.twimg.com/profile_images/1973421191202209797/qRXSiR5e.jpg" },
-    { name: "Symphony", interactions: 170, trend: [110, 125, 130, 145, 150, 160, 170], logo: "https://pbs.twimg.com/profile_images/1893386930605211648/-APwnLNM.jpg" },
-    { name: "Kinetik AI", interactions: 190, trend: [120, 130, 140, 155, 165, 175, 190], logo: "https://pbs.twimg.com/profile_images/1947607859702673408/hpZ89aya.jpg" },
-    { name: "TeleMafia", interactions: 160, trend: [95, 110, 120, 130, 140, 150, 160], logo: "https://pbs.twimg.com/profile_images/1967887075316994050/STzEqU1y.jpg" },
-    { name: "Fluffle World", interactions: 210, trend: [140, 150, 165, 175, 185, 200, 210], logo: "https://pbs.twimg.com/profile_images/1972672305336569856/JLjBcagi.jpg" },
-    { name: "BRO.fun", interactions: 135, trend: [75, 85, 95, 110, 120, 130, 135], logo: "https://pbs.twimg.com/profile_images/1983519855279042560/ntgzrOaU.jpg" },
-    { name: "RareBet Sports", interactions: 250, trend: [180, 190, 200, 210, 220, 235, 250], logo: "https://pbs.twimg.com/profile_images/1802788848956506112/KJnlcaQj.jpg" }
+    { name: "Monad", interactions: 185, trend: [95, 300, 110, 100, 120, 135, 130, 145, 155, 160, 150, 170, 175, 180, 185], logo: "https://pbs.twimg.com/profile_images/1861739634428174336/26FzLLyr.jpg" },
+    { name: "LootGO", interactions: 260, trend: [150, 160, 500, 600, 185, 190, 205, 200, 215, 225, 230, 245, 240, 255, 260], logo: "https://pbs.twimg.com/profile_images/1947490514921488384/TLSJg7Z5.jpg" },
+    { name: "Nad.fun", interactions: 300, trend: [180, 400, 300, 200, 210, 225, 230, 220, 240, 255, 265, 270, 285, 290, 300], logo: "https://pbs.twimg.com/profile_images/1827607782356619264/Owr-840k.jpg" },
+    { name: "Kizzy Mobile", interactions: 155, trend: [70, 75, 80, 75, 90, 95, 100, 110, 105, 120, 130, 125, 140, 150, 155], logo: "https://pbs.twimg.com/profile_images/1889975983941591040/NeddfENS.jpg" },
+    { name: "Kuru Exchange", interactions: 130, trend: [60, 65, 70, 100, 75, 80, 85, 90, 85, 100, 105, 115, 110, 125, 130], logo: "https://pbs.twimg.com/profile_images/1950962142917619714/R7Cj_qk7.jpg" },
+    { name: "Lumiterra", interactions: 175, trend: [90, 95, 100, 95, 110, 115, 120, 130, 125, 140, 150, 145, 160, 170, 175], logo: "https://pbs.twimg.com/profile_images/1667436896480563200/8YPmbLbv.png" },
+    { name: "Levr Bet", interactions: 90, trend: [30, 35, 40, 35, 45, 50, 55, 60, 55, 70, 75, 80, 75, 85, 90], logo: "https://pbs.twimg.com/profile_images/1836024387042004992/YKdDMkOG.jpg" },
+    { name: "Drake Exchange", interactions: 210, trend: [110, 120, 115, 130, 200, 150, 145, 160, 170, 175, 180, 190, 185, 200, 210], logo: "https://pbs.twimg.com/profile_images/1974759389354491904/2vcC-dd4.jpg" },
+    { name: "Omnia Explorer", interactions: 140, trend: [65, 70, 20, 70, 80, 85, 90, 95, 90, 105, 110, 120, 115, 130, 140], logo: "https://pbs.twimg.com/profile_images/1796709016808394752/C91LWB9H.jpg" },
+    { name: "SeerTrade", interactions: 125, trend: [55, 60, 65, 60, 70, 75, 80, 85, 80, 95, 100, 110, 105, 120, 125], logo: "https://pbs.twimg.com/profile_images/1957497669959761920/IMS0lJhe.jpg" },
+    { name: "Monday Trade", interactions: 105, trend: [40, 45, 10, 45, 55, 60, 65, 70, 65, 80, 85, 90, 85, 95, 105], logo: "https://pbs.twimg.com/profile_images/1973421191202209797/qRXSiR5e.jpg" },
+    { name: "Symphony", interactions: 170, trend: [85, 90, 95, 90, 105, 110, 115, 125, 120, 135, 140, 150, 145, 160, 170], logo: "https://pbs.twimg.com/profile_images/1893386930605211648/-APwnLNM.jpg" },
+    { name: "Kinetik AI", interactions: 190, trend: [100, 110, 105, 120, 130, 135, 140, 150, 145, 160, 165, 175, 170, 180, 190], logo: "https://pbs.twimg.com/profile_images/1947607859702673408/hpZ89aya.jpg" },
+    { name: "TeleMafia", interactions: 160, trend: [75, 80, 85, 40, 95, 100, 105, 115, 110, 125, 130, 140, 135, 150, 160], logo: "https://pbs.twimg.com/profile_images/1967887075316994050/STzEqU1y.jpg" },
+    { name: "Fluffle World", interactions: 210, trend: [110, 120, 115, 130, 140, 150, 145, 400, 170, 175, 180, 190, 185, 200, 210], logo: "https://pbs.twimg.com/profile_images/1972672305336569856/JLjBcagi.jpg" },
+    { name: "BRO.fun", interactions: 135, trend: [60, 65, 70, 65, 75, 80, 85, 90, 85, 100, 105, 115, 110, 125, 135], logo: "https://pbs.twimg.com/profile_images/1983519855279042560/ntgzrOaU.jpg" },
+    { name: "RareBet Sports", interactions: 250, trend: [140, 150, 145, 600, 170, 180, 175, 190, 200, 210, 205, 220, 230, 240, 250], logo: "https://pbs.twimg.com/profile_images/1802788848956506112/KJnlcaQj.jpg" }
   ];
   
   const allUsers: User[] = [
