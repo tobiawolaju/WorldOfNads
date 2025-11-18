@@ -1,7 +1,6 @@
-import React, { Suspense, useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useFBX } from "@react-three/drei";
-
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import * as THREE from "three";
 
@@ -26,25 +25,90 @@ interface ThreeSceneProps {
   onLogout: () => void;
 }
 
-// --- Chicken Component ---
+// --- Shader Definition for Water Bubble Effect ---
+const vertexShader = `
+  varying vec3 vNormal;
+  varying vec3 vViewPosition;
+  void main() {
+    vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
+    vViewPosition = -modelViewPosition.xyz;
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewPosition;
+  }
+`;
+
+const fragmentShader = `
+  uniform float uTime;
+  varying vec3 vNormal;
+  varying vec3 vViewPosition;
+  void main() {
+    vec3 viewDir = normalize(vViewPosition);
+    float fresnel = 1.0 - dot(viewDir, vNormal);
+    fresnel = pow(fresnel, 2.5); // Increase power for sharper edge
+    
+    // Rainbow color effect driven by fresnel and time
+    vec3 color;
+    color.r = sin(fresnel * 5.0 - uTime * 0.5) * 0.5 + 0.5;
+    color.g = sin(fresnel * 5.0 - uTime * 0.5 + 2.094) * 0.5 + 0.5; // 120 degrees offset
+    color.b = sin(fresnel * 5.0 - uTime * 0.5 + 4.188) * 0.5 + 0.5; // 240 degrees offset
+    
+    // Final color with transparency
+    gl_FragColor = vec4(color, fresnel * 0.8);
+  }
+`;
+
+
+// --- Chicken Component with Shader ---
 interface ChickenProps {
   position: [number, number, number];
   rotation: [number, number, number];
   scale?: number;
 }
-const Chicken: React.FC<ChickenProps> = ({ position, rotation, scale = 6 }) => { // Scaled down by 60% from 15
+const Chicken: React.FC<ChickenProps> = ({ position, rotation, scale = 6 }) => {
   const fbx = useFBX("/Chicken.fbx");
-  // Simple clone is fine since there's no animation rig
   const model = useMemo(() => fbx.clone(), [fbx]);
+  const shaderRef = useRef<THREE.ShaderMaterial>(null);
+
+  // Animate the shader uniforms
+  useFrame(({ clock }) => {
+    if (shaderRef.current) {
+      shaderRef.current.uniforms.uTime.value = clock.getElapsedTime();
+    }
+  });
+
+  // Create and apply the shader material to the model
+  useEffect(() => {
+    const bubbleMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+      },
+      vertexShader,
+      fragmentShader,
+      transparent: true,
+      blending: THREE.AdditiveBlending, // Gives a nice glowing effect
+      depthWrite: false, // Important for transparency
+    });
+    
+    // Assign the ref so useFrame can access it
+    shaderRef.current = bubbleMaterial;
+
+    model.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.material = bubbleMaterial;
+      }
+    });
+  }, [model]);
+
   return (
     <primitive
       object={model}
       position={position}
       rotation={rotation}
-      scale={scale} // Apply scale directly
+      scale={scale}
     />
   );
 };
+
 
 // --- Animated Nad Model Component ---
 interface NadModelProps {
@@ -58,12 +122,9 @@ const NadModel: React.FC<NadModelProps> = ({
   scale = 1,
 }) => {
   const fbx = useFBX("/nad.fbx");
-
-  // Clone FBX using SkeletonUtils to preserve animation rig
   const model = useMemo(() => SkeletonUtils.clone(fbx), [fbx]);
   const mixer = useMemo(() => new THREE.AnimationMixer(model), [model]);
 
-  // Auto-center and normalize scale internally
   useEffect(() => {
     const box = new THREE.Box3().setFromObject(model);
     const size = new THREE.Vector3();
@@ -78,7 +139,6 @@ const NadModel: React.FC<NadModelProps> = ({
     model.position.sub(center.multiplyScalar(model.scale.x));
   }, [model]);
 
-  // Play first animation
   useEffect(() => {
     if (!model.animations || model.animations.length === 0) return;
     const action = mixer.clipAction(model.animations[0]);
@@ -86,7 +146,6 @@ const NadModel: React.FC<NadModelProps> = ({
     return () => mixer.stopAllAction();
   }, [mixer, model.animations]);
 
-  // Update mixer on each frame
   useFrame((_, delta) => mixer.update(delta));
 
   return (
@@ -113,7 +172,6 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // --- Chicken setup ---
   const chickenCount = 6;
   const radius = 6;
   const randomSeed = 12345;
@@ -128,17 +186,13 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
     return Array.from({ length: chickenCount }).map((_, i) => {
       const theta = random() * 2 * Math.PI;
       const phi = Math.acos(2 * random() - 1);
-
       const x = radius * Math.sin(phi) * Math.cos(theta);
       const y = radius * Math.sin(phi) * Math.sin(theta);
       const z = radius * Math.cos(phi);
-
       const rotX = random() * 2 * Math.PI;
       const rotY = random() * 2 * Math.PI;
       const rotZ = random() * 2 * Math.PI;
-
-      const scale = 2 + random() * 2; // Scaled down by 60% from (5 + random() * 5)
-
+      const scale = 2 + random() * 2;
       return {
         key: i,
         position: [x, y, z] as [number, number, number],
@@ -160,12 +214,9 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
       <directionalLight position={[5, 5, 5]} intensity={1.0} />
 
       <Suspense fallback={null}>
-        {/* Center Animated Nad Model - MOVED DOWN */}
         <NadModel scale={0.5} position={[0, -2, 0]} />
 
-        {/* Offset ID Card slightly along Z */}
         <CardRig>
-          {/* The group is scaled down by 60% to affect the IdCard */}
           <group rotation={[-0.5,1,1]} position={[4, 0.5, 0]} scale={0.3}>
             <IdCard
               twitter={twitter}
@@ -176,7 +227,6 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
           </group>
         </CardRig>
 
-        {/* Chickens around */}
         {chickens.map(chickenProps => (
           <Chicken {...chickenProps} />
         ))}
