@@ -80,18 +80,18 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
       
       {/* === GLASS BODY WITH SHADER === */}
       <mesh>
-        <boxGeometry args={[7, 9, 0.12]} />
+        <boxGeometry args={[9.5, 5.5, 0.12]} />
         {/* Apply the custom shader material */}
         <primitive object={bubbleMaterial} ref={shaderRef} attach="material" />
       </mesh>
 
       {/* Soft backing plane (unchanged) */}
       <mesh position={[0, 0, -0.07]}>
-        <planeGeometry args={[7, 9]} />
+        <planeGeometry args={[9.5, 5.5]} />
         <meshPhysicalMaterial
-          color="#ffffff"
+          color="#ffd900ff"
           transparent
-          opacity={0.15}
+          opacity={1}
           roughness={0.1}
           metalness={0.2}
           transmission={0.85}
@@ -107,41 +107,54 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
         position={[0, 0, 0.07]}
         zIndexRange={[0, 0]}
         style={{
-          width: "280px",
-          height: "320px",
+          width: "380px",
+          height: "220px",
           userSelect: "none",
         }}
       >
-        <div className="id-card-container">
-          <div className="id-card-inner">
 
-            <button className="id-card-logout-button" onClick={onLogout}>
-              Logout
-            </button>
+            <div className="golden-ticket-container">
+      <div className="ticket-main">
+        <div className="ticket-header">
+          <h1 className="ticket-title">Golden Ticket</h1>
+        </div>
 
-            <img
-              src={twitter?.profilePictureUrl || "/default-avatar.png"}
-              className="id-card-avatar"
-              alt="Avatar"
-            />
+        <div className="ticket-content">
+          <img
+            src={twitter?.profilePictureUrl || "/default-avatar.png"}
+            className="ticket-avatar"
+            alt="Avatar"
+          />
 
-            <div className="id-card-name">{twitter?.name || "Player"}</div>
-            <div className="id-card-handle">@{twitter?.username}</div>
-
-            <div className="id-card-wallets">
+          <div className="ticket-info">
+            <div className="ticket-name">{twitter?.name || "Player"}</div>
+            <div className="ticket-handle">@{twitter?.username}</div>
+            <div className="ticket-wallets">
               {wallets.map((w, i) => (
                 <div key={i}>
                   {w.address.slice(0, 6)}...{w.address.slice(-4)}
                 </div>
               ))}
             </div>
-
-            <div className="id-card-earned">
-              {earned.toLocaleString()} MON Earned
-            </div>
-
           </div>
         </div>
+
+        
+      </div>
+
+      <div className="ticket-stub">
+        <div className="stub-earned">
+          {earned.toLocaleString()}
+          <span>MON Earned</span>
+        </div>
+      </div>
+      
+    </div>
+    <button className="ticket-logout-button" onClick={onLogout}>
+          Logout
+        </button>
+
+
       </Html>
     </group>
   );
