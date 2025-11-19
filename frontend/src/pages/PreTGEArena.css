@@ -257,11 +257,10 @@ color: #ffffff;
 }
 
 .pretge-stage {
-  background: #9d51ff;
-  color: white;
+  background: #9c51ff48;
+  color: rgb(0, 0, 0);
   padding: 5px 12px;
-  border-radius: 10px;
-  font-weight: bold;
+  border-radius: 50px;
   text-transform: capitalize; /* Makes 'live', 'upcoming' look nicer */
 }
 
@@ -310,9 +309,9 @@ color: #ffffff;
 
 .filter-buttons button {
   font-size: 1rem;
-  padding: 2px 5px;
+  padding: 2px 15px;
   margin: 2px;
-  border-radius: 10px;
+  border-radius: 50px;
   cursor: pointer;
   opacity: 0.5;
   transition: 0.25s;
@@ -326,6 +325,5 @@ color: #ffffff;
 .filter-buttons button.active {
   background-color: #815fff;
   color: white;
-  font-size: 1.5rem;
   opacity: 1;
 }
