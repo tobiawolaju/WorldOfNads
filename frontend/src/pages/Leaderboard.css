@@ -463,8 +463,8 @@
 }
 
 .pagination button {
-  background-color: #f0e6ff;
-  color: #27044e;
+  background-color: #bba8ff;
+  color: #ffffff;
   border: none;
   padding: 8px 12px;
   margin: 0 4px;
@@ -476,8 +476,11 @@
 }
 
 .pagination button:hover:not(:disabled) {
-  background-color: #bba8ff;
-  color: rgb(255, 255, 255);
+  background-color:  hsl(249, 100%, 74%);
+  color: white;
+  border: 8px solid  hsl(249, 100%, 85%);
+  font-weight: bold;
+  opacity: 0.8;
 }
 
 .pagination button:disabled {
