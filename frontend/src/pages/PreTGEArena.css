@@ -1,162 +1,9 @@
-.pretge-container {
-  text-align: center;
-  padding: 40px 20px;
-  font-family: 'Font1', sans-serif;
-}
-
-.pretge-title {
- font-size: 15vw;
-  font-weight: 800;
-  margin-bottom: 20px;
-  font-family: Font2;
-  color: #000000;
-}
-
-.pretge-intro {
-  max-width: 700px;
-  margin: 0 auto 50px auto;
-  color: rgba(0, 0, 0, 0.75);
-  font-size: clamp(1rem, 1.5vw, 1.2rem);
-}
-
-.pretge-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 25px;
-  justify-content: center;
-  margin-top: 40px;
-}
-
-.pretge-card {
-  border-radius: 18px;
-  border: 1px solid rgba(150, 120, 255, 0.15);
-  background: rgba(255, 255, 255, 0.6);
-  padding: 25px 20px;
-  transition: all 0.25s ease;
-}
-
-.pretge-card:hover {
-  transform: translateY(-5px);
-  background: rgb(179, 65, 255);
-  transition: all 0.25s ease;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
-}
-
-/* Text color changes on hover */
-.pretge-card:hover .pretge-project-name {
-  color: #ffffff;
-  font-family: Font2;
-  font-size: 2.5rem;
-}
-
-.pretge-card:hover .pretge-tagline {
-  color: #ffffff69;
-}
-.pretge-card:hover .pretge-description {
-  color: #ffffff;
-}
-
-.pretge-card:hover .pretge-meta{
-  color: #fffffd;
-  font-size: large;
-  font-weight: bold;
-}
-
-.pretge-card:hover .pretge-stage{
-background-color: #ffffff;
-color: #000000;
-}
-
-.pretge-card:hover .pretge-handle a{
-background-color: #ffffff36;
-padding: 3px 10px;
-border-radius: 50px;
-color: #ffffff;
-}
-
-
-
-
-
-
-
-
-.pretge-project-name {
-  font-size: 1.7rem;
-  font-weight: bold;
-  color: #27044e;
-  margin-bottom: 5px;
-}
-
-
-.pretge-tagline {
-  font-size: 1rem;
-  color: #00000069;
-  font-style: italic;
-  margin-bottom: 10px;
-}
-
-
-
-.pretge-description {
-  color: rgba(0, 0, 0, 0.75);
-  font-size: 1rem;
-  margin-bottom: 15px;
-}
-
-.pretge-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  color: #555;
-}
-
-.pretge-stage {
-  background: #9d51ff;
-  color: white;
-  padding: 5px 12px;
-  border-radius: 10px;
-  font-weight: bold;
-}
-
-.pretge-launch {
-  font-weight: 500;
-}
-
-
-.pretge-logo {
-  width: 70px;
-  height: 70px;
-  border-radius: 12px;
-  object-fit: cover;
-  margin-bottom: 10px;
-  border: 2px solid #e7e7e7;
-}
-
-.pretge-handle {
-  text-align: right;
-  font-size: 0.9rem;
-  margin-top: 10px;
-}
-
-.pretge-handle a {
-  color: #585bff;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.pretge-handle a:hover {
-  color: #27044e;
-}
-
-
-
-
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Exo+2:wght@700;800&display=swap');
 
 .pretge-container {
   text-align: center;
-  padding: 40px 20px;
-  font-family: "Font1", sans-serif;
+  padding: 40px 20px; 
+  font-family: 'Roboto Mono', monospace;
 }
 
 .pretge-title {
@@ -170,128 +17,123 @@ color: #ffffff;
 .pretge-intro {
   max-width: 700px;
   margin: 0 auto 50px auto;
-  color: rgba(0, 0, 0, 0.75);
+  color: #4a5568; /* Softer text color */
   font-size: clamp(1rem, 1.5vw, 1.2rem);
 }
 
 .pretge-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
   justify-content: center;
   margin-top: 40px;
 }
 
 .pretge-card {
-  border-radius: 18px;
-  border: 1px solid rgba(150, 120, 255, 0.15);
-  background: rgba(255, 255, 255, 0.6);
-  padding: 25px 20px;
-  transition: all 0.25s ease;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0; /* Light border */
+  background: #ffffff;
+  padding: 25px;
+  transition: all 0.3s ease;
+  text-align: left; /* Align text to the left for better readability */
 }
 
 .pretge-card:hover {
-  transform: translateY(-5px);
-  background: rgb(179, 65, 255);
-  transition: all 0.25s ease;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  transform: translateY(-8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Softer shadow */
+  border-color: #cbd5e0;
 }
 
-/* Text color changes on hover */
-.pretge-card:hover .pretge-project-name {
-  color: #ffffff;
-  font-family: Font2;
-  font-size: 2.5rem;
+.pretge-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
 }
 
-.pretge-card:hover .pretge-tagline {
-  color: #ffffff69;
-}
-.pretge-card:hover .pretge-description {
-  color: #ffffff;
-}
-
-.pretge-card:hover .pretge-meta {
-  color: #fffffd;
-  font-size: large;
-  font-weight: bold;
-}
-
-.pretge-card:hover .pretge-stage {
-  background-color: #ffffff;
-  color: #000000;
-}
-
-.pretge-card:hover .pretge-handle a {
-  background-color: #ffffff36;
-  padding: 3px 10px;
-  border-radius: 50px;
-  color: #ffffff;
+.pretge-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 10%;
+  object-fit: cover;
+  margin-right: 15px;
+  border: 2px solid #e2e8f0;
 }
 
 .pretge-project-name {
-  font-size: 1.7rem;
-  font-weight: bold;
-  color: #27044e;
-  margin-bottom: 5px;
+  font-family: 'Exo 2', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1a202c;
 }
 
 .pretge-tagline {
   font-size: 1rem;
-  color: #00000069;
+  color: #718096;
+  margin-bottom: 15px;
   font-style: italic;
-  margin-bottom: 10px;
 }
 
 .pretge-description {
-  color: rgba(0, 0, 0, 0.75);
-  font-size: 1rem;
-  margin-bottom: 15px;
+  color: #4a5568;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  line-height: 1.6;
 }
 
 .pretge-meta {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.9rem;
-  color: #555;
+  color: #2d3748;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 15px;
 }
 
 .pretge-stage {
-  background: #9c51ff48;
-  color: rgb(0, 0, 0);
-  padding: 5px 12px;
-  border-radius: 50px;
-  text-transform: capitalize; /* Makes 'live', 'upcoming' look nicer */
-}
-
-.pretge-launch {
-  font-weight: 500;
-}
-
-.pretge-logo {
-  width: 70px;
-  height: 70px;
-  border-radius: 12px;
-  object-fit: cover;
-  margin-bottom: 10px;
-  border: 2px solid #e7e7e7;
-}
-
-.pretge-handle {
-  text-align: right;
-  font-size: 0.9rem;
-  margin-top: 10px;
+  background-color: #e6f7ff; /* Light blue background */
+  color: #3e7bff; /* Darker blue text */
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.8rem;
 }
 
 .pretge-handle a {
-  color: #585bff;
+  color: #0000006c; /* Professional blue */
   text-decoration: none;
   transition: color 0.2s ease;
+  font-weight: bold;
 }
 
 .pretge-handle a:hover {
-  color: #27044e;
+  color: #0357ff;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* --- NEW STYLES FOR FILTER BUTTONS --- */
 
@@ -304,7 +146,7 @@ color: #ffffff;
   padding:4px;
   cursor: pointer;
   transition: 0.25s;
-  z-index: 999;
+  z-index: 900;
 }
 
 .filter-buttons button {
@@ -319,11 +161,11 @@ color: #ffffff;
 
 
 .filter-buttons button:hover {
-  background-color: #e0c8ff;
+  background-color: #0000000c;
 }
 
 .filter-buttons button.active {
-  background-color: #815fff;
-  color: white;
+  background-color: #00000021;
+  color: rgba(0, 0, 0, 0.644);
   opacity: 1;
 }
