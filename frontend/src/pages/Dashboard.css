@@ -463,10 +463,10 @@ background: hsl(249, 100%, 74%);
   bottom:-50px;
   right:0px;
   padding: 5px 10px;
-  border-radius: 8px;
-  border: 3px solid #ff00dd;
+  border-radius: 50px;
+  border: 3px solid #7c6dff;
   background: transparent;
-  color: #ff00dd;
+  color: #7c6dff;
   font-size: 1.2rem;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -474,7 +474,7 @@ background: hsl(249, 100%, 74%);
 }
 
 .ticket-logout-button:hover {
-  background: #ff00dd;
+  background: #7c6dff;
   color: #ffffff;
   border: none;
   font-weight: bold;
