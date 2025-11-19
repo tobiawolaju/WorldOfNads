@@ -5,7 +5,7 @@ function PreTGEArena() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all"); // 'all', 'upcoming', 'live', 'completed'
 
- const [projects] = useState([
+  const [projects] = useState([
     {
       id: 1,
       name: "Monad",
@@ -62,8 +62,7 @@ function PreTGEArena() {
       id: 4,
       name: "Kuru Exchange",
       tagline: "Lightning-fast perpetuals on Monad.",
-      description:
-        "Up to 100x leverage, deep liquidity, zero gas drama.",
+      description: "Up to 100x leverage, deep liquidity, zero gas drama.",
       stage: "upcoming",
       launchDate: "Starts in 3h",
       xHandle: "@KuruExchange",
@@ -114,8 +113,7 @@ function PreTGEArena() {
       id: 8,
       name: "Omnia Explorer",
       tagline: "The most powerful Monad block explorer.",
-      description:
-        "Real-time analytics, mempool sniper, gamified quests.",
+      description: "Real-time analytics, mempool sniper, gamified quests.",
       stage: "upcoming",
       launchDate: "In 2 Days",
       xHandle: "@ExploreOmnia",
@@ -166,8 +164,7 @@ function PreTGEArena() {
       id: 12,
       name: "Kinetik AI",
       tagline: "AI-powered on-chain movement battles.",
-      description:
-        "Run, jump, dodge — turn your activity into crypto.",
+      description: "Run, jump, dodge — turn your activity into crypto.",
       stage: "completed",
       launchDate: "Completed",
       xHandle: "@KINETK_AI",
@@ -179,8 +176,7 @@ function PreTGEArena() {
       id: 13,
       name: "TeleMafia",
       tagline: "The ultimate Telegram mafia game.",
-      description:
-        "Lie, betray, vote out — last don standing wins the pot.",
+      description: "Lie, betray, vote out — last don standing wins the pot.",
       stage: "completed",
       launchDate: "Completed",
       xHandle: "@TeleMafia",
@@ -192,8 +188,7 @@ function PreTGEArena() {
       id: 14,
       name: "Fluffle World",
       tagline: "Home of the cutest bunnies on Monad.",
-      description:
-        "Collect, breed, battle, fluff.",
+      description: "Collect, breed, battle, fluff.",
       stage: "completed",
       launchDate: "Completed",
       xHandle: "@fluffleworld",
@@ -205,8 +200,7 @@ function PreTGEArena() {
       id: 15,
       name: "BRO.fun",
       tagline: "For the bros, by the bros.",
-      description:
-        "Gaming, memes, gains — pure brotherhood on Monad.",
+      description: "Gaming, memes, gains — pure brotherhood on Monad.",
       stage: "completed",
       launchDate: "Completed",
       xHandle: "@bro_dot_fun",
@@ -228,6 +222,7 @@ function PreTGEArena() {
       url: "https://x.com/RareBetSports",
     },
   ]);
+
   // Combined filtering logic
   const filteredProjects = projects
     .filter((project) => {
@@ -242,10 +237,11 @@ function PreTGEArena() {
 
   return (
     <div className="pretge-container">
-            <div style={{ height: "60px" }}></div>
+      <div style={{ height: "60px" }}></div>
       <h1 className="pretge-title">Pre-TGE Arena</h1>
       <p className="pretge-intro">
-        Discover the next wave of innovation. Early access to groundbreaking projects before they launch.
+        Discover the next wave of innovation. Early access to groundbreaking
+        projects before they launch.
       </p>
 
       {/* Search Bar */}
@@ -291,7 +287,10 @@ function PreTGEArena() {
       <div className="pretge-grid">
         {filteredProjects.length > 0 ? (
           filteredProjects.map((project) => (
-            <div key={project.id} className="pretge-card">
+            <div
+              key={project.id}
+              className={`pretge-card pretge-card-${project.stage}`}
+            >
               <div className="pretge-card-header">
                 <img
                   src={project.logo}

@@ -1,10 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Exo+2:wght@700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Exo+2:wght@700;800&display=swap");
 
 .pretge-container {
   text-align: center;
-
   padding: 80px 20px;
-  font-family: 'Roboto Mono', monospace;
+  font-family: "Roboto Mono", monospace;
 }
 
 .pretge-title {
@@ -18,7 +17,7 @@
 .pretge-intro {
   max-width: 700px;
   margin: 0 auto 50px auto;
-  color: #4a5568; /* Softer text color */
+  color: #4a5568;
   font-size: clamp(1rem, 1.5vw, 1.2rem);
 }
 
@@ -32,16 +31,16 @@
 
 .pretge-card {
   border-radius: 12px;
-  border: 1px solid #e2e8f0; /* Light border */
+  border: 1px solid #e2e8f0; /* Default card border */
   background: #ffffff;
   padding: 25px;
   transition: all 0.3s ease;
-  text-align: left; /* Align text to the left for better readability */
+  text-align: left;
 }
 
 .pretge-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Softer shadow */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   border-color: #cbd5e0;
 }
 
@@ -57,11 +56,13 @@
   border-radius: 10%;
   object-fit: cover;
   margin-right: 15px;
-  border: 2px solid #e2e8f0;
+  /* Default border for the logo */
+  border: 3px solid #e2e8f0;
+  transition: all 0.3s ease;
 }
 
 .pretge-project-name {
-  font-family: 'Exo 2', sans-serif;
+  font-family: "Exo 2", sans-serif;
   font-size: 1.8rem;
   font-weight: 700;
   color: #1a202c;
@@ -92,8 +93,8 @@
 }
 
 .pretge-stage {
-  background-color: #e6f7ff; /* Light blue background */
-  color: #3e7bff; /* Darker blue text */
+  background-color: #e6f7ff;
+  color: #3e7bff;
   padding: 6px 14px;
   border-radius: 20px;
   font-weight: bold;
@@ -102,7 +103,7 @@
 }
 
 .pretge-handle a {
-  color: #0000006c; /* Professional blue */
+  color: #0000006c;
   text-decoration: none;
   transition: color 0.2s ease;
   font-weight: bold;
@@ -112,39 +113,14 @@
   color: #0357ff;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* --- NEW STYLES FOR FILTER BUTTONS --- */
-
+/* --- FILTER BUTTONS --- */
 
 .filter-buttons {
   background-color: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(2px); /* Adjust the blur intensity as needed */
+  backdrop-filter: blur(2px);
   position: sticky;
   top: 120px;
-  padding:4px;
+  padding: 4px;
   cursor: pointer;
   transition: 0.25s;
   z-index: 900;
@@ -160,7 +136,6 @@
   transition: 0.25s;
 }
 
-
 .filter-buttons button:hover {
   background-color: #0000000c;
 }
@@ -169,4 +144,27 @@
   background-color: #00000021;
   color: rgba(0, 0, 0, 0.644);
   opacity: 1;
+}
+
+/* --- STYLES FOR PROJECT LOGOS BY STAGE --- */
+
+/* Green border for Live project logos */
+.pretge-card-live .pretge-logo {
+  border-color: #28a745; /* Green */
+}
+
+/* Orange border for Upcoming project logos */
+.pretge-card-upcoming .pretge-logo {
+  border-color: #fd7e14; /* Orange */
+}
+
+/* Grayscale filter and muted border for Completed project logos */
+.pretge-card-completed .pretge-logo {
+  filter: grayscale(100%);
+  border-color: #adb5bd; /* Muted gray border */
+}
+
+/* Optional: fade out the entire completed card to de-emphasize it */
+.pretge-card-completed {
+  opacity: 0.7;
 }
