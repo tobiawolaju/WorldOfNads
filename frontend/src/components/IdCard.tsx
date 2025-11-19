@@ -116,7 +116,7 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
             <div className="golden-ticket-container">
       <div className="ticket-main">
         <div className="ticket-header">
-          <h1 className="ticket-title">Golden Ticket</h1>
+          <h1 className="ticket-title">WONs Ticket</h1>
         </div>
 
         <div className="ticket-content">
