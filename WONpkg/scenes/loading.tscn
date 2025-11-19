@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://sa5je5ejkj2m"]
 
 [ext_resource type="Script" uid="uid://ctqewgg1jqfs1" path="res://scripts/Home.gd" id="1_yc7uc"]
-[ext_resource type="Texture2D" uid="uid://cm7cx3kar1i1g" path="res://assets/images/w.png" id="2_dhqfv"]
+[ext_resource type="Texture2D" uid="uid://rcj3xhh7u10x" path="res://assets/images/logo.png" id="2_yc7uc"]
 
 [node name="Home" type="Node2D"]
 script = ExtResource("1_yc7uc")
@@ -60,6 +60,6 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 
 [node name="W" type="Sprite2D" parent="Node/BoxContainer"]
-scale = Vector2(0.063, 0.06)
-texture = ExtResource("2_dhqfv")
-offset = Vector2(248.415, 0)
+scale = Vector2(0.3, 0.286)
+texture = ExtResource("2_yc7uc")
+offset = Vector2(65, 55)
