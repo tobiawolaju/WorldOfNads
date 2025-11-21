@@ -235,6 +235,28 @@ function PreTGEArena() {
       project.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+
+
+
+
+const renderStatusBadge = (stage) => {
+  const map = {
+    live: "pretge-status-live",
+    upcoming: "pretge-status-upcoming",
+    completed: "pretge-status-completed",
+  };
+
+  return (
+    <span className={`pretge-status ${map[stage]}`}>
+      {stage}
+    </span>
+  );
+};
+
+
+
+
+  
   return (
     <div className="pretge-container">
       <div style={{ height: "60px" }}></div>
@@ -301,18 +323,19 @@ function PreTGEArena() {
               </div>
               <p className="pretge-tagline">{project.tagline}</p>
               <p className="pretge-description">{project.description}</p>
-              <div className="pretge-meta">
-                <span className="pretge-stage">{project.stage}</span>
-                <span className="pretge-handle">
-                  <a
-                    href={project.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {project.xHandle}
-                  </a>
-                </span>
-              </div>
+<div className="pretge-meta">
+  {renderStatusBadge(project.stage)}
+  <span className="pretge-handle">
+    <a
+      href={project.url}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {project.xHandle}
+    </a>
+  </span>
+</div>
+
             </div>
           ))
         ) : (

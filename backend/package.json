@@ -10,6 +10,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2",
     "uuid": "^13.0.0",
     "ws": "^8.18.3"
   }
