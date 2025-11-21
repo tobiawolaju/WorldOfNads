@@ -144,11 +144,13 @@
   height: 100%;
  background: linear-gradient(
   to bottom,
+  #e2d8ff00, /* top */
   #e2d8ff, /* top */
   #a080ff, 
   #6a38ff, 
   #a080ff, 
   #e2d8ff  /* bottom */
+  #e2d8ff00, /* top */
 );
  transform: translateX(-50%);
   border-radius: 5px;
