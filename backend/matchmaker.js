@@ -12,9 +12,9 @@ const MAX_PLAYERS_PER_SERVER = 10;
 
 // LIST OF YOUR RENDER INSTANCES
 const GAME_SERVERS = [
-    { id: 1, url: 'https://my-game-server-1.onrender.com' },
-    { id: 2, url: 'https://my-game-server-2.onrender.com' },
-    { id: 3, url: 'https://my-game-server-3.onrender.com' }
+    { id: 1, url: 'https://server-1-eaim.onrender.com/' },
+    { id: 2, url: 'https://server-2-7bjc.onrender.com' },
+    { id: 3, url: 'https://server-3-nan3.onrender.com' }
 ];
 
 // --- Helper to check a server ---
