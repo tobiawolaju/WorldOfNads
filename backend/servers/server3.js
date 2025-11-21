@@ -1,4 +1,3 @@
-// server.js
 // Final Production Version - CLIENT AUTHORITATIVE + MANAGEMENT API
 
 import { createServer } from 'http';
@@ -8,7 +7,7 @@ import { randomUUID } from 'crypto';
 // --- Configuration ---
 const PORT = process.env.PORT || 8080;
 const BROADCAST_RATE = 20;
-const IDLE_TIMEOUT_MS = 1000 * 60 * 2; // 2 Minutes
+const IDLE_TIMEOUT_MS = 1000 * 60 * 2; // 2 Minutes (Auto-Shutdown time)
 
 // --- Server State ---
 const players = {};
@@ -41,7 +40,7 @@ const server = createServer((req, res) => {
         return;
     }
 
-    // 2. /return connectedplayerids (Stats)
+    // 2. /stats (Matchmaker checks this)
     if (method === 'GET' && url === '/stats') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
