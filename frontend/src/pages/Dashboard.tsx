@@ -13,8 +13,7 @@ import {
   set, 
   get, 
   update, 
-  runTransaction, 
-  child 
+  runTransaction 
 } from "firebase/database";
 
 // --- CONFIGURATION ---
@@ -29,41 +28,54 @@ const firebaseConfig = {
   measurementId: "G-QP22W5T17Z"
 };
 
-
 // Initialize Realtime Database
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- HELPER FUNCTIONS (REALTIME DB VERSION) ---
+// --- HELPER FUNCTIONS ---
+
+// Helper to determine the Username consistently
+function getUsernameFromPrivy(user: any): string {
+  const twitter = user.linkedAccounts?.find((acc: any) => acc.type === "twitter_oauth");
+  const wallet = user.linkedAccounts?.find((acc: any) => acc.type === "wallet");
+  
+  // Use Twitter username OR Wallet address OR "Anon"
+  return twitter?.username || wallet?.address || "Anon";
+}
 
 async function saveUserToFirebase(user: any, db: any) {
   if (!user?.id) return;
 
-  // Point to "users/{userId}"
-  const userRef = ref(db, `users/${user.id}`);
+  // 1. Get Username and Image from Privy
+  const targetUsername = getUsernameFromPrivy(user);
+  const twitter = user.linkedAccounts?.find((acc: any) => acc.type === "twitter_oauth");
+  const wallet = user.linkedAccounts?.find((acc: any) => acc.type === "wallet");
+  
+  // Use Privy Image -> Fallback to default placeholder (Not random person)
+  const targetPfp = twitter?.profile_picture_url || "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png";
+
+  // 2. Point to "users/{USERNAME}" instead of Privy ID
+  const userRef = ref(db, `users/${targetUsername}`);
 
   try {
-    // Check if user already exists
     const snapshot = await get(userRef);
 
     if (snapshot.exists()) {
-      // User exists: just update last login time
+      // User exists: just update last login and ensure PFP is current
       await update(userRef, {
-        lastLogin: new Date().toISOString()
+        lastLogin: new Date().toISOString(),
+        pfp: targetPfp // Update PFP in case they changed it on Twitter
       });
-      console.log("✅ User exists in Realtime DB, updated login.");
+      console.log("✅ User exists, updated login & PFP.");
     } else {
       // User is NEW: Create with your EXACT format
-      const twitter = user.linkedAccounts?.find((acc: any) => acc.type === "twitter_oauth");
-      const wallet = user.linkedAccounts?.find((acc: any) => acc.type === "wallet");
-
       const newUserPayload = {
-        username: twitter?.username || wallet?.address?.slice(0, 8) || "Anon",
-        won: 0, // Default 0
-        projects: [], // Default empty array
-        pfp: twitter?.profile_picture_url || "https://randomuser.me/api/portraits/lego/1.jpg",
+        username: targetUsername,
+        won: 0,
+        projects: [],
+        pfp: targetPfp,
         wallet: wallet?.address || null,
-        privyId: user.id,
+        privyId: user.id, // Keep reference to Privy ID inside data just in case
         lastLogin: new Date().toISOString()
       };
 
@@ -75,25 +87,24 @@ async function saveUserToFirebase(user: any, db: any) {
   }
 }
 
-async function joinMatch(userId: string, matchId: number, db: any) {
+async function joinMatch(username: string, matchId: number, db: any) {
   try {
-    // 1. Log the join event: "match_joins/user_match"
-    const joinRef = ref(db, `match_joins/${userId}_${matchId}`);
+    // 1. Log the join using USERNAME (consistent with users table)
+    const joinRef = ref(db, `match_joins/${username}_${matchId}`);
+    
     await set(joinRef, {
-      userId,
+      userId: username, // Storing username as userId for consistency
       matchId,
       joinedAt: new Date().toISOString()
     });
 
-    // 2. Increment player count in "leaderboard/{matchId}/activePlayers"
-    // Realtime DB uses transactions for safe increments
+    // 2. Increment player count
     const countRef = ref(db, `leaderboard/${matchId}/activePlayers`);
-    
     await runTransaction(countRef, (currentValue) => {
       return (currentValue || 0) + 1;
     });
 
-    console.log(`✅ User ${userId} joined match ${matchId}`);
+    console.log(`✅ User ${username} joined match ${matchId}`);
 
   } catch (err) {
     console.error("🔥 Error recording match join:", err);
@@ -183,9 +194,10 @@ export default function Dashboard() {
   const handlePlayClick = async () => {
     if (!selectedMatch) return;
 
-    // --- SEND JOIN SIGNAL TO DB ---
-    if (user?.id) {
-      await joinMatch(user.id, selectedMatch, db);
+    // --- SEND JOIN SIGNAL TO DB USING USERNAME ---
+    if (user) {
+      const currentUsername = getUsernameFromPrivy(user);
+      await joinMatch(currentUsername, selectedMatch, db);
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
