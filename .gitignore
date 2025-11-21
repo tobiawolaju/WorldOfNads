@@ -30,6 +30,8 @@ build/
 frontend/.env
 *.local
 
+backend/serviceAccount.json
+
 # ────────────────
 # Editor files
 # ────────────────

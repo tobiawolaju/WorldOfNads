@@ -22,6 +22,7 @@
     "@solana/web3.js": "^1.98.4",
     "@tailwindcss/vite": "^4.1.13",
     "bs58": "^6.0.0",
+    "firebase": "^12.6.0",
     "gsap": "^3.13.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
