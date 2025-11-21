@@ -73,33 +73,40 @@ const Partners: React.FC = () => {
         />
       </div>
 
-      <div className="partners-grid">
-        {filteredPartners.length > 0 ? (
-          filteredPartners.map((partner, index) => (
-            <div key={index} className="partner-card">
-              <img
-                src={partner.logo}
-                alt={partner.name}
-                className="partner-logo"
-              />
-              <p className="partner-name">{partner.name}</p>
-              <a
-                href={`https://x.com/${partner.handle.replace("@", "")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="partner-handle"
-              >
-                {partner.handle}
-              </a>
-              <p className="partner-role">{partner.role}</p>
-            </div>
-          ))
-        ) : (
-          <p style={{ marginTop: "40px", color: "#777" }}>
-            No matching partners found.
-          </p>
-        )}
+  <div className="partners-timeline">
+  {filteredPartners.length > 0 ? (
+    filteredPartners.map((partner, index) => (
+      <div
+        key={index}
+        className={`timeline-item ${index % 2 === 0 ? "left" : "right"}`}
+      >
+        <div className="timeline-content">
+          <img src={partner.logo} alt={partner.name} className="t-logo" />
+
+          <div className="t-info">
+            <h2>{partner.name}</h2>
+            <a
+              href={`https://x.com/${partner.handle.replace("@", "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="t-handle"
+            >
+              {partner.handle}
+            </a>
+            <p>{partner.role}</p>
+          </div>
+        </div>
       </div>
+    ))
+  ) : (
+    <p style={{ marginTop: "40px", color: "#777" }}>
+      No matching partners found.
+    </p>
+  )}
+</div>
+
+
+
     </div>
   );
 };

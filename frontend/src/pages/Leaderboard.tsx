@@ -66,7 +66,7 @@ const Leaderboard: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 10;
+  const usersPerPage = 8;
 
   useEffect(() => {
     setCurrentPage(1); // Reset to first page when filter changes
@@ -181,23 +181,38 @@ const Leaderboard: React.FC = () => {
             ))}
           </ul>
           {totalPages > 1 && (
-            <div className="pagination">
-              <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
-                Prev
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
-                <button
-                    key={number}
-                    onClick={() => setCurrentPage(number)}
-                    className={`page-btn ${currentPage === number ? 'active' : ''}`}
-                >
-                    {number}
-                </button>
-              ))}
-              <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
-                Next
-              </button>
-            </div>
+
+           <div className="pagination">
+  {/* Previous Button */}
+  {currentPage > 1 && (
+    <button onClick={() => setCurrentPage(currentPage - 1)}>
+      Previous
+    </button>
+  )}
+
+  {/* Page number buttons */}
+  {Array.from(
+    { length: Math.ceil(allUsers.length / usersPerPage) },
+    (_, i) => (
+      <button
+        key={i}
+        onClick={() => setCurrentPage(i + 1)}
+        className={currentPage === i + 1 ? "active" : ""}
+      >
+        {i + 1}
+      </button>
+    )
+  )}
+
+  {/* Next Button */}
+  {currentPage < Math.ceil(allUsers.length / usersPerPage) && (
+    <button onClick={() => setCurrentPage(currentPage + 1)}>
+      Next
+    </button>
+  )}
+</div>
+
+
           )}
         </div>
       </div>
