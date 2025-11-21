@@ -12,9 +12,7 @@ import {
   ref, 
   set, 
   get, 
-  update, 
-  runTransaction, 
-  child 
+  update
 } from "firebase/database";
 
 // --- CONFIGURATION ---
@@ -29,42 +27,54 @@ const firebaseConfig = {
   measurementId: "G-QP22W5T17Z"
 };
 
-
 // Initialize Realtime Database
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- HELPER FUNCTIONS (REALTIME DB VERSION) ---
+// --- HELPER FUNCTIONS ---
+
+function getUsernameFromPrivy(user: any): string {
+  const twitter = user.linkedAccounts?.find((acc: any) => acc.type === "twitter_oauth");
+  const wallet = user.linkedAccounts?.find((acc: any) => acc.type === "wallet");
+  return twitter?.username || wallet?.address || "Anon";
+}
 
 async function saveUserToFirebase(user: any, db: any) {
   if (!user?.id) return;
 
-  // Point to "users/{userId}"
-  const userRef = ref(db, `users/${user.id}`);
+  const username = getUsernameFromPrivy(user);
+  
+  // Extract specific fields from Linked Accounts
+  const twitter = user.linkedAccounts?.find((acc: any) => acc.type === "twitter_oauth");
+  const wallet = user.linkedAccounts?.find((acc: any) => acc.type === "wallet");
+
+  // Point to "users/{username}"
+  const userRef = ref(db, `users/${username}`);
 
   try {
-    // Check if user already exists
     const snapshot = await get(userRef);
 
-    if (snapshot.exists()) {
-      // User exists: just update last login time
-      await update(userRef, {
-        lastLogin: new Date().toISOString()
-      });
-      console.log("✅ User exists in Realtime DB, updated login.");
-    } else {
-      // User is NEW: Create with your EXACT format
-      const twitter = user.linkedAccounts?.find((acc: any) => acc.type === "twitter_oauth");
-      const wallet = user.linkedAccounts?.find((acc: any) => acc.type === "wallet");
+    // Common data to update regardless if new or old
+    const updates = {
+      lastLogin: new Date().toISOString(),
+      latestVerifiedAt: twitter?.latestVerifiedAt || wallet?.latestVerifiedAt || new Date().toISOString(),
+      profilePictureUrl: twitter?.profilePictureUrl || "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
+    };
 
+    if (snapshot.exists()) {
+      // ✅ User exists: Update metadata ONLY (Do not overwrite projects or won count)
+      await update(userRef, updates);
+      console.log("✅ User metadata updated.");
+    } else {
+      // 🆕 New User: Write FULL data
       const newUserPayload = {
-        username: twitter?.username || wallet?.address?.slice(0, 8) || "Anon",
-        won: 0, // Default 0
-        projects: [], // Default empty array
-        pfp: twitter?.profile_picture_url || "https://randomuser.me/api/portraits/lego/1.jpg",
-        wallet: wallet?.address || null,
         privyId: user.id,
-        lastLogin: new Date().toISOString()
+        username: username,
+        wallet: wallet?.address || null,
+        firstVerifiedAt: twitter?.firstVerifiedAt || wallet?.firstVerifiedAt || new Date().toISOString(),
+        won: 0,
+        projects: [], // Initialize empty array
+        ...updates
       };
 
       await set(userRef, newUserPayload);
@@ -75,28 +85,30 @@ async function saveUserToFirebase(user: any, db: any) {
   }
 }
 
-async function joinMatch(userId: string, matchId: number, db: any) {
+// ✅ NEW LOGIC: Add Match Name to User's "projects" array
+async function updateUserProjects(username: string, matchSponsorName: string, db: any) {
   try {
-    // 1. Log the join event: "match_joins/user_match"
-    const joinRef = ref(db, `match_joins/${userId}_${matchId}`);
-    await set(joinRef, {
-      userId,
-      matchId,
-      joinedAt: new Date().toISOString()
-    });
+    const userRef = ref(db, `users/${username}`);
+    const snapshot = await get(userRef);
 
-    // 2. Increment player count in "leaderboard/{matchId}/activePlayers"
-    // Realtime DB uses transactions for safe increments
-    const countRef = ref(db, `leaderboard/${matchId}/activePlayers`);
-    
-    await runTransaction(countRef, (currentValue) => {
-      return (currentValue || 0) + 1;
-    });
+    if (snapshot.exists()) {
+      const userData = snapshot.val();
+      const currentProjects = userData.projects || [];
 
-    console.log(`✅ User ${userId} joined match ${matchId}`);
-
+      // Check if this project is already in the list
+      if (!currentProjects.includes(matchSponsorName)) {
+        const updatedProjects = [...currentProjects, matchSponsorName];
+        
+        await update(userRef, {
+          projects: updatedProjects
+        });
+        console.log(`✅ Added "${matchSponsorName}" to ${username}'s projects.`);
+      } else {
+        console.log(`ℹ️ User already has "${matchSponsorName}" in projects.`);
+      }
+    }
   } catch (err) {
-    console.error("🔥 Error recording match join:", err);
+    console.error("🔥 Error updating projects:", err);
   }
 }
 
@@ -183,9 +195,14 @@ export default function Dashboard() {
   const handlePlayClick = async () => {
     if (!selectedMatch) return;
 
-    // --- SEND JOIN SIGNAL TO DB ---
-    if (user?.id) {
-      await joinMatch(user.id, selectedMatch, db);
+    // --- DB ACTION: ADD PROJECT TO USER ---
+    if (user) {
+      const match = matches.find(m => m.id === selectedMatch);
+      if (match) {
+        const username = getUsernameFromPrivy(user);
+        // Add sponsor name to 'projects' array
+        await updateUserProjects(username, match.sponsor, db);
+      }
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -216,179 +233,39 @@ export default function Dashboard() {
   const wallets = (user.linkedAccounts?.filter((acc) => acc.type === "wallet") || []) as Wallet[];
 
   // --- DATA: MATCHES ---
- const matches: Match[] = [
-  {
-    id: 1,
-    sponsor: "Monad",
-    reward: "10 MON",
-    status: "upcoming",
-    time: "Upcoming",
-    image: "https://pbs.twimg.com/profile_images/1861739634428174336/26FzLLyr.jpg",
-    description: "Monad is a high-performance EVM-compatible Layer 1 blockchain with 10,000 TPS, 1-second block times, and sub-cent fees.",
-    url: "https://x.com/monad_xyz"
-  },
-  {
-    id: 17,
-    sponsor: "LootGO",
-    reward: "50,000 WONs",
-    status: "live",
-    time: "Live Now",
-    image: "https://pbs.twimg.com/profile_images/1947490514921488384/TLSJg7Z5.jpg",
-    description: "Discover → Play → Earn. The ultimate on-chain discovery app. Turn every interaction into real rewards.",
-    url: "https://x.com/lootgo_official"
-  },
-  {
-    id: 2,
-    sponsor: "Nad.fun",
-    reward: "22,000 WONs",
-    status: "live",
-    time: "Live Now",
-    image: "https://pbs.twimg.com/profile_images/1827607782356619264/Owr-840k.jpg",
-    description: "The most degenerate memecoin arena on Monad. Launch, pump, snipe, rug — pure chaos, zero mercy.",
-    url: "https://x.com/naddotfun"
-  },
-  {
-    id: 3,
-    sponsor: "Kizzy Mobile",
-    reward: "14,500 WONs",
-    status: "live",
-    time: "Live Now",
-    image: "https://pbs.twimg.com/profile_images/1889975983941591040/NeddfENS.jpg",
-    description: "Web3 in your pocket. The fastest mobile gateway to on-chain games, rewards, and social quests.",
-    url: "https://x.com/kizzymobile"
-  },
-  {
-    id: 4,
-    sponsor: "Kuru Exchange",
-    reward: "5,000 WONs",
-    status: "upcoming",
-    time: "Starts in 3h",
-    image: "https://pbs.twimg.com/profile_images/1950962142917619714/R7Cj_qk7.jpg",
-    description: "Lightning-fast perpetuals on Monad. Up to 100x leverage, deep liquidity, zero gas drama.",
-    url: "https://x.com/KuruExchange"
-  },
-  {
-    id: 5,
-    sponsor: "Lumiterra",
-    reward: "10,000 WONs",
-    status: "upcoming",
-    time: "Starts in 5h",
-    image: "https://pbs.twimg.com/profile_images/1667436896480563200/8YPmbLbv.png",
-    description: "An open-world MMORPG where you fight, farm, craft, and own your destiny across infinite lands.",
-    url: "https://x.com/LumiterraGame"
-  },
-  {
-    id: 6,
-    sponsor: "Levr Bet",
-    reward: "7,500 WONs",
-    status: "upcoming",
-    time: "Tomorrow: 14:00",
-    image: "https://pbs.twimg.com/profile_images/1836024387042004992/YKdDMkOG.jpg",
-    description: "Prediction markets & sports betting on-chain. Bet with leverage, earn with accuracy.",
-    url: "https://x.com/Levr_Bet"
-  },
-  {
-    id: 7,
-    sponsor: "Drake Exchange",
-    reward: "25,000 WONs",
-    status: "upcoming",
-    time: "Tomorrow: 18:30",
-    image: "https://pbs.twimg.com/profile_images/1974759389354491904/2vcC-dd4.jpg",
-    description: "Next-gen perpetuals & spot trading on Monad. Fast. Cheap. Ruthless execution.",
-    url: "https://x.com/DrakeExchange"
-  },
-  {
-    id: 8,
-    sponsor: "Omnia Explorer",
-    reward: "13,000 WONs",
-    status: "upcoming",
-    time: "In 2 Days",
-    image: "https://pbs.twimg.com/profile_images/1796709016808394752/C91LWB9H.jpg",
-    description: "The most powerful Monad block explorer. Real-time analytics, mempool sniper, gamified quests.",
-    url: "https://x.com/ExploreOmnia"
-  },
-  {
-    id: 9,
-    sponsor: "SeerTrade",
-    reward: "9,800 WONs",
-    status: "upcoming",
-    time: "In 3 Days",
-    image: "https://pbs.twimg.com/profile_images/1957497669959761920/IMS0lJhe.jpg",
-    description: "Advanced trading terminal for Monad. Sniping, copy-trading, AI signals, limit orders that actually fill.",
-    url: "https://x.com/seertrade"
-  },
-  {
-    id: 10,
-    sponsor: "Monday Trade",
-    reward: "6,400 WONs",
-    status: "completed",
-    time: "Completed",
-    image: "https://pbs.twimg.com/profile_images/1973421191202209797/qRXSiR5e.jpg",
-    description: "Set it and forget it. Automated DCA, grid, and martingale bots for Monad degens.",
-    url: "https://x.com/MondayTrade_"
-  },
-  {
-    id: 11,
-    sponsor: "Symphony",
-    reward: "18,200 WONs",
-    status: "completed",
-    time: "Completed",
-    image: "https://pbs.twimg.com/profile_images/1893386930605211648/-APwnLNM.jpg",
-    description: "Social trading on Monad. Follow top traders, copy flows, split profits, climb the leaderboard.",
-    url: "https://x.com/symphonyio"
-  },
-  {
-    id: 12,
-    sponsor: "Kinetik AI",
-    reward: "33,000 WONs",
-    status: "completed",
-    time: "Completed",
-    image: "https://pbs.twimg.com/profile_images/1947607859702673408/hpZ89aya.jpg",
-    description: "AI-powered on-chain movement battles. Run, jump, dodge — turn your activity into crypto.",
-    url: "https://x.com/KINETK_AI"
-  },
-  {
-    id: 13,
-    sponsor: "TeleMafia",
-    reward: "20,000 WONs",
-    status: "completed",
-    time: "Completed",
-    image: "https://pbs.twimg.com/profile_images/1967887075316994050/STzEqU1y.jpg",
-    description: "The ultimate Telegram mafia game. Lie, betray, vote out — last don standing wins the pot.",
-    url: "https://x.com/TeleMafia"
-  },
-  {
-    id: 14,
-    sponsor: "Fluffle World",
-    reward: "42,000 WONs",
-    status: "completed",
-    time: "Completed",
-    image: "https://pbs.twimg.com/profile_images/1972672305336569856/JLjBcagi.jpg",
-    description: "Home of the cutest (and most savage) bunnies on Monad. Collect, breed, battle, fluff.",
-    url: "https://x.com/fluffleworld"
-  },
-  {
-    id: 15,
-    sponsor: "BRO.fun",
-    reward: "18,000 WONs",
-    status: "completed",
-    time: "Completed",
-    image: "https://pbs.twimg.com/profile_images/1983519855279042560/ntgzrOaU.jpg",
-    description: "For the bros, by the bros. Gaming, memes, gains — pure brotherhood on Monad.",
-    url: "https://x.com/bro_dot_fun"
-  },
-  {
-    id: 16,
-    sponsor: "RareBet Sports",
-    reward: "55,000 WONs",
-    status: "completed",
-    time: "Completed",
-    image: "https://pbs.twimg.com/profile_images/1802788848956506112/KJnlcaQj.jpg",
-    description: "Elite on-chain sports betting. Parlay everything, leverage your takes, get paid instantly.",
-    url: "https://x.com/RareBetSports"
-  }
-];
-
+  const matches: Match[] = [
+    {
+      id: 1,
+      sponsor: "Monad",
+      reward: "10 MON",
+      status: "upcoming",
+      time: "Upcoming",
+      image: "https://pbs.twimg.com/profile_images/1861739634428174336/26FzLLyr.jpg",
+      description: "Monad is a high-performance EVM-compatible Layer 1 blockchain with 10,000 TPS.",
+      url: "https://x.com/monad_xyz"
+    },
+    {
+      id: 17,
+      sponsor: "LootGO",
+      reward: "50,000 WONs",
+      status: "live",
+      time: "Live Now",
+      image: "https://pbs.twimg.com/profile_images/1947490514921488384/TLSJg7Z5.jpg",
+      description: "Discover → Play → Earn. The ultimate on-chain discovery app.",
+      url: "https://x.com/lootgo_official"
+    },
+    // ... Other matches ...
+    {
+      id: 16,
+      sponsor: "RareBet Sports",
+      reward: "55,000 WONs",
+      status: "completed",
+      time: "Completed",
+      image: "https://pbs.twimg.com/profile_images/1802788848956506112/KJnlcaQj.jpg",
+      description: "Elite on-chain sports betting.",
+      url: "https://x.com/RareBetSports"
+    }
+  ];
 
   const filteredMatches = matches.filter((m) => m.status === filter);
 
@@ -520,79 +397,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
