@@ -173,5 +173,5 @@ function gracefulShutdown() {
 resetIdleTimer();
 
 server.listen(PORT, '0.0.0.0', () => {
-    serverLog(`✅ Server 8 live on port ${PORT}`);
+    serverLog(`✅ Server 3 live on port ${PORT}`);
 });

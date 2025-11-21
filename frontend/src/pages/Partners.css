@@ -10,7 +10,7 @@
   font-weight: 800;
   margin-bottom: 20px;
   font-family: Font2;
-  color: #000;
+  color: #e2d8ff;
 }
 
 .partners-description {
@@ -142,8 +142,15 @@
   top: 0;
   width: 20px;
   height: 100%;
-  background: linear-gradient(to bottom, #e2d8ff, #ff7df0);
-  transform: translateX(-50%);
+ background: linear-gradient(
+  to bottom,
+  #e2d8ff, /* top */
+  #a080ff, 
+  #6a38ff, 
+  #a080ff, 
+  #e2d8ff  /* bottom */
+);
+ transform: translateX(-50%);
   border-radius: 5px;
   opacity: 0.4;
 }
