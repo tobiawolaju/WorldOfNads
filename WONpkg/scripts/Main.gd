@@ -3,7 +3,7 @@ extends Node3D
 
 # --- CONFIGURATION ---
 # The URL of your Matchmaker (NOT the game servers)
-const MATCHMAKER_URL = "https://matchmaker-rd5j.onrender.com/find-match"
+const MATCHMAKER_URL = "https://worldofnads-matchmaker.onrender.com/find-match"
 const LOCAL_MATCHMAKER_URL = "http://localhost:3000/find-match"
 
 @export var use_localhost := false

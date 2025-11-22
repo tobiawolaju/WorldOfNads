@@ -1,4 +1,4 @@
-// matchmaker.js
+// matchmaker.js endpoint https://worldofnads-matchmaker.onrender.com/find-match
 import express from 'express';
 import fetch from 'node-fetch';
 import cors from 'cors';
@@ -13,9 +13,8 @@ const MAX_PLAYERS_PER_SERVER = 10;
 // LIST OF YOUR RENDER INSTANCES
 // IMPORTANT: No trailing slashes (/) at the end of these URLs!
 const GAME_SERVERS = [
-    { id: 1, url: 'https://server-1-eaim.onrender.com' },
-    { id: 2, url: 'https://server-2-7bjc.onrender.com' },
-    { id: 3, url: 'https://server-3-nan3.onrender.com' }
+    { id: 1, url: 'https://worldofnads-server-1.onrender.com' },
+    { id: 2, url: 'https://worldofnads-server-2.onrender.com' }
 ];
 
 // --- Helper to check a server ---
