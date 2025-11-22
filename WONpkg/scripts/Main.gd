@@ -4,7 +4,7 @@ extends Node3D
 # --- CONFIGURATION ---
 const MATCHMAKER_URL = "https://worldofnads-matchmaker.onrender.com/find-match"
 const LOCAL_MATCHMAKER_URL = "http://localhost:3000/find-match"
-const REQUEST_TIMEOUT = 30 # Seconds to wait for the matchmaker
+const REQUEST_TIMEOUT = 130 # Seconds to wait for the matchmaker
 
 @export var use_localhost := false
 @export var player_scene: PackedScene = preload("res://scenes/components/Player.tscn")
@@ -40,7 +40,7 @@ func _find_match():
 	is_matchmaking = true
 
 	var url = LOCAL_MATCHMAKER_URL if use_localhost else MATCHMAKER_URL
-	print("🔎 Finding a match... This may take a moment.")
+	print("🔎 Finding a match... The server will hold this connection until a spot is ready.")
 	if status_label: status_label.text = "Finding a match..."
 
 	# Set a longer timeout to allow the long poll to complete
