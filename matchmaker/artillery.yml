@@ -1,0 +1,11 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 20
+      name: "Match Requests Storm"
+
+scenarios:
+  - flow:
+      - get:
+          url: "/find-match"
