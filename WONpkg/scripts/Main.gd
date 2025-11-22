@@ -1,132 +1,200 @@
-# WorldManager.gd - REVISED for Long Polling
 extends Node3D
 
-# --- CONFIGURATION ---
+# ---------------------------------------------------------
+# CONFIG
+# ---------------------------------------------------------
 const MATCHMAKER_URL = "https://worldofnads-matchmaker.onrender.com/find-match"
 const LOCAL_MATCHMAKER_URL = "http://localhost:3000/find-match"
-const REQUEST_TIMEOUT = 30 # Seconds to wait for the matchmaker
+const REQUEST_TIMEOUT = 30 # seconds
 
 @export var use_localhost := false
 @export var player_scene: PackedScene = preload("res://scenes/components/Player.tscn")
 
-# --- NODES ---
+# ---------------------------------------------------------
+# NODES & STATE
+# ---------------------------------------------------------
 var http_req: HTTPRequest
 var ws := WebSocketPeer.new()
-var status_label: Label # Optional: A label to show status to the user
+var status_label: Label = null   # optional UI label
 
-# --- STATE ---
 var connected := false
 var player_id := ""
 var players := {}
 var is_matchmaking := false
 
+# ---------------------------------------------------------
+# READY
+# ---------------------------------------------------------
 func _ready():
-	# Optional: Find a UI label to display status
-	# status_label = $Path/To/Your/Label
-
-	# Create HTTP Request node for the Matchmaker
 	http_req = HTTPRequest.new()
 	add_child(http_req)
 	http_req.request_completed.connect(_on_matchmaker_response)
 
-	# Start the process
 	_find_match()
 
+
 # ---------------------------------------------------------
-# PART 1: MATCHMAKING (Single, Patient HTTP Request)
+# PART 1 — MATCHMAKING (Long polling)
 # ---------------------------------------------------------
 func _find_match():
-	if is_matchmaking: return
+	if is_matchmaking: 
+		return
+
 	is_matchmaking = true
 
 	var url = LOCAL_MATCHMAKER_URL if use_localhost else MATCHMAKER_URL
-	print("🔎 Finding a match... This may take a moment.")
+
+	print("🔎 Finding a match… (long polling)")
 	if status_label: status_label.text = "Finding a match..."
 
-	# Set a longer timeout to allow the long poll to complete
 	http_req.set_timeout(REQUEST_TIMEOUT)
 
-	var error = http_req.request(url)
-	if error != OK:
+	var err = http_req.request(url)
+	if err != OK:
 		push_error("Failed to start HTTP request.")
 		is_matchmaking = false
-		if status_label: status_label.text = "Error: Could not start search."
-		# Optional: Add a button to allow the user to retry manually
-		# get_tree().create_timer(5.0).timeout.connect(_find_match)
+		if status_label: status_label.text = "Error starting matchmaking."
+		return
+
 
 func _on_matchmaker_response(result, response_code, headers, body):
 	is_matchmaking = false
 
 	if result != HTTPRequest.RESULT_SUCCESS:
-		print("❌ Matchmaker request failed. Result: %s" % result)
-		if status_label: status_label.text = "Error: Connection to matchmaker failed."
-		# You might want a "Retry" button here for the user
+		print("❌ Matchmaker request failed: ", result)
+		if status_label: status_label.text = "Matchmaker failed."
 		return
 
-	if response_code == 200:
-		var json = JSON.parse_string(body.get_string_from_utf8())
-		if json == null:
-			print("❌ Failed to parse JSON from matchmaker.")
-			if status_label: status_label.text = "Error: Invalid server response."
-			return
+	if response_code != 200:
+		print("❌ Matchmaker error code: ", response_code)
+		if status_label: status_label.text = "Servers full. Try again."
+		return
 
-		var data = json as Dictionary
-		if data.get("status") == "ready":
-			var target_url = data.get("serverUrl")
-			print("🚀 Match found! Connecting to: %s" % target_url)
-			if status_label: status_label.text = "Connecting to server..."
-			_connect_to_game_server(target_url)
-		else:
-			print("❓ Unknown success response: ", data)
+	var json = JSON.parse_string(body.get_string_from_utf8())
+	if json == null:
+		print("❌ Invalid JSON from matchmaker.")
+		if status_label: status_label.text = "Invalid matchmaker data."
+		return
+
+	var data = json as Dictionary
+	if data.get("status") == "ready":
+		var target_url = data.get("serverUrl")
+		print("🚀 Match found! Connecting to: ", target_url)
+		if status_label: status_label.text = "Connecting..."
+		_connect_to_game_server(target_url)
 	else:
-		print("❌ Matchmaker error. Code: %s" % response_code)
-		if status_label: status_label.text = "Error: All servers are currently full."
-		# Handle specific errors like 503 (all servers full)
-		# A "Retry" button would be appropriate here too.
+		print("❓ Unknown matchmaker response: ", data)
 
 
 # ---------------------------------------------------------
-# PART 2: GAME CONNECTION (WEBSOCKET)
+# PART 2 — CONNECT TO GAME WEBSOCKET
 # ---------------------------------------------------------
 func _connect_to_game_server(url):
 	var err = ws.connect_to_url(url)
 	if err != OK:
-		print("❌ Failed to initiate connection to Game Server.")
-		if status_label: status_label.text = "Error: Could not connect."
-		# Connection failed, go back to matchmaking after a delay
+		print("❌ Failed to connect to game server.")
+		if status_label: status_label.text = "Failed to connect."
 		get_tree().create_timer(5.0).timeout.connect(_find_match)
 		return
-	else:
-		print("🌐 Connection to game server initiated...")
 
+	print("🌐 Connection initiated…")
+
+
+# ---------------------------------------------------------
+# PROCESS LOOP
+# ---------------------------------------------------------
 func _process(delta):
-	if ws.get_ready_state() == WebSocketPeer.STATE_CLOSED:
+	var state = ws.get_ready_state()
+
+	# Closed / disconnected
+	if state == WebSocketPeer.STATE_CLOSED:
 		if connected:
-			print("❌ Disconnected from Game Server.")
+			print("❌ Lost connection to game server.")
 			if status_label: status_label.text = "Disconnected."
 			connected = false
-			_clear_world() # You need to implement this function to remove old players
-			# Optional: automatically try to find a new match
+			_clear_world()
 			get_tree().create_timer(3.0).timeout.connect(_find_match)
 		return
 
 	ws.poll()
-	var state = ws.get_ready_state()
 
+	# Open and ready
 	if state == WebSocketPeer.STATE_OPEN:
 		if not connected:
 			connected = true
 			print("✅ Connected to Game Server!")
 			if status_label: status_label.text = "Connected!"
 		_receive_messages()
-	# The WebSocketPeer is in STATE_CONNECTING while ws.poll() is working.
-	# We don't need to do anything special here; it handles the "waiting" for us.
 
-# (The rest of your _receive_messages, _update_world_state, _spawn_player, etc. can remain the same)
 
+# ---------------------------------------------------------
+# PART 3 — WEBSOCKET MESSAGE HANDLING
+# ---------------------------------------------------------
+func _receive_messages():
+	while ws.get_available_packet_count() > 0:
+		var msg = ws.get_packet().get_string_from_utf8()
+		_process_message(msg)
+
+
+func _process_message(msg):
+	var json = JSON.parse_string(msg)
+	if json == null:
+		print("❌ Bad JSON from server: ", msg)
+		return
+
+	var data = json as Dictionary
+	var type = data.get("type", "")
+
+	match type:
+		"welcome":
+			player_id = data.get("id", "")
+			print("Player ID assigned: ", player_id)
+
+		"state":
+			_update_world_state(data)
+
+		_:
+			print("Unknown WS message: ", data)
+
+
+# ---------------------------------------------------------
+# PART 4 — WORLD UPDATING
+# ---------------------------------------------------------
+func _update_world_state(data):
+	var server_players = data.get("players", {})
+
+	# Add or update players
+	for id in server_players.keys():
+		var player_data = server_players[id]
+
+		if not players.has(id):
+			_spawn_player(id)
+
+		if players.has(id):
+			var pos = player_data.get("pos", Vector3.ZERO)
+			players[id].global_transform.origin = pos
+
+	# Remove players that disappeared from server
+	for id in players.keys():
+		if not server_players.has(id):
+			players[id].queue_free()
+			players.erase(id)
+
+
+func _spawn_player(id):
+	var p = player_scene.instantiate()
+	add_child(p)
+	players[id] = p
+	print("Spawned player: ", id)
+
+
+# ---------------------------------------------------------
+# CLEANUP
+# ---------------------------------------------------------
 func _clear_world():
 	for id in players.keys():
 		if is_instance_valid(players[id]):
 			players[id].queue_free()
+
 	players.clear()
 	player_id = ""
