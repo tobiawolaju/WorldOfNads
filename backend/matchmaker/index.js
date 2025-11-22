@@ -15,11 +15,13 @@ const SERVER_PROBE_INTERVAL_MS = 2000; // How often to check a waking server (e.
 // IMPORTANT: Use unique URLs for each server instance for proper scaling.
 const GAME_SERVERS = [
     { id: 1, url: 'https://worldofnads-server-1.onrender.com' },
-    // For scaling, you would add a *different* server instance here, e.g.:
-    // { id: 2, url: 'https://worldofnads-server-2.onrender.com' }
-    // I'm keeping your duplicated URL to show it works, but it's not true scaling.
-    { id: 2, url: 'https://worldofnads-server-1.onrender.com' }
+  { id: 2, url: 'https://worldofnads-server-1.onrender.com' }
 ];
+
+/*const GAME_SERVERS = [
+    { id: 1, url: 'http://localhost:8080/' },
+  { id: 2, url: 'http://localhost:8080/' }
+];*/
 
 // --- Helper to check a server's status ---
 async function checkServer(serverUrl) {
