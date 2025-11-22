@@ -14,7 +14,7 @@ const MAX_PLAYERS_PER_SERVER = 10;
 // IMPORTANT: No trailing slashes (/) at the end of these URLs!
 const GAME_SERVERS = [
     { id: 1, url: 'https://worldofnads-server-1.onrender.com' },
-    { id: 2, url: 'https://worldofnads-server-2.onrender.com' }
+    { id: 2, url: 'https://worldofnads-server-1.onrender.com' }
 ];
 
 // --- Helper to check a server ---

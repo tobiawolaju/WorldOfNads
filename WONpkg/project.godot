@@ -14,8 +14,10 @@ config/name="World of Nads"
 run/main_scene="uid://sa5je5ejkj2m"
 config/features=PackedStringArray("4.5", "Forward Plus")
 boot_splash/bg_color=Color(1, 1, 1, 1)
-boot_splash/image="uid://cm7cx3kar1i1g"
+boot_splash/image="uid://rcj3xhh7u10x"
 config/icon="uid://rcj3xhh7u10x"
+config/macos_native_icon="uid://rcj3xhh7u10x"
+config/windows_native_icon="uid://rcj3xhh7u10x"
 
 [display]
 
