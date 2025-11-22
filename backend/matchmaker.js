@@ -11,8 +11,9 @@ const PORT = process.env.PORT || 3000;
 const MAX_PLAYERS_PER_SERVER = 10;
 
 // LIST OF YOUR RENDER INSTANCES
+// IMPORTANT: No trailing slashes (/) at the end of these URLs!
 const GAME_SERVERS = [
-    { id: 1, url: 'https://server-1-eaim.onrender.com/' },
+    { id: 1, url: 'https://server-1-eaim.onrender.com' },
     { id: 2, url: 'https://server-2-7bjc.onrender.com' },
     { id: 3, url: 'https://server-3-nan3.onrender.com' }
 ];
@@ -20,9 +21,9 @@ const GAME_SERVERS = [
 // --- Helper to check a server ---
 async function checkServer(serverUrl) {
     try {
-        // Set a short timeout so we don't wait forever for a sleeping server
+        // Set a short timeout (2s) so we don't wait forever for a sleeping server
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
 
         const response = await fetch(`${serverUrl}/stats`, { 
             signal: controller.signal 
@@ -42,9 +43,15 @@ async function checkServer(serverUrl) {
 
 // --- Helper to wake a server ---
 function wakeServer(serverUrl) {
-    // We just fire this request and don't wait for the result immediately
-    fetch(`${serverUrl}/wakeup`).catch(e => console.log(`Waking ${serverUrl}...`));
+    // We just fire this request and don't wait for the result
+    console.log(`🔔 Knocking on door of ${serverUrl}...`);
+    fetch(`${serverUrl}/wakeup`).catch(e => {});
 }
+
+// --- Endpoint: Root (Health Check) ---
+app.get('/', (req, res) => {
+    res.send('✅ MATCHMAKER IS RUNNING. Use /find-match to connect.');
+});
 
 // --- Endpoint: Find a Match ---
 app.get('/find-match', async (req, res) => {
@@ -58,7 +65,8 @@ app.get('/find-match', async (req, res) => {
         if (info.status === 'active' && info.count < MAX_PLAYERS_PER_SERVER) {
             return res.json({
                 status: 'ready',
-                serverUrl: server.url.replace('https://', 'wss://') // Convert to WS
+                // Convert https to wss for the client
+                serverUrl: server.url.replace('https://', 'wss://') 
             });
         }
 

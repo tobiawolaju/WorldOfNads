@@ -1,100 +1,94 @@
-// matchmaker.js
-import express from 'express';
-import fetch from 'node-fetch';
-import cors from 'cors';
+  // server.js
+// Final Production Version - CLIENT AUTHORITATIVE MODEL with Animation Sync
 
-const app = express();
-app.use(cors()); // Allow your frontend to call this
-const PORT = process.env.PORT || 3000;
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
+import { randomUUID } from 'crypto';
 
 // --- Configuration ---
-const MAX_PLAYERS_PER_SERVER = 10;
+const PORT = process.env.PORT || 8080;
+const BROADCAST_RATE = 20;
 
-// LIST OF YOUR RENDER INSTANCES
-// IMPORTANT: No trailing slashes (/) at the end of these URLs!
-const GAME_SERVERS = [
-    { id: 1, url: 'https://server-1-eaim.onrender.com' },
-    { id: 2, url: 'https://server-2-7bjc.onrender.com' },
-    { id: 3, url: 'https://server-3-nan3.onrender.com' }
-];
+// --- Server State ---
+const players = {};
 
-// --- Helper to check a server ---
-async function checkServer(serverUrl) {
+// --- HTTP Server Setup (for health checks from Render) ---
+const server = createServer((req, res) => {
+  if (req.method === 'GET' && req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Server is alive and healthy!\n');
+    return;
+  }
+  res.writeHead(404);
+  res.end();
+});
+
+// --- WebSocket Server Setup ---
+const wss = new WebSocketServer({ noServer: true });
+
+console.log(`🚀 Server starting on port ${PORT}...`);
+
+server.on('upgrade', (req, socket, head) => {
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit('connection', ws, req);
+  });
+});
+
+// --- Connection Handling ---
+wss.on('connection', (ws, req) => {
+  const playerId = randomUUID();
+  // Add 'animation' to the default player state
+  players[playerId] = { id: playerId, x: 0, y: 0, z: 0, rotationY: 0, animation: "idle" };
+  
+  console.log(`🎮 Player connected: ${playerId}`);
+
+  ws.send(JSON.stringify({ type: 'connect', id: playerId }));
+
+  // --- Message Handling ---
+  ws.on('message', (message) => {
     try {
-        // Set a short timeout (2s) so we don't wait forever for a sleeping server
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-        const response = await fetch(`${serverUrl}/stats`, { 
-            signal: controller.signal 
-        });
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-            const data = await response.json();
-            return { status: 'active', count: data.playerCount };
+      const data = JSON.parse(message.toString());
+      if (data.type === 'update_state') {
+        const player = players[data.player_id];
+        if (player) {
+          player.x = data.x;
+          player.y = data.y;
+          player.z = data.z;
+          player.rotationY = data.rotation_y;
+          // Store the animation state sent by the client
+          player.animation = data.animation;
         }
+      }
     } catch (error) {
-        // If it times out or fails, it's likely "sleeping" or booting
-        return { status: 'sleeping', count: 0 };
+      console.error('Failed to parse message:', error);
     }
-    return { status: 'error', count: 0 };
-}
+  });
 
-// --- Helper to wake a server ---
-function wakeServer(serverUrl) {
-    // We just fire this request and don't wait for the result
-    console.log(`🔔 Knocking on door of ${serverUrl}...`);
-    fetch(`${serverUrl}/wakeup`).catch(e => {});
-}
-
-// --- Endpoint: Root (Health Check) ---
-app.get('/', (req, res) => {
-    res.send('✅ MATCHMAKER IS RUNNING. Use /find-match to connect.');
+  // Disconnection Handling
+  ws.on('close', () => {
+    console.log(`💀 Player disconnected: ${playerId}`);
+    delete players[playerId];
+  });
 });
 
-// --- Endpoint: Find a Match ---
-app.get('/find-match', async (req, res) => {
-    console.log("🔎 Client requested a match...");
+// --- Server Broadcast Loop ---
+const broadcastLoop = () => {
+  const stateData = {
+    type: 'state',
+    players: Object.values(players),
+  };
+  const stateString = JSON.stringify(stateData);
 
-    for (const server of GAME_SERVERS) {
-        const info = await checkServer(server.url);
-        console.log(`Checked Server ${server.id}: ${info.status} (${info.count} players)`);
-
-        // 1. If server is active and has space
-        if (info.status === 'active' && info.count < MAX_PLAYERS_PER_SERVER) {
-            return res.json({
-                status: 'ready',
-                // Convert https to wss for the client
-                serverUrl: server.url.replace('https://', 'wss://') 
-            });
-        }
-
-        // 2. If server is sleeping, wake it up and tell client to wait
-        if (info.status === 'sleeping') {
-            wakeServer(server.url);
-            return res.json({
-                status: 'waking_up',
-                message: 'Server is spinning up. Please retry in 5-10 seconds.',
-                retryAfter: 5000
-            });
-        }
+  wss.clients.forEach((client) => {
+    if (client.readyState === 1) { // WebSocket.OPEN
+      client.send(stateString);
     }
+  });
+};
 
-    // 3. All servers full or down
-    res.status(503).json({ error: 'All servers are currently full.' });
-});
+setInterval(broadcastLoop, 1000 / BROADCAST_RATE);
 
-// --- Endpoint: Admin View ---
-app.get('/dashboard', async (req, res) => {
-    const statusReport = [];
-    for (const server of GAME_SERVERS) {
-        const info = await checkServer(server.url);
-        statusReport.push({ ...server, ...info });
-    }
-    res.json(statusReport);
-});
-
-app.listen(PORT, () => {
-    console.log(`Matchmaker running on port ${PORT}`);
+// --- Start the HTTP Server ---
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server is live and listening on port ${PORT}`);
 });
