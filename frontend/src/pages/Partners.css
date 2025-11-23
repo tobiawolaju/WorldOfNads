@@ -10,11 +10,11 @@
   font-weight: 800;
   margin-bottom: 20px;
   font-family: Font2;
-  color: #e2d8ff;
+  color: #6a38ff;
 }
 
 .partners-description {
-  color: #8a8a8a;
+  color: #000000;
   font-size: clamp(1rem, 1.5vw, 1.15rem);
   margin-bottom: 50px;
   max-width: 750px;
@@ -47,7 +47,7 @@
 /* === HOVER: FULL COLOR === */
 .partner-card:hover {
   transform: translateY(-6px);
-  background: rgba(162, 0, 255, 0.9);
+  background: #6a38ff90;
   border-color: transparent;
   box-shadow: 0 8px 26px rgba(0,0,0,0.15);
 
@@ -202,8 +202,8 @@
   left: -18px;
   width: 16px;
   height: 16px;
-  background: #a200ff;
-  border-radius: 50%;
+  background: #6a38ff90;
+  border-radius: 10%;
   transform: translateY(-50%);
 }
 

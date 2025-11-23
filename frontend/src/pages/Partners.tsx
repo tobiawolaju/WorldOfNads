@@ -60,8 +60,7 @@ const Partners: React.FC = () => {
 
       <h1 className="partners-title">Our Partners</h1>
       <p className="partners-description">
-        The 9999 projects built on Monad that makes WONs WONs
-      </p>
+     Meet Our Offical Partners   </p>
 
       <div className="search-wrapper">
         <input
