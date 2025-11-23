@@ -180,3 +180,4 @@ func _on_connected():
 			p.get_parent().remove_child(p)
 			add_child(p) # Re-parent to world
 			p.velocity.y = 0.1 # small nudge to fall naturally
+			
