@@ -18,8 +18,8 @@ const BROWSER_HEADERS = {
 };
 
 const GAME_SERVERS = [
-    { id: 1, url: 'https://worldofnads-server-1.onrender.com' },
-    { id: 2, url: 'https://worldofnads-server-1.onrender.com' }
+    { id: 1, url: 'https://worldofnads-server-2.onrender.com' },
+    { id: 2, url: 'https://worldofnads-server-2.onrender.com' }
 ];
 
 // --- Helper to check a server's status ---
