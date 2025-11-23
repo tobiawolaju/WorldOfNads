@@ -11,7 +11,7 @@
   font-weight: 800;
   margin-bottom: 20px;
   font-family: Font2;
-  color: #000000;
+  color: #6a38ff;
 }
 
 .pretge-intro {
@@ -51,9 +51,9 @@
 }
 
 .pretge-logo {
-  width: 60px;
-  height: 60px;
-  border-radius: 10%;
+  width: 100px;
+  height: 100px;
+  border-radius: 20%;
   object-fit: cover;
   margin-right: 15px;
   /* Default border for the logo */
