@@ -4,7 +4,7 @@
 // Incrementing CACHE_VERSION will kick off the install event and force
 // previously cached resources to be updated from the network.
 /** @type {string} */
-const CACHE_VERSION = '1763863820|8658677245';
+const CACHE_VERSION = '1763865544|10382204049';
 /** @type {string} */
 const CACHE_PREFIX = 'World of Nads-sw-cache-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;

@@ -479,12 +479,6 @@ skeleton = NodePath("")
 
 [node name="CharacterBody3D" parent="." instance=ExtResource("8_101mb")]
 transform = Transform3D(0.5708139, 0, -0.8210795, 0, 1, 0, 0.8210795, 0, 0.5708139, 7.2267113, 0.43621254, 2.1414716)
-camera_distance = null
-camera_smoothness = null
-min_pitch = null
-max_pitch = null
-min_zoom = null
-max_zoom = null
 
 [node name="Skeleton3D" parent="CharacterBody3D" index="2"]
 bones/0/position = Vector3(-0.00020466425, 0.008980044, -9.668184e-05)
