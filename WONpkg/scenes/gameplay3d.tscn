@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=4 uid="uid://b48njcleqy6m3"]
+[gd_scene load_steps=42 format=4 uid="uid://b48njcleqy6m3"]
 
 [ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_vuq5q"]
 [ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="2_00tan"]
@@ -38,6 +38,11 @@ fog_sky_affect = 0.4
 fog_depth_begin = 1.0
 fog_depth_end = 25.0
 volumetric_fog_albedo = Color(0.29411766, 0.2627451, 1, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vuq5q"]
+albedo_color = Color(0.92156863, 0.47058824, 0.9647059, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_5bpam"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ocj2s"]
 
@@ -424,8 +429,14 @@ shape = SubResource("ConcavePolygonShape3D_ocj2s")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="PlayerManager"]
 environment = SubResource("Environment_00tan")
 
+[node name="CAMERABlock" type="MeshInstance3D" parent="PlayerManager"]
+transform = Transform3D(1, 0, 0, 0, -0.0005934675, -0.9999998, 0, 0.9999998, -0.0005934675, 0, -11.384084, -0.60183656)
+material_override = SubResource("StandardMaterial3D_vuq5q")
+mesh = SubResource("PlaneMesh_5bpam")
+skeleton = NodePath("../Camera3D")
+
 [node name="Camera3D" type="Camera3D" parent="PlayerManager"]
-transform = Transform3D(1, 0, 0, 0, 0.9842574, 0.1767412, 0, -0.1767412, 0.9842574, 0, 0.051921308, 0.18706155)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -11.384084, -0.026306748)
 fov = 120.0
 
 [node name="FallbackTimer" type="Timer" parent="PlayerManager"]
@@ -444,7 +455,7 @@ mesh = ExtResource("3_l1v76")
 skeleton = NodePath("")
 
 [node name="Bus" parent="." instance=ExtResource("5_ocj2s")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2283125, 12.080405, 0)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.2283125, 12.080405, 28.030418)
 
 [node name="stones" type="Node3D" parent="."]
 

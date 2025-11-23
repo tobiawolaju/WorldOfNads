@@ -809,13 +809,14 @@ mesh = SubResource("ArrayMesh_ds7rv")
 skeleton = NodePath("")
 
 [node name="STATS" type="Label3D" parent="."]
-transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 2.9710336, 0)
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, -2.4700882, 2.9710336, 6.901902)
 billboard = 1
 fixed_size = true
-modulate = Color(0.99607843, 0.85882354, 1, 1)
-outline_modulate = Color(0.92156863, 0.47058824, 0.9647059, 1)
+modulate = Color(0.9529412, 0.8392157, 0, 1)
+outline_modulate = Color(1, 1, 0.58431375, 1)
 text = "Searching for Server"
 font_size = 100
+outline_size = 50
 
 [editable path="Players/Player2"]
 [editable path="Players/Player3"]
