@@ -9,7 +9,7 @@ const SPEED = 4.5
 @export var min_pitch := deg_to_rad(-40)
 @export var max_pitch := deg_to_rad(60)
 @export var min_zoom := 2.0
-@export var max_zoom := 5.0
+@export var max_zoom := 3.5
 
 @onready var name_label: Label3D = $Label3D
 @onready var anim_run: AnimationPlayer = $running

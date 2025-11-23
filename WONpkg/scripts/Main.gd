@@ -4,6 +4,7 @@ extends Node3D
 const LIVE_URL = "wss://worldofnads.onrender.com/"
 const LOCAL_URL = "ws://localhost:8080"
 
+
 # --- EXPORTS ---
 @export var player_scene: PackedScene = preload("res://scenes/components/Player.tscn")
 @export var bus_node: Node3D # assign bus mesh in editor
