@@ -267,6 +267,11 @@ background: hsl(249, 100%, 74%);
   scale: 0.9;
 }
 
+.grayscale-card {
+  filter: grayscale(100%);
+}
+
+
 .match-card:hover {
   transform: perspective(600px) rotateY(8deg) translateY(-6px) scale(1.08);
   opacity: 1;
