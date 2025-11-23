@@ -5,6 +5,9 @@ const GRAVITY: float = 9.8
 const JUMP_VELOCITY: float = 4.5
 const SPEED: float = 4.5
 
+const BUS_ZOOM_MULTIPLIER :float = 2.0
+const NORMAL_ZOOM_MULTIPLIER :float = 1.0
+
 # === EXPORTS ===
 @onready var camera: Camera3D = get_node("../Camera3D")
 @onready var name_label: Label3D = $Label3D
@@ -109,11 +112,12 @@ func _update_camera_on_bus(delta: float):
 	if not bus_node or not camera:
 		return
 	var target_pos = bus_node.global_transform.origin + bus_offset
+	var zoomed_distance = camera_distance * BUS_ZOOM_MULTIPLIER
 	var cam_target_offset = Vector3(
 		sin(cam_rot_y) * cos(cam_rot_x),
 		sin(cam_rot_x),
 		cos(cam_rot_y) * cos(cam_rot_x)
-	) * camera_distance
+	) * zoomed_distance
 	var desired_pos = target_pos + cam_target_offset
 	camera.global_position = camera.global_position.lerp(desired_pos, delta * camera_smoothness)
 	camera.look_at(target_pos, Vector3.UP)

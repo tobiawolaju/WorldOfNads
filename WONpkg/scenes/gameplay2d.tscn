@@ -60,6 +60,7 @@ scale = Vector2(0.25, 0.25)
 texture = ExtResource("2_cqgoe")
 
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick"]
+modulate = Color(1, 1, 1, 0.4745098)
 scale = Vector2(0.15, 0.15)
 texture = ExtResource("2_cqgoe")
 script = ExtResource("3_1iwhs")
