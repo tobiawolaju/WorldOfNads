@@ -4,48 +4,49 @@ import "./Partners.css";
 const Partners: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Replaced real partners with Redacted placeholders
   const partners = [
     {
-      name: "Azuki",
-      logo: "/logos/azuki.png",
-      handle: "@Azuki",
-      role: "Cultural Partner — bridging art, anime, and Web3 identity.",
+      name: "Redacted",
+      logo: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png",
+      handle: "@?????",
+      role: "Strategic Partner — Identity hidden until mainnet.",
     },
     {
-      name: "Yuga Labs",
-      logo: "/logos/yuga.png",
-      handle: "@yugalabs",
-      role: "Creative ally building immersive experiences in the metaverse.",
+      name: "Redacted",
+      logo: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png",
+      handle: "@?????",
+      role: "Infrastructure Ally — Details confidential.",
     },
     {
-      name: "Ape Yacht Club",
-      logo: "/logos/ape.png",
-      handle: "@BoredApeYC",
-      role: "Community pioneer — redefining digital ownership and culture.",
+      name: "Redacted",
+      logo: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png",
+      handle: "@?????",
+      role: "Community Partner — To be announced.",
     },
     {
-      name: "Blur",
-      logo: "/logos/blur.png",
-      handle: "@blur_io",
-      role: "Marketplace infrastructure partner for NFT liquidity and data.",
+      name: "Redacted",
+      logo: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png",
+      handle: "@?????",
+      role: "Liquidity Provider — Locked.",
     },
     {
-      name: "Chainlink",
-      logo: "/logos/chainlink.png",
-      handle: "@chainlink",
-      role: "Oracle partner — powering on-chain automation and data feeds.",
+      name: "Redacted",
+      logo: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png",
+      handle: "@?????",
+      role: "Oracle Provider — Announcement pending.",
     },
     {
-      name: "Polygon",
-      logo: "/logos/polygon.png",
-      handle: "@0xPolygon",
-      role: "Scaling partner — enabling seamless, low-cost transactions.",
+      name: "Redacted",
+      logo: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png",
+      handle: "@?????",
+      role: "Scaling Solution — Top Secret.",
     },
     {
-      name: "Base",
-      logo: "/logos/base.png",
-      handle: "@base",
-      role: "Ecosystem ally — building the next generation of on-chain apps.",
+      name: "Redacted",
+      logo: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png",
+      handle: "@?????",
+      role: "Ecosystem Giant — Coming soon.",
     },
   ];
 
@@ -60,7 +61,8 @@ const Partners: React.FC = () => {
 
       <h1 className="partners-title">Our Partners</h1>
       <p className="partners-description">
-     Meet Our Offical Partners   </p>
+        The projects building silently with us. 
+      </p>
 
       <div className="search-wrapper">
         <input
@@ -72,40 +74,30 @@ const Partners: React.FC = () => {
         />
       </div>
 
-  <div className="partners-timeline">
-  {filteredPartners.length > 0 ? (
-    filteredPartners.map((partner, index) => (
-      <div
-        key={index}
-        className={`timeline-item ${index % 2 === 0 ? "left" : "right"}`}
-      >
-        <div className="timeline-content">
-          <img src={partner.logo} alt={partner.name} className="t-logo" />
-
-          <div className="t-info">
-            <h2>{partner.name}</h2>
-            <a
-              href={`https://x.com/${partner.handle.replace("@", "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="t-handle"
+      <div className="partners-timeline">
+        {filteredPartners.length > 0 ? (
+          filteredPartners.map((partner, index) => (
+            <div
+              key={index}
+              className={`timeline-item ${index % 2 === 0 ? "left" : "right"}`}
             >
-              {partner.handle}
-            </a>
-            <p>{partner.role}</p>
-          </div>
-        </div>
+              <div className="timeline-content">
+                <img src={partner.logo} alt={partner.name} className="t-logo" />
+
+                <div className="t-info">
+                  <h2>{partner.name}</h2>
+                  <span className="t-handle">{partner.handle}</span>
+                  <p>{partner.role}</p>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p style={{ marginTop: "40px", color: "#777" }}>
+            No matching partners found.
+          </p>
+        )}
       </div>
-    ))
-  ) : (
-    <p style={{ marginTop: "40px", color: "#777" }}>
-      No matching partners found.
-    </p>
-  )}
-</div>
-
-
-
     </div>
   );
 };
