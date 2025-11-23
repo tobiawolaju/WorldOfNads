@@ -13,47 +13,47 @@ const FAQ: React.FC = () => {
     {
       question: "What is World of Nads?",
       answer:
-        "World of Nads (WONs) is a Web3 gamified engagement ecosystem built on the Monad blockchain. It connects crypto and NFT projects with their communities through fun, skill-based matches that reward active supporters with real on-chain prizes.",
+        "World of Nads (WONs) is where the chaos of 'Tag' meets the stakes of a Battle Royale. It is a high-fidelity, browser-based competitive arena game powered by Monad. We prioritize 'Fun First'—shifting from the boring 'Play-to-Earn' model to a sustainable 'Play-and-Own' ecosystem.",
     },
     {
-      question: "How does the game work?",
+      question: "Is the game live?",
       answer:
-        "Players log in, create their character, and join matches on even-numbered days. In each match, you compete to grab and hold a chicken until the 5-minute timer hits zero. The chicken carries your potential reward — win the match, and you claim it.",
+        "Yes. Unlike many Web3 projects that are just a concept, WONs is a live, playable reality. We are currently in Closed Beta with 200+ active testers and a fully functional browser build. No downloads required.",
     },
     {
-      question: "What kind of rewards can I win?",
+      question: "How do I play?",
       answer:
-        "Partner projects offer exclusive rewards like free NFT mints, token airdrops, whitelist spots, or access passes. For example, a 9999 NFT collection might reserve 500 free mints for top players that win their matches.",
+        "You drop into a lobby with up to 20 players for a high-octane 'Chicken Chase.' A chicken spawns in the arena. The objective is simple: be the one holding the chicken when the timer hits 0:00. However, holding the chicken drains your stamina, forcing strategic passes (Hot Potato style) while the map borders shrink.",
     },
     {
-      question: "How can a project partner with WONs?",
+      question: "What are the rewards and Tokenomics?",
       answer:
-        "Projects can apply to become official WON partners and set up their own reward campaigns — defining how many users they want to reward and what they’ll give. This helps them grow engagement while rewarding genuine supporters.",
+        "We use a sustainable dual-asset economy. Prizes for tournaments are paid in stable assets (USDC/USDT) so winners get guaranteed value. The $WON token is an earned utility token used strictly for cosmetics (Skins, Battle Passes, VFX). There are NO Pay-to-Win mechanics.",
     },
     {
-      question: "What is the WON token?",
+      question: "How does Monad integration work?",
       answer:
-        "WON is the native stable token of the World of Nads ecosystem — a 1:1 stable asset similar to USDT. Players earn and use WON across matches, rewards, and in-game purchases, and it can be swapped directly for USDT anytime.",
+        "We use Monad as an invisible backend for speed and trust. The standout feature is 'Instant Payouts.' There is no 'Claim Rewards' button—the moment a match ends, the blockchain settles the result and funds hit the winner's wallet immediately.",
     },
     {
-      question: "How do players get started?",
+      question: "How can projects partner with WONs?",
       answer:
-        "Simply connect your wallet, create your character, and choose your preferred even-day match. Once the countdown begins, you’ll be matched with other players — and if you hold onto that chicken till the end, the reward is yours.",
+        "WONs acts as a 'User Acquisition Engine' for the Monad ecosystem. Instead of airdropping tokens to bots, projects can sponsor 'Wager Lobbies' or Tournaments. To win the allocation, users must play the game. Since bots can't win at Nads, partners are guaranteed engagement from real humans.",
     },
     {
-      question: "Is it free to play?",
+      question: "Is it Free-to-Play?",
       answer:
-        "Yes. World of Nads is free to join and play. Some rewards may require completing partner-specific tasks or holding certain NFTs, but core matches are open to everyone.",
+        "Yes. The core game is accessible to everyone. We utilize Privy for seamless onboarding, allowing you to log in with social accounts in under 15 seconds—no wallet seed phrases required to start playing.",
     },
     {
-      question: "What chain powers World of Nads?",
+      question: "What prevents bots from farming rewards?",
       answer:
-        "WONs runs on the Monad blockchain — built for high performance, ultra-low fees, and real-time on-chain gameplay at scale.",
+        "Skill. Our gameplay is physics-based and twitch-reflex dependent. Unlike simple 'click-to-earn' DeFi games, WONs requires active movement, strategy, and reaction time, making it impossible for standard scripts to farm rewards.",
     },
     {
-      question: "How can I stay updated?",
+      question: "How can I join the Beta?",
       answer:
-        "Follow @worldofnads on X (Twitter) and join the community to stay informed about upcoming matches, partner drops, and new reward campaigns.",
+        "Follow @worldofnads on X (Twitter) and join our Discord. We are gradually expanding our Closed Beta group. We also have reserved whitelist slots for specific partner communities and VC partners.",
     },
   ];
 
@@ -65,6 +65,9 @@ const FAQ: React.FC = () => {
     <div className="faq-container">
       <div style={{ height: '60px' }}></div>
       <h1 className="faq-header">FAQ</h1>
+      <p className="faq-subtext" style={{ textAlign: "center", color: "#888", marginBottom: "30px" }}>
+        Everything you need to know about the Arena.
+      </p>
 
       <div className="faq-list">
         {faqs.map((item, index) => (
