@@ -1,93 +1,94 @@
-// server.js — CLEAN VERSION, NO AUTO SHUTDOWN
+// server.js
+// Final Production Version - CLIENT AUTHORITATIVE MODEL with Animation Sync
 
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 
+// --- Configuration ---
 const PORT = process.env.PORT || 8080;
 const BROADCAST_RATE = 20;
 
+// --- Server State ---
 const players = {};
-const logs = [];
 
-// Logging
-function serverLog(msg) {
-    const line = `[${new Date().toISOString()}] ${msg}`;
-    console.log(line);
-    logs.push(line);
-    if (logs.length > 500) logs.shift();
-}
-
+// --- HTTP Server Setup (for health checks from Render) ---
 const server = createServer((req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-
-    if (req.url === '/' || req.url === '/wakeup') {
-        res.writeHead(200);
-        return res.end("awake");
-    }
-
-    if (req.url === '/stats') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({
-            playerCount: Object.keys(players).length,
-            playerIds: Object.keys(players),
-            uptime: process.uptime()
-        }));
-    }
-
-    if (req.url === '/dumplog') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify(logs));
-    }
-
-    res.writeHead(404);
-    res.end();
+  if (req.method === 'GET' && req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Server is alive and healthy!\n');
+    return;
+  }
+  res.writeHead(404);
+  res.end();
 });
 
+// --- WebSocket Server Setup ---
 const wss = new WebSocketServer({ noServer: true });
 
+console.log(`🚀 Server starting on port ${PORT}...`);
+
 server.on('upgrade', (req, socket, head) => {
-    wss.handleUpgrade(req, socket, head, (ws) => {
-        wss.emit('connection', ws, req);
-    });
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit('connection', ws, req);
+  });
 });
 
-wss.on('connection', (ws) => {
-    const id = randomUUID();
-    players[id] = { id, x: 0, y: 0, z: 0, rotationY: 0, animation: "idle" };
-    serverLog(`Player connected: ${id}`);
+// --- Connection Handling ---
+wss.on('connection', (ws, req) => {
+  const playerId = randomUUID();
+  // Add 'animation' to the default player state
+  players[playerId] = { id: playerId, x: 0, y: 0, z: 0, rotationY: 0, animation: "idle" };
+  
+  console.log(`🎮 Player connected: ${playerId}`);
 
-    ws.send(JSON.stringify({ type: 'connect', id }));
+  ws.send(JSON.stringify({ type: 'connect', id: playerId }));
 
-    ws.on('message', msg => {
-        try {
-            const d = JSON.parse(msg);
-            if (d.type === 'update_state' && players[d.player_id]) {
-                Object.assign(players[d.player_id], {
-                    x: d.x, y: d.y, z: d.z,
-                    rotationY: d.rotation_y,
-                    animation: d.animation
-                });
-            }
-        } catch {}
-    });
+  // --- Message Handling ---
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message.toString());
+      if (data.type === 'update_state') {
+        const player = players[data.player_id];
+        if (player) {
+          player.x = data.x;
+          player.y = data.y;
+          player.z = data.z;
+          player.rotationY = data.rotation_y;
+          // Store the animation state sent by the client
+          player.animation = data.animation;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to parse message:', error);
+    }
+  });
 
-    ws.on('close', () => {
-        delete players[id];
-        serverLog(`Player disconnected: ${id}`);
-    });
+  // Disconnection Handling
+  ws.on('close', () => {
+    console.log(`💀 Player disconnected: ${playerId}`);
+    delete players[playerId];
+  });
 });
 
-// Broadcast (20Hz)
-setInterval(() => {
-    if (Object.keys(players).length === 0) return;
-    const packet = JSON.stringify({
-        type: 'state',
-        players: Object.values(players)
-    });
-    wss.clients.forEach(c => c.readyState === 1 && c.send(packet));
-}, 1000 / BROADCAST_RATE);
+// --- Server Broadcast Loop ---
+const broadcastLoop = () => {
+  const stateData = {
+    type: 'state',
+    players: Object.values(players),
+  };
+  const stateString = JSON.stringify(stateData);
 
+  wss.clients.forEach((client) => {
+    if (client.readyState === 1) { // WebSocket.OPEN
+      client.send(stateString);
+    }
+  });
+};
+
+setInterval(broadcastLoop, 1000 / BROADCAST_RATE);
+
+// --- Start the HTTP Server ---
 server.listen(PORT, '0.0.0.0', () => {
-    serverLog(`Server live on ${PORT}`);
+    console.log(`✅ Server is live and listening on port ${PORT}`);
 });
