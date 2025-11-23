@@ -9,5 +9,5 @@ func _process(delta: float) -> void:
 		timer += delta
 		progress_bar.value = (timer / duration) * 100
 	else:
-		get_tree().change_scene_to_file("res://scenes/gameplay2d.tscn")
+		get_tree().change_scene_to_file("res://scenes/lobby.tscn")
 		

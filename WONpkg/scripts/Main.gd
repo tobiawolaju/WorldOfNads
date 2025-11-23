@@ -1,11 +1,12 @@
-# WorldManager.gd
 extends Node3D
 
 # --- SERVER URLS ---
 const LIVE_URL = "wss://worldofnads.onrender.com/"
 const LOCAL_URL = "ws://localhost:8080"
 
+# --- EXPORTS ---
 @export var player_scene: PackedScene = preload("res://scenes/components/Player.tscn")
+@export var bus_node: Node3D # assign bus mesh in editor
 
 # --- NETWORK & STATE VARIABLES ---
 var ws := WebSocketPeer.new()
@@ -19,8 +20,33 @@ var connection_attempted = false
 @onready var fallback_timer: Timer = $FallbackTimer
 
 func _ready():
-	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
-	_attempt_connection()
+	# Spawn local player immediately on bus
+	_spawn_player_local()
+
+	# Connect to server asynchronously after 10s delay
+	_connect_to_server_delayed()
+
+func _spawn_player_local():
+	var player = player_scene.instantiate()
+	player.name = "Player_local"
+	add_child(player)
+
+	player.player_id = "local"
+	player.is_local = true
+	player.root = self
+	player.bus_node = bus_node
+	player.on_bus = true
+
+	if bus_node:
+		player.global_transform.origin = bus_node.global_transform.origin + Vector3(0, 1.5, 0)
+		player.velocity = Vector3.ZERO # freeze movement
+
+	players["local"] = player
+	print("🧍 Local player spawned immediately on bus")
+
+func _connect_to_server_delayed() -> void:
+	var t = get_tree().create_timer(10.0)
+	t.timeout.connect(_attempt_connection)
 
 func _attempt_connection():
 	var url_to_try = LIVE_URL if is_connecting_to_live else LOCAL_URL
@@ -45,7 +71,7 @@ func _process(delta):
 		connected = true
 		var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
 		print("✅ Connected to %s server!" % server_type)
-	
+		_on_connected()
 	elif state == WebSocketPeer.STATE_CLOSED:
 		if connected:
 			print("❌ Disconnected from server.")
@@ -79,10 +105,19 @@ func _receive_messages():
 			"connect":
 				player_id = data["id"]
 				print("My player ID:", player_id)
-				_spawn_player(player_id, true)
+
+				# Assign server ID to the already spawned local player
+				var local_player = players.get("local", null)
+				if local_player:
+					local_player.player_id = player_id
+					players.erase("local")
+					players[player_id] = local_player
+					_on_connected()
 			"state":
 				if data.has("players"):
 					_update_world_state(data["players"])
+
+
 
 func _update_world_state(players_state):
 	var received_ids = []
@@ -104,7 +139,6 @@ func _update_world_state(players_state):
 
 			node.global_transform.origin = node.global_transform.origin.lerp(server_pos, 0.3)
 			node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
-			# Tell the remote player's script to update its animation
 			node.set_animation_state(server_anim)
 
 	for id in players.keys():
@@ -119,6 +153,12 @@ func _spawn_player(id: String, is_local := false):
 	player.player_id = id
 	player.is_local = is_local
 	player.root = self
+	player.bus_node = bus_node # assign bus reference to player
+
+	# Place player on bus if assigned
+	if bus_node:
+		player.global_transform.origin = bus_node.global_transform.origin + Vector3(0, 1.5, 0)
+		player.on_bus = true
 
 	if is_local:
 		print("🧍 Local player spawned:", id)
@@ -131,4 +171,12 @@ func _remove_player(id: String):
 		if players[id].is_queued_for_deletion(): return
 		players[id].queue_free()
 		players.erase(id)
-		
+
+func _on_connected():
+	if players.has(player_id):
+		var p = players[player_id]
+		if p.on_bus:
+			p.on_bus = false
+			p.get_parent().remove_child(p)
+			add_child(p) # Re-parent to world
+			p.velocity.y = 0.1 # small nudge to fall naturally

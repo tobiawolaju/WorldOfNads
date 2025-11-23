@@ -1,8 +1,11 @@
-[gd_scene load_steps=35 format=4 uid="uid://cfh3bbfmtn7vx"]
+[gd_scene load_steps=38 format=4 uid="uid://cfh3bbfmtn7vx"]
 
-[ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_i517j"]
+[ext_resource type="Script" uid="uid://be68ag11ct64p" path="res://scripts/lobby.gd" id="1_apkv3"]
+[ext_resource type="PackedScene" uid="uid://bow7at01gr1k3" path="res://scenes/components/LobbyPlayer.tscn" id="2_ncsg4"]
 [ext_resource type="ArrayMesh" uid="uid://c8jku1vjebweb" path="res://assets/models/terrain.obj" id="2_usqjs"]
+[ext_resource type="PackedScene" uid="uid://0oywk1mi0xc6" path="res://scenes/components/NPCPlayer.tscn" id="3_07nfq"]
 [ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="3_xbk5o"]
+[ext_resource type="Script" uid="uid://wja8ank84i1j" path="res://scripts/LobbyManager.gd" id="4_07nfq"]
 [ext_resource type="Texture2D" uid="uid://bux033aiby60l" path="res://assets/models/VanTex.png" id="4_oi12y"]
 [ext_resource type="PackedScene" uid="uid://b1xd5yn7ktytj" path="res://scenes/components/PlayerProp.tscn" id="6_usqjs"]
 [ext_resource type="Texture2D" uid="uid://w5ldcc8yjkgr" path="res://assets/models/stop_sign_texture_1024x1024.png" id="6_xbk5o"]
@@ -390,9 +393,22 @@ blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_6j0rr")
 
 [node name="Lobby" type="Node3D"]
+script = ExtResource("1_apkv3")
+local_player_scene = ExtResource("2_ncsg4")
+camera_node = NodePath("PlayerManager/Camera3D")
+npc_p2 = ExtResource("3_07nfq")
+npc_p3 = ExtResource("3_07nfq")
+npc_p4 = ExtResource("3_07nfq")
+npc_p5 = ExtResource("3_07nfq")
+npc_p6 = ExtResource("3_07nfq")
+npc_p7 = ExtResource("3_07nfq")
+npc_p8 = ExtResource("3_07nfq")
+npc_p9 = ExtResource("3_07nfq")
+npc_p10 = ExtResource("3_07nfq")
 
-[node name="PlayerManager" type="Node3D" parent="."]
-script = ExtResource("1_i517j")
+[node name="PlayerManager" type="Node3D" parent="." node_paths=PackedStringArray("status_label")]
+script = ExtResource("4_07nfq")
+status_label = NodePath("../STATS")
 
 [node name="GroundMesh" type="StaticBody3D" parent="PlayerManager"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5161849, 0)
@@ -409,12 +425,12 @@ shape = SubResource("ConcavePolygonShape3D_0s8bf")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="PlayerManager"]
 environment = SubResource("Environment_tqy52")
 
-[node name="Camera3D" type="Camera3D" parent="PlayerManager"]
-transform = Transform3D(1, 0, 0, 0, 0.9842574, 0.1767412, 0, -0.1767412, 0.9842574, 0, 0.051921308, 0.18706155)
-fov = 120.0
-
 [node name="FallbackTimer" type="Timer" parent="PlayerManager"]
 one_shot = true
+
+[node name="Camera3D" type="Camera3D" parent="PlayerManager"]
+transform = Transform3D(-0.005003814, -0.0054083173, 0.9999729, 0.00087060285, 0.999985, 0.0054127397, -0.9999871, 0.0008976635, -0.0049990304, 2.3647788, 0.5302665, 0.041485548)
+fov = 120.0
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.99322146, -0.110632636, -0.035658754, 0.11623737, 0.9453303, 0.3046958, 0, -0.3067753, 0.951782, 0, 0.81719303, 2.8723717)
@@ -422,7 +438,7 @@ light_color = Color(1, 0.7611074, 0.5848961, 1)
 light_energy = 2.0
 shadow_enabled = true
 
-[node name="Van" type="MeshInstance3D" parent="."]
+[node name="Bus" type="MeshInstance3D" parent="."]
 transform = Transform3D(100, 0, 0, 0, -4.371139e-06, 100, 0, -100, -4.371139e-06, 0, 14.05715, 0)
 material_override = SubResource("StandardMaterial3D_3b43p")
 mesh = SubResource("ArrayMesh_4wtlk")
@@ -434,42 +450,6 @@ mesh = SubResource("ArrayMesh_0sjgb")
 skeleton = NodePath("")
 
 [node name="Players" type="Node3D" parent="."]
-
-[node name="Player1" parent="Players" instance=ExtResource("6_usqjs")]
-
-[node name="Label3D" parent="Players/Player1" index="1"]
-visible = false
-
-[node name="Skeleton3D" parent="Players/Player1" index="2"]
-bones/0/position = Vector3(0.00032102608, 0.008831563, 0.00016654027)
-bones/0/rotation = Quaternion(-0.03221202, -0.017449256, -0.023943791, 0.99904186)
-bones/1/rotation = Quaternion(0.023441005, 0.01263508, 0.017897494, 0.99948525)
-bones/2/rotation = Quaternion(0.010091137, 0.0026701025, 0.013610785, 0.9998529)
-bones/3/rotation = Quaternion(0.009868054, 0.002865277, 0.013641211, 0.99985427)
-bones/4/rotation = Quaternion(0.054790642, -0.0009006287, 0.0039063487, 0.9984899)
-bones/5/rotation = Quaternion(-0.06595813, 0.011939382, -0.0015104285, 0.9977498)
-bones/7/rotation = Quaternion(-0.6864233, -0.3192994, 0.50293374, -0.41704762)
-bones/8/rotation = Quaternion(0.46856484, 0.13665612, 0.10029521, 0.8670138)
-bones/9/rotation = Quaternion(0.0002782911, 0.002093135, 0.012337586, 0.9999217)
-bones/10/rotation = Quaternion(-0.0283016, 0.969354, 0.047623254, 0.23934062)
-bones/11/rotation = Quaternion(0.011980079, 0.9975928, -0.065403014, 0.019688241)
-bones/12/rotation = Quaternion(0.51671726, -0.0070585404, 0.014185341, 0.8560095)
-bones/13/rotation = Quaternion(-0.93189573, 0.010348815, -0.0567453, 0.35811058)
-bones/15/rotation = Quaternion(0.68800235, -0.31459472, 0.5188222, 0.39812884)
-bones/16/rotation = Quaternion(0.3958813, -0.22927846, -0.11867948, 0.8812632)
-bones/17/rotation = Quaternion(0.0006059706, 0.00077531824, -0.058460306, 0.9982892)
-bones/18/rotation = Quaternion(0.0019572973, 0.9714845, 0.05927849, -0.22956514)
-bones/19/rotation = Quaternion(-0.0012942879, 0.99744135, -0.0602447, -0.03846575)
-bones/20/rotation = Quaternion(0.45197263, -0.0067557595, 0.17331314, 0.8750072)
-bones/21/rotation = Quaternion(-0.90616477, 0.24889462, -0.035741113, 0.34005806)
-bones/23/rotation = Quaternion(0.10340525, 0.16224296, 0.9812553, 0.0110826)
-bones/24/rotation = Quaternion(-0.2539809, -0.26111305, 0.31634662, 0.87592155)
-bones/25/rotation = Quaternion(0.79613996, 0.15471956, -0.12109552, 0.5723277)
-bones/26/rotation = Quaternion(0.5528482, 0.39843082, -0.25924966, 0.6843986)
-bones/28/rotation = Quaternion(-0.102197565, 0.0060735038, 0.97668976, -0.18866886)
-bones/29/rotation = Quaternion(-0.020223698, 0.35946304, -0.41064355, 0.8377048)
-bones/30/rotation = Quaternion(0.77854437, -0.08383455, 0.19359729, 0.5910675)
-bones/31/rotation = Quaternion(0.49415326, -0.47487983, 0.25091785, 0.6836241)
 
 [node name="Player2" parent="Players" instance=ExtResource("6_usqjs")]
 transform = Transform3D(-0.1273589, 0, 0.9918567, 0, 1, 0, -0.9918567, 0, -0.1273589, 0.5715046, 0.16202962, 0.64722943)
@@ -828,7 +808,15 @@ transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, -1.0236241, -0.07677181)
 mesh = SubResource("ArrayMesh_ds7rv")
 skeleton = NodePath("")
 
-[editable path="Players/Player1"]
+[node name="STATS" type="Label3D" parent="."]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 2.9710336, 0)
+billboard = 1
+fixed_size = true
+modulate = Color(0.99607843, 0.85882354, 1, 1)
+outline_modulate = Color(0.92156863, 0.47058824, 0.9647059, 1)
+text = "Searching for Server"
+font_size = 100
+
 [editable path="Players/Player2"]
 [editable path="Players/Player3"]
 [editable path="Players/Player4"]

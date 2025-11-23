@@ -1,4 +1,3 @@
-# Player.gd
 extends CharacterBody3D
 
 # === CONSTANTS ===
@@ -12,6 +11,7 @@ const SPEED: float = 4.5
 @onready var anim_run: AnimationPlayer = $running
 @onready var anim_idle: AnimationPlayer = $idle
 @onready var mesh: Skeleton3D = $Skeleton3D
+@export var bus_node: Node3D
 
 @export var camera_distance: float = 4.0
 @export var camera_smoothness: float = 8.0
@@ -26,7 +26,9 @@ var is_local: bool = false
 var velocity_y: float = 0.0
 var cam_rot_x: float = deg_to_rad(30)
 var cam_rot_y: float = 0.0
-var current_animation: String = "idle" # Track current animation state
+var current_animation: String = "idle"
+var on_bus := true
+var bus_offset := Vector3(0, 1.5, 0)
 
 var player_id: String = "" :
 	set(new_id):
@@ -37,18 +39,25 @@ var player_id: String = "" :
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
 	_play_idle()
+	if on_bus and bus_node:
+		global_transform.origin = bus_node.global_transform.origin + bus_offset
+		velocity = Vector3.ZERO # freeze movement
+
+
 
 func _process(delta: float):
 	name_label.text = player_id.substr(0, 8)
+	if on_bus:
+		_update_camera_on_bus(delta)
+	else:
+		_update_camera(delta)
 
 func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
-
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		cam_rot_y -= event.relative.x * 0.005
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.005, min_pitch, max_pitch)
-
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
 			camera_distance = clamp(camera_distance - 0.5, min_zoom, max_zoom)
@@ -56,10 +65,10 @@ func _input(event: InputEvent) -> void:
 			camera_distance = clamp(camera_distance + 0.5, min_zoom, max_zoom)
 
 func _physics_process(delta: float) -> void:
-	if not is_local:
-		return
+	if not is_local or on_bus:
+		return # skip physics if frozen on bus
 
-	# === Handle Input ===
+
 	var input_dir := Vector2.ZERO
 	if Input.is_action_pressed("move_forward"): input_dir.y += 1
 	if Input.is_action_pressed("move_back"): input_dir.y -= 1
@@ -67,7 +76,6 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("move_right"): input_dir.x += 1
 	input_dir = input_dir.normalized()
 
-	# === Apply gravity & jump ===
 	if not is_on_floor():
 		velocity_y -= GRAVITY * delta
 	else:
@@ -75,7 +83,6 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_pressed("jump"):
 			velocity_y = JUMP_VELOCITY
 
-	# === Calculate Movement ===
 	var cam_basis = camera.global_transform.basis
 	var forward = -cam_basis.z
 	var right = cam_basis.x
@@ -91,14 +98,25 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
-	# === Make mesh face direction of movement ===
 	if move_direction.length() > 0.05:
 		var target_yaw = atan2(move_direction.x, move_direction.z)
 		mesh.rotation.y = lerp_angle(mesh.rotation.y, target_yaw, delta * 10.0)
 
-	_update_camera(delta)
 	_handle_animations(move_direction)
-	_send_state_to_server() # Called after handle_animations to send the latest state
+	_send_state_to_server()
+
+func _update_camera_on_bus(delta: float):
+	if not bus_node or not camera:
+		return
+	var target_pos = bus_node.global_transform.origin + bus_offset
+	var cam_target_offset = Vector3(
+		sin(cam_rot_y) * cos(cam_rot_x),
+		sin(cam_rot_x),
+		cos(cam_rot_y) * cos(cam_rot_x)
+	) * camera_distance
+	var desired_pos = target_pos + cam_target_offset
+	camera.global_position = camera.global_position.lerp(desired_pos, delta * camera_smoothness)
+	camera.look_at(target_pos, Vector3.UP)
 
 func _update_camera(delta: float) -> void:
 	var target_pos: Vector3 = global_transform.origin + Vector3(0, 1.5, 0)
@@ -122,7 +140,6 @@ func _update_camera(delta: float) -> void:
 	camera.global_position = camera.global_position.lerp(desired_cam_pos, delta * camera_smoothness)
 	camera.look_at(target_pos, Vector3.UP)
 
-# --- NETWORK FUNCTION ---
 func _send_state_to_server() -> void:
 	if not root or not root.ws:
 		return
@@ -134,28 +151,22 @@ func _send_state_to_server() -> void:
 			"y": global_transform.origin.y,
 			"z": global_transform.origin.z,
 			"rotation_y": mesh.rotation.y,
-			"animation": current_animation # Send the current animation state
+			"animation": current_animation
 		}
 		root.ws.send_text(JSON.stringify(data))
 
-# === Animation Handlers ===
-# This public function is called by WorldManager on remote players
 func set_animation_state(new_state: String):
-	# The local player handles its own animations, so ignore this call for them.
 	if is_local: return
-	# Don't restart an animation that is already playing.
 	if new_state == current_animation: return
 
 	current_animation = new_state
 	if new_state == "running":
 		_play_running()
-	else: # Default to idle
+	else:
 		_play_idle()
 
-# This function determines and plays animations for the LOCAL player only.
 func _handle_animations(move_dir: Vector3) -> void:
 	if not is_local: return
-
 	if move_dir.length() > 0.1:
 		current_animation = "running"
 		_play_running()
@@ -164,13 +175,9 @@ func _handle_animations(move_dir: Vector3) -> void:
 		_play_idle()
 
 func _play_running() -> void:
-	if anim_idle.is_playing():
-		anim_idle.stop()
-	if not anim_run.is_playing():
-		anim_run.play("running")
+	if anim_idle.is_playing(): anim_idle.stop()
+	if not anim_run.is_playing(): anim_run.play("running")
 
 func _play_idle() -> void:
-	if anim_run.is_playing():
-		anim_run.stop()
-	if not anim_idle.is_playing():
-		anim_idle.play("idle")
+	if anim_run.is_playing(): anim_run.stop()
+	if not anim_idle.is_playing(): anim_idle.play("idle")
