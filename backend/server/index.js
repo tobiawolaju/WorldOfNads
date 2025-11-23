@@ -1,93 +1,126 @@
-// server.js — CLEAN VERSION, NO AUTO SHUTDOWN
-
+// server.js
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { randomUUID } from 'crypto';
 
 const PORT = process.env.PORT || 8080;
-const BROADCAST_RATE = 20;
+const BROADCAST_RATE = 20; // Broadcasts per second
 
-const players = {};
-const logs = [];
-
-// Logging
-function serverLog(msg) {
-    const line = `[${new Date().toISOString()}] ${msg}`;
-    console.log(line);
-    logs.push(line);
-    if (logs.length > 500) logs.shift();
-}
+// --- Data Structures ---
+// We use a fixed array for IDs to map them to bytes (0-255)
+const MAX_PLAYERS = 255;
+const idSlots = new Array(MAX_PLAYERS).fill(null); // Slots: null or { ws, x, y, z, rot, anim }
+const activeSockets = new Map(); // Map: ws -> playerObject
 
 const server = createServer((req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-
-    if (req.url === '/' || req.url === '/wakeup') {
-        res.writeHead(200);
-        return res.end("awake");
-    }
-
-    if (req.url === '/stats') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({
-            playerCount: Object.keys(players).length,
-            playerIds: Object.keys(players),
-            uptime: process.uptime()
-        }));
-    }
-
-    if (req.url === '/dumplog') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify(logs));
-    }
-
-    res.writeHead(404);
-    res.end();
+    res.writeHead(200);
+    res.end('Game Server Running');
 });
 
-const wss = new WebSocketServer({ noServer: true });
+const wss = new WebSocketServer({ server });
 
-server.on('upgrade', (req, socket, head) => {
-    wss.handleUpgrade(req, socket, head, (ws) => {
-        wss.emit('connection', ws, req);
-    });
-});
+console.log(`🚀 Binary Server started on port ${PORT}`);
+
+// --- Helper: Find free ID ---
+function getFreeId() {
+    for (let i = 1; i < MAX_PLAYERS; i++) {
+        if (idSlots[i] === null) return i;
+    }
+    return null;
+}
 
 wss.on('connection', (ws) => {
-    const id = randomUUID();
-    players[id] = { id, x: 0, y: 0, z: 0, rotationY: 0, animation: "idle" };
-    serverLog(`Player connected: ${id}`);
+    ws.binaryType = 'arraybuffer'; // Important: Receive data as Buffer
 
-    ws.send(JSON.stringify({ type: 'connect', id }));
+    const myId = getFreeId();
+    if (myId === null) {
+        console.log("Server full, rejecting connection.");
+        ws.close();
+        return;
+    }
 
-    ws.on('message', msg => {
+    console.log(`Player connected. Assigned ID: ${myId}`);
+
+    // Init Player State
+    const player = { id: myId, ws, x: 0, y: 0, z: 0, rot: 0, anim: 0 };
+    idSlots[myId] = player;
+    activeSockets.set(ws, player);
+
+    // 1. Send Handshake Packet: [Type 0 (1B)] [MyID (1B)]
+    const handshake = Buffer.alloc(2);
+    handshake.writeUInt8(0, 0);
+    handshake.writeUInt8(myId, 1);
+    ws.send(handshake);
+
+    ws.on('message', (buffer) => {
+        // Client sends: [Type 1 (1B)] [X (4B)] [Y (4B)] [Z (4B)] [Rot (4B)] [Anim (1B)]
+        // Total length expected: 1 + 4 + 4 + 4 + 4 + 1 = 18 bytes
+        if (buffer.byteLength < 18) return;
+
         try {
-            const d = JSON.parse(msg);
-            if (d.type === 'update_state' && players[d.player_id]) {
-                Object.assign(players[d.player_id], {
-                    x: d.x, y: d.y, z: d.z,
-                    rotationY: d.rotation_y,
-                    animation: d.animation
-                });
+            const view = Buffer.from(buffer); // Ensure it's a Buffer
+            const type = view.readUInt8(0);
+
+            if (type === 1) {
+                player.x = view.readFloatLE(1);
+                player.y = view.readFloatLE(5);
+                player.z = view.readFloatLE(9);
+                player.rot = view.readFloatLE(13);
+                player.anim = view.readUInt8(17);
             }
-        } catch {}
+        } catch (e) {
+            console.error("Error parsing packet", e);
+        }
     });
 
     ws.on('close', () => {
-        delete players[id];
-        serverLog(`Player disconnected: ${id}`);
+        console.log(`Player ${myId} disconnected.`);
+        idSlots[myId] = null;
+        activeSockets.delete(ws);
+
+        // Broadcast Disconnect: [Type 2 (1B)] [ID (1B)]
+        const out = Buffer.alloc(2);
+        out.writeUInt8(2, 0);
+        out.writeUInt8(myId, 1);
+        
+        wss.clients.forEach(client => {
+            if (client.readyState === 1 && client !== ws) client.send(out);
+        });
     });
 });
 
-// Broadcast (20Hz)
+// --- Broadcast Loop ---
+// Packet Structure: [Type 3 (1B)] [Count (1B)] ... [ID][X][Y][Z][Rot][Anim] ...
 setInterval(() => {
-    if (Object.keys(players).length === 0) return;
-    const packet = JSON.stringify({
-        type: 'state',
-        players: Object.values(players)
+    // Filter valid players
+    const players = idSlots.filter(p => p !== null);
+    const count = players.length;
+    
+    if (count === 0) return;
+
+    // 2 bytes header + (18 bytes per player)
+    const size = 2 + (count * 18); 
+    const buf = Buffer.allocUnsafe(size);
+
+    buf.writeUInt8(3, 0); // Type 3 = World State
+    buf.writeUInt8(count, 1);
+
+    let offset = 2;
+    for (const p of players) {
+        buf.writeUInt8(p.id, offset);
+        buf.writeFloatLE(p.x, offset + 1);
+        buf.writeFloatLE(p.y, offset + 5);
+        buf.writeFloatLE(p.z, offset + 9);
+        buf.writeFloatLE(p.rot, offset + 13);
+        buf.writeUInt8(p.anim, offset + 17);
+        offset += 18;
+    }
+
+    wss.clients.forEach(client => {
+        if (client.readyState === 1) client.send(buf);
     });
-    wss.clients.forEach(c => c.readyState === 1 && c.send(packet));
+
 }, 1000 / BROADCAST_RATE);
 
 server.listen(PORT, '0.0.0.0', () => {
-    serverLog(`Server live on ${PORT}`);
+    console.log(`✅ Server live on ${PORT}`);
 });
