@@ -1,84 +1,134 @@
 # WorldManager.gd
 extends Node3D
 
-const SERVER_URL = "ws://127.0.0.1:8080" # Change to your Render URL
-@export var player_scene: PackedScene
+# --- SERVER URLS ---
+const LIVE_URL = "wss://worldofnads.onrender.com/"
+const LOCAL_URL = "ws://localhost:8080"
 
+@export var player_scene: PackedScene = preload("res://scenes/components/Player.tscn")
+
+# --- NETWORK & STATE VARIABLES ---
 var ws := WebSocketPeer.new()
 var connected := false
-var my_id: int = -1
-var players := {} # Map<int, Node>
+var player_id := ""
+var players := {}
+
+# --- FALLBACK LOGIC ---
+var is_connecting_to_live = true
+var connection_attempted = false
+@onready var fallback_timer: Timer = $FallbackTimer
 
 func _ready():
-	print("Connecting to server...")
-	ws.connect_to_url(SERVER_URL)
+	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
+	_attempt_connection()
+
+func _attempt_connection():
+	var url_to_try = LIVE_URL if is_connecting_to_live else LOCAL_URL
+	var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
+	print("🌐 Attempting to connect to %s server: %s" % [server_type, url_to_try])
+	var err = ws.connect_to_url(url_to_try)
+	if err != OK:
+		push_error("Failed to initiate connection: %s" % err)
+		if is_connecting_to_live:
+			_trigger_fallback()
+	else:
+		connection_attempted = true
 
 func _process(delta):
+	if not connection_attempted:
+		return
+
 	ws.poll()
 	var state = ws.get_ready_state()
 
-	if state == WebSocketPeer.STATE_OPEN:
-		if not connected:
-			connected = true
-			print("✅ Socket Connected!")
-		_handle_packets()
+	if state == WebSocketPeer.STATE_OPEN and not connected:
+		connected = true
+		var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
+		print("✅ Connected to %s server!" % server_type)
 	
 	elif state == WebSocketPeer.STATE_CLOSED:
 		if connected:
-			print("❌ Disconnected")
+			print("❌ Disconnected from server.")
 			connected = false
+			connection_attempted = false
+		elif is_connecting_to_live:
+			print("❌ Live server connection failed.")
+			_trigger_fallback()
+	
+	if connected:
+		_receive_messages()
 
-func _handle_packets():
+func _trigger_fallback():
+	is_connecting_to_live = false
+	connection_attempted = false
+	print("⏳ Starting fallback to local server in 1 second...")
+	fallback_timer.start(1.0)
+
+func _on_fallback_timer_timeout():
+	_attempt_connection()
+
+func _receive_messages():
 	while ws.get_available_packet_count() > 0:
-		var packet = ws.get_packet()
-		_parse_binary(packet)
+		var raw_packet = ws.get_packet()
+		if raw_packet.is_empty(): continue
+		var raw_string = raw_packet.get_string_from_utf8()
+		var data = JSON.parse_string(raw_string)
+		if typeof(data) != TYPE_DICTIONARY: continue
 
-func _parse_binary(data: PackedByteArray):
-	var buffer = StreamPeerBuffer.new()
-	buffer.data_array = data
-	
-	# First byte is always Packet TYPE
-	var type = buffer.get_u8()
-	
-	match type:
-		0: # HANDSHAKE
-			my_id = buffer.get_u8()
-			print("🔑 My Player ID is: ", my_id)
-			_spawn_player(my_id, true)
-			
-		2: # PLAYER LEFT
-			var target_id = buffer.get_u8()
-			if players.has(target_id):
-				print("💀 Player left: ", target_id)
-				players[target_id].queue_free()
-				players.erase(target_id)
-				
-		3: # WORLD STATE
-			var count = buffer.get_u8() # How many players
-			
-			for i in range(count):
-				var p_id = buffer.get_u8()
-				var p_x = buffer.get_float()
-				var p_y = buffer.get_float()
-				var p_z = buffer.get_float()
-				var p_rot = buffer.get_float()
-				var p_anim = buffer.get_u8()
-				
-				if p_id == my_id: continue # Skip myself (Client prediction)
-				
-				if not players.has(p_id):
-					_spawn_player(p_id, false)
-				
-				# Update Remote Player Data
-				if players.has(p_id):
-					var node = players[p_id]
-					node.target_pos = Vector3(p_x, p_y, p_z)
-					node.target_rot = p_rot
-					node.set_anim_byte(p_anim)
+		match data.get("type"):
+			"connect":
+				player_id = data["id"]
+				print("My player ID:", player_id)
+				_spawn_player(player_id, true)
+			"state":
+				if data.has("players"):
+					_update_world_state(data["players"])
 
-func _spawn_player(id: int, is_local: bool):
-	var p = player_scene.instantiate()
-	p.name = str(id)
-	add_child(p)
-	p.setup(id, is_local, self) # We pass 'self' as the world_manager
-	players[id] = p
+func _update_world_state(players_state):
+	var received_ids = []
+	for p_state in players_state:
+		var id = p_state["id"]
+		received_ids.append(id)
+		
+		if id == player_id:
+			continue
+
+		if not players.has(id):
+			_spawn_player(id, false)
+
+		if players.has(id):
+			var node = players[id]
+			var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
+			var server_rot_y = p_state["rotationY"]
+			var server_anim = p_state["animation"]
+
+			node.global_transform.origin = node.global_transform.origin.lerp(server_pos, 0.3)
+			node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
+			# Tell the remote player's script to update its animation
+			node.set_animation_state(server_anim)
+
+	for id in players.keys():
+		if id != player_id and not id in received_ids:
+			_remove_player(id)
+
+func _spawn_player(id: String, is_local := false):
+	var player = player_scene.instantiate()
+	player.name = "Player_%s" % id
+	add_child(player)
+
+	player.player_id = id
+	player.is_local = is_local
+	player.root = self
+
+	if is_local:
+		print("🧍 Local player spawned:", id)
+	else:
+		print("👤 Remote player spawned:", id)
+	players[id] = player
+
+func _remove_player(id: String):
+	if players.has(id):
+		if players[id].is_queued_for_deletion(): return
+		players[id].queue_free()
+		players.erase(id)
+		
