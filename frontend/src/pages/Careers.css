@@ -4,7 +4,6 @@
     padding: 60px 20px 80px 20px;
     font-family: 'Font1', sans-serif;
     color: #111;
-    background-color: #ffffff;
     min-height: 100vh;
 }
 
@@ -14,7 +13,7 @@
     font-weight: 900;
     margin-bottom: 20px;
     font-family: 'Font2', sans-serif; 
-    color: #000000;
+    color: #6a38ff;
     line-height: 1;
 }
 
