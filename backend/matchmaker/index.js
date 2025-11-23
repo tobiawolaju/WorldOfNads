@@ -1,4 +1,4 @@
-// matchmaker.js - REVISED WITH PERSISTENT POLLING LOGIC
+// matchmaker.js - FINAL VERSION WITH BROWSER-LIKE HEADERS
 import express from 'express';
 import fetch from 'node-fetch';
 import cors from 'cors';
@@ -9,22 +9,29 @@ const PORT = process.env.PORT || 3000;
 
 // --- Configuration ---
 const MAX_PLAYERS_PER_SERVER = 10;
-// How often to check on waking servers.
 const POLLING_INTERVAL_MS = 3000; 
-// A very long safety timeout for the entire request, in case all servers fail to start. 2 minutes.
 const REQUEST_SAFETY_TIMEOUT_MS = 120000; 
+
+// This header will make our requests look like they're from a standard browser.
+const BROWSER_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+};
 
 const GAME_SERVERS = [
     { id: 1, url: 'https://worldofnads-server-1.onrender.com' },
     { id: 2, url: 'https://worldofnads-server-1.onrender.com' }
 ];
 
-// --- Helper to check a server's status (no changes needed) ---
+// --- Helper to check a server's status ---
 async function checkServer(serverUrl) {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2500);
-        const response = await fetch(`${serverUrl}/stats`, { signal: controller.signal });
+        // We add the browser headers to the stats check
+        const response = await fetch(`${serverUrl}/stats`, { 
+            signal: controller.signal,
+            headers: BROWSER_HEADERS 
+        });
         clearTimeout(timeoutId);
         if (response.ok) {
             const data = await response.json();
@@ -36,58 +43,47 @@ async function checkServer(serverUrl) {
     return { status: 'sleeping', count: 0, url: serverUrl };
 }
 
-// --- Endpoint: Find a Match (The New Logic) ---
+// --- Endpoint: Find a Match ---
 app.get('/find-match', async (req, res) => {
     console.log("🔎 Client requested a match. Performing initial check...");
     const requestStartTime = Date.now();
 
-    // --- Step 1: Check all servers to see if one is already active ---
     const serverStatuses = await Promise.all(GAME_SERVERS.map(s => checkServer(s.url)));
     
     const activeServer = serverStatuses.find(s => s.status === 'active' && s.count < MAX_PLAYERS_PER_SERVER);
 
     if (activeServer) {
         console.log(`✅ Found an active server immediately: ${activeServer.url}`);
-        return res.json({
-            status: 'ready',
-            serverUrl: activeServer.url.replace('https://', 'wss://')
-        });
+        return res.json({ status: 'ready', serverUrl: activeServer.url.replace('https://', 'wss://') });
     }
 
-    // --- Step 2: No active servers. Let's wake them up and start polling. ---
     const sleepingServers = serverStatuses.filter(s => s.status === 'sleeping');
     if (sleepingServers.length === 0) {
-        console.log("❌ All servers are full or in an error state. Cannot find a match.");
+        console.log("❌ All servers are full or in an error state.");
         return res.status(503).json({ error: 'All servers are currently full or unavailable.' });
     }
 
-    console.log(`💤 No active servers found. Waking up ${sleepingServers.length} sleeping server(s)...`);
+    console.log(`💤 No active servers found. Waking up ${sleepingServers.length} sleeping server(s) using browser-like requests...`);
     sleepingServers.forEach(server => {
-        console.log(`  - Sending wakeup to ${server.url}`);
-        fetch(`${server.url}/wakeup`).catch(e => {}); // Fire and forget
+        // We add the browser headers to the wakeup call
+        fetch(`${server.url}/wakeup`, { headers: BROWSER_HEADERS }).catch(e => {}); // Fire and forget
     });
 
-    // --- Step 3: Enter the persistent polling loop ---
-    console.log("Entering persistent polling loop. Will check every few seconds...");
+    console.log("Entering persistent polling loop...");
     while (Date.now() - requestStartTime < REQUEST_SAFETY_TIMEOUT_MS) {
         await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
         const elapsed = ((Date.now() - requestStartTime) / 1000).toFixed(1);
         console.log(`  ...polling for active server (${elapsed}s)`);
 
-        // Check all the candidates again
         for (const candidate of sleepingServers) {
             const currentStatus = await checkServer(candidate.url);
             if (currentStatus.status === 'active') {
                 console.log(`🏆 SUCCESS! Server ${currentStatus.url} is now active.`);
-                return res.json({
-                    status: 'ready',
-                    serverUrl: currentStatus.url.replace('https://', 'wss://')
-                });
+                return res.json({ status: 'ready', serverUrl: currentStatus.url.replace('https://', 'wss://') });
             }
         }
     }
 
-    // --- Step 4: If the loop finishes, the safety timeout was hit ---
     console.log(`❌ SAFETY TIMEOUT! No server became active after ${REQUEST_SAFETY_TIMEOUT_MS / 1000} seconds.`);
     res.status(503).json({ error: 'Failed to find an available server in time.' });
 });
@@ -95,8 +91,7 @@ app.get('/find-match', async (req, res) => {
 
 // --- Other Endpoints ---
 app.get('/', (req, res) => res.send('✅ PERSISTENT MATCHMAKER IS RUNNING.'));
-// ... (dashboard endpoint remains the same) ...
-
+// ... (dashboard and listen) ...
 app.listen(PORT, () => {
     console.log(`Matchmaker running on port ${PORT}`);
 });
