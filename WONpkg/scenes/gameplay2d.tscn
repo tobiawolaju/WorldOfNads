@@ -35,10 +35,8 @@ render_target_update_mode = 4
 
 [node name="Gameplayer" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport" instance=ExtResource("1_1iwhs")]
 
-[node name="PlayerManager" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="0" node_paths=PackedStringArray("username_label")]
-username_label = NodePath("../../../../../../username_label")
-
 [node name="username_label" type="Label" parent="CanvasLayer"]
+visible = false
 offset_left = 140.0
 offset_top = -1.0
 offset_right = 293.0
