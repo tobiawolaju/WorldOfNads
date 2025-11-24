@@ -1,7 +1,7 @@
 extends CharacterBody3D
 
-@export var point_a: Vector3 = Vector3(20, 2.08, 0)
-@export var point_b: Vector3 = Vector3(-20, 2.08, 0)
+@export var point_a: Vector3 = Vector3(20, 12, 0)
+@export var point_b: Vector3 = Vector3(-20, 12, 0)
 @export var speed: float = 1.0
 @export var arrive_distance: float = 0.5
 @export var turn_speed: float = 1.0 # higher = faster rotation
