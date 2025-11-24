@@ -33,7 +33,7 @@ func _ready():
 	if Engine.has_singleton("JavaScript"):
 		var js = Engine.get_singleton("JavaScript")
 		js.connect("message", Callable(self, "_on_js_message"))
-	
+
 	
 	# Spawn local player immediately on bus
 	_spawn_player_local()
