@@ -46,12 +46,15 @@ var current_animation: String = "idle"
 var on_bus: bool = true
 
 # === NETWORK PARAMETERS
-var player_id: String = "" :
-	set(new_id):
-		player_id = new_id
-		if name_label:
-			name_label.text = new_id.substr(0, 8)
+var player_id: String = "" #setget set_player_id
 
+func set_player_id(new_id):
+	player_id = new_id
+	if name_label:
+		name_label.text = new_id.substr(0, 8)
+
+# === EXIT BUS COOLDOWN TO AVOID SPAM
+var exited_bus := false
 
 # ===========================================================
 #                          READY
@@ -60,11 +63,9 @@ func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
 	_play_idle()
 
-	# Start player on bus
-	if on_bus and bus_node:
+	if on_bus and is_local and bus_node:
 		global_transform.origin = bus_node.global_transform.origin + bus_offset
 		velocity = Vector3.ZERO
-
 
 # ===========================================================
 #                          PROCESS
@@ -72,21 +73,20 @@ func _ready() -> void:
 func _process(delta: float):
 	name_label.text = player_id.substr(0, 8)
 
-	if on_bus:
-		_move_bus(delta)
-		_update_camera_on_bus(delta)
-	else:
-		_update_camera(delta)
-
+	if is_local:
+		if on_bus:
+			_move_bus(delta)
+			_update_camera_on_bus(delta)
+		else:
+			_update_camera(delta)
 
 # ===========================================================
-#                     BUS MOVEMENT
+#                     BUS MOVEMENT (LOCAL ONLY)
 # ===========================================================
 func _move_bus(delta: float):
 	if not bus_node or bus_has_stopped:
 		return
 
-	# Movement step
 	var step := bus_move_direction.normalized() * bus_move_speed * delta
 	bus_node.global_transform.origin += step
 	total_bus_distance += step.length()
@@ -99,10 +99,6 @@ func _move_bus(delta: float):
 	if total_bus_distance >= bus_auto_stop_distance:
 		bus_has_stopped = true
 		print("🚌 BUS STOPPED — reached auto distance")
-
-		# Optional remove from memory
-		# bus_node.queue_free()
-
 
 # ===========================================================
 #                   INPUT (camera & exit bus)
@@ -123,11 +119,10 @@ func _input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
 			camera_distance = clamp(camera_distance + 0.5, min_zoom, max_zoom)
 
-	# Exit bus
-	if event is InputEventKey and event.pressed:
-		if event.keycode == KEY_F: # or whatever you prefer
-			exit_bus()
-
+	# Exit bus (any key or mouse button, once)
+	if not exited_bus and event.is_pressed():
+		exit_bus()
+		exited_bus = true
 
 # ===========================================================
 #             PLAYER MOVEMENT (OFF BUS)
@@ -137,12 +132,11 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var input_dir := Vector2(
-	(1 if Input.is_action_pressed("move_right") else 0) -
-	(1 if Input.is_action_pressed("move_left") else 0),
-	(1 if Input.is_action_pressed("move_forward") else 0) -
-	(1 if Input.is_action_pressed("move_back") else 0)
-).normalized()
-
+		(1 if Input.is_action_pressed("move_right") else 0) -
+		(1 if Input.is_action_pressed("move_left") else 0),
+		(1 if Input.is_action_pressed("move_forward") else 0) -
+		(1 if Input.is_action_pressed("move_back") else 0)
+	).normalized()
 
 	# gravity
 	if not is_on_floor():
@@ -152,7 +146,6 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_pressed("jump"):
 			velocity_y = JUMP_VELOCITY
 
-	# camera-based movement
 	var cam_basis := camera.global_transform.basis
 	var forward := -cam_basis.z
 	var right := cam_basis.x
@@ -166,13 +159,11 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
-	# rotate mesh
 	if move_vec.length() > 0.05:
 		mesh.rotation.y = lerp_angle(mesh.rotation.y, atan2(move_vec.x, move_vec.z), delta * 10.0)
 
 	_handle_animations(move_vec)
 	_send_state_to_server()
-
 
 # ===========================================================
 #                     EXIT BUS
@@ -183,10 +174,7 @@ func exit_bus():
 
 	on_bus = false
 	print("🧍 Player exited bus")
-
-	# Stop sticking to offset
 	velocity = Vector3.ZERO
-
 
 # ===========================================================
 #                      CAMERA ON BUS
@@ -208,7 +196,6 @@ func _update_camera_on_bus(delta: float):
 
 	camera.global_position = camera.global_position.lerp(desired, delta * camera_smoothness)
 	camera.look_at(target, Vector3.UP)
-
 
 # ===========================================================
 #                      CAMERA NORMAL
@@ -235,7 +222,6 @@ func _update_camera(delta: float):
 	camera.global_position = camera.global_position.lerp(desired, delta * camera_smoothness)
 	camera.look_at(target, Vector3.UP)
 
-
 # ===========================================================
 #                    NETWORK SEND
 # ===========================================================
@@ -255,7 +241,6 @@ func _send_state_to_server():
 		"animation": current_animation
 	}))
 
-
 # ===========================================================
 #                    ANIMATION
 # ===========================================================
@@ -269,7 +254,6 @@ func set_animation_state(state: String):
 	else:
 		_play_idle()
 
-
 func _handle_animations(move: Vector3):
 	if not is_local: return
 
@@ -280,12 +264,10 @@ func _handle_animations(move: Vector3):
 		current_animation = "idle"
 		_play_idle()
 
-
 func _play_running():
 	if anim_idle.is_playing():
 		anim_idle.stop()
 	anim_run.play("running")
-
 
 func _play_idle():
 	if anim_run.is_playing():
