@@ -1,4 +1,3 @@
-# Player.gd
 extends CharacterBody3D
 
 # === CONSTANTS ===
@@ -41,16 +40,27 @@ func _ready() -> void:
 func _process(delta: float):
 	name_label.text = player_id.substr(0, 8)
 
+# =======================================================
+# INPUT — orientation based ignore logic
+# =======================================================
 func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
+	
+	var viewport_rect = get_viewport().get_visible_rect()
+	var viewport_size = viewport_rect.size
+	var portrait = viewport_size.y > viewport_size.x
 
-	var viewport_size = get_viewport().get_visible_rect().size
-
-	# 👇 Ignore any touch or drag from lower part of the screen (joystick area)
+	# === IGNORE TOUCH / DRAG INPUT zones ===
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
-		if event.position.y > viewport_size.y * 0.6:
-			return  # ignore touches in lower 40% of the screen
+		if portrait:
+			# Portrait: ignore bottom half
+			if event.position.y > viewport_size.y * 0.5:
+				return
+		else:
+			# Landscape: ignore left half
+			if event.position.x < viewport_size.x * 0.5:
+				return
 
 	# --- CAMERA ROTATION ---
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
@@ -63,7 +73,6 @@ func _input(event: InputEvent) -> void:
 			camera_distance = clamp(camera_distance - 0.5, min_zoom, max_zoom)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
 			camera_distance = clamp(camera_distance + 0.5, min_zoom, max_zoom)
-
 
 
 
@@ -112,6 +121,7 @@ func _physics_process(delta: float) -> void:
 	_handle_animations(move_direction)
 	_send_state_to_server() # Called after handle_animations to send the latest state
 
+
 func _update_camera(delta: float) -> void:
 	var target_pos: Vector3 = global_transform.origin + Vector3(0, 1.5, 0)
 	cam_rot_x = clamp(cam_rot_x, deg_to_rad(-35), deg_to_rad(60))
@@ -146,25 +156,21 @@ func _send_state_to_server() -> void:
 			"y": global_transform.origin.y,
 			"z": global_transform.origin.z,
 			"rotation_y": mesh.rotation.y,
-			"animation": current_animation # Send the current animation state
+			"animation": current_animation
 		}
 		root.ws.send_text(JSON.stringify(data))
 
 # === Animation Handlers ===
-# This public function is called by WorldManager on remote players
 func set_animation_state(new_state: String):
-	# The local player handles its own animations, so ignore this call for them.
 	if is_local: return
-	# Don't restart an animation that is already playing.
 	if new_state == current_animation: return
 
 	current_animation = new_state
 	if new_state == "running":
 		_play_running()
-	else: # Default to idle
+	else:
 		_play_idle()
 
-# This function determines and plays animations for the LOCAL player only.
 func _handle_animations(move_dir: Vector3) -> void:
 	if not is_local: return
 
