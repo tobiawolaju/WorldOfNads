@@ -410,9 +410,9 @@ shadow_mesh = SubResource("ArrayMesh_30fkp")
 
 [node name="Gameplayer" type="Node3D"]
 
-[node name="PlayerManager" type="Node3D" parent="." node_paths=PackedStringArray("bus_node")]
+[node name="PlayerManager" type="Node3D" parent="." node_paths=PackedStringArray("myplayerswpanpoint")]
 script = ExtResource("1_vuq5q")
-bus_node = NodePath("../Bus")
+myplayerswpanpoint = NodePath("../Bus/Marker3D")
 
 [node name="GroundMesh" type="StaticBody3D" parent="PlayerManager"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5161849, 0)
@@ -552,4 +552,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6875, -0.3125)
 mesh = SubResource("ArrayMesh_ujwm8")
 skeleton = NodePath("")
 
+[editable path="Bus"]
 [editable path="CharacterBody3D"]

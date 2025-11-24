@@ -1,4 +1,3 @@
-# WorldManager.gd
 extends Node3D
 
 # --- SERVER URLS ---
@@ -6,6 +5,7 @@ const LIVE_URL = "wss://worldofnads.onrender.com/"
 const LOCAL_URL = "ws://localhost:8080"
 
 @export var player_scene: PackedScene = preload("res://scenes/components/Player.tscn")
+@export var myplayerswpanpoint: Marker3D
 
 # --- NETWORK & STATE VARIABLES ---
 var ws := WebSocketPeer.new()
@@ -19,6 +19,7 @@ var connection_attempted = false
 @onready var fallback_timer: Timer = $FallbackTimer
 
 func _ready():
+	# connect fallback timer and start initial attempt
 	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
 	_attempt_connection()
 
@@ -38,6 +39,7 @@ func _process(delta):
 	if not connection_attempted:
 		return
 
+	# Poll the socket and handle state
 	ws.poll()
 	var state = ws.get_ready_state()
 
@@ -70,10 +72,14 @@ func _on_fallback_timer_timeout():
 func _receive_messages():
 	while ws.get_available_packet_count() > 0:
 		var raw_packet = ws.get_packet()
-		if raw_packet.is_empty(): continue
+		if raw_packet.is_empty():
+			continue
 		var raw_string = raw_packet.get_string_from_utf8()
 		var data = JSON.parse_string(raw_string)
-		if typeof(data) != TYPE_DICTIONARY: continue
+		# The parse result in your previous code assumed a dictionary directly.
+		# Keep the same check to avoid breaking existing workflow:
+		if typeof(data) != TYPE_DICTIONARY:
+			continue
 
 		match data.get("type"):
 			"connect":
@@ -85,11 +91,12 @@ func _receive_messages():
 					_update_world_state(data["players"])
 
 func _update_world_state(players_state):
-	var received_ids = []
+	var received_ids := []
 	for p_state in players_state:
 		var id = p_state["id"]
 		received_ids.append(id)
 		
+		# Important: don't overwrite the local player's transform from server state
 		if id == player_id:
 			continue
 
@@ -102,11 +109,14 @@ func _update_world_state(players_state):
 			var server_rot_y = p_state["rotationY"]
 			var server_anim = p_state["animation"]
 
+			# Smoothly interpolate remote player to server position/rotation
 			node.global_transform.origin = node.global_transform.origin.lerp(server_pos, 0.3)
 			node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
-			# Tell the remote player's script to update its animation
-			node.set_animation_state(server_anim)
+			# Update animation on the remote player's script (expected method on player)
+			if node.has_method("set_animation_state"):
+				node.set_animation_state(server_anim)
 
+	# Remove players that disappeared
 	for id in players.keys():
 		if id != player_id and not id in received_ids:
 			_remove_player(id)
@@ -120,15 +130,25 @@ func _spawn_player(id: String, is_local := false):
 	player.is_local = is_local
 	player.root = self
 
-	if is_local:
-		print("🧍 Local player spawned:", id)
+	# --- LOCAL PLAYER SPAWN POINT ---
+	if is_local and myplayerswpanpoint:
+		# Place local player at the marker position
+		player.global_position = myplayerswpanpoint.global_position
+
+		# IMPORTANT: copy only the yaw (rotation.y) so forward/right stay consistent
+		var current_rot :Vector3 = player.global_rotation
+		current_rot.y = myplayerswpanpoint.global_rotation.y
+		player.global_rotation = current_rot
+
+		print("🧍 Local player spawned at custom spawn point:", id)
 	else:
 		print("👤 Remote player spawned:", id)
+	
 	players[id] = player
 
 func _remove_player(id: String):
 	if players.has(id):
-		if players[id].is_queued_for_deletion(): return
+		if players[id].is_queued_for_deletion():
+			return
 		players[id].queue_free()
 		players.erase(id)
-		

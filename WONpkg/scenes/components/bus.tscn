@@ -1,5 +1,6 @@
-[gd_scene load_steps=39 format=4 uid="uid://dmfrhhone88c0"]
+[gd_scene load_steps=41 format=4 uid="uid://dmfrhhone88c0"]
 
+[ext_resource type="Script" uid="uid://bok6pqa5jkw3a" path="res://scripts/bus.gd" id="1_wtq63"]
 [ext_resource type="Texture2D" uid="uid://bux033aiby60l" path="res://assets/models/VanTex.png" id="2_8154j"]
 [ext_resource type="ArrayMesh" uid="uid://d2shs8xt2gill" path="res://assets/models/Parachute.obj" id="3_8154j"]
 [ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="4_38u8m"]
@@ -635,7 +636,11 @@ fog_depth_begin = 1.0
 fog_depth_end = 25.0
 volumetric_fog_albedo = Color(0.29411766, 0.2627451, 1, 1)
 
-[node name="Bus" type="Node3D"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_l43u4"]
+size = Vector3(3.1931953, 0.91638184, 1.2374268)
+
+[node name="Bus" type="CharacterBody3D"]
+script = ExtResource("1_wtq63")
 
 [node name="Player1" type="Node3D" parent="."]
 transform = Transform3D(0.32085106, -0.28257152, 0.90399575, 0.6137335, 0.78898835, 0.028792769, -0.7213778, 0.5455742, 0.42657113, 0.090111494, 1, -1.2387869)
@@ -3470,3 +3475,10 @@ skeleton = NodePath("")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_5urgl")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.074632645, 1.2852395, 0.012512207)
+shape = SubResource("BoxShape3D_l43u4")
+
+[node name="Marker3D" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3374033, 0)
