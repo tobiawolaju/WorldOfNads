@@ -27,26 +27,56 @@ var connection_attempted = false
 @export var username_label :Label
 
 
-
+var _js_callback_ref = null
 
 func _ready():
-	if Engine.has_singleton("JavaScript"):
-		var js = Engine.get_singleton("JavaScript")
-		js.connect("message", Callable(self, "_on_js_message"))
-
+	# Check if we are running in a web browser
+	if OS.has_feature("web"):
+		_setup_js_bridge()
 	
-	# Spawn local player immediately on bus
+	# Spawn local player immediately
 	_spawn_player_local()
-
-	# Connect to server asynchronously after 10s delay
+	
+	# Connect to server delayed
 	_connect_to_server_delayed()
+	
 
+func _setup_js_bridge():
+	# 1. Create a specific callback for JavaScript to trigger
+	_js_callback_ref = JavaScriptBridge.create_callback(_on_js_message)
+	
+	# 2. Get the 'window' object from the browser
+	var win = JavaScriptBridge.get_interface("window")
+	
+	# 3. Assign our callback to the variable we defined in HTML
+	win.godotOnMessage = _js_callback_ref
+	
+	# 4. Check if React sent a message while we were loading (The "Buffer")
+	var buffered_data = win.deferredMessage
+	if buffered_data:
+		print("Found buffered message from React")
+		_on_js_message([buffered_data]) # Callbacks receive args as an array
+		win.deferredMessage = null # Clear buffer
 
-func _on_js_message(message):
-	# Check if it's the username message
-	if typeof(message) == TYPE_DICTIONARY and message.has("type") and message["type"] == "set_username":
-		var username = str(message["value"])
-		username_label.text = "Player: " + username
+func _on_js_message(args):
+	# JavaScript callbacks pass arguments as an array
+	var message = args[0] 
+	
+	print("Godot received JS data: ", message)
+	
+	# JavaScript objects are wrapped, so we act carefully
+	# We check if it acts like a dictionary/object
+	if typeof(message) == TYPE_OBJECT or typeof(message) == TYPE_DICTIONARY:
+		# Retrieve properties using get() just to be safe with JS wrappers
+		var msg_type = message.get("type")
+		var msg_value = message.get("value")
+		
+		if msg_type == "set_username":
+			var username = str(msg_value)
+			print("Setting username to: ", username)
+			if username_label:
+				username_label.text = "Player: " + username
+
 
 func _spawn_player_local():
 	var player = player_scene.instantiate()

@@ -216,13 +216,23 @@ const engine = new Engine(GODOT_CONFIG);
 	}
 }());
 		</script>
+		
 
-			<script>
-  // Forward messages from parent iframe to Godot instance
+	<script>
+  // 1. Setup a place to store the Godot callback
+  window.godotOnMessage = null;
+  window.deferredMessage = null; // Buffer for message if Godot isn't ready
+
+  // 2. Listen for React messages
   window.addEventListener("message", (event) => {
-    // Ensure Godot engine is initialized
-    if (typeof engine !== "undefined" && engine && engine.sendMessageToGodot) {
-      engine.sendMessageToGodot(event.data);
+    console.log("HTML received message from React:", event.data);
+    
+    if (window.godotOnMessage) {
+      // If Godot is ready, send directly
+      window.godotOnMessage(event.data);
+    } else {
+      // If Godot is loading, save it for later
+      window.deferredMessage = event.data;
     }
   });
 </script>
