@@ -213,6 +213,15 @@ const engine = new Engine(GODOT_CONFIG);
 		}).then(() => {
 			setStatusMode('hidden');
 		}, displayFailureNotice);
+		
+		// Forward messages from parent iframe to Godot instance
+  window.addEventListener("message", (event) => {
+    // Ensure Godot engine is initialized
+    if (typeof engine !== "undefined" && engine && engine.sendMessageToGodot) {
+      engine.sendMessageToGodot(event.data);
+    }
+  });
+  
 	}
 }());
 		</script>
