@@ -112,7 +112,7 @@ body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":23978700,"index.wasm":36160334},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":23978684,"index.wasm":36160334},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -216,6 +216,17 @@ const engine = new Engine(GODOT_CONFIG);
 	}
 }());
 		</script>
+
+		<script>
+  // Forward messages from parent iframe to Godot instance
+  window.addEventListener("message", (event) => {
+    // Ensure Godot engine is initialized
+    if (typeof engine !== "undefined" && engine && engine.sendMessageToGodot) {
+      engine.sendMessageToGodot(event.data);
+    }
+  });
+</script>
+
 	</body>
 </html>
 
