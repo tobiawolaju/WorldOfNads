@@ -35,6 +35,18 @@ render_target_update_mode = 4
 
 [node name="Gameplayer" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport" instance=ExtResource("1_1iwhs")]
 
+[node name="PlayerManager" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="0" node_paths=PackedStringArray("username_label")]
+username_label = NodePath("../../../../../../username_label")
+
+[node name="username_label" type="Label" parent="CanvasLayer"]
+offset_left = 140.0
+offset_top = -1.0
+offset_right = 293.0
+offset_bottom = 27.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "username  here"
+
 [node name="Joystick" type="CanvasLayer" parent="."]
 
 [node name="TouchJoyStick" type="Node2D" parent="Joystick"]

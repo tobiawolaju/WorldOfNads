@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 
 const Play: React.FC = () => {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const username = "SIrNigga that is black"; // Example, could come from props or state
+  const username = "thisplayer1"; // Example, could come from props or state
 
   useEffect(() => {
     // Wait for iframe to load, then send message

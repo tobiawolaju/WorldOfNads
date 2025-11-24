@@ -1,5 +1,20 @@
 extends Node3D
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # --- SERVER URLS ---
 const LIVE_URL = "wss://worldofnads.onrender.com/"
 const LOCAL_URL = "ws://localhost:8080"
@@ -20,12 +35,31 @@ var is_connecting_to_live = true
 var connection_attempted = false
 @onready var fallback_timer: Timer = $FallbackTimer
 
+
+
+@export var username_label :Label
+
+
+
+
 func _ready():
+	if Engine.has_singleton("JavaScript"):
+		var js = Engine.get_singleton("JavaScript")
+		js.connect("message", Callable(self, "_on_js_message"))
+	
+	
 	# Spawn local player immediately on bus
 	_spawn_player_local()
 
 	# Connect to server asynchronously after 10s delay
 	_connect_to_server_delayed()
+
+
+func _on_js_message(message):
+	# Check if it's the username message
+	if typeof(message) == TYPE_DICTIONARY and message.has("type") and message["type"] == "set_username":
+		var username = str(message["value"])
+		username_label.text = "Player: " + username
 
 func _spawn_player_local():
 	var player = player_scene.instantiate()
