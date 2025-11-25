@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://bj8bka4230iqa"]
+[gd_scene load_steps=5 format=3 uid="uid://bj8bka4230iqa"]
 
 [ext_resource type="PackedScene" uid="uid://b48njcleqy6m3" path="res://scenes/gameplay3d.tscn" id="1_1iwhs"]
 [ext_resource type="Texture2D" uid="uid://c32ce524dwv4m" path="res://assets/images/white_circle.png" id="2_cqgoe"]
+[ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="2_ikted"]
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/joystick.gd" id="3_1iwhs"]
 
 [node name="Gameplay2d" type="Node2D"]
@@ -34,6 +35,30 @@ size = Vector2i(1400, 1400)
 render_target_update_mode = 4
 
 [node name="Gameplayer" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport" instance=ExtResource("1_1iwhs")]
+
+[node name="Node" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="0" node_paths=PackedStringArray("world", "countdown")]
+world = NodePath("../PlayerManager/WorldEnvironment")
+countdown = NodePath("../../../../../Node2/BoxContainer/Label")
+
+[node name="Node2" type="Node" parent="CanvasLayer/BoxContainer"]
+
+[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -38.0
+offset_top = 19.0
+offset_right = 38.0
+offset_bottom = 79.0
+grow_horizontal = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Label" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_ikted")
+theme_override_font_sizes/font_size = 60
+text = "120"
 
 [node name="username_label" type="Label" parent="CanvasLayer"]
 visible = false
@@ -76,4 +101,5 @@ texture = ExtResource("2_cqgoe")
 script = ExtResource("3_1iwhs")
 
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer"]
+[editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Bus"]
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/CharacterBody3D"]

@@ -1,9 +1,10 @@
-[gd_scene load_steps=43 format=4 uid="uid://b48njcleqy6m3"]
+[gd_scene load_steps=44 format=4 uid="uid://b48njcleqy6m3"]
 
+[ext_resource type="Script" uid="uid://timxi6dmdn2m" path="res://scripts/tick.gd" id="1_5bpam"]
 [ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_vuq5q"]
 [ext_resource type="ArrayMesh" uid="uid://c8jku1vjebweb" path="res://assets/models/terrain.obj" id="2_ocj2s"]
 [ext_resource type="ArrayMesh" uid="uid://djlfoy1u834mc" path="res://assets/models/Chicken.obj" id="3_l1v76"]
-[ext_resource type="Texture2D" uid="uid://c8p482cmqow7y" path="res://assets/images/sky.png" id="3_vuq5q"]
+[ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="4_5bpam"]
 [ext_resource type="PackedScene" uid="uid://dmfrhhone88c0" path="res://scenes/components/bus.tscn" id="5_ocj2s"]
 [ext_resource type="Texture2D" uid="uid://stmyh37f16s3" path="res://assets/models/banana peel_0.png" id="6_din8e"]
 [ext_resource type="Texture2D" uid="uid://dk6pulccdwv63" path="res://assets/models/shoppingchart_0.png" id="7_e124b"]
@@ -19,7 +20,7 @@ data = PackedVector3Array(-17.2244, 0, 24.605598, -17.2244, 0, 25, -17.5, 0, 24.
 [sub_resource type="PlaneMesh" id="PlaneMesh_vuq5q"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ct7aa"]
-panorama = ExtResource("3_vuq5q")
+panorama = ExtResource("4_5bpam")
 
 [sub_resource type="Sky" id="Sky_din8e"]
 sky_material = SubResource("PanoramaSkyMaterial_ct7aa")
@@ -411,6 +412,9 @@ blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_30fkp")
 
 [node name="Gameplayer" type="Node3D"]
+
+[node name="Node" type="Node" parent="."]
+script = ExtResource("1_5bpam")
 
 [node name="PlayerManager" type="Node3D" parent="." node_paths=PackedStringArray("myplayerswpanpoint")]
 script = ExtResource("1_vuq5q")
