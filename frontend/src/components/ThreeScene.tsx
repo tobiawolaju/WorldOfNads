@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useFBX } from "@react-three/drei";
-import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
+import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 
 import CardRig from "./CardRig";
@@ -19,11 +19,28 @@ interface Wallet {
 }
 
 interface ThreeSceneProps {
-  twitter: Twitter | undefined;
+  twitter?: Twitter;
   wallets: Wallet[];
   earned: number;
   onLogout: () => void;
 }
+
+// 🟢 HOOK — select object and orbit camera to it
+const useSelectToOrbit = () => {
+  const controlsRef = useRef<any>(null);
+
+  const onSelect = (obj: THREE.Object3D) => {
+    if (!obj || !controlsRef.current) return;
+
+    const center = new THREE.Vector3();
+    obj.getWorldPosition(center);
+
+    controlsRef.current.target.copy(center);
+    controlsRef.current.update();
+  };
+
+  return { controlsRef, onSelect };
+};
 
 // --- Shader Definition for Water Bubble Effect ---
 const vertexShader = `
@@ -44,54 +61,50 @@ const fragmentShader = `
   void main() {
     vec3 viewDir = normalize(vViewPosition);
     float fresnel = 1.0 - dot(viewDir, vNormal);
-    fresnel = pow(fresnel, 2.5); // Increase power for sharper edge
-    
-    // Rainbow color effect driven by fresnel and time
+    fresnel = pow(fresnel, 2.5);
+
     vec3 color;
     color.r = sin(fresnel * 5.0 - uTime * 0.5) * 0.5 + 0.5;
-    color.g = sin(fresnel * 5.0 - uTime * 0.5 + 2.094) * 0.5 + 0.5; // 120 degrees offset
-    color.b = sin(fresnel * 5.0 - uTime * 0.5 + 4.188) * 0.5 + 0.5; // 240 degrees offset
-    
-    // Final color with transparency
+    color.g = sin(fresnel * 5.0 - uTime * 0.5 + 2.094) * 0.5 + 0.5;
+    color.b = sin(fresnel * 5.0 - uTime * 0.5 + 4.188) * 0.5 + 0.5;
+
     gl_FragColor = vec4(color, fresnel * 0.8);
   }
 `;
-
 
 // --- Chicken Component with Shader ---
 interface ChickenProps {
   position: [number, number, number];
   rotation: [number, number, number];
   scale?: number;
+  onSelect: (obj: THREE.Object3D) => void;
 }
-const Chicken: React.FC<ChickenProps> = ({ position, rotation, scale = 6 }) => {
+const Chicken: React.FC<ChickenProps> = ({
+  position,
+  rotation,
+  scale = 6,
+  onSelect,
+}) => {
   const fbx = useFBX("/Chicken.fbx");
   const model = useMemo(() => fbx.clone(), [fbx]);
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
 
-  // Animate the shader uniforms
   useFrame(({ clock }) => {
     if (shaderRef.current) {
       shaderRef.current.uniforms.uTime.value = clock.getElapsedTime();
     }
   });
 
-  // Create and apply the shader material to the model
   useEffect(() => {
     const bubbleMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: { value: 0 },
-      },
+      uniforms: { uTime: { value: 0 } },
       vertexShader,
       fragmentShader,
       transparent: true,
-      blending: THREE.AdditiveBlending, // Gives a nice glowing effect
-      depthWrite: false, // Important for transparency
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
-    
-    // Assign the ref so useFrame can access it
     shaderRef.current = bubbleMaterial;
-
     model.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.material = bubbleMaterial;
@@ -105,21 +118,26 @@ const Chicken: React.FC<ChickenProps> = ({ position, rotation, scale = 6 }) => {
       position={position}
       rotation={rotation}
       scale={scale}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(model);
+      }}
     />
   );
 };
-
 
 // --- Animated Nad Model Component ---
 interface NadModelProps {
   position?: [number, number, number];
   rotation?: [number, number, number];
   scale?: number;
+  onSelect: (obj: THREE.Object3D) => void;
 }
 const NadModel: React.FC<NadModelProps> = ({
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
+  onSelect,
 }) => {
   const fbx = useFBX("/nad.fbx");
   const model = useMemo(() => SkeletonUtils.clone(fbx), [fbx]);
@@ -129,11 +147,13 @@ const NadModel: React.FC<NadModelProps> = ({
     const box = new THREE.Box3().setFromObject(model);
     const size = new THREE.Vector3();
     box.getSize(size);
+
     const maxDim = Math.max(size.x, size.y, size.z);
     if (maxDim > 0) {
-      const scaleFactor = 1 / maxDim;
-      model.scale.setScalar(scaleFactor);
+      const s = 1 / maxDim;
+      model.scale.setScalar(s);
     }
+
     const center = new THREE.Vector3();
     box.getCenter(center);
     model.position.sub(center.multiplyScalar(model.scale.x));
@@ -154,13 +174,21 @@ const NadModel: React.FC<NadModelProps> = ({
       position={position}
       rotation={rotation}
       scale={scale}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(model);
+      }}
     />
   );
 };
 
-
 // --- Main Scene Component ---
-export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned, onLogout }) => {
+export const ThreeScene: React.FC<ThreeSceneProps> = ({
+  twitter,
+  wallets,
+  earned,
+  onLogout,
+}) => {
   const [cameraZ, setCameraZ] = useState(22);
 
   useEffect(() => {
@@ -172,35 +200,38 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const { controlsRef, onSelect } = useSelectToOrbit();
+
   const chickenCount = 6;
   const radius = 6;
-  const randomSeed = 12345;
-
-  const createRandomGenerator = (seed: number) => () => {
-    seed = (seed * 1664525 + 1013904223) % 4294967296;
-    return seed / 4294967296;
+  const seed = 12345;
+  const rand = (s: number) => () => {
+    s = (s * 1664525 + 1013904223) % 4294967296;
+    return s / 4294967296;
   };
+  const random = rand(seed);
 
   const chickens = useMemo(() => {
-    const random = createRandomGenerator(randomSeed);
     return Array.from({ length: chickenCount }).map((_, i) => {
       const theta = random() * 2 * Math.PI;
       const phi = Math.acos(2 * random() - 1);
-      const x = radius * Math.sin(phi) * Math.cos(theta);
-      const y = radius * Math.sin(phi) * Math.sin(theta);
-      const z = radius * Math.cos(phi);
-      const rotX = random() * 2 * Math.PI;
-      const rotY = random() * 2 * Math.PI;
-      const rotZ = random() * 2 * Math.PI;
-      const scale = 2 + random() * 2;
+
       return {
         key: i,
-        position: [x, y, z] as [number, number, number],
-        rotation: [rotX, rotY, rotZ] as [number, number, number],
-        scale,
+        position: [
+          radius * Math.sin(phi) * Math.cos(theta),
+          radius * Math.sin(phi) * Math.sin(theta),
+          radius * Math.cos(phi),
+        ] as [number, number, number],
+        rotation: [
+          random() * 2 * Math.PI,
+          random() * 2 * Math.PI,
+          random() * 2 * Math.PI,
+        ] as [number, number, number],
+        scale: 2 + random() * 2,
       };
     });
-  }, [chickenCount, radius, randomSeed]);
+  }, []);
 
   return (
     <Canvas
@@ -208,16 +239,16 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
       camera={{ position: [0, 0, cameraZ] }}
       gl={{ alpha: true, preserveDrawingBuffer: true }}
       style={{ background: "none", pointerEvents: "auto" }}
-      onCreated={({ gl }) => { gl.setClearColor(0x000000, 0); }}
+      onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
     >
       <ambientLight intensity={3} />
-      <directionalLight position={[5, 5, 5]} intensity={1.0} />
+      <directionalLight position={[5, 5, 5]} intensity={1} />
 
       <Suspense fallback={null}>
-        <NadModel scale={0.5} position={[0, -2, 0]} />
+        <NadModel scale={0.5} position={[0, -2, 0]} onSelect={onSelect} />
 
         <CardRig>
-          <group rotation={[-0.5,1,1]} position={[4, 0.5, 0]} scale={0.3}>
+          <group rotation={[-0.5, 1, 1]} position={[4, 0.5, 0]} scale={0.3}>
             <IdCard
               twitter={twitter}
               wallets={wallets}
@@ -227,12 +258,13 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({ twitter, wallets, earned
           </group>
         </CardRig>
 
-        {chickens.map(chickenProps => (
-          <Chicken {...chickenProps} />
+        {chickens.map((data) => (
+          <Chicken key={data.key} {...data} onSelect={onSelect} />
         ))}
       </Suspense>
 
       <OrbitControls
+        ref={controlsRef}
         enableZoom={true}
         enablePan={true}
         enableRotate={true}
