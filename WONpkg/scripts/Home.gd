@@ -2,7 +2,7 @@ extends Node
 
 @onready var progress_bar: ProgressBar = $"CanvasLayer/BoxContainer/Node/ProgressBar"
 var timer: float = 0.0
-var duration: float = 10.0  # Time in seconds
+var duration: float = 3.0  # Time in seconds
 
 func _process(delta: float) -> void:
 	if timer < duration:

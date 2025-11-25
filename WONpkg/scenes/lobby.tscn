@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=4 uid="uid://cfh3bbfmtn7vx"]
+[gd_scene load_steps=37 format=4 uid="uid://cfh3bbfmtn7vx"]
 
 [ext_resource type="Script" uid="uid://be68ag11ct64p" path="res://scripts/lobby.gd" id="1_apkv3"]
 [ext_resource type="PackedScene" uid="uid://bow7at01gr1k3" path="res://scenes/components/LobbyPlayer.tscn" id="2_ncsg4"]
@@ -7,7 +7,6 @@
 [ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="3_xbk5o"]
 [ext_resource type="Script" uid="uid://wja8ank84i1j" path="res://scripts/LobbyManager.gd" id="4_07nfq"]
 [ext_resource type="Texture2D" uid="uid://bux033aiby60l" path="res://assets/models/VanTex.png" id="4_oi12y"]
-[ext_resource type="PackedScene" uid="uid://b1xd5yn7ktytj" path="res://scenes/components/PlayerProp.tscn" id="6_usqjs"]
 [ext_resource type="Texture2D" uid="uid://w5ldcc8yjkgr" path="res://assets/models/stop_sign_texture_1024x1024.png" id="6_xbk5o"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uc5rn"]
@@ -481,44 +480,3 @@ outline_modulate = Color(1, 0.8775792, 0.92581403, 1)
 text = "Searching for Server"
 font_size = 100
 outline_size = 50
-
-[node name="Player" type="Node3D" parent="."]
-
-[node name="Player2" parent="Player" instance=ExtResource("6_usqjs")]
-transform = Transform3D(-0.32393405, 0, 0.9460797, 0, 1, 0, -0.9460797, 0, -0.32393405, 0.5715046, 0.04345131, 0.64722943)
-
-[node name="Label3D" parent="Player/Player2" index="1"]
-transform = Transform3D(0.19999994, 0, 7.450581e-09, 0, 0.2, 0, -7.450581e-09, 0, 0.19999994, -0.014328599, 0.52379966, 0.11158949)
-
-[node name="Skeleton3D" parent="Player/Player2" index="2"]
-bones/0/position = Vector3(8.826976e-05, 0.008283177, -7.4901065e-05)
-bones/0/rotation = Quaternion(-0.036929294, -0.36307564, -0.012124023, 0.93094873)
-bones/1/rotation = Quaternion(0.04481568, 0.035979852, -0.009507279, 0.9983019)
-bones/2/rotation = Quaternion(0.100697674, 0.081251726, -0.017519077, 0.991439)
-bones/3/rotation = Quaternion(0.10069767, 0.08125176, -0.017519087, 0.991439)
-bones/4/rotation = Quaternion(-0.03184153, -0.011044414, 0.0021305543, 0.9994297)
-bones/5/rotation = Quaternion(-0.05445803, 0.17692666, -0.013031677, 0.9826299)
-bones/7/rotation = Quaternion(-0.59106785, -0.40373346, 0.5792276, -0.3900431)
-bones/8/rotation = Quaternion(0.41871935, -0.114214845, 0.055358276, 0.8992023)
-bones/9/rotation = Quaternion(-0.0034688017, 0.059715196, 0.40517026, 0.91228247)
-bones/10/rotation = Quaternion(-0.010796465, 0.96884656, -0.16311371, -0.18604776)
-bones/11/rotation = Quaternion(0.06287864, 0.99734294, -0.029139783, 0.022455301)
-bones/12/rotation = Quaternion(0.50906515, -0.0044438485, 0.022095608, 0.860433)
-bones/13/rotation = Quaternion(-0.9550697, 0.006797534, -0.05103975, 0.2918743)
-bones/15/rotation = Quaternion(0.6440216, -0.3599133, 0.5368712, 0.40922856)
-bones/16/rotation = Quaternion(0.3834126, 0.119202964, 0.17975925, 0.89803797)
-bones/17/rotation = Quaternion(0.04844664, 0.029828753, -0.359056, 0.93158036)
-bones/18/rotation = Quaternion(0.09376762, 0.98908365, 0.11326772, 0.009571508)
-bones/19/rotation = Quaternion(0.016304398, 0.9981255, -0.037474573, -0.04555749)
-bones/20/rotation = Quaternion(0.44876575, -0.0070792213, 0.17019004, 0.8772655)
-bones/21/rotation = Quaternion(-0.9216252, 0.2670421, -0.05418364, 0.2763325)
-bones/23/rotation = Quaternion(0.04755256, 0.28984913, 0.94537574, -0.14138943)
-bones/24/rotation = Quaternion(-0.35984313, -0.07961214, 0.019837582, 0.9293984)
-bones/25/rotation = Quaternion(0.7483326, 0.21744072, -0.016507274, 0.6264546)
-bones/26/rotation = Quaternion(0.57229584, 0.38735536, -0.26934955, 0.6707341)
-bones/28/rotation = Quaternion(-0.16674629, -0.076524, 0.98293954, -0.013024025)
-bones/29/rotation = Quaternion(-0.090887204, 0.3218449, -0.3910616, 0.85745347)
-bones/30/rotation = Quaternion(0.79044414, 0.07011821, 0.2529555, 0.55343926)
-bones/31/rotation = Quaternion(0.4702126, -0.4558674, 0.28416866, 0.70023805)
-
-[editable path="Player/Player2"]
