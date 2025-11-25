@@ -141,7 +141,7 @@ export default function Dashboard() {
   const [earned, setEarned] = useState<number>(0);
   const [selectedMatch, setSelectedMatch] = useState<number | null>(null);
   const [tab, setTab] = useState<"events" | "results">("events");
-  const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("upcoming");
+const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
 
   const [playButtonState, setPlayButtonState] = useState<"idle" | "counting">("idle");
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -218,7 +218,7 @@ export default function Dashboard() {
         if (intervalRef.current) clearInterval(intervalRef.current);
         setPlayButtonState("idle");
         navigate("/play");
-      }, 15000);
+      }, 3000);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
