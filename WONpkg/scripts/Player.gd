@@ -17,7 +17,8 @@ const SPEED: float = 4.5
 @export var min_pitch: float = deg_to_rad(-40.0)
 @export var max_pitch: float = deg_to_rad(60.0)
 @export var min_zoom: float = 2.0
-@export var max_zoom: float = 5.0
+@export var max_zoom: float = 10.0
+@export var altitude_zoom_factor: float = 5 # how much zoom changes per unit height
 
 # === VARIABLES ===
 var root: Node = null
@@ -54,11 +55,9 @@ func _input(event: InputEvent) -> void:
 	# === IGNORE TOUCH / DRAG INPUT zones ===
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
 		if portrait:
-			# Portrait: ignore bottom half
 			if event.position.y > viewport_size.y * 0.5:
 				return
 		else:
-			# Landscape: ignore left half
 			if event.position.x < viewport_size.x * 0.5:
 				return
 
@@ -73,7 +72,6 @@ func _input(event: InputEvent) -> void:
 			camera_distance = clamp(camera_distance - 0.5, min_zoom, max_zoom)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
 			camera_distance = clamp(camera_distance + 0.5, min_zoom, max_zoom)
-
 
 
 func _physics_process(delta: float) -> void:
@@ -119,18 +117,22 @@ func _physics_process(delta: float) -> void:
 
 	_update_camera(delta)
 	_handle_animations(move_direction)
-	_send_state_to_server() # Called after handle_animations to send the latest state
+	_send_state_to_server()
 
 
 func _update_camera(delta: float) -> void:
 	var target_pos: Vector3 = global_transform.origin + Vector3(0, 1.5, 0)
 	cam_rot_x = clamp(cam_rot_x, deg_to_rad(-35), deg_to_rad(60))
 
+	# --- Altitude-based Zoom ---
+	var altitude_zoom = clamp(global_transform.origin.y * altitude_zoom_factor, 0.0, max_zoom - min_zoom)
+	var effective_camera_distance = clamp(camera_distance + altitude_zoom, min_zoom, max_zoom)
+
 	var cam_target_offset: Vector3 = Vector3(
 		sin(cam_rot_y) * cos(cam_rot_x),
 		sin(cam_rot_x),
 		cos(cam_rot_y) * cos(cam_rot_x)
-	) * camera_distance
+	) * effective_camera_distance
 
 	var desired_cam_pos: Vector3 = target_pos + cam_target_offset
 	var space_state = get_world_3d().direct_space_state
@@ -143,6 +145,7 @@ func _update_camera(delta: float) -> void:
 
 	camera.global_position = camera.global_position.lerp(desired_cam_pos, delta * camera_smoothness)
 	camera.look_at(target_pos, Vector3.UP)
+
 
 # --- NETWORK FUNCTION ---
 func _send_state_to_server() -> void:
@@ -160,6 +163,7 @@ func _send_state_to_server() -> void:
 		}
 		root.ws.send_text(JSON.stringify(data))
 
+
 # === Animation Handlers ===
 func set_animation_state(new_state: String):
 	if is_local: return
@@ -171,6 +175,7 @@ func set_animation_state(new_state: String):
 	else:
 		_play_idle()
 
+
 func _handle_animations(move_dir: Vector3) -> void:
 	if not is_local: return
 
@@ -181,11 +186,13 @@ func _handle_animations(move_dir: Vector3) -> void:
 		current_animation = "idle"
 		_play_idle()
 
+
 func _play_running() -> void:
 	if anim_idle.is_playing():
 		anim_idle.stop()
 	if not anim_run.is_playing():
 		anim_run.play("running")
+
 
 func _play_idle() -> void:
 	if anim_run.is_playing():
