@@ -63,3 +63,22 @@ pointing/emulate_touch_from_mouse=true
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
+
+[shader_globals]
+
+MainLightDirection={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+SkyColor={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+EquatorColor={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+GroundColor={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
