@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=4 uid="uid://cfh3bbfmtn7vx"]
+[gd_scene load_steps=43 format=4 uid="uid://cfh3bbfmtn7vx"]
 
 [ext_resource type="Script" uid="uid://be68ag11ct64p" path="res://scripts/lobby.gd" id="1_apkv3"]
 [ext_resource type="PackedScene" uid="uid://bow7at01gr1k3" path="res://scenes/components/LobbyPlayer.tscn" id="2_ncsg4"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://wja8ank84i1j" path="res://scripts/LobbyManager.gd" id="4_07nfq"]
 [ext_resource type="Texture2D" uid="uid://bux033aiby60l" path="res://assets/models/VanTex.png" id="4_oi12y"]
 [ext_resource type="Texture2D" uid="uid://w5ldcc8yjkgr" path="res://assets/models/stop_sign_texture_1024x1024.png" id="6_xbk5o"]
+[ext_resource type="Shader" uid="uid://c0yxde2keumcq" path="res://maincloud.gdshader" id="9_07nfq"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uc5rn"]
 albedo_color = Color(0.9468966, 0.45612562, 0.34997106, 1)
@@ -29,7 +30,6 @@ glow_enabled = true
 glow_intensity = 0.25
 glow_bloom = 0.1
 glow_hdr_luminance_cap = 10.0
-fog_enabled = true
 fog_mode = 1
 fog_light_color = Color(0.94509804, 0.4627451, 0.99607843, 1)
 fog_density = 1.0
@@ -411,7 +411,7 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_heff3"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_oipnb"]
 resource_name = "Mesh_002"
 _surfaces = [{
 "aabb": AABB(-0.01133293, -0.041812807, -0.012376008, 0.06343811, 0.068912864, 0.024706885),
@@ -429,6 +429,36 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_n0076")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yad6j"]
+render_priority = 0
+shader = ExtResource("9_07nfq")
+shader_parameter/albedo = Color(1, 1, 1, 0.27450982)
+shader_parameter/albedo_texture_size = Vector2i(0, 0)
+shader_parameter/point_size = 1.0
+shader_parameter/roughness = 1.0
+shader_parameter/metallic_texture_channel = Vector4(1, 0, 0, 0)
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 0.0
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/uv2_scale = Vector3(1, 1, 1)
+shader_parameter/uv2_offset = Vector3(0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_m1sns"]
+render_priority = 0
+shader = ExtResource("9_07nfq")
+shader_parameter/albedo = Color(1, 1, 1, 0.27450982)
+shader_parameter/albedo_texture_size = Vector2i(0, 0)
+shader_parameter/point_size = 1.0
+shader_parameter/roughness = 1.0
+shader_parameter/metallic_texture_channel = Vector4(1, 0, 0, 0)
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 0.0
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/uv2_scale = Vector3(1, 1, 1)
+shader_parameter/uv2_offset = Vector3(0, 0, 0)
 
 [node name="Lobby" type="Node3D"]
 script = ExtResource("1_apkv3")
@@ -477,7 +507,7 @@ light_energy = 2.0
 shadow_enabled = true
 
 [node name="Bus" type="MeshInstance3D" parent="."]
-transform = Transform3D(100, 0, 0, 0, -4.371139e-06, 100, 0, -100, -4.371139e-06, 0, 14.05715, 0)
+transform = Transform3D(100, 0, 0, 0, -4.371139e-06, 100, 0, -100, -4.371139e-06, 0, 16, 0)
 material_override = SubResource("StandardMaterial3D_3b43p")
 mesh = SubResource("ArrayMesh_4wtlk")
 skeleton = NodePath("")
@@ -497,7 +527,7 @@ skeleton = NodePath("")
 transform = Transform3D(0.9715946, -0.04955811, 0.23140438, 0, 0.97782713, 0.20941377, -0.23665163, -0.20346528, 0.95005155, -3.3462727, -0.007458687, 4.0711055)
 
 [node name="Cylinder" type="MeshInstance3D" parent="Banana"]
-transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, -1.0236241, -0.07677181)
+transform = Transform3D(0.05, 0, 0, -2.3283064e-10, -1.8626451e-09, 0.05, 0, -0.049999997, -2.7939677e-09, 1.6729999, -0.5303404, 0.43042088)
 mesh = SubResource("ArrayMesh_82wld")
 skeleton = NodePath("")
 
@@ -512,53 +542,53 @@ mesh = SubResource("ArrayMesh_ds7rv")
 skeleton = NodePath("")
 
 [node name="STATS" type="Label3D" parent="."]
-transform = Transform3D(-4.371139e-09, 0, 0.1, 0, 0.1, 0, -0.1, 0, -4.371139e-09, -2.4700882, 2.1188693, -0.44709587)
-fixed_size = true
-modulate = Color(0.7411765, 0.36862746, 1, 1)
-outline_modulate = Color(1, 0.8775792, 0.92581403, 1)
+transform = Transform3D(-4.371139e-09, 0, 0.1, 0, 0.1, 0, -0.1, 0, -4.371139e-09, -0.044095576, 0.9340637, 0.0055159926)
+outline_modulate = Color(0, 0, 0, 0.14117648)
 text = "Searching for Server"
-font_size = 100
+font_size = 400
 outline_size = 50
 
 [node name="cloud" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.632, 12, 1.781)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0869274, 12, 8.045609)
 
-[node name="Mball_008" type="MeshInstance3D" parent="cloud"]
-transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, 0, 0, 0)
-mesh = SubResource("ArrayMesh_heff3")
+[node name="cloud" type="MeshInstance3D" parent="cloud"]
+transform = Transform3D(96.337685, 0, 0, 0, -4.2110537e-06, 83.11763, 0, -96.33768, -3.633187e-06, 0, 0, 0)
+mesh = SubResource("ArrayMesh_oipnb")
 skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_yad6j")
 
-[node name="Mball_009" type="MeshInstance3D" parent="cloud"]
-transform = Transform3D(68.63658, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, -0.56749964, 4.7683716e-07, -9.715955)
-mesh = SubResource("ArrayMesh_heff3")
-skeleton = NodePath("")
-
-[node name="Mball_010" type="MeshInstance3D" parent="cloud"]
+[node name="cloud3" type="MeshInstance3D" parent="cloud"]
 transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, 5.8019342, 1.2391243, 4.641549)
-mesh = SubResource("ArrayMesh_heff3")
+mesh = SubResource("ArrayMesh_oipnb")
 skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_m1sns")
 
-[node name="Mball_011" type="MeshInstance3D" parent="cloud"]
+[node name="cloud4" type="MeshInstance3D" parent="cloud"]
 transform = Transform3D(82.56158, 0, 0, 0, -1.3153002e-05, 73.350105, 0, -110.33537, -8.744015e-06, 5.8019342, 1.2391243, -4.808219)
-mesh = SubResource("ArrayMesh_heff3")
+mesh = SubResource("ArrayMesh_oipnb")
 skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_yad6j")
 
-[node name="Mball_012" type="MeshInstance3D" parent="cloud"]
-transform = Transform3D(-20.847542, -64.69768, -9.004673e-06, 0, -8.48661e-06, 83.11763, -45.4072, 29.704264, 4.134261e-06, -6.9828067, 0, -10.811691)
-mesh = SubResource("ArrayMesh_heff3")
+[node name="cloud5" type="MeshInstance3D" parent="cloud"]
+transform = Transform3D(-20.847542, -64.69768, -8.033643e-06, 0, -8.48661e-06, 74.15454, -45.4072, 29.704264, 3.6884378e-06, -7.010471, -0.46300888, -11.0687275)
+mesh = SubResource("ArrayMesh_oipnb")
 skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_yad6j")
 
-[node name="Mball_013" type="MeshInstance3D" parent="cloud"]
+[node name="cloud6" type="MeshInstance3D" parent="cloud"]
 transform = Transform3D(-40.196754, -87.55095, -9.004674e-06, 0, -1.1484349e-05, 83.11764, -87.55096, 40.19675, 4.1342614e-06, -15.570684, 0, -6.86879)
-mesh = SubResource("ArrayMesh_heff3")
+mesh = SubResource("ArrayMesh_oipnb")
 skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_yad6j")
 
-[node name="Mball_014" type="MeshInstance3D" parent="cloud"]
+[node name="cloud7" type="MeshInstance3D" parent="cloud"]
 transform = Transform3D(-40.196754, -87.55095, -9.004674e-06, 0, -1.1484349e-05, 83.11764, -87.55096, 40.19675, 4.1342614e-06, -5.18545, 1.2391243, -18.021126)
-mesh = SubResource("ArrayMesh_heff3")
+mesh = SubResource("ArrayMesh_oipnb")
 skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_yad6j")
 
-[node name="Mball_015" type="MeshInstance3D" parent="cloud"]
+[node name="cloud8" type="MeshInstance3D" parent="cloud"]
 transform = Transform3D(-40.196754, -87.55095, -9.004674e-06, 0, -1.1484349e-05, 83.11764, -87.55096, 40.19675, 4.1342614e-06, -13.773329, 1.2391243, -14.078224)
-mesh = SubResource("ArrayMesh_heff3")
+mesh = SubResource("ArrayMesh_oipnb")
 skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_yad6j")

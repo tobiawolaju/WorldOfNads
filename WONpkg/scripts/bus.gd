@@ -1,6 +1,6 @@
 extends CharacterBody3D
 
-@export var point_a: Vector3 = Vector3(20, 16, 0)
+@export var point_a: Vector3 = Vector3(10, 16, 0)
 @export var point_b: Vector3 = Vector3(-20, 14, 0)
 @export var speed: float = 1.0
 @export var arrive_distance: float = 0.5
