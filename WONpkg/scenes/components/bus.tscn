@@ -613,6 +613,9 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_6x00d")
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_l43u4"]
+size = Vector3(3.1931953, 0.91638184, 1.2374268)
+
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_6x00d"]
 panorama = ExtResource("4_38u8m")
 
@@ -636,14 +639,11 @@ fog_depth_begin = 1.0
 fog_depth_end = 25.0
 volumetric_fog_albedo = Color(0.29411766, 0.2627451, 1, 1)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_l43u4"]
-size = Vector3(3.1931953, 0.91638184, 1.2374268)
-
 [node name="Bus" type="CharacterBody3D"]
 script = ExtResource("1_wtq63")
 
 [node name="Player1" type="Node3D" parent="."]
-transform = Transform3D(0.32085106, -0.28257152, 0.90399575, 0.6137335, 0.78898835, 0.028792769, -0.7213778, 0.5455742, 0.42657113, 0.090111494, 1, -1.2387869)
+transform = Transform3D(0.32085106, -0.28257152, 0.90399575, 0.6137335, 0.78898835, 0.028792769, -0.7213778, 0.5455742, 0.42657113, 0.090111494, 1.7823153, -1.2387869)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="Player1"]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
@@ -925,7 +925,7 @@ libraries = {
 }
 
 [node name="Player2" type="Node3D" parent="."]
-transform = Transform3D(0.20818384, -0.51306933, 0.8327184, 0.4548869, 0.8044835, 0.3819486, -0.8658738, 0.29927698, 0.40086874, -0.7898462, 1, -0.9507327)
+transform = Transform3D(0.20818384, -0.51306933, 0.8327184, 0.4548869, 0.8044835, 0.3819486, -0.8658738, 0.29927698, 0.40086874, -0.7898462, 1.7823153, -0.9507327)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="Player2"]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
@@ -1207,7 +1207,7 @@ libraries = {
 }
 
 [node name="Player3" type="Node3D" parent="."]
-transform = Transform3D(0.3208511, -0.2825715, 0.90399575, 0.3838192, 0.9113655, 0.14864784, -0.8658739, 0.29927704, 0.40086874, 0.48234993, 1, -1.044349)
+transform = Transform3D(0.3208511, -0.2825715, 0.90399575, 0.3838192, 0.9113655, 0.14864784, -0.8658739, 0.29927704, 0.40086874, 0.48234993, 1.7823153, -1.044349)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="Player3"]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
@@ -1489,7 +1489,7 @@ libraries = {
 }
 
 [node name="Player4" type="Node3D" parent="."]
-transform = Transform3D(0.3208511, -0.2825715, 0.90399575, 0.3838192, 0.9113655, 0.14864784, -0.8658739, 0.29927704, 0.40086874, -0.23737776, 1, -1.044349)
+transform = Transform3D(0.3208511, -0.2825715, 0.90399575, 0.3838192, 0.9113655, 0.14864784, -0.8658739, 0.29927704, 0.40086874, -0.23737776, 1.7823153, -1.044349)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="Player4"]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
@@ -1771,7 +1771,7 @@ libraries = {
 }
 
 [node name="Player5" type="Node3D" parent="."]
-transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, -0.69268847, 1, 1.1053419)
+transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, -0.69268847, 1.7823153, 1.1053419)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="Player5"]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
@@ -2053,7 +2053,7 @@ libraries = {
 }
 
 [node name="Player6" type="Node3D" parent="."]
-transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, 0.018127024, 1, 0.992429)
+transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, 0.018127024, 1.7823153, 0.992429)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="Player6"]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
@@ -2335,7 +2335,7 @@ libraries = {
 }
 
 [node name="Player7" type="Node3D" parent="."]
-transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, -1.08007, 1, 1.1668775)
+transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, -1.08007, 1.7823153, 1.1668775)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="Player7"]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
@@ -2617,7 +2617,7 @@ libraries = {
 }
 
 [node name="Player8" type="Node3D" parent="."]
-transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, -0.3692544, 1, 1.0539645)
+transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, -0.3692544, 1.7823153, 1.0539645)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="Player8"]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
@@ -2899,7 +2899,7 @@ libraries = {
 }
 
 [node name="Player9" type="Node3D" parent="."]
-transform = Transform3D(0.6645565, -0.71253693, -0.22506836, 0.6778038, 0.70160556, -0.219846, 0.3145576, -0.0064521297, 0.94921654, 1.9482262, 1.2542853, 0.24345836)
+transform = Transform3D(0.6645565, -0.71253693, -0.22506836, 0.6778038, 0.70160556, -0.219846, 0.3145576, -0.0064521297, 0.94921654, 1.9482262, 2.0366006, 0.24345836)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="Player9"]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
@@ -3181,7 +3181,7 @@ libraries = {
 }
 
 [node name="Player10" type="Node3D" parent="."]
-transform = Transform3D(0.8958843, -0.32851207, -0.29911694, 0.38381925, 0.9113657, 0.14864786, 0.22377229, -0.24797824, 0.9425672, 1.6403449, 1, -0.13260591)
+transform = Transform3D(0.8958843, -0.32851207, -0.29911694, 0.38381925, 0.9113657, 0.14864786, 0.22377229, -0.24797824, 0.9425672, 1.6403449, 1.7823153, -0.13260591)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="Player10"]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
@@ -3463,22 +3463,22 @@ libraries = {
 }
 
 [node name="Parachute" type="MeshInstance3D" parent="."]
-transform = Transform3D(-2.1855692e-08, 0, -0.49999997, 0, 0.5, 0, 0.49999997, 0, -2.1855692e-08, 0.18050754, 1.6621828, 0.022620916)
+transform = Transform3D(-2.1855692e-08, 0, -0.49999997, 0, 0.5, 0, 0.49999997, 0, -2.1855692e-08, 0.18050754, 2.444498, 0.022620916)
 material_override = SubResource("StandardMaterial3D_6x00d")
 mesh = ExtResource("3_8154j")
 
 [node name="Van" type="MeshInstance3D" parent="."]
-transform = Transform3D(60, 0, 0, 0, -2.6226833e-06, 60, 0, -60, -2.6226833e-06, 0, 1.6621828, 0)
+transform = Transform3D(60, 0, 0, 0, -2.6226833e-06, 60, 0, -60, -2.6226833e-06, 0, 2.444498, 0)
 material_override = SubResource("StandardMaterial3D_38u8m")
 mesh = SubResource("ArrayMesh_5urgl")
 skeleton = NodePath("")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_5urgl")
-
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.074632645, 1.2852395, 0.012512207)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.074632645, 2.0675547, 0.012512207)
 shape = SubResource("BoxShape3D_l43u4")
 
 [node name="Marker3D" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3374033, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1197186, 0)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_5urgl")
