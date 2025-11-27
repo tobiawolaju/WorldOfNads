@@ -1,4 +1,4 @@
-[gd_scene load_steps=49 format=4 uid="uid://b48njcleqy6m3"]
+[gd_scene load_steps=50 format=4 uid="uid://b48njcleqy6m3"]
 
 [ext_resource type="Script" uid="uid://timxi6dmdn2m" path="res://scripts/tick.gd" id="1_5bpam"]
 [ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_vuq5q"]
@@ -238,6 +238,9 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_hxau7")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5bpam"]
+size = Vector3(0.581604, 0.38500977, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yssnl"]
 resource_name = "material_0"
@@ -564,10 +567,17 @@ transform = Transform3D(0.095676795, 0.029085249, 0, -0.029085249, 0.095676795, 
 mesh = SubResource("ArrayMesh_bn24a")
 skeleton = NodePath("")
 
-[node name="cart" type="MeshInstance3D" parent="."]
+[node name="cart" type="StaticBody3D" parent="."]
 transform = Transform3D(0.5137325, 0, -0.73897153, 0, 0.9, 0, 0.73897153, 0, 0.5137325, 7.2267113, -0.44692183, 2.1414716)
+
+[node name="cartmesh" type="MeshInstance3D" parent="cart"]
+transform = Transform3D(0.99999994, 0, -2.9802322e-08, 0, 1, 0, 2.9802322e-08, 0, 0.99999994, 0, 0, 0)
 mesh = SubResource("ArrayMesh_dkj3g")
 skeleton = NodePath("")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="cart"]
+transform = Transform3D(0.9999995, 0, -6.854534e-07, 0, 1, 0, 6.854534e-07, 0, 0.9999995, 0.013031006, 0.26501465, 0)
+shape = SubResource("BoxShape3D_5bpam")
 
 [node name="Fireextuginshet" type="Node3D" parent="."]
 transform = Transform3D(0.8680965, 0.36560526, -0.33576995, -0.49572745, 0.6034204, -0.62461066, -0.025750535, 0.7086725, 0.7050676, 3.073, -0.3844816, 8.012)
