@@ -1,0 +1,28 @@
+[gd_scene load_steps=3 format=3 uid="uid://q85dx3n5lik1"]
+
+[ext_resource type="Script" uid="uid://c5plurlwbls7g" path="res://scripts/waypoint.gd" id="1_kvbum"]
+[ext_resource type="Texture2D" uid="uid://c32ce524dwv4m" path="res://assets/images/white_circle.png" id="1_omn23"]
+
+[node name="Waypoint" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_kvbum")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_left = -36.000004
+offset_top = -33.0
+offset_right = 673.0
+offset_bottom = 104.0
+scale = Vector2(0.1, 0.1)
+theme_override_font_sizes/font_size = 100
+text = "This is Chicken"
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = -13.0
+offset_top = -13.0
+offset_right = 13.0
+offset_bottom = 13.0
+texture = ExtResource("1_omn23")
+expand_mode = 1

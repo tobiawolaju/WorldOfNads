@@ -1,4 +1,4 @@
-[gd_scene load_steps=50 format=4 uid="uid://b48njcleqy6m3"]
+[gd_scene load_steps=51 format=4 uid="uid://b48njcleqy6m3"]
 
 [ext_resource type="Script" uid="uid://timxi6dmdn2m" path="res://scripts/tick.gd" id="1_5bpam"]
 [ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_vuq5q"]
@@ -6,6 +6,7 @@
 [ext_resource type="ArrayMesh" uid="uid://djlfoy1u834mc" path="res://assets/models/Chicken.obj" id="3_l1v76"]
 [ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="4_5bpam"]
 [ext_resource type="PackedScene" uid="uid://dmfrhhone88c0" path="res://scenes/components/bus.tscn" id="5_ocj2s"]
+[ext_resource type="PackedScene" uid="uid://q85dx3n5lik1" path="res://scenes/waypoint.tscn" id="6_cyx30"]
 [ext_resource type="Texture2D" uid="uid://stmyh37f16s3" path="res://assets/models/banana peel_0.png" id="6_din8e"]
 [ext_resource type="Texture2D" uid="uid://dk6pulccdwv63" path="res://assets/models/shoppingchart_0.png" id="7_e124b"]
 [ext_resource type="Texture2D" uid="uid://d20rxp171yt4w" path="res://assets/models/model_0.png" id="9_101mb"]
@@ -537,6 +538,11 @@ material_override = SubResource("StandardMaterial3D_ocj2s")
 mesh = ExtResource("3_l1v76")
 skeleton = NodePath("")
 
+[node name="WaypointAnchor" type="Marker3D" parent="Chicken"]
+transform = Transform3D(1, 0, -5.9604645e-08, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Waypoint" parent="Chicken/WaypointAnchor" instance=ExtResource("6_cyx30")]
+
 [node name="Bus" parent="." instance=ExtResource("5_ocj2s")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.228, 18, 28.03)
 
@@ -652,5 +658,7 @@ transform = Transform3D(-40.196754, -87.55095, -9.004674e-06, 0, -1.1484349e-05,
 mesh = SubResource("ArrayMesh_5bpam")
 skeleton = NodePath("")
 surface_material_override/0 = SubResource("ShaderMaterial_kxttn")
+
+[node name="MiniMapCamera3D" type="Camera3D" parent="."]
 
 [editable path="Bus"]
