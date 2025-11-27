@@ -88,34 +88,71 @@ func _receive_messages():
 				if data.has("players"):
 					_update_world_state(data["players"])
 
+
+# --- UPDATED WORLD STATE ---
 func _update_world_state(players_state):
 	var received_ids = []
+
 	for p_state in players_state:
 		var id = p_state["id"]
 		received_ids.append(id)
-		
+
 		if id == player_id:
 			continue
 
 		if not players.has(id):
 			_spawn_player(id, false)
 
-		if players.has(id):
-			var node = players[id]
-			var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
-			var server_rot_y = p_state["rotationY"]
-			var server_anim = p_state["animation"]
+		var node = players[id]
 
-			node.global_transform.origin = node.global_transform.origin.lerp(server_pos, 0.3)
-			node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
-			# Tell the remote player's script to update its animation
-			node.set_animation_state(server_anim)
+		# 🚐 Check if player is on a vehicle
+		if p_state.has("vehicle") and p_state["vehicle"] != null:
+			_sync_vehicle_player(node, p_state)
+			continue
 
+		# Normal on-foot player
+		var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
+		var server_rot_y = p_state["rotationY"]
+		var server_anim = p_state["animation"]
+
+		node.global_position = node.global_position.lerp(server_pos, 0.3)
+		node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
+		node.set_animation_state(server_anim)
+
+	# Remove players not reported
 	for id in players.keys():
 		if id != player_id and not id in received_ids:
 			_remove_player(id)
 
 
+# --- VEHICLE SYNC ---
+func _sync_vehicle_player(player_node: Node3D, p_state):
+	var vehicle_name = p_state["vehicle"]
+	var seat_index = int(p_state.get("seat", 0))
+
+	var vehicle = get_node_or_null("/root/World/%s" % vehicle_name)
+	if vehicle == null:
+		return
+
+	var seats = vehicle.get_node_or_null("Seats")
+	if seats == null:
+		return
+
+	var seat = seats.get_child(seat_index)
+	if seat == null:
+		return
+
+	# Reparent player to vehicle if not already
+	if player_node.get_parent() != vehicle:
+		player_node.get_parent().remove_child(player_node)
+		vehicle.add_child(player_node)
+
+	# Snap player to seat (no lerp)
+	player_node.global_position = seat.global_position
+	player_node.global_rotation = seat.global_rotation
+
+
+# --- SPAWN & REMOVE PLAYERS ---
 func _spawn_player(id: String, is_local := false):
 	var player = player_scene.instantiate()
 	player.name = "Player_%s" % id
@@ -128,7 +165,6 @@ func _spawn_player(id: String, is_local := false):
 	# --- LOCAL PLAYER SPAWN POINT ---
 	if is_local and myplayerswpanpoint:
 		player.global_position = myplayerswpanpoint.global_position
-		#player.global_rotation = myplayerswpanpoint.global_rotation
 		print("🧍 Local player spawned at custom spawn point:", id)
 	else:
 		print("👤 Remote player spawned:", id)
@@ -141,4 +177,3 @@ func _remove_player(id: String):
 		if players[id].is_queued_for_deletion(): return
 		players[id].queue_free()
 		players.erase(id)
-		
