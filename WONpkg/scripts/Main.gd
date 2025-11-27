@@ -89,7 +89,7 @@ func _receive_messages():
 					_update_world_state(data["players"])
 
 
-# --- UPDATED WORLD STATE ---
+# --- UPDATED WORLD STATE WITH VISIBILITY ---
 func _update_world_state(players_state):
 	var received_ids = []
 
@@ -108,16 +108,21 @@ func _update_world_state(players_state):
 		# 🚐 Check if player is on a vehicle
 		if p_state.has("vehicle") and p_state["vehicle"] != null:
 			_sync_vehicle_player(node, p_state)
-			continue
+		else:
+			# Normal on-foot player
+			var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
+			var server_rot_y = p_state["rotationY"]
+			var server_anim = p_state["animation"]
 
-		# Normal on-foot player
-		var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
-		var server_rot_y = p_state["rotationY"]
-		var server_anim = p_state["animation"]
+			node.global_position = node.global_position.lerp(server_pos, 0.3)
+			node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
+			node.set_animation_state(server_anim)
 
-		node.global_position = node.global_position.lerp(server_pos, 0.3)
-		node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
-		node.set_animation_state(server_anim)
+		# --- BRILLIANT VISIBILITY SOLUTION ---
+		if node.global_position.y > 10:
+			node.visible = false
+		else:
+			node.visible = true
 
 	# Remove players not reported
 	for id in players.keys():

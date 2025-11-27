@@ -1,4 +1,4 @@
-[gd_scene load_steps=50 format=4 uid="uid://b48njcleqy6m3"]
+[gd_scene load_steps=49 format=4 uid="uid://b48njcleqy6m3"]
 
 [ext_resource type="Script" uid="uid://timxi6dmdn2m" path="res://scripts/tick.gd" id="1_5bpam"]
 [ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_vuq5q"]
@@ -8,7 +8,6 @@
 [ext_resource type="PackedScene" uid="uid://dmfrhhone88c0" path="res://scenes/components/bus.tscn" id="5_ocj2s"]
 [ext_resource type="Texture2D" uid="uid://stmyh37f16s3" path="res://assets/models/banana peel_0.png" id="6_din8e"]
 [ext_resource type="Texture2D" uid="uid://dk6pulccdwv63" path="res://assets/models/shoppingchart_0.png" id="7_e124b"]
-[ext_resource type="PackedScene" uid="uid://bitlrnfd0s6tn" path="res://scenes/components/Player.tscn" id="8_101mb"]
 [ext_resource type="Texture2D" uid="uid://d20rxp171yt4w" path="res://assets/models/model_0.png" id="9_101mb"]
 [ext_resource type="Shader" uid="uid://c0yxde2keumcq" path="res://maincloud.gdshader" id="11_cyx30"]
 
@@ -570,42 +569,8 @@ transform = Transform3D(0.5137325, 0, -0.73897153, 0, 0.9, 0, 0.73897153, 0, 0.5
 mesh = SubResource("ArrayMesh_dkj3g")
 skeleton = NodePath("")
 
-[node name="CharacterBody3D" parent="." instance=ExtResource("8_101mb")]
-transform = Transform3D(0.5708139, 0, -0.8210795, 0, 1, 0, 0.8210795, 0, 0.5708139, 7.2267113, 0.43621254, 2.1414716)
-
-[node name="Skeleton3D" parent="CharacterBody3D" index="2"]
-bones/0/position = Vector3(-0.00020466425, 0.008980044, -9.668184e-05)
-bones/0/rotation = Quaternion(0.03568648, 0.1421722, -0.013697194, 0.9891036)
-bones/1/rotation = Quaternion(-0.08529445, -0.08463313, 0.01617101, 0.9926231)
-bones/2/rotation = Quaternion(0.04047935, -0.013736232, -0.0033683197, 0.9990803)
-bones/3/rotation = Quaternion(0.040319968, -0.01390925, -0.004475103, 0.99908)
-bones/4/rotation = Quaternion(0.033378195, -0.019080147, 0.017873732, 0.99910086)
-bones/5/rotation = Quaternion(0.06393963, -0.06844871, 0.0016271975, 0.99560237)
-bones/7/rotation = Quaternion(-0.5597494, -0.44733167, 0.53639966, -0.44592646)
-bones/8/rotation = Quaternion(0.2815016, 0.053255808, 0.3561707, 0.88941735)
-bones/9/rotation = Quaternion(0.018099226, 0.0012486093, 0.80244863, 0.5964453)
-bones/10/rotation = Quaternion(-0.31841797, 0.9003972, -0.18654387, -0.23042679)
-bones/11/rotation = Quaternion(-0.0028718016, 0.99881023, -0.045734435, 0.016679863)
-bones/12/rotation = Quaternion(0.4226817, -0.0024388726, 0.019698106, 0.9060608)
-bones/13/rotation = Quaternion(-0.9480461, 0.008149695, -0.05328448, 0.3135334)
-bones/15/rotation = Quaternion(0.53641224, -0.42716902, 0.6297936, 0.36489543)
-bones/16/rotation = Quaternion(0.25245965, 0.015981685, 0.11830184, 0.96021533)
-bones/17/rotation = Quaternion(0.008713276, 0.00042051822, -0.8408234, 0.5412393)
-bones/18/rotation = Quaternion(-0.1995157, 0.94430923, 0.20096242, 0.16759378)
-bones/19/rotation = Quaternion(0.024624603, 0.9953726, -0.085781634, -0.035618152)
-bones/20/rotation = Quaternion(0.39672458, -0.0027369172, 0.1615361, 0.90360844)
-bones/21/rotation = Quaternion(-0.91286653, 0.25477588, -0.041188717, 0.3163347)
-bones/23/rotation = Quaternion(0.06449729, 0.07831412, 0.9723453, 0.21036094)
-bones/24/rotation = Quaternion(-0.07545357, -0.37080356, 0.36116782, 0.8522731)
-bones/25/rotation = Quaternion(0.81202006, 0.26821542, -0.06260338, 0.51455283)
-bones/26/rotation = Quaternion(0.55940235, 0.40616775, -0.24787793, 0.6787146)
-bones/28/rotation = Quaternion(-0.05932299, 0.1440978, 0.9720066, -0.17584041)
-bones/29/rotation = Quaternion(-0.23710391, 0.24208498, -0.35416964, 0.871631)
-bones/30/rotation = Quaternion(0.8610521, -0.11587696, 0.0824007, 0.48823372)
-bones/31/rotation = Quaternion(0.49439108, -0.47507474, 0.25051942, 0.68346286)
-
 [node name="Fireextuginshet" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.0551863, 0, 1.7061431)
+transform = Transform3D(0.8680965, 0.36560526, -0.33576995, -0.49572745, 0.6034204, -0.62461066, -0.025750535, 0.7086725, 0.7050676, 3.073, -0.3844816, 8.012)
 
 [node name="f1" type="Node3D" parent="Fireextuginshet"]
 transform = Transform3D(-0.25758088, 0.36758178, 0.032182842, -0.11184736, -0.04037818, -0.43400428, -0.351628, -0.25642398, 0.11447487, -0.30451846, 0.18491066, 0.314485)
@@ -679,4 +644,3 @@ skeleton = NodePath("")
 surface_material_override/0 = SubResource("ShaderMaterial_kxttn")
 
 [editable path="Bus"]
-[editable path="CharacterBody3D"]
