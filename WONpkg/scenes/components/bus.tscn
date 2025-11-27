@@ -614,7 +614,7 @@ blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_6x00d")
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_l43u4"]
-size = Vector3(3.1931953, 0.91638184, 1.2374268)
+size = Vector3(3.1931953, 0.235672, 1.2374268)
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_6x00d"]
 panorama = ExtResource("4_38u8m")
@@ -3473,8 +3473,8 @@ material_override = SubResource("StandardMaterial3D_38u8m")
 mesh = SubResource("ArrayMesh_5urgl")
 skeleton = NodePath("")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.074632645, 2.0675547, 0.012512207)
+[node name="bottomBlock" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.074632645, 2.1491365, 0.012512207)
 shape = SubResource("BoxShape3D_l43u4")
 
 [node name="Marker3D" type="Marker3D" parent="."]

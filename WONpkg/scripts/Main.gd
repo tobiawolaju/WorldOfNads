@@ -120,7 +120,8 @@ func _update_world_state(players_state):
 
 		# --- BRILLIANT VISIBILITY SOLUTION ---
 		if node.global_position.y > 10:
-			node.visible = false
+			#node.visible = false
+			return
 		else:
 			node.visible = true
 
