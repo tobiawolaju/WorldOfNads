@@ -533,15 +533,22 @@ light_energy = 2.0
 shadow_enabled = true
 
 [node name="Chicken" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.5199516, 0, 1.3709842, 0, 1, 0, -0.8541957, 0, 0.8345223, -0.06550497, -0.42972296, -1.839961)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.605, -0.06550497, -0.42972296, -1.839961)
 material_override = SubResource("StandardMaterial3D_ocj2s")
 mesh = ExtResource("3_l1v76")
 skeleton = NodePath("")
 
 [node name="WaypointAnchor" type="Marker3D" parent="Chicken"]
-transform = Transform3D(1, 0, -5.9604645e-08, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+transform = Transform3D(1, 0, -2.3841858e-07, 0, 1, 0, 0, 0, 1, -0.758, 0.618, 0.006000042)
 
 [node name="Waypoint" parent="Chicken/WaypointAnchor" instance=ExtResource("6_cyx30")]
+text = "Chicken"
+
+[node name="WaypointAnchor" type="Marker3D" parent="Chicken/WaypointAnchor"]
+transform = Transform3D(1, 0, -2.3841858e-07, 0, 1, 0, 0, 0, 1, -0.758, 0.618, 0.006000042)
+
+[node name="Waypoint" parent="Chicken/WaypointAnchor/WaypointAnchor" instance=ExtResource("6_cyx30")]
+text = "Chicken"
 
 [node name="Bus" parent="." instance=ExtResource("5_ocj2s")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.228, 18, 28.03)
@@ -573,8 +580,8 @@ transform = Transform3D(0.095676795, 0.029085249, 0, -0.029085249, 0.095676795, 
 mesh = SubResource("ArrayMesh_bn24a")
 skeleton = NodePath("")
 
-[node name="cart" type="StaticBody3D" parent="."]
-transform = Transform3D(0.5137325, 0, -0.73897153, 0, 0.9, 0, 0.73897153, 0, 0.5137325, 7.2267113, -0.44692183, 2.1414716)
+[node name="cart" type="CharacterBody3D" parent="."]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 7.2267113, -0.44692183, 2.1414716)
 
 [node name="cartmesh" type="MeshInstance3D" parent="cart"]
 transform = Transform3D(0.99999994, 0, -2.9802322e-08, 0, 1, 0, 2.9802322e-08, 0, 0.99999994, 0, 0, 0)
@@ -584,6 +591,12 @@ skeleton = NodePath("")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="cart"]
 transform = Transform3D(0.9999995, 0, -6.854534e-07, 0, 1, 0, 6.854534e-07, 0, 0.9999995, 0.013031006, 0.26501465, 0)
 shape = SubResource("BoxShape3D_5bpam")
+
+[node name="WaypointAnchor" type="Marker3D" parent="cart"]
+transform = Transform3D(0.9999999, 0, -2.682209e-07, 0, 1, 0, 1.4901161e-07, 0, 0.9999999, -0.017363548, 1.2747319, 0.083455324)
+
+[node name="Waypoint" parent="cart/WaypointAnchor" instance=ExtResource("6_cyx30")]
+text = "Cart"
 
 [node name="Fireextuginshet" type="Node3D" parent="."]
 transform = Transform3D(0.8680965, 0.36560526, -0.33576995, -0.49572745, 0.6034204, -0.62461066, -0.025750535, 0.7086725, 0.7050676, 3.073, -0.3844816, 8.012)
@@ -613,6 +626,12 @@ skeleton = NodePath("")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6875, -0.3125)
 mesh = SubResource("ArrayMesh_ujwm8")
 skeleton = NodePath("")
+
+[node name="WaypointAnchor" type="Marker3D" parent="Fireextuginshet"]
+transform = Transform3D(0.9999999, 0, -2.682209e-07, 0, 1, 0, 1.4901161e-07, 0, 0.9999999, -0.017363548, 1.2747319, 0.083455324)
+
+[node name="Waypoint" parent="Fireextuginshet/WaypointAnchor" instance=ExtResource("6_cyx30")]
+text = "Tool"
 
 [node name="cloud" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0869274, 12, 8.045609)

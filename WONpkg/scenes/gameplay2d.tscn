@@ -40,6 +40,30 @@ render_target_update_mode = 4
 world = NodePath("../PlayerManager/WorldEnvironment")
 countdown = NodePath("../../../../../Node2/BoxContainer/Label")
 
+[node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Chicken/WaypointAnchor" index="0" node_paths=PackedStringArray("camera")]
+camera = NodePath("../../../PlayerManager/Camera3D")
+
+[node name="cloud" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="0"]
+surface_material_override/0 = null
+
+[node name="cloud3" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="1"]
+surface_material_override/0 = null
+
+[node name="cloud4" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="2"]
+surface_material_override/0 = null
+
+[node name="cloud5" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="3"]
+surface_material_override/0 = null
+
+[node name="cloud6" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="4"]
+surface_material_override/0 = null
+
+[node name="cloud7" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="5"]
+surface_material_override/0 = null
+
+[node name="cloud8" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="6"]
+surface_material_override/0 = null
+
 [node name="Node2" type="Node" parent="CanvasLayer/BoxContainer"]
 
 [node name="BoxContainer" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2"]
@@ -102,4 +126,3 @@ script = ExtResource("3_1iwhs")
 
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer"]
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Bus"]
-[editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/CharacterBody3D"]

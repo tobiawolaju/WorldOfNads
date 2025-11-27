@@ -15,7 +15,7 @@ const MARGIN = 8
 ## If `true`, the waypoint sticks to the viewport's edges when moving off-screen.
 @export var sticky: bool = true
 
-@onready var camera := get_viewport().get_camera_3d()
+@export var camera :Camera3D
 @onready var parent := get_parent()
 @onready var label: Label = $Label
 @onready var marker: TextureRect = $Marker
@@ -44,12 +44,9 @@ func _process(_delta: float) -> void:
 	modulate.a = clamp(remap(distance, 0, 2, 0, 1), 0, 1 )
 
 	var unprojected_position := camera.unproject_position(parent_position)
-	# `get_size_override()` will return a valid size only if the stretch mode is `2d`.
-	# Otherwise, the viewport size is used directly.
-	var viewport_base_size: Vector2i = (
-			get_viewport().content_scale_size if get_viewport().content_scale_size > Vector2i(0, 0)
-			else get_viewport().size
-		)
+	var viewport_base_size: Vector2i = get_viewport().size
+
+
 
 	if not sticky:
 		# For non-sticky waypoints, we don't need to clamp and calculate
