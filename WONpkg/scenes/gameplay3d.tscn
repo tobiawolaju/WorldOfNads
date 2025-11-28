@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_vuq5q"]
 [ext_resource type="ArrayMesh" uid="uid://c8jku1vjebweb" path="res://assets/models/terrain.obj" id="2_ocj2s"]
 [ext_resource type="ArrayMesh" uid="uid://djlfoy1u834mc" path="res://assets/models/Chicken.obj" id="3_l1v76"]
-[ext_resource type="Texture2D" uid="uid://dxlxgcsx7l1cf" path="res://assets/images/Untitled.png" id="4_cyx30"]
+[ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="4_5bpam"]
 [ext_resource type="PackedScene" uid="uid://dmfrhhone88c0" path="res://scenes/components/bus.tscn" id="5_ocj2s"]
 [ext_resource type="PackedScene" uid="uid://q85dx3n5lik1" path="res://scenes/waypoint.tscn" id="6_cyx30"]
 [ext_resource type="Texture2D" uid="uid://stmyh37f16s3" path="res://assets/models/banana peel_0.png" id="6_din8e"]
@@ -21,7 +21,7 @@ data = PackedVector3Array(-17.2244, 0, 24.605598, -17.2244, 0, 25, -17.5, 0, 24.
 [sub_resource type="PlaneMesh" id="PlaneMesh_vuq5q"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ct7aa"]
-panorama = ExtResource("4_cyx30")
+panorama = ExtResource("4_5bpam")
 
 [sub_resource type="Sky" id="Sky_din8e"]
 sky_material = SubResource("PanoramaSkyMaterial_ct7aa")
@@ -32,7 +32,7 @@ sky = SubResource("Sky_din8e")
 sky_rotation = Vector3(0, 0, -1.4695672)
 glow_enabled = true
 glow_intensity = 0.25
-glow_bloom = 0.6
+glow_bloom = 0.2
 glow_hdr_luminance_cap = 10.0
 fog_enabled = true
 fog_mode = 1

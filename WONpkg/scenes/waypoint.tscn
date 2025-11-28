@@ -16,16 +16,16 @@ offset_top = -21.0
 offset_right = 6930.0
 offset_bottom = 979.0
 scale = Vector2(0.02, 0.02)
-theme_override_colors/font_color = Color(0, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0.17435122, 0.48809272, 0.608063, 1)
-theme_override_constants/outline_size = 250
+theme_override_colors/font_color = Color(0.68235296, 0.9843137, 1, 1)
+theme_override_colors/font_outline_color = Color(0.17254902, 0.4862745, 0.60784316, 0.48235294)
+theme_override_constants/outline_size = 500
 theme_override_fonts/font = ExtResource("2_hy65e")
 theme_override_font_sizes/font_size = 1000
 text = "Label"
 horizontal_alignment = 1
 
 [node name="Marker" type="TextureRect" parent="."]
-modulate = Color(0, 1, 1, 0.54509807)
+modulate = Color(1, 1, 1, 0.54509807)
 layout_mode = 0
 offset_left = -6.0
 offset_top = 1.0
