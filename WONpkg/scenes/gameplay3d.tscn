@@ -544,12 +544,6 @@ transform = Transform3D(1, 0, -2.3841858e-07, 0, 1, 0, 0, 0, 1, -0.758, 0.618, 0
 [node name="Waypoint" parent="Chicken/WaypointAnchor" instance=ExtResource("6_cyx30")]
 text = "Chicken"
 
-[node name="WaypointAnchor" type="Marker3D" parent="Chicken/WaypointAnchor"]
-transform = Transform3D(1, 0, -2.3841858e-07, 0, 1, 0, 0, 0, 1, -0.758, 0.618, 0.006000042)
-
-[node name="Waypoint" parent="Chicken/WaypointAnchor/WaypointAnchor" instance=ExtResource("6_cyx30")]
-text = "Chicken"
-
 [node name="Bus" parent="." instance=ExtResource("5_ocj2s")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.228, 18, 28.03)
 

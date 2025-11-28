@@ -43,6 +43,12 @@ countdown = NodePath("../../../../../Node2/BoxContainer/Label")
 [node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Chicken/WaypointAnchor" index="0" node_paths=PackedStringArray("camera")]
 camera = NodePath("../../../PlayerManager/Camera3D")
 
+[node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cart/WaypointAnchor" index="0" node_paths=PackedStringArray("camera")]
+camera = NodePath("../../../PlayerManager/Camera3D")
+
+[node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Fireextuginshet/WaypointAnchor" index="0" node_paths=PackedStringArray("camera")]
+camera = NodePath("../../../PlayerManager/Camera3D")
+
 [node name="cloud" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="0"]
 surface_material_override/0 = null
 
