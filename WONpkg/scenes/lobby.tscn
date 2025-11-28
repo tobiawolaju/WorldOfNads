@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=4 uid="uid://cfh3bbfmtn7vx"]
+[gd_scene load_steps=33 format=4 uid="uid://cfh3bbfmtn7vx"]
 
 [ext_resource type="Script" uid="uid://be68ag11ct64p" path="res://scripts/lobby.gd" id="1_apkv3"]
 [ext_resource type="PackedScene" uid="uid://bow7at01gr1k3" path="res://scenes/components/LobbyPlayer.tscn" id="2_ncsg4"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://wja8ank84i1j" path="res://scripts/LobbyManager.gd" id="4_07nfq"]
 [ext_resource type="Texture2D" uid="uid://w5ldcc8yjkgr" path="res://assets/models/stop_sign_texture_1024x1024.png" id="6_xbk5o"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="8_07nfq"]
+[ext_resource type="Shader" uid="uid://c3ksm6nb271ka" path="res://shaders/glicth.gdshader" id="8_oipnb"]
 [ext_resource type="Shader" uid="uid://c0yxde2keumcq" path="res://maincloud.gdshader" id="9_07nfq"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uc5rn"]
@@ -39,8 +40,11 @@ fog_depth_begin = 1.0
 fog_depth_end = 25.0
 volumetric_fog_albedo = Color(0.29411766, 0.2627451, 1, 1)
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_oipnb"]
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lmydf"]
 resource_name = "seat"
+next_pass = SubResource("ShaderMaterial_oipnb")
 vertex_color_use_as_albedo = true
 albedo_color = Color(0.66173434, 0.00026298643, 0.64302355, 1)
 emission_enabled = true
@@ -197,8 +201,15 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_g1j2o")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oi12y"]
-albedo_texture = ExtResource("6_xbk5o")
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dyhay"]
+render_priority = 0
+shader = ExtResource("8_oipnb")
+shader_parameter/shake_power = 0.001
+shader_parameter/shake_rate = 0.50000002375
+shader_parameter/shake_speed = 5.0
+shader_parameter/shake_block_size = 10000.0
+shader_parameter/shake_color_rate = 0.10000000475
+shader_parameter/main_tex = ExtResource("6_xbk5o")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rjads"]
 resource_name = "stop sign"
@@ -356,14 +367,14 @@ light_color = Color(1, 0.7611074, 0.5848961, 1)
 light_energy = 2.0
 shadow_enabled = true
 
-[node name="BusStop_low2" type="MeshInstance3D" parent="."]
+[node name="BusStop" type="MeshInstance3D" parent="."]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, -0.76181567, -0.18512928, -0.91481936)
 mesh = SubResource("ArrayMesh_0sjgb")
 skeleton = NodePath("")
 
 [node name="Stop sign" type="MeshInstance3D" parent="."]
-transform = Transform3D(-3.4632773, -39.84979, -1.7418895e-06, 0, -1.7484556e-06, 40, -39.84979, 3.4632773, 1.5138465e-07, -0.9619038, 0.20001364, -2.4686737)
-material_override = SubResource("StandardMaterial3D_oi12y")
+transform = Transform3D(-3.4632773, -39.84979, -1.7418895e-06, 0, -1.7484556e-06, 40, -39.84979, 3.4632773, 1.5138465e-07, -0.5182855, 0.24087113, -2.1986597)
+material_override = SubResource("ShaderMaterial_dyhay")
 mesh = SubResource("ArrayMesh_yxb0h")
 skeleton = NodePath("")
 
