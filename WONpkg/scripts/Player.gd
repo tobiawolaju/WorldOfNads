@@ -1,11 +1,12 @@
 extends CharacterBody3D
 
-# === CONSTANTS ===
 const GRAVITY: float = 9.8
 const JUMP_VELOCITY: float = 4.5
 const SPEED: float = 4.5
 
-# === EXPORTS ===
+var gamepad_index := 0
+const DEADZONE := 0.12
+
 @onready var camera: Camera3D = get_node("../Camera3D")
 @onready var name_label: Label3D = $Label3D
 @onready var anim_run: AnimationPlayer = $running
@@ -18,15 +19,14 @@ const SPEED: float = 4.5
 @export var max_pitch: float = deg_to_rad(60.0)
 @export var min_zoom: float = 2.0
 @export var max_zoom: float = 10.0
-@export var altitude_zoom_factor: float = 5 # how much zoom changes per unit height
+@export var altitude_zoom_factor: float = 5
 
-# === VARIABLES ===
 var root: Node = null
 var is_local: bool = false
 var velocity_y: float = 0.0
 var cam_rot_x: float = deg_to_rad(30)
 var cam_rot_y: float = 0.0
-var current_animation: String = "idle" # Track current animation state
+var current_animation: String = "idle"
 
 var player_id: String = "" :
 	set(new_id):
@@ -41,13 +41,6 @@ func _ready() -> void:
 func _process(delta: float):
 	name_label.text = player_id.substr(0, 8)
 
-# =======================================================
-# INPUT — orientation based ignore logic
-# =======================================================
-
-
-
-
 func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
@@ -56,122 +49,118 @@ func _input(event: InputEvent) -> void:
 	var size = viewport.size
 	var portrait = size.y > size.x
 
-	# IGNORE CAMERA INPUT INSIDE JOYSTICK ZONE
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
 		if portrait:
-			# bottom half → joystick zone
 			if event.position.y > size.y * 0.5:
 				return
 		else:
-			# left half → joystick zone
 			if event.position.x < size.x * 0.5:
 				return
 
-	# === CAMERA ROTATION ===
 	if event is InputEventScreenDrag:
 		cam_rot_y -= event.relative.x * 0.0045
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.0045, min_pitch, max_pitch)
 
-	# === MOUSE ROTATION (PC) ===
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		cam_rot_y -= event.relative.x * 0.005
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.005, min_pitch, max_pitch)
 
-	# === CAMERA ZOOM ===
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
 			camera_distance = clamp(camera_distance - 0.5, min_zoom, max_zoom)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
 			camera_distance = clamp(camera_distance + 0.5, min_zoom, max_zoom)
 
-
-
-
-
-
-
-
-
-
 func _physics_process(delta: float) -> void:
 	if not is_local:
 		return
 
-	# === Handle Input ===
 	var input_dir := Vector2.ZERO
+
 	if Input.is_action_pressed("move_forward"): input_dir.y += 1
 	if Input.is_action_pressed("move_back"): input_dir.y -= 1
 	if Input.is_action_pressed("move_left"): input_dir.x -= 1
 	if Input.is_action_pressed("move_right"): input_dir.x += 1
+
+	var lx := Input.get_joy_axis(gamepad_index, JOY_AXIS_LEFT_X)
+	var ly := Input.get_joy_axis(gamepad_index, JOY_AXIS_LEFT_Y)
+
+	if abs(lx) > DEADZONE: input_dir.x += lx
+	if abs(ly) > DEADZONE: input_dir.y -= ly   # FIXED INVERSION HERE
 	input_dir = input_dir.normalized()
 
-	# === Apply gravity & jump ===
 	if not is_on_floor():
 		velocity_y -= GRAVITY * delta
 	else:
 		velocity_y = 0
-		if Input.is_action_just_pressed("jump"):
+		if Input.is_action_just_pressed("jump") or Input.is_joy_button_pressed(gamepad_index, JOY_BUTTON_A):
 			velocity_y = JUMP_VELOCITY
 
-	# === Calculate Movement ===
 	var cam_basis = camera.global_transform.basis
 	var forward = -cam_basis.z
 	var right = cam_basis.x
-	forward.y = 0.0
-	right.y = 0.0
+
+	forward.y = 0
+	right.y = 0
 	forward = forward.normalized()
 	right = right.normalized()
 
-	var move_direction = (forward * input_dir.y + right * input_dir.x)
+	var move_direction = forward * input_dir.y + right * input_dir.x
+
 	velocity.x = move_direction.x * SPEED
 	velocity.z = move_direction.z * SPEED
 	velocity.y = velocity_y
-
 	move_and_slide()
 
-	# === Make mesh face direction of movement ===
 	if move_direction.length() > 0.05:
-		var target_yaw = atan2(move_direction.x, move_direction.z)
+		var target_yaw := atan2(move_direction.x, move_direction.z)
 		mesh.rotation.y = lerp_angle(mesh.rotation.y, target_yaw, delta * 10.0)
 
+	_handle_camera_gamepad(delta)
 	_update_camera(delta)
 	_handle_animations(move_direction)
 	_send_state_to_server()
 
+func _handle_camera_gamepad(delta: float) -> void:
+	var rx := Input.get_joy_axis(gamepad_index, JOY_AXIS_RIGHT_X)
+	var ry := Input.get_joy_axis(gamepad_index, JOY_AXIS_RIGHT_Y)
+
+	if abs(rx) > DEADZONE:
+		cam_rot_y -= rx * 0.05 * delta * 60
+	if abs(ry) > DEADZONE:
+		cam_rot_x = clamp(cam_rot_x + ry * 0.05 * delta * 60, min_pitch, max_pitch)
 
 func _update_camera(delta: float) -> void:
 	var target_pos: Vector3 = global_transform.origin + Vector3(0, 1.5, 0)
-	cam_rot_x = clamp(cam_rot_x, deg_to_rad(-35), deg_to_rad(60))
+	cam_rot_x = clamp(cam_rot_x, min_pitch, max_pitch)
 
-	# --- Altitude-based Zoom ---
 	var altitude_zoom = clamp(global_transform.origin.y * altitude_zoom_factor, 0.0, max_zoom - min_zoom)
 	var effective_camera_distance = clamp(camera_distance + altitude_zoom, min_zoom, max_zoom)
 
-	var cam_target_offset: Vector3 = Vector3(
+	var cam_offset: Vector3 = Vector3(
 		sin(cam_rot_y) * cos(cam_rot_x),
 		sin(cam_rot_x),
 		cos(cam_rot_y) * cos(cam_rot_x)
 	) * effective_camera_distance
 
-	var desired_cam_pos: Vector3 = target_pos + cam_target_offset
+	var desired_pos: Vector3 = target_pos + cam_offset
+
 	var space_state = get_world_3d().direct_space_state
-	var query = PhysicsRayQueryParameters3D.create(target_pos, desired_cam_pos)
+	var query := PhysicsRayQueryParameters3D.create(target_pos, desired_pos)
 	query.exclude = [self]
-	var result = space_state.intersect_ray(query)
+	var hit = space_state.intersect_ray(query)
 
-	if result and result.has("position"):
-		desired_cam_pos = result.position
+	if hit and hit.has("position"):
+		desired_pos = hit.position
 
-	camera.global_position = camera.global_position.lerp(desired_cam_pos, delta * camera_smoothness)
+	camera.global_position = camera.global_position.lerp(desired_pos, delta * camera_smoothness)
 	camera.look_at(target_pos, Vector3.UP)
 
-
-# --- NETWORK FUNCTION ---
 func _send_state_to_server() -> void:
 	if not root or not root.ws:
 		return
 	if root.ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
-		var data = {
+		root.ws.send_text(JSON.stringify({
 			"type": "update_state",
 			"player_id": player_id,
 			"x": global_transform.origin.x,
@@ -179,25 +168,19 @@ func _send_state_to_server() -> void:
 			"z": global_transform.origin.z,
 			"rotation_y": mesh.rotation.y,
 			"animation": current_animation
-		}
-		root.ws.send_text(JSON.stringify(data))
+		}))
 
-
-# === Animation Handlers ===
 func set_animation_state(new_state: String):
 	if is_local: return
 	if new_state == current_animation: return
-
 	current_animation = new_state
 	if new_state == "running":
 		_play_running()
 	else:
 		_play_idle()
 
-
 func _handle_animations(move_dir: Vector3) -> void:
 	if not is_local: return
-
 	if move_dir.length() > 0.1:
 		current_animation = "running"
 		_play_running()
@@ -205,13 +188,11 @@ func _handle_animations(move_dir: Vector3) -> void:
 		current_animation = "idle"
 		_play_idle()
 
-
 func _play_running() -> void:
 	if anim_idle.is_playing():
 		anim_idle.stop()
 	if not anim_run.is_playing():
 		anim_run.play("running")
-
 
 func _play_idle() -> void:
 	if anim_run.is_playing():
