@@ -9,12 +9,11 @@ interface TeamMember {
 }
 
 const teamMembers: TeamMember[] = [
-    { name: "Tobi", role: "Founder & Lead Engineer", imageUrl: "/pfps/pfp1.png"}, // Replace with actual images
-    { name: "Joshua", role: "Frontend Engineer", imageUrl: "/pfps/pfp2.png"},
-    { name: "Spark", role: "Concept Artist",imageUrl: "/pfps/pfp3.png"},
-    { name: "Lone", role: "Partnerships Manager", imageUrl: "/pfps/pfp4.png"},
-    { name: "Wisdom", role: "Community Strategy", imageUrl: "/pfps/pfp5.png"},
-    { name: "Cotonou", role: "Community Growth", imageUrl: "/pfps/pfp1.png"},
+    { name: "Tobi", role: "Founder & CTO ", imageUrl: "/pfps/pfp1.png" }, // Replace with actual images
+    { name: "Joshua", role: "Frontend Engineer", imageUrl: "/pfps/pfp2.png" },
+    { name: "Spark", role: "Concept Artist", imageUrl: "/pfps/pfp3.png" },
+    { name: "Lone", role: "Partnerships Manager", imageUrl: "/pfps/pfp4.png" },
+    { name: "Wisdom", role: "Community Strategy", imageUrl: "/pfps/pfp5.png" },
 ];
 
 const Careers: React.FC = () => {
@@ -54,7 +53,7 @@ const Careers: React.FC = () => {
 
             <div className="careers-list">
                 {/* ----------------- SECTION 0: Our Culture ----------------- */}
-                <div 
+                <div
                     className={`careers-item ${activeIndex === 0 ? "active" : ""}`}
                     onClick={() => toggleSection(0)}
                 >
@@ -74,7 +73,7 @@ const Careers: React.FC = () => {
                 </div>
 
                 {/* ----------------- SECTION 1: Open Roles ----------------- */}
-                <div 
+                <div
                     className={`careers-item ${activeIndex === 1 ? "active" : ""}`}
                     onClick={() => toggleSection(1)}
                 >
@@ -99,7 +98,7 @@ const Careers: React.FC = () => {
                 </div>
 
                 {/* ----------------- SECTION 2: How We Hire ----------------- */}
-                <div 
+                <div
                     className={`careers-item ${activeIndex === 2 ? "active" : ""}`}
                     onClick={() => toggleSection(2)}
                 >
@@ -116,9 +115,9 @@ const Careers: React.FC = () => {
                         </ul>
                     </div>
                 </div>
-                
+
                 {/* ----------------- SECTION 3: Remote Policy ----------------- */}
-                 <div 
+                <div
                     className={`careers-item ${activeIndex === 3 ? "active" : ""}`}
                     onClick={() => toggleSection(3)}
                 >
@@ -128,7 +127,7 @@ const Careers: React.FC = () => {
                     </div>
                     <div className="careers-answer">
                         <p className="remote-policy">
-                            Work isn't somewhere you go; it's something you <strong>do</strong>. As a browser-based, globally-focused startup, 
+                            Work isn't somewhere you go; it's something you <strong>do</strong>. As a browser-based, globally-focused startup,
                             we embrace <strong>remote-first</strong> work. We value output and consistency above physical location.
                         </p>
                         <ul>

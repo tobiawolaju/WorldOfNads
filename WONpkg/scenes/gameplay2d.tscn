@@ -119,7 +119,7 @@ grow_vertical = 2
 color = Color(1, 1, 1, 0)
 
 [node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick"]
-modulate = Color(0, 0, 0, 0.4)
+modulate = Color(0.60784316, 0, 0.7529412, 0.4)
 self_modulate = Color(18.892157, 18.892157, 18.892157, 0.14117648)
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("2_cqgoe")
