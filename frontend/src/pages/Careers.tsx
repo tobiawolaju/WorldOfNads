@@ -41,6 +41,8 @@ const teamMembers: TeamMember[] = [
     },
 ];
 
+
+
 const Careers: React.FC = () => {
     // State to manage which section is currently open.
     const [activeIndex, setActiveIndex] = useState<number | null>(0); // Start with Culture open
