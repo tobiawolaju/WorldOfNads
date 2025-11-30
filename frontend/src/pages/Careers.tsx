@@ -9,11 +9,36 @@ interface TeamMember {
 }
 
 const teamMembers: TeamMember[] = [
-    { name: "Tobi", role: "Founder & CTO ", imageUrl: "/pfps/pfp1.png" }, // Replace with actual images
-    { name: "Joshua", role: "Frontend Engineer", imageUrl: "/pfps/pfp2.png" },
-    { name: "Spark", role: "Concept Artist", imageUrl: "/pfps/pfp3.png" },
-    { name: "Lone", role: "Partnerships Manager", imageUrl: "/pfps/pfp4.png" },
-    { name: "Wisdom", role: "Community Strategy", imageUrl: "/pfps/pfp5.png" },
+    {
+        name: "Tobi",
+        role: "Founder & CTO",
+        imageUrl: "/pfps/pfp-tobi.png",
+        twitter: "https://x.com/world_of_nads", // optional
+    },
+    {
+        name: "Joshua",
+        role: "Senior Game Engineer",
+        imageUrl: "/pfps/pfp-joshua.png",
+        twitter: "https://x.com/joshua_xyz", // optional
+    },
+    {
+        name: "Spark",
+        role: "Head of Growth & Partnerships",
+        imageUrl: "/pfps/pfp-spark.png",
+        twitter: "https://x.com/spark_xyz",
+    },
+    {
+        name: "Lone",
+        role: "Infrastructure & Security Engineer",
+        imageUrl: "/pfps/pfp-lone.png",
+        twitter: "https://x.com/lone_xyz",
+    },
+    {
+        name: "Wisdom",
+        role: "Community & Content Lead",
+        imageUrl: "/pfps/pfp-wisdom.png",
+        twitter: "https://x.com/wisdom_xyz",
+    },
 ];
 
 const Careers: React.FC = () => {
