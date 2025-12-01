@@ -1,6 +1,7 @@
-[gd_scene load_steps=77 format=4 uid="uid://bitlrnfd0s6tn"]
+[gd_scene load_steps=78 format=4 uid="uid://bitlrnfd0s6tn"]
 
 [ext_resource type="Script" uid="uid://dt4bl1rmfjm12" path="res://scripts/Player.gd" id="1_hqo6i"]
+[ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="2_3wy7d"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hqo6i"]
 radius = 0.23692703
@@ -5449,17 +5450,6 @@ script = ExtResource("1_hqo6i")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 shape = SubResource("CapsuleShape3D_hqo6i")
 
-[node name="Label3D" type="Label3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0.6120912, 0)
-billboard = 1
-double_sided = false
-modulate = Color(0.33333334, 0.35686275, 0.29803923, 1)
-outline_modulate = Color(6.116308, 6.116308, 4.143508, 0.45882353)
-text = "@keone"
-font_size = 150
-outline_size = 100
-justification_flags = 227
-
 [node name="Skeleton3D" type="Skeleton3D" parent="."]
 transform = Transform3D(25, 0, 0, 0, 25, 0, 0, 0, 25, 0, -0.45, 0)
 bones/0/name = "mixamorig_Hips"
@@ -5858,3 +5848,14 @@ libraries = {
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
 shape = SubResource("SphereShape3D_hqo6i")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(-3.934025e-09, 0, 0.09, 0, 0.09, 0, -0.09, 0, -3.934025e-09, -0.005, 0.592, 0)
+billboard = 1
+modulate = Color(1, 1, 1, 0.5254902)
+outline_modulate = Color(0.92156863, 0.47058824, 0.9647059, 0.49019608)
+text = "Username"
+font = ExtResource("2_3wy7d")
+font_size = 400
+outline_size = 127
+uppercase = true

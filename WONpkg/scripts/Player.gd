@@ -11,7 +11,7 @@ var gamepad_index := 0
 
 # --- PICKUP VARIABLES ---
 var held_object: RigidBody3D = null
-@export var hold_distance: float = 0.5
+@export var hold_distance: float = 0.25
 @export var hold_height: float = 1.5
 
 # --- CAMERA & ZOOM SETTINGS ---

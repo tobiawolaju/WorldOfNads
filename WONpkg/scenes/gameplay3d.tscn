@@ -490,7 +490,7 @@ shadow_mesh = SubResource("ArrayMesh_30fkp")
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ocj2s"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_kxttn"]
-radius = 0.15877868
+radius = 0.10403673
 
 [node name="Gameplayer" type="Node3D"]
 
@@ -673,11 +673,11 @@ text = "Tool"
 camera = NodePath("../../../../PlayerManager/Camera3D")
 
 [node name="Chicken" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9764378, 0, -1.5649502)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9764378, 0.7204666, -1.5649502)
 script = ExtResource("11_kxttn")
 
 [node name="Chicken" type="MeshInstance3D" parent="Chicken"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.605, 0.7339051, -0.3067944, -0.00412488)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.605, 0.734, -0.4, -0.004)
 material_override = SubResource("StandardMaterial3D_ocj2s")
 mesh = ExtResource("3_l1v76")
 skeleton = NodePath("")
@@ -690,7 +690,7 @@ text = "Chicken"
 camera = NodePath("../../../../PlayerManager/Camera3D")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Chicken"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1103946, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.005, 0, 0.004)
 shape = SubResource("SphereShape3D_kxttn")
 
 [editable path="Bus"]
