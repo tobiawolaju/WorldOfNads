@@ -11,8 +11,8 @@ var gamepad_index := 0
 
 # --- PICKUP VARIABLES ---
 var held_object: RigidBody3D = null
-@export var hold_distance: float = 2.0
-@export var hold_height: float = 0.5
+@export var hold_distance: float = 0.5
+@export var hold_height: float = 1.5
 
 # --- CAMERA & ZOOM SETTINGS ---
 @export var camera_distance: float = 4.0
@@ -60,7 +60,7 @@ func _process(delta: float):
 	
 	# Handle holding the object (Smoothly move it to front of camera)
 	if held_object:
-		var target_pos = camera.global_position + (camera.global_transform.basis.z * -hold_distance)
+		var target_pos = global_position + (global_transform.basis.z * -hold_distance)
 		target_pos.y += hold_height * 0.5 
 		held_object.global_position = held_object.global_position.lerp(target_pos, 10.0 * delta)
 		held_object.global_rotation.y = lerp_angle(held_object.global_rotation.y, rotation.y, 10.0 * delta)
