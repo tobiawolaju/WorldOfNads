@@ -489,9 +489,8 @@ shader_parameter/uv2_offset = Vector3(0, 0, 0)
 [node name="Node" type="Node" parent="."]
 script = ExtResource("1_5bpam")
 
-[node name="PlayerManager" type="Node3D" parent="." node_paths=PackedStringArray("myplayerswpanpoint")]
+[node name="PlayerManager" type="Node3D" parent="."]
 script = ExtResource("1_vuq5q")
-myplayerswpanpoint = NodePath("../Bus/Marker3D")
 
 [node name="GroundMesh" type="StaticBody3D" parent="PlayerManager"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5161849, 0)
