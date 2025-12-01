@@ -13,7 +13,6 @@ var ws := WebSocketPeer.new()
 var connected := false
 var player_id := ""
 var players := {}
-
 var is_local: bool
 var root: Node
 

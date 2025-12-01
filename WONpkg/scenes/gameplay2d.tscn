@@ -40,6 +40,9 @@ render_target_update_mode = 4
 world = NodePath("../PlayerManager/WorldEnvironment")
 countdown = NodePath("../../../../../Node2/BoxContainer/Label")
 
+[node name="PlayerManager" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="1" node_paths=PackedStringArray("myplayerswpanpoint")]
+myplayerswpanpoint = NodePath("../Bus/Marker3D")
+
 [node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Chicken/WaypointAnchor" index="0" node_paths=PackedStringArray("camera")]
 camera = NodePath("../../../PlayerManager/Camera3D")
 
