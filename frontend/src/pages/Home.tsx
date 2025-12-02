@@ -236,15 +236,13 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        {/* ====== WONs DEX PREVIEW ====== */}
+        {/* ====== WONs CHICKEN CHAOS NIGHT PREVIEW ====== */}
         <section className="dex-section">
-          <h2>Swap with WONs</h2>
-          <p>Trade assets instantly with the native WON DEX.</p>
+          <h2>Chicken CHAOS Night</h2>
+          <p>Compete for $10k every Weekend on WONs.</p>
           <div className="dex-preview">
-            <div className="dex-screenshot">DEX SCREENSHOT PLACEHOLDER</div>
+            <div className="dex-screenshot">CHAOS MATCH and TAG TWEET PLACEHOLDER</div>
           </div>
-
-          <button className="dex-btn">Learn More</button>
         </section>
 
         {/* ====== WONs HAPPENINGS ====== */}
