@@ -188,12 +188,12 @@ body {
 }
 
 .backed-card {
-  background: #fff;
+  background: #ffffff69;
   padding: 20px 40px;
   border-radius: 14px;
   font-weight: 700;
   font-size: 1.2rem;
-  border-radius: 100%;
+  border-radius: 25%;
 }
 
 
