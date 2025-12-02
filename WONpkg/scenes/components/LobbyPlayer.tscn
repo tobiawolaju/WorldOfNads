@@ -1,6 +1,7 @@
-[gd_scene load_steps=76 format=4 uid="uid://bow7at01gr1k3"]
+[gd_scene load_steps=77 format=4 uid="uid://bow7at01gr1k3"]
 
 [ext_resource type="Script" uid="uid://bul1ov38tj54x" path="res://scripts/LobbyPlayer.gd" id="1_5xvhu"]
+[ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="2_fqtxe"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hqo6i"]
 radius = 0.23692703
@@ -5447,17 +5448,6 @@ script = ExtResource("1_5xvhu")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 shape = SubResource("CapsuleShape3D_hqo6i")
 
-[node name="Label3D" type="Label3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0.6120912, 0)
-billboard = 1
-double_sided = false
-modulate = Color(0.33333334, 0.35686275, 0.29803923, 1)
-outline_modulate = Color(6.116308, 6.116308, 4.143508, 0.45882353)
-text = "@keone"
-font_size = 150
-outline_size = 100
-justification_flags = 227
-
 [node name="Skeleton3D" type="Skeleton3D" parent="."]
 transform = Transform3D(25, 0, 0, 0, 25, 0, 0, 0, 25, 0, -0.45, 0)
 bones/0/name = "mixamorig_Hips"
@@ -5851,3 +5841,14 @@ libraries = {
 libraries = {
 &"": SubResource("AnimationLibrary_y3wbf")
 }
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(-3.934025e-09, 0, 0.09, 0, 0.09, 0, -0.09, 0, -3.934025e-09, -0.005, 0.592, 0)
+billboard = 1
+modulate = Color(1, 1, 1, 0.5254902)
+outline_modulate = Color(0.92156863, 0.47058824, 0.9647059, 0.49019608)
+text = "Username"
+font = ExtResource("2_fqtxe")
+font_size = 400
+outline_size = 127
+uppercase = true

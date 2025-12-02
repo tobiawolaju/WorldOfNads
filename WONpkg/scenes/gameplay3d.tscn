@@ -313,7 +313,7 @@ shader_parameter/uv2_offset = Vector3(0, 0, 0)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_cyx30"]
 radius = 0.11810303
-height = 0.26312256
+height = 0.5997162
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yssnl"]
 resource_name = "material_0"
@@ -489,8 +489,9 @@ shadow_mesh = SubResource("ArrayMesh_30fkp")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ocj2s"]
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_kxttn"]
-radius = 0.10403673
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_kxttn"]
+radius = 0.18017578
+height = 0.4659729
 
 [node name="Gameplayer" type="Node3D"]
 
@@ -636,7 +637,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_kxttn")
 script = ExtResource("11_kxttn")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Tool"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5027795, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2679696, 0)
 shape = SubResource("CapsuleShape3D_cyx30")
 
 [node name="mesh" type="Node3D" parent="Tool"]
@@ -673,11 +674,11 @@ text = "Tool"
 camera = NodePath("../../../../PlayerManager/Camera3D")
 
 [node name="Chicken" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9764378, 0.7204666, -1.5649502)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9764378, 0.5869336, -1.5649502)
 script = ExtResource("11_kxttn")
 
 [node name="Chicken" type="MeshInstance3D" parent="Chicken"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.605, 0.734, -0.4, -0.004)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.605, 0.73399997, -0.20600772, -0.0039999485)
 material_override = SubResource("StandardMaterial3D_ocj2s")
 mesh = ExtResource("3_l1v76")
 skeleton = NodePath("")
@@ -690,7 +691,7 @@ text = "Chicken"
 camera = NodePath("../../../../PlayerManager/Camera3D")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Chicken"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.005, 0, 0.004)
-shape = SubResource("SphereShape3D_kxttn")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.004999995, 0.009811401, 0.0039999485)
+shape = SubResource("CapsuleShape3D_kxttn")
 
 [editable path="Bus"]

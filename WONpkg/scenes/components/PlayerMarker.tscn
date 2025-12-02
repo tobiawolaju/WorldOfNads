@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://dt0jcp7t8s5rl"]
-
-[sub_resource type="BoxMesh" id="BoxMesh_67e0c"]
-
-[node name="PlayerMarker" type="MeshInstance3D"]
-mesh = SubResource("BoxMesh_67e0c")
