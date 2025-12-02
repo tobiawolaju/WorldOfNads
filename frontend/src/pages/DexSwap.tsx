@@ -31,7 +31,7 @@ const QUOTER_ABI = [
 const WON = new Token(1, "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A", 18, "WON", "World of Nads");
 const USDC = new Token(
   1,
-  "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
   6,
   "USDC",
   "USD Coin"
