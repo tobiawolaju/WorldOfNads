@@ -28,7 +28,7 @@ const QUOTER_ABI = [
 ];
 
 // Example tokens
-const WON = new Token(1, "0xWON_TOKEN_ADDRESS", 18, "WON", "World of Nads");
+const WON = new Token(1, "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A", 18, "WON", "World of Nads");
 const USDC = new Token(
   1,
   "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
