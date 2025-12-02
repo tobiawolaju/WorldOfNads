@@ -28,7 +28,7 @@ const QUOTER_ABI = [
 ];
 
 // Example tokens
-const WMON = new Token(1, "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A", 18, "WON", "World of Nads");
+const WMON = new Token(1, "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A", 18, "WMON", "World of Nads");
 const USDC = new Token(
   1,
   "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
@@ -38,7 +38,7 @@ const USDC = new Token(
 );
 
 const DexSwap: React.FC = () => {
-  const [fromToken, setFromToken] = useState<string>("WON");
+  const [fromToken, setFromToken] = useState<string>("WMON");
   const [toToken, setToToken] = useState<string>("USDC");
   const [fromAmount, setFromAmount] = useState<string>("");
   const [toAmount, setToAmount] = useState<string>("");
@@ -65,10 +65,10 @@ const DexSwap: React.FC = () => {
         provider
       );
 
-      const amountIn = ethers.parseUnits(amount, WON.decimals); // 18 decimals
+      const amountIn = ethers.parseUnits(amount, WMON.decimals); // 18 decimals
 
       const amountOut = await quoterContract.quoteExactInputSingle(
-        WON.address,
+        WMON.address,
         USDC.address,
         3000, // pool fee 0.3%
         amountIn,
@@ -105,7 +105,7 @@ const DexSwap: React.FC = () => {
       <div style={{ height: "60px" }}></div>
 
       <p className="swap-subtitle">
-        Instantly swap WON for USDC — your bridge between the World of Nads and
+        Instantly swap WMON for USDC — your bridge between the World of Nads and
         the wider crypto world.
       </p>
 
