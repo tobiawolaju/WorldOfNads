@@ -1,7 +1,9 @@
 /* 1️⃣ Font faces */
 @font-face {
-  font-family: 'Font1'; /* use this name in your CSS */
-  src: url('/font1.ttf') format('truetype'); /* public/ is root in React */
+  font-family: 'Font1';
+  /* use this name in your CSS */
+  src: url('/font1.ttf') format('truetype');
+  /* public/ is root in React */
   font-display: swap;
 }
 
@@ -16,7 +18,8 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  font-family: 'Font1', sans-serif; /* default body font */
+  font-family: 'Font1', sans-serif;
+  /* default body font */
 }
 
 /* 3️⃣ Title styling */
@@ -60,9 +63,12 @@ body {
 
 /* --- WHAT'S ON WONS SECTION --- */
 .wons-section {
-  background: #00000015;         /* transparent white */
-  backdrop-filter: blur(4px);   /* blur effect */
-  -webkit-backdrop-filter: blur(4px); /* Safari */
+  background: #00000015;
+  /* transparent white */
+  backdrop-filter: blur(4px);
+  /* blur effect */
+  -webkit-backdrop-filter: blur(4px);
+  /* Safari */
   padding: 60px 20px;
   text-align: center;
   border-radius: 20px;
@@ -71,14 +77,15 @@ body {
 
 
 .wons-section h2 {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #000000;
-    margin-bottom: 40px; padding-bottom: 10px;
-    max-width: 450px;
-    margin-left: auto;
-    margin-right: auto;
-    text-align: center;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 40px;
+  padding-bottom: 10px;
+  max-width: 450px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
 }
 
 /* Grid Layout (Staggered style like team) */
@@ -101,15 +108,31 @@ body {
   position: relative;
 
   /* DEFAULT uneven height */
-  min-height: 200px; /* you can change this */
+  min-height: 200px;
+  /* you can change this */
 
 }
 
 /* Add natural uneven heights automatically */
-.wons-card:nth-child(1) { background-color: #ffffff; height: 300px; }
-.wons-card:nth-child(2) {background-color: #ffffff;  height: 250px; }
-.wons-card:nth-child(3) { background-color: #ffffff; height: 300px; }
-.wons-card:nth-child(4) {background-color: #ffffff;  height: 300px; }
+.wons-card:nth-child(1) {
+  background-color: #ffffff;
+  height: 300px;
+}
+
+.wons-card:nth-child(2) {
+  background-color: #ffffff;
+  height: 250px;
+}
+
+.wons-card:nth-child(3) {
+  background-color: #ffffff;
+  height: 300px;
+}
+
+.wons-card:nth-child(4) {
+  background-color: #ffffff;
+  height: 300px;
+}
 
 /* Staggered effect */
 .wons-card:nth-child(even) {
@@ -117,8 +140,238 @@ body {
 }
 
 
-  .wons-section h2 {
-    font-size: 2rem;
-  }
+.wons-section h2 {
+  font-size: 2rem;
+}
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.backed-section {
+  margin: 60px auto;
+  padding: 50px 20px;
+  text-align: center;
+}
+
+.backed-section h2 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 40px;
+}
+
+.backed-logos {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+
+.backed-card {
+  background: #fff;
+  padding: 20px 40px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 1.2rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .07);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.stats-section {
+  margin: 60px auto;
+  background: #f4f4f4;
+  border-radius: 16px;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.stats-section h2 {
+  font-size: 2.4rem;
+  margin-bottom: 30px;
+}
+
+.stats-grid {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 30px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.stats-card {
+  flex: 1;
+  min-width: 180px;
+  padding: 30px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .05);
+}
+
+.stats-value {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #907cff;
+  display: block;
+}
+
+.stats-label {
+  margin-top: 5px;
+  opacity: 0.7;
+  font-size: 1rem;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.dex-section {
+  margin: 60px auto;
+  padding: 50px 20px;
+  text-align: center;
+}
+
+.dex-section h2 {
+  font-size: 2.4rem;
+  margin-bottom: 15px;
+}
+
+.dex-section p {
+  font-size: 1.1rem;
+  opacity: .8;
+  margin-bottom: 30px;
+}
+
+.dex-preview {
+  max-width: 900px;
+  margin: auto;
+}
+
+.dex-screenshot {
+  background: #0f0f0f;
+  height: 300px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #999;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.dex-btn {
+  margin-top: 25px;
+  padding: 12px 30px;
+  background: #907cff;
+  border: none;
+  border-radius: 40px;
+  font-size: 1.1rem;
+  font-family: Font1;
+  color: white;
+  cursor: pointer;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.events-section {
+  margin: 60px auto 120px;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.events-section h2 {
+  font-size: 2.4rem;
+  margin-bottom: 35px;
+}
+
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 25px;
+  max-width: 980px;
+  margin: auto;
+}
+
+.event-card {
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .06);
+  text-align: left;
+}
+
+.event-card h3 {
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.events-btn {
+  margin-top: 35px;
+  padding: 14px 35px;
+  background: #000;
+  color: white;
+  border: none;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 1.1rem;
+}

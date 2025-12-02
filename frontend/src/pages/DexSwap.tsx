@@ -1,57 +1,103 @@
-import React, { useState, ChangeEvent } from "react";
+import React, { useState, ChangeEvent, useEffect } from "react";
+import { ethers } from "ethers";
+import { Token } from "@uniswap/sdk-core";
+import { Quoter } from "@uniswap/v3-sdk"; // simplified import
 import "./DexSwap.css";
+
+// Example: mainnet provider
+const provider = new ethers.JsonRpcProvider(
+  "https://eth-mainnet.alchemyapi.io/v2/YOUR_ALCHEMY_KEY"
+);
+
+// Uniswap V3 Quoter contract
+const QUOTER_ADDRESS = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6";
+const QUOTER_ABI = [
+  {
+    inputs: [
+      { internalType: "address", name: "tokenIn", type: "address" },
+      { internalType: "address", name: "tokenOut", type: "address" },
+      { internalType: "uint24", name: "fee", type: "uint24" },
+      { internalType: "uint256", name: "amountIn", type: "uint256" },
+      { internalType: "uint160", name: "sqrtPriceLimitX96", type: "uint160" },
+    ],
+    name: "quoteExactInputSingle",
+    outputs: [{ internalType: "uint256", name: "amountOut", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+];
+
+// Example tokens
+const WON = new Token(1, "0xWON_TOKEN_ADDRESS", 18, "WON", "World of Nads");
+const USDC = new Token(
+  1,
+  "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  6,
+  "USDC",
+  "USD Coin"
+);
 
 const DexSwap: React.FC = () => {
   const [fromToken, setFromToken] = useState<string>("WON");
   const [toToken, setToToken] = useState<string>("USDC");
   const [fromAmount, setFromAmount] = useState<string>("");
   const [toAmount, setToAmount] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
-  // Dummy conversion rate
-  const conversionRate: number = 3.32; // 1 WON = 2.32 USDC
-
-  const handleSwapDirection = (): void => {
+  const handleSwapDirection = () => {
     setFromToken(toToken);
     setToToken(fromToken);
     setFromAmount("");
     setToAmount("");
   };
 
-  const handleFromAmountChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    const value = e.target.value;
-    setFromAmount(value);
-
-    if (!value) {
+  const fetchQuote = async (amount: string) => {
+    if (!amount || isNaN(Number(amount))) {
       setToAmount("");
       return;
     }
 
-    const numericValue = parseFloat(value);
-    if (isNaN(numericValue)) {
-      setToAmount("");
-      return;
-    }
+    setLoading(true);
+    try {
+      const quoterContract = new ethers.Contract(
+        QUOTER_ADDRESS,
+        QUOTER_ABI,
+        provider
+      );
 
-    if (fromToken === "WON" && toToken === "USDC") {
-      setToAmount((numericValue * conversionRate).toFixed(2));
-    } else {
-      setToAmount((numericValue / conversionRate).toFixed(2));
+      const amountIn = ethers.parseUnits(amount, WON.decimals); // 18 decimals
+
+      const amountOut = await quoterContract.quoteExactInputSingle(
+        WON.address,
+        USDC.address,
+        3000, // pool fee 0.3%
+        amountIn,
+        0
+      );
+
+      const formatted = ethers.formatUnits(amountOut, USDC.decimals);
+      setToAmount(Number(formatted).toFixed(4));
+    } catch (err) {
+      console.error(err);
+      setToAmount("");
     }
+    setLoading(false);
   };
 
-  const handleSelectWallet = (): void => {
-    // This is where you would trigger your wallet connection logic
+  const handleFromAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFromAmount(value);
+    fetchQuote(value);
+  };
+
+  const handleSelectWallet = () => {
     alert("Wallet selection modal would open here.");
   };
 
-  const handleSwap = (): void => {
-    const amountNum = parseFloat(fromAmount);
-    if (!amountNum || amountNum <= 0) {
-      alert("Enter a valid amount to swap");
-      return;
-    }
-
-    alert(`Swapped ${fromAmount} ${fromToken} → ${toAmount} ${toToken}`);
+  const handleSwap = () => {
+    alert(
+      `Swap logic not implemented yet. You entered ${fromAmount} ${fromToken} → ${toAmount} ${toToken}`
+    );
   };
 
   return (
@@ -80,10 +126,9 @@ const DexSwap: React.FC = () => {
 
         <div className="swap-row">
           <label>{toToken}</label>
-          <input type="number" value={toAmount} readOnly />
+          <input type="number" value={loading ? "…" : toAmount} readOnly />
         </div>
 
-        {/* --- Select Wallet Button --- */}
         <button className="select-wallet-btn" onClick={handleSelectWallet}>
           Select Wallet
         </button>
@@ -94,7 +139,9 @@ const DexSwap: React.FC = () => {
       </div>
 
       <p className="swap-note">
-        Rate: 1 {fromToken} = {conversionRate} {toToken}
+        {loading
+          ? "Fetching live rate..."
+          : `1 ${fromToken} ≈ ${toAmount || "–"} ${toToken}`}
       </p>
     </div>
   );
