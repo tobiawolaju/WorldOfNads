@@ -193,7 +193,7 @@ body {
   border-radius: 14px;
   font-weight: 700;
   font-size: 1.2rem;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, .07);
+  border-radius: 100%;
 }
 
 
@@ -306,12 +306,6 @@ body {
   font-weight: bold;
   letter-spacing: 1px;
 }
-
-
-
-
-
-
 
 
 

@@ -206,10 +206,10 @@ const Home: React.FC = () => {
         <section className="backed-section">
           <h2>Backed By</h2>
           <div className="backed-logos">
-            <div className="backed-card">Sequoia</div>
-            <div className="backed-card">Paradigm</div>
-            <div className="backed-card">a16z</div>
-            <div className="backed-card">YC</div>
+            <div className="backed-card">******</div>
+            <div className="backed-card">******</div>
+            <div className="backed-card">******</div>
+            <div className="backed-card">******</div>
           </div>
         </section>
 
