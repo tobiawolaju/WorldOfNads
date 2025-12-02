@@ -1,15 +1,21 @@
-import React, { useState, ChangeEvent, useEffect } from "react";
+import React, { useState, ChangeEvent } from "react";
 import { ethers } from "ethers";
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useBalance,
+  useWalletClient,
+} from "wagmi";
+import { InjectedConnector } from "wagmi/connectors/injected";
 import { Token } from "@uniswap/sdk-core";
-import { Quoter } from "@uniswap/v3-sdk"; // simplified import
-import "./DexSwap.css";
 
-// Example: mainnet provider
-const provider = new ethers.JsonRpcProvider(
-  "https://eth-mainnet.alchemyapi.io/v2/YOUR_ALCHEMY_KEY"
-);
+// ------------------- CONSTANTS ----------------------
+const RPC_URL = "https://eth-mainnet.alchemyapi.io/v2/YOUR_KEY";
 
-// Uniswap V3 Quoter contract
+const provider = new ethers.JsonRpcProvider(RPC_URL);
+
+// Uniswap V3 Quoter Contract
 const QUOTER_ADDRESS = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6";
 const QUOTER_ABI = [
   {
@@ -27,8 +33,15 @@ const QUOTER_ABI = [
   },
 ];
 
-// Example tokens
-const WMON = new Token(1, "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A", 18, "WMON", "World of Nads");
+// Example tokens (replace with real mainnet)
+const WMON = new Token(
+  1,
+  "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+  18,
+  "WMON",
+  "World of Nads"
+);
+
 const USDC = new Token(
   1,
   "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
@@ -37,111 +50,133 @@ const USDC = new Token(
   "USD Coin"
 );
 
+// Pool fee (0.3% = 3000)
+const POOL_FEE = 3000;
+
+// --------------------------------------------------------
+
 const DexSwap: React.FC = () => {
-  const [fromToken, setFromToken] = useState<string>("WMON");
-  const [toToken, setToToken] = useState<string>("USDC");
-  const [fromAmount, setFromAmount] = useState<string>("");
-  const [toAmount, setToAmount] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [fromAmount, setFromAmount] = useState("");
+  const [toAmount, setToAmount] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSwapDirection = () => {
-    setFromToken(toToken);
-    setToToken(fromToken);
-    setFromAmount("");
-    setToAmount("");
-  };
+  // Wallet hooks (wagmi)
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect({ connector: new InjectedConnector() });
+  const { disconnect } = useDisconnect();
+  const { data: walletClient } = useWalletClient();
 
-  const fetchQuote = async (amount: string) => {
-    if (!amount || isNaN(Number(amount))) {
+  const fetchQuote = async (value: string) => {
+    if (!value || isNaN(Number(value))) {
       setToAmount("");
       return;
     }
 
-    setLoading(true);
     try {
-      const quoterContract = new ethers.Contract(
+      setLoading(true);
+
+      const quoter = new ethers.Contract(
         QUOTER_ADDRESS,
         QUOTER_ABI,
         provider
       );
 
-      const amountIn = ethers.parseUnits(amount, WMON.decimals); // 18 decimals
-
-      const amountOut = await quoterContract.quoteExactInputSingle(
+      const amountIn = ethers.parseUnits(value, WMON.decimals);
+      const quoted = await quoter.quoteExactInputSingle(
         WMON.address,
         USDC.address,
-        3000, // pool fee 0.3%
+        POOL_FEE,
         amountIn,
         0
       );
 
-      const formatted = ethers.formatUnits(amountOut, USDC.decimals);
-      setToAmount(Number(formatted).toFixed(4));
+      const formatted = ethers.formatUnits(quoted, USDC.decimals);
+      setToAmount(Number(formatted).toFixed(6));
     } catch (err) {
-      console.error(err);
+      console.error("QUOTE FAILED:", err);
       setToAmount("");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const handleFromAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFromAmount(value);
     fetchQuote(value);
   };
 
-  const handleSelectWallet = () => {
-    alert("Wallet selection modal would open here.");
-  };
+  const handleSwap = async () => {
+    if (!walletClient) return alert("Connect wallet first");
 
-  const handleSwap = () => {
     alert(
-      `Swap logic not implemented yet. You entered ${fromAmount} ${fromToken} → ${toAmount} ${toToken}`
+      `Swap not implemented yet, but you would send:\n${fromAmount} WMON → ${toAmount} USDC`
     );
   };
 
   return (
-    <div className="swap-container">
-      <div style={{ height: "60px" }}></div>
+    <div style={{ width: 400, margin: "30px auto", fontFamily: "Arial" }}>
+      <h2>Dex Swap</h2>
+      <p>WMON → USDC (Uniswap V3 Quoter)</p>
 
-      <p className="swap-subtitle">
-        Instantly swap WMON for USDC — your bridge between the World of Nads and
-        the wider crypto world.
-      </p>
-
-      <div className="swap-card">
-        <div className="swap-row">
-          <label>{fromToken}</label>
-          <input
-            type="number"
-            placeholder="0.0"
-            value={fromAmount}
-            onChange={handleFromAmountChange}
-          />
-        </div>
-
-        <div className="swap-toggle" onClick={handleSwapDirection}>
-          ⇅
-        </div>
-
-        <div className="swap-row">
-          <label>{toToken}</label>
-          <input type="number" value={loading ? "…" : toAmount} readOnly />
-        </div>
-
-        <button className="select-wallet-btn" onClick={handleSelectWallet}>
-          Select Wallet
-        </button>
-
-        <button className="swap-btn" onClick={handleSwap}>
-          Swap
-        </button>
+      <div style={{ marginBottom: 20 }}>
+        <label>Amount (WMON)</label>
+        <input
+          style={{ width: "100%", padding: 8 }}
+          type="number"
+          placeholder="0.0"
+          value={fromAmount}
+          onChange={handleAmountChange}
+        />
       </div>
 
-      <p className="swap-note">
+      <div style={{ marginBottom: 20 }}>
+        <label>Receive (USDC)</label>
+        <input
+          style={{ width: "100%", padding: 8 }}
+          type="text"
+          readOnly
+          value={loading ? "..." : toAmount}
+        />
+      </div>
+
+      {!isConnected ? (
+        <button
+          style={{ width: "100%", padding: 10 }}
+          onClick={() => connect()}
+        >
+          Connect Wallet
+        </button>
+      ) : (
+        <button
+          style={{ width: "100%", padding: 10 }}
+          onClick={handleSwap}
+        >
+          Swap
+        </button>
+      )}
+
+      {isConnected && (
+        <button
+          onClick={() => disconnect()}
+          style={{
+            marginTop: 8,
+            width: "100%",
+            padding: 10,
+            background: "#444",
+            color: "white",
+          }}
+        >
+          Disconnect ({address?.slice(0, 6)}…)
+        </button>
+      )}
+
+      <p style={{ marginTop: 15, fontSize: 13 }}>
         {loading
-          ? "Fetching live rate..."
-          : `1 ${fromToken} ≈ ${toAmount || "–"} ${toToken}`}
+          ? "Fetching live quote..."
+          : toAmount
+            ? `1 WMON ≈ ${toAmount} USDC`
+            : "Enter amount"}
       </p>
     </div>
   );
