@@ -1,41 +1,10 @@
-import React, { useState, ChangeEvent, useEffect } from "react";
+import React, { useState, ChangeEvent } from "react";
 import { ethers } from "ethers";
-import { Token } from "@uniswap/sdk-core";
-import { Quoter } from "@uniswap/v3-sdk"; // simplified import
 import "./DexSwap.css";
 
-// Example: mainnet provider
-const provider = new ethers.JsonRpcProvider(
-  "https://eth-mainnet.alchemyapi.io/v2/YOUR_ALCHEMY_KEY"
-);
-
-// Uniswap V3 Quoter contract
-const QUOTER_ADDRESS = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6";
-const QUOTER_ABI = [
-  {
-    inputs: [
-      { internalType: "address", name: "tokenIn", type: "address" },
-      { internalType: "address", name: "tokenOut", type: "address" },
-      { internalType: "uint24", name: "fee", type: "uint24" },
-      { internalType: "uint256", name: "amountIn", type: "uint256" },
-      { internalType: "uint160", name: "sqrtPriceLimitX96", type: "uint160" },
-    ],
-    name: "quoteExactInputSingle",
-    outputs: [{ internalType: "uint256", name: "amountOut", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-];
-
-// Example tokens
-const WMON = new Token(1, "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A", 18, "WMON", "World of Nads");
-const USDC = new Token(
-  1,
-  "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
-  6,
-  "USDC",
-  "USD Coin"
-);
+// Dummy rate for now:
+// 1 WMON = 0.42 USDC
+const DUMMY_RATE = 0.42;
 
 const DexSwap: React.FC = () => {
   const [fromToken, setFromToken] = useState<string>("WMON");
@@ -58,30 +27,14 @@ const DexSwap: React.FC = () => {
     }
 
     setLoading(true);
-    try {
-      const quoterContract = new ethers.Contract(
-        QUOTER_ADDRESS,
-        QUOTER_ABI,
-        provider
-      );
 
-      const amountIn = ethers.parseUnits(amount, WMON.decimals); // 18 decimals
+    // simple dummy quote: multiply by dummy rate
+    const out = Number(amount) * DUMMY_RATE;
 
-      const amountOut = await quoterContract.quoteExactInputSingle(
-        WMON.address,
-        USDC.address,
-        3000, // pool fee 0.3%
-        amountIn,
-        0
-      );
-
-      const formatted = ethers.formatUnits(amountOut, USDC.decimals);
-      setToAmount(Number(formatted).toFixed(4));
-    } catch (err) {
-      console.error(err);
-      setToAmount("");
-    }
-    setLoading(false);
+    setTimeout(() => {
+      setToAmount(out.toFixed(4));
+      setLoading(false);
+    }, 300); // fake network delay
   };
 
   const handleFromAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -140,8 +93,8 @@ const DexSwap: React.FC = () => {
 
       <p className="swap-note">
         {loading
-          ? "Fetching live rate..."
-          : `1 ${fromToken} ≈ ${toAmount || "–"} ${toToken}`}
+          ? "Fetching rate..."
+          : `1 ${fromToken} ≈ ${DUMMY_RATE} ${toToken}`}
       </p>
     </div>
   );
