@@ -56,7 +56,7 @@ func _process(_delta: float) -> void:
 		return
 
 	# We need to handle the axes differently.
-	# For the screen's X axis, the projected position is useful to us,
+	# For the screen's X axis, the projected position is useful to us
 	# but we need to force it to the side if it's also behind.
 	if is_behind:
 		if unprojected_position.x < viewport_base_size.x / 2:

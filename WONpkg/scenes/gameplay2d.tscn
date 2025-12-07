@@ -43,9 +43,6 @@ countdown = NodePath("../../../../../Node2/BoxContainer/Label")
 [node name="PlayerManager" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="1" node_paths=PackedStringArray("myplayerswpanpoint")]
 myplayerswpanpoint = NodePath("../Bus/Marker3D")
 
-[node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Chicken/WaypointAnchor" index="0" node_paths=PackedStringArray("camera")]
-camera = NodePath("../../../PlayerManager/Camera3D")
-
 [node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cart/WaypointAnchor" index="0" node_paths=PackedStringArray("camera")]
 camera = NodePath("../../../PlayerManager/Camera3D")
 
@@ -69,9 +66,6 @@ surface_material_override/0 = null
 
 [node name="cloud8" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="6"]
 surface_material_override/0 = null
-
-[node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/RigidBody3D/mesh/WaypointAnchor" index="0" node_paths=PackedStringArray("camera")]
-camera = NodePath("../../../../PlayerManager/Camera3D")
 
 [node name="Node2" type="Node" parent="CanvasLayer/BoxContainer"]
 

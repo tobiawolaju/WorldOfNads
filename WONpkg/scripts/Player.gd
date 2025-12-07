@@ -17,11 +17,11 @@ var held_object: RigidBody3D = null
 # --- CAMERA & ZOOM SETTINGS ---
 @export var camera_distance: float = 4.0
 @export var camera_smoothness: float = 8.0
-@export var min_pitch: float = deg_to_rad(-40.0)
+@export var min_pitch: float = deg_to_rad(0.0)
 @export var max_pitch: float = deg_to_rad(60.0)
 @export var min_zoom: float = 2.0
 @export var max_zoom: float = 10.0
-@export var altitude_zoom_factor: float = 5
+@export var altitude_zoom_factor: float = 1.5
 
 # --- NODE REFERENCES ---
 @onready var camera: Camera3D = get_node("../Camera3D")
