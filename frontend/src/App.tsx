@@ -9,6 +9,8 @@ import Footer from "./components/Footer";
 
 // UI
 import { FullScreenLoader } from "./components/ui/fullscreen-loader";
+import Footer from "./components/Footer";
+
 
 // Pages
 import Home from "./pages/Home";
@@ -61,6 +63,8 @@ const AppContent: React.FC = () => {
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
+
+            <Footer />
           </Routes>
         </main>
 
