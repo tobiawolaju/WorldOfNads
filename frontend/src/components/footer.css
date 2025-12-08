@@ -45,7 +45,7 @@
 
 .footer-icons {
     margin: 8px;
-    background-color: rgba(162, 104, 255, 0.493);
+    background-color: rgb(70, 70, 70);
     display: flex;
     gap: 15px;
 }
