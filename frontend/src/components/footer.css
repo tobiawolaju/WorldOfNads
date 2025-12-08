@@ -1,6 +1,8 @@
 .footer-container {
     width: 100%;
-    background: #ffffff;
+    background-color: rgba(255, 255, 255, 0.89);
+    backdrop-filter: blur(10px);
+    /* Adjust the blur intensity as needed */
     color: rgb(0, 0, 0);
     padding: 30px 20px;
     display: flex;
@@ -45,13 +47,12 @@
 
 .footer-icons {
     margin: 8px;
-    background-color: rgb(70, 70, 70);
     display: flex;
     gap: 15px;
 }
 
 .footer-icon {
-    color: rgb(255, 255, 255);
+    color: rgb(122, 122, 122);
     transition: opacity 0.2s;
 }
 
