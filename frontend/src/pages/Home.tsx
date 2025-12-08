@@ -6,6 +6,7 @@ import { FaDiscord } from "react-icons/fa";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Rive from '@rive-app/react-canvas';
 
 
 // Register the ScrollTrigger plugin
@@ -189,6 +190,10 @@ const Home: React.FC = () => {
         <h1 className="title" ref={titleRef}>
           1.2k Nads
         </h1>
+        <Rive
+          src="https://cdn.rive.app/animations/vehicles.riv"
+          stateMachines="bumpy"
+        />
       </div>
 
       {/* Contents Section */}

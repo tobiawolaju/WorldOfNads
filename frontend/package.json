@@ -15,6 +15,7 @@
     "@privy-io/react-auth": "^2.24.0",
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.4.0",
+    "@rive-app/react-canvas": "^4.24.0",
     "@solana-program/system": "0.7.0",
     "@solana-program/token": "0.5.1",
     "@solana/kit": "2.3.0",
