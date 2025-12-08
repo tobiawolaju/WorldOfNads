@@ -9,8 +9,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 //remeber to unsinstall this
 import Rive from '@rive-app/react-canvas';
-import { RiveComponent } from "@rive-app/react-canvas";
-
 
 // Register the ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
@@ -195,10 +193,6 @@ const Home: React.FC = () => {
         </h1>
 
 
-        <RiveComponent
-          src="https://cdn.rive.app/animations/vehicles.riv"
-          stateMachines="bumpy"
-        />
 
 
         <img
