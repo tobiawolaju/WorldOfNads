@@ -13,7 +13,7 @@ const Footer = () => {
           alt="site logo"
           className="footer-logo"
         />
-        <p className="footer-text">We are here to dominate.</p>
+        <p className="footer-text">And then I WON.</p>
       </div>
 
       {/* Navigation */}
