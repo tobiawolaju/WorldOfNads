@@ -1,12 +1,13 @@
 .footer-container {
     width: 100%;
-    background: #000;
-    color: white;
+    background: #ffffff;
+    color: rgb(0, 0, 0);
     padding: 30px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
+    z-index: 999;
 }
 
 .footer-left {
@@ -33,7 +34,7 @@
 }
 
 .footer-link {
-    color: white;
+    color: rgb(146, 146, 146);
     text-decoration: none;
     font-size: 14px;
 }
@@ -43,12 +44,14 @@
 }
 
 .footer-icons {
+    margin: 8px;
+    background-color: rgba(162, 104, 255, 0.493);
     display: flex;
     gap: 15px;
 }
 
 .footer-icon {
-    color: white;
+    color: rgb(255, 255, 255);
     transition: opacity 0.2s;
 }
 
