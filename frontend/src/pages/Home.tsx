@@ -196,10 +196,7 @@ const Home: React.FC = () => {
 
 
         <img
-          style={{
-            width: '40vw',
-            zIndex: '999',
-          }}
+          className="absolute bottom-0 w-[80vw] md:w-[80vh]"
           src="logo.jpg"
           alt="logo"
         />
