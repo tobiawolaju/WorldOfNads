@@ -198,7 +198,7 @@ const Home: React.FC = () => {
         >
           <Rive
             src="nad.riv"
-            stateMachines="bumpy"
+            stateMachines="idle"
           />
         </div>
 
