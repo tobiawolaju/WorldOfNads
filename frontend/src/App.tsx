@@ -31,6 +31,8 @@ const AppContent: React.FC = () => {
 
   // Hide navbar on /play route
   const hideNavbar = location.pathname === "/play";
+  const hideFooter = location.pathname === "/dashboard";
+
 
   return (
     <>
@@ -64,7 +66,7 @@ const AppContent: React.FC = () => {
           </Routes>
         </main>
 
-        <Footer />
+        {!hideFooter && <Footer />}
       </div>
     </>
   );
