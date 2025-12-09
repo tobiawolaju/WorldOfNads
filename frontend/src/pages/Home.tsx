@@ -197,7 +197,7 @@ const Home: React.FC = () => {
           className="absolute bottom-0 w-[80vw] h-[80vw] md:w-[80vh] md:h-[80vh]"
         >
           <Rive
-            src="https://cdn.rive.app/animations/vehicles.riv"
+            src="nad.riv"
             stateMachines="bumpy"
           />
         </div>
