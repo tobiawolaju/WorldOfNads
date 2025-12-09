@@ -194,7 +194,7 @@ const Home: React.FC = () => {
 
 
         <div
-          className="absolute bottom-0 w-[80vw] h-[80vw] md:w-[80vh] md:h-[80vh]"
+          className="absolute bottom-0 w-[100vw] h-[100vw] md:w-[80vh] md:h-[80vh]"
         >
           <Rive
             src="nad.riv"
