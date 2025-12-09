@@ -23,6 +23,7 @@ body {
 }
 
 /* 3️⃣ Title styling */
+
 .title {
   color: #ff9acb;
   font-size: 23vw;
@@ -30,6 +31,15 @@ body {
   font-weight: bold;
   margin-bottom: 0;
 }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .title {
+    font-size: 43vw;
+  }
+}
+
+
 
 .play {
   font-family: 'Font1', sans-serif;
