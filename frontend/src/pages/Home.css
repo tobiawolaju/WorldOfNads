@@ -25,7 +25,7 @@ body {
 /* 3️⃣ Title styling */
 
 .title {
-  color: hsla(255, 100%, 61%, 0.253);
+  color: hsl(256, 100%, 92%);
   font-size: 23vw;
   font-family: 'Font2', sans-serif;
   font-weight: bold;
