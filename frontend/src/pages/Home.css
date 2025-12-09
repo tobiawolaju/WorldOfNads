@@ -65,7 +65,7 @@ body {
 .wons-section {
   background: #00000015;
   /* transparent white */
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(7px);
   /* blur effect */
   -webkit-backdrop-filter: blur(4px);
   /* Safari */
@@ -73,6 +73,7 @@ body {
   text-align: center;
   border-radius: 20px;
   margin: 25px;
+  margin-top: 0px;
 }
 
 
