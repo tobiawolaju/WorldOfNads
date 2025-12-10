@@ -44,6 +44,13 @@ body {
 }
 
 
+/* Mobile */
+@media (max-width: 768px) {
+  .title {
+    font-size: 46vw;
+  }
+}
+
 
 
 .play {
