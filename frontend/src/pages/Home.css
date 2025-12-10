@@ -25,19 +25,24 @@ body {
 /* 3️⃣ Title styling */
 
 .title {
-  color: #6a38ff;
   font-size: 23vw;
   font-family: 'Font2', sans-serif;
   font-weight: bold;
-  margin-bottom: 0;
+  margin: 0;
+
+  background-image: url('banner.jpg');
+  /* replace */
+  background-size: cover;
+  /* ensures no skewing */
+  background-position: center;
+  /* centers the image */
+  background-repeat: no-repeat;
+
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .title {
-    font-size: 43vw;
-  }
-}
 
 
 

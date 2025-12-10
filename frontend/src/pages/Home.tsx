@@ -188,9 +188,11 @@ const Home: React.FC = () => {
           justifyContent: "center",
         }}
       >
+
         <h1 className="title" ref={titleRef}>
           1.2k Nads
         </h1>
+
 
 
         <div
