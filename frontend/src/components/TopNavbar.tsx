@@ -4,121 +4,63 @@ import './topnav.css';
 
 const TopNavbar = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
-  const location = useLocation(); // get current route
+  const location = useLocation();
 
-  const toggleDrawer = () => {
-    setDrawerOpen(!isDrawerOpen);
-  };
+  const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
 
-  // Map route paths to text for display
-const pageTextMap: Record<string, string> = {
-  '/': '',
-  '/pre-tge-arena': 'Pre-TGE Arena',
-  '/roadmap': 'Leaderboards',
-  '/crew': 'Won Dex',
-  '/partners': 'Partners',
-  '/community': 'FAQ',
-  '/careers': 'Careers',
-};
+  // central nav config
+  const navItems = [
+    { path: '/', label: 'WONs' },
+    { path: '/arena', label: 'Arena' },
+    { path: '/leaderboards', label: 'Leaderboards' },
+    { path: '/crew', label: 'Won Dex' },
+    { path: '/partners', label: 'Partners' },
+    { path: '/community', label: 'FAQ' },
+    { path: '/careers', label: 'Careers' },
+  ];
 
+  const currentText = navItems.find(item => item.path === location.pathname)?.label || '';
 
-  const currentText = pageTextMap[location.pathname] || '';
+  const renderNavLinks = (onClick?: () => void) =>
+    navItems.map(item => (
+      <NavLink
+        key={item.path}
+        to={item.path}
+        onClick={onClick}
+        className={({ isActive }) => (isActive ? 'link active-link' : 'link')}
+      >
+        {item.label}
+      </NavLink>
+    ));
 
   return (
     <nav className="topnav">
-      {/* Logo + Optional Text */}
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <img
-          style={{
-            width: '40px',
-            zIndex: '999',
-          }}
-          src="logo.jpg"
-          alt="logo"
-        />
+      {/* Logo + Optional Page Text */}
+      <div className="logo-section" style={{ display: 'flex', alignItems: 'center' }}>
+        <img src="logo.jpg" alt="logo" style={{ width: '40px', zIndex: 999 }} />
         {currentText && (
-          <p
-            style={{
-              fontSize: 'larger',
-              margin: '10px',
-              color: " rgba(0, 0, 0, 1)",
-              fontFamily: "'Font1', sans-serif",
-              fontWeight: "bold",
-    
-            }}
-          >
-        {currentText}
-      </p>
+          <p style={{ fontSize: 'larger', margin: '10px', color: '#000', fontFamily: "'Font1', sans-serif", fontWeight: 'bold' }}>
+            {currentText}
+          </p>
         )}
-    </div>
-
-      {/* Navigation Links for Desktop */ }
-  <div className="nav-links">
-    <NavLink to="/" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-      WONs
-    </NavLink>
-    <NavLink to="/pre-tge-arena" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-      Pre-TGE Arena
-    </NavLink>
-    <NavLink to="/roadmap" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-    Leaderboards
-    </NavLink>
-    <NavLink to="/crew" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-    Won Dex
-    </NavLink>
-    <NavLink to="/partners" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-    Partners
-    </NavLink>
-    <NavLink to="/community" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-    FAQ
-    </NavLink>
-      <NavLink to="/careers" className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-    Careers
-    </NavLink>
-  </div>
-
-  {/* Hamburger Menu Button */ }
-  <button onClick={toggleDrawer} className="hamburger-btn" aria-expanded={isDrawerOpen}>
-    ☰
-  </button>
-
-  {/* Drawer Menu for Mobile */ }
-  {
-    isDrawerOpen && (
-      <div className="drawer">
-        <button onClick={toggleDrawer} className="close-btn">
-          ✖
-        </button>
-
-        <div className="drawer-links">
-          <NavLink to="/" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-            WONs
-          </NavLink>
-          <NavLink to="/pre-tge-arena" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-            Pre-TGE Arena
-          </NavLink>
-          <NavLink to="/roadmap" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-          Leaderboards
-          </NavLink>
-          <NavLink to="/crew" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-          Won Dex
-          </NavLink>
-          <NavLink to="/partners" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-            Partners
-          </NavLink>
-          <NavLink to="/community" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-            FAQ
-          </NavLink>
-
-           <NavLink to="/careers" onClick={toggleDrawer} className={({ isActive }) => (isActive ? 'link active-link' : 'link')}>
-            Careers
-          </NavLink>
-
-        </div>
       </div>
-    )
-  }
-    </nav >
+
+      {/* Desktop Links */}
+      <div className="nav-links">{renderNavLinks()}</div>
+
+      {/* Hamburger */}
+      <button onClick={toggleDrawer} className="hamburger-btn" aria-expanded={isDrawerOpen}>
+        ☰
+      </button>
+
+      {/* Drawer */}
+      {isDrawerOpen && (
+        <div className="drawer">
+          <button onClick={toggleDrawer} className="close-btn">✖</button>
+          <div className="drawer-links">{renderNavLinks(toggleDrawer)}</div>
+        </div>
+      )}
+    </nav>
   );
 };
 
