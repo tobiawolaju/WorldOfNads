@@ -25,102 +25,84 @@ const Home: React.FC = () => {
 
   // GSAP animations
   useGSAP(() => {
-
-    gsap.from(".stats-card", {
-      opacity: 0,
-      y: 50,
-      stagger: 0.1,
-      duration: 0.6,
-      scrollTrigger: {
-        trigger: ".stats-section",
-        start: "top bottom-=100",
-        end: "top center",
-        scrub: 1,
-      }
-    });
-
-    gsap.from(".event-card", {
-      opacity: 0,
-      y: 30,
-      stagger: 0.15,
-      duration: 0.6,
-      scrollTrigger: {
-        trigger: ".events-section",
-        start: "top bottom-=100",
-        end: "top center",
-        scrub: 1,
-      }
-    });
-
-
-    // 1. Animate .title on page load (no change)
+    // ---------- HERO TITLE (still load-based, allowed)
     gsap.from(titleRef.current, {
-      duration: 2.0,
       opacity: 0,
-      y: 50,
+      y: 60,
       ease: "power3.out",
-      delay: 0.5,
+      duration: 1.8,
+      delay: 0.3
     });
 
-    // 2. Animate .wons-card elements tied to scroll position
-    gsap.from(".wons-card", {
-      opacity: 0,
-      y: 0,
-      rotation: (i) => gsap.utils.random(-10, 5), // 🔥 random per card
-      stagger: 0.1,
-      ease: "power2.out",
-      scrollTrigger: {
-        trigger: ".wons-grid",
-        start: "top bottom-=100",
-        end: "top center",
-        scrub: 1,
-      }
+    // ---------- WONS CARDS (true scroll-y driven)
+    gsap.utils.toArray<HTMLElement>(".wons-card").forEach((card, i) => {
+      gsap.from(card, {
+        opacity: 0,
+        y: 90,
+        scale: 0.94,
+        rotation: i % 2 ? 4 : -3,
+        ease: "none", // important for scrub
+        scrollTrigger: {
+          trigger: card,
+          start: "top 90%",
+          end: "top 60%",
+          scrub: true
+        }
+      });
     });
 
-
-    // 3. Animate buttons on hover (no change)
-    const animateButtonHover = (target: Element, glowColor: string) => {
-      gsap.to(target, {
-        border: '8px solid rgba(255, 255, 255, 0.197)',
-        duration: 0.3,
-        ease: "power1.inOut",
+    // ---------- STATS
+    gsap.utils.toArray<HTMLElement>(".stats-card").forEach((card, i) => {
+      gsap.from(card, {
+        opacity: 0,
+        y: 70,
+        ease: "none",
+        scrollTrigger: {
+          trigger: card,
+          start: "top 85%",
+          end: "top 55%",
+          scrub: true
+        }
       });
-    };
+    });
 
-    const resetButtonHover = (target: Element) => {
-      gsap.to(target, {
-        border: 'none',
-        duration: 0.3,
-        ease: "power1.inOut",
+    // ---------- EVENTS
+    gsap.utils.toArray<HTMLElement>(".event-card").forEach((card, i) => {
+      gsap.from(card, {
+        opacity: 0,
+        y: 60,
+        ease: "none",
+        scrollTrigger: {
+          trigger: card,
+          start: "top 85%",
+          end: "top 60%",
+          scrub: true
+        }
       });
-    };
+    });
+
+    // ---------- BUTTON HOVER (unchanged, not scroll-based)
+    const hoverIn = (el: Element) =>
+      gsap.to(el, { border: "8px solid rgba(255,255,255,0.2)", duration: 0.25 });
+
+    const hoverOut = (el: Element) =>
+      gsap.to(el, { border: "none", duration: 0.25 });
 
     const discordBtn = discordBtnRef.current;
-    if (discordBtn) {
-      discordBtn.addEventListener("mouseenter", () => animateButtonHover(discordBtn, "rgba(110, 89, 255, 0.7)"));
-      discordBtn.addEventListener("mouseleave", () => resetButtonHover(discordBtn));
-    }
-
     const playBtn = playBtnRef.current;
-    if (playBtn) {
-      playBtn.addEventListener("mouseenter", () => animateButtonHover(playBtn, "rgba(110, 89, 255, 0.7)"));
-      playBtn.addEventListener("mouseleave", () => resetButtonHover(playBtn));
+
+    if (discordBtn) {
+      discordBtn.addEventListener("mouseenter", () => hoverIn(discordBtn));
+      discordBtn.addEventListener("mouseleave", () => hoverOut(discordBtn));
     }
 
+    if (playBtn) {
+      playBtn.addEventListener("mouseenter", () => hoverIn(playBtn));
+      playBtn.addEventListener("mouseleave", () => hoverOut(playBtn));
+    }
 
-    // Cleanup event listeners on component unmount
-    return () => {
-      if (discordBtn) {
-        discordBtn.removeEventListener("mouseenter", () => animateButtonHover(discordBtn, "rgba(110, 89, 255, 0.7)"));
-        discordBtn.removeEventListener("mouseleave", () => resetButtonHover(discordBtn));
-      }
-      if (playBtn) {
-        playBtn.removeEventListener("mouseenter", () => animateButtonHover(playBtn, "rgba(110, 89, 255, 0.7)"));
-        playBtn.removeEventListener("mouseleave", () => resetButtonHover(playBtn));
-      }
-    };
-
-  }, { scope: container }); // Scope GSAP selectors to the container ref
+    return () => ScrollTrigger.getAll().forEach(t => t.kill());
+  }, { scope: container });
 
   const btnBase: React.CSSProperties = {
     width: "120px",
@@ -212,11 +194,12 @@ const Home: React.FC = () => {
         {/* --- WHAT'S ON WONS SECTION --- */}
         <section className="wons-section">
           <div className="wons-grid">
-            <div className="wons-card"></div>
-            <div className="wons-card"></div>
-            <div className="wons-card"></div>
-            <div className="wons-card"></div>
+            <div className="wons-card"><h2>Enter the Arena</h2></div>
+            <div className="wons-card"><h2>Steal the Chicken</h2></div>
+            <div className="wons-card"><h2>Outrun Everyone</h2></div>
+            <div className="wons-card"><h2>Become a Problem</h2></div>
           </div>
+
         </section>
 
 

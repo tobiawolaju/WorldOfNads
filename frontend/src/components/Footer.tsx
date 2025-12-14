@@ -20,13 +20,9 @@ const Footer = () => {
           className="footer-logo"
         />
         <p className="footer-text">
-          World of Nads Oy
+          World of Nads
           <br />
-          Jätkäsaarenlaituri 1
-          <br />
-          00180 Helsinki
-          <br />
-          Finland</p>
+          contact@worldofnads</p>
       </div>
 
       {/* Navigation */}
