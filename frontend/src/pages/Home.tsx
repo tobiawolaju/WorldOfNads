@@ -199,7 +199,7 @@ const Home: React.FC = () => {
           className="absolute bottom-0 w-[100vw] h-[100vw] md:w-[80vh] md:h-[80vh]"
         >
           <Rive
-            src="nad.riv"
+            src="test.riv"
             stateMachines="idle"
           />
         </div>
