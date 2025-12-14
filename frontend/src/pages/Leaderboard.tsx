@@ -22,13 +22,13 @@ const Leaderboard: React.FC = () => {
     { name: "Monad", interactions: 185, trend: [95, 300, 110, 100, 120, 135, 130, 145, 155, 160, 150, 170, 175, 180, 185], logo: "https://pbs.twimg.com/profile_images/1861739634428174336/26FzLLyr.jpg" },
     { name: "LootGO", interactions: 260, trend: [150, 160, 500, 600, 185, 190, 205, 200, 215, 225, 230, 245, 240, 255, 260], logo: "https://pbs.twimg.com/profile_images/1947490514921488384/TLSJg7Z5.jpg" },
     { name: "Nad.fun", interactions: 300, trend: [180, 400, 300, 200, 210, 225, 230, 220, 240, 255, 265, 270, 285, 290, 300], logo: "https://pbs.twimg.com/profile_images/1827607782356619264/Owr-840k.jpg" },
-    { name: "Kizzy Mobile", interactions: 155, trend: [70, 75, 80, 75, 90, 95, 100, 110, 105, 120, 130, 125, 140, 150, 155], logo: "https://pbs.twimg.com/profile_images/1889975983941591040/NeddfENS.jpg" },
+    { name: "Kizzy Mobile", interactions: 155, trend: [70, 75, 80, 75, 90, 95, 100, 110, 105, 120, 130, 125, 140, 150, 155], logo: "https://pbs.twimg.com/profile_images/2000251466468978688/Q7hvNgR3.jpg" },
     { name: "Kuru Exchange", interactions: 130, trend: [60, 65, 70, 100, 75, 80, 85, 90, 85, 100, 105, 115, 110, 125, 130], logo: "https://pbs.twimg.com/profile_images/1950962142917619714/R7Cj_qk7.jpg" },
     { name: "Lumiterra", interactions: 175, trend: [90, 95, 100, 95, 110, 115, 120, 130, 125, 140, 150, 145, 160, 170, 175], logo: "https://pbs.twimg.com/profile_images/1667436896480563200/8YPmbLbv.png" },
     { name: "Levr Bet", interactions: 90, trend: [30, 35, 40, 35, 45, 50, 55, 60, 55, 70, 75, 80, 75, 85, 90], logo: "https://pbs.twimg.com/profile_images/1836024387042004992/YKdDMkOG.jpg" },
     { name: "Drake Exchange", interactions: 210, trend: [110, 120, 115, 130, 200, 150, 145, 160, 170, 175, 180, 190, 185, 200, 210], logo: "https://pbs.twimg.com/profile_images/1974759389354491904/2vcC-dd4.jpg" },
     { name: "Omnia Explorer", interactions: 140, trend: [65, 70, 20, 70, 80, 85, 90, 95, 90, 105, 110, 120, 115, 130, 140], logo: "https://pbs.twimg.com/profile_images/1796709016808394752/C91LWB9H.jpg" },
-    { name: "SeerTrade", interactions: 125, trend: [55, 60, 65, 60, 70, 75, 80, 85, 80, 95, 100, 110, 105, 120, 125], logo: "https://pbs.twimg.com/profile_images/1957497669959761920/IMS0lJhe.jpg" },
+    { name: "SeerTrade", interactions: 125, trend: [55, 60, 65, 60, 70, 75, 80, 85, 80, 95, 100, 110, 105, 120, 125], logo: "https://pbs.twimg.com/profile_images/1992956835922587649/6s2RZ9xf.jpg" },
     { name: "Monday Trade", interactions: 105, trend: [40, 45, 10, 45, 55, 60, 65, 70, 65, 80, 85, 90, 85, 95, 105], logo: "https://pbs.twimg.com/profile_images/1973421191202209797/qRXSiR5e.jpg" },
     { name: "Symphony", interactions: 170, trend: [85, 90, 95, 90, 105, 110, 115, 125, 120, 135, 140, 150, 145, 160, 170], logo: "https://pbs.twimg.com/profile_images/1893386930605211648/-APwnLNM.jpg" },
     { name: "Kinetik AI", interactions: 190, trend: [100, 110, 105, 120, 130, 135, 140, 150, 145, 160, 165, 175, 170, 180, 190], logo: "https://pbs.twimg.com/profile_images/1947607859702673408/hpZ89aya.jpg" },
@@ -37,7 +37,7 @@ const Leaderboard: React.FC = () => {
     { name: "BRO.fun", interactions: 135, trend: [60, 65, 70, 65, 75, 80, 85, 90, 85, 100, 105, 115, 110, 125, 135], logo: "https://pbs.twimg.com/profile_images/1983519855279042560/ntgzrOaU.jpg" },
     { name: "RareBet Sports", interactions: 250, trend: [140, 150, 145, 600, 170, 180, 175, 190, 200, 210, 205, 220, 230, 240, 250], logo: "https://pbs.twimg.com/profile_images/1802788848956506112/KJnlcaQj.jpg" }
   ];
-  
+
   const allUsers: User[] = [
     // This is a truncated list for brevity. Use your full user list here.
     { username: "0xSolarKnight", won: 870, projects: ["Monad"], pfp: "https://randomuser.me/api/portraits/men/11.jpg" },
@@ -142,8 +142,8 @@ const Leaderboard: React.FC = () => {
                   <div className="mini-chart">
                     <ResponsiveContainer width="100%" height={50}>
                       <LineChart data={chartData}>
-                        <Line type="monotone" dataKey="value" stroke="#ffd700" strokeWidth={2} dot={false} isAnimationActive={true}/>
-                        <Tooltip contentStyle={{ background: "rgba(255,255,255,0.8)", borderRadius: "6px", color: "#000" }}/>
+                        <Line type="monotone" dataKey="value" stroke="#ffd700" strokeWidth={2} dot={false} isAnimationActive={true} />
+                        <Tooltip contentStyle={{ background: "rgba(255,255,255,0.8)", borderRadius: "6px", color: "#000" }} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -182,35 +182,35 @@ const Leaderboard: React.FC = () => {
           </ul>
           {totalPages > 1 && (
 
-           <div className="pagination">
-  {/* Previous Button */}
-  {currentPage > 1 && (
-    <button onClick={() => setCurrentPage(currentPage - 1)}>
-      Previous
-    </button>
-  )}
+            <div className="pagination">
+              {/* Previous Button */}
+              {currentPage > 1 && (
+                <button onClick={() => setCurrentPage(currentPage - 1)}>
+                  Previous
+                </button>
+              )}
 
-  {/* Page number buttons */}
-  {Array.from(
-    { length: Math.ceil(allUsers.length / usersPerPage) },
-    (_, i) => (
-      <button
-        key={i}
-        onClick={() => setCurrentPage(i + 1)}
-        className={currentPage === i + 1 ? "active" : ""}
-      >
-        {i + 1}
-      </button>
-    )
-  )}
+              {/* Page number buttons */}
+              {Array.from(
+                { length: Math.ceil(allUsers.length / usersPerPage) },
+                (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={currentPage === i + 1 ? "active" : ""}
+                  >
+                    {i + 1}
+                  </button>
+                )
+              )}
 
-  {/* Next Button */}
-  {currentPage < Math.ceil(allUsers.length / usersPerPage) && (
-    <button onClick={() => setCurrentPage(currentPage + 1)}>
-      Next
-    </button>
-  )}
-</div>
+              {/* Next Button */}
+              {currentPage < Math.ceil(allUsers.length / usersPerPage) && (
+                <button onClick={() => setCurrentPage(currentPage + 1)}>
+                  Next
+                </button>
+              )}
+            </div>
 
 
           )}

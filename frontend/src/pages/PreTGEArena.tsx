@@ -5,7 +5,7 @@ function PreTGEArena() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all"); // 'all', 'upcoming', 'live', 'completed'
 
-const [projects] = useState([
+  const [projects] = useState([
     {
       id: 1,
       name: "Monad Mainnet",
@@ -67,7 +67,7 @@ const [projects] = useState([
       stage: "upcoming",
       launchDate: "Upcoming",
       xHandle: "@kizzymobile",
-      logo: "https://pbs.twimg.com/profile_images/1889975983941591040/NeddfENS.jpg",
+      logo: "https://pbs.twimg.com/profile_images/2000251466468978688/Q7hvNgR3.jpg",
       reward: "14,500 WONs",
       url: "https://x.com/kizzymobile",
     },
@@ -143,7 +143,7 @@ const [projects] = useState([
       stage: "upcoming",
       launchDate: "Upcoming",
       xHandle: "@seertrade",
-      logo: "https://pbs.twimg.com/profile_images/1957497669959761920/IMS0lJhe.jpg",
+      logo: "https://pbs.twimg.com/profile_images/1992956835922587649/6s2RZ9xf.jpg",
       reward: "9,800 WONs",
       url: "https://x.com/seertrade",
     },
@@ -252,24 +252,24 @@ const [projects] = useState([
 
 
 
-const renderStatusBadge = (stage) => {
-  const map = {
-    live: "pretge-status-live",
-    upcoming: "pretge-status-upcoming",
-    completed: "pretge-status-completed",
+  const renderStatusBadge = (stage) => {
+    const map = {
+      live: "pretge-status-live",
+      upcoming: "pretge-status-upcoming",
+      completed: "pretge-status-completed",
+    };
+
+    return (
+      <span className={`pretge-status ${map[stage]}`}>
+        {stage}
+      </span>
+    );
   };
 
-  return (
-    <span className={`pretge-status ${map[stage]}`}>
-      {stage}
-    </span>
-  );
-};
 
 
 
 
-  
   return (
     <div className="pretge-container">
       <div style={{ height: "60px" }}></div>
@@ -336,18 +336,18 @@ const renderStatusBadge = (stage) => {
               </div>
               <p className="pretge-tagline">{project.tagline}</p>
               <p className="pretge-description">{project.description}</p>
-<div className="pretge-meta">
-  {renderStatusBadge(project.stage)}
-  <span className="pretge-handle">
-    <a
-      href={project.url}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      {project.xHandle}
-    </a>
-  </span>
-</div>
+              <div className="pretge-meta">
+                {renderStatusBadge(project.stage)}
+                <span className="pretge-handle">
+                  <a
+                    href={project.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {project.xHandle}
+                  </a>
+                </span>
+              </div>
 
             </div>
           ))
