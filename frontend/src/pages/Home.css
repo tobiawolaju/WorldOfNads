@@ -177,63 +177,6 @@ body {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-.backed-section {
-  margin: 60px auto;
-  padding: 50px 20px;
-  text-align: center;
-}
-
-.backed-section h2 {
-  color: #907cff;
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 40px;
-}
-
-.backed-logos {
-  display: flex;
-  justify-content: center;
-  gap: 25px;
-  flex-wrap: wrap;
-}
-
-.backed-card {
-  padding: -20px -40px;
-  font-weight: 700;
-  font-size: 1.2rem;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 .stats-section {
   margin: 60px auto;
   background: #f4f4f4;

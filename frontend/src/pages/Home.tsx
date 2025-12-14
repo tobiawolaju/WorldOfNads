@@ -219,20 +219,23 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        {/* ====== BACKED BY SECTION ====== */}
-        <section className="backed-section">
-          <h2>Backed By</h2>
-          <div className="backed-logos">
-            <div className="backed-card">No Vc</div>
-            <div className="backed-card">No Angel Investors</div>
-            <div className="backed-card">No Founding Engineer</div>
-            <div className="backed-card">No Monad Whale</div>
+
+
+
+
+        {/* ====== WONs CHICKEN CHAOS NIGHT PREVIEW ====== */}
+        <section className="dex-section">
+          <h2>Chicken CHAOS Night</h2>
+          <p>Compete for Nothing every Weekend on WONs.</p>
+          <div className="dex-preview">
+            <div className="dex-screenshot">▓▓░░░░░░░░ 67%</div>
           </div>
         </section>
 
+
         {/* ====== LIVE STATS SECTION ====== */}
         <section className="stats-section">
-          <h2>WON Network Stats</h2>
+
           <div className="stats-grid">
             <div className="stats-card">
               <span className="stats-value">0</span>
@@ -253,14 +256,6 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        {/* ====== WONs CHICKEN CHAOS NIGHT PREVIEW ====== */}
-        <section className="dex-section">
-          <h2>Chicken CHAOS Night</h2>
-          <p>Compete for Nothing every Weekend on WONs.</p>
-          <div className="dex-preview">
-            <div className="dex-screenshot">▓▓░░░░░░░░ 67%</div>
-          </div>
-        </section>
 
         {/* ====== WONs HAPPENINGS ====== */}
         <section className="events-section">
