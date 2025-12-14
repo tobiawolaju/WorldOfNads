@@ -247,14 +247,23 @@ const Home: React.FC = () => {
             <div className="event-card">
               <h3>Latest on WONs</h3>
               <p>Read the latest development drops from the core team.</p>
+              <a href="https://www.google.com" target="_blank" rel="noopener noreferrer" className="match-details-twitter">
+                Read ↗
+              </a>
             </div>
             <div className="event-card">
               <h3>WON Batches</h3>
               <p>Seasonal competitive game waves and challenge rounds.</p>
+              <a href="https://www.google.com" target="_blank" rel="noopener noreferrer" className="match-details-twitter">
+                Read ↗
+              </a>
             </div>
             <div className="event-card">
               <h3>WON CREATORS</h3>
               <p>2025 Wons creators program —  start your wonstreaming career with Wons.</p>
+              <a href="https://www.google.com" target="_blank" rel="noopener noreferrer" className="match-details-twitter">
+                Read ↗
+              </a>
             </div>
           </div>
 
