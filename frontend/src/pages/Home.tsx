@@ -1,137 +1,356 @@
-import { useRef } from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
+import "./Home.css";
 import { FaDiscord } from "react-icons/fa";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Rive from "@rive-app/react-canvas";
-import "./Home.css";
 
+//remeber to unsinstall this
+import Rive from '@rive-app/react-canvas';
+
+// Register the ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
 
-export default function Home() {
+const Home: React.FC = () => {
   const { ready, authenticated, login } = usePrivy();
   const navigate = useNavigate();
-  const root = useRef<HTMLDivElement>(null);
 
+  // Refs for GSAP animations
+  const container = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const discordBtnRef = useRef<HTMLAnchorElement>(null);
+  const playBtnRef = useRef<HTMLButtonElement>(null);
+
+  // GSAP animations
   useGSAP(() => {
-    gsap.from(".title", {
-      opacity: 0,
-      y: 60,
-      duration: 1.6,
-      ease: "power3.out",
-    });
-
-    gsap.from(".wons-card", {
-      opacity: 0,
-      y: 40,
-      rotation: () => gsap.utils.random(-6, 6),
-      stagger: 0.12,
-      scrollTrigger: {
-        trigger: ".wons-section",
-        start: "top 80%",
-      },
-    });
 
     gsap.from(".stats-card", {
       opacity: 0,
-      y: 30,
+      y: 50,
       stagger: 0.1,
+      duration: 0.6,
       scrollTrigger: {
         trigger: ".stats-section",
-        start: "top 85%",
-      },
+        start: "top bottom-=100",
+        end: "top center",
+        scrub: 1,
+      }
     });
 
     gsap.from(".event-card", {
       opacity: 0,
       y: 30,
       stagger: 0.15,
+      duration: 0.6,
       scrollTrigger: {
         trigger: ".events-section",
-        start: "top 85%",
-      },
+        start: "top bottom-=100",
+        end: "top center",
+        scrub: 1,
+      }
     });
 
-    gsap.utils.toArray<HTMLElement>(".hover-btn").forEach(btn => {
-      gsap.set(btn, { border: "0px solid rgba(255,255,255,.2)" });
-      btn.addEventListener("mouseenter", () =>
-        gsap.to(btn, { borderWidth: 6, duration: 0.25 })
-      );
-      btn.addEventListener("mouseleave", () =>
-        gsap.to(btn, { borderWidth: 0, duration: 0.25 })
-      );
-    });
-  }, { scope: root });
 
-  const handlePlay = async () => {
-    if (!authenticated) await login();
-    navigate("/dashboard");
+    // 1. Animate .title on page load (no change)
+    gsap.from(titleRef.current, {
+      duration: 2.0,
+      opacity: 0,
+      y: 50,
+      ease: "power3.out",
+      delay: 0.5,
+    });
+
+    // 2. Animate .wons-card elements tied to scroll position
+    gsap.from(".wons-card", {
+      opacity: 0,
+      y: 0,
+      rotation: (i) => gsap.utils.random(-10, 5), // 🔥 random per card
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: ".wons-grid",
+        start: "top bottom-=100",
+        end: "top center",
+        scrub: 1,
+      }
+    });
+
+
+    // 3. Animate buttons on hover (no change)
+    const animateButtonHover = (target: Element, glowColor: string) => {
+      gsap.to(target, {
+        border: '8px solid rgba(255, 255, 255, 0.197)',
+        duration: 0.3,
+        ease: "power1.inOut",
+      });
+    };
+
+    const resetButtonHover = (target: Element) => {
+      gsap.to(target, {
+        border: 'none',
+        duration: 0.3,
+        ease: "power1.inOut",
+      });
+    };
+
+    const discordBtn = discordBtnRef.current;
+    if (discordBtn) {
+      discordBtn.addEventListener("mouseenter", () => animateButtonHover(discordBtn, "rgba(110, 89, 255, 0.7)"));
+      discordBtn.addEventListener("mouseleave", () => resetButtonHover(discordBtn));
+    }
+
+    const playBtn = playBtnRef.current;
+    if (playBtn) {
+      playBtn.addEventListener("mouseenter", () => animateButtonHover(playBtn, "rgba(110, 89, 255, 0.7)"));
+      playBtn.addEventListener("mouseleave", () => resetButtonHover(playBtn));
+    }
+
+
+    // Cleanup event listeners on component unmount
+    return () => {
+      if (discordBtn) {
+        discordBtn.removeEventListener("mouseenter", () => animateButtonHover(discordBtn, "rgba(110, 89, 255, 0.7)"));
+        discordBtn.removeEventListener("mouseleave", () => resetButtonHover(discordBtn));
+      }
+      if (playBtn) {
+        playBtn.removeEventListener("mouseenter", () => animateButtonHover(playBtn, "rgba(110, 89, 255, 0.7)"));
+        playBtn.removeEventListener("mouseleave", () => resetButtonHover(playBtn));
+      }
+    };
+
+  }, { scope: container }); // Scope GSAP selectors to the container ref
+
+  const btnBase: React.CSSProperties = {
+    width: "120px",
+    height: "50px",
+    border: "none",
+    borderRadius: "50px",
+    margin: "10px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "20px",
+    textDecoration: "none",
+    padding: "5px 30px",
+    fontFamily: "Font1",
+    fontWeight: "bold",
   };
 
-  if (!ready) return null;
+  const discordBtn: React.CSSProperties = {
+    ...btnBase,
+    backgroundColor: "#907cff",
+    color: "#ffffff",
+    width: "60px",
+    padding: '5px'
+  };
+
+  const playBtn: React.CSSProperties = {
+    ...btnBase,
+    backgroundColor: "#907cff",
+    color: "#ffffff",
+    position: "relative",
+    overflow: "hidden",
+  };
+
+  const handlePlay = async (): Promise<void> => {
+    try {
+      if (!authenticated) {
+        await login();
+      }
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Login failed:", err);
+    }
+  };
+
+  if (!ready) return <div>Loading...</div>;
 
   return (
-    <div ref={root}>
-      <section className="hero-center">
-        <h1 className="title">1.2k Nads</h1>
-        <Rive src="test.riv" stateMachines="idle" />
-      </section>
+    <div
+      ref={container}
+      className="home-container"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+      }}
+    >
+      {/* Centered Section */}
+      <div
+        className="hero-center"
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
 
-      <section className="wons-section">
-        <div className="wons-grid">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="wons-card" />
-          ))}
-        </div>
-      </section>
+        <h1 className="title" ref={titleRef}>
+          1.2k Nads
+        </h1>
 
-      <section className="stats-section">
-        <div className="stats-grid">
-          {[
-            ["0", "Daily Players"],
-            ["0", "Total Matches"],
-            ["0", "Fucks given"],
-            ["$0.00", "Given out"],
-          ].map(([v, l]) => (
-            <div key={l} className="stats-card">
-              <span className="stats-value">{v}</span>
-              <div>{l}</div>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      <section className="events-section">
-        <div className="events-grid">
-          {[
-            ["Latest on WONs", "Core dev updates"],
-            ["WON Batches", "Seasonal waves"],
-            ["WON Creators", "2025 creator program"],
-          ].map(([h, p]) => (
-            <div key={h} className="event-card">
-              <h3>{h}</h3>
-              <p>{p}</p>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      <div className="footer-buttons">
-        <a
-          className="hover-btn"
-          href="https://discord.gg/z4SUdrKayb"
-          target="_blank"
-          rel="noopener noreferrer"
+        <div
+          className="absolute bottom-0 w-[100vw] h-[100vw] md:w-[80vh] md:h-[80vh]"
         >
-          <FaDiscord size={28} />
-        </a>
+          <Rive
+            src="test.riv"
+            stateMachines="idle"
+          />
+        </div>
 
-        <button className="hover-btn" onClick={handlePlay}>
-          {authenticated ? "Lobby" : "Login"}
-        </button>
+
       </div>
+
+      {/* Contents Section */}
+      <div>
+        {/* --- WHAT'S ON WONS SECTION --- */}
+        <section className="wons-section">
+          <div className="wons-grid">
+            <div className="wons-card"></div>
+            <div className="wons-card"></div>
+            <div className="wons-card"></div>
+            <div className="wons-card"></div>
+          </div>
+        </section>
+
+
+
+
+
+        {/* ====== WONs CHICKEN CHAOS NIGHT PREVIEW ====== */}
+        <section className="dex-section">
+          <h2>Chicken CHAOS Night</h2>
+          <p>Compete for Nothing every Weekend on WONs.</p>
+          <div className="dex-preview">
+            <div className="dex-screenshot">▓▓░░░░░░░░ 67%</div>
+          </div>
+        </section>
+
+
+        {/* ====== LIVE STATS SECTION ====== */}
+        <section className="stats-section">
+
+          <div className="stats-grid">
+            <div className="stats-card">
+              <span className="stats-value">0</span>
+              <span className="stats-label">Daily Players</span>
+            </div>
+            <div className="stats-card">
+              <span className="stats-value">0</span>
+              <span className="stats-label">Total Matches</span>
+            </div>
+            <div className="stats-card">
+              <span className="stats-value">0</span>
+              <span className="stats-label">Fucks given</span>
+            </div>
+            <div className="stats-card">
+              <span className="stats-value">$0.00</span>
+              <span className="stats-label">Given out</span>
+            </div>
+          </div>
+        </section>
+
+
+        {/* ====== WONs HAPPENINGS ====== */}
+        <section className="events-section">
+          <h2>WONs Happenings</h2>
+          <div className="events-grid">
+            <div className="event-card">
+              <h3>Latest on WONs</h3>
+              <p>Read the latest development drops from the core team.</p>
+            </div>
+            <div className="event-card">
+              <h3>WON Batches</h3>
+              <p>Seasonal competitive game waves and challenge rounds.</p>
+            </div>
+            <div className="event-card">
+              <h3>WON CREATORS</h3>
+              <p>2025 Wons creators program —  start your wonstreaming career with Wons.</p>
+            </div>
+          </div>
+
+        </section>
+
+
+
+
+      </div>
+
+      {/* Footer Section */}
+      <footer
+        style={{
+          padding: "10px",
+          color: "rgba(0, 0, 0, 0.51)",
+          textAlign: "center",
+          fontSize: "medium",
+          position: "relative",
+        }}
+      >
+        &copy; {new Date().getFullYear()} WON – All rights reserved
+        {/* Button container */}
+        <div className="footer-buttons">
+          <a
+            ref={discordBtnRef}
+            href="https://discord.gg/z4SUdrKayb"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={discordBtn}
+            className="discord-btn"
+            title="Join Discord"
+          >
+            <FaDiscord size={28} />
+          </a>
+          <button
+            ref={playBtnRef}
+            onClick={handlePlay}
+            style={playBtn}
+            className="play-btn"
+            title="Play"
+          >
+            <span className="stars"></span>
+            <span>{authenticated ? "Lobby" : "Login"}</span>
+          </button>
+        </div>
+
+        {/* Inline Styles */}
+        <style>
+          {`
+            .footer-buttons {
+              position: fixed;
+              bottom: 20px;
+              display: flex;
+              flex-direction: row;
+            }
+
+            @media (min-width: 768px) {
+              .footer-buttons {
+                right: 20px;
+                left: auto;
+                justify-content: flex-end;
+              }
+            }
+
+            @media (max-width: 767px) {
+              .footer-buttons {
+                left: 50%;
+                transform: translateX(-50%);
+                right: auto;
+                justify-content: center;
+              }
+            }
+        
+          `}
+        </style>
+      </footer>
+
     </div>
   );
-}
+};
+
+export default Home;
