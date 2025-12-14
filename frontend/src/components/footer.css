@@ -23,6 +23,8 @@
 }
 
 .footer-text {
+    display: block;
+    max-width: fit-content;
     font-size: 14px;
     font-weight: bold;
     opacity: 0.9;

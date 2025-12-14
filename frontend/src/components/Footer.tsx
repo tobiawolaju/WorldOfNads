@@ -19,7 +19,14 @@ const Footer = () => {
           alt="site logo"
           className="footer-logo"
         />
-        <p className="footer-text">And then I WON.</p>
+        <p className="footer-text">
+          World of Nads Oy
+          <br />
+          Jätkäsaarenlaituri 1
+          <br />
+          00180 Helsinki
+          <br />
+          Finland</p>
       </div>
 
       {/* Navigation */}
