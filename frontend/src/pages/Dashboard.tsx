@@ -140,7 +140,7 @@ export default function Dashboard() {
 
   const [earned, setEarned] = useState<number>(0);
   const [selectedMatch, setSelectedMatch] = useState<number | null>(null);
-  const [tab, setTab] = useState<"events" | "results">("events");
+  const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
 
   const [playButtonState, setPlayButtonState] = useState<"idle" | "counting">("idle");
@@ -472,8 +472,11 @@ export default function Dashboard() {
           <div className={tab === "events" ? "tab active" : "tab"} onClick={() => setTab("events")}>
             Events
           </div>
-          <div className={tab === "results" ? "tab active" : "tab"} onClick={() => setTab("results")}>
-            Results
+          <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => setTab("rewards")}>
+            Rewards
+          </div>
+          <div className={tab === "store" ? "tab active" : "tab"} onClick={() => setTab("store")}>
+            Store
           </div>
         </div>
 

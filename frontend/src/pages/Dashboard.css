@@ -12,7 +12,7 @@
 .left-3d-section {
   width: 50%;
   height: 100vh;
-  background:#00000000 ;
+  background: #00000000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -50,7 +50,10 @@
   padding-top: 10px;
   scrollbar-width: none;
 }
-.matches-scroll::-webkit-scrollbar { display: none; }
+
+.matches-scroll::-webkit-scrollbar {
+  display: none;
+}
 
 
 
@@ -63,8 +66,10 @@
   cursor: pointer;
   transition: 0.2s;
 }
-.match-button.live:hover { 
-  transform: scale(1.06); }
+
+.match-button.live:hover {
+  transform: scale(1.06);
+}
 
 
 
@@ -95,7 +100,7 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-background: hsl(249, 100%, 74%);
+  background: hsl(249, 100%, 74%);
   color: white;
   cursor: pointer;
   z-index: 20;
@@ -107,7 +112,7 @@ background: hsl(249, 100%, 74%);
   margin: 10px;
   padding: 5px, 30px;
   transition: 0.25s ease;
-  width:120px;
+  width: 120px;
   opacity: 1;
   border: none;
   cursor: pointer;
@@ -129,11 +134,12 @@ background: hsl(249, 100%, 74%);
 
 /* Disabled / Active White Background State */
 .play-fixed.disabled {
-background: hsl(249, 100%, 74%);
+  background: hsl(249, 100%, 74%);
   color: #ffffff;
-  border: 8px solid rgba(255, 255, 255, 0.197);  /* ← Black border when white */
+  border: 8px solid rgba(255, 255, 255, 0.197);
+  /* ← Black border when white */
   cursor: not-allowed;
-  opacity:0.5;
+  opacity: 0.5;
 }
 
 /* Active hover effects */
@@ -146,12 +152,13 @@ background: hsl(249, 100%, 74%);
   display: flex;
   gap: 20px;
   font-family: font2;
-  font-size: 1.2rem;
+  font-size: 1.8rem;
   user-select: none;
 }
-@media (max-width:768px){
-  .tabs{
-  margin-top:-40px;
+
+@media (max-width:768px) {
+  .tabs {
+    margin-top: -40px;
   }
 }
 
@@ -161,10 +168,11 @@ background: hsl(249, 100%, 74%);
   transition: 0.25s;
   scale: 0.8;
 }
+
 .tab.active {
   opacity: 1;
   scale: 1.2;
-  color: #000000;
+  color: hsl(249, 100%, 74%);
   transform: translateX(8px);
 }
 
@@ -174,6 +182,7 @@ background: hsl(249, 100%, 74%);
   gap: 10px;
   margin-bottom: 24px;
 }
+
 .filter {
   font-size: 0.8rem;
   padding: 2px 5px;
@@ -182,6 +191,7 @@ background: hsl(249, 100%, 74%);
   opacity: 0.5;
   transition: 0.25s;
 }
+
 .filter.active {
   opacity: 1;
   background: #00000020;
@@ -195,7 +205,8 @@ background: hsl(249, 100%, 74%);
 /* Wrapper stays fixed and holds the fade */
 .matches-wrapper {
   position: relative;
-  overflow: hidden; /* ← VERY IMPORTANT */
+  overflow: hidden;
+  /* ← VERY IMPORTANT */
 }
 
 /* Your scrolling container */
@@ -210,10 +221,13 @@ background: hsl(249, 100%, 74%);
 }
 
 /* Hide scrollbar */
-.matches-carousel::-webkit-scrollbar { display: none; }
-.matches-carousel { 
+.matches-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.matches-carousel {
   scroll-behavior: smooth;
- }
+}
 
 /* Fades now anchor correctly */
 .matches-wrapper::before,
@@ -222,7 +236,8 @@ background: hsl(249, 100%, 74%);
   position: absolute;
   top: 0;
   height: 100%;
-  width: 60px; /* Adjust fade width */
+  width: 60px;
+  /* Adjust fade width */
   pointer-events: none;
   z-index: 10;
 }
@@ -230,19 +245,21 @@ background: hsl(249, 100%, 74%);
 /* LEFT Fade */
 .matches-wrapper::before {
   left: 0;
-  background: linear-gradient(to right, #ffffff94 0%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(to right, #ffffff94 0%, rgba(255, 255, 255, 0) 100%);
 }
 
 /* RIGHT Fade */
 .matches-wrapper::after {
   right: 0;
-  background: linear-gradient(to left, #ffffff94 0%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(to left, #ffffff94 0%, rgba(255, 255, 255, 0) 100%);
 }
 
 
 
 
-.matches-carousel::-webkit-scrollbar { display: none; }
+.matches-carousel::-webkit-scrollbar {
+  display: none;
+}
 
 
 
@@ -263,7 +280,7 @@ background: hsl(249, 100%, 74%);
     box-shadow 0.3s ease,
     opacity 0.4s ease;
   opacity: 0.5;
-  background-size:contain;
+  background-size: contain;
   scale: 0.9;
 }
 
@@ -296,6 +313,7 @@ background: hsl(249, 100%, 74%);
   opacity: 0.8;
   transition: opacity 0.3s ease;
 }
+
 .match-card:hover::after {
   opacity: 1;
 }
@@ -360,10 +378,11 @@ background: hsl(249, 100%, 74%);
   backdrop-filter: blur(6px);
   transition: 0.25s;
 }
+
 .id-card-logout-button:hover {
   background: rgba(255, 255, 255, 0.685);
   transform: translateY(-2px);
-  color:#000000
+  color: #000000
 }
 
 
@@ -466,9 +485,9 @@ background: hsl(249, 100%, 74%);
 }
 
 .ticket-logout-button {
-  position:absolute;
-  bottom:-50px;
-  right:0px;
+  position: absolute;
+  bottom: -50px;
+  right: 0px;
   padding: 5px 10px;
   border-radius: 50px;
   border: 3px solid #7c6dff;
@@ -498,16 +517,20 @@ background: hsl(249, 100%, 74%);
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
 }
 
 .play-fixed.counting {
-background: hsl(249, 100%, 74%);/* Dark background for contrast */
+  background: hsl(249, 100%, 74%);
+  /* Dark background for contrast */
   color: #ffffff;
-  width: 160px; /* Wider to fit the new text */
-  overflow: hidden; /* Important: keeps the pseudo-element contained */
+  width: 160px;
+  /* Wider to fit the new text */
+  overflow: hidden;
+  /* Important: keeps the pseudo-element contained */
 
 }
 
@@ -519,16 +542,16 @@ background: hsl(249, 100%, 74%);/* Dark background for contrast */
   top: -50%;
   left: -50%;
   width: 200%;
-  
+
   height: 200%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0%,
-    transparent 50%,
-    #ffffff 75%, /* Purple */
-    #6200ff 90%, /* Pink */
-    #ffffff 100% 
-  );
+  background: conic-gradient(from 0deg,
+      transparent 0%,
+      transparent 50%,
+      #ffffff 75%,
+      /* Purple */
+      #6200ff 90%,
+      /* Pink */
+      #ffffff 100%);
   animation: rotate-border 4s linear infinite;
 }
 
@@ -537,9 +560,12 @@ background: hsl(249, 100%, 74%);/* Dark background for contrast */
   content: "";
   position: absolute;
   z-index: 1;
-  inset: 4px; /* This value determines the border thickness */
-background: hsl(249, 100%, 74%); /* Must match the button's background */
-  border-radius: 50px; /* Should match the button's border-radius */
+  inset: 4px;
+  /* This value determines the border thickness */
+  background: hsl(249, 100%, 74%);
+  /* Must match the button's background */
+  border-radius: 50px;
+  /* Should match the button's border-radius */
 }
 
 /* Ensure the text content is on top of all pseudo-elements */
@@ -668,6 +694,7 @@ background: hsl(249, 100%, 74%); /* Must match the button's background */
   color: #5c00ff;
   font-weight: 600;
 }
+
 .match-details-twitter:hover {
   transform: translateY(-2px);
   background: rgba(255, 255, 255, 0.55);
@@ -685,14 +712,13 @@ background: hsl(249, 100%, 74%); /* Must match the button's background */
 
 /* Small fade animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0px); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
 }
-
-
-
-
-
-
-
-
