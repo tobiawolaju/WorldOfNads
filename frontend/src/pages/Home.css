@@ -30,7 +30,7 @@ body {
   font-weight: bold;
   margin: 0;
 
-  background-image: url('/banner.jpg');
+  background-image: url('/videoplayback.gif');
   /* replace */
   background-size: cover;
   /* ensures no skewing */
