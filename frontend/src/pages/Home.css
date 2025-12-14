@@ -197,6 +197,7 @@ body {
 }
 
 .backed-section h2 {
+  color: #907cff;
   font-size: 2.5rem;
   font-weight: 800;
   margin-bottom: 40px;
@@ -210,12 +211,9 @@ body {
 }
 
 .backed-card {
-  background: #ffffff69;
-  padding: 20px 40px;
-  border-radius: 14px;
+  padding: -20px -40px;
   font-weight: 700;
   font-size: 1.2rem;
-  border-radius: 25%;
 }
 
 

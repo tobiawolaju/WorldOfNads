@@ -223,10 +223,10 @@ const Home: React.FC = () => {
         <section className="backed-section">
           <h2>Backed By</h2>
           <div className="backed-logos">
-            <div className="backed-card">******</div>
-            <div className="backed-card">******</div>
-            <div className="backed-card">******</div>
-            <div className="backed-card">******</div>
+            <div className="backed-card">No Vc</div>
+            <div className="backed-card">No Angel Investors</div>
+            <div className="backed-card">No Founding Engineer</div>
+            <div className="backed-card">No Monad Whale</div>
           </div>
         </section>
 
@@ -235,20 +235,20 @@ const Home: React.FC = () => {
           <h2>WON Network Stats</h2>
           <div className="stats-grid">
             <div className="stats-card">
-              <span className="stats-value">12,342</span>
-              <span className="stats-label">Players on WONs</span>
+              <span className="stats-value">0</span>
+              <span className="stats-label">Daily Players</span>
             </div>
             <div className="stats-card">
-              <span className="stats-value">98,221</span>
+              <span className="stats-value">0</span>
               <span className="stats-label">Total Matches</span>
             </div>
             <div className="stats-card">
-              <span className="stats-value">42ms</span>
-              <span className="stats-label">Latency</span>
+              <span className="stats-value">0</span>
+              <span className="stats-label">Fucks given</span>
             </div>
             <div className="stats-card">
-              <span className="stats-value">0.3s</span>
-              <span className="stats-label">Block Time</span>
+              <span className="stats-value">$0.00</span>
+              <span className="stats-label">Given out</span>
             </div>
           </div>
         </section>
@@ -256,9 +256,9 @@ const Home: React.FC = () => {
         {/* ====== WONs CHICKEN CHAOS NIGHT PREVIEW ====== */}
         <section className="dex-section">
           <h2>Chicken CHAOS Night</h2>
-          <p>Compete for $10k every Weekend on WONs.</p>
+          <p>Compete for Nothing every Weekend on WONs.</p>
           <div className="dex-preview">
-            <div className="dex-screenshot">CHAOS MATCH and TAG TWEET PLACEHOLDER</div>
+            <div className="dex-screenshot">▓▓░░░░░░░░ 67%</div>
           </div>
         </section>
 
@@ -267,7 +267,7 @@ const Home: React.FC = () => {
           <h2>WONs Happenings</h2>
           <div className="events-grid">
             <div className="event-card">
-              <h3>WON Substack</h3>
+              <h3>Latest on WONs</h3>
               <p>Read the latest development drops from the core team.</p>
             </div>
             <div className="event-card">
@@ -275,16 +275,11 @@ const Home: React.FC = () => {
               <p>Seasonal competitive game waves and challenge rounds.</p>
             </div>
             <div className="event-card">
-              <h3>WON CAMP</h3>
-              <p>2025 Bootcamp — Learn, build, and compete on WON.</p>
-            </div>
-            <div className="event-card">
-              <h3>Meetups</h3>
-              <p>Local gatherings and Web3 gaming meetups.</p>
+              <h3>WON CREATORS</h3>
+              <p>2025 Wons creators program —  start your wonstreaming career with Wons.</p>
             </div>
           </div>
 
-          <button className="events-btn">Read More</button>
         </section>
 
 
