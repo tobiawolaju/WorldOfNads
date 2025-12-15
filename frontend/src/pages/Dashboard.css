@@ -165,7 +165,7 @@
 .tab {
   opacity: 0.35;
   cursor: pointer;
-  transition: 0.25s;
+  transition: 0.5s;
   scale: 0.8;
 }
 
