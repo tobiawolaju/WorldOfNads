@@ -10,7 +10,7 @@
   font-size: 15vw;
   font-weight: 800;
   margin-bottom: 20px;
-  font-family: Font2;
+  font-family: Font3;
   color: #6a38ff;
 }
 
@@ -31,7 +31,8 @@
 
 .pretge-card {
   border-radius: 12px;
-  border: 1px solid #e2e8f0; /* Default card border */
+  border: 1px solid #e2e8f0;
+  /* Default card border */
   background: #ffffff;
   padding: 25px;
   transition: all 0.3s ease;
@@ -192,7 +193,3 @@
   background: #6c757d;
   opacity: 0.8;
 }
-
-
-
-
