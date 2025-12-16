@@ -13,6 +13,13 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Font3';
+  src: url('/font3.ttf') format('truetype');
+  font-display: swap;
+}
+
+
 /* 2️⃣ Global reset + background */
 body {
   margin: 0;
@@ -164,6 +171,7 @@ body {
 
 .wons-section h2 {
   font-size: 2rem;
+  font-family: font3;
 }
 
 
