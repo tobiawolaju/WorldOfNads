@@ -51,8 +51,8 @@ const FundWallet = () => {
   const fundWalletEvmHandler = (
     asset?:
       | {
-          erc20: Hex;
-        }
+        erc20: Hex;
+      }
       | "USDC"
       | "native-currency"
   ) => {

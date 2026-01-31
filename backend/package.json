@@ -1,22 +1,16 @@
 {
-  "name": "multiplayer-server",
+  "name": "server",
   "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
   "type": "module",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "firebase-admin": "^13.6.0",
-    "node-cron": "^4.2.1",
-    "node-fetch": "^3.3.2",
-    "uuid": "^13.0.0",
     "ws": "^8.18.3"
   }
 }

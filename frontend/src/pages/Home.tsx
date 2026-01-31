@@ -7,8 +7,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-//remeber to unsinstall this
-import Rive from '@rive-app/react-canvas';
+
 
 // Register the ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
@@ -172,19 +171,11 @@ const Home: React.FC = () => {
       >
 
         <h1 className="title" ref={titleRef}>
-          1.2k Nads
+          World of Nads
         </h1>
 
 
 
-        <div
-          className="absolute bottom-0 w-[100vw] h-[100vw] md:w-[80vh] md:h-[80vh]"
-        >
-          <Rive
-            src="test.riv"
-            stateMachines="idle"
-          />
-        </div>
 
 
       </div>
@@ -203,41 +194,6 @@ const Home: React.FC = () => {
         </section>
 
 
-
-
-
-        {/* ====== WONs CHICKEN CHAOS NIGHT PREVIEW ====== */}
-        <section className="dex-section">
-          <h2>Chicken CHAOS Night</h2>
-          <p>Compete for Nothing every Weekend on WONs.</p>
-          <div className="dex-preview">
-            <div className="dex-screenshot">▓▓░░░░░░░░ 67%</div>
-          </div>
-        </section>
-
-
-        {/* ====== LIVE STATS SECTION ====== */}
-        <section className="stats-section">
-
-          <div className="stats-grid">
-            <div className="stats-card">
-              <span className="stats-value">0</span>
-              <span className="stats-label">Daily Players</span>
-            </div>
-            <div className="stats-card">
-              <span className="stats-value">0</span>
-              <span className="stats-label">Total Matches</span>
-            </div>
-            <div className="stats-card">
-              <span className="stats-value">0</span>
-              <span className="stats-label">Fucks given</span>
-            </div>
-            <div className="stats-card">
-              <span className="stats-value">$0.00</span>
-              <span className="stats-label">Given out</span>
-            </div>
-          </div>
-        </section>
 
 
         {/* ====== WONs HAPPENINGS ====== */}

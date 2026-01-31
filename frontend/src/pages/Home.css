@@ -32,12 +32,12 @@ body {
 /* 3️⃣ Title styling */
 
 .title {
-  font-size: 23vw;
+  font-size: 15vw;
   font-family: 'Font2', sans-serif;
   font-weight: bold;
   margin: 0;
 
-  background-image: url('/videoplayback.gif');
+  background-image: url('/videoplayback.jpg');
   /* replace */
   background-size: cover;
   /* ensures no skewing */
@@ -54,7 +54,7 @@ body {
 /* Mobile */
 @media (max-width: 768px) {
   .title {
-    font-size: 46vw;
+    font-size: 35vw;
   }
 }
 
@@ -265,25 +265,6 @@ body {
   max-width: 900px;
   margin: auto;
 }
-
-.dex-screenshot {
-  background: #5a5a5a;
-  height: 300px;
-  border-radius: 16px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #ffffff;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
-
-
-
-
-
-
-
 
 
 

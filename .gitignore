@@ -15,6 +15,8 @@ lerna-debug.log*
 node_modules/
 frontend/node_modules/
 
+backend/node_modules/
+
 # ────────────────
 # Build output
 # ────────────────
@@ -53,27 +55,27 @@ backend/serviceAccount.json
 # ────────────────
 # Godot
 # ────────────────
-/WONpkg/.godot/
-/WONpkg/export_presets.cfg
-/WONpkg/icon.svg.import
-/WONpkg/*.translation
+/godot/.godot/
+/godot/export_presets.cfg
+/godot/icon.svg.import
+/godot/*.translation
 
 # Godot - Exported binaries
-/WONpkg/builds/
-/WONpkg/*.o
-/WONpkg/*.so
-/WONpkg/*.a
-/WONpkg/*.dll
-/WONpkg/*.pdb
-/WONpkg/*.app
-/WONpkg/*.apk
-/WONpkg/*.ipa
-/WONpkg/*.xap
-/WONpkg/*.exe
-/WONpkg/*.dmg
-/WONpkg/*.pkg
-/WONpkg/*.deb
-/WONpkg/*.rpm
+/godot/builds/
+/godot/*.o
+/godot/*.so
+/godot/*.a
+/godot/*.dll
+/godot/*.pdb
+/godot/*.app
+/godot/*.apk
+/godot/*.ipa
+/godot/*.xap
+/godot/*.exe
+/godot/*.dmg
+/godot/*.pkg
+/godot/*.deb
+/godot/*.rpm
 
 #Contracts
 # Node modules
