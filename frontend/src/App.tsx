@@ -1,12 +1,10 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { usePrivy } from "@privy-io/react-auth";
 
 // Layout Components
 import BackgroundPattern from "./components/Background";
 import TopNavbar from "./components/TopNavbar";
 // UI
-import { FullScreenLoader } from "./components/ui/fullscreen-loader";
 import Footer from "./components/Footer";
 
 
@@ -22,28 +20,22 @@ import Play from "./pages/Play";
 import Careers from "./pages/Careers";
 
 const AppContent: React.FC = () => {
-  const { ready, authenticated, login } = usePrivy();
   const location = useLocation();
-
-  if (!ready) {
-    return <FullScreenLoader />;
-  }
 
   // Hide navbar on /play route
   const hideNavbar = location.pathname === "/play";
   const hideFooter = location.pathname === "/dashboard";
 
-
   return (
     <>
       <BackgroundPattern />
       <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-        {!hideNavbar && <TopNavbar />} {/* 👈 conditionally render navbar */}
+        {!hideNavbar && <TopNavbar />}
 
         <main style={{ flex: 1 }}>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Home onLogin={login} authenticated={authenticated} />} />
+            <Route path="/" element={<Home />} />
             <Route path="/crew" element={<Crew />} />
             <Route path="/pre-tge-arena" element={<PreTGEArena />} />
             <Route path="/roadmap" element={<Roadmap />} />
@@ -51,15 +43,9 @@ const AppContent: React.FC = () => {
             <Route path="/partners" element={<Partners />} />
             <Route path="/careers" element={<Careers />} />
 
-            {/* Protected Routes */}
-            <Route
-              path="/dashboard"
-              element={authenticated ? <Dashboard /> : <Navigate to="/" replace />}
-            />
-            <Route
-              path="/play"
-              element={authenticated ? <Play /> : <Navigate to="/" replace />}
-            />
+            {/* Previously protected routes - now public */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/play" element={<Play />} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />

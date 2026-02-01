@@ -62,22 +62,22 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
       shaderRef.current.uniforms.uTime.value = clock.getElapsedTime();
     }
   });
-  
+
   // Memoize the material to prevent it from being recreated on every render
   const bubbleMaterial = useMemo(() => new THREE.ShaderMaterial({
-      uniforms: {
-          uTime: { value: 0 },
-      },
-      vertexShader,
-      fragmentShader,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false, 
+    uniforms: {
+      uTime: { value: 0 },
+    },
+    vertexShader,
+    fragmentShader,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   }), []);
 
   return (
     <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
-      
+
       {/* === GLASS BODY WITH SHADER === */}
       <mesh>
         <boxGeometry args={[9.5, 5.5, 0.12]} />
@@ -113,44 +113,44 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
         }}
       >
 
-            <div className="golden-ticket-container">
-      <div className="ticket-main">
-        <div className="ticket-header">
-          <h1 className="ticket-title">WONs Ticket</h1>
-        </div>
+        <div className="golden-ticket-container">
+          <div className="ticket-main">
+            <div className="ticket-header">
+              <h1 className="ticket-title">WONs Ticket</h1>
+            </div>
 
-        <div className="ticket-content">
-          <img
-            src={twitter?.profilePictureUrl || "/default-avatar.png"}
-            className="ticket-avatar"
-            alt="Avatar"
-          />
+            <div className="ticket-content">
+              <img
+                src={twitter?.profilePictureUrl || "/default-avatar.png"}
+                className="ticket-avatar"
+                alt="Avatar"
+              />
 
-          <div className="ticket-info">
-            <div className="ticket-name">{twitter?.name || "Player"}</div>
-            <div className="ticket-handle">@{twitter?.username}</div>
-            <div className="ticket-wallets">
-              {wallets.map((w, i) => (
-                <div key={i}>
-                  {w.address.slice(0, 6)}...{w.address.slice(-4)}
+              <div className="ticket-info">
+                <div className="ticket-name">{twitter?.name || "Player"}</div>
+                <div className="ticket-handle">@{twitter?.username || "guest"}</div>
+                <div className="ticket-wallets">
+                  {wallets.map((w, i) => (
+                    <div key={i}>
+                      {w.address.slice(0, 6)}...{w.address.slice(-4)}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            </div>
+
+
+          </div>
+
+          <div className="ticket-stub">
+            <div className="stub-earned">
+              {earned.toLocaleString()}
+              <span>MON Earned</span>
             </div>
           </div>
-        </div>
 
-        
-      </div>
-
-      <div className="ticket-stub">
-        <div className="stub-earned">
-          {earned.toLocaleString()}
-          <span>MON Earned</span>
         </div>
-      </div>
-      
-    </div>
-    <button className="ticket-logout-button" onClick={onLogout}>
+        <button className="ticket-logout-button" onClick={onLogout}>
           Logout
         </button>
 

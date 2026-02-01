@@ -118,7 +118,7 @@ const Chicken: React.FC<ChickenProps> = ({
       position={position}
       rotation={rotation}
       scale={scale}
-      onClick={(e) => {
+      onClick={(e: any) => {
         e.stopPropagation();
         onSelect(model);
       }}
@@ -174,7 +174,7 @@ const NadModel: React.FC<NadModelProps> = ({
       position={position}
       rotation={rotation}
       scale={scale}
-      onClick={(e) => {
+      onClick={(e: any) => {
         e.stopPropagation();
         onSelect(model);
       }}
@@ -270,8 +270,8 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
         enableRotate={true}
         mouseButtons={{
           LEFT: THREE.MOUSE.ROTATE,
-          MIDDLE: null,
-          RIGHT: null,
+          MIDDLE: null as any,
+          RIGHT: null as any,
         }}
       />
     </Canvas>

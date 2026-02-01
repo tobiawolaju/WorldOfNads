@@ -1,19 +1,15 @@
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePrivy } from "@privy-io/react-auth";
 import "./Home.css";
 import { FaDiscord } from "react-icons/fa";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-
-
 // Register the ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
 
 const Home: React.FC = () => {
-  const { ready, authenticated, login } = usePrivy();
   const navigate = useNavigate();
 
   // Refs for GSAP animations
@@ -136,18 +132,9 @@ const Home: React.FC = () => {
     overflow: "hidden",
   };
 
-  const handlePlay = async (): Promise<void> => {
-    try {
-      if (!authenticated) {
-        await login();
-      }
-      navigate("/dashboard");
-    } catch (err) {
-      console.error("Login failed:", err);
-    }
+  const handlePlay = (): void => {
+    navigate("/dashboard");
   };
-
-  if (!ready) return <div>Loading...</div>;
 
   return (
     <div
@@ -173,10 +160,6 @@ const Home: React.FC = () => {
         <h1 className="title" ref={titleRef}>
           World of Nads
         </h1>
-
-
-
-
 
       </div>
 
@@ -262,7 +245,7 @@ const Home: React.FC = () => {
             title="Play"
           >
             <span className="stars"></span>
-            <span>{authenticated ? "Lobby" : "Login"}</span>
+            <span>Lobby</span>
           </button>
         </div>
 
