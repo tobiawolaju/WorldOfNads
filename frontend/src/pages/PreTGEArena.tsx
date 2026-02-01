@@ -273,7 +273,7 @@ function PreTGEArena() {
   return (
     <div className="pretge-container">
       <div style={{ height: "60px" }}></div>
-      <h1 className="pretge-title">Pre-TGE Arena</h1>
+      <h1 className="pretge-title">Nad Arena</h1>
       <p className="pretge-intro">
         Discover the next wave of innovation. Early access to groundbreaking
         projects before they launch.

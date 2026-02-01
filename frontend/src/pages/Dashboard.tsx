@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
+import { usePrivy } from "@privy-io/react-auth";
 import { useNavigate } from "react-router-dom";
+import { FullScreenLoader } from "../components/ui/fullscreen-loader";
 import { ThreeScene } from "../components/ThreeScene";
 import "./Dashboard.css";
 
@@ -31,34 +33,47 @@ const db = getDatabase(app);
 
 // --- HELPER FUNCTIONS ---
 
-// Mock user for now (without Privy)
-const mockUser = {
-  id: "guest-user",
-  username: "Guest",
-};
-
-function getUsername(): string {
-  return mockUser.username;
+function getUsernameFromPrivy(user: any): string {
+  const twitter = user.linkedAccounts?.find((acc: any) => acc.type === "twitter_oauth");
+  const wallet = user.linkedAccounts?.find((acc: any) => acc.type === "wallet");
+  return twitter?.username || wallet?.address || "Anon";
 }
 
-async function saveUserToFirebase(username: string, db: any) {
+async function saveUserToFirebase(user: any, db: any) {
+  if (!user?.id) return;
+
+  const username = getUsernameFromPrivy(user);
+
+  // Extract specific fields from Linked Accounts
+  const twitter = user.linkedAccounts?.find((acc: any) => acc.type === "twitter_oauth");
+  const wallet = user.linkedAccounts?.find((acc: any) => acc.type === "wallet");
+
+  // Point to "users/{username}"
   const userRef = ref(db, `users/${username}`);
 
   try {
     const snapshot = await get(userRef);
 
+    // Common data to update regardless if new or old
     const updates = {
       lastLogin: new Date().toISOString(),
+      latestVerifiedAt: twitter?.latestVerifiedAt || wallet?.latestVerifiedAt || new Date().toISOString(),
+      profilePictureUrl: twitter?.profilePictureUrl || "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
     };
 
     if (snapshot.exists()) {
+      // ✅ User exists: Update metadata ONLY (Do not overwrite projects or won count)
       await update(userRef, updates);
       console.log("✅ User metadata updated.");
     } else {
+      // 🆕 New User: Write FULL data
       const newUserPayload = {
+        privyId: user.id,
         username: username,
+        wallet: wallet?.address || null,
+        firstVerifiedAt: twitter?.firstVerifiedAt || wallet?.firstVerifiedAt || new Date().toISOString(),
         won: 0,
-        projects: [],
+        projects: [], // Initialize empty array
         ...updates
       };
 
@@ -100,7 +115,8 @@ async function updateUserProjects(username: string, matchSponsorName: string, db
 // --- TYPES ---
 type Twitter = {
   username?: string;
-  profile_picture_url?: string;
+  profilePictureUrl?: string; // Corrected from profile_picture_url to match IdCard.tsx expectations
+  name?: string;
 };
 
 type Wallet = {
@@ -120,6 +136,7 @@ type Match = {
 
 // --- MAIN COMPONENT ---
 export default function Dashboard() {
+  const { ready, authenticated, user, logout } = usePrivy();
   const navigate = useNavigate();
 
   const [earned, setEarned] = useState<number>(0);
@@ -136,15 +153,12 @@ export default function Dashboard() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Mock data for display (without Privy)
-  const twitter: Twitter | undefined = undefined;
-  const wallets: Wallet[] = [];
-
   // 1. Save User to Realtime DB on Load
   useEffect(() => {
-    const username = getUsername();
-    saveUserToFirebase(username, db);
-  }, []);
+    if (authenticated && user) {
+      saveUserToFirebase(user, db);
+    }
+  }, [authenticated, user]);
 
   // 2. Animate Earned Counter
   useEffect(() => {
@@ -183,11 +197,13 @@ export default function Dashboard() {
     if (!selectedMatch) return;
 
     // --- DB ACTION: ADD PROJECT TO USER ---
-    const match = matches.find(m => m.id === selectedMatch);
-    if (match) {
-      const username = getUsername();
-      // Add sponsor name to 'projects' array
-      await updateUserProjects(username, match.sponsor, db);
+    if (user) {
+      const match = matches.find(m => m.id === selectedMatch);
+      if (match) {
+        const username = getUsernameFromPrivy(user);
+        // Add sponsor name to 'projects' array
+        await updateUserProjects(username, match.sponsor, db);
+      }
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -211,9 +227,17 @@ export default function Dashboard() {
     }
   };
 
-  const handleLogout = () => {
-    navigate("/");
-  };
+  if (!ready) return <FullScreenLoader />;
+  if (!authenticated || !user) return null;
+
+  const twitterAcc = user.linkedAccounts?.find((acc) => acc.type === "twitter_oauth");
+  const twitterData: Twitter | undefined = twitterAcc ? {
+    username: twitterAcc.username,
+    profilePictureUrl: twitterAcc.profilePictureUrl,
+    name: twitterAcc.name || twitterAcc.username
+  } : undefined;
+
+  const wallets = (user.linkedAccounts?.filter((acc) => acc.type === "wallet") || []) as Wallet[];
 
   // --- DATA: MATCHES ---
   // MATCHES 
@@ -447,7 +471,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard-wrapper">
       <div className="left-3d-section">
-        <ThreeScene twitter={twitter} wallets={wallets} earned={earned} onLogout={handleLogout} />
+        <ThreeScene twitter={twitterData} wallets={wallets} earned={earned} onLogout={logout} />
       </div>
 
       <div className="right-info-section">

@@ -1,12 +1,13 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { usePrivy } from "@privy-io/react-auth";
 
 // Layout Components
 import BackgroundPattern from "./components/Background";
 import TopNavbar from "./components/TopNavbar";
 // UI
+import { FullScreenLoader } from "./components/ui/fullscreen-loader";
 import Footer from "./components/Footer";
-
 
 // Pages
 import Home from "./pages/Home";
@@ -20,7 +21,20 @@ import Play from "./pages/Play";
 import Careers from "./pages/Careers";
 
 const AppContent: React.FC = () => {
+  const { ready, authenticated } = usePrivy();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Redirect to dashboard after login if on home page
+  useEffect(() => {
+    if (ready && authenticated && location.pathname === "/") {
+      navigate("/dashboard");
+    }
+  }, [ready, authenticated, location.pathname, navigate]);
+
+  if (!ready) {
+    return <FullScreenLoader />;
+  }
 
   // Hide navbar on /play route
   const hideNavbar = location.pathname === "/play";
@@ -43,9 +57,15 @@ const AppContent: React.FC = () => {
             <Route path="/partners" element={<Partners />} />
             <Route path="/careers" element={<Careers />} />
 
-            {/* Previously protected routes - now public */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/play" element={<Play />} />
+            {/* Protected Routes */}
+            <Route
+              path="/dashboard"
+              element={authenticated ? <Dashboard /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="/play"
+              element={authenticated ? <Play /> : <Navigate to="/" replace />}
+            />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
