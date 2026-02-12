@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=4 uid="uid://bs0yq1yv60pjj"]
+[gd_scene format=4 uid="uid://bs0yq1yv60pjj"]
 
 [ext_resource type="ArrayMesh" uid="uid://djlfoy1u834mc" path="res://assets/models/Chicken.obj" id="2_3ngmj"]
 [ext_resource type="ArrayMesh" uid="uid://c8jku1vjebweb" path="res://assets/models/terrain.obj" id="2_k1c6p"]
