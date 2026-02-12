@@ -85,11 +85,11 @@ func _receive_messages():
 				_spawn_player(player_id, true)
 			"state":
 				if data.has("players"):
-					_update_world_state(data["players"])
+					_update_world_state(data["players"], data.get("objects", []))
 
 
 # --- UPDATED WORLD STATE WITH VISIBILITY ---
-func _update_world_state(players_state):
+func _update_world_state(players_state, objects_state):
 	var received_ids = []
 
 	for p_state in players_state:
@@ -128,6 +128,32 @@ func _update_world_state(players_state):
 	for id in players.keys():
 		if id != player_id and not id in received_ids:
 			_remove_player(id)
+			
+	# --- OBJECT SYNC ---
+	for o_state in objects_state:
+		var object_name = o_state["id"]
+		# Find the object in the scene
+		# We assume objects are direct children of the root/world or organized in a way we can find them
+		var object_node = get_node_or_null("/root/World/%s" % object_name)
+		if object_node and object_node is RigidBody3D:
+			# If someone else is holding it (or it's being moved by server), lerp it
+			# We don't want to fight with local physics if we are the one holding it
+			var is_held_locally = false
+			if players.has(player_id):
+				is_held_locally = (players[player_id].held_object == object_node)
+			
+			if not is_held_locally:
+				var server_pos = Vector3(o_state["x"], o_state["y"], o_state["z"])
+				var server_rot = Vector3(o_state["rotationX"], o_state["rotationY"], o_state["rotationZ"])
+				
+				# Smoothly move the object
+				object_node.global_position = object_node.global_position.lerp(server_pos, 0.3)
+				object_node.global_rotation.x = lerp_angle(object_node.global_rotation.x, server_rot.x, 0.3)
+				object_node.global_rotation.y = lerp_angle(object_node.global_rotation.y, server_rot.y, 0.3)
+				object_node.global_rotation.z = lerp_angle(object_node.global_rotation.z, server_rot.z, 0.3)
+				
+				# Ensure it doesn't fall through floor while syncing
+				object_node.freeze = true
 
 
 # --- VEHICLE SYNC ---

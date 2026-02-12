@@ -258,6 +258,19 @@ func _send_state_to_server() -> void:
 			"rotation_y": mesh.rotation.y,
 			"animation": current_animation
 		}))
+		
+		# Send held object updates if applicable
+		if held_object:
+			root.ws.send_text(JSON.stringify({
+				"type": "update_object",
+				"object_id": held_object.name,
+				"x": held_object.global_transform.origin.x,
+				"y": held_object.global_transform.origin.y,
+				"z": held_object.global_transform.origin.z,
+				"rotation_x": held_object.global_rotation.x,
+				"rotation_y": held_object.global_rotation.y,
+				"rotation_z": held_object.global_rotation.z
+			}))
 
 func set_animation_state(new_state: String):
 	if is_local: return
