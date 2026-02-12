@@ -11,7 +11,6 @@ const BROADCAST_RATE = 20;
 
 // --- Server State ---
 const players = {};
-const objects = {};
 
 // --- HTTP Server Setup (for health checks from Render) ---
 const server = createServer((req, res) => {
@@ -59,17 +58,6 @@ wss.on('connection', (ws, req) => {
                     // Store the animation state sent by the client
                     player.animation = data.animation;
                 }
-            } else if (data.type === 'update_object') {
-                // Update or create object state
-                objects[data.object_id] = {
-                    id: data.object_id,
-                    x: data.x,
-                    y: data.y,
-                    z: data.z,
-                    rotationX: data.rotation_x,
-                    rotationY: data.rotation_y,
-                    rotationZ: data.rotation_z
-                };
             }
         } catch (error) {
             console.error('Failed to parse message:', error);
@@ -88,7 +76,6 @@ const broadcastLoop = () => {
     const stateData = {
         type: 'state',
         players: Object.values(players),
-        objects: Object.values(objects),
     };
     const stateString = JSON.stringify(stateData);
 
