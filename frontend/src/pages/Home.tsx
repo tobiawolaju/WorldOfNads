@@ -204,7 +204,7 @@ const Home: React.FC = () => {
               </a>
             </div>
             <div className="event-card">
-              <h3>WON CREATORS</h3>
+              <h3>WON CREATORS Kekek</h3>
               <p>2025 Wons creators program —  start your wonstreaming career with Wons.</p>
               <a href="https://www.google.com" target="_blank" rel="noopener noreferrer" className="match-details-twitter">
                 Read ↗
