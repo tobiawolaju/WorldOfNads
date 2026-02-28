@@ -25,8 +25,47 @@ Think: tag + battle royale pressure, optimized for short, replayable sessions.
 - **Blockchain as backend**, not gameplay loop
 
 ### System Design
-- **Client:** Three.js / Babylon.js (60fps browser gameplay)
-- **Servers:** WebSocket-based authoritative movement & physics
+
+```mermaid
+graph TD
+    subgraph "Client Side"
+        A["Web Browser (React/Vite)"]
+        subgraph "Game Engine (Godot)"
+            B["Gameplay Logic"]
+            C["WebSocket Client"]
+            D["Rendering (GLES3/Vulkan)"]
+        end
+    end
+
+    subgraph "Server Side"
+        E["Node.js WebSocket Server"]
+        F["State Broadcast (20Hz)"]
+        G["Vercel Serverless (API)"]
+        H["Firebase (Persistence)"]
+    end
+
+    subgraph "Blockchain (Monad)"
+        I["Match Settlement"]
+        J["Smart Contracts"]
+    end
+
+    A -- "Embeds" --> B
+    C <--> E
+    E -- "Syncs" --> F
+    F -- "Updates" --> C
+    A <--> G
+    G <--> H
+    B -- "Match Results" --> I
+    I <--> J
+
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style E fill:#bfb,stroke:#333,stroke-width:2px
+    style I fill:#fdb,stroke:#333,stroke-width:2px
+```
+
+- **Client:** Godot Engine (Exported to WASM) embedded in a React/Vite wrapper.
+- **Servers:** Node.js WebSocket server for real-time state synchronization.
 - **Chain (Monad):**
   - Match settlement
   - Tournament payouts
