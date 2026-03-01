@@ -88,6 +88,16 @@ graph TD
 
 Real-time gameplay stays off-chain. Only outcomes that require trust go on-chain.
 
+
+---
+## 🛠 Tech Stack & Highlights
+
+- **Frontend / Engine:** Godot → WASM embedded in React/Vite  
+- **Networking:** Node.js WebSocket server @20Hz  
+- **Persistence:** Firebase for cosmetic state  
+- **Blockchain:** Monad smart contracts for match settlement + payouts  
+- **Gameplay:** 20-player arenas, 1–5 minute rounds, competitive balance  
+- **Key focus:** Fast, replayable, low-latency gameplay with trustless settlement
 ---
 
 ## 🔐 Why Blockchain Is Used Here
@@ -99,6 +109,14 @@ Real-time gameplay stays off-chain. Only outcomes that require trust go on-chain
 
 Players don’t need to “understand crypto” to play.
 
+---
+## 👨‍💻 My Role
+
+- Full-stack implementation: React + WASM Godot + Node.js  
+- Real-time networking, state synchronization, and game physics  
+- Blockchain integration for settlement + tournament payouts  
+- Systems architecture & performance optimization  
+- Gameplay and UX design for high retention
 ---
 
 ## 🚧 Status
