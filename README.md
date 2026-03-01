@@ -5,7 +5,7 @@
 
 <h1 align="center">World of Nads (WONs)</h1>
 <p align="center">
-  **World of Nads** is a real-time, browser-based multiplayer arena game that combines fast, chaotic gameplay with on-chain settlement using Monad.
+  World of Nads is a real-time, browser-based multiplayer arena game that combines fast, chaotic gameplay with on-chain settlement using Monad.
 </p>
 
 
