@@ -6,13 +6,23 @@
 <h1 align="center">World of Nads (WONs)</h1>
 <p align="center">
   World of Nads is a real-time, browser-based multiplayer arena game that combines fast, chaotic gameplay with on-chain settlement using Monad.
+  This project explores how to build mass-market games where blockchain is invisible to the player but critical for fairness, ownership, and payouts.
 </p>
+---
+<div style="display:flex; overflow-x:auto; gap:12px; padding:10px 0;white-space: nowrap;">
 
 
+    
+   <img src="./screenshots/1.gif" height="260"/>
+  <img src="./screenshots/2.gif" height="260"/>
+  <img src="./screenshots/3.gif" height="260"/>
+  <img src="./screenshots/4.gif" height="260"/>
+  <img src="./screenshots/5.gif" height="260"/>
+</div>
 
-
-This project explores how to build **mass-market games** where blockchain is invisible to the player but critical for fairness, ownership, and payouts.
-
+<p align="center">
+Scroll horizontally to view platform screenshots →
+</p>
 ---
 
 ## 🎮 What the Game Is
