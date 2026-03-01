@@ -19,10 +19,6 @@
   <img src="./screenshots/4.gif" height="260"/>
   <img src="./screenshots/5.gif" height="260"/>
 </div>
-
-<p align="center">
-Scroll horizontally to view platform screenshots →
-</p>
 ---
 
 ## 🎮 What the Game Is
