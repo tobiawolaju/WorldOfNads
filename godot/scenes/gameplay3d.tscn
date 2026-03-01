@@ -1,4 +1,4 @@
-[gd_scene load_steps=54 format=4 uid="uid://b48njcleqy6m3"]
+[gd_scene format=4 uid="uid://b48njcleqy6m3"]
 
 [ext_resource type="Script" uid="uid://timxi6dmdn2m" path="res://scripts/tick.gd" id="1_5bpam"]
 [ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_vuq5q"]
@@ -493,204 +493,204 @@ shadow_mesh = SubResource("ArrayMesh_30fkp")
 radius = 0.18017578
 height = 0.4659729
 
-[node name="Gameplayer" type="Node3D"]
+[node name="Gameplayer" type="Node3D" unique_id=844227963]
 
-[node name="Node" type="Node" parent="."]
+[node name="Node" type="Node" parent="." unique_id=851590252]
 script = ExtResource("1_5bpam")
 
-[node name="PlayerManager" type="Node3D" parent="."]
+[node name="PlayerManager" type="Node3D" parent="." unique_id=1626271999]
 script = ExtResource("1_vuq5q")
 
-[node name="GroundMesh" type="StaticBody3D" parent="PlayerManager"]
+[node name="GroundMesh" type="StaticBody3D" parent="PlayerManager" unique_id=337250964]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5161849, 0)
 
-[node name="floor" type="MeshInstance3D" parent="PlayerManager/GroundMesh"]
+[node name="floor" type="MeshInstance3D" parent="PlayerManager/GroundMesh" unique_id=1929826106]
 material_override = SubResource("StandardMaterial3D_ct7aa")
 mesh = ExtResource("2_ocj2s")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerManager/GroundMesh"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerManager/GroundMesh" unique_id=2109294253]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
 visible = false
 shape = SubResource("ConcavePolygonShape3D_ocj2s")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="PlayerManager/GroundMesh"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PlayerManager/GroundMesh" unique_id=2147189479]
 transform = Transform3D(400, 0, 0, 0, 400, 0, 0, 0, 400, 0, 0, 0)
 material_override = SubResource("StandardMaterial3D_ct7aa")
 mesh = SubResource("PlaneMesh_vuq5q")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="PlayerManager"]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="PlayerManager" unique_id=1423249583]
 environment = SubResource("Environment_00tan")
 
-[node name="CAMERABlock" type="MeshInstance3D" parent="PlayerManager"]
+[node name="CAMERABlock" type="MeshInstance3D" parent="PlayerManager" unique_id=2113137792]
 transform = Transform3D(1, 0, 0, 0, -0.0005934675, -0.9999998, 0, 0.9999998, -0.0005934675, 0, -11.384084, -0.60183656)
 material_override = SubResource("StandardMaterial3D_vuq5q")
 mesh = SubResource("PlaneMesh_5bpam")
 skeleton = NodePath("../Camera3D")
 
-[node name="Camera3D" type="Camera3D" parent="PlayerManager"]
+[node name="Camera3D" type="Camera3D" parent="PlayerManager" unique_id=590773890]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -11.384084, -0.026306748)
 fov = 120.0
 
-[node name="FallbackTimer" type="Timer" parent="PlayerManager"]
+[node name="FallbackTimer" type="Timer" parent="PlayerManager" unique_id=83054798]
 one_shot = true
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=2095516961]
 transform = Transform3D(0.99322146, -0.110632636, -0.035658754, 0.11623737, 0.9453303, 0.3046958, 0, -0.3067753, 0.951782, 0, 0.81719303, 2.8723717)
 light_color = Color(1, 0.7611074, 0.5848961, 1)
 light_energy = 2.0
 shadow_enabled = true
 
-[node name="Bus" parent="." instance=ExtResource("5_ocj2s")]
+[node name="Bus" parent="." unique_id=1237644976 instance=ExtResource("5_ocj2s")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.228, 18, 28.03)
 
-[node name="stones" type="Node3D" parent="."]
+[node name="stones" type="Node3D" parent="." unique_id=2053322477]
 
-[node name="Stone_5_Low" type="MeshInstance3D" parent="stones"]
+[node name="Stone_5_Low" type="MeshInstance3D" parent="stones" unique_id=1033966651]
 transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -2.9841068, -0.95634866, -0.03832674)
 material_override = SubResource("StandardMaterial3D_ct7aa")
 mesh = SubResource("ArrayMesh_gl1gq")
 skeleton = NodePath("")
 
-[node name="Stone_1_Low" type="MeshInstance3D" parent="stones"]
+[node name="Stone_1_Low" type="MeshInstance3D" parent="stones" unique_id=1665194473]
 transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 2, -0.40922874, -1.637)
 material_override = SubResource("StandardMaterial3D_ct7aa")
 mesh = SubResource("ArrayMesh_tb3vw")
 skeleton = NodePath("")
 
-[node name="Stone_4_Low" type="MeshInstance3D" parent="stones"]
+[node name="Stone_4_Low" type="MeshInstance3D" parent="stones" unique_id=130658219]
 transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0.77776676, -0.8663275, 4.2474647)
 material_override = SubResource("StandardMaterial3D_ct7aa")
 mesh = SubResource("ArrayMesh_42itn")
 skeleton = NodePath("")
 
-[node name="Banana" type="Node3D" parent="."]
+[node name="Banana" type="Node3D" parent="." unique_id=331185602]
 
-[node name="node_id27" type="MeshInstance3D" parent="Banana"]
+[node name="node_id27" type="MeshInstance3D" parent="Banana" unique_id=835052198]
 transform = Transform3D(0.095676795, 0.029085249, 0, -0.029085249, 0.095676795, 0, 0, 0, 0.1, 0.00021483013, -0.39485806, 0.0025600032)
 mesh = SubResource("ArrayMesh_bn24a")
 skeleton = NodePath("")
 
-[node name="cart" type="CharacterBody3D" parent="."]
+[node name="cart" type="CharacterBody3D" parent="." unique_id=630901220]
 transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 7.2267113, -0.44692183, 2.1414716)
 
-[node name="cartmesh" type="MeshInstance3D" parent="cart"]
+[node name="cartmesh" type="MeshInstance3D" parent="cart" unique_id=1070044251]
 transform = Transform3D(0.99999994, 0, -2.9802322e-08, 0, 1, 0, 2.9802322e-08, 0, 0.99999994, 0, 0, 0)
 mesh = SubResource("ArrayMesh_dkj3g")
 skeleton = NodePath("")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="cart"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="cart" unique_id=1321200035]
 transform = Transform3D(0.9999995, 0, -6.854534e-07, 0, 1, 0, 6.854534e-07, 0, 0.9999995, 0.013031006, 0.26501465, 0)
 shape = SubResource("BoxShape3D_5bpam")
 
-[node name="WaypointAnchor" type="Marker3D" parent="cart"]
+[node name="WaypointAnchor" type="Marker3D" parent="cart" unique_id=53948068]
 transform = Transform3D(0.9999999, 0, -2.682209e-07, 0, 1, 0, 1.4901161e-07, 0, 0.9999999, -0.017363548, 1.2747319, 0.083455324)
 
-[node name="Waypoint" parent="cart/WaypointAnchor" instance=ExtResource("6_cyx30")]
+[node name="Waypoint" parent="cart/WaypointAnchor" unique_id=232879054 instance=ExtResource("6_cyx30")]
 text = "Cart"
 
-[node name="cloud" type="Node3D" parent="."]
+[node name="cloud" type="Node3D" parent="." unique_id=370710878]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0869274, 12, 8.045609)
 
-[node name="cloud" type="MeshInstance3D" parent="cloud"]
+[node name="cloud" type="MeshInstance3D" parent="cloud" unique_id=524187468]
 transform = Transform3D(96.337685, 0, 0, 0, -4.2110537e-06, 83.11763, 0, -96.33768, -3.633187e-06, 0, 0, 0)
 mesh = SubResource("ArrayMesh_5bpam")
 skeleton = NodePath("")
 surface_material_override/0 = SubResource("ShaderMaterial_kxttn")
 
-[node name="cloud3" type="MeshInstance3D" parent="cloud"]
+[node name="cloud3" type="MeshInstance3D" parent="cloud" unique_id=319399619]
 transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, 5.8019342, 1.2391243, 4.641549)
 mesh = SubResource("ArrayMesh_5bpam")
 skeleton = NodePath("")
 surface_material_override/0 = SubResource("ShaderMaterial_p80do")
 
-[node name="cloud4" type="MeshInstance3D" parent="cloud"]
+[node name="cloud4" type="MeshInstance3D" parent="cloud" unique_id=934328590]
 transform = Transform3D(82.56158, 0, 0, 0, -1.3153002e-05, 73.350105, 0, -110.33537, -8.744015e-06, 5.8019342, 1.2391243, -4.808219)
 mesh = SubResource("ArrayMesh_5bpam")
 skeleton = NodePath("")
 surface_material_override/0 = SubResource("ShaderMaterial_kxttn")
 
-[node name="cloud5" type="MeshInstance3D" parent="cloud"]
+[node name="cloud5" type="MeshInstance3D" parent="cloud" unique_id=562575514]
 transform = Transform3D(-20.847542, -64.69768, -8.033643e-06, 0, -8.48661e-06, 74.15454, -45.4072, 29.704264, 3.6884378e-06, -7.010471, -0.46300888, -11.0687275)
 mesh = SubResource("ArrayMesh_5bpam")
 skeleton = NodePath("")
 surface_material_override/0 = SubResource("ShaderMaterial_kxttn")
 
-[node name="cloud6" type="MeshInstance3D" parent="cloud"]
+[node name="cloud6" type="MeshInstance3D" parent="cloud" unique_id=1216161987]
 transform = Transform3D(-40.196754, -87.55095, -9.004674e-06, 0, -1.1484349e-05, 83.11764, -87.55096, 40.19675, 4.1342614e-06, -15.570684, 0, -6.86879)
 mesh = SubResource("ArrayMesh_5bpam")
 skeleton = NodePath("")
 surface_material_override/0 = SubResource("ShaderMaterial_kxttn")
 
-[node name="cloud7" type="MeshInstance3D" parent="cloud"]
+[node name="cloud7" type="MeshInstance3D" parent="cloud" unique_id=19935141]
 transform = Transform3D(-40.196754, -87.55095, -9.004674e-06, 0, -1.1484349e-05, 83.11764, -87.55096, 40.19675, 4.1342614e-06, -5.18545, 1.2391243, -18.021126)
 mesh = SubResource("ArrayMesh_5bpam")
 skeleton = NodePath("")
 surface_material_override/0 = SubResource("ShaderMaterial_kxttn")
 
-[node name="cloud8" type="MeshInstance3D" parent="cloud"]
+[node name="cloud8" type="MeshInstance3D" parent="cloud" unique_id=324572119]
 transform = Transform3D(-40.196754, -87.55095, -9.004674e-06, 0, -1.1484349e-05, 83.11764, -87.55096, 40.19675, 4.1342614e-06, -13.773329, 1.2391243, -14.078224)
 mesh = SubResource("ArrayMesh_5bpam")
 skeleton = NodePath("")
 surface_material_override/0 = SubResource("ShaderMaterial_kxttn")
 
-[node name="Tool" type="RigidBody3D" parent="."]
+[node name="Tool" type="RigidBody3D" parent="." unique_id=1752934799]
 script = ExtResource("11_kxttn")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Tool"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Tool" unique_id=718260030]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2679696, 0)
 shape = SubResource("CapsuleShape3D_cyx30")
 
-[node name="mesh" type="Node3D" parent="Tool"]
+[node name="mesh" type="Node3D" parent="Tool" unique_id=1265349948]
 transform = Transform3D(0.12362377, 0.023359273, 0.43205494, -0.003859222, 0.44938546, -0.023191955, -0.4326688, 0.0026659817, 0.12365529, 0, 0, 0)
 
-[node name="tank" type="MeshInstance3D" parent="Tool/mesh"]
+[node name="tank" type="MeshInstance3D" parent="Tool/mesh" unique_id=1254870021]
 mesh = SubResource("ArrayMesh_cocem")
 skeleton = NodePath("")
 
-[node name="valve assembly" type="MeshInstance3D" parent="Tool/mesh"]
+[node name="valve assembly" type="MeshInstance3D" parent="Tool/mesh" unique_id=321981004]
 mesh = SubResource("ArrayMesh_yxis4")
 skeleton = NodePath("")
 
-[node name="handle" type="MeshInstance3D" parent="Tool/mesh"]
+[node name="handle" type="MeshInstance3D" parent="Tool/mesh" unique_id=2017862640]
 transform = Transform3D(1, 0, 0, 0, 0.9238795, -0.3826835, 0, 0.3826835, 0.9238795, 0, 1.203125, 0)
 mesh = SubResource("ArrayMesh_qq3if")
 skeleton = NodePath("")
 
-[node name="release lever" type="MeshInstance3D" parent="Tool/mesh"]
+[node name="release lever" type="MeshInstance3D" parent="Tool/mesh" unique_id=869813535]
 transform = Transform3D(1, 0, 0, 0, 0.9396926, 0.34202015, 0, -0.34202015, 0.9396926, 0, 1.25, 0)
 mesh = SubResource("ArrayMesh_qwi4b")
 skeleton = NodePath("")
 
-[node name="hose" type="MeshInstance3D" parent="Tool/mesh"]
+[node name="hose" type="MeshInstance3D" parent="Tool/mesh" unique_id=26664859]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6875, -0.3125)
 mesh = SubResource("ArrayMesh_ujwm8")
 skeleton = NodePath("")
 
-[node name="WaypointAnchor" type="Marker3D" parent="Tool/mesh"]
+[node name="WaypointAnchor" type="Marker3D" parent="Tool/mesh" unique_id=1076360328]
 transform = Transform3D(2.2222223, -2.7939677e-09, 0, -1.8626451e-09, 2.2222223, 1.3271347e-08, 1.1920929e-07, 1.6530976e-08, 2.222222, -0.013029317, 1.5171953, -0.078299865)
 
-[node name="Waypoint" parent="Tool/mesh/WaypointAnchor" node_paths=PackedStringArray("camera") instance=ExtResource("6_cyx30")]
+[node name="Waypoint" parent="Tool/mesh/WaypointAnchor" unique_id=331092906 node_paths=PackedStringArray("camera") instance=ExtResource("6_cyx30")]
 text = "Tool"
 camera = NodePath("../../../../PlayerManager/Camera3D")
 
-[node name="Chicken" type="RigidBody3D" parent="."]
+[node name="Chicken" type="RigidBody3D" parent="." unique_id=1144379313]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9764378, 0.5869336, -1.5649502)
 script = ExtResource("11_kxttn")
 
-[node name="Chicken" type="MeshInstance3D" parent="Chicken"]
+[node name="Chicken" type="MeshInstance3D" parent="Chicken" unique_id=1048331848]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.605, 0.73399997, -0.20600772, -0.0039999485)
 material_override = SubResource("StandardMaterial3D_ocj2s")
 mesh = ExtResource("3_l1v76")
 skeleton = NodePath("")
 
-[node name="WaypointAnchor" type="Marker3D" parent="Chicken/Chicken"]
+[node name="WaypointAnchor" type="Marker3D" parent="Chicken/Chicken" unique_id=1867317863]
 transform = Transform3D(1, 0, -2.3841858e-07, 0, 1, 0, 0, 0, 1, -0.758, 0.618, 0.006000042)
 
-[node name="Waypoint" parent="Chicken/Chicken/WaypointAnchor" node_paths=PackedStringArray("camera") instance=ExtResource("6_cyx30")]
+[node name="Waypoint" parent="Chicken/Chicken/WaypointAnchor" unique_id=1696929746 node_paths=PackedStringArray("camera") instance=ExtResource("6_cyx30")]
 text = "Chicken"
 camera = NodePath("../../../../PlayerManager/Camera3D")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Chicken"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Chicken" unique_id=1740220797]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.004999995, 0.009811401, 0.0039999485)
 shape = SubResource("CapsuleShape3D_kxttn")
 

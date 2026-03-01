@@ -1,9 +1,8 @@
-[gd_scene load_steps=41 format=4 uid="uid://dmfrhhone88c0"]
+[gd_scene format=4 uid="uid://dmfrhhone88c0"]
 
 [ext_resource type="Script" uid="uid://bok6pqa5jkw3a" path="res://scripts/bus.gd" id="1_wtq63"]
 [ext_resource type="Texture2D" uid="uid://bux033aiby60l" path="res://assets/models/VanTex.png" id="2_8154j"]
 [ext_resource type="ArrayMesh" uid="uid://d2shs8xt2gill" path="res://assets/models/Parachute.obj" id="3_8154j"]
-[ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="4_38u8m"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qkeax"]
 albedo_color = Color(0.99999994, 0.14157677, 0.5880843, 1)
@@ -616,36 +615,13 @@ shadow_mesh = SubResource("ArrayMesh_6x00d")
 [sub_resource type="BoxShape3D" id="BoxShape3D_l43u4"]
 size = Vector3(3.1931953, 0.235672, 1.2374268)
 
-[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_6x00d"]
-panorama = ExtResource("4_38u8m")
-
-[sub_resource type="Sky" id="Sky_ocj2s"]
-sky_material = SubResource("PanoramaSkyMaterial_6x00d")
-
-[sub_resource type="Environment" id="Environment_5urgl"]
-background_mode = 2
-sky = SubResource("Sky_ocj2s")
-sky_rotation = Vector3(0, 0, -1.4695672)
-glow_enabled = true
-glow_intensity = 0.25
-glow_bloom = 0.1
-glow_hdr_luminance_cap = 10.0
-fog_enabled = true
-fog_mode = 1
-fog_light_color = Color(0.94509804, 0.4627451, 0.99607843, 1)
-fog_density = 1.0
-fog_sky_affect = 0.4
-fog_depth_begin = 1.0
-fog_depth_end = 25.0
-volumetric_fog_albedo = Color(0.29411766, 0.2627451, 1, 1)
-
-[node name="Bus" type="CharacterBody3D"]
+[node name="Bus" type="CharacterBody3D" unique_id=1811375150]
 script = ExtResource("1_wtq63")
 
-[node name="Player1" type="Node3D" parent="."]
+[node name="Player1" type="Node3D" parent="." unique_id=792307692]
 transform = Transform3D(0.32085106, -0.28257152, 0.90399575, 0.6137335, 0.78898835, 0.028792769, -0.7213778, 0.5455742, 0.42657113, 0.090111494, 1.7823153, -1.2387869)
 
-[node name="Skeleton3D" type="Skeleton3D" parent="Player1"]
+[node name="Skeleton3D" type="Skeleton3D" parent="Player1" unique_id=382930647]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
@@ -879,55 +855,53 @@ bones/32/position = Vector3(1.1890266e-13, 0.0003039132, 4.666396e-12)
 bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
-[node name="Cube" type="MeshInstance3D" parent="Player1/Skeleton3D"]
+[node name="Cube" type="MeshInstance3D" parent="Player1/Skeleton3D" unique_id=711994534]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
-[node name="Cube_001" type="MeshInstance3D" parent="Player1/Skeleton3D"]
+[node name="Cube_001" type="MeshInstance3D" parent="Player1/Skeleton3D" unique_id=186984395]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
-[node name="Cube_004" type="MeshInstance3D" parent="Player1/Skeleton3D"]
+[node name="Cube_004" type="MeshInstance3D" parent="Player1/Skeleton3D" unique_id=1015907023]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
 
-[node name="Cube_005" type="MeshInstance3D" parent="Player1/Skeleton3D"]
+[node name="Cube_005" type="MeshInstance3D" parent="Player1/Skeleton3D" unique_id=1060078671]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_gpbcd")
 skin = SubResource("Skin_c0q3t")
 
-[node name="Cube_006" type="MeshInstance3D" parent="Player1/Skeleton3D"]
+[node name="Cube_006" type="MeshInstance3D" parent="Player1/Skeleton3D" unique_id=2036323486]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_fec7n")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_007" type="MeshInstance3D" parent="Player1/Skeleton3D"]
+[node name="Cube_007" type="MeshInstance3D" parent="Player1/Skeleton3D" unique_id=1858532812]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_002" type="MeshInstance3D" parent="Player1/Skeleton3D"]
+[node name="Cube_002" type="MeshInstance3D" parent="Player1/Skeleton3D" unique_id=1526531656]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
-[node name="Cube_003" type="MeshInstance3D" parent="Player1/Skeleton3D"]
+[node name="Cube_003" type="MeshInstance3D" parent="Player1/Skeleton3D" unique_id=1958472156]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 
-[node name="falling" type="AnimationPlayer" parent="Player1"]
-libraries = {
-&"": SubResource("AnimationLibrary_3eoc7")
-}
+[node name="falling" type="AnimationPlayer" parent="Player1" unique_id=855240503]
+libraries/ = SubResource("AnimationLibrary_3eoc7")
 
-[node name="Player2" type="Node3D" parent="."]
+[node name="Player2" type="Node3D" parent="." unique_id=578317149]
 transform = Transform3D(0.20818384, -0.51306933, 0.8327184, 0.4548869, 0.8044835, 0.3819486, -0.8658738, 0.29927698, 0.40086874, -0.7898462, 1.7823153, -0.9507327)
 
-[node name="Skeleton3D" type="Skeleton3D" parent="Player2"]
+[node name="Skeleton3D" type="Skeleton3D" parent="Player2" unique_id=1821922850]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
@@ -1161,55 +1135,53 @@ bones/32/position = Vector3(1.1890266e-13, 0.0003039132, 4.666396e-12)
 bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
-[node name="Cube" type="MeshInstance3D" parent="Player2/Skeleton3D"]
+[node name="Cube" type="MeshInstance3D" parent="Player2/Skeleton3D" unique_id=2109224233]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
-[node name="Cube_001" type="MeshInstance3D" parent="Player2/Skeleton3D"]
+[node name="Cube_001" type="MeshInstance3D" parent="Player2/Skeleton3D" unique_id=559563617]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
-[node name="Cube_004" type="MeshInstance3D" parent="Player2/Skeleton3D"]
+[node name="Cube_004" type="MeshInstance3D" parent="Player2/Skeleton3D" unique_id=457917974]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
 
-[node name="Cube_005" type="MeshInstance3D" parent="Player2/Skeleton3D"]
+[node name="Cube_005" type="MeshInstance3D" parent="Player2/Skeleton3D" unique_id=1703944773]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_gpbcd")
 skin = SubResource("Skin_c0q3t")
 
-[node name="Cube_006" type="MeshInstance3D" parent="Player2/Skeleton3D"]
+[node name="Cube_006" type="MeshInstance3D" parent="Player2/Skeleton3D" unique_id=36516470]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_fec7n")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_007" type="MeshInstance3D" parent="Player2/Skeleton3D"]
+[node name="Cube_007" type="MeshInstance3D" parent="Player2/Skeleton3D" unique_id=547304862]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_002" type="MeshInstance3D" parent="Player2/Skeleton3D"]
+[node name="Cube_002" type="MeshInstance3D" parent="Player2/Skeleton3D" unique_id=321760203]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
-[node name="Cube_003" type="MeshInstance3D" parent="Player2/Skeleton3D"]
+[node name="Cube_003" type="MeshInstance3D" parent="Player2/Skeleton3D" unique_id=1245051717]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 
-[node name="falling" type="AnimationPlayer" parent="Player2"]
-libraries = {
-&"": SubResource("AnimationLibrary_3eoc7")
-}
+[node name="falling" type="AnimationPlayer" parent="Player2" unique_id=322249479]
+libraries/ = SubResource("AnimationLibrary_3eoc7")
 
-[node name="Player3" type="Node3D" parent="."]
+[node name="Player3" type="Node3D" parent="." unique_id=181020808]
 transform = Transform3D(0.3208511, -0.2825715, 0.90399575, 0.3838192, 0.9113655, 0.14864784, -0.8658739, 0.29927704, 0.40086874, 0.48234993, 1.7823153, -1.044349)
 
-[node name="Skeleton3D" type="Skeleton3D" parent="Player3"]
+[node name="Skeleton3D" type="Skeleton3D" parent="Player3" unique_id=1942111541]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
@@ -1443,55 +1415,53 @@ bones/32/position = Vector3(1.1890266e-13, 0.0003039132, 4.666396e-12)
 bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
-[node name="Cube" type="MeshInstance3D" parent="Player3/Skeleton3D"]
+[node name="Cube" type="MeshInstance3D" parent="Player3/Skeleton3D" unique_id=2037837245]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
-[node name="Cube_001" type="MeshInstance3D" parent="Player3/Skeleton3D"]
+[node name="Cube_001" type="MeshInstance3D" parent="Player3/Skeleton3D" unique_id=2031879878]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
-[node name="Cube_004" type="MeshInstance3D" parent="Player3/Skeleton3D"]
+[node name="Cube_004" type="MeshInstance3D" parent="Player3/Skeleton3D" unique_id=684751614]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
 
-[node name="Cube_005" type="MeshInstance3D" parent="Player3/Skeleton3D"]
+[node name="Cube_005" type="MeshInstance3D" parent="Player3/Skeleton3D" unique_id=1520988739]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_gpbcd")
 skin = SubResource("Skin_c0q3t")
 
-[node name="Cube_006" type="MeshInstance3D" parent="Player3/Skeleton3D"]
+[node name="Cube_006" type="MeshInstance3D" parent="Player3/Skeleton3D" unique_id=1854785346]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_fec7n")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_007" type="MeshInstance3D" parent="Player3/Skeleton3D"]
+[node name="Cube_007" type="MeshInstance3D" parent="Player3/Skeleton3D" unique_id=1662723769]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_002" type="MeshInstance3D" parent="Player3/Skeleton3D"]
+[node name="Cube_002" type="MeshInstance3D" parent="Player3/Skeleton3D" unique_id=384378487]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
-[node name="Cube_003" type="MeshInstance3D" parent="Player3/Skeleton3D"]
+[node name="Cube_003" type="MeshInstance3D" parent="Player3/Skeleton3D" unique_id=615581273]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 
-[node name="falling" type="AnimationPlayer" parent="Player3"]
-libraries = {
-&"": SubResource("AnimationLibrary_3eoc7")
-}
+[node name="falling" type="AnimationPlayer" parent="Player3" unique_id=1722968730]
+libraries/ = SubResource("AnimationLibrary_3eoc7")
 
-[node name="Player4" type="Node3D" parent="."]
+[node name="Player4" type="Node3D" parent="." unique_id=304938769]
 transform = Transform3D(0.3208511, -0.2825715, 0.90399575, 0.3838192, 0.9113655, 0.14864784, -0.8658739, 0.29927704, 0.40086874, -0.23737776, 1.7823153, -1.044349)
 
-[node name="Skeleton3D" type="Skeleton3D" parent="Player4"]
+[node name="Skeleton3D" type="Skeleton3D" parent="Player4" unique_id=495636680]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
@@ -1725,55 +1695,53 @@ bones/32/position = Vector3(1.1890266e-13, 0.0003039132, 4.666396e-12)
 bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
-[node name="Cube" type="MeshInstance3D" parent="Player4/Skeleton3D"]
+[node name="Cube" type="MeshInstance3D" parent="Player4/Skeleton3D" unique_id=1039106064]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
-[node name="Cube_001" type="MeshInstance3D" parent="Player4/Skeleton3D"]
+[node name="Cube_001" type="MeshInstance3D" parent="Player4/Skeleton3D" unique_id=1667765314]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
-[node name="Cube_004" type="MeshInstance3D" parent="Player4/Skeleton3D"]
+[node name="Cube_004" type="MeshInstance3D" parent="Player4/Skeleton3D" unique_id=275342970]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
 
-[node name="Cube_005" type="MeshInstance3D" parent="Player4/Skeleton3D"]
+[node name="Cube_005" type="MeshInstance3D" parent="Player4/Skeleton3D" unique_id=1375058767]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_gpbcd")
 skin = SubResource("Skin_c0q3t")
 
-[node name="Cube_006" type="MeshInstance3D" parent="Player4/Skeleton3D"]
+[node name="Cube_006" type="MeshInstance3D" parent="Player4/Skeleton3D" unique_id=85405663]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_fec7n")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_007" type="MeshInstance3D" parent="Player4/Skeleton3D"]
+[node name="Cube_007" type="MeshInstance3D" parent="Player4/Skeleton3D" unique_id=79989921]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_002" type="MeshInstance3D" parent="Player4/Skeleton3D"]
+[node name="Cube_002" type="MeshInstance3D" parent="Player4/Skeleton3D" unique_id=110655033]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
-[node name="Cube_003" type="MeshInstance3D" parent="Player4/Skeleton3D"]
+[node name="Cube_003" type="MeshInstance3D" parent="Player4/Skeleton3D" unique_id=2121251676]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 
-[node name="falling" type="AnimationPlayer" parent="Player4"]
-libraries = {
-&"": SubResource("AnimationLibrary_3eoc7")
-}
+[node name="falling" type="AnimationPlayer" parent="Player4" unique_id=576947337]
+libraries/ = SubResource("AnimationLibrary_3eoc7")
 
-[node name="Player5" type="Node3D" parent="."]
+[node name="Player5" type="Node3D" parent="." unique_id=2137897280]
 transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, -0.69268847, 1.7823153, 1.1053419)
 
-[node name="Skeleton3D" type="Skeleton3D" parent="Player5"]
+[node name="Skeleton3D" type="Skeleton3D" parent="Player5" unique_id=119436407]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
@@ -2007,55 +1975,53 @@ bones/32/position = Vector3(1.1890266e-13, 0.0003039132, 4.666396e-12)
 bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
-[node name="Cube" type="MeshInstance3D" parent="Player5/Skeleton3D"]
+[node name="Cube" type="MeshInstance3D" parent="Player5/Skeleton3D" unique_id=1892010319]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
-[node name="Cube_001" type="MeshInstance3D" parent="Player5/Skeleton3D"]
+[node name="Cube_001" type="MeshInstance3D" parent="Player5/Skeleton3D" unique_id=300183286]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
-[node name="Cube_004" type="MeshInstance3D" parent="Player5/Skeleton3D"]
+[node name="Cube_004" type="MeshInstance3D" parent="Player5/Skeleton3D" unique_id=29474122]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
 
-[node name="Cube_005" type="MeshInstance3D" parent="Player5/Skeleton3D"]
+[node name="Cube_005" type="MeshInstance3D" parent="Player5/Skeleton3D" unique_id=1491554641]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_gpbcd")
 skin = SubResource("Skin_c0q3t")
 
-[node name="Cube_006" type="MeshInstance3D" parent="Player5/Skeleton3D"]
+[node name="Cube_006" type="MeshInstance3D" parent="Player5/Skeleton3D" unique_id=685864109]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_fec7n")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_007" type="MeshInstance3D" parent="Player5/Skeleton3D"]
+[node name="Cube_007" type="MeshInstance3D" parent="Player5/Skeleton3D" unique_id=1255500350]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_002" type="MeshInstance3D" parent="Player5/Skeleton3D"]
+[node name="Cube_002" type="MeshInstance3D" parent="Player5/Skeleton3D" unique_id=99215390]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
-[node name="Cube_003" type="MeshInstance3D" parent="Player5/Skeleton3D"]
+[node name="Cube_003" type="MeshInstance3D" parent="Player5/Skeleton3D" unique_id=628523671]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 
-[node name="falling" type="AnimationPlayer" parent="Player5"]
-libraries = {
-&"": SubResource("AnimationLibrary_3eoc7")
-}
+[node name="falling" type="AnimationPlayer" parent="Player5" unique_id=1039968576]
+libraries/ = SubResource("AnimationLibrary_3eoc7")
 
-[node name="Player6" type="Node3D" parent="."]
+[node name="Player6" type="Node3D" parent="." unique_id=110135483]
 transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, 0.018127024, 1.7823153, 0.992429)
 
-[node name="Skeleton3D" type="Skeleton3D" parent="Player6"]
+[node name="Skeleton3D" type="Skeleton3D" parent="Player6" unique_id=162874710]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
@@ -2289,55 +2255,53 @@ bones/32/position = Vector3(1.1890266e-13, 0.0003039132, 4.666396e-12)
 bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
-[node name="Cube" type="MeshInstance3D" parent="Player6/Skeleton3D"]
+[node name="Cube" type="MeshInstance3D" parent="Player6/Skeleton3D" unique_id=1447006627]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
-[node name="Cube_001" type="MeshInstance3D" parent="Player6/Skeleton3D"]
+[node name="Cube_001" type="MeshInstance3D" parent="Player6/Skeleton3D" unique_id=1245226139]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
-[node name="Cube_004" type="MeshInstance3D" parent="Player6/Skeleton3D"]
+[node name="Cube_004" type="MeshInstance3D" parent="Player6/Skeleton3D" unique_id=1317406069]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
 
-[node name="Cube_005" type="MeshInstance3D" parent="Player6/Skeleton3D"]
+[node name="Cube_005" type="MeshInstance3D" parent="Player6/Skeleton3D" unique_id=623226449]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_gpbcd")
 skin = SubResource("Skin_c0q3t")
 
-[node name="Cube_006" type="MeshInstance3D" parent="Player6/Skeleton3D"]
+[node name="Cube_006" type="MeshInstance3D" parent="Player6/Skeleton3D" unique_id=2050095493]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_fec7n")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_007" type="MeshInstance3D" parent="Player6/Skeleton3D"]
+[node name="Cube_007" type="MeshInstance3D" parent="Player6/Skeleton3D" unique_id=1753637847]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_002" type="MeshInstance3D" parent="Player6/Skeleton3D"]
+[node name="Cube_002" type="MeshInstance3D" parent="Player6/Skeleton3D" unique_id=1538240406]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
-[node name="Cube_003" type="MeshInstance3D" parent="Player6/Skeleton3D"]
+[node name="Cube_003" type="MeshInstance3D" parent="Player6/Skeleton3D" unique_id=395541531]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 
-[node name="falling" type="AnimationPlayer" parent="Player6"]
-libraries = {
-&"": SubResource("AnimationLibrary_3eoc7")
-}
+[node name="falling" type="AnimationPlayer" parent="Player6" unique_id=828541308]
+libraries/ = SubResource("AnimationLibrary_3eoc7")
 
-[node name="Player7" type="Node3D" parent="."]
+[node name="Player7" type="Node3D" parent="." unique_id=1756396288]
 transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, -1.08007, 1.7823153, 1.1668775)
 
-[node name="Skeleton3D" type="Skeleton3D" parent="Player7"]
+[node name="Skeleton3D" type="Skeleton3D" parent="Player7" unique_id=2047337635]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
@@ -2571,55 +2535,53 @@ bones/32/position = Vector3(1.1890266e-13, 0.0003039132, 4.666396e-12)
 bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
-[node name="Cube" type="MeshInstance3D" parent="Player7/Skeleton3D"]
+[node name="Cube" type="MeshInstance3D" parent="Player7/Skeleton3D" unique_id=682286905]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
-[node name="Cube_001" type="MeshInstance3D" parent="Player7/Skeleton3D"]
+[node name="Cube_001" type="MeshInstance3D" parent="Player7/Skeleton3D" unique_id=797157281]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
-[node name="Cube_004" type="MeshInstance3D" parent="Player7/Skeleton3D"]
+[node name="Cube_004" type="MeshInstance3D" parent="Player7/Skeleton3D" unique_id=677056174]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
 
-[node name="Cube_005" type="MeshInstance3D" parent="Player7/Skeleton3D"]
+[node name="Cube_005" type="MeshInstance3D" parent="Player7/Skeleton3D" unique_id=1787648499]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_gpbcd")
 skin = SubResource("Skin_c0q3t")
 
-[node name="Cube_006" type="MeshInstance3D" parent="Player7/Skeleton3D"]
+[node name="Cube_006" type="MeshInstance3D" parent="Player7/Skeleton3D" unique_id=1676985253]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_fec7n")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_007" type="MeshInstance3D" parent="Player7/Skeleton3D"]
+[node name="Cube_007" type="MeshInstance3D" parent="Player7/Skeleton3D" unique_id=1786390418]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_002" type="MeshInstance3D" parent="Player7/Skeleton3D"]
+[node name="Cube_002" type="MeshInstance3D" parent="Player7/Skeleton3D" unique_id=1494992475]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
-[node name="Cube_003" type="MeshInstance3D" parent="Player7/Skeleton3D"]
+[node name="Cube_003" type="MeshInstance3D" parent="Player7/Skeleton3D" unique_id=1354821758]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 
-[node name="falling" type="AnimationPlayer" parent="Player7"]
-libraries = {
-&"": SubResource("AnimationLibrary_3eoc7")
-}
+[node name="falling" type="AnimationPlayer" parent="Player7" unique_id=1743765430]
+libraries/ = SubResource("AnimationLibrary_3eoc7")
 
-[node name="Player8" type="Node3D" parent="."]
+[node name="Player8" type="Node3D" parent="." unique_id=148867688]
 transform = Transform3D(-0.18103743, 0.2321211, -0.95569116, 0.3838193, 0.9113657, 0.14864787, 0.9054878, -0.33990175, -0.2540836, -0.3692544, 1.7823153, 1.0539645)
 
-[node name="Skeleton3D" type="Skeleton3D" parent="Player8"]
+[node name="Skeleton3D" type="Skeleton3D" parent="Player8" unique_id=694716068]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
@@ -2853,55 +2815,53 @@ bones/32/position = Vector3(1.1890266e-13, 0.0003039132, 4.666396e-12)
 bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
-[node name="Cube" type="MeshInstance3D" parent="Player8/Skeleton3D"]
+[node name="Cube" type="MeshInstance3D" parent="Player8/Skeleton3D" unique_id=1495620477]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
-[node name="Cube_001" type="MeshInstance3D" parent="Player8/Skeleton3D"]
+[node name="Cube_001" type="MeshInstance3D" parent="Player8/Skeleton3D" unique_id=1342685578]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
-[node name="Cube_004" type="MeshInstance3D" parent="Player8/Skeleton3D"]
+[node name="Cube_004" type="MeshInstance3D" parent="Player8/Skeleton3D" unique_id=498892337]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
 
-[node name="Cube_005" type="MeshInstance3D" parent="Player8/Skeleton3D"]
+[node name="Cube_005" type="MeshInstance3D" parent="Player8/Skeleton3D" unique_id=1281283209]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_gpbcd")
 skin = SubResource("Skin_c0q3t")
 
-[node name="Cube_006" type="MeshInstance3D" parent="Player8/Skeleton3D"]
+[node name="Cube_006" type="MeshInstance3D" parent="Player8/Skeleton3D" unique_id=1761800034]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_fec7n")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_007" type="MeshInstance3D" parent="Player8/Skeleton3D"]
+[node name="Cube_007" type="MeshInstance3D" parent="Player8/Skeleton3D" unique_id=1252722777]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_002" type="MeshInstance3D" parent="Player8/Skeleton3D"]
+[node name="Cube_002" type="MeshInstance3D" parent="Player8/Skeleton3D" unique_id=706001914]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
-[node name="Cube_003" type="MeshInstance3D" parent="Player8/Skeleton3D"]
+[node name="Cube_003" type="MeshInstance3D" parent="Player8/Skeleton3D" unique_id=434313010]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 
-[node name="falling" type="AnimationPlayer" parent="Player8"]
-libraries = {
-&"": SubResource("AnimationLibrary_3eoc7")
-}
+[node name="falling" type="AnimationPlayer" parent="Player8" unique_id=681643434]
+libraries/ = SubResource("AnimationLibrary_3eoc7")
 
-[node name="Player9" type="Node3D" parent="."]
+[node name="Player9" type="Node3D" parent="." unique_id=1889835518]
 transform = Transform3D(0.6645565, -0.71253693, -0.22506836, 0.6778038, 0.70160556, -0.219846, 0.3145576, -0.0064521297, 0.94921654, 1.9482262, 2.0366006, 0.24345836)
 
-[node name="Skeleton3D" type="Skeleton3D" parent="Player9"]
+[node name="Skeleton3D" type="Skeleton3D" parent="Player9" unique_id=1248563565]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
@@ -3135,55 +3095,53 @@ bones/32/position = Vector3(1.1890266e-13, 0.0003039132, 4.666396e-12)
 bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
-[node name="Cube" type="MeshInstance3D" parent="Player9/Skeleton3D"]
+[node name="Cube" type="MeshInstance3D" parent="Player9/Skeleton3D" unique_id=1699488308]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
-[node name="Cube_001" type="MeshInstance3D" parent="Player9/Skeleton3D"]
+[node name="Cube_001" type="MeshInstance3D" parent="Player9/Skeleton3D" unique_id=635228780]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
-[node name="Cube_004" type="MeshInstance3D" parent="Player9/Skeleton3D"]
+[node name="Cube_004" type="MeshInstance3D" parent="Player9/Skeleton3D" unique_id=718365799]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
 
-[node name="Cube_005" type="MeshInstance3D" parent="Player9/Skeleton3D"]
+[node name="Cube_005" type="MeshInstance3D" parent="Player9/Skeleton3D" unique_id=1899165787]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_gpbcd")
 skin = SubResource("Skin_c0q3t")
 
-[node name="Cube_006" type="MeshInstance3D" parent="Player9/Skeleton3D"]
+[node name="Cube_006" type="MeshInstance3D" parent="Player9/Skeleton3D" unique_id=845023580]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_fec7n")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_007" type="MeshInstance3D" parent="Player9/Skeleton3D"]
+[node name="Cube_007" type="MeshInstance3D" parent="Player9/Skeleton3D" unique_id=1488520122]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_002" type="MeshInstance3D" parent="Player9/Skeleton3D"]
+[node name="Cube_002" type="MeshInstance3D" parent="Player9/Skeleton3D" unique_id=909571561]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
-[node name="Cube_003" type="MeshInstance3D" parent="Player9/Skeleton3D"]
+[node name="Cube_003" type="MeshInstance3D" parent="Player9/Skeleton3D" unique_id=903137623]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 
-[node name="falling" type="AnimationPlayer" parent="Player9"]
-libraries = {
-&"": SubResource("AnimationLibrary_3eoc7")
-}
+[node name="falling" type="AnimationPlayer" parent="Player9" unique_id=1301238353]
+libraries/ = SubResource("AnimationLibrary_3eoc7")
 
-[node name="Player10" type="Node3D" parent="."]
+[node name="Player10" type="Node3D" parent="." unique_id=279280228]
 transform = Transform3D(0.8958843, -0.32851207, -0.29911694, 0.38381925, 0.9113657, 0.14864786, 0.22377229, -0.24797824, 0.9425672, 1.6403449, 1.7823153, -0.13260591)
 
-[node name="Skeleton3D" type="Skeleton3D" parent="Player10"]
+[node name="Skeleton3D" type="Skeleton3D" parent="Player10" unique_id=2003658204]
 transform = Transform3D(-5.572321, 0, 24.371075, 0, 25, 0, -24.371075, 0, -5.572321, 0, 0.6980894, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
@@ -3417,68 +3375,63 @@ bones/32/position = Vector3(1.1890266e-13, 0.0003039132, 4.666396e-12)
 bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
-[node name="Cube" type="MeshInstance3D" parent="Player10/Skeleton3D"]
+[node name="Cube" type="MeshInstance3D" parent="Player10/Skeleton3D" unique_id=1149651125]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
-[node name="Cube_001" type="MeshInstance3D" parent="Player10/Skeleton3D"]
+[node name="Cube_001" type="MeshInstance3D" parent="Player10/Skeleton3D" unique_id=265642763]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
-[node name="Cube_004" type="MeshInstance3D" parent="Player10/Skeleton3D"]
+[node name="Cube_004" type="MeshInstance3D" parent="Player10/Skeleton3D" unique_id=1789153794]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
 
-[node name="Cube_005" type="MeshInstance3D" parent="Player10/Skeleton3D"]
+[node name="Cube_005" type="MeshInstance3D" parent="Player10/Skeleton3D" unique_id=1218574692]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_gpbcd")
 skin = SubResource("Skin_c0q3t")
 
-[node name="Cube_006" type="MeshInstance3D" parent="Player10/Skeleton3D"]
+[node name="Cube_006" type="MeshInstance3D" parent="Player10/Skeleton3D" unique_id=807862961]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_fec7n")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_007" type="MeshInstance3D" parent="Player10/Skeleton3D"]
+[node name="Cube_007" type="MeshInstance3D" parent="Player10/Skeleton3D" unique_id=813614143]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_002" type="MeshInstance3D" parent="Player10/Skeleton3D"]
+[node name="Cube_002" type="MeshInstance3D" parent="Player10/Skeleton3D" unique_id=833881099]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
-[node name="Cube_003" type="MeshInstance3D" parent="Player10/Skeleton3D"]
+[node name="Cube_003" type="MeshInstance3D" parent="Player10/Skeleton3D" unique_id=969251853]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 
-[node name="falling" type="AnimationPlayer" parent="Player10"]
-libraries = {
-&"": SubResource("AnimationLibrary_3eoc7")
-}
+[node name="falling" type="AnimationPlayer" parent="Player10" unique_id=674077348]
+libraries/ = SubResource("AnimationLibrary_3eoc7")
 
-[node name="Parachute" type="MeshInstance3D" parent="."]
+[node name="Parachute" type="MeshInstance3D" parent="." unique_id=321006622]
 transform = Transform3D(-2.1855692e-08, 0, -0.49999997, 0, 0.5, 0, 0.49999997, 0, -2.1855692e-08, 0.18050754, 2.444498, 0.022620916)
 material_override = SubResource("StandardMaterial3D_6x00d")
 mesh = ExtResource("3_8154j")
 
-[node name="Van" type="MeshInstance3D" parent="."]
+[node name="Van" type="MeshInstance3D" parent="." unique_id=705404418]
 transform = Transform3D(60, 0, 0, 0, -2.6226833e-06, 60, 0, -60, -2.6226833e-06, 0, 2.444498, 0)
 material_override = SubResource("StandardMaterial3D_38u8m")
 mesh = SubResource("ArrayMesh_5urgl")
 skeleton = NodePath("")
 
-[node name="bottomBlock" type="CollisionShape3D" parent="."]
+[node name="bottomBlock" type="CollisionShape3D" parent="." unique_id=777978999]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.074632645, 2.1491365, 0.012512207)
 shape = SubResource("BoxShape3D_l43u4")
 
-[node name="Marker3D" type="Marker3D" parent="."]
+[node name="Marker3D" type="Marker3D" parent="." unique_id=317178988]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1197186, 0)
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_5urgl")
