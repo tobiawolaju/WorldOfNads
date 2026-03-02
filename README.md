@@ -126,10 +126,3 @@ Players don’t need to “understand crypto” to play.
 - Ongoing iteration on gameplay, networking, and settlement logic
 
 ---
-
-## 🎯 Why This Project Exists
-
-World of Nads is not a token demo or a play-to-earn experiment.
-
-It’s a systems project:
-**how to build fast, competitive games that use blockchain only where it actually adds value.**
