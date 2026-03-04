@@ -1,4 +1,4 @@
-[gd_scene load_steps=78 format=4 uid="uid://bitlrnfd0s6tn"]
+[gd_scene format=4 uid="uid://bitlrnfd0s6tn"]
 
 [ext_resource type="Script" uid="uid://dt4bl1rmfjm12" path="res://scripts/Player.gd" id="1_hqo6i"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="2_3wy7d"]
@@ -5443,14 +5443,14 @@ _data = {
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_hqo6i"]
 
-[node name="CharacterBody3D" type="CharacterBody3D"]
+[node name="CharacterBody3D" type="CharacterBody3D" unique_id=1520854348]
 script = ExtResource("1_hqo6i")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=42515026]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 shape = SubResource("CapsuleShape3D_hqo6i")
 
-[node name="Skeleton3D" type="Skeleton3D" parent="."]
+[node name="Skeleton3D" type="Skeleton3D" parent="." unique_id=589374111]
 transform = Transform3D(25, 0, 0, 0, 25, 0, 0, 0, 25, 0, -0.45, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
@@ -5684,172 +5684,126 @@ bones/32/position = Vector3(1.1890266e-13, 0.0003039132, 4.666396e-12)
 bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
-[node name="Cube" type="MeshInstance3D" parent="Skeleton3D"]
+[node name="Cube" type="MeshInstance3D" parent="Skeleton3D" unique_id=299572121]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
-[node name="Cube_001" type="MeshInstance3D" parent="Skeleton3D"]
+[node name="Cube_001" type="MeshInstance3D" parent="Skeleton3D" unique_id=1257854260]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
-[node name="Cube_004" type="MeshInstance3D" parent="Skeleton3D"]
+[node name="Cube_004" type="MeshInstance3D" parent="Skeleton3D" unique_id=2036297002]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
 
-[node name="Cube_005" type="MeshInstance3D" parent="Skeleton3D"]
+[node name="Cube_005" type="MeshInstance3D" parent="Skeleton3D" unique_id=102145925]
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_gpbcd")
 skin = SubResource("Skin_c0q3t")
 
-[node name="Cube_006" type="MeshInstance3D" parent="Skeleton3D"]
+[node name="Cube_006" type="MeshInstance3D" parent="Skeleton3D" unique_id=1905098739]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_fec7n")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_007" type="MeshInstance3D" parent="Skeleton3D"]
+[node name="Cube_007" type="MeshInstance3D" parent="Skeleton3D" unique_id=1961235545]
 material_override = SubResource("StandardMaterial3D_3wy7d")
 mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
-[node name="Cube_002" type="MeshInstance3D" parent="Skeleton3D"]
+[node name="Cube_002" type="MeshInstance3D" parent="Skeleton3D" unique_id=1594527453]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
-[node name="Cube_003" type="MeshInstance3D" parent="Skeleton3D"]
+[node name="Cube_003" type="MeshInstance3D" parent="Skeleton3D" unique_id=230133579]
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 
-[node name="idle" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_jpo2m")
-}
+[node name="idle" type="AnimationPlayer" parent="." unique_id=1368350315]
+libraries/ = SubResource("AnimationLibrary_jpo2m")
 
-[node name="zombiecrawl" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_e1ook")
-}
+[node name="zombiecrawl" type="AnimationPlayer" parent="." unique_id=8220695]
+libraries/ = SubResource("AnimationLibrary_e1ook")
 
-[node name="stomp" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_t3hmj")
-}
+[node name="stomp" type="AnimationPlayer" parent="." unique_id=1792198254]
+libraries/ = SubResource("AnimationLibrary_t3hmj")
 
-[node name="surpriseuppercut" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_xlx5b")
-}
+[node name="surpriseuppercut" type="AnimationPlayer" parent="." unique_id=1231981072]
+libraries/ = SubResource("AnimationLibrary_xlx5b")
 
-[node name="runningjump" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_if8mq")
-}
+[node name="runningjump" type="AnimationPlayer" parent="." unique_id=1754226420]
+libraries/ = SubResource("AnimationLibrary_if8mq")
 
-[node name="runningslide" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_l375m")
-}
+[node name="runningslide" type="AnimationPlayer" parent="." unique_id=2099646127]
+libraries/ = SubResource("AnimationLibrary_l375m")
 
-[node name="climbingladder" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_ogkci")
-}
+[node name="climbingladder" type="AnimationPlayer" parent="." unique_id=1911249098]
+libraries/ = SubResource("AnimationLibrary_ogkci")
 
-[node name="falling" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_3eoc7")
-}
+[node name="falling" type="AnimationPlayer" parent="." unique_id=1351421128]
+libraries/ = SubResource("AnimationLibrary_3eoc7")
 
-[node name="fallingflatimpact" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_bwiys")
-}
+[node name="fallingflatimpact" type="AnimationPlayer" parent="." unique_id=441296320]
+libraries/ = SubResource("AnimationLibrary_bwiys")
 
-[node name="rumbadancing" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_sgurj")
-}
+[node name="rumbadancing" type="AnimationPlayer" parent="." unique_id=41585071]
+libraries/ = SubResource("AnimationLibrary_sgurj")
 
-[node name="oldmanwalk" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_uvwbl")
-}
+[node name="oldmanwalk" type="AnimationPlayer" parent="." unique_id=2080587475]
+libraries/ = SubResource("AnimationLibrary_uvwbl")
 
-[node name="injuredjog" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_mh1om")
-}
+[node name="injuredjog" type="AnimationPlayer" parent="." unique_id=842095372]
+libraries/ = SubResource("AnimationLibrary_mh1om")
 
-[node name="shoulderhitandfall" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_rbc4w")
-}
+[node name="shoulderhitandfall" type="AnimationPlayer" parent="." unique_id=368880267]
+libraries/ = SubResource("AnimationLibrary_rbc4w")
 
-[node name="shooting" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_0p4h2")
-}
+[node name="shooting" type="AnimationPlayer" parent="." unique_id=1839257143]
+libraries/ = SubResource("AnimationLibrary_0p4h2")
 
-[node name="standingdeathleft" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_et13u")
-}
+[node name="standingdeathleft" type="AnimationPlayer" parent="." unique_id=771255284]
+libraries/ = SubResource("AnimationLibrary_et13u")
 
-[node name="StandingMeleeAttackHorizontal" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_j4uw7")
-}
+[node name="StandingMeleeAttackHorizontal" type="AnimationPlayer" parent="." unique_id=407542751]
+libraries/ = SubResource("AnimationLibrary_j4uw7")
 
-[node name="StandingMeleeKick" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_8u58h")
-}
+[node name="StandingMeleeKick" type="AnimationPlayer" parent="." unique_id=22028685]
+libraries/ = SubResource("AnimationLibrary_8u58h")
 
-[node name="swordandshieldattack" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_v5738")
-}
+[node name="swordandshieldattack" type="AnimationPlayer" parent="." unique_id=145983662]
+libraries/ = SubResource("AnimationLibrary_v5738")
 
-[node name="throwobject" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_8nyve")
-}
+[node name="throwobject" type="AnimationPlayer" parent="." unique_id=517274077]
+libraries/ = SubResource("AnimationLibrary_8nyve")
 
-[node name="zombierun" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_yf7l7")
-}
+[node name="zombierun" type="AnimationPlayer" parent="." unique_id=565058193]
+libraries/ = SubResource("AnimationLibrary_yf7l7")
 
-[node name="sittingidle" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_7emx4")
-}
+[node name="sittingidle" type="AnimationPlayer" parent="." unique_id=438973]
+libraries/ = SubResource("AnimationLibrary_7emx4")
 
-[node name="runningcrawl" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_j13ho")
-}
+[node name="runningcrawl" type="AnimationPlayer" parent="." unique_id=1380853148]
+libraries/ = SubResource("AnimationLibrary_j13ho")
 
-[node name="FastRun" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_kw427")
-}
+[node name="FastRun" type="AnimationPlayer" parent="." unique_id=1856416695]
+libraries/ = SubResource("AnimationLibrary_kw427")
 
-[node name="running" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_y3wbf")
-}
+[node name="running" type="AnimationPlayer" parent="." unique_id=608001286]
+libraries/ = SubResource("AnimationLibrary_y3wbf")
 
-[node name="Area3D" type="Area3D" parent="."]
+[node name="Area3D" type="Area3D" parent="." unique_id=477192623]
+collision_layer = 2
+collision_mask = 2
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=2098142434]
 shape = SubResource("SphereShape3D_hqo6i")
 
-[node name="Label3D" type="Label3D" parent="."]
+[node name="Label3D" type="Label3D" parent="." unique_id=851294382]
 transform = Transform3D(-3.934025e-09, 0, 0.09, 0, 0.09, 0, -0.09, 0, -3.934025e-09, -0.005, 0.592, 0)
 billboard = 1
 modulate = Color(1, 1, 1, 0.5254902)

@@ -186,6 +186,7 @@ func _try_pickup():
 	if best_target:
 		held_object = best_target
 		held_object.freeze = true
+		held_object.is_held = true  # stop circular movement
 		
 		# Turn off collisions with player so it doesn't push you
 		held_object.set_collision_mask_value(1, false)
@@ -197,16 +198,23 @@ func _try_pickup():
 func _drop_object():
 	if not held_object:
 		return
-	
+
+	# When dropped, the circle center stays at the current position
+	# The chicken continues moving along the same path
+	held_object.update_circle_center(held_object.global_transform.origin)
+	held_object.is_held = false
+
+	# Reset physics and collisions
 	held_object.freeze = false
 	held_object.set_collision_mask_value(1, true)
 	held_object.set_collision_layer_value(1, true)
-	
-	# Throw it slightly
+
+	# Optional slight throw
 	var throw_dir = -camera.global_transform.basis.z
 	held_object.apply_central_impulse(throw_dir * 5.0)
-	
+
 	held_object = null
+
 
 # --- CAMERA LOGIC ---
 func _handle_camera_gamepad(delta: float) -> void:
