@@ -1,21 +1,22 @@
-[gd_scene load_steps=5 format=3 uid="uid://bj8bka4230iqa"]
+[gd_scene format=3 uid="uid://bj8bka4230iqa"]
 
 [ext_resource type="PackedScene" uid="uid://b48njcleqy6m3" path="res://scenes/gameplay3d.tscn" id="1_1iwhs"]
 [ext_resource type="Texture2D" uid="uid://c32ce524dwv4m" path="res://assets/images/white_circle.png" id="2_cqgoe"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="2_ikted"]
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/joystick.gd" id="3_1iwhs"]
+[ext_resource type="Script" uid="uid://vwbunt2j3px3" path="res://scripts/pick_button.gd" id="3_uw04a"]
 
-[node name="Gameplay2d" type="Node2D"]
+[node name="Gameplay2d" type="Node2D" unique_id=843521828]
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1992101475]
 
-[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer"]
+[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer" unique_id=1863037272]
 offset_right = 40.0
 offset_bottom = 40.0
 
-[node name="Node" type="Node" parent="CanvasLayer/BoxContainer"]
+[node name="Node" type="Node" parent="CanvasLayer/BoxContainer" unique_id=1938871911]
 
-[node name="SubViewportContainer" type="SubViewportContainer" parent="CanvasLayer/BoxContainer/Node"]
+[node name="SubViewportContainer" type="SubViewportContainer" parent="CanvasLayer/BoxContainer/Node" unique_id=1886500815]
 custom_minimum_size = Vector2(1400, 1400)
 anchors_preset = 8
 anchor_left = 0.5
@@ -29,47 +30,47 @@ offset_bottom = 700.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="SubViewport" type="SubViewport" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer"]
+[node name="SubViewport" type="SubViewport" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer" unique_id=1504562891]
 handle_input_locally = false
 size = Vector2i(1400, 1400)
 render_target_update_mode = 4
 
-[node name="Gameplayer" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport" instance=ExtResource("1_1iwhs")]
+[node name="Gameplayer" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport" unique_id=280572712 instance=ExtResource("1_1iwhs")]
 
-[node name="Node" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="0" node_paths=PackedStringArray("world", "countdown")]
+[node name="Node" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="0" unique_id=851590252 node_paths=PackedStringArray("world", "countdown")]
 world = NodePath("../PlayerManager/WorldEnvironment")
 countdown = NodePath("../../../../../Node2/BoxContainer/Label")
 
-[node name="PlayerManager" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="1" node_paths=PackedStringArray("myplayerswpanpoint")]
+[node name="PlayerManager" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="1" unique_id=1626271999 node_paths=PackedStringArray("myplayerswpanpoint")]
 myplayerswpanpoint = NodePath("../Bus/Marker3D")
 
-[node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cart/WaypointAnchor" index="0" node_paths=PackedStringArray("camera")]
+[node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cart/WaypointAnchor" parent_id_path=PackedInt32Array(280572712, 53948068) index="0" unique_id=232879054 node_paths=PackedStringArray("camera")]
 camera = NodePath("../../../PlayerManager/Camera3D")
 
-[node name="cloud" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="0"]
+[node name="cloud" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="0" unique_id=524187468]
 surface_material_override/0 = null
 
-[node name="cloud3" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="1"]
+[node name="cloud3" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="1" unique_id=319399619]
 surface_material_override/0 = null
 
-[node name="cloud4" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="2"]
+[node name="cloud4" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="2" unique_id=934328590]
 surface_material_override/0 = null
 
-[node name="cloud5" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="3"]
+[node name="cloud5" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="3" unique_id=562575514]
 surface_material_override/0 = null
 
-[node name="cloud6" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="4"]
+[node name="cloud6" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="4" unique_id=1216161987]
 surface_material_override/0 = null
 
-[node name="cloud7" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="5"]
+[node name="cloud7" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="5" unique_id=19935141]
 surface_material_override/0 = null
 
-[node name="cloud8" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" index="6"]
+[node name="cloud8" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="6" unique_id=324572119]
 surface_material_override/0 = null
 
-[node name="Node2" type="Node" parent="CanvasLayer/BoxContainer"]
+[node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=2082930407]
 
-[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2"]
+[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1968208815]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -81,13 +82,35 @@ grow_horizontal = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="Label" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer"]
+[node name="Label" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer" unique_id=97871540]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_ikted")
 theme_override_font_sizes/font_size = 60
 text = "120"
 
-[node name="username_label" type="Label" parent="CanvasLayer"]
+[node name="Node3" type="Node" parent="CanvasLayer/BoxContainer" unique_id=1333095260]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="CanvasLayer/BoxContainer/Node3" unique_id=691266471]
+
+[node name="pick" type="TextureButton" parent="CanvasLayer/BoxContainer/Node3/CanvasLayer" unique_id=610930177]
+modulate = Color(1, 1, 1, 0.4745098)
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -126.00003
+offset_top = -115.0
+offset_right = 374.0
+offset_bottom = 385.0
+grow_horizontal = 0
+grow_vertical = 0
+scale = Vector2(0.1, 0.1)
+texture_normal = ExtResource("2_cqgoe")
+stretch_mode = 4
+script = ExtResource("3_uw04a")
+
+[node name="username_label" type="Label" parent="CanvasLayer" unique_id=593725242]
 visible = false
 offset_left = 140.0
 offset_top = -1.0
@@ -97,11 +120,11 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 20
 text = "username  here"
 
-[node name="Joystick" type="CanvasLayer" parent="."]
+[node name="Joystick" type="CanvasLayer" parent="." unique_id=740292484]
 
-[node name="TouchJoyStick" type="Node2D" parent="Joystick"]
+[node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=424517319]
 
-[node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick"]
+[node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=12073439]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -115,13 +138,13 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(1, 1, 1, 0)
 
-[node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick"]
+[node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=167824840]
 modulate = Color(0.60784316, 0, 0.7529412, 0.4)
 self_modulate = Color(18.892157, 18.892157, 18.892157, 0.14117648)
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("2_cqgoe")
 
-[node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick"]
+[node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=1945660391]
 modulate = Color(1, 1, 1, 0.4745098)
 scale = Vector2(0.1, 0.1)
 texture = ExtResource("2_cqgoe")
