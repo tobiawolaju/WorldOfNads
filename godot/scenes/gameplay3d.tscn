@@ -283,7 +283,7 @@ shadow_mesh = SubResource("ArrayMesh_cyx30")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_kxttn"]
 render_priority = 0
 shader = ExtResource("11_cyx30")
-shader_parameter/albedo = Color(1, 1, 1, 0.27450982)
+shader_parameter/albedo = Color(1, 0.7882353, 0.5137255, 1)
 shader_parameter/albedo_texture_size = Vector2i(0, 0)
 shader_parameter/point_size = 1.0
 shader_parameter/roughness = 1.0
@@ -298,7 +298,7 @@ shader_parameter/uv2_offset = Vector3(0, 0, 0)
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_p80do"]
 render_priority = 0
 shader = ExtResource("11_cyx30")
-shader_parameter/albedo = Color(1, 1, 1, 0.27450982)
+shader_parameter/albedo = Color(1, 0.7882353, 0.5137255, 1)
 shader_parameter/albedo_texture_size = Vector2i(0, 0)
 shader_parameter/point_size = 1.0
 shader_parameter/roughness = 1.0

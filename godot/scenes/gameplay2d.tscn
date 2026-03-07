@@ -101,6 +101,7 @@ text = "username  here"
 [node name="Joystick" type="CanvasLayer" parent="." unique_id=740292484]
 
 [node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=424517319]
+position = Vector2(100, 400)
 
 [node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=12073439]
 anchors_preset = 8
@@ -134,18 +135,9 @@ script = ExtResource("3_1iwhs")
 
 [node name="pick" type="TextureButton" parent="Node3/CanvasLayer" unique_id=1273709688]
 modulate = Color(1, 1, 1, 0.4745098)
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -164.0
-offset_top = -162.0
-offset_right = 336.0
-offset_bottom = 338.0
-grow_horizontal = 0
-grow_vertical = 0
-scale = Vector2(0.2, 0.2)
+offset_right = 500.0
+offset_bottom = 500.0
+scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("2_cqgoe")
 stretch_mode = 4
 script = ExtResource("3_uw04a")
