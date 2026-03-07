@@ -169,9 +169,10 @@ func _update_chicken_state(chicken_state: Dictionary) -> void:
 	var target_pos = server_target_pos
 	var target_rot_y = server_target_rot_y
 
-	# Visual attachment: while held, render chicken from holder transform so it stays locked to player.
+	# Visual attachment only for local holder to remove perceived self-lag.
+	# Remote clients must stay on server pose to keep one shared world state.
 	var holder_node = _get_player_node_by_id(chicken_holder_id)
-	if chicken_is_held and holder_node != null:
+	if chicken_is_held and chicken_holder_id == player_id and holder_node != null:
 		target_pos = _build_hold_target_for_player(holder_node)
 		target_rot_y = holder_node.rotation.y
 
