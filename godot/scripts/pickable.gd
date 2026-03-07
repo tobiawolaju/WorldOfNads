@@ -1,29 +1,57 @@
 extends RigidBody3D
 
-@export var can_be_picked: bool = true
-@export var circle_radius: float = 2.0
-@export var circle_speed: float = 1.0
+signal picked_up
 
-var circle_angle: float = 0.0
-var circle_center: Vector3
+@export var can_be_picked: bool = true
+@export var wiggle_radius: float = 0.15   # very small movement
+@export var wiggle_speed: float = 4.0     # faster for jitter effect
+
+var wiggle_angle: float = 0.0
+var wiggle_center: Vector3
 var is_held: bool = false
+var network_authoritative: bool = false
 
 func _ready() -> void:
-	circle_center = global_transform.origin
+	wiggle_center = global_transform.origin
+	freeze = true
+	add_to_group("pickup_items") # IMPORTANT
 
-func _physics_process(delta: float) -> void:
-	if is_held:
-		# While held, move the circle center to match player position
-		if get_parent(): # assuming player is parent temporarily or passed reference
-			circle_center = global_transform.origin
+func pick():
+	if not can_be_picked:
 		return
 
-	# Update circular movement
-	circle_angle += circle_speed * delta
-	var x = circle_center.x + cos(circle_angle) * circle_radius
-	var z = circle_center.z + sin(circle_angle) * circle_radius
+	is_held = true
+	emit_signal("picked_up", self)
+
+func _physics_process(delta: float) -> void:
+	if network_authoritative:
+		return
+
+	if is_held:
+		# While held, keep the center at current position
+		if get_parent():
+			wiggle_center = global_transform.origin
+		return
+
+	# Small jitter/wiggle movement
+	wiggle_angle += wiggle_speed * delta
+	var x = wiggle_center.x + cos(wiggle_angle) * wiggle_radius
+	var z = wiggle_center.z + sin(wiggle_angle) * wiggle_radius
 	global_transform.origin.x = x
 	global_transform.origin.z = z
 
 func update_circle_center(new_center: Vector3) -> void:
-	circle_center = new_center
+	wiggle_center = new_center
+
+func apply_network_state(target_pos: Vector3, target_rot_y: float, held: bool) -> void:
+	network_authoritative = true
+	is_held = held
+	freeze = true
+
+	global_position = global_position.lerp(target_pos, 0.5)
+	var rot = global_rotation
+	rot.y = lerp_angle(rot.y, target_rot_y, 0.5)
+	global_rotation = rot
+
+	if not held:
+		wiggle_center = target_pos

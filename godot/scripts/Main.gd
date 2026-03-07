@@ -16,6 +16,11 @@ var players := {}
 var is_local: bool
 var root: Node
 
+# --- CHICKEN AUTHORITY STATE ---
+var chicken_node: RigidBody3D = null
+var chicken_is_held := false
+var chicken_holder_id := ""
+
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live = true
 var connection_attempted = false
@@ -24,6 +29,7 @@ var connection_attempted = false
 func _ready():
 	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
 	_attempt_connection()
+	_cache_chicken_node()
 
 func _attempt_connection():
 	var url_to_try = LIVE_URL if is_connecting_to_live else LOCAL_URL
@@ -39,7 +45,7 @@ func _attempt_connection():
 	else:
 		connection_attempted = true
 
-func _process(delta):
+func _process(_delta):
 	if not connection_attempted:
 		return
 
@@ -93,6 +99,8 @@ func _receive_messages():
 			"state":
 				if data.has("players"):
 					_update_world_state(data["players"])
+				if data.has("chicken"):
+					_update_chicken_state(data["chicken"])
 
 
 # --- WORLD STATE UPDATE ---
@@ -133,6 +141,55 @@ func _update_world_state(players_state):
 	for id in players.keys():
 		if id != player_id and not id in received_ids:
 			_remove_player(id)
+
+
+# --- CHICKEN SYNC ---
+func _cache_chicken_node() -> void:
+	if chicken_node != null and is_instance_valid(chicken_node):
+		return
+	var pickup_nodes = get_tree().get_nodes_in_group("pickup_items")
+	if pickup_nodes.size() > 0 and pickup_nodes[0] is RigidBody3D:
+		chicken_node = pickup_nodes[0]
+
+func _update_chicken_state(chicken_state: Dictionary) -> void:
+	_cache_chicken_node()
+	if chicken_node == null:
+		return
+
+	var target_pos = Vector3(
+		float(chicken_state.get("x", chicken_node.global_position.x)),
+		float(chicken_state.get("y", chicken_node.global_position.y)),
+		float(chicken_state.get("z", chicken_node.global_position.z))
+	)
+	var target_rot_y = float(chicken_state.get("rotationY", chicken_node.global_rotation.y))
+	chicken_is_held = bool(chicken_state.get("isHeld", false))
+	chicken_holder_id = str(chicken_state.get("holderId", ""))
+
+	if chicken_node.has_method("apply_network_state"):
+		chicken_node.apply_network_state(target_pos, target_rot_y, chicken_is_held)
+	else:
+		chicken_node.freeze = true
+		chicken_node.global_position = chicken_node.global_position.lerp(target_pos, 0.45)
+		var rot = chicken_node.global_rotation
+		rot.y = lerp_angle(rot.y, target_rot_y, 0.45)
+		chicken_node.global_rotation = rot
+
+func is_local_player_holding_chicken() -> bool:
+	return chicken_is_held and chicken_holder_id == player_id
+
+func build_local_chicken_payload(player_pos: Vector3, view_forward: Vector3, visual_rot_y: float):
+	if not is_local_player_holding_chicken():
+		return null
+	var hold_distance = 0.9
+	var hold_height = 1.0
+	var target_pos = player_pos + (view_forward * hold_distance)
+	target_pos.y += hold_height
+	return {
+		"x": target_pos.x,
+		"y": target_pos.y,
+		"z": target_pos.z,
+		"rotation_y": visual_rot_y
+	}
 
 
 # --- VEHICLE SYNC ---

@@ -5,6 +5,7 @@ const GRAVITY: float = 9.8
 const JUMP_VELOCITY: float = 4.5
 const SPEED: float = 4.5
 const DEADZONE := 0.12
+const PICKUP_REQUEST_COOLDOWN_MS := 150
 
 # --- INPUT VARIABLES ---
 var gamepad_index := 0
@@ -13,6 +14,7 @@ var gamepad_index := 0
 var held_object: RigidBody3D = null
 @export var hold_distance: float = 0.25
 @export var hold_height: float = 1.5
+var last_pickup_request_ms: int = 0
 
 # --- CAMERA & ZOOM SETTINGS ---
 @export var camera_distance: float = 4.0
@@ -27,7 +29,7 @@ var held_object: RigidBody3D = null
 @onready var camera: Camera3D = get_node("../Camera3D")
 
 # [CHANGED] Replaced RayCast3D with Area3D
-@onready var pickup_area: Area3D = $Area3D 
+@onready var pickup_area: Area3D = $Area3D
 
 @onready var name_label: Label3D = $Label3D
 @onready var anim_run: AnimationPlayer = $running
@@ -51,19 +53,12 @@ var player_id: String = "" :
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
 	_play_idle()
-	
+
 	if not pickup_area:
 		print("ERROR: $Area3D node not found! Please add an Area3D with a CollisionShape to the player.")
 
-func _process(delta: float):
+func _process(_delta: float):
 	name_label.text = player_id.substr(0, 8)
-	
-	# Handle holding the object (Smoothly move it to front of camera)
-	if held_object:
-		var target_pos = global_position + (global_transform.basis.z * -hold_distance)
-		target_pos.y += hold_height * 0.5 
-		held_object.global_position = held_object.global_position.lerp(target_pos, 10.0 * delta)
-		held_object.global_rotation.y = lerp_angle(held_object.global_rotation.y, rotation.y, 10.0 * delta)
 
 func _input(event: InputEvent) -> void:
 	if not is_local:
@@ -102,10 +97,10 @@ func _input(event: InputEvent) -> void:
 
 	# --- 2. PICKUP CONTROLS ---
 	if event.is_action_pressed("pickup"):
-		if held_object == null:
-			_try_pickup()
-		else:
+		if _is_local_holding_chicken():
 			_drop_object()
+		else:
+			_try_pickup()
 
 func _physics_process(delta: float) -> void:
 	if not is_local:
@@ -163,58 +158,49 @@ func _try_pickup():
 	if not pickup_area:
 		return
 
-	# 1. Get all overlapping bodies in the area
+	var now = Time.get_ticks_msec()
+	if now - last_pickup_request_ms < PICKUP_REQUEST_COOLDOWN_MS:
+		return
+	last_pickup_request_ms = now
+
+	# Only request pickup when a valid nearby target exists.
 	var bodies = pickup_area.get_overlapping_bodies()
 	var best_target: RigidBody3D = null
 	var shortest_dist: float = 999.0
 
-	# 2. Iterate to find the closest valid object
 	for body in bodies:
-		# Must be a RigidBody, and cannot be the player itself
-		if body is RigidBody3D and body != self:
-			
-			# Optional: Ignore ground
-			if "GroundMesh" in body.name:
-				continue
-			
+		if body is RigidBody3D and body != self and body.is_in_group("pickup_items"):
 			var dist = global_position.distance_to(body.global_position)
 			if dist < shortest_dist:
 				shortest_dist = dist
 				best_target = body
-	
-	# 3. If we found a target, pick it up
-	if best_target:
-		held_object = best_target
-		held_object.freeze = true
-		held_object.is_held = true  # stop circular movement
-		
-		# Turn off collisions with player so it doesn't push you
-		held_object.set_collision_mask_value(1, false)
-		held_object.set_collision_layer_value(1, false)
-		print("Picked up: ", held_object.name)
-	else:
-		print("Nothing to pick up nearby.")
+
+	if best_target and root and root.ws and root.ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		root.ws.send_text(JSON.stringify({
+			"type": "pickup_request",
+			"item_id": best_target.name
+		}))
 
 func _drop_object():
-	if not held_object:
+	if not _is_local_holding_chicken():
+		return
+	if not root or not root.ws:
+		return
+	if root.ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		return
 
-	# When dropped, the circle center stays at the current position
-	# The chicken continues moving along the same path
-	held_object.update_circle_center(held_object.global_transform.origin)
-	held_object.is_held = false
-
-	# Reset physics and collisions
-	held_object.freeze = false
-	held_object.set_collision_mask_value(1, true)
-	held_object.set_collision_layer_value(1, true)
-
-	# Optional slight throw
 	var throw_dir = -camera.global_transform.basis.z
-	held_object.apply_central_impulse(throw_dir * 5.0)
+	root.ws.send_text(JSON.stringify({
+		"type": "drop_request",
+		"throw_x": throw_dir.x * 5.0,
+		"throw_y": max(1.0, throw_dir.y * 5.0),
+		"throw_z": throw_dir.z * 5.0
+	}))
 
-	held_object = null
-
+func _is_local_holding_chicken() -> bool:
+	if not root or not root.has_method("is_local_player_holding_chicken"):
+		return false
+	return root.is_local_player_holding_chicken()
 
 # --- CAMERA LOGIC ---
 func _handle_camera_gamepad(delta: float) -> void:
@@ -257,15 +243,22 @@ func _send_state_to_server() -> void:
 	if not root or not root.ws:
 		return
 	if root.ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
-		root.ws.send_text(JSON.stringify({
+		var payload = {
 			"type": "update_state",
-			"player_id": player_id,
 			"x": global_transform.origin.x,
 			"y": global_transform.origin.y,
 			"z": global_transform.origin.z,
 			"rotation_y": mesh.rotation.y,
 			"animation": current_animation
-		}))
+		}
+
+		# Only holder is allowed to stream chicken pose to server.
+		if _is_local_holding_chicken() and root.has_method("build_local_chicken_payload"):
+			var chicken_payload = root.build_local_chicken_payload(global_position, -camera.global_transform.basis.z, mesh.rotation.y)
+			if chicken_payload != null:
+				payload["chicken"] = chicken_payload
+
+		root.ws.send_text(JSON.stringify(payload))
 
 func set_animation_state(new_state: String):
 	if is_local: return
