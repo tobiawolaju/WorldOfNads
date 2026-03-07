@@ -88,28 +88,6 @@ theme_override_fonts/font = ExtResource("2_ikted")
 theme_override_font_sizes/font_size = 60
 text = "120"
 
-[node name="Node3" type="Node" parent="CanvasLayer/BoxContainer" unique_id=1333095260]
-
-[node name="CanvasLayer" type="CanvasLayer" parent="CanvasLayer/BoxContainer/Node3" unique_id=691266471]
-
-[node name="pick" type="TextureButton" parent="CanvasLayer/BoxContainer/Node3/CanvasLayer" unique_id=610930177]
-modulate = Color(1, 1, 1, 0.4745098)
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -126.00003
-offset_top = -115.0
-offset_right = 374.0
-offset_bottom = 385.0
-grow_horizontal = 0
-grow_vertical = 0
-scale = Vector2(0.1, 0.1)
-texture_normal = ExtResource("2_cqgoe")
-stretch_mode = 4
-script = ExtResource("3_uw04a")
-
 [node name="username_label" type="Label" parent="CanvasLayer" unique_id=593725242]
 visible = false
 offset_left = 140.0
@@ -149,6 +127,28 @@ modulate = Color(1, 1, 1, 0.4745098)
 scale = Vector2(0.1, 0.1)
 texture = ExtResource("2_cqgoe")
 script = ExtResource("3_1iwhs")
+
+[node name="Node3" type="Node" parent="." unique_id=633834656]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="Node3" unique_id=1670940751]
+
+[node name="pick" type="TextureButton" parent="Node3/CanvasLayer" unique_id=1273709688]
+modulate = Color(1, 1, 1, 0.4745098)
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -164.0
+offset_top = -162.0
+offset_right = 336.0
+offset_bottom = 338.0
+grow_horizontal = 0
+grow_vertical = 0
+scale = Vector2(0.2, 0.2)
+texture_normal = ExtResource("2_cqgoe")
+stretch_mode = 4
+script = ExtResource("3_uw04a")
 
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer"]
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Bus"]
