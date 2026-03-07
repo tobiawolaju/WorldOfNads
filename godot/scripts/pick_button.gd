@@ -7,8 +7,8 @@ func _ready():
 	# Position button 100px above bottom and 100px left from right edge
 	var viewport_size = get_viewport().get_visible_rect().size
 	global_position = Vector2(
-		viewport_size.x - 100,   # 100px left from right edge
-		viewport_size.y - 100    # 100px above bottom edge
+		viewport_size.x - 150,   # 100px left from right edge
+		viewport_size.y - 150    # 100px above bottom edge
 	)
 
 func _on_pressed():
