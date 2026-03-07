@@ -100,7 +100,20 @@ size_flags_vertical = 4
 
 [node name="username" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer2" unique_id=190950955]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95328337, 0.90947247, 1, 1)
+theme_override_colors/font_color = Color(0.21960784, 1, 0, 1)
+theme_override_colors/font_shadow_color = Color(18.892157, 18.892157, 18.892157, 1)
+theme_override_colors/font_outline_color = Color(18.892157, 18.892157, 18.892157, 1)
+theme_override_constants/shadow_outline_size = 5
+theme_override_fonts/font = ExtResource("2_ikted")
+theme_override_font_sizes/font_size = 30
+text = "username"
+
+[node name="username2" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer2" unique_id=769348370]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.21960784, 1, 0, 1)
+theme_override_colors/font_shadow_color = Color(18.892157, 18.892157, 18.892157, 1)
+theme_override_colors/font_outline_color = Color(18.892157, 18.892157, 18.892157, 1)
+theme_override_constants/shadow_outline_size = 5
 theme_override_fonts/font = ExtResource("2_ikted")
 theme_override_font_sizes/font_size = 30
 text = "username"
@@ -115,7 +128,10 @@ size_flags_vertical = 4
 
 [node name="status" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=979704754]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95328337, 0.90947247, 1, 1)
+theme_override_colors/font_color = Color(0.21960784, 1, 0, 1)
+theme_override_colors/font_shadow_color = Color(18.892157, 18.892157, 18.892157, 1)
+theme_override_colors/font_outline_color = Color(18.892157, 18.892157, 18.892157, 1)
+theme_override_constants/shadow_outline_size = 5
 theme_override_fonts/font = ExtResource("2_ikted")
 theme_override_font_sizes/font_size = 25
 text = "you are holding the chicken"
