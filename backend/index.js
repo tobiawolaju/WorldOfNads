@@ -1,4 +1,3 @@
-// server.js
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
@@ -12,6 +11,10 @@ const PICKUP_RADIUS = 2.2;
 const MAX_THROW_IMPULSE = 8.0;
 const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 0.5869336;
+
+const MAX_EVENT_HISTORY = 100;
+let eventSequence = 0;
+const eventHistory = [];
 
 const players = {};
 
@@ -32,25 +35,119 @@ function length3(x, y, z) {
   return Math.sqrt(x * x + y * y + z * z);
 }
 
+function sanitizeMessage(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  return value.trim().slice(0, 220);
+}
+
+function sanitizeMeta(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+  const safe = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (typeof key !== 'string' || key.length > 40) {
+      continue;
+    }
+    if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean' || item === null) {
+      safe[key] = item;
+    }
+  }
+  return safe;
+}
+
 const server = createServer((req, res) => {
-  if (req.method === 'GET' && req.url === '/') {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
+  const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET,OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
+    res.end();
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/') {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Access-Control-Allow-Origin': '*'
+    });
     res.end('Server is alive and healthy!\\n');
     return;
   }
-  res.writeHead(404);
+
+  if (req.method === 'GET' && reqUrl.pathname === '/events') {
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(JSON.stringify({
+      type: 'events_snapshot',
+      events: eventHistory
+    }));
+    return;
+  }
+
+  res.writeHead(404, {
+    'Access-Control-Allow-Origin': '*'
+  });
   res.end();
 });
 
-const wss = new WebSocketServer({ noServer: true });
+const gameWss = new WebSocketServer({ noServer: true });
+const eventsWss = new WebSocketServer({ noServer: true });
+
+function publishEvent(eventType, message, playerId = '', meta = {}) {
+  const event = {
+    id: ++eventSequence,
+    eventType,
+    message,
+    playerId,
+    timestamp: new Date().toISOString(),
+    meta
+  };
+
+  eventHistory.push(event);
+  if (eventHistory.length > MAX_EVENT_HISTORY) {
+    eventHistory.shift();
+  }
+
+  const payload = JSON.stringify({ type: 'event', event });
+  eventsWss.clients.forEach((client) => {
+    if (client.readyState === 1) {
+      client.send(payload);
+    }
+  });
+}
 
 server.on('upgrade', (req, socket, head) => {
-  wss.handleUpgrade(req, socket, head, (ws) => {
-    wss.emit('connection', ws, req);
+  const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+
+  if (reqUrl.pathname === '/events') {
+    eventsWss.handleUpgrade(req, socket, head, (ws) => {
+      eventsWss.emit('connection', ws, req);
+    });
+    return;
+  }
+
+  gameWss.handleUpgrade(req, socket, head, (ws) => {
+    gameWss.emit('connection', ws, req);
   });
 });
 
-wss.on('connection', (ws) => {
+eventsWss.on('connection', (ws) => {
+  ws.send(JSON.stringify({
+    type: 'events_snapshot',
+    events: eventHistory
+  }));
+});
+
+gameWss.on('connection', (ws) => {
   const playerId = randomUUID();
 
   players[playerId] = {
@@ -71,6 +168,14 @@ wss.on('connection', (ws) => {
       const player = players[playerId];
       if (!player || !data || typeof data.type !== 'string') {
         return;
+      }
+
+      if (data.type === 'client_event') {
+        const eventType = typeof data.eventType === 'string' ? data.eventType.slice(0, 40) : 'client_event';
+        const cleanMessage = sanitizeMessage(data.message);
+        if (cleanMessage !== '') {
+          publishEvent(eventType, cleanMessage, playerId, sanitizeMeta(data.meta));
+        }
       }
 
       if (data.type === 'update_state') {
@@ -182,6 +287,14 @@ wss.on('connection', (ws) => {
 
   ws.on('close', () => {
     console.log(`💀 Player disconnected: ${playerId}`);
+
+    publishEvent(
+      'player_left',
+      `${playerId.slice(0, 8)} left the game`,
+      playerId,
+      {}
+    );
+
     if (chicken.holderId === playerId) {
       chicken.isHeld = false;
       chicken.holderId = null;
@@ -229,12 +342,11 @@ setInterval(() => {
 
   const stateString = JSON.stringify(stateData);
 
-  wss.clients.forEach((client) => {
+  gameWss.clients.forEach((client) => {
     if (client.readyState === 1) {
       client.send(stateString);
     }
   });
-
 }, 1000 / BROADCAST_RATE);
 
 server.listen(PORT, '0.0.0.0', () => {

@@ -5,8 +5,10 @@
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="2_ikted"]
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/joystick.gd" id="3_1iwhs"]
 [ext_resource type="Script" uid="uid://vwbunt2j3px3" path="res://scripts/pick_button.gd" id="3_uw04a"]
+[ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/Events.gd" id="4_events"]
 
 [node name="Gameplay2d" type="Node2D" unique_id=843521828]
+script = ExtResource("4_events")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1992101475]
 

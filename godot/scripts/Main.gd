@@ -22,6 +22,9 @@ const CHICKEN_HOLD_HEIGHT := 1.0
 var chicken_node: RigidBody3D = null
 var chicken_is_held := false
 var chicken_holder_id := ""
+var events_bridge: Node = null
+var _last_chicken_is_held := false
+var _last_chicken_holder_id := ""
 
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live = true
@@ -32,6 +35,7 @@ func _ready():
 	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
 	_attempt_connection()
 	_cache_chicken_node()
+	_resolve_events_bridge()
 
 func _attempt_connection():
 	var url_to_try = LIVE_URL if is_connecting_to_live else LOCAL_URL
@@ -48,6 +52,9 @@ func _attempt_connection():
 		connection_attempted = true
 
 func _process(_delta):
+	if events_bridge == null or not is_instance_valid(events_bridge):
+		_resolve_events_bridge()
+
 	if not connection_attempted:
 		return
 
@@ -97,6 +104,12 @@ func _receive_messages():
 				player_id = data["id"]
 				print("My player ID:", player_id)
 				_spawn_player(player_id, true)
+				_set_local_username(player_id.substr(0, 8))
+				_emit_player_event(
+					"player_joined",
+					"%s joined the game" % _format_player_short_name(player_id),
+					{"playerId": player_id}
+				)
 
 			"state":
 				if data.has("players"):
@@ -166,6 +179,7 @@ func _update_chicken_state(chicken_state: Dictionary) -> void:
 	var server_target_rot_y = float(chicken_state.get("rotationY", chicken_node.global_rotation.y))
 	chicken_is_held = bool(chicken_state.get("isHeld", false))
 	chicken_holder_id = str(chicken_state.get("holderId", ""))
+	_handle_chicken_state_event(chicken_is_held, chicken_holder_id)
 	var target_pos = server_target_pos
 	var target_rot_y = server_target_rot_y
 
@@ -276,3 +290,49 @@ func _remove_player(id: String):
 			return
 		players[id].queue_free()
 		players.erase(id)
+
+func _resolve_events_bridge() -> void:
+	var bridges = get_tree().get_nodes_in_group("events_bridge")
+	if bridges.size() > 0:
+		events_bridge = bridges[0]
+
+func _set_local_username(name_text: String) -> void:
+	if events_bridge != null and is_instance_valid(events_bridge) and events_bridge.has_method("set_local_username"):
+		events_bridge.set_local_username(name_text)
+
+func _show_local_event(message: String) -> void:
+	if events_bridge != null and is_instance_valid(events_bridge) and events_bridge.has_method("show_local_event"):
+		events_bridge.show_local_event(message)
+
+func _emit_player_event(event_type: String, message: String, meta: Dictionary = {}) -> void:
+	_show_local_event(message)
+	if ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		ws.send_text(JSON.stringify({
+			"type": "client_event",
+			"eventType": event_type,
+			"message": message,
+			"meta": meta
+		}))
+
+func _format_player_short_name(id: String) -> String:
+	if id == "":
+		return "player"
+	return id.substr(0, 8)
+
+func _handle_chicken_state_event(current_is_held: bool, current_holder_id: String) -> void:
+	if not _last_chicken_is_held and current_is_held and current_holder_id == player_id:
+		_emit_player_event(
+			"chicken_picked",
+			"%s picked the chicken" % _format_player_short_name(current_holder_id),
+			{"item": "chicken", "action": "pick"}
+		)
+
+	if _last_chicken_is_held and _last_chicken_holder_id == player_id and not current_is_held:
+		_emit_player_event(
+			"chicken_dropped",
+			"%s dropped the chicken" % _format_player_short_name(player_id),
+			{"item": "chicken", "action": "drop"}
+		)
+
+	_last_chicken_is_held = current_is_held
+	_last_chicken_holder_id = current_holder_id
