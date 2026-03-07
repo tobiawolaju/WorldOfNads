@@ -88,12 +88,46 @@ graph TD
 
 Real-time gameplay stays off-chain. Only outcomes that require trust go on-chain.
 
+---
+## 📡 Live Events Stream
+
+The game now includes a dedicated events stream for lightweight activity logs.
+
+- **Live WebSocket endpoint:** `wss://worldofnads.onrender.com/events`
+- **Local fallback endpoint:** `ws://localhost:8080/events`
+- **HTTP snapshot endpoint:** `https://worldofnads.onrender.com/events` (`GET`)
+- **History size:** last `100` events (server-side ring buffer)
+
+### Payloads
+
+- `events_snapshot`: sent on connect and via `GET /events`
+- `event`: pushed in real time to `/events` subscribers
+
+Example event object:
+
+```json
+{
+  "id": 12,
+  "eventType": "chicken_picked",
+  "message": "a1b2c3d4 picked the chicken",
+  "playerId": "a1b2c3d4-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "timestamp": "2026-03-07T20:00:00.000Z",
+  "meta": { "item": "chicken", "action": "pick" }
+}
+```
+
+### In-game integration
+
+- Godot scene `gameplay2d.tscn` mounts `scripts/Events.gd` as the events bridge.
+- `Main.gd` emits `client_event` messages (e.g. player joined, chicken picked/dropped).
+- `Events.gd` renders recent status lines in HUD and shows live/local connection status.
+
 
 ---
 ## 🛠 Tech Stack & Highlights
 
 - **Frontend / Engine:** Godot → WASM embedded in React/Vite  
-- **Networking:** Node.js WebSocket server @20Hz  
+- **Networking:** Node.js WebSocket server @20Hz + `/events` WebSocket stream  
 - **Persistence:** Firebase for cosmetic state  
 - **Blockchain:** Monad smart contracts for match settlement + payouts  
 - **Gameplay:** 20-player arenas, 1–5 minute rounds, competitive balance  
