@@ -88,6 +88,36 @@ theme_override_fonts/font = ExtResource("2_ikted")
 theme_override_font_sizes/font_size = 60
 text = "120"
 
+[node name="BoxContainer2" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=586681937]
+offset_left = 19.0
+offset_top = 21.0
+offset_right = 95.0
+offset_bottom = 81.0
+size_flags_horizontal = 0
+size_flags_vertical = 4
+
+[node name="username" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer2" unique_id=190950955]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95328337, 0.90947247, 1, 1)
+theme_override_fonts/font = ExtResource("2_ikted")
+theme_override_font_sizes/font_size = 30
+text = "username"
+
+[node name="BoxContainer3" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=146550388]
+offset_left = 19.0
+offset_top = 60.0
+offset_right = 125.0
+offset_bottom = 91.0
+size_flags_horizontal = 0
+size_flags_vertical = 4
+
+[node name="status" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=979704754]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95328337, 0.90947247, 1, 1)
+theme_override_fonts/font = ExtResource("2_ikted")
+theme_override_font_sizes/font_size = 25
+text = "you are holding the chicken"
+
 [node name="username_label" type="Label" parent="CanvasLayer" unique_id=593725242]
 visible = false
 offset_left = 140.0
@@ -101,7 +131,7 @@ text = "username  here"
 [node name="Joystick" type="CanvasLayer" parent="." unique_id=740292484]
 
 [node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=424517319]
-position = Vector2(100, 400)
+position = Vector2(-200, -200)
 
 [node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=12073439]
 anchors_preset = 8

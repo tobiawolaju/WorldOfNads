@@ -12,7 +12,6 @@ signal camera_dragged(relative: Vector2)
 var radiusJoyStick
 var radiusJoyBase
 var maxRadius
-var touchInsideJoystick = false
 var return_to_center = true
 var keys_pressed = {
 	"move_forward": false,
@@ -26,6 +25,11 @@ var last_tap_time = 0.0
 var double_tap_interval = 0.3
 var last_tap_position = Vector2.ZERO
 var screen_orientation = "portrait"
+
+# --- MULTI-TOUCH TRACKING ---
+var active_joystick_index := -1
+var active_camera_index := -1
+var touchInsideJoystick = false
 
 func _ready():
 	var viewport_size = get_viewport().get_visible_rect().size
@@ -43,37 +47,42 @@ func _input(event):
 
 	if event is InputEventScreenTouch:
 		if event.pressed:
-			if _is_joystick_area(event.position, viewport_size):
+			# --- Joystick touch ---
+			if _is_joystick_area(event.position, viewport_size) and active_joystick_index == -1:
+				active_joystick_index = event.index
+				touchInsideJoystick = true
 				touch_joystick.position = event.position
 				global_position = event.position
-				touchInsideJoystick = true
 				touch_joystick.visible = true
 				_check_double_tap(event.position)
 				_update_visuals()
-			elif _is_camera_area(event.position, viewport_size):
+			# --- Camera touch ---
+			elif _is_camera_area(event.position, viewport_size) and active_camera_index == -1:
+				active_camera_index = event.index
 				emit_signal("camera_dragged", Vector2.ZERO)
 		else:
-			if touchInsideJoystick:
+			if event.index == active_joystick_index:
 				if return_to_center:
 					position = Vector2.ZERO
 					_release_all_keys()
 					_update_visuals()
 				emit_signal("joystick_released")
 				touch_joystick.visible = false
-			touchInsideJoystick = false
+				touchInsideJoystick = false
+				active_joystick_index = -1
+			elif event.index == active_camera_index:
+				active_camera_index = -1
 
 	elif event is InputEventScreenDrag:
-		if touchInsideJoystick:
+		if event.index == active_joystick_index:
 			position += event.relative
 			if position.length() > maxRadius:
 				position = position.normalized() * maxRadius
-			
 			emit_signal("joystick_moved", position)
 			touch_joystick.visible = true
-			
 			_update_input_from_joystick(position)
 			_update_visuals()
-		elif _is_camera_area(event.position, viewport_size):
+		elif event.index == active_camera_index:
 			emit_signal("camera_dragged", event.relative)
 
 func _process(delta):
