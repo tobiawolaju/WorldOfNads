@@ -42,10 +42,10 @@ func _process(_delta: float) -> void:
 		if tried_live and not fallback_started:
 			_start_local_fallback("Falling back to local events")
 
-func set_local_username(id: String) -> void:
-	if username_label == null:
-		return
-	username_label.text = id
+#func set_local_username(id: String) -> void:
+	#if username_label == null:
+		#return
+	#username_label.text = id
 
 func show_local_event(message: String) -> void:
 	_push_status_line(message)
