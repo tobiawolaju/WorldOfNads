@@ -15,6 +15,8 @@ var player_id := ""
 var players := {}
 var is_local: bool
 var root: Node
+const CHICKEN_HOLD_DISTANCE := 0.9
+const CHICKEN_HOLD_HEIGHT := 1.0
 
 # --- CHICKEN AUTHORITY STATE ---
 var chicken_node: RigidBody3D = null
@@ -156,14 +158,22 @@ func _update_chicken_state(chicken_state: Dictionary) -> void:
 	if chicken_node == null:
 		return
 
-	var target_pos = Vector3(
+	var server_target_pos = Vector3(
 		float(chicken_state.get("x", chicken_node.global_position.x)),
 		float(chicken_state.get("y", chicken_node.global_position.y)),
 		float(chicken_state.get("z", chicken_node.global_position.z))
 	)
-	var target_rot_y = float(chicken_state.get("rotationY", chicken_node.global_rotation.y))
+	var server_target_rot_y = float(chicken_state.get("rotationY", chicken_node.global_rotation.y))
 	chicken_is_held = bool(chicken_state.get("isHeld", false))
 	chicken_holder_id = str(chicken_state.get("holderId", ""))
+	var target_pos = server_target_pos
+	var target_rot_y = server_target_rot_y
+
+	# Visual attachment: while held, render chicken from holder transform so it stays locked to player.
+	var holder_node = _get_player_node_by_id(chicken_holder_id)
+	if chicken_is_held and holder_node != null:
+		target_pos = _build_hold_target_for_player(holder_node)
+		target_rot_y = holder_node.rotation.y
 
 	if chicken_node.has_method("apply_network_state"):
 		chicken_node.apply_network_state(target_pos, target_rot_y, chicken_is_held)
@@ -177,13 +187,33 @@ func _update_chicken_state(chicken_state: Dictionary) -> void:
 func is_local_player_holding_chicken() -> bool:
 	return chicken_is_held and chicken_holder_id == player_id
 
+func get_chicken_node() -> RigidBody3D:
+	_cache_chicken_node()
+	return chicken_node
+
+func _get_player_node_by_id(id: String) -> Node3D:
+	if id == "":
+		return null
+	if players.has(id):
+		return players[id]
+	return null
+
+func _build_hold_target_for_player(player_node: Node3D) -> Vector3:
+	var forward = -player_node.global_transform.basis.z
+	forward.y = 0.0
+	if forward.length_squared() < 0.0001:
+		forward = Vector3.FORWARD
+	else:
+		forward = forward.normalized()
+	var target_pos = player_node.global_position + (forward * CHICKEN_HOLD_DISTANCE)
+	target_pos.y += CHICKEN_HOLD_HEIGHT
+	return target_pos
+
 func build_local_chicken_payload(player_pos: Vector3, view_forward: Vector3, visual_rot_y: float):
 	if not is_local_player_holding_chicken():
 		return null
-	var hold_distance = 0.9
-	var hold_height = 1.0
-	var target_pos = player_pos + (view_forward * hold_distance)
-	target_pos.y += hold_height
+	var target_pos = player_pos + (view_forward * CHICKEN_HOLD_DISTANCE)
+	target_pos.y += CHICKEN_HOLD_HEIGHT
 	return {
 		"x": target_pos.x,
 		"y": target_pos.y,

@@ -48,9 +48,10 @@ func apply_network_state(target_pos: Vector3, target_rot_y: float, held: bool) -
 	is_held = held
 	freeze = true
 
-	global_position = global_position.lerp(target_pos, 0.5)
+	var lerp_weight := 0.85 if held else 0.5
+	global_position = global_position.lerp(target_pos, lerp_weight)
 	var rot = global_rotation
-	rot.y = lerp_angle(rot.y, target_rot_y, 0.5)
+	rot.y = lerp_angle(rot.y, target_rot_y, lerp_weight)
 	global_rotation = rot
 
 	if not held:

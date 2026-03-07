@@ -57,8 +57,9 @@ func _ready() -> void:
 	if not pickup_area:
 		print("ERROR: $Area3D node not found! Please add an Area3D with a CollisionShape to the player.")
 
-func _process(_delta: float):
+func _process(delta: float):
 	name_label.text = player_id.substr(0, 8)
+	_update_local_chicken_visual(delta)
 
 func _input(event: InputEvent) -> void:
 	if not is_local:
@@ -201,6 +202,20 @@ func _is_local_holding_chicken() -> bool:
 	if not root or not root.has_method("is_local_player_holding_chicken"):
 		return false
 	return root.is_local_player_holding_chicken()
+
+func _update_local_chicken_visual(delta: float) -> void:
+	if not is_local or not _is_local_holding_chicken():
+		return
+	if not root or not root.has_method("get_chicken_node"):
+		return
+
+	var chicken = root.get_chicken_node()
+	if chicken == null:
+		return
+
+	var target_pos = global_position + (-camera.global_transform.basis.z * 0.9)
+	target_pos.y += 1.0
+	chicken.global_position = chicken.global_position.lerp(target_pos, min(1.0, 16.0 * delta))
 
 # --- CAMERA LOGIC ---
 func _handle_camera_gamepad(delta: float) -> void:
