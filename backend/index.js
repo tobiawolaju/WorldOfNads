@@ -42,6 +42,13 @@ function sanitizeMessage(value) {
   return value.trim().slice(0, 220);
 }
 
+function sanitizeUsername(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  return value.trim().replace(/\s+/g, ' ').slice(0, 24);
+}
+
 function sanitizeMeta(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {};
@@ -147,11 +154,15 @@ eventsWss.on('connection', (ws) => {
   }));
 });
 
-gameWss.on('connection', (ws) => {
+gameWss.on('connection', (ws, req) => {
   const playerId = randomUUID();
+  const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+  const requestedUsername = sanitizeUsername(reqUrl.searchParams.get('username') || '');
+  const username = requestedUsername !== '' ? requestedUsername : `player-${playerId.slice(0, 8)}`;
 
   players[playerId] = {
     id: playerId,
+    username,
     x: 0,
     y: 0,
     z: 0,
@@ -159,8 +170,8 @@ gameWss.on('connection', (ws) => {
     animation: 'idle'
   };
 
-  console.log(`🎮 Player connected: ${playerId}`);
-  ws.send(JSON.stringify({ type: 'connect', id: playerId }));
+  console.log(`🎮 Player connected: ${playerId} (${username})`);
+  ws.send(JSON.stringify({ type: 'connect', id: playerId, username }));
 
   ws.on('message', (message) => {
     try {
@@ -290,7 +301,7 @@ gameWss.on('connection', (ws) => {
 
     publishEvent(
       'player_left',
-      `${playerId.slice(0, 8)} left the game`,
+      `${username} left the game`,
       playerId,
       {}
     );

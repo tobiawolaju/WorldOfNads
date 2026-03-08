@@ -25,6 +25,8 @@ var chicken_holder_id := ""
 var events_bridge: Node = null
 var _last_chicken_is_held := false
 var _last_chicken_holder_id := ""
+var local_username := ""
+var local_display_name := "player"
 
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live = true
@@ -32,13 +34,15 @@ var connection_attempted = false
 @onready var fallback_timer: Timer = $FallbackTimer
 
 func _ready():
+	_resolve_local_username()
 	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
 	_attempt_connection()
 	_cache_chicken_node()
 	_resolve_events_bridge()
 
 func _attempt_connection():
-	var url_to_try = LIVE_URL if is_connecting_to_live else LOCAL_URL
+	var base_url = LIVE_URL if is_connecting_to_live else LOCAL_URL
+	var url_to_try = _build_ws_url_with_username(base_url)
 	var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
 
 	print("🌐 Attempting to connect to %s server: %s" % [server_type, url_to_try])
@@ -102,12 +106,13 @@ func _receive_messages():
 		match data.get("type"):
 			"connect":
 				player_id = data["id"]
-				print("My player ID:", player_id)
+				local_display_name = _resolve_server_username(data, player_id)
+				print("My player ID:", player_id, "username:", local_display_name)
 				_spawn_player(player_id, true)
-				_set_local_username(player_id.substr(0, 8))
+				_set_local_username(local_display_name)
 				_emit_player_event(
 					"player_joined",
-					"%s joined the game" % _format_player_short_name(player_id),
+					"%s joined the game" % local_display_name,
 					{"playerId": player_id}
 				)
 
@@ -318,6 +323,26 @@ func _format_player_short_name(id: String) -> String:
 	if id == "":
 		return "player"
 	return id.substr(0, 8)
+
+func _resolve_local_username() -> void:
+	if not OS.has_feature("web"):
+		return
+	var raw_username = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('username') || ''")
+	if typeof(raw_username) != TYPE_STRING:
+		return
+	local_username = str(raw_username).strip_edges()
+
+func _build_ws_url_with_username(base_url: String) -> String:
+	if local_username == "":
+		return base_url
+	var joiner = "&" if base_url.find("?") != -1 else "?"
+	return "%s%susername=%s" % [base_url, joiner, local_username.uri_encode()]
+
+func _resolve_server_username(data: Dictionary, fallback_id: String) -> String:
+	var candidate := str(data.get("username", "")).strip_edges()
+	if candidate != "":
+		return candidate
+	return _format_player_short_name(fallback_id)
 
 func _handle_chicken_state_event(current_is_held: bool, current_holder_id: String) -> void:
 	if not _last_chicken_is_held and current_is_held and current_holder_id == player_id:
