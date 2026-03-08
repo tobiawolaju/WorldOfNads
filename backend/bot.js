@@ -2,9 +2,11 @@ import { WebSocket } from "ws";
 
 const SERVER_URL =
   process.env.BOT_SERVER_URL || "wss://worldofnads.onrender.com";
-const BOT_COUNT = Number(process.env.BOT_COUNT || 5);
+const BOT_COUNT = Number(process.env.BOT_COUNT || 2);
 const BOT_MOVE_SPEED = Number(process.env.BOT_MOVE_SPEED || 5.0);
 const PICKUP_RADIUS = Number(process.env.BOT_PICKUP_RADIUS || 2.0);
+const BOT_PERSONAL_SPACE = Number(process.env.BOT_PERSONAL_SPACE || 1.1);
+const BOT_SEPARATION_WEIGHT = Number(process.env.BOT_SEPARATION_WEIGHT || 1.6);
 const RECONNECT_MS = 1200;
 const TICK_MS = 50;
 const HOLD_DISTANCE = 0.9;
@@ -23,8 +25,9 @@ function createSpawn(index) {
 }
 
 class BotClient {
-  constructor(index) {
+  constructor(index, allBots) {
     this.index = index;
+    this.allBots = allBots;
     this.username = `bot${index + 1}`;
     this.id = "";
     this.ws = null;
@@ -108,11 +111,34 @@ class BotClient {
     const dx = cx - this.position.x;
     const dz = cz - this.position.z;
     const dist2D = Math.hypot(dx, dz);
+    let dirX = 0;
+    let dirZ = 0;
 
     if (dist2D > 0.0001) {
-      const nx = dx / dist2D;
-      const nz = dz / dist2D;
-      const step = Math.min(BOT_MOVE_SPEED * dt, dist2D);
+      dirX += dx / dist2D;
+      dirZ += dz / dist2D;
+    }
+
+    for (const other of this.allBots) {
+      if (other === this) {
+        continue;
+      }
+      const ox = this.position.x - other.position.x;
+      const oz = this.position.z - other.position.z;
+      const od = Math.hypot(ox, oz);
+      if (od <= 0.0001 || od >= BOT_PERSONAL_SPACE) {
+        continue;
+      }
+      const strength = (BOT_PERSONAL_SPACE - od) / BOT_PERSONAL_SPACE;
+      dirX += (ox / od) * strength * BOT_SEPARATION_WEIGHT;
+      dirZ += (oz / od) * strength * BOT_SEPARATION_WEIGHT;
+    }
+
+    const desiredLen = Math.hypot(dirX, dirZ);
+    if (desiredLen > 0.0001) {
+      const nx = dirX / desiredLen;
+      const nz = dirZ / desiredLen;
+      const step = Math.min(BOT_MOVE_SPEED * dt, Math.max(dist2D, 0.15));
       this.position.x += nx * step;
       this.position.z += nz * step;
       this.rotationY = Math.atan2(nx, nz);
@@ -166,8 +192,12 @@ class BotClient {
 }
 
 const totalBots = Math.max(0, Math.floor(BOT_COUNT));
+const botClients = [];
 for (let i = 0; i < totalBots; i += 1) {
-  new BotClient(i).start();
+  botClients.push(new BotClient(i, botClients));
+}
+for (const bot of botClients) {
+  bot.start();
 }
 
 console.log(`Bot runner started with ${totalBots} bot(s) -> ${SERVER_URL}`);
