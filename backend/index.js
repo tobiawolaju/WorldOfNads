@@ -21,6 +21,7 @@ const eventHistory = [];
 const players = {};
 let matchTimeLeft = MATCH_DURATION_SECONDS;
 let matchRunning = false;
+let isBatchResetting = false;
 
 const chicken = {
   id: 'Chicken',
@@ -33,6 +34,13 @@ const chicken = {
   vx: 0,
   vy: 0,
   vz: 0
+};
+
+const DEFAULT_CHICKEN_STATE = {
+  x: 1.9764378,
+  y: 0.5869336,
+  z: -1.5649502,
+  rotationY: 0
 };
 
 function length3(x, y, z) {
@@ -163,6 +171,40 @@ function resolveRoundWinner() {
     return { winnerId: '', winnerName: 'No one' };
   }
   return { winnerId: holder.id, winnerName: holder.username || `player-${holder.id.slice(0, 8)}` };
+}
+
+function resetChickenState() {
+  chicken.x = DEFAULT_CHICKEN_STATE.x;
+  chicken.y = DEFAULT_CHICKEN_STATE.y;
+  chicken.z = DEFAULT_CHICKEN_STATE.z;
+  chicken.rotationY = DEFAULT_CHICKEN_STATE.rotationY;
+  chicken.isHeld = false;
+  chicken.holderId = null;
+  chicken.vx = 0;
+  chicken.vy = 0;
+  chicken.vz = 0;
+}
+
+function resetRoundForNextBatch() {
+  isBatchResetting = true;
+
+  gameWss.clients.forEach((client) => {
+    if (client.readyState === 1) {
+      client.close(1000, 'round_finished');
+    }
+  });
+
+  for (const id of Object.keys(players)) {
+    delete players[id];
+  }
+
+  resetChickenState();
+  matchRunning = false;
+  matchTimeLeft = MATCH_DURATION_SECONDS;
+
+  setTimeout(() => {
+    isBatchResetting = false;
+  }, 500);
 }
 
 server.on('upgrade', (req, socket, head) => {
@@ -335,12 +377,14 @@ gameWss.on('connection', (ws, req) => {
   ws.on('close', () => {
     console.log(`💀 Player disconnected: ${playerId}`);
 
-    publishEvent(
-      'player_left',
-      `${username} left the game`,
-      playerId,
-      {}
-    );
+    if (!isBatchResetting) {
+      publishEvent(
+        'player_left',
+        `${username} left the game`,
+        playerId,
+        {}
+      );
+    }
 
     if (chicken.holderId === playerId) {
       chicken.isHeld = false;
@@ -373,7 +417,7 @@ setInterval(() => {
           winnerName: 'No one'
         });
       }
-      restartMatchIfEligible();
+      resetRoundForNextBatch();
     }
   } else {
     matchTimeLeft = MATCH_DURATION_SECONDS;

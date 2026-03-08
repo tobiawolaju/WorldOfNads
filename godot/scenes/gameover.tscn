@@ -1,0 +1,139 @@
+[gd_scene format=3 uid="uid://cqwohrwlunqwn"]
+
+[ext_resource type="Script" uid="uid://13gqwbhom86x" path="res://scripts/gameover.gd" id="1_dy3ie"]
+[ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="1_ncp31"]
+
+[node name="Gameover" type="Node2D" unique_id=532376623]
+script = ExtResource("1_dy3ie")
+
+[node name="Node2" type="Node" parent="." unique_id=49671896]
+
+[node name="Winner" type="VBoxContainer" parent="Node2" unique_id=1112965181]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -171.0
+offset_top = -62.0
+offset_right = 171.0
+offset_bottom = 62.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BoxContainer" type="BoxContainer" parent="Node2/Winner" unique_id=1547773491]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Congrats" type="Label" parent="Node2/Winner/BoxContainer" unique_id=2030613253]
+modulate = Color(1, 1, 1, 0.7176471)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 60
+text = "Congratulations"
+
+[node name="BoxContainer2" type="BoxContainer" parent="Node2/Winner" unique_id=1824911435]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Countdown" type="Label" parent="Node2/Winner/BoxContainer2" unique_id=1201116873]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 60
+text = "You won $ 2,000"
+
+[node name="BoxContainer3" type="BoxContainer" parent="Node2/Winner" unique_id=1582980151]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Countdown" type="Label" parent="Node2/Winner/BoxContainer3" unique_id=2142499783]
+modulate = Color(1, 1, 1, 0.7176471)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 30
+text = "you outplayed  9 other nads,
+ victory belongs to you."
+horizontal_alignment = 1
+
+[node name="Loser" type="VBoxContainer" parent="Node2" unique_id=204106690]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -171.0
+offset_top = -62.0
+offset_right = 171.0
+offset_bottom = 62.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BoxContainer" type="BoxContainer" parent="Node2/Loser" unique_id=117952747]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Congrats" type="Label" parent="Node2/Loser/BoxContainer" unique_id=1598761661]
+modulate = Color(1, 1, 1, 0.7176471)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 60
+text = "You almost made it"
+
+[node name="BoxContainer2" type="BoxContainer" parent="Node2/Loser" unique_id=2087374139]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Countdown" type="Label" parent="Node2/Loser/BoxContainer2" unique_id=1206262197]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 60
+text = "Winner earned: $2,000"
+
+[node name="BoxContainer3" type="BoxContainer" parent="Node2/Loser" unique_id=1829643382]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Countdown" type="Label" parent="Node2/Loser/BoxContainer3" unique_id=811400797]
+modulate = Color(1, 1, 1, 0.7176471)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 30
+text = "your placment: #4
+reward: Discord Sponsor Role"
+horizontal_alignment = 1
+
+[node name="LoserBg" type="ColorRect" parent="." unique_id=314910917]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -738.0
+offset_top = -749.0
+offset_right = 1262.0
+offset_bottom = 1251.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.8745098, 0, 0.05490196, 1)
+metadata/_edit_use_anchors_ = true
+
+[node name="WinnerBg" type="ColorRect" parent="." unique_id=1614391081]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -750.0
+offset_top = -750.0
+offset_right = 1250.0
+offset_bottom = 1250.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0.6666667, 0.40784314, 1)
+metadata/_edit_use_anchors_ = true

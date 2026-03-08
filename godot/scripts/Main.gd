@@ -124,6 +124,7 @@ func _receive_messages():
 				print("My player ID:", player_id, "username:", local_display_name)
 				_spawn_player(player_id, true)
 				_set_local_username(local_display_name)
+				_set_local_player_id(player_id)
 				_emit_player_event(
 					"player_joined",
 					"%s joined the game" % local_display_name,
@@ -361,6 +362,10 @@ func _update_match_ui() -> void:
 func _set_local_username(name_text: String) -> void:
 	if events_bridge != null and is_instance_valid(events_bridge) and events_bridge.has_method("set_local_username"):
 		events_bridge.set_local_username(name_text)
+
+func _set_local_player_id(id_text: String) -> void:
+	if events_bridge != null and is_instance_valid(events_bridge) and events_bridge.has_method("set_local_player_id"):
+		events_bridge.set_local_player_id(id_text)
 
 func _show_local_event(message: String) -> void:
 	if events_bridge != null and is_instance_valid(events_bridge) and events_bridge.has_method("show_local_event"):
