@@ -86,7 +86,7 @@ size_flags_vertical = 4
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_ikted")
 theme_override_font_sizes/font_size = 60
-text = "Loading..."
+text = "..........."
 
 [node name="BoxContainer2" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=586681937]
 offset_left = 19.0
