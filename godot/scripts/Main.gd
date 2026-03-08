@@ -35,6 +35,7 @@ var world_environment: WorldEnvironment = null
 var _world_env_duplicated := false
 var match_duration_seconds := 180.0
 var match_time_left := 180.0
+var match_is_running := false
 var fog_start_color: Color = Color8(152, 227, 254)
 var fog_end_color: Color = Color8(241, 118, 254)
 
@@ -335,15 +336,19 @@ func _resolve_ui_nodes() -> void:
 func _update_match_state(match_state: Dictionary) -> void:
 	match_duration_seconds = maxf(1.0, float(match_state.get("durationSeconds", match_duration_seconds)))
 	match_time_left = clampf(float(match_state.get("timeLeft", match_time_left)), 0.0, match_duration_seconds)
+	match_is_running = bool(match_state.get("isRunning", false))
 	_update_match_ui()
 
 func _update_match_ui() -> void:
 	_resolve_ui_nodes()
 	if countdown_label != null:
-		var whole_seconds := maxi(0, int(ceil(match_time_left)))
-		var minutes = whole_seconds / 60
-		var seconds = whole_seconds % 60
-		countdown_label.text = "%02d:%02d" % [minutes, seconds]
+		if match_is_running:
+			var whole_seconds := maxi(0, int(ceil(match_time_left)))
+			var minutes = whole_seconds / 60
+			var seconds = whole_seconds % 60
+			countdown_label.text = "%02d:%02d" % [minutes, seconds]
+		else:
+			countdown_label.text = "Waiting for players"
 
 	if world_environment == null or world_environment.environment == null:
 		return
