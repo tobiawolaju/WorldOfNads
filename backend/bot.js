@@ -2,7 +2,7 @@ import { WebSocket } from "ws";
 
 const SERVER_URL =
   process.env.BOT_SERVER_URL || "wss://worldofnads.onrender.com";
-const BOT_COUNT = Number(process.env.BOT_COUNT || 2);
+const BOT_COUNT = Number(process.env.BOT_COUNT || 9);
 const BOT_MOVE_SPEED = Number(process.env.BOT_MOVE_SPEED || 5.0);
 const PICKUP_RADIUS = Number(process.env.BOT_PICKUP_RADIUS || 2.0);
 const BOT_PERSONAL_SPACE = Number(process.env.BOT_PERSONAL_SPACE || 1.1);

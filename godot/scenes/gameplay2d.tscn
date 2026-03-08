@@ -41,11 +41,8 @@ render_target_update_mode = 4
 
 [node name="Gameplayer" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport" unique_id=280572712 instance=ExtResource("1_1iwhs")]
 
-[node name="Node" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="0" unique_id=851590252]
-
-[node name="PlayerManager" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="1" unique_id=1626271999 node_paths=PackedStringArray("myplayerswpanpoint", "countdown_label_path")]
+[node name="PlayerManager" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="1" unique_id=1626271999 node_paths=PackedStringArray("myplayerswpanpoint")]
 myplayerswpanpoint = NodePath("../Bus/Marker3D")
-countdown_label_path = NodePath("../../../../../Node2/BoxContainer/Label")
 
 [node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cart/WaypointAnchor" parent_id_path=PackedInt32Array(280572712, 53948068) index="0" unique_id=232879054 node_paths=PackedStringArray("camera")]
 camera = NodePath("../../../PlayerManager/Camera3D")
@@ -89,13 +86,13 @@ size_flags_vertical = 4
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_ikted")
 theme_override_font_sizes/font_size = 60
-text = "120"
+text = "Loading..."
 
 [node name="BoxContainer2" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=586681937]
 offset_left = 19.0
-offset_top = 21.0
+offset_top = 66.0
 offset_right = 95.0
-offset_bottom = 81.0
+offset_bottom = 85.0
 size_flags_horizontal = 0
 size_flags_vertical = 4
 
@@ -110,9 +107,9 @@ text = "username"
 
 [node name="BoxContainer3" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=146550388]
 offset_left = 20.0
-offset_top = 60.0
-offset_right = 124.0
-offset_bottom = 68.0
+offset_top = 87.0
+offset_right = 223.0
+offset_bottom = 103.0
 size_flags_horizontal = 0
 size_flags_vertical = 4
 
@@ -122,7 +119,7 @@ theme_override_colors/font_color = Color(0, 1, 0.1882353, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.541)
 theme_override_constants/shadow_outline_size = 5
 theme_override_fonts/font = ExtResource("2_ikted")
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 16
 text = "BeNad:"
 
 [node name="status" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=979704754]
@@ -131,7 +128,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.541)
 theme_override_constants/shadow_outline_size = 5
 theme_override_fonts/font = ExtResource("2_ikted")
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 16
 text = "you are holding the chicken"
 
 [node name="username_label" type="Label" parent="CanvasLayer" unique_id=593725242]
