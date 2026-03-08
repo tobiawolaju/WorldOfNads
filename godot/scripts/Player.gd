@@ -47,8 +47,12 @@ var current_animation: String = "idle"
 var player_id: String = "" :
 	set(new_id):
 		player_id = new_id
-		if name_label:
-			name_label.text = new_id.substr(0, 8)
+		_refresh_name_label()
+
+var display_name: String = "" :
+	set(new_name):
+		display_name = new_name.strip_edges()
+		_refresh_name_label()
 
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
@@ -58,8 +62,16 @@ func _ready() -> void:
 		print("ERROR: $Area3D node not found! Please add an Area3D with a CollisionShape to the player.")
 
 func _process(delta: float):
-	name_label.text = player_id.substr(0, 8)
+	_refresh_name_label()
 	_update_local_chicken_visual(delta)
+
+func _refresh_name_label() -> void:
+	if not name_label:
+		return
+	var resolved_name = display_name
+	if resolved_name == "":
+		resolved_name = player_id.substr(0, 8)
+	name_label.text = resolved_name
 
 func _input(event: InputEvent) -> void:
 	if not is_local:

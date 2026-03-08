@@ -27,6 +27,7 @@ var _last_chicken_is_held := false
 var _last_chicken_holder_id := ""
 var local_username := ""
 var local_display_name := "player"
+var player_display_names := {}
 
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live = true
@@ -107,6 +108,7 @@ func _receive_messages():
 			"connect":
 				player_id = data["id"]
 				local_display_name = _resolve_server_username(data, player_id)
+				player_display_names[player_id] = local_display_name
 				print("My player ID:", player_id, "username:", local_display_name)
 				_spawn_player(player_id, true)
 				_set_local_username(local_display_name)
@@ -130,8 +132,12 @@ func _update_world_state(players_state):
 	for p_state in players_state:
 		var id = p_state["id"]
 		received_ids.append(id)
+		var resolved_name = _resolve_server_username(p_state, id)
+		player_display_names[id] = resolved_name
 
 		if id == player_id:
+			if players.has(id):
+				players[id].display_name = resolved_name
 			continue
 
 		var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
@@ -144,6 +150,7 @@ func _update_world_state(players_state):
 			players[id].global_position = server_pos  # FIX: spawn at correct position
 
 		var node = players[id]
+		node.display_name = resolved_name
 
 		# 🚗 Vehicle sync
 		if p_state.has("vehicle") and p_state["vehicle"] != null:
@@ -274,6 +281,7 @@ func _spawn_player(id: String, is_local := false):
 	add_child(player)
 
 	player.player_id = id
+	player.display_name = _get_player_display_name(id)
 	player.is_local = is_local
 	player.root = self
 
@@ -295,6 +303,7 @@ func _remove_player(id: String):
 			return
 		players[id].queue_free()
 		players.erase(id)
+	player_display_names.erase(id)
 
 func _resolve_events_bridge() -> void:
 	var bridges = get_tree().get_nodes_in_group("events_bridge")
@@ -323,6 +332,12 @@ func _format_player_short_name(id: String) -> String:
 	if id == "":
 		return "player"
 	return id.substr(0, 8)
+
+func _get_player_display_name(id: String) -> String:
+	var candidate = str(player_display_names.get(id, "")).strip_edges()
+	if candidate != "":
+		return candidate
+	return _format_player_short_name(id)
 
 func _resolve_local_username() -> void:
 	if not OS.has_feature("web"):
