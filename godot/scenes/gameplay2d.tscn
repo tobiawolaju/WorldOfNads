@@ -9,6 +9,8 @@
 
 [node name="Gameplay2d" type="Node2D" unique_id=843521828]
 script = ExtResource("4_events")
+status_label_path = null
+username_label_path = null
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1992101475]
 
@@ -100,28 +102,37 @@ size_flags_vertical = 4
 
 [node name="username" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer2" unique_id=190950955]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.52007854, 0.0034240216, 0.912157, 1)
-theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.47058824)
+theme_override_colors/font_color = Color(0.26106378, 0.6644564, 0.85876876, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.47058824)
 theme_override_constants/shadow_outline_size = 5
 theme_override_fonts/font = ExtResource("2_ikted")
 theme_override_font_sizes/font_size = 18
 text = "username"
 
 [node name="BoxContainer3" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=146550388]
-offset_left = 19.0
+offset_left = 20.0
 offset_top = 60.0
-offset_right = 125.0
-offset_bottom = 91.0
+offset_right = 124.0
+offset_bottom = 68.0
 size_flags_horizontal = 0
 size_flags_vertical = 4
 
-[node name="status" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=979704754]
+[node name="status2" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=1079011311]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.9019608, 0.14901961, 0.5921569, 1)
-theme_override_colors/font_shadow_color = Color(1.0413129, 1.0413129, 1.0413129, 0.5411765)
+theme_override_colors/font_color = Color(0, 1, 0.1882353, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.541)
 theme_override_constants/shadow_outline_size = 5
 theme_override_fonts/font = ExtResource("2_ikted")
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 8
+text = "BeNad:"
+
+[node name="status" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=979704754]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.541)
+theme_override_constants/shadow_outline_size = 5
+theme_override_fonts/font = ExtResource("2_ikted")
+theme_override_font_sizes/font_size = 8
 text = "you are holding the chicken"
 
 [node name="username_label" type="Label" parent="CanvasLayer" unique_id=593725242]

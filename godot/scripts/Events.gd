@@ -2,9 +2,10 @@ extends Node
 
 const LIVE_EVENTS_URL := "wss://worldofnads.onrender.com/events"
 const LOCAL_EVENTS_URL := "ws://localhost:8080/events"
-const MAX_STATUS_LINES := 4
 
 @export var status_label_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/BoxContainer3/status")
+@export var status2_label_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/BoxContainer3/status2")
+
 @export var username_label_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/BoxContainer2/username")
 
 var ws := WebSocketPeer.new()
@@ -12,10 +13,10 @@ var connected := false
 var tried_live := false
 var fallback_started := false
 
-var _status_lines: Array[String] = []
 var _username_locked := false
 
 @onready var status_label: Label = get_node_or_null(status_label_path)
+@onready var status_username: Label = get_node_or_null(status2_label_path)
 @onready var username_label: Label = get_node_or_null(username_label_path)
 
 func _ready() -> void:
@@ -59,14 +60,14 @@ func set_local_username(id: String, force: bool = false) -> void:
 	username_label.text = safe_id
 
 func show_local_event(message: String) -> void:
-	_push_status_line(message)
+	_set_event_display(_extract_actor_from_message(message), message)
 
 func _start_local_fallback(reason: String) -> void:
 	fallback_started = true
 	_show_local_status(reason)
 	var err = ws.connect_to_url(LOCAL_EVENTS_URL)
 	if err != OK:
-		_show_local_status("Events offline")
+		_show_local_status("Events offline", "system")
 
 func _read_packets() -> void:
 	while ws.get_available_packet_count() > 0:
@@ -99,22 +100,59 @@ func _render_event(event_data: Dictionary) -> void:
 	var message = str(event_data.get("message", ""))
 	if message.strip_edges() == "":
 		return
-	_push_status_line(message)
+	var actor = _resolve_event_actor(event_data, message)
+	_set_event_display(actor, message)
 
-func _show_local_status(text: String) -> void:
-	_push_status_line(text)
+func _show_local_status(text: String, actor: String = "system") -> void:
+	_set_event_display(actor, text)
 
-func _push_status_line(line: String) -> void:
+func _set_event_display(actor: String, message: String) -> void:
 	if status_label == null:
 		status_label = get_node_or_null(status_label_path)
+	if status_username == null:
+		status_username = get_node_or_null(status2_label_path)
 	if status_label == null:
 		return
+	if status_username == null:
+		return
 
-	_status_lines.append(line)
-	if _status_lines.size() > MAX_STATUS_LINES:
-		_status_lines.pop_front()
+	status_label.text = message
+	status_username.text = actor
 
-	status_label.text = "\n".join(_status_lines)
+func _resolve_event_actor(event_data: Dictionary, message: String) -> String:
+	var candidate = str(event_data.get("username", "")).strip_edges()
+	if candidate != "":
+		return candidate
+	if event_data.has("meta") and typeof(event_data["meta"]) == TYPE_DICTIONARY:
+		var meta := event_data["meta"] as Dictionary
+		candidate = str(meta.get("username", "")).strip_edges()
+		if candidate != "":
+			return candidate
+
+	var player_id = str(event_data.get("playerId", "")).strip_edges()
+	if player_id != "":
+		return player_id.substr(0, 8)
+
+	return _extract_actor_from_message(message)
+
+func _extract_actor_from_message(message: String) -> String:
+	var safe_message := message.strip_edges()
+	if safe_message == "":
+		return "system"
+
+	var suffixes = [
+		" joined the game",
+		" left the game",
+		" picked the chicken",
+		" dropped the chicken"
+	]
+	for suffix in suffixes:
+		if safe_message.ends_with(suffix):
+			var actor = safe_message.trim_suffix(suffix).strip_edges()
+			if actor != "":
+				return actor
+
+	return "system"
 
 func _try_set_username_from_web_query() -> void:
 	if not OS.has_feature("web"):
