@@ -7,6 +7,8 @@ const LOCAL_URL = "ws://localhost:8080"
 
 @export var player_scene: PackedScene = preload("res://scenes/components/Player.tscn")
 @export var myplayerswpanpoint: Marker3D
+@export var countdown_label_path: NodePath
+@export var world_environment_path: NodePath = NodePath("WorldEnvironment")
 
 # --- NETWORK & STATE VARIABLES ---
 var ws := WebSocketPeer.new()
@@ -28,6 +30,13 @@ var _last_chicken_holder_id := ""
 var local_username := ""
 var local_display_name := "player"
 var player_display_names := {}
+var countdown_label: Label = null
+var world_environment: WorldEnvironment = null
+var _world_env_duplicated := false
+var match_duration_seconds := 180.0
+var match_time_left := 180.0
+var fog_start_color: Color = Color8(152, 227, 254)
+var fog_end_color: Color = Color8(241, 118, 254)
 
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live = true
@@ -40,6 +49,8 @@ func _ready():
 	_attempt_connection()
 	_cache_chicken_node()
 	_resolve_events_bridge()
+	_resolve_ui_nodes()
+	_update_match_ui()
 
 func _attempt_connection():
 	var base_url = LIVE_URL if is_connecting_to_live else LOCAL_URL
@@ -123,6 +134,8 @@ func _receive_messages():
 					_update_world_state(data["players"])
 				if data.has("chicken"):
 					_update_chicken_state(data["chicken"])
+				if data.has("match") and typeof(data["match"]) == TYPE_DICTIONARY:
+					_update_match_state(data["match"])
 
 
 # --- WORLD STATE UPDATE ---
@@ -309,6 +322,36 @@ func _resolve_events_bridge() -> void:
 	var bridges = get_tree().get_nodes_in_group("events_bridge")
 	if bridges.size() > 0:
 		events_bridge = bridges[0]
+
+func _resolve_ui_nodes() -> void:
+	if countdown_label == null and countdown_label_path != NodePath():
+		countdown_label = get_node_or_null(countdown_label_path)
+	if world_environment == null and world_environment_path != NodePath():
+		world_environment = get_node_or_null(world_environment_path)
+	if world_environment != null and world_environment.environment and not _world_env_duplicated:
+		world_environment.environment = world_environment.environment.duplicate()
+		_world_env_duplicated = true
+
+func _update_match_state(match_state: Dictionary) -> void:
+	match_duration_seconds = maxf(1.0, float(match_state.get("durationSeconds", match_duration_seconds)))
+	match_time_left = clampf(float(match_state.get("timeLeft", match_time_left)), 0.0, match_duration_seconds)
+	_update_match_ui()
+
+func _update_match_ui() -> void:
+	_resolve_ui_nodes()
+	if countdown_label != null:
+		var whole_seconds := maxi(0, int(ceil(match_time_left)))
+		var minutes = whole_seconds / 60
+		var seconds = whole_seconds % 60
+		countdown_label.text = "%02d:%02d" % [minutes, seconds]
+
+	if world_environment == null or world_environment.environment == null:
+		return
+
+	var ratio := 1.0 - (match_time_left / match_duration_seconds)
+	var current_color = fog_start_color.lerp(fog_end_color, clampf(ratio, 0.0, 1.0))
+	world_environment.environment.fog_light_color = current_color
+	world_environment.environment.volumetric_fog_albedo = current_color
 
 func _set_local_username(name_text: String) -> void:
 	if events_bridge != null and is_instance_valid(events_bridge) and events_bridge.has_method("set_local_username"):

@@ -168,7 +168,8 @@ func _split_message_actor_and_text(message: String) -> Dictionary:
 		" left the game",
 		" left the match",
 		" picked the chicken",
-		" dropped the chicken"
+		" dropped the chicken",
+		" won the round"
 	]
 	for suffix in split_patterns:
 		if safe_message.ends_with(suffix):

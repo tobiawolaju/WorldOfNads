@@ -11,12 +11,16 @@ const PICKUP_RADIUS = 2.2;
 const MAX_THROW_IMPULSE = 8.0;
 const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 0.5869336;
+const MATCH_DURATION_SECONDS = 180.0;
+const MIN_PLAYERS_TO_START = 3;
 
 const MAX_EVENT_HISTORY = 100;
 let eventSequence = 0;
 const eventHistory = [];
 
 const players = {};
+let matchTimeLeft = MATCH_DURATION_SECONDS;
+let matchRunning = false;
 
 const chicken = {
   id: 'Chicken',
@@ -132,6 +136,35 @@ function publishEvent(eventType, message, playerId = '', meta = {}) {
   });
 }
 
+function getPlayerCount() {
+  return Object.keys(players).length;
+}
+
+function buildMatchState() {
+  return {
+    timeLeft: Number(matchTimeLeft.toFixed(2)),
+    isRunning: matchRunning,
+    durationSeconds: MATCH_DURATION_SECONDS,
+    minPlayersToStart: MIN_PLAYERS_TO_START
+  };
+}
+
+function restartMatchIfEligible() {
+  matchTimeLeft = MATCH_DURATION_SECONDS;
+  matchRunning = getPlayerCount() >= MIN_PLAYERS_TO_START;
+}
+
+function resolveRoundWinner() {
+  if (!chicken.isHeld || !chicken.holderId) {
+    return { winnerId: '', winnerName: 'No one' };
+  }
+  const holder = players[chicken.holderId];
+  if (!holder) {
+    return { winnerId: '', winnerName: 'No one' };
+  }
+  return { winnerId: holder.id, winnerName: holder.username || `player-${holder.id.slice(0, 8)}` };
+}
+
 server.on('upgrade', (req, socket, head) => {
   const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
@@ -172,6 +205,9 @@ gameWss.on('connection', (ws, req) => {
 
   console.log(`🎮 Player connected: ${playerId} (${username})`);
   ws.send(JSON.stringify({ type: 'connect', id: playerId, username }));
+  if (!matchRunning && getPlayerCount() >= MIN_PLAYERS_TO_START) {
+    matchRunning = true;
+  }
 
   ws.on('message', (message) => {
     try {
@@ -314,10 +350,38 @@ gameWss.on('connection', (ws, req) => {
       chicken.vz = 0;
     }
     delete players[playerId];
+    if (getPlayerCount() < MIN_PLAYERS_TO_START) {
+      matchRunning = false;
+      matchTimeLeft = MATCH_DURATION_SECONDS;
+    }
   });
 });
 
 setInterval(() => {
+  if (matchRunning) {
+    matchTimeLeft -= FIXED_DT;
+    if (matchTimeLeft <= 0) {
+      const winner = resolveRoundWinner();
+      if (winner.winnerId) {
+        publishEvent('match_winner', `${winner.winnerName} won the round`, winner.winnerId, {
+          winnerId: winner.winnerId,
+          winnerName: winner.winnerName
+        });
+      } else {
+        publishEvent('match_winner', 'No winner this round', '', {
+          winnerId: null,
+          winnerName: 'No one'
+        });
+      }
+      restartMatchIfEligible();
+    }
+  } else {
+    matchTimeLeft = MATCH_DURATION_SECONDS;
+    if (getPlayerCount() >= MIN_PLAYERS_TO_START) {
+      matchRunning = true;
+    }
+  }
+
   if (!chicken.isHeld) {
     chicken.vy -= CHICKEN_GRAVITY * FIXED_DT;
     chicken.x += chicken.vx * FIXED_DT;
@@ -340,6 +404,7 @@ setInterval(() => {
   const stateData = {
     type: 'state',
     players: Object.values(players),
+    match: buildMatchState(),
     chicken: {
       id: chicken.id,
       x: chicken.x,

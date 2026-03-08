@@ -1,6 +1,5 @@
 [gd_scene format=4 uid="uid://b48njcleqy6m3"]
 
-[ext_resource type="Script" uid="uid://timxi6dmdn2m" path="res://scripts/tick.gd" id="1_5bpam"]
 [ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_vuq5q"]
 [ext_resource type="ArrayMesh" uid="uid://c8jku1vjebweb" path="res://assets/models/terrain.obj" id="2_ocj2s"]
 [ext_resource type="ArrayMesh" uid="uid://djlfoy1u834mc" path="res://assets/models/Chicken.obj" id="3_l1v76"]
@@ -318,7 +317,6 @@ size = Vector3(0.34240723, 0.3552246, 0.3293686)
 [node name="Gameplayer" type="Node3D" unique_id=844227963]
 
 [node name="Node" type="Node" parent="." unique_id=851590252]
-script = ExtResource("1_5bpam")
 
 [node name="PlayerManager" type="Node3D" parent="." unique_id=1626271999]
 script = ExtResource("1_vuq5q")

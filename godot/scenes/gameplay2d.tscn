@@ -41,12 +41,11 @@ render_target_update_mode = 4
 
 [node name="Gameplayer" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport" unique_id=280572712 instance=ExtResource("1_1iwhs")]
 
-[node name="Node" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="0" unique_id=851590252 node_paths=PackedStringArray("world", "countdown")]
-world = NodePath("../PlayerManager/WorldEnvironment")
-countdown = NodePath("../../../../../Node2/BoxContainer/Label")
+[node name="Node" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="0" unique_id=851590252]
 
-[node name="PlayerManager" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="1" unique_id=1626271999 node_paths=PackedStringArray("myplayerswpanpoint")]
+[node name="PlayerManager" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="1" unique_id=1626271999 node_paths=PackedStringArray("myplayerswpanpoint", "countdown_label_path")]
 myplayerswpanpoint = NodePath("../Bus/Marker3D")
+countdown_label_path = NodePath("../../../../../Node2/BoxContainer/Label")
 
 [node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cart/WaypointAnchor" parent_id_path=PackedInt32Array(280572712, 53948068) index="0" unique_id=232879054 node_paths=PackedStringArray("camera")]
 camera = NodePath("../../../PlayerManager/Camera3D")
