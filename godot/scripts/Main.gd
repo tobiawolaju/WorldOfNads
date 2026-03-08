@@ -360,17 +360,20 @@ func _resolve_server_username(data: Dictionary, fallback_id: String) -> String:
 	return _format_player_short_name(fallback_id)
 
 func _handle_chicken_state_event(current_is_held: bool, current_holder_id: String) -> void:
+	var holder_name = _get_player_display_name(current_holder_id)
+	var local_name = _get_player_display_name(player_id)
+
 	if not _last_chicken_is_held and current_is_held and current_holder_id == player_id:
 		_emit_player_event(
 			"chicken_picked",
-			"%s picked the chicken" % _format_player_short_name(current_holder_id),
+			"%s picked the chicken" % holder_name,
 			{"item": "chicken", "action": "pick"}
 		)
 
 	if _last_chicken_is_held and _last_chicken_holder_id == player_id and not current_is_held:
 		_emit_player_event(
 			"chicken_dropped",
-			"%s dropped the chicken" % _format_player_short_name(player_id),
+			"%s dropped the chicken" % local_name,
 			{"item": "chicken", "action": "drop"}
 		)
 
