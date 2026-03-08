@@ -1,7 +1,6 @@
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
-import { createBots, updateBots } from './bot.js';
 
 const PORT = process.env.PORT || 8080;
 const BROADCAST_RATE = 20;
@@ -14,17 +13,12 @@ const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 0.5869336;
 const MATCH_DURATION_SECONDS = 180.0;
 const MIN_PLAYERS_TO_START = 3;
-const BOT_COUNT = Number(process.env.BOT_COUNT || 0);
-const BOT_MOVE_SPEED = 5.0;
-const CHICKEN_HOLD_DISTANCE = 0.9;
-const CHICKEN_HOLD_HEIGHT = 1.0;
 
 const MAX_EVENT_HISTORY = 100;
 let eventSequence = 0;
 const eventHistory = [];
 
 const players = {};
-const bots = createBots(BOT_COUNT, FLOOR_Y);
 let matchTimeLeft = MATCH_DURATION_SECONDS;
 let matchRunning = false;
 
@@ -146,10 +140,6 @@ function getPlayerCount() {
   return Object.keys(players).length;
 }
 
-function getParticipantCount() {
-  return getPlayerCount() + Object.keys(bots).length;
-}
-
 function buildMatchState() {
   return {
     timeLeft: Number(matchTimeLeft.toFixed(2)),
@@ -161,7 +151,7 @@ function buildMatchState() {
 
 function restartMatchIfEligible() {
   matchTimeLeft = MATCH_DURATION_SECONDS;
-  matchRunning = getParticipantCount() >= MIN_PLAYERS_TO_START;
+  matchRunning = getPlayerCount() >= MIN_PLAYERS_TO_START;
 }
 
 function resolveRoundWinner() {
@@ -169,14 +159,10 @@ function resolveRoundWinner() {
     return { winnerId: '', winnerName: 'No one' };
   }
   const holder = players[chicken.holderId];
-  if (holder) {
-    return { winnerId: holder.id, winnerName: holder.username || `player-${holder.id.slice(0, 8)}` };
-  }
-  const botHolder = bots[chicken.holderId];
-  if (!botHolder) {
+  if (!holder) {
     return { winnerId: '', winnerName: 'No one' };
   }
-  return { winnerId: botHolder.id, winnerName: botHolder.username };
+  return { winnerId: holder.id, winnerName: holder.username || `player-${holder.id.slice(0, 8)}` };
 }
 
 server.on('upgrade', (req, socket, head) => {
@@ -219,7 +205,7 @@ gameWss.on('connection', (ws, req) => {
 
   console.log(`🎮 Player connected: ${playerId} (${username})`);
   ws.send(JSON.stringify({ type: 'connect', id: playerId, username }));
-  if (!matchRunning && getParticipantCount() >= MIN_PLAYERS_TO_START) {
+  if (!matchRunning && getPlayerCount() >= MIN_PLAYERS_TO_START) {
     matchRunning = true;
   }
 
@@ -364,7 +350,7 @@ gameWss.on('connection', (ws, req) => {
       chicken.vz = 0;
     }
     delete players[playerId];
-    if (getParticipantCount() < MIN_PLAYERS_TO_START) {
+    if (getPlayerCount() < MIN_PLAYERS_TO_START) {
       matchRunning = false;
       matchTimeLeft = MATCH_DURATION_SECONDS;
     }
@@ -391,38 +377,9 @@ setInterval(() => {
     }
   } else {
     matchTimeLeft = MATCH_DURATION_SECONDS;
-    if (getParticipantCount() >= MIN_PLAYERS_TO_START) {
+    if (getPlayerCount() >= MIN_PLAYERS_TO_START) {
       matchRunning = true;
     }
-  }
-
-  const botTick = updateBots({
-    bots,
-    chicken,
-    dt: FIXED_DT,
-    pickupRadius: PICKUP_RADIUS,
-    moveSpeed: BOT_MOVE_SPEED
-  });
-
-  if (!chicken.isHeld && botTick.pickupBotId) {
-    chicken.isHeld = true;
-    chicken.holderId = botTick.pickupBotId;
-    chicken.vx = 0;
-    chicken.vy = 0;
-    chicken.vz = 0;
-  }
-
-  if (chicken.isHeld && bots[chicken.holderId]) {
-    const holderBot = bots[chicken.holderId];
-    const forwardX = Math.sin(holderBot.rotationY);
-    const forwardZ = Math.cos(holderBot.rotationY);
-    chicken.x = holderBot.x + forwardX * CHICKEN_HOLD_DISTANCE;
-    chicken.y = holderBot.y + CHICKEN_HOLD_HEIGHT;
-    chicken.z = holderBot.z + forwardZ * CHICKEN_HOLD_DISTANCE;
-    chicken.rotationY = holderBot.rotationY;
-    chicken.vx = 0;
-    chicken.vy = 0;
-    chicken.vz = 0;
   }
 
   if (!chicken.isHeld) {
@@ -446,7 +403,7 @@ setInterval(() => {
 
   const stateData = {
     type: 'state',
-    players: [...Object.values(players), ...Object.values(bots)],
+    players: Object.values(players),
     match: buildMatchState(),
     chicken: {
       id: chicken.id,
