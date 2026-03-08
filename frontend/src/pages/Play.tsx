@@ -3,6 +3,7 @@ import React, { useRef, useEffect } from "react";
 const Play: React.FC = () => {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const username = "thisplayer1";
+  const gameUrl = `/godot/index.html?username=${encodeURIComponent(username)}`;
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -25,7 +26,7 @@ const Play: React.FC = () => {
     <div className="play-container">
       <iframe
         ref={iframeRef}
-        src="/godot/index.html" // Make sure this path is correct!
+        src={gameUrl}
         title="World of Nads"
         style={{
           border: "none",

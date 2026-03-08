@@ -13,12 +13,14 @@ var tried_live := false
 var fallback_started := false
 
 var _status_lines: Array[String] = []
+var _username_locked := false
 
 @onready var status_label: Label = get_node_or_null(status_label_path)
 @onready var username_label: Label = get_node_or_null(username_label_path)
 
 func _ready() -> void:
 	add_to_group("events_bridge")
+	_try_set_username_from_web_query()
 	tried_live = true
 	var err = ws.connect_to_url(LIVE_EVENTS_URL)
 	if err != OK:
@@ -42,10 +44,19 @@ func _process(_delta: float) -> void:
 		if tried_live and not fallback_started:
 			_start_local_fallback("Falling back to local events")
 
-#func set_local_username(id: String) -> void:
-	#if username_label == null:
-		#return
-	#username_label.text = id
+func set_local_username(id: String, force: bool = false) -> void:
+	if username_label == null:
+		username_label = get_node_or_null(username_label_path)
+	if username_label == null:
+		return
+	if _username_locked and not force:
+		return
+
+	var safe_id := id.strip_edges()
+	if safe_id == "":
+		return
+
+	username_label.text = safe_id
 
 func show_local_event(message: String) -> void:
 	_push_status_line(message)
@@ -104,3 +115,18 @@ func _push_status_line(line: String) -> void:
 		_status_lines.pop_front()
 
 	status_label.text = "\n".join(_status_lines)
+
+func _try_set_username_from_web_query() -> void:
+	if not OS.has_feature("web"):
+		return
+
+	var raw_username = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('username') || ''")
+	if typeof(raw_username) != TYPE_STRING:
+		return
+
+	var parsed_username := str(raw_username).strip_edges()
+	if parsed_username == "":
+		return
+
+	_username_locked = true
+	set_local_username(parsed_username, true)
