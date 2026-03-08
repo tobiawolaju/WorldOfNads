@@ -1,6 +1,7 @@
-import { WebSocket } from 'ws';
+import { WebSocket } from "ws";
 
-const SERVER_URL = process.env.BOT_SERVER_URL || 'ws://localhost:8080';
+const SERVER_URL =
+  process.env.BOT_SERVER_URL || "wss://worldofnads.onrender.com";
 const BOT_COUNT = Number(process.env.BOT_COUNT || 1);
 const BOT_MOVE_SPEED = Number(process.env.BOT_MOVE_SPEED || 5.0);
 const PICKUP_RADIUS = Number(process.env.BOT_PICKUP_RADIUS || 2.0);
@@ -17,7 +18,7 @@ function createSpawn(index) {
   return {
     x: Math.cos(angle) * radius,
     y: 0,
-    z: Math.sin(angle) * radius
+    z: Math.sin(angle) * radius,
   };
 }
 
@@ -25,11 +26,11 @@ class BotClient {
   constructor(index) {
     this.index = index;
     this.username = `bot${index + 1}`;
-    this.id = '';
+    this.id = "";
     this.ws = null;
     this.position = createSpawn(index);
     this.rotationY = 0;
-    this.animation = 'idle';
+    this.animation = "idle";
     this.lastState = null;
     this.connected = false;
   }
@@ -43,25 +44,25 @@ class BotClient {
     const url = `${SERVER_URL}?username=${encodeURIComponent(this.username)}`;
     this.ws = new WebSocket(url);
 
-    this.ws.on('open', () => {
+    this.ws.on("open", () => {
       this.connected = true;
       console.log(`[${this.username}] connected`);
     });
 
-    this.ws.on('message', (raw) => {
+    this.ws.on("message", (raw) => {
       this.onMessage(raw.toString());
     });
 
-    this.ws.on('close', () => {
+    this.ws.on("close", () => {
       if (this.connected) {
         console.log(`[${this.username}] disconnected, retrying...`);
       }
       this.connected = false;
-      this.id = '';
+      this.id = "";
       setTimeout(() => this.connect(), RECONNECT_MS);
     });
 
-    this.ws.on('error', () => {
+    this.ws.on("error", () => {
       // Close event handles reconnect.
     });
   }
@@ -73,16 +74,16 @@ class BotClient {
     } catch {
       return;
     }
-    if (!data || typeof data !== 'object') {
+    if (!data || typeof data !== "object") {
       return;
     }
 
-    if (data.type === 'connect') {
-      this.id = String(data.id || '');
+    if (data.type === "connect") {
+      this.id = String(data.id || "");
       return;
     }
 
-    if (data.type === 'state') {
+    if (data.type === "state") {
       this.lastState = data;
     }
   }
@@ -115,22 +116,22 @@ class BotClient {
       this.position.x += nx * step;
       this.position.z += nz * step;
       this.rotationY = Math.atan2(nx, nz);
-      this.animation = 'running';
+      this.animation = "running";
     } else {
-      this.animation = 'idle';
+      this.animation = "idle";
     }
 
     const isHeld = Boolean(chicken.isHeld);
-    const holderId = String(chicken.holderId || '');
+    const holderId = String(chicken.holderId || "");
     const iHoldChicken = isHeld && holderId === this.id;
 
     const statePayload = {
-      type: 'update_state',
+      type: "update_state",
       x: this.position.x,
       y: this.position.y,
       z: this.position.z,
       rotation_y: this.rotationY,
-      animation: this.animation
+      animation: this.animation,
     };
 
     if (iHoldChicken) {
@@ -140,19 +141,25 @@ class BotClient {
         x: this.position.x + forwardX * HOLD_DISTANCE,
         y: this.position.y + HOLD_HEIGHT,
         z: this.position.z + forwardZ * HOLD_DISTANCE,
-        rotation_y: this.rotationY
+        rotation_y: this.rotationY,
       };
     }
 
     this.ws.send(JSON.stringify(statePayload));
 
     if (!isHeld) {
-      const dist3D = Math.hypot(cx - this.position.x, cy - this.position.y, cz - this.position.z);
+      const dist3D = Math.hypot(
+        cx - this.position.x,
+        cy - this.position.y,
+        cz - this.position.z,
+      );
       if (dist3D <= PICKUP_RADIUS) {
-        this.ws.send(JSON.stringify({
-          type: 'pickup_request',
-          item_id: 'Chicken'
-        }));
+        this.ws.send(
+          JSON.stringify({
+            type: "pickup_request",
+            item_id: "Chicken",
+          }),
+        );
       }
     }
   }
