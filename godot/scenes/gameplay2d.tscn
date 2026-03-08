@@ -43,6 +43,7 @@ render_target_update_mode = 4
 
 [node name="PlayerManager" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer" index="1" unique_id=1626271999 node_paths=PackedStringArray("myplayerswpanpoint")]
 myplayerswpanpoint = NodePath("../Bus/Marker3D")
+countdown_label_path = NodePath("../../../../../Node2/BoxContainer/Countdown")
 
 [node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cart/WaypointAnchor" parent_id_path=PackedInt32Array(280572712, 53948068) index="0" unique_id=232879054 node_paths=PackedStringArray("camera")]
 camera = NodePath("../../../PlayerManager/Camera3D")
@@ -82,7 +83,7 @@ grow_horizontal = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="Label" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer" unique_id=97871540]
+[node name="Countdown" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer" unique_id=97871540]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_ikted")
 theme_override_font_sizes/font_size = 60
