@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 
 const Play: React.FC = () => {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const username = "thisplayer1";
+  const username = "this is the player o";
   const gameUrl = `/godot/index.html?username=${encodeURIComponent(username)}`;
 
   useEffect(() => {
@@ -14,7 +14,7 @@ const Play: React.FC = () => {
       // The HTML/Godot logic will handle the buffering
       iframe.contentWindow?.postMessage(
         { type: "set_username", value: username },
-        "*"
+        "*",
       );
     };
 
@@ -33,7 +33,7 @@ const Play: React.FC = () => {
           width: "100%",
           height: "100vh",
           padding: "0px",
-          margin: "0px"
+          margin: "0px",
         }}
       />
     </div>
