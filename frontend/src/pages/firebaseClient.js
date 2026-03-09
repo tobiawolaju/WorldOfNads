@@ -17,13 +17,14 @@ export const db = getDatabase(firebaseApp);
 
 export function getUsernameFromPrivy(user) {
   const twitter = user?.linkedAccounts?.find((acc) => acc.type === "twitter_oauth");
-  const wallet = user?.linkedAccounts?.find((acc) => acc.type === "wallet");
-  return twitter?.username || wallet?.address || "Anon";
+  const ethWallet = user?.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "ethereum");
+  const solWallet = user?.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "solana");
+  return twitter?.username || ethWallet?.address || solWallet?.address || "Anon";
 }
 
 export function getPrimaryWalletAddress(user) {
-  const wallet = user?.linkedAccounts?.find((acc) => acc.type === "wallet");
-  return wallet?.address || "";
+  const ethWallet = user?.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "ethereum");
+  return ethWallet?.address || "";
 }
 
 export async function saveUserToFirebase(user) {

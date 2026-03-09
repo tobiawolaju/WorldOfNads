@@ -41,16 +41,21 @@ export default function SpounsorDashbaord() {
   const walletAddress = useMemo(() => getPrimaryWalletAddress(user), [user]);
   
   const activeEthWallet = useMemo(() => {
-    console.log("All Wallets:", wallets);
-    // 1. Prioritize the Privy Embedded Ethereum wallet
+    if (!walletsReady || !wallets.length) return null;
+    
+    // 1. Try to find the specific wallet that matches our primary ETH address
+    if (walletAddress) {
+      const match = wallets.find(w => w.address.toLowerCase() === walletAddress.toLowerCase());
+      if (match) return match;
+    }
+
+    // 2. Prioritize sub-selection of Privy Embedded Ethereum wallet
     const embedded = wallets.find(w => w.walletClientType === 'privy' && w.chainType === 'ethereum');
     if (embedded) return embedded;
 
-    // 2. Fall back to any Ethereum wallet present in the Privy list
-    const anyEth = wallets.find(w => w.chainType === 'ethereum');
-    console.log("Selected ETH Wallet:", embedded || anyEth);
-    return embedded || anyEth;
-  }, [wallets]);
+    // 3. Fall back to any Ethereum wallet present in the Privy list
+    return wallets.find(w => w.chainType === 'ethereum');
+  }, [wallets, walletsReady, walletAddress]);
 
   useEffect(() => {
     if (!authenticated) return;
