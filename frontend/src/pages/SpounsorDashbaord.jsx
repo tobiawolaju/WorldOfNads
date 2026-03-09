@@ -41,12 +41,15 @@ export default function SpounsorDashbaord() {
   const walletAddress = useMemo(() => getPrimaryWalletAddress(user), [user]);
   
   const activeEthWallet = useMemo(() => {
+    console.log("All Wallets:", wallets);
     // 1. Prioritize the Privy Embedded Ethereum wallet
     const embedded = wallets.find(w => w.walletClientType === 'privy' && w.chainType === 'ethereum');
     if (embedded) return embedded;
 
     // 2. Fall back to any Ethereum wallet present in the Privy list
-    return wallets.find(w => w.chainType === 'ethereum');
+    const anyEth = wallets.find(w => w.chainType === 'ethereum');
+    console.log("Selected ETH Wallet:", embedded || anyEth);
+    return embedded || anyEth;
   }, [wallets]);
 
   useEffect(() => {
@@ -88,6 +91,11 @@ export default function SpounsorDashbaord() {
   const handleCreateMatch = async () => {
     if (!form.sponsor || !form.prizeAmount || !form.date || !form.time) {
       setFeedback("Fill sponsor, prize amount, match date, and match time.");
+      return;
+    }
+
+    if (!activeEthWallet) {
+      setFeedback("No Ethereum wallet found. Please ensure your Privy wallet is created and ready.");
       return;
     }
 
@@ -184,7 +192,6 @@ export default function SpounsorDashbaord() {
         <button 
           className="sponsor-dashboard__cta" 
           onClick={() => setIsModalOpen(true)}
-          disabled={!activeEthWallet}
         >
           CreateMatch
         </button>
