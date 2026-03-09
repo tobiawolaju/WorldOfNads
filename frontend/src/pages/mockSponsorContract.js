@@ -10,7 +10,7 @@ export async function createSponsorMatchOnchain({ embeddedWallet, matchId, prize
     throw new Error("No Privy wallet available for contract interaction.");
   }
 
-  const providerSource = await embeddedWallet.getProvider();
+  const providerSource = await embeddedWallet.getEthereumProvider();
   const browserProvider = new ethers.BrowserProvider(providerSource);
   const signer = await browserProvider.getSigner();
   const contractAddress = import.meta.env.VITE_SPONSOR_CLICK_CONTRACT_ADDRESS;
