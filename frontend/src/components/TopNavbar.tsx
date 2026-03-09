@@ -17,6 +17,7 @@ const TopNavbar = () => {
     { path: '/partners', label: 'Partners' },
     { path: '/community', label: 'FAQ' },
     { path: '/careers', label: 'Careers' },
+    { path: '/sponsor', label: 'Sponsor' },
   ];
 
   const currentText = navItems.find(item => item.path === location.pathname)?.label || '';

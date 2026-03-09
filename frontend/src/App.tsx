@@ -19,6 +19,7 @@ import Partners from "./pages/Partners";
 import Dashboard from "./pages/Dashboard";
 import Play from "./pages/Play";
 import Careers from "./pages/Careers";
+import SpounsorDashbaord from "./pages/SpounsorDashbaord.js";
 
 const AppContent: React.FC = () => {
   const { ready, authenticated } = usePrivy();
@@ -65,6 +66,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/play"
               element={authenticated ? <Play /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="/sponsor"
+              element={authenticated ? <SpounsorDashbaord /> : <Navigate to="/" replace />}
             />
 
             {/* Fallback */}
