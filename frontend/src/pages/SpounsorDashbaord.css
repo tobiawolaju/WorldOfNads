@@ -30,11 +30,18 @@
 .sponsor-dashboard__cta {
   border: none;
   border-radius: 999px;
-  background: #111;
+  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
   color: #fff;
-  padding: 14px 24px;
+  padding: 14px 28px;
   font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.sponsor-dashboard__cta:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
 }
 
 .sponsor-dashboard__cta:disabled {
@@ -127,10 +134,24 @@
 
 .sponsor-modal {
   width: min(760px, 100%);
+  max-height: calc(100vh - 80px);
   border-radius: 24px;
   background: #fff7ec;
-  padding: 24px;
+  padding: 32px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124, 58, 237, 0.3) transparent;
+}
+
+.sponsor-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sponsor-modal::-webkit-scrollbar-thumb {
+  background-color: rgba(124, 58, 237, 0.3);
+  border-radius: 10px;
 }
 
 .sponsor-modal__header,
