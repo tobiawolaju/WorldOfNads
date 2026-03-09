@@ -30,6 +30,8 @@ build/
 # ────────────────
 .env
 frontend/.env
+backend/.env
+contracts/.env
 *.local
 
 backend/serviceAccount.json
