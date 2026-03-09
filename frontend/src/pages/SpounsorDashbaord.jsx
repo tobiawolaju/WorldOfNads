@@ -31,7 +31,7 @@ const initialForm = {
 
 export default function SpounsorDashbaord() {
   const { ready, authenticated, user, connectWallet } = usePrivy();
-  const { wallets } = useWallets();
+  const { wallets, ready: walletsReady } = useWallets();
   const [matches, setMatches] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,13 +40,18 @@ export default function SpounsorDashbaord() {
 
   const walletAddress = useMemo(() => getPrimaryWalletAddress(user), [user]);
   
-  // Specifically find an Ethereum wallet
-  const ethWallets = useMemo(() => wallets.filter(w => w.chainType === 'ethereum'), [wallets]);
-  
+  // Specifically prioritize the Privy Embedded Ethereum wallet
   const activeEthWallet = useMemo(() => {
-    if (ethWallets.length === 0) return null;
-    return ethWallets.find(w => w.address === walletAddress) || ethWallets[0];
-  }, [ethWallets, walletAddress]);
+    // 1. Look for Privy Embedded Ethereum wallet
+    const embedded = wallets.find(w => w.walletClientType === 'privy' && w.chainType === 'ethereum');
+    if (embedded) return embedded;
+
+    // 2. Look for any Ethereum wallet
+    const anyEth = wallets.find(w => w.chainType === 'ethereum');
+    if (anyEth) return anyEth;
+
+    return null;
+  }, [wallets]);
 
   useEffect(() => {
     if (!authenticated) return;
@@ -167,7 +172,7 @@ export default function SpounsorDashbaord() {
     }
   };
 
-  if (!ready) return <FullScreenLoader />;
+  if (!ready || !walletsReady) return <FullScreenLoader />;
   if (!authenticated || !user) return null;
 
   return (
