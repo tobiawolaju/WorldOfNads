@@ -38,8 +38,14 @@ export async function createSponsorMatchOnchain({
   const prizeValue = ethers.parseUnits(String(prizeAmount || 0), 18);
 
   const contract = new ethers.Contract(contractAddress, sponsorClickContractAbi, signer);
+  
+  // Ensure matchId is a bytes32 hex string. If it's a plain string, hash it.
+  const formattedMatchId = matchId.startsWith("0x") && matchId.length === 66 
+    ? matchId 
+    : ethers.id(matchId);
+
   const tx = await contract.createSponsoredMatch(
-    matchId,
+    formattedMatchId,
     isNative ? "0x0000000000000000000000000000000000000000" : prizeToken,
     prizeValue,
     expectedParticipants || 50,
@@ -74,7 +80,13 @@ export async function cancelSponsorMatchOnchain({ embeddedWallet, matchId }) {
   }
 
   const contract = new ethers.Contract(contractAddress, sponsorClickContractAbi, signer);
-  const tx = await contract.cancelSponsoredMatch(matchId);
+
+  // Ensure matchId is a bytes32 hex string. If it's a plain string, hash it.
+  const formattedMatchId = matchId.startsWith("0x") && matchId.length === 66 
+    ? matchId 
+    : ethers.id(matchId);
+
+  const tx = await contract.cancelSponsoredMatch(formattedMatchId);
   const receipt = await tx.wait();
 
   return {
