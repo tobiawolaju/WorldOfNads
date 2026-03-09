@@ -276,7 +276,7 @@ export default function Dashboard() {
                 Match Date: {selectedMatchData.date}
               </p>
               <a href={selectedMatchData.url} target="_blank" rel="noopener noreferrer" className="match-details-twitter">
-                Visit Sponsor ->
+                Visit Sponsor -{'>'}
               </a>
             </div>
           ) : (
