@@ -19,7 +19,7 @@ import Partners from "./pages/Partners";
 import Dashboard from "./pages/Dashboard";
 import Play from "./pages/Play";
 import Careers from "./pages/Careers";
-import SpounsorDashbaord from "./pages/SpounsorDashbaord.js";
+import SpounsorDashbaord from "./pages/SpounsorDashbaord";
 
 const AppContent: React.FC = () => {
   const { ready, authenticated } = usePrivy();
