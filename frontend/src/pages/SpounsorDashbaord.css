@@ -27,6 +27,27 @@
   line-height: 1.5;
 }
 
+.sponsor-dashboard__header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.sponsor-dashboard__connect-btn {
+  border: 1px solid #111;
+  border-radius: 999px;
+  background: transparent;
+  color: #111;
+  padding: 12px 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sponsor-dashboard__connect-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
 .sponsor-dashboard__cta {
   border: none;
   border-radius: 999px;
@@ -35,6 +56,11 @@
   padding: 14px 24px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.sponsor-dashboard__cta:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .sponsor-dashboard__notice {

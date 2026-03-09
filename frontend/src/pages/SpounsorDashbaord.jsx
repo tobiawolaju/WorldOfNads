@@ -30,7 +30,7 @@ const initialForm = {
 };
 
 export default function SpounsorDashbaord() {
-  const { ready, authenticated, user } = usePrivy();
+  const { ready, authenticated, user, connectWallet } = usePrivy();
   const { wallets } = useWallets();
   const [matches, setMatches] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,10 +39,14 @@ export default function SpounsorDashbaord() {
   const [form, setForm] = useState(initialForm);
 
   const walletAddress = useMemo(() => getPrimaryWalletAddress(user), [user]);
-  const embeddedWallet = useMemo(
-    () => wallets.find((wallet) => wallet.walletClientType === "privy" && wallet.address === walletAddress) || wallets[0],
-    [wallets, walletAddress]
-  );
+  
+  // Specifically find an Ethereum wallet
+  const ethWallets = useMemo(() => wallets.filter(w => w.chainType === 'ethereum'), [wallets]);
+  
+  const activeEthWallet = useMemo(() => {
+    if (ethWallets.length === 0) return null;
+    return ethWallets.find(w => w.address === walletAddress) || ethWallets[0];
+  }, [ethWallets, walletAddress]);
 
   useEffect(() => {
     if (!authenticated) return;
@@ -95,7 +99,7 @@ export default function SpounsorDashbaord() {
 
     try {
       const contractResult = await createSponsorMatchOnchain({
-        embeddedWallet,
+        embeddedWallet: activeEthWallet,
         matchId,
         prizeAmount: Number(form.prizeAmount),
         prizeToken: form.prizeToken === "MON" ? "0x0000000000000000000000000000000000000000" : form.prizeToken,
@@ -147,7 +151,7 @@ export default function SpounsorDashbaord() {
     setFeedback("");
     
     try {
-      const result = await cancelSponsorMatchOnchain({ embeddedWallet, matchId });
+      const result = await cancelSponsorMatchOnchain({ embeddedWallet: activeEthWallet, matchId });
       
       // Update local state (in a real app, you'd update Firebase too)
       setMatches(prev => prev.map(m => m.matchId === matchId ? { ...m, status: "cancelled" } : m));
@@ -176,9 +180,20 @@ export default function SpounsorDashbaord() {
             Create sponsor-funded matches, track deposited prizes, and push them into Firebase for the player dashboard.
           </p>
         </div>
-        <button className="sponsor-dashboard__cta" onClick={() => setIsModalOpen(true)}>
-          CreateMatch
-        </button>
+        <div className="sponsor-dashboard__header-actions">
+          {!activeEthWallet && (
+            <button className="sponsor-dashboard__connect-btn" onClick={connectWallet}>
+              Connect ETH Wallet
+            </button>
+          )}
+          <button 
+            className="sponsor-dashboard__cta" 
+            onClick={() => setIsModalOpen(true)}
+            disabled={!activeEthWallet}
+          >
+            CreateMatch
+          </button>
+        </div>
       </div>
 
       {feedback ? <div className="sponsor-dashboard__notice">{feedback}</div> : null}
