@@ -30,7 +30,7 @@ const initialForm = {
 };
 
 export default function SpounsorDashbaord() {
-  const { ready, authenticated, user, connectWallet } = usePrivy();
+  const { ready, authenticated, user } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
   const [matches, setMatches] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,17 +40,9 @@ export default function SpounsorDashbaord() {
 
   const walletAddress = useMemo(() => getPrimaryWalletAddress(user), [user]);
   
-  // Specifically prioritize the Privy Embedded Ethereum wallet
+  // Strictly use the Privy Embedded Ethereum wallet
   const activeEthWallet = useMemo(() => {
-    // 1. Look for Privy Embedded Ethereum wallet
-    const embedded = wallets.find(w => w.walletClientType === 'privy' && w.chainType === 'ethereum');
-    if (embedded) return embedded;
-
-    // 2. Look for any Ethereum wallet
-    const anyEth = wallets.find(w => w.chainType === 'ethereum');
-    if (anyEth) return anyEth;
-
-    return null;
+    return wallets.find(w => w.walletClientType === 'privy' && w.chainType === 'ethereum');
   }, [wallets]);
 
   useEffect(() => {
@@ -185,20 +177,13 @@ export default function SpounsorDashbaord() {
             Create sponsor-funded matches, track deposited prizes, and push them into Firebase for the player dashboard.
           </p>
         </div>
-        <div className="sponsor-dashboard__header-actions">
-          {!activeEthWallet && (
-            <button className="sponsor-dashboard__connect-btn" onClick={connectWallet}>
-              Connect ETH Wallet
-            </button>
-          )}
-          <button 
-            className="sponsor-dashboard__cta" 
-            onClick={() => setIsModalOpen(true)}
-            disabled={!activeEthWallet}
-          >
-            CreateMatch
-          </button>
-        </div>
+        <button 
+          className="sponsor-dashboard__cta" 
+          onClick={() => setIsModalOpen(true)}
+          disabled={!activeEthWallet}
+        >
+          {activeEthWallet ? "CreateMatch" : "Initializing Wallet..."}
+        </button>
       </div>
 
       {feedback ? <div className="sponsor-dashboard__notice">{feedback}</div> : null}
