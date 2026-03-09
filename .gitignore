@@ -79,24 +79,15 @@ backend/serviceAccount.json
 /godot/*.deb
 /godot/*.rpm
 
-#Contracts
-# Node modules
-contract/node_modules
+# Contracts (Foundry/Forge)
+contracts/lib/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/node_modules/
+contracts/artifacts/
+contracts/types/
+contracts/coverage/
+contracts/bundle/
+contracts/dist/
 
-# Compilation output
-contract/dist
-
-# pnpm deploy output
-contract/bundle
-
-# Hardhat Build Artifacts
-contract/artifacts
-
-# Hardhat compilation (v2) support directory
-contract/cache
-
-# Typechain output
-contract/types
-
-# Hardhat coverage reports
-contract/coverage

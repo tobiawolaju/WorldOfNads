@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
@@ -19,7 +19,7 @@ contract WONSponsorArenaEscrow is ERC1155, Ownable, ReentrancyGuard {
     error MatchAlreadyExists();
     error MatchNotFound();
     error MatchAlreadySettled();
-    error MatchCancelled();
+    error MatchAlreadyCancelled();
     error PrizeAmountMustBePositive();
     error InvalidPrizeToken();
     error InvalidWinner();
@@ -36,7 +36,8 @@ contract WONSponsorArenaEscrow is ERC1155, Ownable, ReentrancyGuard {
         uint256 winnerTokenId;
         uint256 participationTokenId;
         uint32 expectedParticipants;
-        uint64 createdAt;
+        uint64 createdAt; // timestamp match was created
+        uint64 startTime; // timestamp match is scheduled to start
         uint64 settledAt;
         bool settled;
         bool cancelled;
@@ -58,9 +59,10 @@ contract WONSponsorArenaEscrow is ERC1155, Ownable, ReentrancyGuard {
         uint256 winnerTokenId,
         uint256 participationTokenId,
         uint32 expectedParticipants,
+        uint256 startTime,
         string matchMetadataURI
     );
-    event MatchCancelled(bytes32 indexed matchId, address indexed sponsor);
+    event MatchCancelled(bytes32 indexed matchId, address indexed sponsor, uint256 amountReturned);
     event MatchSettled(
         bytes32 indexed matchId,
         address indexed winner,
@@ -91,21 +93,29 @@ contract WONSponsorArenaEscrow is ERC1155, Ownable, ReentrancyGuard {
         address prizeToken,
         uint256 firstPlacePrize,
         uint32 expectedParticipants,
+        uint64 startTime,
         string calldata winnerTokenURI,
         string calldata participationTokenURI,
         string calldata matchMetadataURI
-    ) external nonReentrant {
+    ) external payable nonReentrant {
         if (matchesById[matchId].createdAt != 0) {
             revert MatchAlreadyExists();
-        }
-        if (prizeToken == address(0)) {
-            revert InvalidPrizeToken();
         }
         if (firstPlacePrize == 0) {
             revert PrizeAmountMustBePositive();
         }
 
-        IERC20(prizeToken).safeTransferFrom(msg.sender, address(this), firstPlacePrize);
+        // Handle native MON vs ERC20
+        if (prizeToken == address(0)) {
+            if (msg.value != firstPlacePrize) {
+                revert PrizeAmountMustBePositive(); // Inaccurate error but reusing for simplicity
+            }
+        } else {
+            if (msg.value > 0) {
+                revert InvalidPrizeToken(); // Should not send ETH for ERC20 prize
+            }
+            IERC20(prizeToken).safeTransferFrom(msg.sender, address(this), firstPlacePrize);
+        }
 
         uint256 winnerTokenId = nextTokenId++;
         uint256 participationTokenId = nextTokenId++;
@@ -121,6 +131,7 @@ contract WONSponsorArenaEscrow is ERC1155, Ownable, ReentrancyGuard {
             participationTokenId: participationTokenId,
             expectedParticipants: expectedParticipants,
             createdAt: uint64(block.timestamp),
+            startTime: startTime,
             settledAt: 0,
             settled: false,
             cancelled: false,
@@ -135,6 +146,7 @@ contract WONSponsorArenaEscrow is ERC1155, Ownable, ReentrancyGuard {
             winnerTokenId,
             participationTokenId,
             expectedParticipants,
+            startTime,
             matchMetadataURI
         );
     }
@@ -151,13 +163,23 @@ contract WONSponsorArenaEscrow is ERC1155, Ownable, ReentrancyGuard {
             revert MatchAlreadySettled();
         }
         if (matchConfig.cancelled) {
-            revert MatchCancelled();
+            revert MatchAlreadyCancelled();
+        }
+        if (block.timestamp >= matchConfig.startTime) {
+            revert MatchAlreadySettled(); // Match started, too late to cancel
         }
 
         matchConfig.cancelled = true;
-        IERC20(matchConfig.prizeToken).safeTransfer(matchConfig.sponsor, matchConfig.firstPlacePrize);
+        
+        uint256 refundAmount = matchConfig.firstPlacePrize;
+        if (matchConfig.prizeToken == address(0)) {
+            (bool success, ) = payable(matchConfig.sponsor).call{value: refundAmount}("");
+            require(success, "Transfer failed");
+        } else {
+            IERC20(matchConfig.prizeToken).safeTransfer(matchConfig.sponsor, refundAmount);
+        }
 
-        emit MatchCancelled(matchId, msg.sender);
+        emit MatchCancelled(matchId, msg.sender, refundAmount);
     }
 
     function settleMatch(
@@ -170,7 +192,7 @@ contract WONSponsorArenaEscrow is ERC1155, Ownable, ReentrancyGuard {
             revert MatchNotFound();
         }
         if (matchConfig.cancelled) {
-            revert MatchCancelled();
+            revert MatchAlreadyCancelled();
         }
         if (matchConfig.settled) {
             revert MatchAlreadySettled();
@@ -212,7 +234,13 @@ contract WONSponsorArenaEscrow is ERC1155, Ownable, ReentrancyGuard {
         matchConfig.settledAt = uint64(block.timestamp);
 
         _mint(winner, matchConfig.winnerTokenId, 1, "");
-        IERC20(matchConfig.prizeToken).safeTransfer(winner, matchConfig.firstPlacePrize);
+        
+        if (matchConfig.prizeToken == address(0)) {
+            (bool success, ) = payable(winner).call{value: matchConfig.firstPlacePrize}("");
+            require(success, "Transfer failed");
+        } else {
+            IERC20(matchConfig.prizeToken).safeTransfer(winner, matchConfig.firstPlacePrize);
+        }
 
         emit MatchSettled(
             matchId,

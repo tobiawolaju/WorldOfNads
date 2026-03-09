@@ -26,3 +26,7 @@ contract DeployWONSponsorArenaEscrow is Script {
         console.log("Deployment info saved to:", path);
     }
 }
+
+
+//forge script DeploymentScripts/Deploy.s.sol --rpc-url <YOUR_RPC_URL> --broadcast
+//forge script DeploymentScripts/Deploy.s.sol:DeployWONSponsorArenaEscrow --rpc-url https://rpc.monad.xyz --broadcast

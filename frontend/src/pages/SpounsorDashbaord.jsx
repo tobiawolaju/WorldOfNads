@@ -7,7 +7,10 @@ import {
   getUsernameFromPrivy,
   saveMatchToFirebase
 } from "./firebaseClient";
-import { createSponsorMatchOnchain } from "./mockSponsorContract";
+import { 
+  createSponsorMatchOnchain, 
+  cancelSponsorMatchOnchain 
+} from "./mockSponsorContract";
 import "./SpounsorDashbaord.css";
 
 function buildMatchId(sponsor) {
@@ -87,12 +90,20 @@ export default function SpounsorDashbaord() {
     setFeedback("");
 
     const matchId = buildMatchId(form.sponsor);
+    const matchDateTime = new Date(`${form.date}T${form.time}`);
+    const startTime = Math.floor(matchDateTime.getTime() / 1000);
 
     try {
       const contractResult = await createSponsorMatchOnchain({
         embeddedWallet,
         matchId,
-        prizeAmount: Number(form.prizeAmount)
+        prizeAmount: Number(form.prizeAmount),
+        prizeToken: form.prizeToken === "MON" ? "0x0000000000000000000000000000000000000000" : form.prizeToken,
+        startTime,
+        expectedParticipants: 50,
+        winnerTokenURI: `/metadata/winner-${matchId}.json`,
+        participationTokenURI: `/metadata/participant-${matchId}.json`,
+        matchMetadataURI: form.url || `https://wons.example.com/matches/${matchId}`
       });
 
       const record = await saveMatchToFirebase({
@@ -105,6 +116,7 @@ export default function SpounsorDashbaord() {
         status: "upcoming",
         time: form.time,
         date: form.date,
+        startTime,
         image: form.image || "/logo.jpg",
         description: form.description || `${form.sponsor} sponsored match`,
         url: form.url,
@@ -117,12 +129,35 @@ export default function SpounsorDashbaord() {
       setFeedback(
         contractResult.mode === "onchain"
           ? "Match created and deposit transaction confirmed."
-          : "Match created with mock contract confirmation. Add VITE_SPONSOR_CLICK_CONTRACT_ADDRESS to send real MON."
+          : "Match created with mock contract confirmation. Add VITE_SPONSOR_CLICK_CONTRACT_ADDRESS for real MON."
       );
       setIsModalOpen(false);
     } catch (error) {
       console.error(error);
       setFeedback(error?.message || "Failed to create match.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelMatch = async (matchId) => {
+    if (!window.confirm("Are you sure you want to cancel this match and refund the prize?")) return;
+    
+    setIsSubmitting(true);
+    setFeedback("");
+    
+    try {
+      const result = await cancelSponsorMatchOnchain({ embeddedWallet, matchId });
+      
+      // Update local state (in a real app, you'd update Firebase too)
+      setMatches(prev => prev.map(m => m.matchId === matchId ? { ...m, status: "cancelled" } : m));
+      
+      setFeedback(result.mode === "onchain" 
+        ? "Match cancelled successfully and funds returned." 
+        : "Match cancelled (mock).");
+    } catch (error) {
+      console.error(error);
+      setFeedback(error?.message || "Failed to cancel match.");
     } finally {
       setIsSubmitting(false);
     }
@@ -164,6 +199,18 @@ export default function SpounsorDashbaord() {
               <span>{match.time}</span>
               <span>{match.prize}</span>
               <span className="sponsor-dashboard__match-id">{match.matchId}</span>
+              <div className="sponsor-dashboard__actions">
+                {match.status === "upcoming" && match.createdByWallet === walletAddress && (
+                  <button 
+                    className="sponsor-dashboard__cancel-btn"
+                    onClick={() => handleCancelMatch(match.matchId)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                )}
+                {match.status === "cancelled" && <span className="status-cancelled">Cancelled</span>}
+              </div>
             </div>
           ))
         )}

@@ -55,10 +55,11 @@
 
 .sponsor-dashboard__row {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr 2fr;
+  grid-template-columns: 1.2fr 1fr 1fr 1.5fr 1fr;
   gap: 16px;
   padding: 18px 20px;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
+  align-items: center;
 }
 
 .sponsor-dashboard__row--head {
@@ -74,6 +75,38 @@
 .sponsor-dashboard__match-id {
   word-break: break-all;
   font-family: monospace;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.sponsor-dashboard__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sponsor-dashboard__cancel-btn {
+  background: rgba(255, 69, 58, 0.1);
+  color: #ff453a;
+  border: 1px solid rgba(255, 69, 58, 0.2);
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sponsor-dashboard__cancel-btn:hover:not(:disabled) {
+  background: #ff453a;
+  color: #fff;
+}
+
+.status-cancelled {
+  color: #888;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .sponsor-modal__backdrop {
