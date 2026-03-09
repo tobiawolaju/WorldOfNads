@@ -40,9 +40,13 @@ export default function SpounsorDashbaord() {
 
   const walletAddress = useMemo(() => getPrimaryWalletAddress(user), [user]);
   
-  // Strictly use the Privy Embedded Ethereum wallet
   const activeEthWallet = useMemo(() => {
-    return wallets.find(w => w.walletClientType === 'privy' && w.chainType === 'ethereum');
+    // 1. Prioritize the Privy Embedded Ethereum wallet
+    const embedded = wallets.find(w => w.walletClientType === 'privy' && w.chainType === 'ethereum');
+    if (embedded) return embedded;
+
+    // 2. Fall back to any Ethereum wallet present in the Privy list
+    return wallets.find(w => w.chainType === 'ethereum');
   }, [wallets]);
 
   useEffect(() => {
@@ -182,7 +186,7 @@ export default function SpounsorDashbaord() {
           onClick={() => setIsModalOpen(true)}
           disabled={!activeEthWallet}
         >
-          {activeEthWallet ? "CreateMatch" : "Initializing Wallet..."}
+          CreateMatch
         </button>
       </div>
 
