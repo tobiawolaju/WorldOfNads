@@ -10,9 +10,9 @@ import {
   deleteMatchFromFirebase,
   saveMatchToFirebase
 } from "./firebaseClient";
-import { 
-  createSponsorMatchOnchain, 
-  cancelSponsorMatchOnchain 
+import {
+  createSponsorMatchOnchain,
+  cancelSponsorMatchOnchain
 } from "./mockSponsorContract";
 import "./SpounsorDashbaord.css";
 
@@ -42,10 +42,10 @@ export default function SpounsorDashbaord() {
   const [form, setForm] = useState(initialForm);
 
   const walletAddress = useMemo(() => getPrimaryWalletAddress(user), [user]);
-  
+
   const activeEthWallet = useMemo(() => {
     if (!walletsReady || !wallets.length) return null;
-    
+
     // 1. Try to find the specific wallet that matches our primary ETH address
     if (walletAddress) {
       const match = wallets.find(w => w.address.toLowerCase() === walletAddress.toLowerCase());
@@ -163,21 +163,21 @@ export default function SpounsorDashbaord() {
 
   const handleCancelMatch = async (matchId) => {
     if (!window.confirm("Are you sure you want to cancel this match and refund the prize?")) return;
-    
+
     setIsSubmitting(true);
     setFeedback("");
-    
+
     try {
       const result = await cancelSponsorMatchOnchain({ embeddedWallet: activeEthWallet, matchId });
-      
+
       // Remove from Firebase after successful on-chain cancellation
       await deleteMatchFromFirebase(matchId);
-      
+
       // Update local state by removing the match
       setMatches(prev => prev.filter(m => m.matchId !== matchId));
-      
-      setFeedback(result.mode === "onchain" 
-        ? "Match cancelled successfully. Funds returned and removed from dashboard." 
+
+      setFeedback(result.mode === "onchain"
+        ? "Match cancelled successfully. Funds returned and removed from dashboard."
         : "Match cancelled (mock).");
     } catch (error) {
       console.error(error);
@@ -200,8 +200,8 @@ export default function SpounsorDashbaord() {
             Create sponsor-funded matches, track deposited prizes, and push them into Firebase for the player dashboard.
           </p>
         </div>
-        <button 
-          className="sponsor-dashboard__cta" 
+        <button
+          className="sponsor-dashboard__cta"
           onClick={() => setIsModalOpen(true)}
         >
           CreateMatch
@@ -228,7 +228,7 @@ export default function SpounsorDashbaord() {
               <span className="sponsor-dashboard__match-id">{match.matchId}</span>
               <div className="sponsor-dashboard__actions">
                 {match.status === "upcoming" && match.createdByWallet === walletAddress && (
-                  <button 
+                  <button
                     className="sponsor-dashboard__cancel-btn"
                     onClick={() => handleCancelMatch(match.matchId)}
                     disabled={isSubmitting}
@@ -246,16 +246,6 @@ export default function SpounsorDashbaord() {
       {isModalOpen ? (
         <div className="sponsor-modal__backdrop" onClick={closeModal}>
           <div className="sponsor-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="sponsor-modal__header">
-              <div>
-                <p className="sponsor-dashboard__eyebrow">Create Match</p>
-                <h2>Fund a sponsor match</h2>
-              </div>
-              <button className="sponsor-modal__close" onClick={closeModal}>
-                x
-              </button>
-            </div>
-
             <div className="sponsor-modal__grid">
               <label>
                 Sponsor
