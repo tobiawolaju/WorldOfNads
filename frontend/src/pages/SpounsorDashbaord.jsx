@@ -7,7 +7,8 @@ import {
   getUsernameFromPrivy,
   saveUserToFirebase,
   updateUserProjects,
-  deleteMatchFromFirebase
+  deleteMatchFromFirebase,
+  saveMatchToFirebase
 } from "./firebaseClient";
 import { 
   createSponsorMatchOnchain, 
