@@ -33,13 +33,45 @@ Think: tag + battle royale pressure, optimized for short, replayable sessions.
 
 ---
 
+<p align="center">
+  <img src="./screenshots/logo.jpg" height="120"/>
+</p>
+
+<h1 align="center">World of Nads (WONs)</h1>
+<p align="center">
+  World of Nads is a real-time, browser-based multiplayer arena game that combines fast, chaotic gameplay with on-chain settlement using Monad.
+  This project explores how to build mass-market games where blockchain is invisible to the player but critical for fairness, ownership, and payouts.
+</p>
+---
+<div style="display:flex; overflow-x:auto; gap:12px; padding:10px 0;white-space: nowrap;">
+
+
+    
+   <img src="./screenshots/1.gif" height="260"/>
+  <img src="./screenshots/2.gif" height="260"/>
+  <img src="./screenshots/3.gif" height="260"/>
+  <img src="./screenshots/4.gif" height="260"/>
+  <img src="./screenshots/5.gif" height="260"/>
+</div>
+---
+
+## 🎮 Features
+
+- **20-player competitive arena**: High-stakes "King of the Hill" gameplay.
+- **Real-time Synchronization**: Node.js backend @20Hz for low-latency state.
+- **On-chain Payouts**: Verified winners receive rewards directly to their Monad wallets.
+- **Embedded Wallets**: Seamless social login (Privy) with automatically created EVM wallets.
+- **Sponsor Tools**: Create and fund matches directly from the dashboard.
+
+---
+
 ## 🧠 Architecture Philosophy
 
 - **Gameplay first** (Nintendo model)
 - **Cosmetics, not power** (Fortnite model)
 - **Blockchain as backend**, not gameplay loop
 
-### System Design
+### System Architecture
 
 ```mermaid
 graph TD
@@ -52,26 +84,27 @@ graph TD
         end
     end
 
-    subgraph "Server Side"
+    subgraph "Server Side (Backend)"
         E["Node.js WebSocket Server"]
         F["State Broadcast (20Hz)"]
-        G["Vercel Serverless (API)"]
-        H["Firebase (Persistence)"]
+        G["Trusted Authority (Payout Logic)"]
+        H["Firebase (User & Match DB)"]
     end
 
     subgraph "Blockchain (Monad)"
-        I["Match Settlement"]
-        J["Smart Contracts"]
+        I["WONSponsorArenaEscrow"]
+        J["Prize Pool (Native MON/ERC20)"]
     end
 
     A -- "Embeds" --> B
     C <--> E
     E -- "Syncs" --> F
     F -- "Updates" --> C
-    A <--> G
-    G <--> H
-    B -- "Match Results" --> I
-    I <--> J
+    A <--> H
+    G -- "Lookup Winner Address" --> H
+    G -- "settleMatch()" --> I
+    I -- "Transfers Prize" --> J
+    A -- "Sponsor: createSponsoredMatch()" --> I
 
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style B fill:#bbf,stroke:#333,stroke-width:2px
@@ -81,14 +114,15 @@ graph TD
 
 - **Client:** Godot Engine (Exported to WASM) embedded in a React/Vite wrapper.
 - **Servers:** Node.js WebSocket server for real-time state synchronization.
-- **Chain (Monad):**
-  - Match settlement
-  - Tournament payouts
-  - Ownership & cosmetic state
-
-Real-time gameplay stays off-chain. Only outcomes that require trust go on-chain.
+- **Smart Contracts (Monad):**
+  - **Match Escrow:** `0x5EA4AAfa6d8da9F9C0556C0A99F79c39F1Ae7D6b`
+  - Handles trustless prize deposits and automated winner payouts.
+- **Sponsor Dashboard:** 
+  - On-chain match creation with native MON or ERC20 tokens.
+  - Transparent prize tracking and cancellation logic.
 
 ---
+
 ## 📡 Live Events Stream
 
 The game now includes a dedicated events stream for lightweight activity logs.
@@ -155,8 +189,9 @@ Players don’t need to “understand crypto” to play.
 
 ## 🚧 Status
 
-- Live browser build (closed beta)
-- Active testing cohort
-- Ongoing iteration on gameplay, networking, and settlement logic
+- **Monad Mainnet/Devnet Settlement Logic**: [COMPLETE]
+- **Sponsor Escrow System**: [LIVE]
+- **Live browser build (closed beta)**: Active testing cohort.
+
 
 ---
