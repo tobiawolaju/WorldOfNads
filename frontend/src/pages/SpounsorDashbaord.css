@@ -136,7 +136,7 @@
 
 .sponsor-modal {
   width: min(760px, 100%);
-  max-height: calc(100vh - 80px);
+  max-height: 95vh; /* Allow it to reach almost the top */
   border-radius: 24px 24px 0 0;
   /* Rounded only at the top */
   background: #fff;
@@ -165,6 +165,27 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+}
+
+.sponsor-modal__footer-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.sponsor-modal__cancel-btn {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: transparent;
+  color: #333;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sponsor-modal__cancel-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .sponsor-modal__close {

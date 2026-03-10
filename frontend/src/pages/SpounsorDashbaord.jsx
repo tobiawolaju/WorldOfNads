@@ -295,9 +295,14 @@ export default function SpounsorDashbaord() {
               <p className="sponsor-modal__hint">
                 Uses your Privy EVM wallet. If no click-contract address is configured, the app writes a mock tx hash and still stores the match in Firebase.
               </p>
-              <button className="sponsor-dashboard__cta" disabled={isSubmitting} onClick={handleCreateMatch}>
-                {isSubmitting ? "Creating..." : "Create"}
-              </button>
+              <div className="sponsor-modal__footer-actions">
+                <button className="sponsor-modal__cancel-btn" onClick={closeModal} disabled={isSubmitting}>
+                  Cancel
+                </button>
+                <button className="sponsor-dashboard__cta" disabled={isSubmitting} onClick={handleCreateMatch}>
+                  {isSubmitting ? "Creating..." : "Create Match"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
