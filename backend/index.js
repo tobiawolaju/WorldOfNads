@@ -1,6 +1,8 @@
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
+import { getPlayerWallet, findActiveMatch, markMatchSettled } from './firebaseClient.js';
+import { settleMatchOnchain } from './contractClient.js';
 
 const PORT = process.env.PORT || 8080;
 const BROADCAST_RATE = 20;
@@ -406,6 +408,39 @@ setInterval(() => {
     matchTimeLeft -= FIXED_DT;
     if (matchTimeLeft <= 0) {
       const winner = resolveRoundWinner();
+
+      // Perform On-chain Settlement if it's a sponsored match
+      (async () => {
+        try {
+          const activeMatch = await findActiveMatch();
+          if (activeMatch && winner.winnerId && winner.winnerName !== 'No one') {
+            console.log(`[Payout] Sponsored match found: ${activeMatch.matchId}. Resolving...`);
+
+            // Get winner's wallet
+            const winnerWallet = await getPlayerWallet(winner.winnerName);
+
+            if (winnerWallet) {
+              console.log(`[Payout] Winner ${winner.winnerName} wallet: ${winnerWallet}`);
+
+              // Get all participant wallets (for the NFT mints)
+              const participantPromises = Object.values(players).map(p => getPlayerWallet(p.username));
+              const allWallets = await Promise.all(participantPromises);
+              const validParticipants = [...new Set(allWallets.filter(w => !!w))]; // unique valid wallets
+
+              const result = await settleMatchOnchain(activeMatch.matchId, winnerWallet, validParticipants);
+              if (result.success) {
+                await markMatchSettled(activeMatch.matchId, result.txHash);
+                console.log(`[Payout] Payout successful for ${activeMatch.matchId}`);
+              }
+            } else {
+              console.warn(`[Payout] Could not find wallet for winner: ${winner.winnerName}`);
+            }
+          }
+        } catch (err) {
+          console.error(`[Payout] Error during automated settlement:`, err);
+        }
+      })();
+
       if (winner.winnerId) {
         publishEvent('match_winner', `${winner.winnerName} won the round`, winner.winnerId, {
           winnerId: winner.winnerId,
