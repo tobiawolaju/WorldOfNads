@@ -24,6 +24,24 @@ export async function createSponsorMatchOnchain({
 
   const providerSource = await embeddedWallet.getEthereumProvider();
   const browserProvider = new ethers.BrowserProvider(providerSource);
+  
+  // Verify network
+  const network = await browserProvider.getNetwork();
+  if (BigInt(network.chainId) !== 143n) {
+    try {
+      await providerSource.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x8f' }], // 143 in hex
+      });
+    } catch (switchError) {
+      // This error code indicates that the chain has not been added to MetaMask.
+      if (switchError.code === 4902) {
+        throw new Error("Monad network not found in provider. Please add it.");
+      }
+      throw switchError;
+    }
+  }
+
   const signer = await browserProvider.getSigner();
   const contractAddress = import.meta.env.VITE_SPONSOR_CLICK_CONTRACT_ADDRESS;
 
@@ -72,6 +90,23 @@ export async function cancelSponsorMatchOnchain({ embeddedWallet, matchId }) {
 
   const providerSource = await embeddedWallet.getEthereumProvider();
   const browserProvider = new ethers.BrowserProvider(providerSource);
+
+  // Verify network
+  const network = await browserProvider.getNetwork();
+  if (BigInt(network.chainId) !== 143n) {
+    try {
+      await providerSource.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x8f' }], 
+      });
+    } catch (switchError) {
+      if (switchError.code === 4902) {
+        throw new Error("Monad network not found in provider.");
+      }
+      throw switchError;
+    }
+  }
+
   const signer = await browserProvider.getSigner();
   const contractAddress = import.meta.env.VITE_SPONSOR_CLICK_CONTRACT_ADDRESS;
 
