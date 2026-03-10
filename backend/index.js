@@ -408,11 +408,12 @@ setInterval(() => {
     matchTimeLeft -= FIXED_DT;
     if (matchTimeLeft <= 0) {
       const winner = resolveRoundWinner();
+      const participantNames = Object.values(players).map(p => p.username);
 
       // Perform On-chain Settlement if it's a sponsored match
-      (async () => {
+      (async (winnerInfo, allParticipants) => {
         try {
-          console.log(`[Payout-Debug] Round ended. Potential winner: ${winner.winnerName}`);
+          console.log(`[Payout-Debug] Round ended. Potential winner: ${winnerInfo.winnerName}`);
           const activeMatch = await findActiveMatch();
 
           if (!activeMatch) {
@@ -422,19 +423,25 @@ setInterval(() => {
 
           console.log(`[Payout-Debug] Found candidate match: ${activeMatch.matchId} (Status: ${activeMatch.status})`);
 
-          if (winner.winnerId && winner.winnerName !== 'No one') {
-            console.log(`[Payout] Sponsored match found: ${activeMatch.matchId}. Resolving for winner ${winner.winnerName}...`);
+          if (winnerInfo.winnerId && winnerInfo.winnerName !== 'No one') {
+            console.log(`[Payout] Sponsored match found: ${activeMatch.matchId}. Resolving for winner ${winnerInfo.winnerName}...`);
 
             // Get winner's wallet
-            const winnerWallet = await getPlayerWallet(winner.winnerName);
+            const winnerWallet = await getPlayerWallet(winnerInfo.winnerName);
 
             if (winnerWallet) {
-              console.log(`[Payout] Winner ${winner.winnerName} wallet: ${winnerWallet}`);
+              console.log(`[Payout] Winner ${winnerInfo.winnerName} wallet: ${winnerWallet}`);
 
               // Get all participant wallets (for the NFT mints)
-              const participantPromises = Object.values(players).map(p => getPlayerWallet(p.username));
+              // Note: winner MUST be in this list for the contract to succeed
+              const participantPromises = allParticipants.map(name => getPlayerWallet(name));
               const allWallets = await Promise.all(participantPromises);
-              const validParticipants = [...new Set(allWallets.filter(w => !!w))]; // unique valid wallets
+              let validParticipants = [...new Set(allWallets.filter(w => !!w))]; // unique valid wallets
+
+              // safety: ensure winner is in participants list
+              if (!validParticipants.some(w => w.toLowerCase() === winnerWallet.toLowerCase())) {
+                validParticipants.push(winnerWallet);
+              }
 
               console.log(`[Payout] Settle params: winner=${winnerWallet}, participantsCount=${validParticipants.length}`);
 
@@ -446,7 +453,7 @@ setInterval(() => {
                 console.error(`[Payout] On-chain settlement failed: ${result.error}`);
               }
             } else {
-              console.warn(`[Payout] Could not find wallet for winner: ${winner.winnerName}. Ensure they are logged in on the dashboard first.`);
+              console.warn(`[Payout] Could not find wallet for winner: ${winnerInfo.winnerName}. Ensure they are logged in on the dashboard first.`);
             }
           } else {
             console.log(`[Payout-Debug] No valid winner found for this round.`);
@@ -454,7 +461,7 @@ setInterval(() => {
         } catch (err) {
           console.error(`[Payout] Error during automated settlement:`, err);
         }
-      })();
+      })(winner, participantNames);
 
       if (winner.winnerId) {
         publishEvent('match_winner', `${winner.winnerName} won the round`, winner.winnerId, {
