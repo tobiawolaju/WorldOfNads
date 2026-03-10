@@ -32,16 +32,22 @@ export async function saveUserToFirebase(user) {
 
   const username = getUsernameFromPrivy(user);
   const twitter = user.linkedAccounts?.find((acc) => acc.type === "twitter_oauth");
-  const wallet = user.linkedAccounts?.find((acc) => acc.type === "wallet");
+  
+  // Explicitly find Ethereum and Solana addresses
+  const ethAcc = user.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "ethereum");
+  const solAcc = user.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "solana");
+  
   const userRef = ref(db, `users/${username}`);
   const snapshot = await get(userRef);
 
   const updates = {
     lastLogin: new Date().toISOString(),
-    latestVerifiedAt: twitter?.latestVerifiedAt || wallet?.latestVerifiedAt || new Date().toISOString(),
+    latestVerifiedAt: twitter?.latestVerifiedAt || ethAcc?.latestVerifiedAt || solAcc?.latestVerifiedAt || new Date().toISOString(),
     profilePictureUrl:
       twitter?.profilePictureUrl ||
-      "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
+      "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png",
+    ethAddress: ethAcc?.address || null, // Capture specifically for Monad payouts
+    solAddress: solAcc?.address || null  // Capture for Solana compatibility
   };
 
   if (snapshot.exists()) {
@@ -52,8 +58,8 @@ export async function saveUserToFirebase(user) {
   await set(userRef, {
     privyId: user.id,
     username,
-    wallet: wallet?.address || null,
-    firstVerifiedAt: twitter?.firstVerifiedAt || wallet?.firstVerifiedAt || new Date().toISOString(),
+    wallet: ethAcc?.address || solAcc?.address || null, // Legacy field
+    firstVerifiedAt: twitter?.firstVerifiedAt || ethAcc?.latestVerifiedAt || new Date().toISOString(),
     won: 0,
     projects: [],
     ...updates
