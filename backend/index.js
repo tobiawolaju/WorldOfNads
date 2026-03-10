@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
-import { getPlayerWallet, findActiveMatch, markMatchSettled } from './firebaseClient.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus } from './firebaseClient.js';
 import { settleMatchOnchain } from './contractClient.js';
 
 const PORT = process.env.PORT || 8080;
@@ -402,6 +402,34 @@ gameWss.on('connection', (ws, req) => {
     }
   });
 });
+
+const statusWorkerInterval = setInterval(async () => {
+  try {
+    const matches = await getAllMatches();
+    const now = Math.floor(Date.now() / 1000);
+    const fiveMinutes = 300;
+
+    for (const match of Object.values(matches)) {
+      const { matchId, status, startTime } = match;
+      if (!matchId || !startTime) continue;
+
+      // 1. Upcoming -> Live (5 minutes before startTime)
+      if (status === "upcoming" && now >= startTime - fiveMinutes) {
+        console.log(`[Worker] Match ${matchId} is now LIVE.`);
+        await updateMatchStatus(matchId, "live");
+      }
+
+      // 2. Live -> Completed (5 minutes after startTime)
+      // Note: If match is settled, don't touch it.
+      if (status === "live" && now >= startTime + fiveMinutes) {
+        console.log(`[Worker] Match ${matchId} is now COMPLETED.`);
+        await updateMatchStatus(matchId, "completed");
+      }
+    }
+  } catch (error) {
+    console.error("[Worker] Error updating match statuses:", error);
+  }
+}, 60000); // Run every 60 seconds
 
 setInterval(() => {
   if (matchRunning) {

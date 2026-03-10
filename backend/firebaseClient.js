@@ -52,3 +52,15 @@ export async function markMatchSettled(matchId, txHash) {
         settleTxHash: txHash
     });
 }
+
+export async function getAllMatches() {
+    const matchesRef = ref(db, "matches");
+    const snapshot = await get(matchesRef);
+    if (!snapshot.exists()) return {};
+    return snapshot.val();
+}
+
+export async function updateMatchStatus(matchId, status) {
+    const matchRef = ref(db, `matches/${matchId}`);
+    await update(matchRef, { status });
+}
