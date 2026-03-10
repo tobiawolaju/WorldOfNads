@@ -412,9 +412,18 @@ setInterval(() => {
       // Perform On-chain Settlement if it's a sponsored match
       (async () => {
         try {
+          console.log(`[Payout-Debug] Round ended. Potential winner: ${winner.winnerName}`);
           const activeMatch = await findActiveMatch();
-          if (activeMatch && winner.winnerId && winner.winnerName !== 'No one') {
-            console.log(`[Payout] Sponsored match found: ${activeMatch.matchId}. Resolving...`);
+
+          if (!activeMatch) {
+            console.log(`[Payout-Debug] No 'upcoming' or 'live' matches found in Firebase for payout.`);
+            return;
+          }
+
+          console.log(`[Payout-Debug] Found candidate match: ${activeMatch.matchId} (Status: ${activeMatch.status})`);
+
+          if (winner.winnerId && winner.winnerName !== 'No one') {
+            console.log(`[Payout] Sponsored match found: ${activeMatch.matchId}. Resolving for winner ${winner.winnerName}...`);
 
             // Get winner's wallet
             const winnerWallet = await getPlayerWallet(winner.winnerName);
@@ -427,14 +436,20 @@ setInterval(() => {
               const allWallets = await Promise.all(participantPromises);
               const validParticipants = [...new Set(allWallets.filter(w => !!w))]; // unique valid wallets
 
+              console.log(`[Payout] Settle params: winner=${winnerWallet}, participantsCount=${validParticipants.length}`);
+
               const result = await settleMatchOnchain(activeMatch.matchId, winnerWallet, validParticipants);
               if (result.success) {
                 await markMatchSettled(activeMatch.matchId, result.txHash);
-                console.log(`[Payout] Payout successful for ${activeMatch.matchId}`);
+                console.log(`[Payout] Payout successful for ${activeMatch.matchId}. TX: ${result.txHash}`);
+              } else {
+                console.error(`[Payout] On-chain settlement failed: ${result.error}`);
               }
             } else {
-              console.warn(`[Payout] Could not find wallet for winner: ${winner.winnerName}`);
+              console.warn(`[Payout] Could not find wallet for winner: ${winner.winnerName}. Ensure they are logged in on the dashboard first.`);
             }
+          } else {
+            console.log(`[Payout-Debug] No valid winner found for this round.`);
           }
         } catch (err) {
           console.error(`[Payout] Error during automated settlement:`, err);

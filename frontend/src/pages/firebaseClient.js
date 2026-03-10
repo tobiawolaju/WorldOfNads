@@ -32,11 +32,11 @@ export async function saveUserToFirebase(user) {
 
   const username = getUsernameFromPrivy(user);
   const twitter = user.linkedAccounts?.find((acc) => acc.type === "twitter_oauth");
-  
+
   // Explicitly find Ethereum and Solana addresses
   const ethAcc = user.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "ethereum");
   const solAcc = user.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "solana");
-  
+
   const userRef = ref(db, `users/${username}`);
   const snapshot = await get(userRef);
 
@@ -98,6 +98,7 @@ export function normalizeMatchRecord(match, fallbackKey = "") {
     description: String(match?.description || ""),
     url: String(match?.url || ""),
     createdAt: String(match?.createdAt || new Date().toISOString()),
+    startTime: Number(match?.startTime || 0),
     createdByWallet: String(match?.createdByWallet || ""),
     depositTxHash: String(match?.depositTxHash || "")
   };

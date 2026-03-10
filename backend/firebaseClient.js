@@ -36,10 +36,9 @@ export async function findActiveMatch() {
     const matches = snapshot.val();
     const now = Math.floor(Date.now() / 1000);
 
-    // Find a match that is "upcoming" and whose startTime has passed (or is close)
-    // Logic: oldest upcoming match that is already started or about to start
+    // Find a match that is "upcoming" or "live" and whose startTime has passed (or is close)
     const activeMatch = Object.values(matches)
-        .filter(m => m.status === "upcoming" && m.startTime <= now + 300) // 5 min buffer
+        .filter(m => (m.status === "upcoming" || m.status === "live") && m.startTime <= now + 600) // 10 min buffer
         .sort((a, b) => a.startTime - b.startTime)[0];
 
     return activeMatch || null;
