@@ -127,18 +127,18 @@
   background: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 24px;
+  align-items: flex-end; /* Changed from center to flex-end */
+  padding: 0; /* Removed padding to let it sit at the bottom */
   z-index: 1000;
 }
 
 .sponsor-modal {
   width: min(760px, 100%);
   max-height: calc(100vh - 80px);
-  border-radius: 24px;
-  background: #fff7ec;
+  border-radius: 24px 24px 0 0; /* Rounded only at the top */
+  background: #fff; /* Changed from #fff7ec to #fff */
   padding: 32px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15); /* Adjusted shadow for bottom sheet */
   overflow-y: auto;
   position: relative;
   scrollbar-width: thin;
