@@ -130,11 +130,36 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
                 <div className="ticket-name">{twitter?.name || "Player"}</div>
                 <div className="ticket-handle">@{twitter?.username || "guest"}</div>
                 <div className="ticket-wallets">
-                  {wallets.map((w, i) => (
-                    <div key={i}>
-                      {w.address.slice(0, 6)}...{w.address.slice(-4)}
+                  {wallets.length > 0 ? (
+                    <div 
+                      className="evm-address-container"
+                      onClick={() => {
+                        const addr = wallets[0].address;
+                        navigator.clipboard.writeText(addr);
+                        alert("Address copied!");
+                      }}
+                      style={{ 
+                        cursor: "pointer", 
+                        display: "flex", 
+                        alignItems: "center", 
+                        gap: "6px",
+                        fontSize: "12px",
+                        background: "rgba(255, 255, 255, 0.1)",
+                        padding: "4px 10px",
+                        borderRadius: "12px",
+                        marginTop: "4px",
+                        border: "1px solid rgba(255, 255, 255, 0.2)"
+                      }}
+                    >
+                      <span>{wallets[0].address.slice(0, 6)}...{wallets[0].address.slice(-4)}</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                      </svg>
                     </div>
-                  ))}
+                  ) : (
+                    <div style={{ fontSize: "10px", opacity: 0.6 }}>No Wallet</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -144,8 +169,8 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
 
           <div className="ticket-stub">
             <div className="stub-earned">
-              {earned.toLocaleString()}
-              <span>MON Earned</span>
+              {earned.toFixed(4)}
+              <span>MON Balance</span>
             </div>
           </div>
 

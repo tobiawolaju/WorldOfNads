@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useNavigate } from "react-router-dom";
+import { ethers } from "ethers";
 import { FullScreenLoader } from "../components/ui/fullscreen-loader";
 import { ThreeScene } from "../components/ThreeScene";
 import "./Dashboard.css";
@@ -45,6 +46,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const [earned, setEarned] = useState<number>(0);
+  const [monBalance, setMonBalance] = useState<string>("0");
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
@@ -66,19 +68,33 @@ export default function Dashboard() {
     }
   }, [authenticated, user]);
 
+  // Fetch actual MON balance
   useEffect(() => {
-    let start = 0;
-    const end = 30000;
-    const interval = setInterval(() => {
-      start += 400;
-      if (start >= end) {
-        start = end;
-        clearInterval(interval);
+    if (!authenticated || !user) return;
+
+    const fetchBalance = async () => {
+      try {
+        const ethWallet = user.linkedAccounts?.find(
+          (acc) => acc.type === "wallet" && acc.chainType === "ethereum"
+        );
+        if (ethWallet && "address" in ethWallet && ethWallet.address) {
+          const provider = new ethers.JsonRpcProvider("https://rpc.monad.xyz");
+          const balance = await provider.getBalance(ethWallet.address);
+          const formatted = ethers.formatEther(balance);
+          // Trim to 4 decimal places for display
+          setMonBalance(parseFloat(formatted).toFixed(4));
+          setEarned(parseFloat(formatted));
+        }
+      } catch (error) {
+        console.error("Failed to fetch MON balance:", error);
       }
-      setEarned(start);
-    }, 20);
+    };
+
+    fetchBalance();
+    // Refresh balance every 30 seconds
+    const interval = setInterval(fetchBalance, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [authenticated, user]);
 
   useEffect(() => {
     return () => {
@@ -159,7 +175,11 @@ export default function Dashboard() {
       }
     : undefined;
 
-  const wallets = (user.linkedAccounts?.filter((acc) => acc.type === "wallet") || []) as Wallet[];
+  // Filter for ONLY the Ethereum wallet (Monad)
+  const wallets = (user.linkedAccounts?.filter(
+    (acc) => acc.type === "wallet" && acc.chainType === "ethereum"
+  ) || []) as Wallet[];
+  
   const filteredMatches = matches.filter((match) => match.status === filter);
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
   const isLive = selectedMatchData?.status === "live";
