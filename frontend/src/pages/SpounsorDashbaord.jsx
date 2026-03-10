@@ -5,7 +5,9 @@ import {
   fetchMatchesFromFirebase,
   getPrimaryWalletAddress,
   getUsernameFromPrivy,
-  saveMatchToFirebase
+  saveUserToFirebase,
+  updateUserProjects,
+  deleteMatchFromFirebase
 } from "./firebaseClient";
 import { 
   createSponsorMatchOnchain, 
@@ -167,11 +169,14 @@ export default function SpounsorDashbaord() {
     try {
       const result = await cancelSponsorMatchOnchain({ embeddedWallet: activeEthWallet, matchId });
       
-      // Update local state (in a real app, you'd update Firebase too)
-      setMatches(prev => prev.map(m => m.matchId === matchId ? { ...m, status: "cancelled" } : m));
+      // Remove from Firebase after successful on-chain cancellation
+      await deleteMatchFromFirebase(matchId);
+      
+      // Update local state by removing the match
+      setMatches(prev => prev.filter(m => m.matchId !== matchId));
       
       setFeedback(result.mode === "onchain" 
-        ? "Match cancelled successfully and funds returned." 
+        ? "Match cancelled successfully. Funds returned and removed from dashboard." 
         : "Match cancelled (mock).");
     } catch (error) {
       console.error(error);

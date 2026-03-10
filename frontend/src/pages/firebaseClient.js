@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getDatabase, get, ref, set, update } from "firebase/database";
+import { getDatabase, get, ref, set, update, remove } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD3Md8vlOQDg4QoTRJuwNmrv3mg11WMDss",
@@ -123,4 +123,8 @@ export async function saveMatchToFirebase(matchInput) {
   const match = normalizeMatchRecord(matchInput);
   await set(ref(db, `matches/${match.matchId}`), match);
   return match;
+}
+
+export async function deleteMatchFromFirebase(matchId) {
+  await remove(ref(db, `matches/${matchId}`));
 }

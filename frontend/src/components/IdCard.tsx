@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -55,6 +55,7 @@ const fragmentShader = `
 
 export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogout }) => {
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
+  const [copied, setCopied] = useState(false);
 
   // Animate the shader's time uniform
   useFrame(({ clock }) => {
@@ -136,7 +137,8 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
                       onClick={() => {
                         const addr = wallets[0].address;
                         navigator.clipboard.writeText(addr);
-                        alert("Address copied!");
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
                       }}
                       style={{ 
                         cursor: "pointer", 
@@ -151,11 +153,18 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
                         border: "1px solid rgba(255, 255, 255, 0.2)"
                       }}
                     >
-                      <span>{wallets[0].address.slice(0, 6)}...{wallets[0].address.slice(-4)}</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                      </svg>
+                      <span>
+                        {copied 
+                          ? "Copied!" 
+                          : `${wallets[0].address.slice(0, 6)}...${wallets[0].address.slice(-4)}`
+                        }
+                      </span>
+                      {!copied && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        </svg>
+                      )}
                     </div>
                   ) : (
                     <div style={{ fontSize: "10px", opacity: 0.6 }}>No Wallet</div>
