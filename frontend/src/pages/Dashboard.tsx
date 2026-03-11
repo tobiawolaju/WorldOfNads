@@ -118,12 +118,14 @@ export default function Dashboard() {
     loadMatches();
   }, []);
 
-  useEffect(() => {
-    const candidate = matches.find((match) => match.status === filter) || matches[0];
-    if (candidate) {
-      setSelectedMatch(candidate.matchId);
-    }
-  }, [filter, matches]);
+  // No longer auto-selecting the first match on filter change to allow for a clean "refresh" state
+  // as requested by the user. Selection will happen via carousel scrolling or clicking.
+  // useEffect(() => {
+  //   const candidate = matches.find((match) => match.status === filter) || matches[0];
+  //   if (candidate) {
+  //     setSelectedMatch(candidate.matchId);
+  //   }
+  // }, [filter, matches]);
 
   useEffect(() => {
     if (!selectedMatch) return;
@@ -169,17 +171,17 @@ export default function Dashboard() {
   const twitterAcc = user.linkedAccounts?.find((acc) => acc.type === "twitter_oauth");
   const twitterData: Twitter | undefined = twitterAcc
     ? {
-        username: twitterAcc.username ?? undefined,
-        profilePictureUrl: twitterAcc.profilePictureUrl ?? undefined,
-        name: twitterAcc.name || twitterAcc.username || undefined
-      }
+      username: twitterAcc.username ?? undefined,
+      profilePictureUrl: twitterAcc.profilePictureUrl ?? undefined,
+      name: twitterAcc.name || twitterAcc.username || undefined
+    }
     : undefined;
 
   // Filter for ONLY the Ethereum wallet (Monad)
   const wallets = (user.linkedAccounts?.filter(
     (acc) => acc.type === "wallet" && acc.chainType === "ethereum"
   ) || []) as Wallet[];
-  
+
   const filteredMatches = matches.filter((match) => match.status === filter);
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
   const isLive = selectedMatchData?.status === "live";
@@ -241,13 +243,31 @@ export default function Dashboard() {
         </div>
 
         <div className="filters">
-          <span className={filter === "upcoming" ? "filter active" : "filter"} onClick={() => setFilter("upcoming")}>
+          <span
+            className={filter === "upcoming" ? "filter active" : "filter"}
+            onClick={() => {
+              setFilter("upcoming");
+              setSelectedMatch(null);
+            }}
+          >
             Upcoming
           </span>
-          <span className={filter === "live" ? "filter active" : "filter"} onClick={() => setFilter("live")}>
+          <span
+            className={filter === "live" ? "filter active" : "filter"}
+            onClick={() => {
+              setFilter("live");
+              setSelectedMatch(null);
+            }}
+          >
             Live
           </span>
-          <span className={filter === "completed" ? "filter active" : "filter"} onClick={() => setFilter("completed")}>
+          <span
+            className={filter === "completed" ? "filter active" : "filter"}
+            onClick={() => {
+              setFilter("completed");
+              setSelectedMatch(null);
+            }}
+          >
             Completed
           </span>
         </div>
