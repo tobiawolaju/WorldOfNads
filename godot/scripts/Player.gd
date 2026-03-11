@@ -109,7 +109,7 @@ func _input(event: InputEvent) -> void:
 			camera_distance = clamp(camera_distance + 0.5, min_zoom, max_zoom)
 
 	# --- 2. PICKUP CONTROLS ---
-	if event.is_action_pressed("pickup"):
+	if _is_movement_allowed() and event.is_action_pressed("pickup"):
 		if _is_local_holding_chicken():
 			_drop_object()
 		else:
@@ -120,24 +120,27 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var input_dir := Vector2.ZERO
+	var movement_allowed := _is_movement_allowed()
 
-	if Input.is_action_pressed("move_forward"): input_dir.y += 1
-	if Input.is_action_pressed("move_back"): input_dir.y -= 1
-	if Input.is_action_pressed("move_left"): input_dir.x -= 1
-	if Input.is_action_pressed("move_right"): input_dir.x += 1
+	if movement_allowed:
+		if Input.is_action_pressed("move_forward"): input_dir.y += 1
+		if Input.is_action_pressed("move_back"): input_dir.y -= 1
+		if Input.is_action_pressed("move_left"): input_dir.x -= 1
+		if Input.is_action_pressed("move_right"): input_dir.x += 1
 
 	var lx := Input.get_joy_axis(gamepad_index, JOY_AXIS_LEFT_X)
 	var ly := Input.get_joy_axis(gamepad_index, JOY_AXIS_LEFT_Y)
 
-	if abs(lx) > DEADZONE: input_dir.x += lx
-	if abs(ly) > DEADZONE: input_dir.y -= ly
+	if movement_allowed:
+		if abs(lx) > DEADZONE: input_dir.x += lx
+		if abs(ly) > DEADZONE: input_dir.y -= ly
 	input_dir = input_dir.normalized()
 
 	if not is_on_floor():
 		velocity_y -= GRAVITY * delta
 	else:
 		velocity_y = 0
-		if Input.is_action_just_pressed("jump") or Input.is_joy_button_pressed(gamepad_index, JOY_BUTTON_A):
+		if movement_allowed and (Input.is_action_just_pressed("jump") or Input.is_joy_button_pressed(gamepad_index, JOY_BUTTON_A)):
 			velocity_y = JUMP_VELOCITY
 
 	# Movement direction relative to Camera
@@ -298,12 +301,21 @@ func set_animation_state(new_state: String):
 
 func _handle_animations(move_dir: Vector3) -> void:
 	if not is_local: return
+	if not _is_movement_allowed():
+		current_animation = "idle"
+		_play_idle()
+		return
 	if move_dir.length() > 0.1:
 		current_animation = "running"
 		_play_running()
 	else:
 		current_animation = "idle"
 		_play_idle()
+
+func _is_movement_allowed() -> bool:
+	if root and root.has_method("is_match_running"):
+		return root.is_match_running()
+	return true
 
 func _play_running() -> void:
 	if anim_idle.is_playing():

@@ -2,6 +2,7 @@ extends Node
 
 @export var world: WorldEnvironment
 @export var countdown: Label
+@export var waiting_for_players: bool = false
 
 # Countdown in seconds
 var time_left: float = 120.0
@@ -17,6 +18,10 @@ func _ready():
 		world.environment = world.environment.duplicate()
 
 func _process(delta):
+	if waiting_for_players:
+		if countdown:
+			countdown.text = "Waiting for players"
+		return
 	if time_left > 0:
 		time_left -= delta
 		if time_left < 0:
@@ -37,3 +42,8 @@ func _process(delta):
 			
 			# Update Volumetric Fog Color (just in case you are using this instead)
 			world.environment.volumetric_fog_albedo = current_color
+
+func set_waiting_for_players(is_waiting: bool) -> void:
+	waiting_for_players = is_waiting
+	if waiting_for_players and countdown:
+		countdown.text = "Waiting for players"

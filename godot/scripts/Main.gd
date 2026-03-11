@@ -340,6 +340,12 @@ func _update_match_state(match_state: Dictionary) -> void:
 	match_is_running = bool(match_state.get("isRunning", false))
 	_update_match_ui()
 
+func is_match_running() -> bool:
+	return match_is_running
+
+func is_waiting_for_players() -> bool:
+	return not match_is_running
+
 func _update_match_ui() -> void:
 	_resolve_ui_nodes()
 	if countdown_label != null:
