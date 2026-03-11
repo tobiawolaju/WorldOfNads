@@ -42,6 +42,44 @@ type Match = {
   startTime?: number; // Unix timestamp in seconds
 };
 
+type RewardItem = {
+  id: string;
+  username: string;
+  amount: string;
+  source: string;
+  category: "earned" | "gifted";
+  date: string;
+};
+
+type StoreItem = {
+  id: string;
+  name: string;
+  price: string;
+  image: string;
+  category: "skins" | "emotes" | "bundles";
+  description: string;
+};
+
+const dummyRewards: RewardItem[] = [
+  { id: "r1", username: "Tobia", amount: "9.4 MON", source: "WorldOfNads Match #114", category: "earned", date: "2026-03-10" },
+  { id: "r2", username: "Alex", amount: "5.0 MON", source: "Community Event", category: "gifted", date: "2026-03-09" },
+  { id: "r3", username: "Tobia", amount: "12.2 MON", source: "Sponsor Cup Final", category: "earned", date: "2026-03-08" },
+  { id: "r4", username: "Sarah", amount: "2.5 MON", source: "Loyalty Airdrop", category: "gifted", date: "2026-03-07" },
+  { id: "r5", username: "Mike", amount: "1.1 MON", source: "Weekly Challenge", category: "earned", date: "2026-03-11" },
+  { id: "r6", username: "NadBot", amount: "100.0 MON", source: "Grand Opening Gift", category: "gifted", date: "2026-03-11" },
+];
+
+const dummyStore: StoreItem[] = [
+  { id: "s1", name: "Gladiator Skin", price: "20 MON", image: "/logo.jpg", category: "skins", description: "Battle-hardened armor for your character." },
+  { id: "s2", name: "Heart Wave", price: "5 MON", image: "/logo.jpg", category: "emotes", description: "Spread the love in the arena." },
+  { id: "s3", name: "Starter Bundle", price: "45 MON", image: "/logo.jpg", category: "bundles", description: "Everything a new Nad needs to survive." },
+  { id: "s4", name: "Ninja Skin", price: "35 MON", image: "/logo.jpg", category: "skins", description: "Move like a shadow, strike like lightning." },
+  { id: "s5", name: "Chicken Dance", price: "8 MON", image: "/logo.jpg", category: "emotes", description: "A classic victory taunt." },
+  { id: "s6", name: "Elite Bundle", price: "150 MON", image: "/logo.jpg", category: "bundles", description: "Full set of elite gear and exclusive emotes." },
+  { id: "s7", name: "Cyberpunk Skin", price: "60 MON", image: "/logo.jpg", category: "skins", description: "Neon-soaked aesthetic for the modern warrior." },
+  { id: "s8", name: "Llama Dance", price: "12 MON", image: "/logo.jpg", category: "emotes", description: "Celebrate with some llama energy." },
+];
+
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
   const navigate = useNavigate();
@@ -49,8 +87,14 @@ export default function Dashboard() {
   const [earned, setEarned] = useState<number>(0);
   const [monBalance, setMonBalance] = useState<string>("0");
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
+  const [selectedReward, setSelectedReward] = useState<string | null>(null);
+  const [selectedStore, setSelectedStore] = useState<string | null>(null);
+
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
+  const [rewardFilter, setRewardFilter] = useState<"earned" | "gifted">("earned");
+  const [storeFilter, setStoreFilter] = useState<"skins" | "emotes" | "bundles">("skins");
+
   const [matches, setMatches] = useState<Match[]>(staticMatches as Match[]);
   const [playButtonState, setPlayButtonState] = useState<"idle" | "counting">("idle");
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -129,12 +173,12 @@ export default function Dashboard() {
   // }, [filter, matches]);
 
   useEffect(() => {
-    if (!selectedMatch) return;
+    if (!selectedMatch && !selectedReward && !selectedStore) return;
     window.scrollTo({
       top: document.body.scrollHeight,
       behavior: "smooth"
     });
-  }, [selectedMatch]);
+  }, [selectedMatch, selectedReward, selectedStore]);
 
   const handlePlayClick = async () => {
     if (!selectedMatch || !user) return;
@@ -241,84 +285,120 @@ export default function Dashboard() {
 
       <div className="right-info-section">
         <div className="tabs">
-          <div className={tab === "events" ? "tab active" : "tab"} onClick={() => setTab("events")}>
+          <div className={tab === "events" ? "tab active" : "tab"} onClick={() => { setTab("events"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
             Events
           </div>
-          <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => setTab("rewards")}>
+          <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
             Rewards
           </div>
-          <div className={tab === "store" ? "tab active" : "tab"} onClick={() => setTab("store")}>
+          <div className={tab === "store" ? "tab active" : "tab"} onClick={() => { setTab("store"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
             Store
           </div>
         </div>
 
         <div className="filters">
-          <span
-            className={filter === "upcoming" ? "filter active" : "filter"}
-            onClick={() => {
-              setFilter("upcoming");
-              setSelectedMatch(null);
-            }}
-          >
-            Upcoming
-          </span>
-          <span
-            className={filter === "live" ? "filter active" : "filter"}
-            onClick={() => {
-              setFilter("live");
-              setSelectedMatch(null);
-            }}
-          >
-            Live
-          </span>
-          <span
-            className={filter === "completed" ? "filter active" : "filter"}
-            onClick={() => {
-              setFilter("completed");
-              setSelectedMatch(null);
-            }}
-          >
-            Completed
-          </span>
+          {tab === "events" && (
+            <>
+              <span className={filter === "upcoming" ? "filter active" : "filter"} onClick={() => { setFilter("upcoming"); setSelectedMatch(null); }}>Upcoming</span>
+              <span className={filter === "live" ? "filter active" : "filter"} onClick={() => { setFilter("live"); setSelectedMatch(null); }}>Live</span>
+              <span className={filter === "completed" ? "filter active" : "filter"} onClick={() => { setFilter("completed"); setSelectedMatch(null); }}>Completed</span>
+            </>
+          )}
+
+          {tab === "rewards" && (
+            <>
+              <span className={rewardFilter === "earned" ? "filter active" : "filter"} onClick={() => { setRewardFilter("earned"); setSelectedReward(null); }}>Earned</span>
+              <span className={rewardFilter === "gifted" ? "filter active" : "filter"} onClick={() => { setRewardFilter("gifted"); setSelectedReward(null); }}>Gifted</span>
+            </>
+          )}
+
+          {tab === "store" && (
+            <>
+              <span className={storeFilter === "skins" ? "filter active" : "filter"} onClick={() => { setStoreFilter("skins"); setSelectedStore(null); }}>Skins</span>
+              <span className={storeFilter === "emotes" ? "filter active" : "filter"} onClick={() => { setStoreFilter("emotes"); setSelectedStore(null); }}>Emotes</span>
+              <span className={storeFilter === "bundles" ? "filter active" : "filter"} onClick={() => { setStoreFilter("bundles"); setSelectedStore(null); }}>Bundles</span>
+            </>
+          )}
         </div>
 
         <div className="matches-wrapper">
-          <div className="matches-carousel" ref={carouselRef}>
-            {filteredMatches.map((match) => (
-              <div
-                key={match.matchId}
-                data-id={match.matchId}
-                className={`match-card ${selectedMatch === match.matchId ? "selected" : ""} ${match.status !== "live" ? "grayscale-card" : ""}`}
-                style={{ backgroundImage: `url(${match.image})` }}
-                onClick={(event) => {
-                  const card = event.currentTarget;
-                  const carousel = carouselRef.current;
-                  if (!carousel) return;
-                  const target = card.offsetLeft - carousel.offsetWidth / 2 + card.offsetWidth / 2;
-                  carousel.scrollTo({ left: target, behavior: "smooth" });
-                  isManuallyScrolling.current = true;
-                  setSelectedMatch(match.matchId);
-                  setTimeout(() => {
-                    isManuallyScrolling.current = false;
-                  }, 600);
-                }}
-              >
-                <div className="match-card-overlay">
-                  <h3 className="match-sponsor">{match.sponsor}</h3>
-                  <p className="match-reward">{match.prize}</p>
-                  <p className="match-time">
-                    {match.status === "upcoming" && match.startTime
-                      ? `${formatLocalTime(match.startTime)} (Local)`
-                      : match.time}
-                  </p>
+          {tab === "events" && (
+            <div className="matches-carousel" ref={carouselRef}>
+              {filteredMatches.map((match) => (
+                <div
+                  key={match.matchId}
+                  data-id={match.matchId}
+                  className={`match-card ${selectedMatch === match.matchId ? "selected" : ""} ${match.status !== "live" ? "grayscale-card" : ""}`}
+                  style={{ backgroundImage: `url(${match.image})` }}
+                  onClick={(event) => {
+                    const card = event.currentTarget;
+                    const carousel = carouselRef.current;
+                    if (!carousel) return;
+                    const target = card.offsetLeft - carousel.offsetWidth / 2 + card.offsetWidth / 2;
+                    carousel.scrollTo({ left: target, behavior: "smooth" });
+                    isManuallyScrolling.current = true;
+                    setSelectedMatch(match.matchId);
+                    setTimeout(() => {
+                      isManuallyScrolling.current = false;
+                    }, 600);
+                  }}
+                >
+                  <div className="match-card-overlay">
+                    <h3 className="match-sponsor">{match.sponsor}</h3>
+                    <p className="match-reward">{match.prize}</p>
+                    <p className="match-time">
+                      {match.status === "upcoming" && match.startTime
+                        ? `${formatLocalTime(match.startTime)} (Local)`
+                        : match.time}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {tab === "rewards" && (
+            <div className="reward-list">
+              {dummyRewards
+                .filter((r) => r.category === rewardFilter)
+                .map((reward) => (
+                  <div
+                    key={reward.id}
+                    className={`reward-item ${selectedReward === reward.id ? "selected" : ""}`}
+                    onClick={() => setSelectedReward(reward.id)}
+                  >
+                    <div className="reward-item-icon">🏆</div>
+                    <div className="reward-item-text">
+                      <strong>{reward.username}</strong> won <span>{reward.amount}</span> from {reward.source}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {tab === "store" && (
+            <div className="store-grid">
+              {dummyStore
+                .filter((s) => s.category === storeFilter)
+                .map((item) => (
+                  <div
+                    key={item.id}
+                    className={`store-card ${selectedStore === item.id ? "selected" : ""}`}
+                    onClick={() => setSelectedStore(item.id)}
+                  >
+                    <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}></div>
+                    <div className="store-card-info">
+                      <h3>{item.name}</h3>
+                      <p>{item.price}</p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
 
         <div className="match-details">
-          {selectedMatchData ? (
+          {tab === "events" && selectedMatchData && (
             <div className="match-details-box">
               <h2 className="match-details-title">{selectedMatchData.sponsor}</h2>
               <p className="match-details-description">{selectedMatchData.description}</p>
@@ -335,9 +415,57 @@ export default function Dashboard() {
                 Visit Sponsor -{'>'}
               </a>
             </div>
-          ) : (
+          )}
+
+          {tab === "rewards" && selectedReward && (
+            <div className="match-details-box">
+              {(() => {
+                const r = dummyRewards.find((x) => x.id === selectedReward);
+                if (!r) return null;
+                return (
+                  <>
+                    <h2 className="match-details-title">Reward Detail</h2>
+                    <p className="match-details-description">
+                      Username: {r.username}
+                      <br />
+                      Reward: {r.amount}
+                      <br />
+                      Source: {r.source}
+                      <br />
+                      Type: {r.category}
+                      <br />
+                      Date: {r.date}
+                    </p>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
+          {tab === "store" && selectedStore && (
+            <div className="match-details-box">
+              {(() => {
+                const s = dummyStore.find((x) => x.id === selectedStore);
+                if (!s) return null;
+                return (
+                  <>
+                    <h2 className="match-details-title">{s.name}</h2>
+                    <p className="match-details-description">{s.description}</p>
+                    <p className="match-details-description">
+                      Price: {s.price}
+                      <br />
+                      Category: {s.category}
+                    </p>
+                    <button className="sponsor-dashboard__cta" style={{ width: '100%', marginTop: '10px' }}>Buy Now</button>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
+          {((tab === "events" && !selectedMatchData) || (tab === "rewards" && !selectedReward) || (tab === "store" && !selectedStore)) && (
             <div className="match-details-empty">
-              <p>Select a match to view details</p>
+              <p>Select an item to view details</p>
             </div>
           )}
         </div>
