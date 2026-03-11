@@ -7,6 +7,7 @@ const BOT_MOVE_SPEED = Number(process.env.BOT_MOVE_SPEED || 5.0);
 const PICKUP_RADIUS = Number(process.env.BOT_PICKUP_RADIUS || 2.0);
 const BOT_PERSONAL_SPACE = Number(process.env.BOT_PERSONAL_SPACE || 1.1);
 const BOT_SEPARATION_WEIGHT = Number(process.env.BOT_SEPARATION_WEIGHT || 1.6);
+const CAN_PICK = false;
 const RECONNECT_MS = 1200;
 const TICK_MS = 50;
 const HOLD_DISTANCE = 0.9;
@@ -173,7 +174,7 @@ class BotClient {
 
     this.ws.send(JSON.stringify(statePayload));
 
-    if (!isHeld) {
+    if (CAN_PICK && !isHeld) {
       const dist3D = Math.hypot(
         cx - this.position.x,
         cy - this.position.y,
