@@ -85,6 +85,9 @@ size_flags_vertical = 4
 
 [node name="Countdown" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer" unique_id=97871540]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.3019608)
+theme_override_constants/outline_size = 0
+theme_override_constants/shadow_outline_size = 10
 theme_override_fonts/font = ExtResource("2_ikted")
 theme_override_font_sizes/font_size = 60
 text = "..........."
