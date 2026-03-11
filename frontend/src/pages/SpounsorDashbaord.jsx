@@ -264,7 +264,7 @@ export default function SpounsorDashbaord() {
                 <input name="date" type="date" value={form.date} onChange={handleChange} />
               </label>
               <label>
-                Match Time
+                Match Time (24h Format)
                 <input name="time" type="time" value={form.time} onChange={handleChange} />
               </label>
               <label>

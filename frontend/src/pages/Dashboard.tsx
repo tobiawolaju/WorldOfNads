@@ -39,6 +39,7 @@ type Match = {
   createdAt?: string;
   createdByWallet?: string;
   depositTxHash?: string;
+  startTime?: number; // Unix timestamp in seconds
 };
 
 export default function Dashboard() {
@@ -163,6 +164,15 @@ export default function Dashboard() {
       if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
       setPlayButtonState("idle");
     }
+  };
+
+  const formatLocalTime = (timestamp: number | undefined) => {
+    if (!timestamp) return "";
+    return new Intl.DateTimeFormat("default", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }).format(new Date(timestamp * 1000));
   };
 
   if (!ready) return <FullScreenLoader />;
@@ -296,7 +306,11 @@ export default function Dashboard() {
                 <div className="match-card-overlay">
                   <h3 className="match-sponsor">{match.sponsor}</h3>
                   <p className="match-reward">{match.prize}</p>
-                  <p className="match-time">{match.time}</p>
+                  <p className="match-time">
+                    {match.status === "upcoming" && match.startTime
+                      ? `${formatLocalTime(match.startTime)} (Local)`
+                      : match.time}
+                  </p>
                 </div>
               </div>
             ))}
@@ -314,6 +328,8 @@ export default function Dashboard() {
                 Prize Deposited: {selectedMatchData.prize}
                 <br />
                 Match Date: {selectedMatchData.date}
+                <br />
+                Start Time: {selectedMatchData.startTime ? `${formatLocalTime(selectedMatchData.startTime)} (24h Local)` : selectedMatchData.time}
               </p>
               <a href={selectedMatchData.url} target="_blank" rel="noopener noreferrer" className="match-details-twitter">
                 Visit Sponsor -{'>'}
