@@ -61,19 +61,21 @@ export default function SpounsorDashbaord() {
   }, [wallets, walletsReady, walletAddress]);
 
   useEffect(() => {
-    if (!authenticated) return;
+    if (!authenticated || !walletAddress) return;
 
     const hydrateMatches = async () => {
       try {
         const records = await fetchMatchesFromFirebase();
-        setMatches(records);
+        // Only show matches created by this wallet
+        const myMatches = records.filter(m => m.createdByWallet === walletAddress);
+        setMatches(myMatches);
       } catch (error) {
         console.error("Failed to load sponsor matches", error);
       }
     };
 
     hydrateMatches();
-  }, [authenticated]);
+  }, [authenticated, walletAddress]);
 
   useEffect(() => {
     if (!user) return;
