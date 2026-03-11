@@ -21,6 +21,7 @@
 </div>
 ---
 
+
 ## 🎮 What the Game Is
 
 - 20-player competitive arena
@@ -180,3 +181,12 @@ Players don’t need to “understand crypto” to play.
 
 
 ---
+
+## 🧾 Audit & Docs
+
+- A lightweight, pre-release audit has been performed; see `audit/README.md` for:
+  - Quick audit notes and manual gameplay checks
+  - Known limitations and next steps
+  - Contract addresses and settlement logic
+- This is **not a professional audit**; critical issues are tracked in `audit/security_issues.md` with status updates.
+- We continue to patch and harden the system, but the current live demo is fully playable and supports on-chain prize settlement.
