@@ -36,10 +36,13 @@ export async function findActiveMatch() {
     const matches = snapshot.val();
     const now = Math.floor(Date.now() / 1000);
 
-    // Find a match that is "upcoming" or "live" and whose startTime has passed (or is close)
     const activeMatch = Object.values(matches)
         .filter(m => (m.status === "upcoming" || m.status === "live") && m.startTime <= now + 600) // 10 min buffer
         .sort((a, b) => a.startTime - b.startTime)[0];
+
+    if (activeMatch) {
+        console.log(`[Firebase] Found candidate match for payout: ${activeMatch.matchId} (Status: ${activeMatch.status})`);
+    }
 
     return activeMatch || null;
 }

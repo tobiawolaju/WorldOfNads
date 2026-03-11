@@ -408,6 +408,7 @@ const statusWorkerInterval = setInterval(async () => {
     const matches = await getAllMatches();
     const now = Math.floor(Date.now() / 1000);
     const fiveMinutes = 300;
+    const matchBuffer = 60; // Extra minute after duration
 
     for (const match of Object.values(matches)) {
       const { matchId, status, startTime } = match;
@@ -415,21 +416,21 @@ const statusWorkerInterval = setInterval(async () => {
 
       // 1. Upcoming -> Live (5 minutes before startTime)
       if (status === "upcoming" && now >= startTime - fiveMinutes) {
-        console.log(`[Worker] Match ${matchId} is now LIVE.`);
+        console.log(`[Worker] [${new Date().toISOString()}] Match ${matchId} (Starts: ${new Date(startTime * 1000).toISOString()}) is now LIVE.`);
         await updateMatchStatus(matchId, "live");
       }
 
-      // 2. Live -> Completed (5 minutes after startTime)
-      // Note: If match is settled, don't touch it.
-      if (status === "live" && now >= startTime + fiveMinutes) {
-        console.log(`[Worker] Match ${matchId} is now COMPLETED.`);
+      // 2. Live -> Completed (Duration + buffer after startTime)
+      // Duration is 180s, so we wait 180s + 60s buffer = 240s
+      if (status === "live" && now >= startTime + MATCH_DURATION_SECONDS + matchBuffer) {
+        console.log(`[Worker] [${new Date().toISOString()}] Match ${matchId} (Started: ${new Date(startTime * 1000).toISOString()}) is now COMPLETED.`);
         await updateMatchStatus(matchId, "completed");
       }
     }
   } catch (error) {
     console.error("[Worker] Error updating match statuses:", error);
   }
-}, 60000); // Run every 60 seconds
+}, 30000); // Run every 30 seconds for better precision
 
 setInterval(() => {
   if (matchRunning) {
