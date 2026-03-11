@@ -67,3 +67,14 @@ export async function updateMatchStatus(matchId, status) {
     const matchRef = ref(db, `matches/${matchId}`);
     await update(matchRef, { status });
 }
+
+export async function saveReward(rewardData) {
+    const rewardId = `reward-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const rewardRef = ref(db, `rewards/${rewardId}`);
+    await update(rewardRef, {
+        ...rewardData,
+        id: rewardId,
+        createdAt: new Date().toISOString()
+    });
+    console.log(`[Firebase] Reward saved for ${rewardData.username}: ${rewardData.amount}`);
+}

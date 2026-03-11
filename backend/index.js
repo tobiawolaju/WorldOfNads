@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
-import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus } from './firebaseClient.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward } from './firebaseClient.js';
 import { settleMatchOnchain } from './contractClient.js';
 
 const PORT = process.env.PORT || 8080;
@@ -478,6 +478,17 @@ setInterval(() => {
               if (result.success) {
                 await markMatchSettled(activeMatch.matchId, result.txHash);
                 console.log(`[Payout] Payout successful for ${activeMatch.matchId}. TX: ${result.txHash}`);
+
+                // Save reward record to Firebase
+                await saveReward({
+                  username: winnerInfo.winnerName,
+                  wallet: winnerWallet,
+                  amount: activeMatch.prize,
+                  matchId: activeMatch.matchId,
+                  source: activeMatch.sponsor,
+                  category: "earned",
+                  txHash: result.txHash
+                });
               } else {
                 console.error(`[Payout] On-chain settlement failed: ${result.error}`);
               }

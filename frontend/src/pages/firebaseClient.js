@@ -129,3 +129,15 @@ export async function saveMatchToFirebase(matchInput) {
 export async function deleteMatchFromFirebase(matchId) {
   await remove(ref(db, `matches/${matchId}`));
 }
+
+export async function fetchUserRewards(username) {
+  if (!username) return [];
+  const snapshot = await get(ref(db, "rewards"));
+  if (!snapshot.exists()) return [];
+
+  const data = snapshot.val();
+  // Filter rewards where username matches
+  return Object.values(data)
+    .filter(r => r.username === username)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}

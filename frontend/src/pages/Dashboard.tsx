@@ -9,7 +9,8 @@ import {
   fetchMatchesFromFirebase,
   getUsernameFromPrivy,
   saveUserToFirebase,
-  updateUserProjects
+  updateUserProjects,
+  fetchUserRewards
 } from "./firebaseClient";
 import { staticMatches } from "./staticMatches.js";
 
@@ -96,6 +97,7 @@ export default function Dashboard() {
   const [storeFilter, setStoreFilter] = useState<"skins" | "emotes" | "bundles">("skins");
 
   const [matches, setMatches] = useState<Match[]>(staticMatches as Match[]);
+  const [rewards, setRewards] = useState<RewardItem[]>([]);
   const [playButtonState, setPlayButtonState] = useState<"idle" | "counting">("idle");
   const [elapsedTime, setElapsedTime] = useState(0);
 
@@ -162,6 +164,21 @@ export default function Dashboard() {
 
     loadMatches();
   }, []);
+
+  useEffect(() => {
+    const loadRewards = async () => {
+      if (!authenticated || !user) return;
+      try {
+        const username = getUsernameFromPrivy(user);
+        const liveRewards = await fetchUserRewards(username);
+        setRewards(liveRewards as RewardItem[]);
+      } catch (error) {
+        console.error("Failed to fetch rewards", error);
+      }
+    };
+
+    loadRewards();
+  }, [authenticated, user]);
 
   // No longer auto-selecting the first match on filter change to allow for a clean "refresh" state
   // as requested by the user. Selection will happen via carousel scrolling or clicking.
@@ -359,7 +376,7 @@ export default function Dashboard() {
 
           {tab === "rewards" && (
             <div className="reward-list">
-              {dummyRewards
+              {(rewards.length > 0 ? rewards : dummyRewards)
                 .filter((r) => r.category === rewardFilter)
                 .map((reward) => (
                   <div
@@ -420,7 +437,7 @@ export default function Dashboard() {
           {tab === "rewards" && selectedReward && (
             <div className="match-details-box">
               {(() => {
-                const r = dummyRewards.find((x) => x.id === selectedReward);
+                const r = [...rewards, ...dummyRewards].find((x) => x.id === selectedReward);
                 if (!r) return null;
                 return (
                   <>
