@@ -58,6 +58,7 @@ func _input(event):
 				touch_joystick.visible = true
 				_check_double_tap(event.position)
 				_update_visuals()
+				get_viewport().set_input_as_handled()
 			# --- Camera touch ---
 			elif _is_camera_area(event.position, viewport_size) and active_camera_index == -1:
 				active_camera_index = event.index
@@ -72,6 +73,7 @@ func _input(event):
 				touch_joystick.visible = false
 				touchInsideJoystick = false
 				active_joystick_index = -1
+				get_viewport().set_input_as_handled()
 			elif event.index == active_camera_index:
 				active_camera_index = -1
 
@@ -85,6 +87,7 @@ func _input(event):
 			touch_joystick.visible = true
 			_update_input_from_joystick(position)
 			_update_visuals()
+			get_viewport().set_input_as_handled()
 		elif event.index == active_camera_index:
 			emit_signal("camera_dragged", event.relative)
 
