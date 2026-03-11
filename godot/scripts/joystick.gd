@@ -47,6 +47,8 @@ func _input(event):
 
 	if event is InputEventScreenTouch:
 		if event.pressed:
+			if event.index == active_joystick_index or event.index == active_camera_index:
+				return
 			# --- Joystick touch ---
 			if _is_joystick_area(event.position, viewport_size) and active_joystick_index == -1:
 				active_joystick_index = event.index
@@ -75,9 +77,10 @@ func _input(event):
 
 	elif event is InputEventScreenDrag:
 		if event.index == active_joystick_index:
-			position += event.relative
-			if position.length() > maxRadius:
-				position = position.normalized() * maxRadius
+			var local_pos = event.position - touch_joystick.global_position
+			if local_pos.length() > maxRadius:
+				local_pos = local_pos.normalized() * maxRadius
+			position = local_pos
 			emit_signal("joystick_moved", position)
 			touch_joystick.visible = true
 			_update_input_from_joystick(position)

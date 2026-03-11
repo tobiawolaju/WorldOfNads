@@ -16,3 +16,8 @@ func _on_pressed():
 	ev.action = "pickup"
 	ev.pressed = true
 	Input.parse_input_event(ev)
+
+func _input(event):
+	if event is InputEventScreenTouch and event.pressed:
+		if get_global_rect().has_point(event.position):
+			_on_pressed()
