@@ -11,7 +11,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 const Home: React.FC = () => {
-  const { login, authenticated } = usePrivy();
+  const { login, authenticated, ready } = usePrivy();
   const navigate = useNavigate();
 
   // Refs for GSAP animations
@@ -135,6 +135,7 @@ const Home: React.FC = () => {
   };
 
   const handlePlay = (): void => {
+    if (!ready) return;
     if (authenticated) {
       navigate("/dashboard");
     } else {
@@ -246,6 +247,7 @@ const Home: React.FC = () => {
           <button
             ref={playBtnRef}
             onClick={handlePlay}
+            disabled={!ready}
             style={playBtn}
             className="play-btn sparkle-btn"
             title="Play"

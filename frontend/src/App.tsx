@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 
 // Layout Components
@@ -24,14 +24,7 @@ import SpounsorDashbaord from "./pages/SpounsorDashbaord";
 const AppContent: React.FC = () => {
   const { ready, authenticated } = usePrivy();
   const location = useLocation();
-  const navigate = useNavigate();
 
-  // Redirect to dashboard after login if on home page
-  useEffect(() => {
-    if (ready && authenticated && location.pathname === "/") {
-      navigate("/dashboard");
-    }
-  }, [ready, authenticated, location.pathname, navigate]);
 
   if (!ready) {
     return <FullScreenLoader />;
@@ -50,7 +43,7 @@ const AppContent: React.FC = () => {
         <main style={{ flex: 1 }}>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={authenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
             <Route path="/crew" element={<Crew />} />
             <Route path="/pre-tge-arena" element={<PreTGEArena />} />
             <Route path="/roadmap" element={<Roadmap />} />
