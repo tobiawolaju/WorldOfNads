@@ -488,17 +488,19 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <button
-        className={`play-fixed ${isLive ? "active" : "disabled"} ${playButtonState === "counting" ? "counting" : ""}`}
-        onClick={isLive ? handlePlayClick : undefined}
-        disabled={!isLive}
-        style={{
-          opacity: isLive ? 1 : 0.5,
-          pointerEvents: isLive ? "auto" : "none"
-        }}
-      >
-        {playButtonState === "counting" ? <span>{elapsedTime.toFixed(1)}s Cancel</span> : <span>PLAY</span>}
-      </button>
+      {tab === "events" && (
+        <button
+          className={`play-fixed ${isLive ? "active" : "disabled"} ${playButtonState === "counting" ? "counting" : ""}`}
+          onClick={isLive ? handlePlayClick : undefined}
+          disabled={!isLive}
+          style={{
+            opacity: isLive ? 1 : 0.5,
+            pointerEvents: isLive ? "auto" : "none"
+          }}
+        >
+          {playButtonState === "counting" ? <span>{elapsedTime.toFixed(1)}s Cancel</span> : <span>PLAY</span>}
+        </button>
+      )}
     </div>
   );
 }
