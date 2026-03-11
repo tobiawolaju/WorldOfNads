@@ -43,6 +43,7 @@ var velocity_y: float = 0.0
 var cam_rot_x: float = deg_to_rad(30)
 var cam_rot_y: float = 0.0
 var current_animation: String = "idle"
+var ignored_touch_indices := {}
 
 var player_id: String = "" :
 	set(new_id):
@@ -80,16 +81,18 @@ func _input(event: InputEvent) -> void:
 	# --- 1. MOUSE & TOUCH CAMERA CONTROLS ---
 	var viewport = get_viewport().get_visible_rect()
 	var size = viewport.size
-	var portrait = size.y > size.x
 
 	# Avoid moving camera if touching the virtual joystick area
-	if event is InputEventScreenTouch or event is InputEventScreenDrag:
-		if portrait:
-			if event.position.y > size.y * 0.5:
-				return
-		else:
-			if event.position.x < size.x * 0.5:
-				return
+	if event is InputEventScreenTouch:
+		if event.pressed and _is_touch_on_joystick_area(event.position, size):
+			ignored_touch_indices[event.index] = true
+			return
+		elif not event.pressed and ignored_touch_indices.has(event.index):
+			ignored_touch_indices.erase(event.index)
+			return
+
+	if event is InputEventScreenDrag and ignored_touch_indices.has(event.index):
+		return
 
 	# Touch Drag
 	if event is InputEventScreenDrag:
@@ -328,3 +331,7 @@ func _play_idle() -> void:
 		anim_run.stop()
 	if not anim_idle.is_playing():
 		anim_idle.play("idle")
+
+func _is_touch_on_joystick_area(pos: Vector2, size: Vector2) -> bool:
+	# Match joystick.gd bottom-left quadrant
+	return pos.x <= size.x * 0.5 and pos.y >= size.y * 0.5
