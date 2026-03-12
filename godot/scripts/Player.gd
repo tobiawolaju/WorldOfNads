@@ -128,11 +128,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventScreenDrag:
+		if _is_touch_on_joystick_area(event.position, size):
+			return
 		if ignored_touch_indices.has(event.index):
 			return
 		if touch_joystick and touch_joystick.call("claims_touch", event.index):
 			return
-		if event.index != active_camera_index:
+		if active_camera_index == -1:
+			active_camera_index = event.index
+		elif event.index != active_camera_index:
 			return
 		cam_rot_y -= event.relative.x * 0.0045
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.0045, min_pitch, max_pitch)
