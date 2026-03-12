@@ -44,6 +44,7 @@ var cam_rot_x: float = deg_to_rad(30)
 var cam_rot_y: float = 0.0
 var current_animation: String = "idle"
 var ignored_touch_indices := {}
+var active_camera_index := -1
 var touch_joystick: Node = null
 
 var player_id: String = "" :
@@ -59,7 +60,7 @@ var display_name: String = "" :
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
 	_play_idle()
-	touch_joystick = get_tree().get_first_node_in_group("touch_joystick")
+	_refresh_touch_joystick()
 
 	if not pickup_area:
 		print("ERROR: $Area3D node not found! Please add an Area3D with a CollisionShape to the player.")
@@ -80,30 +81,7 @@ func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
 
-	# --- 1. MOUSE & TOUCH CAMERA CONTROLS ---
-	var viewport = get_viewport().get_visible_rect()
-	var size = viewport.size
-
-	# Avoid moving camera if touching the virtual joystick area
-	if event is InputEventScreenTouch:
-		if event.pressed and _is_touch_on_joystick_area(event.position, size):
-			ignored_touch_indices[event.index] = true
-			return
-		elif not event.pressed and ignored_touch_indices.has(event.index):
-			ignored_touch_indices.erase(event.index)
-			return
-
-	if event is InputEventScreenDrag and ignored_touch_indices.has(event.index):
-		return
-	if event is InputEventScreenDrag and touch_joystick and touch_joystick.call("claims_touch", event.index):
-		return
-
-	# Touch Drag
-	if event is InputEventScreenDrag:
-		cam_rot_y -= event.relative.x * 0.0045
-		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.0045, min_pitch, max_pitch)
-
-	# Mouse Drag
+	# --- 1. MOUSE CAMERA CONTROLS ---
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		cam_rot_y -= event.relative.x * 0.005
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.005, min_pitch, max_pitch)
@@ -121,6 +99,43 @@ func _input(event: InputEvent) -> void:
 			_drop_object()
 		else:
 			_try_pickup()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not is_local:
+		return
+
+	if touch_joystick == null:
+		_refresh_touch_joystick()
+
+	var viewport = get_viewport().get_visible_rect()
+	var size = viewport.size
+
+	if event is InputEventScreenTouch:
+		if touch_joystick and touch_joystick.call("claims_touch", event.index):
+			return
+		if event.pressed:
+			if _is_touch_on_joystick_area(event.position, size):
+				ignored_touch_indices[event.index] = true
+				return
+			if active_camera_index == -1:
+				active_camera_index = event.index
+		else:
+			if ignored_touch_indices.has(event.index):
+				ignored_touch_indices.erase(event.index)
+				return
+			if event.index == active_camera_index:
+				active_camera_index = -1
+		return
+
+	if event is InputEventScreenDrag:
+		if ignored_touch_indices.has(event.index):
+			return
+		if touch_joystick and touch_joystick.call("claims_touch", event.index):
+			return
+		if event.index != active_camera_index:
+			return
+		cam_rot_y -= event.relative.x * 0.0045
+		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.0045, min_pitch, max_pitch)
 
 func _physics_process(delta: float) -> void:
 	if not is_local:
@@ -339,3 +354,6 @@ func _play_idle() -> void:
 func _is_touch_on_joystick_area(pos: Vector2, size: Vector2) -> bool:
 	# Match joystick.gd bottom-left quadrant
 	return pos.x <= size.x * 0.5 and pos.y >= size.y * 0.5
+
+func _refresh_touch_joystick() -> void:
+	touch_joystick = get_tree().get_first_node_in_group("touch_joystick")
