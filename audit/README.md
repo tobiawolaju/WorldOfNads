@@ -1,4 +1,4 @@
-# Audit Notes (Pre-Grant)
+# Audit Notes (Pre-Main Audit)
 
 This folder is a lightweight, pre-release audit log meant to show due diligence.
 It is not a professional security audit.
