@@ -32,6 +32,7 @@ var active_camera_index := -1
 var touchInsideJoystick = false
 
 func _ready():
+	add_to_group("touch_joystick")
 	var viewport_size = get_viewport().get_visible_rect().size
 	screen_orientation = "portrait" if viewport_size.y > viewport_size.x else "landscape"
 
@@ -146,3 +147,6 @@ func _check_double_tap(tap_pos: Vector2):
 		_release_key("jump")
 	last_tap_time = now
 	last_tap_position = tap_pos
+
+func claims_touch(touch_index: int) -> bool:
+	return touch_index == active_joystick_index

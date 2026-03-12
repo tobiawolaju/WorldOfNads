@@ -44,6 +44,7 @@ var cam_rot_x: float = deg_to_rad(30)
 var cam_rot_y: float = 0.0
 var current_animation: String = "idle"
 var ignored_touch_indices := {}
+var touch_joystick: Node = null
 
 var player_id: String = "" :
 	set(new_id):
@@ -58,6 +59,7 @@ var display_name: String = "" :
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
 	_play_idle()
+	touch_joystick = get_tree().get_first_node_in_group("touch_joystick")
 
 	if not pickup_area:
 		print("ERROR: $Area3D node not found! Please add an Area3D with a CollisionShape to the player.")
@@ -92,6 +94,8 @@ func _input(event: InputEvent) -> void:
 			return
 
 	if event is InputEventScreenDrag and ignored_touch_indices.has(event.index):
+		return
+	if event is InputEventScreenDrag and touch_joystick and touch_joystick.call("claims_touch", event.index):
 		return
 
 	# Touch Drag
