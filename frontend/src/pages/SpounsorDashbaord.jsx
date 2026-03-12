@@ -14,6 +14,7 @@ import {
   createSponsorMatchOnchain,
   cancelSponsorMatchOnchain
 } from "./mockSponsorContract";
+import { trackMatchCreated, trackSponsorAdded, trackSponsorMatchCreated } from "../lib/analyticsClient";
 import "./SpounsorDashbaord.css";
 
 function buildMatchId(sponsor) {
@@ -149,6 +150,31 @@ export default function SpounsorDashbaord() {
       });
 
       setMatches((current) => [record, ...current]);
+
+      trackMatchCreated({
+        userId: user?.id,
+        matchId,
+        sponsorId: form.sponsor,
+        value: Number(form.prizeAmount),
+        metadata: {
+          prizeToken: form.prizeToken,
+          createdByWallet: walletAddress
+        }
+      });
+
+      trackSponsorAdded({
+        sponsorId: form.sponsor,
+        value: Number(form.prizeAmount),
+        metadata: { createdByWallet: walletAddress }
+      });
+
+      trackSponsorMatchCreated({
+        userId: user?.id,
+        matchId,
+        sponsorId: form.sponsor,
+        value: Number(form.prizeAmount),
+        metadata: { prizeToken: form.prizeToken }
+      });
       setFeedback(
         contractResult.mode === "onchain"
           ? "Match created and deposit transaction confirmed."

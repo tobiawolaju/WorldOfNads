@@ -1,5 +1,6 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase, get, ref, set, update, remove } from "firebase/database";
+import { trackUserJoined, trackUserRegistered } from "../lib/analyticsClient";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD3Md8vlOQDg4QoTRJuwNmrv3mg11WMDss",
@@ -52,6 +53,10 @@ export async function saveUserToFirebase(user) {
 
   if (snapshot.exists()) {
     await update(userRef, updates);
+    trackUserJoined({
+      userId: user.id,
+      metadata: { username }
+    });
     return;
   }
 
@@ -63,6 +68,11 @@ export async function saveUserToFirebase(user) {
     won: 0,
     projects: [],
     ...updates
+  });
+
+  trackUserRegistered({
+    userId: user.id,
+    metadata: { username }
   });
 }
 

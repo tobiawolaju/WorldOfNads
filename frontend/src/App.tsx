@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 
@@ -20,11 +20,38 @@ import Dashboard from "./pages/Dashboard";
 import Play from "./pages/Play";
 import Careers from "./pages/Careers";
 import SpounsorDashbaord from "./pages/SpounsorDashbaord";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import { trackSessionEnded, trackSessionStarted } from "./lib/analyticsClient";
+import { getUsernameFromPrivy } from "./pages/firebaseClient";
 
 const AppContent: React.FC = () => {
-  const { ready, authenticated } = usePrivy();
+  const { ready, authenticated, user } = usePrivy();
   const location = useLocation();
+  const sessionTrackedRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
 
+  useEffect(() => {
+    if (user?.id && lastUserIdRef.current !== user.id) {
+      sessionTrackedRef.current = false;
+      lastUserIdRef.current = user.id;
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!ready || !authenticated || !user) return;
+    if (sessionTrackedRef.current) return;
+    sessionTrackedRef.current = true;
+
+    const username = getUsernameFromPrivy(user);
+    trackSessionStarted({ userId: user.id, metadata: { username } });
+
+    const handleUnload = () => {
+      trackSessionEnded({ userId: user.id, metadata: { username } });
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [ready, authenticated, user]);
 
   if (!ready) {
     return <FullScreenLoader />;
@@ -50,6 +77,7 @@ const AppContent: React.FC = () => {
             <Route path="/community" element={<Community />} />
             <Route path="/partners" element={<Partners />} />
             <Route path="/careers" element={<Careers />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
 
             {/* Protected Routes */}
             <Route

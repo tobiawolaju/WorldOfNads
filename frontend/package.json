@@ -29,6 +29,7 @@
     "@tailwindcss/vite": "^4.1.13",
     "@types/three": "^0.182.0",
     "bs58": "^6.0.0",
+    "chart.js": "^4.4.8",
     "ethers": "^6.15.0",
     "firebase": "^12.6.0",
     "gsap": "^3.13.0",

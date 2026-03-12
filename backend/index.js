@@ -3,6 +3,7 @@ import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward } from './firebaseClient.js';
 import { settleMatchOnchain } from './contractClient.js';
+import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 
 const PORT = process.env.PORT || 8080;
 const BROADCAST_RATE = 20;
@@ -79,33 +80,60 @@ function sanitizeMeta(value) {
   return safe;
 }
 
-const server = createServer((req, res) => {
+function setCors(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function sendJson(res, status, payload) {
+  setCors(res);
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(payload));
+}
+
+async function readJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+      if (body.length > 1_000_000) {
+        reject(new Error('Payload too large'));
+      }
+    });
+    req.on('end', () => {
+      if (!body) return resolve({});
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
+
+const server = createServer(async (req, res) => {
   const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
   if (req.method === 'OPTIONS') {
-    res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    });
+    setCors(res);
+    res.writeHead(204);
     res.end();
     return;
   }
 
   if (req.method === 'GET' && reqUrl.pathname === '/') {
-    res.writeHead(200, {
-      'Content-Type': 'text/plain',
-      'Access-Control-Allow-Origin': '*'
-    });
+    setCors(res);
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('Server is alive and healthy!\\n');
     return;
   }
 
   if (req.method === 'GET' && reqUrl.pathname === '/events') {
+    setCors(res);
     res.writeHead(200, {
       'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-      'Access-Control-Allow-Origin': '*'
+      'Cache-Control': 'no-store'
     });
     res.end(JSON.stringify({
       type: 'events_snapshot',
@@ -114,9 +142,70 @@ const server = createServer((req, res) => {
     return;
   }
 
-  res.writeHead(404, {
-    'Access-Control-Allow-Origin': '*'
-  });
+  if (req.method === 'POST' && reqUrl.pathname === '/analytics/events') {
+    try {
+      const payload = await readJsonBody(req);
+      const result = await logAnalyticsEvent(payload);
+      if (!result.ok) {
+        sendJson(res, 400, { ok: false, error: result.error });
+        return;
+      }
+      sendJson(res, 200, { ok: true, id: result.id, timestamp: result.timestamp });
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: 'Invalid JSON payload' });
+    }
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/analytics/summary') {
+    const summary = await getAnalyticsSummary({
+      start: reqUrl.searchParams.get('start'),
+      end: reqUrl.searchParams.get('end')
+    });
+    sendJson(res, 200, summary);
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/analytics/timeseries') {
+    const data = await getAnalyticsTimeseries({
+      start: reqUrl.searchParams.get('start'),
+      end: reqUrl.searchParams.get('end')
+    });
+    sendJson(res, 200, data);
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/analytics/export') {
+    const format = reqUrl.searchParams.get('format') || 'json';
+    const exportData = await exportAnalyticsEvents({
+      format,
+      start: reqUrl.searchParams.get('start'),
+      end: reqUrl.searchParams.get('end')
+    });
+    setCors(res);
+    res.writeHead(200, { 'Content-Type': exportData.contentType });
+    res.end(exportData.body);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/admin/verify-access') {
+    try {
+      const payload = await readJsonBody(req);
+      const code = typeof payload?.code === 'string' ? payload.code.trim() : '';
+      const expected = process.env.ADMIN_ACCESS_CODE || 'WONS';
+      if (code && code === expected) {
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+      sendJson(res, 403, { ok: false, error: 'Invalid access code' });
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: 'Invalid JSON payload' });
+    }
+    return;
+  }
+
+  setCors(res);
+  res.writeHead(404);
   res.end();
 });
 
@@ -418,6 +507,16 @@ const statusWorkerInterval = setInterval(async () => {
       if (status === "upcoming" && now >= startTime - fiveMinutes) {
         console.log(`[Worker] [${new Date().toISOString()}] Match ${matchId} (Starts: ${new Date(startTime * 1000).toISOString()}) is now LIVE.`);
         await updateMatchStatus(matchId, "live");
+        await logAnalyticsEvent({
+          event_type: 'match_started',
+          match_id: matchId,
+          sponsor_id: match.sponsor || '',
+          value: Number(match.prizeAmount || 0),
+          metadata: {
+            startTime,
+            status: 'live'
+          }
+        });
       }
 
       // 2. Live -> Completed (Duration + buffer after startTime)
@@ -425,6 +524,16 @@ const statusWorkerInterval = setInterval(async () => {
       if (status === "live" && now >= startTime + MATCH_DURATION_SECONDS + matchBuffer) {
         console.log(`[Worker] [${new Date().toISOString()}] Match ${matchId} (Started: ${new Date(startTime * 1000).toISOString()}) is now COMPLETED.`);
         await updateMatchStatus(matchId, "completed");
+        await logAnalyticsEvent({
+          event_type: 'match_finished',
+          match_id: matchId,
+          sponsor_id: match.sponsor || '',
+          value: Number(match.prizeAmount || 0),
+          metadata: {
+            startTime,
+            status: 'completed'
+          }
+        });
       }
     }
   } catch (error) {
@@ -488,6 +597,19 @@ setInterval(() => {
                   source: activeMatch.sponsor,
                   category: "earned",
                   txHash: result.txHash
+                });
+
+                const prizeAmount = Number(activeMatch.prizeAmount || String(activeMatch.prize || '').split(' ')[0] || 0);
+                await logAnalyticsEvent({
+                  event_type: 'reward_paid',
+                  user_id: winnerInfo.winnerName,
+                  match_id: activeMatch.matchId,
+                  sponsor_id: activeMatch.sponsor || '',
+                  value: Number.isFinite(prizeAmount) ? prizeAmount : 0,
+                  metadata: {
+                    txHash: result.txHash,
+                    prize: activeMatch.prize
+                  }
                 });
               } else {
                 console.error(`[Payout] On-chain settlement failed: ${result.error}`);
@@ -566,6 +688,13 @@ setInterval(() => {
   });
 }, 1000 / BROADCAST_RATE);
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server is live on port ${PORT}`);
-});
+initAnalyticsDb()
+  .then(() => {
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`✅ Server is live on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('[Analytics] Failed to initialize analytics database', error);
+    process.exit(1);
+  });

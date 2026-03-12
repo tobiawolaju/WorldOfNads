@@ -12,6 +12,7 @@ import {
   updateUserProjects,
   fetchUserRewards
 } from "./firebaseClient";
+import { trackMatchJoined } from "../lib/analyticsClient";
 import { staticMatches } from "./staticMatches.js";
 
 type Twitter = {
@@ -204,6 +205,12 @@ export default function Dashboard() {
     if (match) {
       const username = getUsernameFromPrivy(user);
       await updateUserProjects(username, match.sponsor);
+      trackMatchJoined({
+        userId: user.id,
+        matchId: match.matchId,
+        sponsorId: match.sponsor,
+        metadata: { username }
+      });
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
