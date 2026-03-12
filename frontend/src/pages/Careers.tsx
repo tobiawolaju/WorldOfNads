@@ -500,9 +500,10 @@ const Careers: React.FC = () => {
 
                                 {/* Apply Button Specific to this Role */}
                                 <div style={{ marginTop: "30px", textAlign: "left" }}>
-                                    <a
-                                        href={`mailto:careers@worldofnads.xyz?subject=Application for ${encodeURIComponent(role.title)}`}
+                                    <button
+                                        type="button"
                                         className="apply-btn"
+                                        disabled
                                         style={{
                                             display: "inline-block",
                                             background: "#6a38ff",
@@ -511,12 +512,15 @@ const Careers: React.FC = () => {
                                             borderRadius: "30px",
                                             textDecoration: "none",
                                             fontWeight: "bold",
-                                            fontSize: "1rem"
+                                            fontSize: "1rem",
+                                            border: "none",
+                                            cursor: "not-allowed",
+                                            opacity: 0.6
                                         }}
                                         onClick={(e) => e.stopPropagation()} // Prevent closing accordion when clicking apply
                                     >
-                                        Apply for {role.title}
-                                    </a>
+                                        Not hiring at the moment
+                                    </button>
                                 </div>
                             </div>
                         </div>
