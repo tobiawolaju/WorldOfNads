@@ -15,7 +15,7 @@ const Footer = () => {
       {/* Left Section */}
       <div className="footer-left">
         <img
-          src="logo.jpg"
+          src="/logo.jpg"
           alt="site logo"
           className="footer-logo"
         />
