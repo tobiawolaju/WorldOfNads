@@ -41,14 +41,20 @@ export async function saveUserToFirebase(user) {
   const userRef = ref(db, `users/${username}`);
   const snapshot = await get(userRef);
 
+  const defaultRoles = buildDefaultRoles(username);
+  const existingRoles = snapshot.exists() ? snapshot.val()?.roles : null;
+  const normalizedRoles = normalizeRoles(existingRoles, username, defaultRoles);
+
   const updates = {
     lastLogin: new Date().toISOString(),
     latestVerifiedAt: twitter?.latestVerifiedAt || ethAcc?.latestVerifiedAt || solAcc?.latestVerifiedAt || new Date().toISOString(),
     profilePictureUrl:
       twitter?.profilePictureUrl ||
       "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png",
+    twitterUsername: twitter?.username || null,
     ethAddress: ethAcc?.address || null, // Capture specifically for Monad payouts
-    solAddress: solAcc?.address || null  // Capture for Solana compatibility
+    solAddress: solAcc?.address || null,  // Capture for Solana compatibility
+    roles: normalizedRoles
   };
 
   if (snapshot.exists()) {
@@ -88,6 +94,41 @@ export async function updateUserProjects(username, matchSponsorName) {
   await update(userRef, {
     projects: [...currentProjects, matchSponsorName]
   });
+}
+
+function buildDefaultRoles(username) {
+  const roles = ["player"];
+  if (String(username || "").toLowerCase() === "worldofnads") {
+    roles.push("admin");
+  }
+  return roles;
+}
+
+function normalizeRoles(roles, username, fallbackRoles = null) {
+  const base = Array.isArray(roles) && roles.length > 0 ? roles : (fallbackRoles || buildDefaultRoles(username));
+  const normalized = Array.from(new Set(base.map((role) => String(role).toLowerCase().trim()).filter(Boolean)));
+  if (!normalized.includes("player")) normalized.push("player");
+  if (String(username || "").toLowerCase() === "worldofnads" && !normalized.includes("admin")) {
+    normalized.push("admin");
+  }
+  return normalized;
+}
+
+export async function fetchUserRoles(username) {
+  if (!username) return ["player"];
+
+  const userRef = ref(db, `users/${username}`);
+  const snapshot = await get(userRef);
+  if (!snapshot.exists()) {
+    return buildDefaultRoles(username);
+  }
+
+  const data = snapshot.val();
+  const normalized = normalizeRoles(data?.roles, username);
+  if (JSON.stringify(normalized) !== JSON.stringify(data?.roles || [])) {
+    await update(userRef, { roles: normalized });
+  }
+  return normalized;
 }
 
 export function normalizeMatchRecord(match, fallbackKey = "") {
@@ -161,8 +202,17 @@ export async function fetchUsersFromFirebase() {
     username: value?.username || key,
     won: Number(value?.won || 0),
     projects: Array.isArray(value?.projects) ? value.projects : [],
-    profilePictureUrl: value?.profilePictureUrl || value?.pfp || ""
+    profilePictureUrl: value?.profilePictureUrl || value?.pfp || "",
+    twitterUsername: value?.twitterUsername || null,
+    roles: normalizeRoles(value?.roles, value?.username || key)
   }));
+}
+
+export async function updateUserRoles(username, roles) {
+  if (!username) return;
+  const normalized = normalizeRoles(roles, username);
+  await update(ref(db, `users/${username}`), { roles: normalized });
+  return normalized;
 }
 
 function sanitizeKey(value) {

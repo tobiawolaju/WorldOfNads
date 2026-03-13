@@ -1,0 +1,95 @@
+.admin-users {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 80px 24px 60px;
+  color: #111;
+  font-family: 'Font1', sans-serif;
+}
+
+.admin-users__header {
+  margin-bottom: 30px;
+}
+
+.admin-users__header h1 {
+  font-size: 2.4rem;
+  margin: 0 0 8px;
+}
+
+.admin-users__header p {
+  margin: 0;
+  color: #555;
+}
+
+.admin-users__error {
+  display: inline-block;
+  margin-top: 10px;
+  color: #b42318;
+  font-weight: 600;
+}
+
+.admin-users__table {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.admin-users__row {
+  display: grid;
+  grid-template-columns: 2.2fr 1.4fr 0.6fr 0.6fr 0.7fr;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-users__row--head {
+  background: #f7f7f7;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.admin-users__row:last-child {
+  border-bottom: none;
+}
+
+.admin-users__user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.admin-users__user img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.admin-users__empty {
+  padding: 30px 20px;
+  color: #777;
+}
+
+.admin-users input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #6a38ff;
+}
+
+@media (max-width: 840px) {
+  .admin-users__row {
+    grid-template-columns: 1.7fr 1fr 0.6fr 0.6fr 0.7fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-users__table {
+    overflow-x: auto;
+  }
+  .admin-users__row {
+    min-width: 520px;
+  }
+}

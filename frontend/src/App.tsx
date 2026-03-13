@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 
@@ -20,8 +20,43 @@ import Play from "./pages/Play";
 import Careers from "./pages/Careers";
 import SpounsorDashbaord from "./pages/SpounsorDashbaord";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminUsers from "./pages/AdminUsers";
 import { trackSessionEnded, trackSessionStarted } from "./lib/analyticsClient";
-import { getUsernameFromPrivy } from "./pages/firebaseClient";
+import { fetchUserRoles, getUsernameFromPrivy } from "./pages/firebaseClient";
+
+const RequireRole: React.FC<{ role: string; children: React.ReactElement }> = ({ role, children }) => {
+  const { ready, authenticated, user } = usePrivy();
+  const [checking, setChecking] = useState(true);
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    const verify = async () => {
+      if (!ready) return;
+      if (!authenticated || !user) {
+        setAllowed(false);
+        setChecking(false);
+        return;
+      }
+      try {
+        const username = getUsernameFromPrivy(user);
+        const roles = await fetchUserRoles(username);
+        setAllowed(roles.includes(role));
+      } catch (error) {
+        console.error("Failed to verify role", error);
+        setAllowed(false);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    verify();
+  }, [ready, authenticated, user, role]);
+
+  if (!ready || checking) return <FullScreenLoader />;
+  if (!authenticated || !user || !allowed) return <Navigate to="/" replace />;
+
+  return children;
+};
 
 const AppContent: React.FC = () => {
   const { ready, authenticated, user } = usePrivy();
@@ -75,7 +110,22 @@ const AppContent: React.FC = () => {
             <Route path="/community" element={<Community />} />
             <Route path="/partners" element={<Partners />} />
             <Route path="/careers" element={<Careers />} />
-            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route
+              path="/admin/analytics"
+              element={
+                <RequireRole role="admin">
+                  <AdminAnalytics />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <RequireRole role="admin">
+                  <AdminUsers />
+                </RequireRole>
+              }
+            />
 
             {/* Protected Routes */}
             <Route
@@ -88,7 +138,11 @@ const AppContent: React.FC = () => {
             />
             <Route
               path="/sponsor"
-              element={authenticated ? <SpounsorDashbaord /> : <Navigate to="/" replace />}
+              element={
+                <RequireRole role="sponsor">
+                  <SpounsorDashbaord />
+                </RequireRole>
+              }
             />
 
             {/* Fallback */}
