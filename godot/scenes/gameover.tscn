@@ -41,8 +41,8 @@ size_flags_vertical = 4
 [node name="Countdown" type="Label" parent="Node2/Winner/BoxContainer2" unique_id=1201116873]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_ncp31")
-theme_override_font_sizes/font_size = 60
-text = "You won $ 2,000"
+theme_override_font_sizes/font_size = 120
+text = "You won"
 
 [node name="BoxContainer3" type="BoxContainer" parent="Node2/Winner" unique_id=1582980151]
 layout_mode = 2
@@ -54,8 +54,7 @@ modulate = Color(1, 1, 1, 0.7176471)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_ncp31")
 theme_override_font_sizes/font_size = 30
-text = "you outplayed  9 other nads,
- victory belongs to you."
+text = "you outplayed other nads"
 horizontal_alignment = 1
 
 [node name="Loser" type="VBoxContainer" parent="Node2" unique_id=204106690]
@@ -91,8 +90,8 @@ size_flags_vertical = 4
 [node name="Countdown" type="Label" parent="Node2/Loser/BoxContainer2" unique_id=1206262197]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_ncp31")
-theme_override_font_sizes/font_size = 60
-text = "Winner earned: $2,000"
+theme_override_font_sizes/font_size = 120
+text = "You Tried"
 
 [node name="BoxContainer3" type="BoxContainer" parent="Node2/Loser" unique_id=1829643382]
 layout_mode = 2
@@ -104,8 +103,7 @@ modulate = Color(1, 1, 1, 0.7176471)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_ncp31")
 theme_override_font_sizes/font_size = 30
-text = "your placment: #4
-reward: Discord Sponsor Role"
+text = "you got outplayed"
 horizontal_alignment = 1
 
 [node name="LoserBg" type="ColorRect" parent="." unique_id=314910917]
@@ -120,7 +118,7 @@ offset_right = 1262.0
 offset_bottom = 1251.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.8745098, 0, 0.05490196, 1)
+color = Color(0.87758064, 5.0826075e-05, 0.6595774, 1)
 metadata/_edit_use_anchors_ = true
 
 [node name="WinnerBg" type="ColorRect" parent="." unique_id=1614391081]
@@ -129,11 +127,11 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -750.0
-offset_top = -750.0
-offset_right = 1250.0
-offset_bottom = 1250.0
+offset_left = -745.0
+offset_top = -745.0
+offset_right = 1255.0
+offset_bottom = 1255.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0.6666667, 0.40784314, 1)
+color = Color(0.4745098, 0.14901961, 1, 1)
 metadata/_edit_use_anchors_ = true
