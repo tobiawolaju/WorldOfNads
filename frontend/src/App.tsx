@@ -7,7 +7,6 @@ import BackgroundPattern from "./components/Background";
 import TopNavbar from "./components/TopNavbar";
 // UI
 import { FullScreenLoader } from "./components/ui/fullscreen-loader";
-import Footer from "./components/Footer";
 
 // Pages
 import Home from "./pages/Home";
@@ -150,7 +149,6 @@ const AppContent: React.FC = () => {
           </Routes>
         </main>
 
-        {!hideFooter && <Footer />}
       </div>
     </>
   );
