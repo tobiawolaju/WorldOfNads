@@ -24,8 +24,7 @@ function buildMatchId(sponsor) {
 
 const initialForm = {
   sponsor: "",
-  prizeAmount: "10",
-  prizeToken: "MON",
+  prizeAmount: "",
   date: "",
   time: "",
   image: "/logo.jpg",
@@ -43,6 +42,13 @@ export default function SpounsorDashbaord() {
   const [form, setForm] = useState(initialForm);
 
   const walletAddress = useMemo(() => getPrimaryWalletAddress(user), [user]);
+  const twitterAccount = useMemo(
+    () => user?.linkedAccounts?.find((acc) => acc.type === "twitter_oauth"),
+    [user]
+  );
+  const sponsorHandle = twitterAccount?.username ? `@${twitterAccount.username}` : "";
+  const sponsorUrl = twitterAccount?.username ? `https://x.com/${twitterAccount.username}` : "";
+  const sponsorAvatar = twitterAccount?.profilePictureUrl || "/logo.jpg";
 
   const activeEthWallet = useMemo(() => {
     if (!walletsReady || !wallets.length) return null;
@@ -82,15 +88,19 @@ export default function SpounsorDashbaord() {
     if (!user) return;
     setForm((current) => ({
       ...current,
-      sponsor: current.sponsor || getUsernameFromPrivy(user)
+      sponsor: current.sponsor || getUsernameFromPrivy(user),
+      image: sponsorAvatar || current.image,
+      url: current.url || sponsorUrl
     }));
-  }, [user]);
+  }, [user, sponsorAvatar, sponsorUrl]);
 
   const closeModal = () => {
     setIsModalOpen(false);
     setForm((current) => ({
       ...initialForm,
-      sponsor: current.sponsor || getUsernameFromPrivy(user)
+      sponsor: current.sponsor || getUsernameFromPrivy(user),
+      image: sponsorAvatar || current.image,
+      url: current.url || sponsorUrl
     }));
   };
 
@@ -122,7 +132,7 @@ export default function SpounsorDashbaord() {
         embeddedWallet: activeEthWallet,
         matchId,
         prizeAmount: Number(form.prizeAmount),
-        prizeToken: form.prizeToken === "MON" ? "0x0000000000000000000000000000000000000000" : form.prizeToken,
+        prizeToken: "0x0000000000000000000000000000000000000000",
         startTime,
         expectedParticipants: 50,
         winnerTokenURI: `/metadata/winner-${matchId}.json`,
@@ -134,9 +144,9 @@ export default function SpounsorDashbaord() {
         id: Date.now(),
         matchId,
         sponsor: form.sponsor,
-        prize: `${form.prizeAmount} ${form.prizeToken}`,
+        prize: `${form.prizeAmount} MON`,
         prizeAmount: Number(form.prizeAmount),
-        prizeToken: form.prizeToken,
+        prizeToken: "MON",
         status: "upcoming",
         time: form.time,
         date: form.date,
@@ -157,7 +167,7 @@ export default function SpounsorDashbaord() {
         sponsorId: form.sponsor,
         value: Number(form.prizeAmount),
         metadata: {
-          prizeToken: form.prizeToken,
+          prizeToken: "MON",
           createdByWallet: walletAddress
         }
       });
@@ -173,7 +183,7 @@ export default function SpounsorDashbaord() {
         matchId,
         sponsorId: form.sponsor,
         value: Number(form.prizeAmount),
-        metadata: { prizeToken: form.prizeToken }
+        metadata: { prizeToken: "MON" }
       });
       setFeedback(
         contractResult.mode === "onchain"
@@ -275,17 +285,27 @@ export default function SpounsorDashbaord() {
         <div className="sponsor-modal__backdrop" onClick={closeModal}>
           <div className="sponsor-modal" onClick={(event) => event.stopPropagation()}>
             <div className="sponsor-modal__grid">
-              <label>
-                Sponsor
-                <input name="sponsor" value={form.sponsor} onChange={handleChange} />
-              </label>
+              <div className="sponsor-modal__identity sponsor-modal__wide">
+                <img className="sponsor-modal__avatar" src={form.image || "/logo.jpg"} alt={form.sponsor} />
+                <div>
+                  <span className="sponsor-modal__name">{form.sponsor}</span>
+                  {sponsorHandle ? <span className="sponsor-modal__handle">{sponsorHandle}</span> : null}
+                </div>
+              </div>
               <label>
                 Prize Amount
-                <input name="prizeAmount" type="number" min="0" value={form.prizeAmount} onChange={handleChange} />
-              </label>
-              <label>
-                Token
-                <input name="prizeToken" value={form.prizeToken} onChange={handleChange} />
+                <div className="sponsor-modal__amount">
+                  <input
+                    name="prizeAmount"
+                    type="number"
+                    min="0"
+                    step="0.0001"
+                    placeholder="0.001"
+                    value={form.prizeAmount}
+                    onChange={handleChange}
+                  />
+                  <span className="sponsor-modal__token">MON</span>
+                </div>
               </label>
               <label>
                 Match Date
@@ -295,17 +315,9 @@ export default function SpounsorDashbaord() {
                 Match Time (24h Format)
                 <input name="time" type="time" value={form.time} onChange={handleChange} />
               </label>
-              <label>
-                Banner/Image
-                <input name="image" value={form.image} onChange={handleChange} />
-              </label>
               <label className="sponsor-modal__wide">
                 Description
                 <textarea name="description" rows="4" value={form.description} onChange={handleChange} />
-              </label>
-              <label className="sponsor-modal__wide">
-                URL
-                <input name="url" value={form.url} onChange={handleChange} />
               </label>
             </div>
 

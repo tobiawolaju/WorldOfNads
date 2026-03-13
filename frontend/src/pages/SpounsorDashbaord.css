@@ -210,6 +210,44 @@
   font-weight: 600;
 }
 
+.sponsor-modal__identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.sponsor-modal__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.sponsor-modal__name {
+  display: block;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.sponsor-modal__handle {
+  display: block;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.sponsor-modal__amount {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sponsor-modal__token {
+  font-weight: 700;
+  color: #5b21b6;
+}
+
 .sponsor-modal__grid input,
 .sponsor-modal__grid textarea {
   border-radius: 14px;
