@@ -33,24 +33,24 @@ const AdminUsers: React.FC = () => {
   }, []);
 
   const handleToggle = async (username: string, role: "admin" | "sponsor") => {
-    let pendingRoles: string[] | null = null;
+    const currentUser = users.find((user) => user.username === username);
+    if (!currentUser) return;
+
+    const previousRoles = Array.isArray(currentUser.roles) ? currentUser.roles : [];
+    const roleSet = new Set(previousRoles);
+    if (roleSet.has(role)) {
+      roleSet.delete(role);
+    } else {
+      roleSet.add(role);
+    }
+    roleSet.add("player");
+    const pendingRoles = Array.from(roleSet);
 
     setUsers((current) =>
-      current.map((user) => {
-        if (user.username !== username) return user;
-        const roles = new Set(user.roles || []);
-        if (roles.has(role)) {
-          roles.delete(role);
-        } else {
-          roles.add(role);
-        }
-        roles.add("player");
-        pendingRoles = Array.from(roles);
-        return { ...user, roles: pendingRoles };
-      })
+      current.map((user) =>
+        user.username === username ? { ...user, roles: pendingRoles } : user
+      )
     );
-
-    if (!pendingRoles) return;
 
     try {
       const updated = await updateUserRoles(username, pendingRoles);
@@ -64,6 +64,11 @@ const AdminUsers: React.FC = () => {
     } catch (err) {
       console.error("Failed to update roles", err);
       setError("Failed to update roles. Please try again.");
+      setUsers((current) =>
+        current.map((user) =>
+          user.username === username ? { ...user, roles: previousRoles } : user
+        )
+      );
     }
   };
 
