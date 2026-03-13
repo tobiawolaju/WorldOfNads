@@ -93,6 +93,7 @@ export default function Dashboard() {
   const [rewards, setRewards] = useState<RewardItem[]>([]);
   const [playButtonState, setPlayButtonState] = useState<"idle" | "counting">("idle");
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [nowMs, setNowMs] = useState(Date.now());
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const isManuallyScrolling = useRef<boolean>(false);
@@ -141,6 +142,13 @@ export default function Dashboard() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
     };
+  }, []);
+
+  useEffect(() => {
+    const ticker = setInterval(() => {
+      setNowMs(Date.now());
+    }, 5000);
+    return () => clearInterval(ticker);
   }, []);
 
   useEffect(() => {
@@ -256,6 +264,10 @@ export default function Dashboard() {
   const filteredMatches = matches.filter((match) => match.status === filter);
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
   const isLive = selectedMatchData?.status === "live";
+  const isStartTimeReached = selectedMatchData?.startTime
+    ? nowMs >= selectedMatchData.startTime * 1000
+    : true;
+  const canPlay = isLive && isStartTimeReached;
 
   const updateSelectedCard = () => {
     if (isManuallyScrolling.current) return;
@@ -502,15 +514,25 @@ export default function Dashboard() {
 
       {tab === "events" && (
         <button
-          className={`play-fixed ${isLive ? "active" : "disabled"} ${playButtonState === "counting" ? "counting" : ""}`}
-          onClick={isLive ? handlePlayClick : undefined}
-          disabled={!isLive}
+          className={`play-fixed ${canPlay ? "active" : "disabled"} ${playButtonState === "counting" ? "counting" : ""}`}
+          onClick={canPlay ? handlePlayClick : undefined}
+          disabled={!canPlay}
           style={{
-            opacity: isLive ? 1 : 0.5,
-            pointerEvents: isLive ? "auto" : "none"
+            opacity: canPlay ? 1 : 0.5,
+            pointerEvents: canPlay ? "auto" : "none"
           }}
         >
-          {playButtonState === "counting" ? <span>{elapsedTime.toFixed(1)}s Cancel</span> : <span>PLAY</span>}
+          {playButtonState === "counting" ? (
+            <span>{elapsedTime.toFixed(1)}s Cancel</span>
+          ) : (
+            <span>
+              {canPlay
+                ? "PLAY"
+                : isLive && selectedMatchData?.startTime
+                  ? `Starts at ${formatLocalTime(selectedMatchData.startTime)}`
+                  : "Not Live"}
+            </span>
+          )}
         </button>
       )}
     </div>
