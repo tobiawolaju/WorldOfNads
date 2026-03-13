@@ -13,6 +13,7 @@ const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [savingUsers, setSavingUsers] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -52,6 +53,7 @@ const AdminUsers: React.FC = () => {
       )
     );
 
+    setSavingUsers((current) => ({ ...current, [username]: true }));
     try {
       const updated = await updateUserRoles(username, pendingRoles);
       if (updated) {
@@ -69,6 +71,8 @@ const AdminUsers: React.FC = () => {
           user.username === username ? { ...user, roles: previousRoles } : user
         )
       );
+    } finally {
+      setSavingUsers((current) => ({ ...current, [username]: false }));
     }
   };
 
@@ -109,6 +113,7 @@ const AdminUsers: React.FC = () => {
             const isSponsor = roles.includes("sponsor");
             const isPlayer = roles.includes("player");
             const isPrimaryAdmin = user.username?.toLowerCase() === "worldofnads";
+            const isSaving = Boolean(savingUsers[user.username]);
             const looksLikeWallet = user.username?.startsWith("0x") || user.username?.includes(":");
             const handle = user.twitterUsername
               ? `@${user.twitterUsername}`
@@ -132,16 +137,20 @@ const AdminUsers: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={isAdmin}
-                    disabled={isPrimaryAdmin}
+                    disabled={isPrimaryAdmin || isSaving}
                     onChange={() => handleToggle(user.username, "admin")}
                   />
                 </span>
                 <span>
-                  <input
-                    type="checkbox"
-                    checked={isSponsor}
-                    onChange={() => handleToggle(user.username, "sponsor")}
-                  />
+                  <span className="admin-users__cell">
+                    <input
+                      type="checkbox"
+                      checked={isSponsor}
+                      disabled={isSaving}
+                      onChange={() => handleToggle(user.username, "sponsor")}
+                    />
+                    {isSaving ? <span className="admin-users__status">Saving...</span> : null}
+                  </span>
                 </span>
               </div>
             );

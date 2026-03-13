@@ -73,6 +73,18 @@
   color: #777;
 }
 
+.admin-users__cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-users__status {
+  font-size: 0.8rem;
+  color: #6a38ff;
+  font-weight: 600;
+}
+
 .admin-users input[type="checkbox"] {
   width: 18px;
   height: 18px;
