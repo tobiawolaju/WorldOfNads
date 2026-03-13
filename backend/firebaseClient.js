@@ -35,10 +35,23 @@ export async function findActiveMatch() {
 
     const matches = snapshot.val();
     const now = Math.floor(Date.now() / 1000);
+    const eligibleStatuses = new Set(["upcoming", "live", "completed"]);
+    const tenMinutes = 600;
+    const lookbackSeconds = 3600; // avoid picking stale matches
 
-    const activeMatch = Object.values(matches)
-        .filter(m => (m.status === "upcoming" || m.status === "live") && m.startTime <= now + 600) // 10 min buffer
-        .sort((a, b) => a.startTime - b.startTime)[0];
+    const eligible = Object.values(matches)
+        .filter((m) => {
+            if (!m || !m.matchId || !m.startTime) return false;
+            if (!eligibleStatuses.has(m.status)) return false;
+            if (m.status === "settled" || m.status === "cancelled") return false;
+            if (m.startTime < now - lookbackSeconds) return false;
+            return m.startTime <= now + tenMinutes;
+        });
+
+    const started = eligible.filter(m => m.startTime <= now);
+    const pool = started.length > 0 ? started : eligible;
+
+    const activeMatch = pool.sort((a, b) => b.startTime - a.startTime)[0];
 
     if (activeMatch) {
         console.log(`[Firebase] Found candidate match for payout: ${activeMatch.matchId} (Status: ${activeMatch.status})`);
