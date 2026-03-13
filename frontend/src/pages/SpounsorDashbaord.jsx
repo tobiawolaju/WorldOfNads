@@ -430,7 +430,17 @@ export default function SpounsorDashbaord() {
               </label>
               <label>
                 Match Time (24h Format)
-                <input name="time" type="time" value={form.time} onChange={handleChange} />
+                <div className="sponsor-modal__time-row">
+                  <input name="time" type="time" value={form.time} onChange={handleChange} />
+                  <button
+                    type="button"
+                    className="sponsor-modal__suggest-btn"
+                    onClick={handleSuggestTime}
+                    disabled={isSubmitting}
+                  >
+                    Suggest Time
+                  </button>
+                </div>
               </label>
               <label>
                 Minimum Players
@@ -468,9 +478,6 @@ export default function SpounsorDashbaord() {
               <div className="sponsor-modal__footer-actions">
                 <button className="sponsor-modal__cancel-btn" onClick={closeModal} disabled={isSubmitting}>
                   Cancel
-                </button>
-                <button className="sponsor-modal__suggest-btn" onClick={handleSuggestTime} disabled={isSubmitting}>
-                  Suggest Time
                 </button>
                 <button className="sponsor-dashboard__cta" disabled={isSubmitting} onClick={handleCreateMatch}>
                   {isSubmitting ? "Creating..." : "Create Match"}

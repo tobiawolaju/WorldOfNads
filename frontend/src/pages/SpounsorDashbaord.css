@@ -193,11 +193,13 @@
   border: 1px dashed rgba(124, 58, 237, 0.5);
   background: rgba(124, 58, 237, 0.08);
   color: #5b21b6;
-  padding: 12px 24px;
-  border-radius: 999px;
+  padding: 10px 14px;
+  border-radius: 10px;
   font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .sponsor-modal__suggest-btn:hover:not(:disabled) {
@@ -270,6 +272,17 @@
   border: 1px solid rgba(0, 0, 0, 0.16);
   padding: 12px 14px;
   background: rgba(255, 255, 255, 0.85);
+}
+
+.sponsor-modal__time-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sponsor-modal__time-row input {
+  flex: 1;
+  min-width: 0;
 }
 
 .sponsor-modal__wide {
