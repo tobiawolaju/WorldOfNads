@@ -10,7 +10,8 @@ import {
   getUsernameFromPrivy,
   saveUserToFirebase,
   updateUserProjects,
-  fetchUserRewards
+  fetchUserRewards,
+  recordSponsorDailyUniquePlayer
 } from "./firebaseClient";
 import { trackMatchJoined } from "../lib/analyticsClient";
 import { staticMatches } from "./staticMatches.js";
@@ -205,6 +206,7 @@ export default function Dashboard() {
     if (match) {
       const username = getUsernameFromPrivy(user);
       await updateUserProjects(username, match.sponsor);
+      await recordSponsorDailyUniquePlayer({ sponsor: match.sponsor, username });
       trackMatchJoined({
         userId: user.id,
         matchId: match.matchId,

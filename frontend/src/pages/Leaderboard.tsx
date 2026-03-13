@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 import "./Leaderboard.css";
-import { fetchMatchesFromFirebase, fetchUsersFromFirebase } from "./firebaseClient";
+import {
+  fetchMatchesFromFirebase,
+  fetchUsersFromFirebase,
+  fetchSponsorDailyPlayers
+} from "./firebaseClient";
 
 type Project = {
   name: string;
@@ -20,17 +24,20 @@ type User = {
 type MatchRecord = {
   sponsor?: string;
   image?: string;
-  createdAt?: string;
-  date?: string;
-  status?: string;
 };
 
-const TREND_DAYS = 15;
+type SponsorDailyData = {
+  dates: string[];
+  sponsors: Record<string, { dailyCounts: Record<string, number>; usersByDate: Record<string, string[]> }>;
+};
+
+const TREND_DAYS = 7;
 const DEFAULT_LOGO = "/logo.jpg";
 
 const Leaderboard: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [sponsorUsers, setSponsorUsers] = useState<Record<string, string[]>>({});
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,9 +51,10 @@ const Leaderboard: React.FC = () => {
       setLoading(true);
       setLoadError("");
       try {
-        const [matches, users] = await Promise.all([
+        const [matches, users, sponsorDaily] = await Promise.all([
           fetchMatchesFromFirebase(),
-          fetchUsersFromFirebase()
+          fetchUsersFromFirebase(),
+          fetchSponsorDailyPlayers(TREND_DAYS)
         ]);
 
         const normalizedUsers: User[] = (users || []).map((user: any) => ({
@@ -56,10 +64,12 @@ const Leaderboard: React.FC = () => {
           pfp: String(user.pfp || user.profilePictureUrl || DEFAULT_LOGO)
         }));
 
-        const projectStats = buildProjects(matches as MatchRecord[], normalizedUsers);
+        const projectStats = buildProjects(matches as MatchRecord[], sponsorDaily as SponsorDailyData);
+        const sponsorUsersLookup = buildSponsorUsersLookup(sponsorDaily as SponsorDailyData);
 
         setAllUsers(normalizedUsers);
         setProjects(projectStats);
+        setSponsorUsers(sponsorUsersLookup);
       } catch (error) {
         console.error("Failed to load leaderboard data", error);
         setLoadError("Failed to load leaderboard data.");
@@ -80,12 +90,16 @@ const Leaderboard: React.FC = () => {
       p.name.toLowerCase().includes(searchTerm.toLowerCase())
     ), [projects, searchTerm]);
 
-  const filteredUsers = useMemo(() =>
-    selectedProject
-      ? allUsers.filter((u) => u.projects.includes(selectedProject))
-      : allUsers,
-    [allUsers, selectedProject]
-  );
+  const filteredUsers = useMemo(() => {
+    if (!selectedProject) return allUsers;
+    const activeUsers = sponsorUsers[selectedProject] || [];
+    return activeUsers
+      .map((username) => {
+        const match = allUsers.find((user) => user.username === username);
+        if (match) return match;
+        return { username, won: 0, projects: [], pfp: DEFAULT_LOGO };
+      });
+  }, [allUsers, selectedProject, sponsorUsers]);
 
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
@@ -192,7 +206,7 @@ const Leaderboard: React.FC = () => {
         <div className="user-leaderboard">
           <h2>
             {selectedProject
-              ? `${selectedProject} Top Users`
+              ? `${selectedProject} Players (last ${TREND_DAYS} days)`
               : "Global Rankings"}
           </h2>
           {filteredUsers.length === 0 ? (
@@ -245,11 +259,9 @@ const Leaderboard: React.FC = () => {
   );
 };
 
-function buildProjects(matches: MatchRecord[], users: User[]): Project[] {
+function buildProjects(matches: MatchRecord[], sponsorDaily: SponsorDailyData): Project[] {
   const map = new Map<string, Project>();
-  const dayMs = 24 * 60 * 60 * 1000;
-  const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (TREND_DAYS - 1));
+  const dates = sponsorDaily?.dates || [];
 
   const ensureProject = (name: string) => {
     if (!map.has(name)) {
@@ -263,37 +275,40 @@ function buildProjects(matches: MatchRecord[], users: User[]): Project[] {
     return map.get(name)!;
   };
 
+  const sponsors = sponsorDaily?.sponsors || {};
+  Object.entries(sponsors).forEach(([name, data]) => {
+    const project = ensureProject(name);
+    project.trend = dates.map((date) => Number(data.dailyCounts?.[date] || 0));
+    project.interactions = project.trend.reduce((sum, val) => sum + val, 0);
+  });
+
   matches.forEach((match) => {
     const sponsor = (match.sponsor || "Unknown Sponsor").trim();
+    if (!sponsor) return;
     const project = ensureProject(sponsor);
-    project.interactions += 1;
-
     if (match.image && match.image !== DEFAULT_LOGO) {
       project.logo = match.image;
     }
-
-    const dateSource = match.createdAt || match.date;
-    if (dateSource) {
-      const date = new Date(dateSource);
-      if (!Number.isNaN(date.getTime())) {
-        const idx = Math.floor((date.getTime() - start.getTime()) / dayMs);
-        if (idx >= 0 && idx < TREND_DAYS) {
-          project.trend[idx] += 1;
-        }
-      }
-    }
-  });
-
-  users.forEach((user) => {
-    user.projects.forEach((projectName) => {
-      const sponsor = String(projectName).trim();
-      if (!sponsor) return;
-      const project = ensureProject(sponsor);
-      project.interactions += 1;
-    });
   });
 
   return Array.from(map.values()).sort((a, b) => b.interactions - a.interactions);
+}
+
+function buildSponsorUsersLookup(sponsorDaily: SponsorDailyData): Record<string, string[]> {
+  const lookup: Record<string, Set<string>> = {};
+  const sponsors = sponsorDaily?.sponsors || {};
+
+  Object.entries(sponsors).forEach(([name, data]) => {
+    const users = new Set<string>();
+    Object.values(data.usersByDate || {}).forEach((list) => {
+      list.forEach((username) => users.add(username));
+    });
+    lookup[name] = users;
+  });
+
+  return Object.fromEntries(
+    Object.entries(lookup).map(([name, set]) => [name, Array.from(set)])
+  );
 }
 
 export default Leaderboard;

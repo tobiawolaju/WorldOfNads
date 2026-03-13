@@ -164,3 +164,61 @@ export async function fetchUsersFromFirebase() {
     profilePictureUrl: value?.profilePictureUrl || value?.pfp || ""
   }));
 }
+
+function sanitizeKey(value) {
+  return String(value || "unknown")
+    .trim()
+    .replace(/[.#$\[\]/]/g, "_");
+}
+
+export async function recordSponsorDailyUniquePlayer({ sponsor, username }) {
+  if (!sponsor || !username) return;
+
+  const dateKey = new Date().toISOString().slice(0, 10);
+  const sponsorKey = sanitizeKey(sponsor);
+  const userKey = sanitizeKey(username);
+
+  const baseRef = ref(db, `analytics/sponsorDailyPlayers/${dateKey}/${sponsorKey}`);
+  await set(ref(db, `analytics/sponsorDailyPlayers/${dateKey}/${sponsorKey}/__name`), sponsor);
+  await set(ref(db, `analytics/sponsorDailyPlayers/${dateKey}/${sponsorKey}/${userKey}`), {
+    username,
+    recordedAt: new Date().toISOString()
+  });
+}
+
+export async function fetchSponsorDailyPlayers(days = 7) {
+  const snapshot = await get(ref(db, "analytics/sponsorDailyPlayers"));
+  if (!snapshot.exists()) {
+    return { dates: [], sponsors: {} };
+  }
+
+  const data = snapshot.val();
+  const dates = [];
+  const sponsors = {};
+
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dateKey = date.toISOString().slice(0, 10);
+    dates.push(dateKey);
+
+    const dayData = data?.[dateKey] || {};
+    Object.entries(dayData).forEach(([sponsorKey, sponsorValue]) => {
+      if (!sponsorValue || sponsorKey === "__meta") return;
+      const name = sponsorValue.__name || sponsorKey;
+      if (!sponsors[name]) {
+        sponsors[name] = { dailyCounts: {}, usersByDate: {} };
+      }
+
+      const users = Object.entries(sponsorValue)
+        .filter(([key]) => key !== "__name")
+        .map(([, value]) => value?.username)
+        .filter(Boolean);
+
+      sponsors[name].dailyCounts[dateKey] = new Set(users).size;
+      sponsors[name].usersByDate[dateKey] = Array.from(new Set(users));
+    });
+  }
+
+  return { dates, sponsors };
+}
