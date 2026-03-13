@@ -24,6 +24,7 @@ const eventHistory = [];
 const players = {};
 let matchTimeLeft = MATCH_DURATION_SECONDS;
 let matchRunning = false;
+let matchStartedThisRound = false;
 let isBatchResetting = false;
 
 const chicken = {
@@ -251,6 +252,9 @@ function buildMatchState() {
 function restartMatchIfEligible() {
   matchTimeLeft = MATCH_DURATION_SECONDS;
   matchRunning = getPlayerCount() >= MIN_PLAYERS_TO_START;
+  if (matchRunning) {
+    matchStartedThisRound = true;
+  }
 }
 
 function resolveRoundWinner() {
@@ -292,6 +296,7 @@ function resetRoundForNextBatch() {
   resetChickenState();
   matchRunning = false;
   matchTimeLeft = MATCH_DURATION_SECONDS;
+  matchStartedThisRound = false;
 
   setTimeout(() => {
     isBatchResetting = false;
@@ -340,6 +345,7 @@ gameWss.on('connection', (ws, req) => {
   ws.send(JSON.stringify({ type: 'connect', id: playerId, username }));
   if (!matchRunning && getPlayerCount() >= MIN_PLAYERS_TO_START) {
     matchRunning = true;
+    matchStartedThisRound = true;
   }
 
   ws.on('message', (message) => {
@@ -485,7 +491,7 @@ gameWss.on('connection', (ws, req) => {
       chicken.vz = 0;
     }
     delete players[playerId];
-    if (getPlayerCount() < MIN_PLAYERS_TO_START) {
+    if (!matchStartedThisRound && getPlayerCount() < MIN_PLAYERS_TO_START) {
       matchRunning = false;
       matchTimeLeft = MATCH_DURATION_SECONDS;
     }
@@ -639,9 +645,12 @@ setInterval(() => {
       resetRoundForNextBatch();
     }
   } else {
-    matchTimeLeft = MATCH_DURATION_SECONDS;
-    if (getPlayerCount() >= MIN_PLAYERS_TO_START) {
-      matchRunning = true;
+    if (!matchStartedThisRound) {
+      matchTimeLeft = MATCH_DURATION_SECONDS;
+      if (getPlayerCount() >= MIN_PLAYERS_TO_START) {
+        matchRunning = true;
+        matchStartedThisRound = true;
+      }
     }
   }
 
