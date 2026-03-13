@@ -19,6 +19,10 @@ It is not a professional security audit.
 - Input validation is basic; malformed client state should be hardened
 - Reconnect logic is in place, but abuse/throttle limits are not fully enforced
 
+## Recent fixes
+
+- Client stop-match control removed; only the server timer can end rounds (see `SEC-011`).
+
 ## Known limitations
 
 - No formal load testing results included yet
