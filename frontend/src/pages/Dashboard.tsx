@@ -485,7 +485,7 @@ export default function Dashboard() {
                       <br />
                       Category: {s.category}
                     </p>
-                    <button className="sponsor-dashboard__cta" style={{ width: '100%', marginTop: '10px' }}>Buy Now</button>
+                    <button className="sponsor-dashboard__cta" style={{ width: '100%', marginTop: '10px', opacity: 0.5 }}>Not Yet Availiable</button>
                   </>
                 );
               })()}
