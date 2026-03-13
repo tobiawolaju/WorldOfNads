@@ -13,48 +13,48 @@ const FAQ: React.FC = () => {
     {
       question: "What is World of Nads?",
       answer:
-        "World of Nads (WONs) is where the chaos of 'Tag' meets the stakes of a Battle Royale. It is a high-fidelity, browser-based competitive arena game powered by Monad. We prioritize 'Fun First'—shifting from the boring 'Play-to-Earn' model to a sustainable 'Play-and-Own' ecosystem.",
+        "World of Nads (WONs) is a fast-paced multiplayer arena game built for the browser and powered by the Monad blockchain. It blends the chaos of playground games like Tag with the intensity of battle-royale competition. The focus is simple: fun gameplay first, real rewards second.",
     },
     {
       question: "Is the game live?",
       answer:
-        "Yes. Unlike many Web3 projects that are just a concept, WONs is a live, playable reality. We are currently in Closed Beta with 200+ active testers and a fully functional browser build. No downloads required.",
+        "Yes. World of Nads already has a playable browser build. Players can jump into matches instantly with no downloads required. The game is currently in active testing as we expand features and prepare for a larger public release.",
     },
     {
-      question: "How do I play?",
+      question: "How does the game work?",
       answer:
-        "You drop into a lobby with up to 20 players for a high-octane 'Chicken Chase.' A chicken spawns in the arena. The objective is simple: be the one holding the chicken when the timer hits 0:00. However, holding the chicken drains your stamina, forcing strategic passes (Hot Potato style) while the map borders shrink.",
+        "Players drop into a chaotic arena where a chicken spawns in the center. The goal is simple: be the player holding the chicken when the timer reaches zero. Holding the chicken drains stamina, forcing players to move quickly, dodge opponents, and strategically pass it before time runs out.",
     },
     {
-      question: "What are the rewards and Tokenomics?",
+      question: "What rewards do players earn?",
       answer:
-        "We use a sustainable dual-asset economy. Prizes for tournaments are paid in stable assets (USDC/USDT) so winners get guaranteed value. The $WON token is an earned utility token used strictly for cosmetics (Skins, Battle Passes, VFX). There are NO Pay-to-Win mechanics.",
+        "Matches and tournaments are funded using MON, the native token of the Monad network. Sponsors deposit prizes before the match starts, and when a match ends the winner automatically receives the reward on-chain. There are no manual claims and no hidden steps.",
     },
     {
-      question: "How does Monad integration work?",
+      question: "Why is the game built on Monad?",
       answer:
-        "We use Monad as an invisible backend for speed and trust. The standout feature is 'Instant Payouts.' There is no 'Claim Rewards' button—the moment a match ends, the blockchain settles the result and funds hit the winner's wallet immediately.",
+        "Monad provides extremely fast transaction processing with low fees. This allows match results to settle instantly on-chain while keeping the gameplay experience smooth and responsive for players.",
     },
     {
-      question: "How can projects partner with WONs?",
+      question: "Is the game free to play?",
       answer:
-        "WONs acts as a 'User Acquisition Engine' for the Monad ecosystem. Instead of airdropping tokens to bots, projects can sponsor 'Wager Lobbies' or Tournaments. To win the allocation, users must play the game. Since bots can't win at Nads, partners are guaranteed engagement from real humans.",
+        "Yes. Anyone can start playing for free. Players can sign in using simple social login through Privy, which creates a wallet automatically behind the scenes. This removes the usual blockchain friction and lets players start playing within seconds.",
     },
     {
-      question: "Is it Free-to-Play?",
+      question: "How do sponsored matches work?",
       answer:
-        "Yes. The core game is accessible to everyone. We utilize Privy for seamless onboarding, allowing you to log in with social accounts in under 15 seconds—no wallet seed phrases required to start playing.",
+        "Projects or communities can sponsor matches by funding a prize pool using MON. Players compete for the reward inside the arena. This creates a new way for projects to distribute incentives through gameplay instead of traditional airdrops.",
     },
     {
       question: "What prevents bots from farming rewards?",
       answer:
-        "Skill. Our gameplay is physics-based and twitch-reflex dependent. Unlike simple 'click-to-earn' DeFi games, WONs requires active movement, strategy, and reaction time, making it impossible for standard scripts to farm rewards.",
+        "The game is skill-based and physics-driven. Winning requires movement, reaction time, and strategy inside a real-time arena. This makes it extremely difficult for automated scripts or bots to farm rewards.",
     },
     {
-      question: "How can I join the Beta?",
+      question: "How can I join early?",
       answer:
-        "Follow @worldofnads on X (Twitter) and join our Discord. We are gradually expanding our Closed Beta group. We also have reserved whitelist slots for specific partner communities and VC partners.",
-    },
+        "Follow @worldofnads on X and join the community Discord to stay updated on playtests, tournaments, and early access opportunities."
+    }
   ];
 
   const toggleFAQ = (index: number) => {
@@ -63,9 +63,18 @@ const FAQ: React.FC = () => {
 
   return (
     <div className="faq-container">
-      <div style={{ height: '60px' }}></div>
+      <div style={{ height: "60px" }}></div>
+
       <h1 className="faq-header">FAQ</h1>
-      <p className="faq-subtext" style={{ textAlign: "center", color: "#888", marginBottom: "30px" }}>
+
+      <p
+        className="faq-subtext"
+        style={{
+          textAlign: "center",
+          color: "#888",
+          marginBottom: "30px"
+        }}
+      >
         Everything you need to know about the Arena.
       </p>
 
@@ -78,8 +87,11 @@ const FAQ: React.FC = () => {
           >
             <div className="faq-question">
               <span>{item.question}</span>
-              <span className="faq-icon">{activeIndex === index ? "–" : "+"}</span>
+              <span className="faq-icon">
+                {activeIndex === index ? "–" : "+"}
+              </span>
             </div>
+
             <div className="faq-answer">{item.answer}</div>
           </div>
         ))}
