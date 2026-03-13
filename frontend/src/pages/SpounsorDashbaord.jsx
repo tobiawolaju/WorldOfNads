@@ -22,6 +22,76 @@ function buildMatchId(sponsor) {
   return `match-${slug || "sponsor"}-${Date.now()}`;
 }
 
+const MATCH_SLOT_MINUTES = 30;
+const MAX_SUGGEST_DAYS = 60;
+
+function toMinutes(timeValue) {
+  if (!timeValue || typeof timeValue !== "string") return null;
+  const [hoursStr, minutesStr] = timeValue.split(":");
+  const hours = Number(hoursStr);
+  const minutes = Number(minutesStr);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  return hours * 60 + minutes;
+}
+
+function formatDateInput(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatTimeInput(date) {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function roundUpToSlot(date) {
+  const slotMs = MATCH_SLOT_MINUTES * 60 * 1000;
+  return new Date(Math.ceil(date.getTime() / slotMs) * slotMs);
+}
+
+function findConflictingMatch(dateValue, timeValue, matchList) {
+  const selectedMinutes = toMinutes(timeValue);
+  if (!dateValue || selectedMinutes === null) return null;
+  return matchList.find((match) => {
+    if (!match || match.status === "cancelled") return false;
+    if (match.date !== dateValue) return false;
+    const matchMinutes = toMinutes(match.time);
+    if (matchMinutes === null) return false;
+    return Math.abs(matchMinutes - selectedMinutes) <= MATCH_SLOT_MINUTES;
+  }) || null;
+}
+
+function findSuggestedSlot({ dateValue, timeValue, matchList }) {
+  const slotMs = MATCH_SLOT_MINUTES * 60 * 1000;
+  let start;
+
+  if (dateValue && timeValue) {
+    start = new Date(`${dateValue}T${timeValue}`);
+  } else if (dateValue) {
+    start = new Date(`${dateValue}T00:00`);
+  } else {
+    start = new Date();
+  }
+
+  start = roundUpToSlot(start);
+  const maxIterations = MAX_SUGGEST_DAYS * 24 * (60 / MATCH_SLOT_MINUTES);
+
+  for (let i = 0; i < maxIterations; i += 1) {
+    const candidate = new Date(start.getTime() + i * slotMs);
+    const candidateDate = formatDateInput(candidate);
+    const candidateTime = formatTimeInput(candidate);
+    const conflict = findConflictingMatch(candidateDate, candidateTime, matchList);
+    if (!conflict) {
+      return { date: candidateDate, time: candidateTime };
+    }
+  }
+
+  return null;
+}
+
 const initialForm = {
   sponsor: "",
   prizeAmount: "",
@@ -36,6 +106,7 @@ export default function SpounsorDashbaord() {
   const { ready, authenticated, user } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
   const [matches, setMatches] = useState([]);
+  const [allMatches, setAllMatches] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -73,6 +144,7 @@ export default function SpounsorDashbaord() {
     const hydrateMatches = async () => {
       try {
         const records = await fetchMatchesFromFirebase();
+        setAllMatches(records);
         // Only show matches created by this wallet
         const myMatches = records.filter(m => m.createdByWallet === walletAddress);
         setMatches(myMatches);
@@ -112,6 +184,12 @@ export default function SpounsorDashbaord() {
   const handleCreateMatch = async () => {
     if (!form.sponsor || !form.prizeAmount || !form.date || !form.time) {
       setFeedback("Fill sponsor, prize amount, match date, and match time.");
+      return;
+    }
+
+    const conflict = findConflictingMatch(form.date, form.time, allMatches);
+    if (conflict) {
+      setFeedback("That time is already booked or too close to another match. Please select another time.");
       return;
     }
 
@@ -160,6 +238,7 @@ export default function SpounsorDashbaord() {
       });
 
       setMatches((current) => [record, ...current]);
+      setAllMatches((current) => [record, ...current]);
 
       trackMatchCreated({
         userId: user?.id,
@@ -213,6 +292,7 @@ export default function SpounsorDashbaord() {
 
       // Update local state by removing the match
       setMatches(prev => prev.filter(m => m.matchId !== matchId));
+      setAllMatches(prev => prev.filter(m => m.matchId !== matchId));
 
       setFeedback(result.mode === "onchain"
         ? "Match cancelled successfully. Funds returned and removed from dashboard."
@@ -227,6 +307,26 @@ export default function SpounsorDashbaord() {
 
   if (!ready || !walletsReady) return <FullScreenLoader />;
   if (!authenticated || !user) return null;
+
+  const handleSuggestTime = () => {
+    const suggestion = findSuggestedSlot({
+      dateValue: form.date,
+      timeValue: form.time,
+      matchList: allMatches
+    });
+
+    if (!suggestion) {
+      setFeedback("No available time found in the next 60 days. Try another date.");
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      date: suggestion.date,
+      time: suggestion.time
+    }));
+    setFeedback(`Suggested time: ${suggestion.date} at ${suggestion.time}`);
+  };
 
   return (
     <div className="sponsor-dashboard">
@@ -328,6 +428,9 @@ export default function SpounsorDashbaord() {
               <div className="sponsor-modal__footer-actions">
                 <button className="sponsor-modal__cancel-btn" onClick={closeModal} disabled={isSubmitting}>
                   Cancel
+                </button>
+                <button className="sponsor-modal__suggest-btn" onClick={handleSuggestTime} disabled={isSubmitting}>
+                  Suggest Time
                 </button>
                 <button className="sponsor-dashboard__cta" disabled={isSubmitting} onClick={handleCreateMatch}>
                   {isSubmitting ? "Creating..." : "Create Match"}

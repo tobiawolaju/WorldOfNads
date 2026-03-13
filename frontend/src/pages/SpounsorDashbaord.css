@@ -189,6 +189,21 @@
   background: rgba(0, 0, 0, 0.05);
 }
 
+.sponsor-modal__suggest-btn {
+  border: 1px dashed rgba(124, 58, 237, 0.5);
+  background: rgba(124, 58, 237, 0.08);
+  color: #5b21b6;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sponsor-modal__suggest-btn:hover:not(:disabled) {
+  background: rgba(124, 58, 237, 0.16);
+}
+
 .sponsor-modal__close {
   border: none;
   background: transparent;
