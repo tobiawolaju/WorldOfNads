@@ -11,7 +11,6 @@ import Footer from "./components/Footer";
 
 // Pages
 import Home from "./pages/Home";
-import Crew from "./pages/DexSwap";
 import PreTGEArena from "./pages/PreTGEArena";
 import Roadmap from "./pages/Leaderboard";
 import Community from "./pages/FAQ";
@@ -71,7 +70,6 @@ const AppContent: React.FC = () => {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={authenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
-            <Route path="/crew" element={<Crew />} />
             <Route path="/pre-tge-arena" element={<PreTGEArena />} />
             <Route path="/roadmap" element={<Roadmap />} />
             <Route path="/community" element={<Community />} />

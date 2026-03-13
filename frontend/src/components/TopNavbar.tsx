@@ -13,7 +13,6 @@ const TopNavbar = () => {
     { path: '/', label: 'WONs' },
     { path: '/pre-tge-arena', label: 'Arena' },
     { path: '/roadmap', label: 'Leaderboards' },
-    { path: '/crew', label: 'Swap' },
     { path: '/partners', label: 'Partners' },
     { path: '/community', label: 'FAQ' },
     { path: '/careers', label: 'Careers' },

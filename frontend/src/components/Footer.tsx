@@ -30,7 +30,6 @@ const Footer = () => {
         <NavLink to="/" className="footer-link">WONs</NavLink>
         <NavLink to="/pre-tge-arena" className="footer-link">Pre-TGE Arena</NavLink>
         <NavLink to="/roadmap" className="footer-link">Leaderboards</NavLink>
-        <NavLink to="/crew" className="footer-link">Won Dex</NavLink>
         <NavLink to="/partners" className="footer-link">Partners</NavLink>
         <NavLink to="/community" className="footer-link">FAQ</NavLink>
         <NavLink to="/careers" className="footer-link">Careers</NavLink>
