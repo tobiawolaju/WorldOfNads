@@ -399,11 +399,11 @@ const jobRoles: JobRole[] = [
 ];
 
 const teamMembers: TeamMember[] = [
-    { name: "Tobi", role: "Foundering Engineer", imageUrl: "/pfps/pfp-tobi.png" },
-    { name: "Joshua", role: "Senior Game Engineer", imageUrl: "/pfps/pfp-joshua.png" },
-    { name: "Spark", role: "Head of Growth & Partnerships", imageUrl: "/pfps/pfp-spark.png" },
-    { name: "Lone", role: "Infrastructure & Security Engineer", imageUrl: "/pfps/pfp-lone.png" },
-    { name: "Wisdom", role: "Community & Content Lead", imageUrl: "/pfps/pfp-wisdom.png" },
+    { name: "Tobi Awolaju", role: "Foundering ", imageUrl: "/pfps/pfp-tobi.png" },
+    { name: "Tobi-codex", role: "Game Dev", imageUrl: "/pfps/pfp-joshua.png" },
+    { name: "Tobi-clawbot", role: "Growth & Partnerships", imageUrl: "/pfps/pfp-spark.png" },
+    { name: "Tobi-gemini", role: "Security & SmartcontractsS", imageUrl: "/pfps/pfp-lone.png" },
+    { name: "Tobi-n8n", role: "Community & Content Lead", imageUrl: "/pfps/pfp-wisdom.png" },
 ];
 
 const Careers: React.FC = () => {
@@ -465,8 +465,8 @@ const Careers: React.FC = () => {
 
                         {/* BODY: Collapsible Content */}
                         {/* Inline style max-height adjusted because contents are long */}
-                        <div 
-                            className="careers-answer" 
+                        <div
+                            className="careers-answer"
                             style={activeIndex === index ? { maxHeight: "2000px" } : {}}
                         >
                             <div className="job-card-content" style={{ paddingBottom: "20px" }}>
