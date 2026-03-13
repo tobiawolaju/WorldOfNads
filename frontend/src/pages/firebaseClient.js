@@ -151,3 +151,16 @@ export async function fetchUserRewards(username) {
     .filter(r => r.username === username)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
+
+export async function fetchUsersFromFirebase() {
+  const snapshot = await get(ref(db, "users"));
+  if (!snapshot.exists()) return [];
+
+  const data = snapshot.val();
+  return Object.entries(data).map(([key, value]) => ({
+    username: value?.username || key,
+    won: Number(value?.won || 0),
+    projects: Array.isArray(value?.projects) ? value.projects : [],
+    profilePictureUrl: value?.profilePictureUrl || value?.pfp || ""
+  }));
+}
