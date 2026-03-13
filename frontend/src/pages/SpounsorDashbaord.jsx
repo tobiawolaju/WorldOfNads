@@ -97,6 +97,8 @@ const initialForm = {
   prizeAmount: "",
   date: "",
   time: "",
+  minPlayersToStart: "3",
+  maxPlayers: "50",
   image: "/logo.jpg",
   description: "",
   url: ""
@@ -187,6 +189,19 @@ export default function SpounsorDashbaord() {
       return;
     }
 
+    const minPlayersValue = Number(form.minPlayersToStart);
+    const maxPlayersValue = form.maxPlayers === "unlimited" ? null : Number(form.maxPlayers);
+
+    if (!Number.isFinite(minPlayersValue) || minPlayersValue < 1) {
+      setFeedback("Minimum players must be at least 1.");
+      return;
+    }
+
+    if (maxPlayersValue !== null && (!Number.isFinite(maxPlayersValue) || maxPlayersValue < minPlayersValue)) {
+      setFeedback("Maximum players must be greater than or equal to minimum players.");
+      return;
+    }
+
     const conflict = findConflictingMatch(form.date, form.time, allMatches);
     if (conflict) {
       setFeedback("That time is already booked or too close to another match. Please select another time.");
@@ -212,7 +227,7 @@ export default function SpounsorDashbaord() {
         prizeAmount: Number(form.prizeAmount),
         prizeToken: "0x0000000000000000000000000000000000000000",
         startTime,
-        expectedParticipants: 50,
+        expectedParticipants: maxPlayersValue,
         winnerTokenURI: `/metadata/winner-${matchId}.json`,
         participationTokenURI: `/metadata/participant-${matchId}.json`,
         matchMetadataURI: form.url || `https://wons.example.com/matches/${matchId}`
@@ -229,6 +244,8 @@ export default function SpounsorDashbaord() {
         time: form.time,
         date: form.date,
         startTime,
+        minPlayersToStart: minPlayersValue,
+        maxPlayers: maxPlayersValue,
         image: form.image || "/logo.jpg",
         description: form.description || `${form.sponsor} sponsored match`,
         url: form.url,
@@ -414,6 +431,29 @@ export default function SpounsorDashbaord() {
               <label>
                 Match Time (24h Format)
                 <input name="time" type="time" value={form.time} onChange={handleChange} />
+              </label>
+              <label>
+                Minimum Players
+                <input
+                  name="minPlayersToStart"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={form.minPlayersToStart}
+                  onChange={handleChange}
+                />
+              </label>
+              <label>
+                Maximum Players
+                <select name="maxPlayers" value={form.maxPlayers} onChange={handleChange}>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="30">30</option>
+                  <option value="50">50</option>
+                  <option value="75">75</option>
+                  <option value="100">100</option>
+                  <option value="unlimited">Unlimited</option>
+                </select>
               </label>
               <label className="sponsor-modal__wide">
                 Description

@@ -15,7 +15,7 @@ const MAX_THROW_IMPULSE = 8.0;
 const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 0.5869336;
 const MATCH_DURATION_SECONDS = 180.0;
-const MIN_PLAYERS_TO_START = 3;
+const DEFAULT_MIN_PLAYERS_TO_START = 3;
 
 const MAX_EVENT_HISTORY = 100;
 let eventSequence = 0;
@@ -26,6 +26,8 @@ let matchTimeLeft = MATCH_DURATION_SECONDS;
 let matchRunning = false;
 let matchStartedThisRound = false;
 let isBatchResetting = false;
+let currentMinPlayersToStart = DEFAULT_MIN_PLAYERS_TO_START;
+let currentMaxPlayers = null;
 
 const chicken = {
   id: 'Chicken',
@@ -240,18 +242,72 @@ function getPlayerCount() {
   return Object.keys(players).length;
 }
 
+function normalizeLimitValue(value, fallback) {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === "string") {
+    if (value.toLowerCase() === "unlimited") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function updateMatchLimitsFromActiveMatch(activeMatch) {
+  if (!activeMatch) {
+    currentMinPlayersToStart = DEFAULT_MIN_PLAYERS_TO_START;
+    currentMaxPlayers = null;
+    return;
+  }
+
+  const minPlayers = normalizeLimitValue(activeMatch.minPlayersToStart, DEFAULT_MIN_PLAYERS_TO_START);
+  const maxPlayers = normalizeLimitValue(activeMatch.maxPlayers, null);
+
+  currentMinPlayersToStart = Math.max(1, Math.floor(minPlayers));
+  if (maxPlayers === null) {
+    currentMaxPlayers = null;
+  } else {
+    const normalizedMax = Math.max(1, Math.floor(maxPlayers));
+    currentMaxPlayers = normalizedMax < currentMinPlayersToStart ? currentMinPlayersToStart : normalizedMax;
+  }
+}
+
+function selectMatchForLimits(matchesMap) {
+  if (!matchesMap) return null;
+  const now = Math.floor(Date.now() / 1000);
+  const matches = Object.values(matchesMap).filter((m) => {
+    if (!m || !m.matchId || !m.startTime) return false;
+    if (m.status === "cancelled" || m.status === "settled") return false;
+    return true;
+  });
+
+  if (!matches.length) return null;
+
+  const liveOrStarted = matches.filter((m) => m.status === "live" || (m.status === "upcoming" && m.startTime <= now));
+  if (liveOrStarted.length) {
+    return liveOrStarted.sort((a, b) => b.startTime - a.startTime)[0];
+  }
+
+  const upcoming = matches.filter((m) => m.status === "upcoming" && m.startTime > now);
+  if (upcoming.length) {
+    return upcoming.sort((a, b) => a.startTime - b.startTime)[0];
+  }
+
+  return null;
+}
+
 function buildMatchState() {
   return {
     timeLeft: Number(matchTimeLeft.toFixed(2)),
     isRunning: matchRunning,
     durationSeconds: MATCH_DURATION_SECONDS,
-    minPlayersToStart: MIN_PLAYERS_TO_START
+    minPlayersToStart: currentMinPlayersToStart,
+    maxPlayers: currentMaxPlayers
   };
 }
 
 function restartMatchIfEligible() {
   matchTimeLeft = MATCH_DURATION_SECONDS;
-  matchRunning = getPlayerCount() >= MIN_PLAYERS_TO_START;
+  matchRunning = getPlayerCount() >= currentMinPlayersToStart;
   if (matchRunning) {
     matchStartedThisRound = true;
   }
@@ -326,6 +382,11 @@ eventsWss.on('connection', (ws) => {
 });
 
 gameWss.on('connection', (ws, req) => {
+  if (currentMaxPlayers !== null && getPlayerCount() >= currentMaxPlayers) {
+    ws.close(1008, 'match_full');
+    return;
+  }
+
   const playerId = randomUUID();
   const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const requestedUsername = sanitizeUsername(reqUrl.searchParams.get('username') || '');
@@ -343,7 +404,7 @@ gameWss.on('connection', (ws, req) => {
 
   console.log(`🎮 Player connected: ${playerId} (${username})`);
   ws.send(JSON.stringify({ type: 'connect', id: playerId, username }));
-  if (!matchRunning && getPlayerCount() >= MIN_PLAYERS_TO_START) {
+  if (!matchRunning && getPlayerCount() >= currentMinPlayersToStart) {
     matchRunning = true;
     matchStartedThisRound = true;
   }
@@ -491,7 +552,7 @@ gameWss.on('connection', (ws, req) => {
       chicken.vz = 0;
     }
     delete players[playerId];
-    if (!matchStartedThisRound && getPlayerCount() < MIN_PLAYERS_TO_START) {
+    if (!matchStartedThisRound && getPlayerCount() < currentMinPlayersToStart) {
       matchRunning = false;
       matchTimeLeft = MATCH_DURATION_SECONDS;
     }
@@ -647,7 +708,7 @@ setInterval(() => {
   } else {
     if (!matchStartedThisRound) {
       matchTimeLeft = MATCH_DURATION_SECONDS;
-      if (getPlayerCount() >= MIN_PLAYERS_TO_START) {
+      if (getPlayerCount() >= currentMinPlayersToStart) {
         matchRunning = true;
         matchStartedThisRound = true;
       }
@@ -699,6 +760,16 @@ setInterval(() => {
 
 initAnalyticsDb()
   .then(() => {
+    updateMatchLimitsFromActiveMatch(null);
+    setInterval(async () => {
+      try {
+        const allMatches = await getAllMatches();
+        const matchForLimits = selectMatchForLimits(allMatches);
+        updateMatchLimitsFromActiveMatch(matchForLimits);
+      } catch (error) {
+        console.error("[Match] Failed to refresh match limits:", error);
+      }
+    }, 15000);
     server.listen(PORT, '0.0.0.0', () => {
       console.log(`✅ Server is live on port ${PORT}`);
     });

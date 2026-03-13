@@ -56,6 +56,10 @@ export async function createSponsorMatchOnchain({
   const prizeValue = ethers.parseUnits(String(prizeAmount || 0), 18);
 
   const contract = new ethers.Contract(contractAddress, sponsorClickContractAbi, signer);
+  const maxUint32 = 4294967295;
+  const normalizedExpectedParticipants = Number.isFinite(expectedParticipants) && expectedParticipants > 0
+    ? Math.min(expectedParticipants, maxUint32)
+    : maxUint32;
   
   // Ensure matchId is a bytes32 hex string. If it's a plain string, hash it.
   const formattedMatchId = matchId.startsWith("0x") && matchId.length === 66 
@@ -66,7 +70,7 @@ export async function createSponsorMatchOnchain({
     formattedMatchId,
     isNative ? "0x0000000000000000000000000000000000000000" : prizeToken,
     prizeValue,
-    expectedParticipants || 50,
+    normalizedExpectedParticipants,
     startTime || Math.floor(Date.now() / 1000) + 3600,
     winnerTokenURI || "",
     participationTokenURI || "",
