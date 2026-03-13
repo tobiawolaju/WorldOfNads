@@ -1,10 +1,73 @@
 const API_BASE = import.meta.env.VITE_ANALYTICS_API_URL || "";
+const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || "";
 
 const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+let gaInitialized = false;
 
 function buildUrl(path) {
   if (!API_BASE) return path;
   return `${API_BASE}${path}`;
+}
+
+function safeStringify(value, maxLength = 500) {
+  try {
+    const serialized = JSON.stringify(value);
+    if (typeof serialized !== "string") return "";
+    return serialized.length > maxLength ? `${serialized.slice(0, maxLength)}...` : serialized;
+  } catch (error) {
+    return "";
+  }
+}
+
+function pruneEmpty(values) {
+  return Object.fromEntries(
+    Object.entries(values).filter(([, value]) => value !== undefined && value !== null && value !== "")
+  );
+}
+
+function sendToGoogleAnalytics(payload) {
+  if (!gaInitialized || typeof window === "undefined" || typeof window.gtag !== "function") return;
+
+  const metadata = payload?.metadata || {};
+  const params = pruneEmpty({
+    user_id: payload.user_id,
+    match_id: payload.match_id,
+    sponsor_id: payload.sponsor_id,
+    value: payload.value,
+    session_id: metadata.session_id,
+    username: metadata.username,
+    metadata: Object.keys(metadata).length ? safeStringify(metadata) : undefined
+  });
+
+  window.gtag("event", payload.event_type, params);
+}
+
+export function initGoogleAnalytics() {
+  if (!GA_MEASUREMENT_ID || gaInitialized || typeof window === "undefined") return false;
+
+  if (!window.dataLayer) {
+    window.dataLayer = [];
+  }
+  if (typeof window.gtag !== "function") {
+    window.gtag = function gtag() {
+      window.dataLayer.push(arguments);
+    };
+  }
+
+  window.gtag("js", new Date());
+  window.gtag("config", GA_MEASUREMENT_ID, {
+    send_page_view: false
+  });
+
+  if (!document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"]`)) {
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+    document.head.appendChild(script);
+  }
+
+  gaInitialized = true;
+  return true;
 }
 
 function sendEvent(payload, useBeacon = false) {
@@ -21,6 +84,8 @@ function sendEvent(payload, useBeacon = false) {
     body,
     keepalive: useBeacon
   }).catch(() => {});
+
+  sendToGoogleAnalytics(payload);
   return true;
 }
 

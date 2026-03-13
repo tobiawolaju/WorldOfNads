@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
+import { initGoogleAnalytics } from "./lib/analyticsClient";
 
 import { PrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
@@ -30,6 +31,8 @@ const monad = {
     },
   },
 };
+
+initGoogleAnalytics();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
