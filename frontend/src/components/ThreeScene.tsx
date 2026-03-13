@@ -22,6 +22,7 @@ interface ThreeSceneProps {
   twitter?: Twitter;
   wallets: Wallet[];
   earned: number;
+  username: string;
   onLogout: () => void;
 }
 
@@ -187,6 +188,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
   twitter,
   wallets,
   earned,
+  username,
   onLogout,
 }) => {
   const [cameraZ, setCameraZ] = useState(22);
@@ -253,6 +255,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
               twitter={twitter}
               wallets={wallets}
               earned={earned}
+              username={username}
               onLogout={onLogout}
             />
           </group>

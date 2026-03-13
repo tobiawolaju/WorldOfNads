@@ -1,7 +1,9 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { useNavigate } from "react-router-dom";
+import { fetchUserRoles } from "../pages/firebaseClient";
 
 // --- Prop and Type Interfaces ---
 interface Twitter {
@@ -18,6 +20,7 @@ interface IdCardProps {
   twitter: Twitter | undefined;
   wallets: Wallet[];
   earned: number;
+  username: string;
   onLogout: () => void;
 }
 
@@ -53,9 +56,24 @@ const fragmentShader = `
   }
 `;
 
-export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogout }) => {
+export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, username, onLogout }) => {
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
   const [copied, setCopied] = useState(false);
+  const [roles, setRoles] = useState<string[]>([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let mounted = true;
+    if (!username) return;
+    fetchUserRoles(username)
+      .then((data) => {
+        if (mounted) setRoles(data || []);
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, [username]);
 
   // Animate the shader's time uniform
   useFrame(({ clock }) => {
@@ -184,9 +202,26 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, onLogo
           </div>
 
         </div>
-        <button className="ticket-logout-button" onClick={onLogout}>
-          Logout
-        </button>
+        <div className="ticket-action-bar">
+          {roles.includes("admin") && (
+            <>
+              <button className="ticket-action-button" onClick={() => navigate("/admin/users")}>
+                Admin Users
+              </button>
+              <button className="ticket-action-button" onClick={() => navigate("/admin/analytics")}>
+                Analytics
+              </button>
+            </>
+          )}
+          {roles.includes("sponsor") && (
+            <button className="ticket-action-button" onClick={() => navigate("/sponsor")}>
+              Host Match
+            </button>
+          )}
+          <button className="ticket-action-button" onClick={onLogout}>
+            Logout
+          </button>
+        </div>
 
 
       </Html>

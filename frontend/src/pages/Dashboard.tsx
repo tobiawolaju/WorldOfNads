@@ -306,7 +306,13 @@ export default function Dashboard() {
   return (
     <div className="dashboard-wrapper">
       <div className="left-3d-section">
-        <ThreeScene twitter={twitterData} wallets={wallets} earned={earned} onLogout={logout} />
+        <ThreeScene
+          twitter={twitterData}
+          wallets={wallets}
+          earned={earned}
+          username={getUsernameFromPrivy(user)}
+          onLogout={logout}
+        />
       </div>
 
       <div className="right-info-section">
