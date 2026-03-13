@@ -743,6 +743,14 @@
   overflow-y: auto;
 }
 
+.reward-empty {
+  padding: 16px 12px;
+  color: #5a5a5a;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+}
+
 .reward-item {
   display: flex;
   align-items: center;

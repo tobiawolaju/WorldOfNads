@@ -63,15 +63,6 @@ type StoreItem = {
   description: string;
 };
 
-const dummyRewards: RewardItem[] = [
-  { id: "r1", username: "Tobia", amount: "9.4 MON", source: "WorldOfNads Match #114", category: "earned", date: "2026-03-10" },
-  { id: "r2", username: "Alex", amount: "5.0 MON", source: "Community Event", category: "gifted", date: "2026-03-09" },
-  { id: "r3", username: "Tobia", amount: "12.2 MON", source: "Sponsor Cup Final", category: "earned", date: "2026-03-08" },
-  { id: "r4", username: "Sarah", amount: "2.5 MON", source: "Loyalty Airdrop", category: "gifted", date: "2026-03-07" },
-  { id: "r5", username: "Mike", amount: "1.1 MON", source: "Weekly Challenge", category: "earned", date: "2026-03-11" },
-  { id: "r6", username: "NadBot", amount: "100.0 MON", source: "Grand Opening Gift", category: "gifted", date: "2026-03-11" },
-];
-
 const dummyStore: StoreItem[] = [
   { id: "s1", name: "Gladiator Skin", price: "20 MON", image: "/logo.jpg", category: "skins", description: "Battle-hardened armor for your character." },
   { id: "s2", name: "Heart Wave", price: "5 MON", image: "/logo.jpg", category: "emotes", description: "Spread the love in the arena." },
@@ -391,20 +382,26 @@ export default function Dashboard() {
 
           {tab === "rewards" && (
             <div className="reward-list">
-              {(rewards.length > 0 ? rewards : dummyRewards)
-                .filter((r) => r.category === rewardFilter)
-                .map((reward) => (
-                  <div
-                    key={reward.id}
-                    className={`reward-item ${selectedReward === reward.id ? "selected" : ""}`}
-                    onClick={() => setSelectedReward(reward.id)}
-                  >
-                    <div className="reward-item-icon">🏆</div>
-                    <div className="reward-item-text">
-                      <strong>{reward.username}</strong> won <span>{reward.amount}</span> from {reward.source}
+              {rewards.filter((r) => r.category === rewardFilter).length === 0 ? (
+                <div className="reward-empty">
+                  No rewards yet. Join a match to win some.
+                </div>
+              ) : (
+                rewards
+                  .filter((r) => r.category === rewardFilter)
+                  .map((reward) => (
+                    <div
+                      key={reward.id}
+                      className={`reward-item ${selectedReward === reward.id ? "selected" : ""}`}
+                      onClick={() => setSelectedReward(reward.id)}
+                    >
+                      <div className="reward-item-icon">??</div>
+                      <div className="reward-item-text">
+                        <strong>{reward.username}</strong> won <span>{reward.amount}</span> from {reward.source}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+              )}
             </div>
           )}
 
@@ -452,7 +449,7 @@ export default function Dashboard() {
           {tab === "rewards" && selectedReward && (
             <div className="match-details-box">
               {(() => {
-                const r = [...rewards, ...dummyRewards].find((x) => x.id === selectedReward);
+                const r = rewards.find((x) => x.id === selectedReward);
                 if (!r) return null;
                 return (
                   <>
