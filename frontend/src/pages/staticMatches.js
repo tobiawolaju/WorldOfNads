@@ -1,17 +1,18 @@
 export const staticMatches = [
   {
     id: 1,
-    matchId: "match-monad-mainnet-001",
-    sponsor: "Monad Mainnet",
-    prize: "Free",
-    prizeAmount: 10,
-    prizeToken: "MON",
+    matchId: "match-open-lobby-001",
+    sponsor: "World of NAD Open Lobby",
+    prize: "None",
+    prizeAmount: 0,
+    prizeToken: null,
     status: "live",
     time: "Live Now",
     date: "2026-03-09",
-    startTime: 1741510800, // 2026-03-09T09:00:00Z
+    startTime: 1741510800,
     image: "https://pbs.twimg.com/profile_images/1861739634428174336/26FzLLyr.jpg",
-    description: "Monad is a high-performance EVM-compatible Layer 1 blockchain with 10,000 TPS, 1-second block times, and sub-cent fees.",
-    url: "https://x.com/monad_xyz"
+    description:
+      "Open lobby match. No sponsors, no rewards. Players join freely, compete, and experience real-time gameplay. Winners may occasionally receive NFTs, but rewards are not guaranteed.",
+    url: ""
   }
 ];
