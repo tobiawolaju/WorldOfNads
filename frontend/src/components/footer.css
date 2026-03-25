@@ -39,7 +39,7 @@
 }
 
 .footer-link {
-    color: rgb(146, 146, 146);
+    color: var(--foreground-light);
     text-decoration: none;
     font-size: 14px;
 }
@@ -55,7 +55,7 @@
 }
 
 .footer-icon {
-    color: rgb(122, 122, 122);
+    color: var(--foreground-muted);
     transition: opacity 0.2s;
 }
 

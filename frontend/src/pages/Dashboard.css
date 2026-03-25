@@ -102,14 +102,14 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: hsl(249, 100%, 74%);
+  background: var(--primary-light);
   color: white;
   cursor: pointer;
   z-index: 20;
   font-family: font1;
   font-weight: bold;
   font-size: 20px;
-  border-radius: 50px;
+  border-radius: var(--radius-full);
   height: 50px;
   margin: 10px;
   padding: 5px, 30px;
@@ -136,7 +136,7 @@
 
 /* Disabled / Active White Background State */
 .play-fixed.disabled {
-  background: hsl(249, 100%, 74%);
+  background: var(--primary-light);
   color: #ffffff;
   border: 8px solid rgba(255, 255, 255, 0.197);
   /* ← Black border when white */
@@ -174,7 +174,7 @@
 .tab.active {
   opacity: 1;
   scale: 1.2;
-  color: hsl(249, 100%, 74%);
+  color: var(--primary-light);
   transform: translateX(8px);
 }
 
@@ -198,7 +198,7 @@
   opacity: 1;
   background: #00000020;
   color: rgba(0, 0, 0, 0.463);
-  border-radius: 50px;
+  border-radius: var(--radius-full);
 }
 
 
@@ -499,7 +499,7 @@
 
 .ticket-action-button {
   padding: 5px 10px;
-  border-radius: 50px;
+  border-radius: var(--radius-full);
   border: 3px solid #7c6dff;
   background: transparent;
   color: #7c6dff;
@@ -534,7 +534,7 @@
 }
 
 .play-fixed.counting {
-  background: hsl(249, 100%, 74%);
+  background: var(--primary-light);
   /* Dark background for contrast */
   color: #ffffff;
   width: 160px;
@@ -572,9 +572,9 @@
   z-index: 1;
   inset: 4px;
   /* This value determines the border thickness */
-  background: hsl(249, 100%, 74%);
+  background: var(--primary-light);
   /* Must match the button's background */
-  border-radius: 50px;
+  border-radius: var(--radius-full);
   /* Should match the button's border-radius */
 }
 
@@ -745,10 +745,10 @@
 
 .reward-empty {
   padding: 16px 12px;
-  color: #5a5a5a;
+  color: var(--foreground-muted);
   font-size: 0.95rem;
   background: rgba(255, 255, 255, 0.6);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
 }
 
 .reward-item {

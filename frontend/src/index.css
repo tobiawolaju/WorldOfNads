@@ -13,12 +13,37 @@
 }
 
 :root {
+  /* Colors */
+  --primary: #5B4FFF;
+  --primary-hover: #4A3EE6;
+  --primary-active: #3F35D9;
+  --primary-light: hsl(249, 100%, 74%);
+  
   --background: #ffffff;
   --foreground: #171717;
+  --foreground-muted: rgba(0, 0, 0, 0.7);
+  --foreground-light: rgb(146, 146, 146);
+  
+  --border: #E2E3F0;
+  --border-light: rgba(255, 255, 255, 0.45);
+  
+  --card-bg: rgba(255, 255, 255, 0.25);
+  --overlay-bg: rgba(255, 255, 255, 0.3);
+  --navbar-bg: rgba(255, 255, 255, 0.4);
+  --muted-bg: #f4f4f4;
+  --primary-accent: #907cff;
+
+  /* Typography */
   --font-inter: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
   --font-abc-favorit: "ABC Favorit", "Inter", system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
 }
 
 body {
@@ -43,25 +68,25 @@ html {
   line-height: 1.25rem;
   font-weight: 500;
   color: white;
-  background-color: #5B4FFF;
+  background-color: var(--primary);
   border: 1px solid transparent;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 200ms ease-in-out;
 }
 
 .button-primary:hover {
-  background-color: #4A3EE6;
+  background-color: var(--primary-hover);
 }
 
 .button-primary:focus {
-  background-color: #4A3EE6;
+  background-color: var(--primary-hover);
   outline: none;
-  box-shadow: 0 0 0 2px white, 0 0 0 4px #5B4FFF;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary);
 }
 
 .button-primary:active {
-  background-color: #3F35D9;
+  background-color: var(--primary-active);
 }
 
 .button-primary:disabled {
@@ -76,10 +101,10 @@ html {
   padding: 0.5rem 1rem;
   gap: 0.25rem;
   height: 2.25rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   background-color: transparent;
-  border: 1px solid #5B4FFF;
-  color: #5B4FFF;
+  border: 1px solid var(--primary);
+  color: var(--primary);
   font-weight: 500;
   font-size: 0.875rem;
   line-height: 1.25;
@@ -89,13 +114,13 @@ html {
 
 .button-outline:hover,
 .button-outline:focus {
-  background-color: #5B4FFF;
+  background-color: var(--primary);
   color: white;
   outline: none;
 }
 
 .button-outline:active {
-  background-color: #4A3EE6;
+  background-color: var(--primary-hover);
 }
 
 .button-outline:disabled {
@@ -110,8 +135,8 @@ html {
   padding: 0.5rem 0.75rem;
   gap: 0.75rem;
   background-color: white;
-  border: 1px solid #E2E3F0;
-  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   color: #040217;
   font-weight: 400;
   font-size: 1rem;
@@ -138,11 +163,11 @@ html {
 }
 
 .text-primary {
-  color: #5B4FFF;
+  color: var(--primary);
 }
 
 .border-primary {
-  border-color: #5B4FFF;
+  border-color: var(--primary);
 }
 
 .loader-overlay {
@@ -155,7 +180,7 @@ html {
   width: 100%;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--overlay-bg);
   animation: fade-in 150ms ease-in forwards;
 }
 

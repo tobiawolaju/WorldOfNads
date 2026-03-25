@@ -100,7 +100,7 @@ body {
   /* Safari */
   padding: 60px 20px;
   text-align: center;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   margin: 25px;
 }
 
@@ -130,7 +130,7 @@ body {
 /* Individual card */
 .wons-card {
   background: #ff80e3;
-  border-radius: 15px;
+  border-radius: var(--radius-md);
   padding: 25px;
   text-align: left;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -187,8 +187,8 @@ body {
 
 .stats-section {
   margin: 60px auto;
-  background: #f4f4f4;
-  border-radius: 16px;
+  background: var(--muted-bg);
+  border-radius: var(--radius-lg);
   padding: 60px 20px;
   text-align: center;
 }
@@ -212,14 +212,14 @@ body {
   min-width: 180px;
   padding: 30px;
   background: white;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   box-shadow: 0 4px 12px rgba(0, 0, 0, .05);
 }
 
 .stats-value {
   font-size: 2.4rem;
   font-weight: 800;
-  color: #907cff;
+  color: var(--primary-accent);
   display: block;
 }
 
@@ -290,7 +290,7 @@ body {
 .event-card {
   background: white;
   padding: 25px;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   box-shadow: 0 4px 10px rgba(0, 0, 0, .06);
   text-align: left;
 }
@@ -307,7 +307,7 @@ body {
   background: #000;
   color: white;
   border: none;
-  border-radius: 40px;
+  border-radius: var(--radius-full);
   cursor: pointer;
   font-size: 1.1rem;
 }
