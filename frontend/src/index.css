@@ -194,35 +194,31 @@ html {
   pointer-events: none;
   z-index: -1;
   overflow: hidden;
-  opacity: 0.35; /* Increased from 0.15 for better visibility */
+  opacity: 0.35;
+  /* Increased from 0.15 for better visibility */
 }
 
 .rainbow-bar {
   position: absolute;
   left: 0;
-  width: 100vw;
-  height: 200px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 255, 255, 1) 10%,
-    rgba(255, 0, 0, 0.5) 30%,
-    rgba(255, 127, 0, 0.45) 45%,
-    rgba(255, 255, 0, 0.4) 60%,
-    rgba(0, 255, 0, 0.4) 75%,
-    rgba(0, 0, 255, 0.45) 85%,
-    rgba(75, 0, 130, 0.45) 90%,
-    rgba(148, 0, 211, 0.5) 95%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  filter: blur(35px);
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
+  width: 150vw;
+  height: 80px;
+  background: radial-gradient(ellipse at center,
+      rgba(255, 255, 255, 0.767) 10%,
+      rgba(253, 237, 255, 0.459) 30%,
+      rgba(244, 165, 255, 0.568) 30%,
+      rgba(237, 105, 255, 0.575) 30%,
+      rgba(231, 49, 255, 0.856) 30%,
+      rgb(225, 0, 255) 30%,
+      filter: blur(35px);
   }
 
-  to {
-    opacity: 1;
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
-}
