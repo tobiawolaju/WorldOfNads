@@ -3,7 +3,7 @@ extends Node
 @export var status_label: Label3D
 
 # URL to "wake up" the server (can be the WS URL)
-const SERVER_URL := "wss://worldofnads.onrender.com/"
+const SERVER_URL := "wss://worldofnads-129481786742.europe-west1.run.app"
 
 func _ready():
 	status_label.text = "🔄 Waking up game server..."
@@ -18,7 +18,7 @@ func _wake_server():
 	
 	# Use HTTPS endpoint to wake the server if your WS server doesn’t support HTTP ping
 	# If your WS server is only WS, you could just skip sending anything
-	req.request("https://worldofnads.onrender.com/") 
+	req.request("https://worldofnads-129481786742.europe-west1.run.app") 
 
 
 func _on_server_ping_completed(result, response_code, headers, body):

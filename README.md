@@ -104,9 +104,9 @@ graph TD
 
 The game includes a dedicated events stream for lightweight activity logs.
 
-- **Live WebSocket endpoint:** `wss://worldofnads.onrender.com/events`
+- **Live WebSocket endpoint:** `wss://worldofnads-129481786742.europe-west1.run.app/events`
 - **Local fallback endpoint:** `ws://localhost:8080/events`
-- **HTTP snapshot endpoint:** `https://worldofnads.onrender.com/events` (`GET`)
+- **HTTP snapshot endpoint:** `https://worldofnads-129481786742.europe-west1.run.app/events` (`GET`)
 - **History size:** last `100` events (server-side ring buffer)
 
 ### Payloads

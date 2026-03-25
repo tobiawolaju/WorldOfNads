@@ -2,7 +2,7 @@
 extends Node3D
 
 # --- SERVER URLS ---
-const LIVE_URL = "wss://worldofnads.onrender.com/"
+const LIVE_URL = "wss://worldofnads-129481786742.europe-west1.run.app"
 const LOCAL_URL = "ws://localhost:8080"
 
 @export var player_scene: PackedScene = preload("res://scenes/components/Player.tscn")

@@ -1,7 +1,7 @@
 import { WebSocket } from "ws";
 
 const SERVER_URL =
-  process.env.BOT_SERVER_URL || "wss://worldofnads.onrender.com";
+  process.env.BOT_SERVER_URL || "wss://worldofnads-129481786742.europe-west1.run.app";
 const BOT_COUNT = Number(process.env.BOT_COUNT || 9);
 const BOT_MOVE_SPEED = Number(process.env.BOT_MOVE_SPEED || 5.0);
 const PICKUP_RADIUS = Number(process.env.BOT_PICKUP_RADIUS || 2.0);
