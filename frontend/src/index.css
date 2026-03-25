@@ -184,6 +184,39 @@ html {
   animation: fade-in 150ms ease-in forwards;
 }
 
+/* Rainbow Beam Background Effect */
+.rainbow-beam-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+  opacity: 0.15; /* Subtle opacity for a premium feel */
+}
+
+.rainbow-bar {
+  position: absolute;
+  left: 0;
+  width: 100vw;
+  height: 200px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 1) 10%,
+    rgba(255, 0, 0, 0.3) 30%,
+    rgba(255, 127, 0, 0.25) 45%,
+    rgba(255, 255, 0, 0.2) 60%,
+    rgba(0, 255, 0, 0.2) 75%,
+    rgba(0, 0, 255, 0.25) 85%,
+    rgba(75, 0, 130, 0.25) 90%,
+    rgba(148, 0, 211, 0.3) 95%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  filter: blur(40px);
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

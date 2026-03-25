@@ -4,7 +4,9 @@ import { usePrivy } from "@privy-io/react-auth";
 
 // Layout Components
 import BackgroundPattern from "./components/Background";
+import RainbowBeam from "./components/RainbowBeam";
 import TopNavbar from "./components/TopNavbar";
+
 // UI
 import { FullScreenLoader } from "./components/ui/fullscreen-loader";
 
@@ -92,11 +94,11 @@ const AppContent: React.FC = () => {
 
   // Hide navbar on /play route
   const hideNavbar = location.pathname === "/play";
-  const hideFooter = location.pathname === "/dashboard";
 
   return (
     <>
       <BackgroundPattern />
+      <RainbowBeam />
       <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         {!hideNavbar && <TopNavbar />}
 
@@ -148,7 +150,6 @@ const AppContent: React.FC = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
-
       </div>
     </>
   );
