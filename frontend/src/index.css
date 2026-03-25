@@ -18,15 +18,15 @@
   --primary-hover: #4A3EE6;
   --primary-active: #3F35D9;
   --primary-light: hsl(249, 100%, 74%);
-  
-  --background: #ffffff;
+
+  --background: #a63aff;
   --foreground: #171717;
   --foreground-muted: rgba(0, 0, 0, 0.7);
   --foreground-light: rgb(146, 146, 146);
-  
+
   --border: #E2E3F0;
   --border-light: rgba(255, 255, 255, 0.45);
-  
+
   --card-bg: rgba(255, 255, 255, 0.25);
   --overlay-bg: rgba(255, 255, 255, 0.3);
   --navbar-bg: rgba(255, 255, 255, 0.4);
