@@ -152,11 +152,19 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    const mergeMatches = (liveMatches: Match[]) => {
+      const map = new Map<string, Match>();
+      [...staticMatches, ...liveMatches].forEach((match) => {
+        map.set(match.matchId, match);
+      });
+      return Array.from(map.values());
+    };
+
     const loadMatches = async () => {
       try {
         const firebaseMatches = await fetchMatchesFromFirebase();
         if (firebaseMatches.length > 0) {
-          setMatches(firebaseMatches as Match[]);
+          setMatches(mergeMatches(firebaseMatches as Match[]));
         }
       } catch (error) {
         console.error("Failed to fetch Firebase matches", error);
