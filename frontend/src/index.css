@@ -19,7 +19,7 @@
   --primary-active: #3F35D9;
   --primary-light: hsl(249, 100%, 74%);
 
-  --background: #ffffff;
+  --background: #f0f0f0;
   --foreground: #171717;
   --foreground-muted: rgba(0, 0, 0, 0.7);
   --foreground-light: rgb(146, 146, 146);
@@ -204,11 +204,9 @@ html {
   width: 150vw;
   height: 80px;
   background: radial-gradient(ellipse at center,
-      rgba(255, 255, 255, 0.767) 10%,
-      rgba(253, 237, 255, 0.459) 30%,
-      rgba(244, 165, 255, 0.568) 30%,
-      rgba(237, 105, 255, 0.575) 30%,
-      rgba(231, 49, 255, 0.856) 30%,
+      rgb(255, 255, 255) 10%,
+      rgb(251, 218, 255) 30%,
+      rgb(241, 134, 255) 30%,
       rgb(225, 0, 255) 100%);
   filter: blur(35px);
 }
