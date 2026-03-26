@@ -238,18 +238,15 @@ img,
 }
 
 .rainbow-active-text {
-  color: white !important;
-  text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 25px rgba(255, 255, 255, 0.5) !important;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.9), 0 0 25px rgba(255, 255, 255, 0.6) !important;
 }
 
 .rainbow-active-img {
-  filter: brightness(0) invert(1) drop-shadow(0 0 15px white) !important;
+  filter: brightness(0) invert(1) drop-shadow(0 15px 15px white) !important;
 }
 
 .rainbow-active-div {
-  background-color: white !important;
-  box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.6) !important;
-  border-color: white !important;
+  /* No effect as per user request */
 }
 
 @keyframes fade-in {

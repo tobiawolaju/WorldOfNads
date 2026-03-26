@@ -13,15 +13,15 @@ const RainbowBeam: React.FC = () => {
     let animationFrameId: number;
 
     const updateElements = () => {
+      // Focused list of text elements and images only, as divs are now ignored
       elementsRef.current = document.querySelectorAll(
-        "h1, h2, h3, h4, h5, h6, p, a, button, img, .card, .match-card, .tab, .filter, .button, .wons-card, .stats-card, .event-card, .match-details, .reward-item"
+        "h1, h2, h3, h4, h5, h6, p, a, button, img, .tab, .filter"
       );
     };
 
     updateElements();
 
     const animate = (time: number) => {
-      // Re-scan DOM every 2 seconds to catch new elements
       if (time - lastScanTime.current > 2000) {
         updateElements();
         lastScanTime.current = time;
@@ -42,32 +42,20 @@ const RainbowBeam: React.FC = () => {
         elementsRef.current.forEach((el) => {
           const rect = el.getBoundingClientRect();
           
-          // Optimization: Skip if the element's bounding rect is not currently valid or far from viewport
           if (rect.width === 0 || rect.height === 0) return;
           if (rect.bottom < -100 || rect.top > window.innerHeight + 100) return;
 
           const elCenter = rect.top + rect.height / 2;
           const distance = Math.abs(beamCenter - elCenter);
 
-          // Inclusion threshold based on beam height and element size
           if (distance < beamHeight / 2 + rect.height / 2) {
             if (el.tagName === "IMG") {
               el.classList.add("rainbow-active-img");
-            } else if (
-              el.tagName === "DIV" ||
-              el.tagName === "SECTION" ||
-              el.classList.contains("card") ||
-              el.classList.contains("match-card") ||
-              el.classList.contains("wons-card") ||
-              el.classList.contains("stats-card") ||
-              el.classList.contains("event-card")
-            ) {
-              el.classList.add("rainbow-active-div");
             } else {
               el.classList.add("rainbow-active-text");
             }
           } else {
-            el.classList.remove("rainbow-active-img", "rainbow-active-div", "rainbow-active-text");
+            el.classList.remove("rainbow-active-img", "rainbow-active-text");
           }
         });
       }
@@ -80,10 +68,10 @@ const RainbowBeam: React.FC = () => {
     return () => {
       cancelAnimationFrame(animationFrameId);
       const elements = document.querySelectorAll(
-        ".rainbow-active-img, .rainbow-active-div, .rainbow-active-text"
+        ".rainbow-active-img, .rainbow-active-text"
       );
       elements.forEach((el) =>
-        el.classList.remove("rainbow-active-img", "rainbow-active-div", "rainbow-active-text")
+        el.classList.remove("rainbow-active-img", "rainbow-active-text")
       );
     };
   }, []);
