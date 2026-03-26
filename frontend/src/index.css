@@ -205,9 +205,9 @@ html {
   width: 150vw;
   height: 80px;
   background: radial-gradient(ellipse at center,
-      rgb(255, 255, 255) 100%,
-      rgb(251, 218, 255) 100%,
-      rgb(241, 134, 255) 100%,
+      rgb(255, 255, 255) 10%,
+      rgb(251, 218, 255) 25%,
+      rgb(241, 134, 255) 75%,
       rgb(225, 0, 255) 100%);
   filter: blur(35px);
 }
