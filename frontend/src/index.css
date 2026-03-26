@@ -200,7 +200,8 @@ html {
 
 .rainbow-bar {
   position: absolute;
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 150vw;
   height: 80px;
   background: radial-gradient(ellipse at center,
@@ -209,6 +210,31 @@ html {
       rgb(241, 134, 255) 30%,
       rgb(225, 0, 255) 100%);
   filter: blur(35px);
+}
+
+/* Base transitions for smooth interaction */
+h1, h2, h3, h4, h5, h6, p, a, button, img, .card, .match-card, .tab, .filter {
+  transition: color 0.4s ease, filter 0.4s ease, text-shadow 0.4s ease, box-shadow 0.4s ease, background-color 0.4s ease, border-color 0.4s ease !important;
+}
+
+/* Intersection Effect Classes */
+.rainbow-interact {
+  transition: color 0.3s ease, filter 0.3s ease, text-shadow 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+}
+
+.rainbow-active-text {
+  color: white !important;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 25px rgba(255, 255, 255, 0.5) !important;
+}
+
+.rainbow-active-img {
+  filter: brightness(0) invert(1) drop-shadow(0 0 15px white) !important;
+}
+
+.rainbow-active-div {
+  background-color: white !important;
+  box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.6) !important;
+  border-color: white !important;
 }
 
 @keyframes fade-in {
