@@ -13,9 +13,9 @@ const RainbowBeam: React.FC = () => {
     let animationFrameId: number;
 
     const updateElements = () => {
-      // Focused list of text elements and images only, as divs are now ignored
+      // Only targeting text-based elements now
       elementsRef.current = document.querySelectorAll(
-        "h1, h2, h3, h4, h5, h6, p, a, button, img, .tab, .filter"
+        "h1, h2, h3, h4, h5, h6, p, a, button, .tab, .filter"
       );
     };
 
@@ -49,13 +49,9 @@ const RainbowBeam: React.FC = () => {
           const distance = Math.abs(beamCenter - elCenter);
 
           if (distance < beamHeight / 2 + rect.height / 2) {
-            if (el.tagName === "IMG") {
-              el.classList.add("rainbow-active-img");
-            } else {
-              el.classList.add("rainbow-active-text");
-            }
+            el.classList.add("rainbow-active-text");
           } else {
-            el.classList.remove("rainbow-active-img", "rainbow-active-text");
+            el.classList.remove("rainbow-active-text");
           }
         });
       }
@@ -67,12 +63,8 @@ const RainbowBeam: React.FC = () => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      const elements = document.querySelectorAll(
-        ".rainbow-active-img, .rainbow-active-text"
-      );
-      elements.forEach((el) =>
-        el.classList.remove("rainbow-active-img", "rainbow-active-text")
-      );
+      const elements = document.querySelectorAll(".rainbow-active-text");
+      elements.forEach((el) => el.classList.remove("rainbow-active-text"));
     };
   }, []);
 

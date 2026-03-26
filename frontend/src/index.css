@@ -242,7 +242,7 @@ img,
 }
 
 .rainbow-active-img {
-  filter: brightness(0) invert(1) drop-shadow(0 15px 15px white) !important;
+  /* No effect as per user request */
 }
 
 .rainbow-active-div {
