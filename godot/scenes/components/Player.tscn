@@ -169,18 +169,6 @@ shader = ExtResource("2_qkeax")
 shader_parameter/pixelation = 0.01
 shader_parameter/opacity = 1.0
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_qkeax"]
-size = Vector2(0.005, 0.005)
-
-[sub_resource type="Texture2DRD" id="Texture2DRD_wha0s"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oelb0"]
-albedo_color = Color(0.9754868, 0.7976988, 0.70088446, 1)
-albedo_texture = SubResource("Texture2DRD_wha0s")
-emission_enabled = true
-emission = Color(0.9529412, 0.21568628, 0.6901961, 1)
-emission_energy_multiplier = 0.19
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ndbr4"]
 albedo_color = Color(0.99999994, 0.25160655, 0.7472611, 1)
 
@@ -5720,11 +5708,6 @@ skin = SubResource("Skin_mg7oo")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0061266115, 0.0017609405)
 mesh = SubResource("BoxMesh_qkeax")
 surface_material_override/0 = SubResource("ShaderMaterial_wha0s")
-
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="Skeleton3D/Cube_001" unique_id=1399859074]
-transform = Transform3D(1.1, 0, 0, 0, -0.7778175, -0.7778175, 0, 0.7778175, -0.7778175, 0, 0.005984882, 0.0024311724)
-mesh = SubResource("PlaneMesh_qkeax")
-surface_material_override/0 = SubResource("StandardMaterial3D_oelb0")
 
 [node name="Cube_004" type="MeshInstance3D" parent="Skeleton3D" unique_id=2036297002]
 material_override = SubResource("StandardMaterial3D_ndbr4")

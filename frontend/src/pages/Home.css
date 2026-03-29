@@ -115,7 +115,7 @@ body,
 
 .hero-headline {
   font-family: 'Font2', sans-serif;
-  font-size: clamp(48px, 12vw, 140px);
+  font-size: clamp(70px, 12vw, 140px);
   font-weight: 900;
   margin: 0;
   letter-spacing: -0.05em;
@@ -466,7 +466,7 @@ body,
 
 @media (max-width: 480px) {
   .hero-headline {
-    font-size: 42px;
+    font-size: 70px;
   }
 }
 
