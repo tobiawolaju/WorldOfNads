@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://dt4bl1rmfjm12" path="res://scripts/Player.gd" id="1_hqo6i"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="2_3wy7d"]
-[ext_resource type="Shader" uid="uid://c2uwrkkjuuaxh" path="res://scenes/components/cencored.gdshader" id="2_qkeax"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hqo6i"]
 radius = 0.23692703
@@ -159,15 +158,6 @@ bind/24/pose = Transform3D(-0.9089222, 0.39463136, -0.134635, -0.08852805, 0.132
 bind/25/name = &"mixamorig_RightHandIndex3"
 bind/25/bone = -1
 bind/25/pose = Transform3D(0.07971042, 0.1733621, 0.9816271, -0.99360865, 0.09277714, 0.064298265, -0.07992567, -0.98047847, 0.1796494, 0.0002988852, -0.01704338, 0.0034920515)
-
-[sub_resource type="BoxMesh" id="BoxMesh_qkeax"]
-size = Vector3(0.005, 0.005, 0.005)
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_wha0s"]
-render_priority = 0
-shader = ExtResource("2_qkeax")
-shader_parameter/pixelation = 0.01
-shader_parameter/opacity = 1.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ndbr4"]
 albedo_color = Color(0.99999994, 0.25160655, 0.7472611, 1)
@@ -5703,11 +5693,6 @@ skin = SubResource("Skin_ps8c2")
 material_override = SubResource("StandardMaterial3D_qkeax")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Skeleton3D/Cube_001" unique_id=776226587]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0061266115, 0.0017609405)
-mesh = SubResource("BoxMesh_qkeax")
-surface_material_override/0 = SubResource("ShaderMaterial_wha0s")
 
 [node name="Cube_004" type="MeshInstance3D" parent="Skeleton3D" unique_id=2036297002]
 material_override = SubResource("StandardMaterial3D_ndbr4")
