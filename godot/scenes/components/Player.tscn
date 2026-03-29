@@ -2,13 +2,17 @@
 
 [ext_resource type="Script" uid="uid://dt4bl1rmfjm12" path="res://scripts/Player.gd" id="1_hqo6i"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="2_3wy7d"]
+[ext_resource type="Shader" uid="uid://c2uwrkkjuuaxh" path="res://scenes/components/cencored.gdshader" id="2_qkeax"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hqo6i"]
 radius = 0.23692703
 height = 0.805861
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qkeax"]
-albedo_color = Color(0.99999994, 0.14157677, 0.5880843, 1)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wha0s"]
+render_priority = 0
+shader = ExtResource("2_qkeax")
+shader_parameter/pixelation = 0.01
+shader_parameter/opacity = 1.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1usnk"]
 
@@ -55,6 +59,9 @@ bind/5/pose = Transform3D(0.059090566, -0.028470559, -0.99784654, 0.9943781, -0.
 bind/6/name = &"mixamorig_RightArm"
 bind/6/bone = -1
 bind/6/pose = Transform3D(-0.00680141, 0.009168091, 0.99993485, -0.99623674, -0.08646715, -0.005983466, 0.086406656, -0.99621254, 0.009721688, -5.50056e-05, -0.006772674, 0.00445968)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qkeax"]
+albedo_color = Color(0.99999994, 0.14157677, 0.5880843, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gj8f4"]
 
@@ -5685,7 +5692,7 @@ bones/32/rotation = Quaternion(4.035599e-09, -2.0816682e-17, 4.8572257e-17, 1)
 bones/32/scale = Vector3(1, 1, 1)
 
 [node name="Cube" type="MeshInstance3D" parent="Skeleton3D" unique_id=299572121]
-material_override = SubResource("StandardMaterial3D_qkeax")
+material_override = SubResource("ShaderMaterial_wha0s")
 mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
