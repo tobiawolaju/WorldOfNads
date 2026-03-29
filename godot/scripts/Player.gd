@@ -46,6 +46,8 @@ var current_animation: String = "idle"
 var ignored_touch_indices := {}
 var active_camera_index := -1
 var touch_joystick: Node = null
+var network_tick_timer: float = 0.0
+const NETWORK_TICK_RATE: float = 0.05
 
 var player_id: String = "" :
 	set(new_id):
@@ -193,7 +195,11 @@ func _physics_process(delta: float) -> void:
 	_handle_camera_gamepad(delta)
 	_update_camera(delta)
 	_handle_animations(move_direction)
-	_send_state_to_server()
+
+	network_tick_timer += delta
+	if network_tick_timer >= NETWORK_TICK_RATE:
+		_send_state_to_server()
+		network_tick_timer = 0.0
 
 # --- PICKUP LOGIC (USING AREA3D) ---
 func _try_pickup():
