@@ -142,14 +142,6 @@ const Home: React.FC = () => {
 
         <div className="hero-content" ref={heroContentRef}>
           <h1 className="hero-headline">WORLD OF NADS</h1>
-          <p className="hero-tagline">Play. Compete. Earn.</p>
-          <p className="hero-description">
-            World of Nads connects players and projects through competitive gameplay.
-          </p>
-          <div className="hero-ctas">
-            <button onClick={handlePlay} className="cta-primary">Play Now</button>
-            <button className="cta-secondary">Explore Ecosystem</button>
-          </div>
         </div>
 
         <div className="scroll-hint">
@@ -254,19 +246,6 @@ const Home: React.FC = () => {
             <FaGamepad className="event-icon" />
             <h3 className="event-title">Raised community funding runde</h3>
             <span className="event-date">Jan 2025</span>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 5: FINAL CTA */}
-      <section className="final-cta-section reveal">
-        <div className="cta-glow-bg" />
-        <div className="final-cta-content">
-          <h2 className="cta-headline">Ready to Play or Build?</h2>
-          <p className="cta-subtext">Join World of Nads and be part of the next gaming layer.</p>
-          <div className="cta-buttons">
-            <button onClick={handlePlay} className="cta-primary">Start Playing</button>
-            <button className="cta-secondary">Partner With Us</button>
           </div>
         </div>
       </section>
