@@ -12,6 +12,25 @@
     BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* 1️⃣ Global Embedded Fonts */
+@font-face {
+  font-family: 'Font1';
+  src: url('/font1.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Font2';
+  src: url('/font2.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Font3';
+  src: url('/font3.ttf') format('truetype');
+  font-display: swap;
+}
+
 :root {
   /* Colors */
   --primary: #5B4FFF;
