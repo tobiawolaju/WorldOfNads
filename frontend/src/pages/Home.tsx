@@ -215,10 +215,10 @@ const Home: React.FC = () => {
               <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
               <div className="tweet-user">
                 <span className="tweet-name">World of Nads</span>
-                <span className="tweet-handle">@WorldOfNads · Mar 2025</span>
+                <span className="tweet-handle">@WorldOfNads · Mar 2026</span>
               </div>
             </div>
-            <p className="tweet-body">Won Monad Blitz for our new feature! 🏆 Extremely excited for what's next.</p>
+            <p className="tweet-body blur-news">Won Monad Blitz for our new feature! 🏆 Extremely excited for what's next.</p>
             <a href="#" className="tweet-link">View Post</a>
           </div>
 
@@ -228,10 +228,10 @@ const Home: React.FC = () => {
               <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
               <div className="tweet-user">
                 <span className="tweet-name">World of Nads</span>
-                <span className="tweet-handle">@WorldOfNads · Feb 2025</span>
+                <span className="tweet-handle">@WorldOfNads · Feb 2026</span>
               </div>
             </div>
-            <p className="tweet-body">Just crossed 200K active players! The community momentum is absolutely insane right now. 🚀</p>
+            <p className="tweet-body blur-news">Just crossed 200K active players! The community momentum is absolutely insane right now. 🚀</p>
             <a href="#" className="tweet-link">View Post</a>
           </div>
 
@@ -241,10 +241,10 @@ const Home: React.FC = () => {
               <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
               <div className="tweet-user">
                 <span className="tweet-name">World of Nads</span>
-                <span className="tweet-handle">@WorldOfNads · Jan 2025</span>
+                <span className="tweet-handle">@WorldOfNads · Jan 2026</span>
               </div>
             </div>
-            <p className="tweet-body">Officially raised our community funding round! Thank you to everyone who believes in the vision. 🎮</p>
+            <p className="tweet-body blur-news">Officially raised our community funding round! Thank you to everyone who believes in the vision. 🎮</p>
             <a href="#" className="tweet-link">View Post</a>
           </div>
         </div>

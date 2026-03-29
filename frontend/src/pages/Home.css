@@ -332,6 +332,12 @@ html, body, #root, .home-wrapper {
   margin: 0;
 }
 
+.blur-news {
+  filter: blur(6px);
+  user-select: none;
+  opacity: 0.7;
+}
+
 .tweet-link {
   font-size: 15px;
   color: #1d9bf0;
