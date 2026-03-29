@@ -266,59 +266,12 @@ const Home: React.FC = () => {
           ref={playBtnRef}
           onClick={handlePlay}
           disabled={!ready}
-          className="play-btn-fixed sparkle-btn"
+          className="play-btn-fixed"
           title="Play"
         >
-          <span className="sparkle-particle">👻</span>
-          <span className="sparkle-particle">🐔</span>
-          <span className="sparkle-particle">😶‍🌫️</span>
-          <span className="btn-text">Play</span>
+          Play
         </button>
       </div>
-
-      <style>
-        {`
-          .sparkle-btn {
-            position: relative;
-            overflow: visible !important;
-          }
-
-          .sparkle-btn .btn-text {
-            position: relative;
-            z-index: 2;
-          }
-
-          .sparkle-particle {
-            position: absolute;
-            font-size: 14px;
-            scale: 2.0;
-            opacity: 0;
-            pointer-events: none;
-            animation: sparkle-rise 4s ease-out infinite;
-            text-shadow: 0 0 10px rgba(144, 124, 255, 0.2), 0 0 20px rgba(144, 124, 255, 0.15);
-            filter: drop-shadow(0 0 8px rgba(144, 124, 255, 0.2));
-          }
-
-          .sparkle-particle:nth-child(1) { left: 20%; animation-delay: 0s; }
-          .sparkle-particle:nth-child(2) { left: 50%; animation-delay: 1.3s; }
-          .sparkle-particle:nth-child(3) { left: 80%; animation-delay: 2.6s; }
-
-          @keyframes sparkle-rise {
-            0% {
-              opacity: 0;
-              transform: translateY(0) scale(0.6);
-              bottom: 50%;
-            }
-            15% { opacity: 0.7; }
-            50% { opacity: 0.5; }
-            100% {
-              opacity: 0;
-              transform: translateY(-50px) scale(1.5);
-              bottom: 100%;
-            }
-          }
-        `}
-      </style>
     </div>
   );
 };
