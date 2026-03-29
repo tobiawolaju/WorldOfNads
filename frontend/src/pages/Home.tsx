@@ -154,12 +154,12 @@ const Home: React.FC = () => {
       <section className="scroll-story-container" ref={scrollContainerRef}>
         <div className="sticky-wrapper" ref={stickyRef}>
           
-          {/* Slide 1: Players */}
+          {/* Slide 1: Gameplay */}
           <div className="story-slide">
             <div className="slide-content-wrapper">
               <div className="slide-content">
-                <h2 className="slide-headline">Fun First. Always.</h2>
-                <p className="slide-subtext">No grind. Just pure skill, chaos, and rewards.</p>
+                <h2 className="slide-headline">Gameplay</h2>
+                <p className="slide-subtext">Turn Players Into Community. <br /> Reward engagement and grow your ecosystem organically.</p>
               </div>
               <div className="slide-image">
                 <img src="/logo.jpg" alt="Gameplay" />
@@ -172,8 +172,8 @@ const Home: React.FC = () => {
           <div className="story-slide">
             <div className="slide-content-wrapper reverse">
               <div className="slide-content">
-                <h2 className="slide-headline">Turn Players Into Community.</h2>
-                <p className="slide-subtext">Reward engagement and grow your ecosystem organically.</p>
+                <h2 className="slide-headline">Projects</h2>
+                <p className="slide-subtext">Play Together. Win Together. <br /> A new layer where games and Web3 connect seamlessly.</p>
               </div>
               <div className="slide-image">
                 <img src="/logo.jpg" alt="Projects" />
@@ -186,7 +186,7 @@ const Home: React.FC = () => {
           <div className="story-slide">
             <div className="slide-content-wrapper">
               <div className="slide-content">
-                <h2 className="slide-headline">Play Together. Win Together.</h2>
+                <h2 className="slide-headline">Vision First. Always.</h2>
                 <p className="slide-subtext">A new layer where games and Web3 connect seamlessly.</p>
               </div>
               <div className="slide-image">
