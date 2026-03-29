@@ -10,18 +10,20 @@ import TopNavbar from "./components/TopNavbar";
 // UI
 import { FullScreenLoader } from "./components/ui/fullscreen-loader";
 
-// Pages
-import Home from "./pages/Home";
-import PreTGEArena from "./pages/PreTGEArena";
-import Roadmap from "./pages/Leaderboard";
-import Community from "./pages/FAQ";
-import Partners from "./pages/Partners";
-import Dashboard from "./pages/Dashboard";
-import Play from "./pages/Play";
-import Careers from "./pages/Careers";
-import SpounsorDashbaord from "./pages/SpounsorDashbaord";
-import AdminAnalytics from "./pages/AdminAnalytics";
-import AdminUsers from "./pages/AdminUsers";
+import { lazy, Suspense } from "react";
+
+// Pages (Lazy Loaded)
+const Home = lazy(() => import("./pages/Home"));
+const PreTGEArena = lazy(() => import("./pages/PreTGEArena"));
+const Roadmap = lazy(() => import("./pages/Leaderboard"));
+const Community = lazy(() => import("./pages/FAQ"));
+const Partners = lazy(() => import("./pages/Partners"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Play = lazy(() => import("./pages/Play"));
+const Careers = lazy(() => import("./pages/Careers"));
+const SpounsorDashbaord = lazy(() => import("./pages/SpounsorDashbaord"));
+const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 import { trackSessionEnded, trackSessionStarted } from "./lib/analyticsClient";
 import { fetchUserRoles, getUsernameFromPrivy } from "./pages/firebaseClient";
 
@@ -103,52 +105,54 @@ const AppContent: React.FC = () => {
         {!hideNavbar && <TopNavbar />}
 
         <main style={{ flex: 1 }}>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={authenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
-            <Route path="/pre-tge-arena" element={<PreTGEArena />} />
-            <Route path="/roadmap" element={<Roadmap />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/partners" element={<Partners />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route
-              path="/admin/analytics"
-              element={
-                <RequireRole role="admin">
-                  <AdminAnalytics />
-                </RequireRole>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <RequireRole role="admin">
-                  <AdminUsers />
-                </RequireRole>
-              }
-            />
+          <Suspense fallback={<FullScreenLoader />}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={authenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
+              <Route path="/pre-tge-arena" element={<PreTGEArena />} />
+              <Route path="/roadmap" element={<Roadmap />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/partners" element={<Partners />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route
+                path="/admin/analytics"
+                element={
+                  <RequireRole role="admin">
+                    <AdminAnalytics />
+                  </RequireRole>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <RequireRole role="admin">
+                    <AdminUsers />
+                  </RequireRole>
+                }
+              />
 
-            {/* Protected Routes */}
-            <Route
-              path="/dashboard"
-              element={authenticated ? <Dashboard /> : <Navigate to="/" replace />}
-            />
-            <Route
-              path="/play"
-              element={authenticated ? <Play /> : <Navigate to="/" replace />}
-            />
-            <Route
-              path="/sponsor"
-              element={
-                <RequireRole role="sponsor">
-                  <SpounsorDashbaord />
-                </RequireRole>
-              }
-            />
+              {/* Protected Routes */}
+              <Route
+                path="/dashboard"
+                element={authenticated ? <Dashboard /> : <Navigate to="/" replace />}
+              />
+              <Route
+                path="/play"
+                element={authenticated ? <Play /> : <Navigate to="/" replace />}
+              />
+              <Route
+                path="/sponsor"
+                element={
+                  <RequireRole role="sponsor">
+                    <SpounsorDashbaord />
+                  </RequireRole>
+                }
+              />
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
     </>
