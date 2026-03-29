@@ -56,6 +56,15 @@ const Home: React.FC = () => {
   }, { scope: heroRef });
 
   useGSAP(() => {
+    // ---------- HIDE BUTTONS ON HERO ----------
+    gsap.set(".footer-buttons", { opacity: 0, pointerEvents: "none", y: 20 });
+    ScrollTrigger.create({
+      trigger: scrollContainerRef.current,
+      start: "top 80%",
+      onEnter: () => gsap.to(".footer-buttons", { opacity: 1, pointerEvents: "auto", y: 0, duration: 0.4 }),
+      onLeaveBack: () => gsap.to(".footer-buttons", { opacity: 0, pointerEvents: "none", y: 20, duration: 0.4 })
+    });
+
     // ---------- FADE IN SECTIONS ----------
     gsap.utils.toArray<HTMLElement>(".reveal").forEach((el) => {
       gsap.from(el, {
