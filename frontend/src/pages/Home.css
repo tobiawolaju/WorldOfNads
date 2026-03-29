@@ -1,15 +1,21 @@
 /* 1️⃣ Global Wrapper & Effects */
 :root {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
 }
 
 ::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
 /* Force zero margins/padding on all layout parents */
-html, body, #root, .home-wrapper {
+html,
+body,
+#root,
+.home-wrapper {
   margin: 0 !important;
   padding: 0 !important;
   width: 100%;
@@ -80,7 +86,8 @@ html, body, #root, .home-wrapper {
 }
 
 .hero-bg-video {
-  width: 101vw; /* Oversized to kill any gaps */
+  width: 101vw;
+  /* Oversized to kill any gaps */
   height: 100vh;
   object-fit: cover;
   position: absolute;
@@ -138,9 +145,22 @@ html, body, #root, .home-wrapper {
 }
 
 @keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-  40% {transform: translateY(-13px);}
-  60% {transform: translateY(-6px);}
+
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+
+  40% {
+    transform: translateY(-13px);
+  }
+
+  60% {
+    transform: translateY(-6px);
+  }
 }
 
 /* 3️⃣ Section 2: Scroll Story */
@@ -218,8 +238,13 @@ html, body, #root, .home-wrapper {
 }
 
 @keyframes scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .stats-group {
@@ -377,7 +402,8 @@ html, body, #root, .home-wrapper {
   }
 }
 
-.discord-btn-fixed, .play-btn-fixed {
+.discord-btn-fixed,
+.play-btn-fixed {
   width: 130px;
   height: 56px;
   border: none;
@@ -395,31 +421,62 @@ html, body, #root, .home-wrapper {
   box-shadow: 0 10px 25px rgba(144, 124, 255, 0.2);
 }
 
-.discord-btn-fixed { background-color: #907cff; color: #ffffff; width: 60px; padding: 5px; }
-.play-btn-fixed { background-color: #907cff; color: #ffffff; position: relative; overflow: hidden; }
+.discord-btn-fixed {
+  background-color: #907cff;
+  color: #ffffff;
+  width: 60px;
+  padding: 5px;
+}
 
-.discord-btn-fixed:hover, .play-btn-fixed:hover {
+.play-btn-fixed {
+  background-color: #907cff;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+.discord-btn-fixed:hover,
+.play-btn-fixed:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 35px rgba(144, 124, 255, 0.3);
 }
 
 /* 📱 Mobile Fixes */
 @media (max-width: 900px) {
-  .functional-slide, .functional-slide.reverse {
+
+  .functional-slide,
+  .functional-slide.reverse {
     flex-direction: column !important;
     text-align: center;
     gap: 40px;
   }
-  
-  .func-content { text-align: center; }
-  .func-subtext { margin: 0 auto; }
-  .func-image img { max-width: 100%; }
+
+  .func-content {
+    text-align: center;
+  }
+
+  .func-subtext {
+    margin: 0 auto;
+  }
+
+  .func-image img {
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
-  .hero-headline { font-size: 42px; }
-  .slide-headline { font-size: 32px; }
+  .hero-headline {
+    font-size: 42px;
+  }
 }
 
-* { box-sizing: border-box; }
-h1, h2, h3, p { margin-top: 0; }
+* {
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
