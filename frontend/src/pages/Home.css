@@ -107,14 +107,14 @@ html, body, #root, .home-wrapper {
 }
 
 .hero-headline {
-  font-family: var(--font-abc-favorit), sans-serif;
+  font-family: 'Font2', sans-serif;
   font-size: clamp(48px, 12vw, 140px);
   font-weight: 900;
   margin: 0;
   letter-spacing: -0.05em;
   line-height: 0.9;
   color: #ffffff;
-  opacity: 0.3;
+  opacity: 1;
   text-transform: uppercase;
 }
 
