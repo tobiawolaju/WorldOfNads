@@ -179,13 +179,13 @@ html, body, #root, .home-wrapper {
   font-weight: 850;
   margin-bottom: 20px;
   line-height: 1.1;
-  color: #4a148c; /* Dark purple */
+  color: #000000;
   letter-spacing: -0.02em;
 }
 
 .func-subtext {
   font-size: clamp(18px, 2vw, 22px);
-  color: #6a1b9a; /* Medium purple */
+  color: #000000;
   line-height: 1.5;
   max-width: 500px;
 }
@@ -200,7 +200,6 @@ html, body, #root, .home-wrapper {
   width: 100%;
   max-width: 480px;
   border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(74, 20, 140, 0.15); /* Purple tint shadow */
 }
 
 /* 4️⃣ Section 3: Stats Bar */
