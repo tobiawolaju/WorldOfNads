@@ -207,20 +207,19 @@ html, body, #root, .home-wrapper {
   background: #ffffff;
   border-top: 1px solid #f0f0f0;
   border-bottom: 1px solid #f0f0f0;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  overflow: hidden;
   padding: 60px 0;
-}
-
-.stats-bar-section::-webkit-scrollbar {
-  display: none;
 }
 
 .stats-track {
   display: flex;
-  width: max-content;
-  padding: 0 40px;
+  width: fit-content;
+  animation: scroll 40s linear infinite;
+}
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .stats-group {
