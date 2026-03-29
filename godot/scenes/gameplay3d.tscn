@@ -36,6 +36,7 @@ glow_hdr_luminance_cap = 10.0
 fog_enabled = true
 fog_mode = 1
 fog_light_color = Color(0.59607846, 0.8901961, 0.99607843, 1)
+fog_sun_scatter = 0.25
 fog_density = 0.9
 fog_sky_affect = 0.4
 fog_depth_begin = 1.0
