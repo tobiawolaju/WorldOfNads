@@ -56,6 +56,39 @@ const Home: React.FC = () => {
   }, { scope: heroRef });
 
   useGSAP(() => {
+    // ---------- SCROLL STORY BACKGROUNDS ----------
+    const slides = gsap.utils.toArray<HTMLElement>(".functional-slide");
+    const storyContainer = scrollContainerRef.current;
+    const bgColors = ["#1a0b2e", "#0d1b2a", "#121212"]; 
+    
+    if (storyContainer) {
+      ScrollTrigger.create({
+        trigger: storyContainer,
+        start: "top 50%", 
+        onLeaveBack: () => {
+          gsap.to(".home-wrapper", { backgroundColor: "#ffffff", duration: 0.8, overwrite: "auto" });
+        }
+      });
+
+      slides.forEach((slide, i) => {
+        ScrollTrigger.create({
+          trigger: slide,
+          start: "top 60%", 
+          end: "bottom 60%",
+          onEnter: () => gsap.to(".home-wrapper", { backgroundColor: bgColors[i], duration: 0.8, overwrite: "auto" }),
+          onEnterBack: () => gsap.to(".home-wrapper", { backgroundColor: bgColors[i], duration: 0.8, overwrite: "auto" })
+        });
+      });
+
+      ScrollTrigger.create({
+        trigger: storyContainer,
+        start: "bottom 60%",
+        onEnter: () => {
+          gsap.to(".home-wrapper", { backgroundColor: "#ffffff", duration: 0.8, overwrite: "auto" });
+        }
+      });
+    }
+
     // ---------- FADE IN SECTIONS ----------
     gsap.utils.toArray<HTMLElement>(".reveal").forEach((el) => {
       gsap.from(el, {

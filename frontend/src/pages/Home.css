@@ -146,7 +146,7 @@ html, body, #root, .home-wrapper {
 /* 3️⃣ Section 2: Scroll Story */
 .scroll-story-container.functional-purple {
   position: relative;
-  background: #fdf5ff; /* Light purple background */
+  background: transparent; 
   padding: 100px 20px;
 }
 
@@ -179,13 +179,13 @@ html, body, #root, .home-wrapper {
   font-weight: 850;
   margin-bottom: 20px;
   line-height: 1.1;
-  color: #000000;
+  color: #ffffff;
   letter-spacing: -0.02em;
 }
 
 .func-subtext {
   font-size: clamp(18px, 2vw, 22px);
-  color: #000000;
+  color: rgba(255, 255, 255, 0.85);
   line-height: 1.5;
   max-width: 500px;
 }
