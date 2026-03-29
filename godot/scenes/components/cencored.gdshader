@@ -33,6 +33,6 @@ void fragment() {
                      smoothstep(vec2(0.0), uv_delta * 2.0, vec2(1.0) - SCREEN_UV);
     float edge_factor = edge_dist.x * edge_dist.y;
 
-    ALBEDO = color.rgb;
+    ALBEDO = color.rgb * vec3(0.7,1.0,1.0);
     ALPHA = opacity * edge_factor;
 }
