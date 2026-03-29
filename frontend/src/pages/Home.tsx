@@ -56,49 +56,6 @@ const Home: React.FC = () => {
   }, { scope: heroRef });
 
   useGSAP(() => {
-    // ---------- SCROLL STORY (Section 2) ----------
-    const sections = gsap.utils.toArray<HTMLElement>(".story-slide");
-    
-    gsap.to(sections, {
-      scrollTrigger: {
-        trigger: scrollContainerRef.current,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: true,
-      }
-    });
-
-    sections.forEach((section, i) => {
-      const content = section.querySelector(".slide-content");
-      const image = section.querySelector(".slide-image");
-
-      // Initial state
-      gsap.set(content, { opacity: 0, y: 50 });
-      gsap.set(image, { opacity: 0, scale: 0.9 });
-
-      ScrollTrigger.create({
-        trigger: section,
-        start: "top center",
-        end: "bottom center",
-        onEnter: () => {
-          gsap.to(content, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" });
-          gsap.to(image, { opacity: 1, scale: 1, duration: 1, ease: "power2.out" });
-        },
-        onLeave: () => {
-          gsap.to(content, { opacity: 0, y: -50, duration: 0.8, ease: "power2.in" });
-          gsap.to(image, { opacity: 0, scale: 1.1, duration: 1, ease: "power2.in" });
-        },
-        onEnterBack: () => {
-          gsap.to(content, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" });
-          gsap.to(image, { opacity: 1, scale: 1, duration: 1, ease: "power2.out" });
-        },
-        onLeaveBack: () => {
-          gsap.to(content, { opacity: 0, y: 50, duration: 0.8, ease: "power2.in" });
-          gsap.to(image, { opacity: 0, scale: 0.9, duration: 1, ease: "power2.in" });
-        }
-      });
-    });
-
     // ---------- FADE IN SECTIONS ----------
     gsap.utils.toArray<HTMLElement>(".reveal").forEach((el) => {
       gsap.from(el, {
@@ -144,55 +101,42 @@ const Home: React.FC = () => {
           <h1 className="hero-headline">WORLD OF NADS</h1>
         </div>
 
-        <div className="scroll-hint">
-          <FaArrowDown className="bounce" />
-          <span>SCROLL TO EXPLORE</span>
-        </div>
       </section>
 
       {/* SECTION 2: SCROLL STORY */}
-      <section className="scroll-story-container" ref={scrollContainerRef}>
-        <div className="sticky-wrapper" ref={stickyRef}>
+      <section className="scroll-story-container functional-purple">
+        <div className="story-content-wrapper">
           
           {/* Slide 1: Gameplay */}
-          <div className="story-slide">
-            <div className="slide-content-wrapper">
-              <div className="slide-content">
-                <h2 className="slide-headline">Gameplay</h2>
-                <p className="slide-subtext">Turn Players Into Community. <br /> Reward engagement and grow your ecosystem organically.</p>
-              </div>
-              <div className="slide-image">
-                <img src="/logo.jpg" alt="Gameplay" />
-                <div className="image-glow" />
-              </div>
+          <div className="functional-slide">
+            <div className="func-content">
+              <h2 className="func-headline">Gameplay</h2>
+              <p className="func-subtext">Turn Players Into Community. Reward engagement and grow your ecosystem organically.</p>
+            </div>
+            <div className="func-image">
+              <img src="/logo.jpg" alt="Gameplay" />
             </div>
           </div>
 
           {/* Slide 2: Projects */}
-          <div className="story-slide">
-            <div className="slide-content-wrapper reverse">
-              <div className="slide-content">
-                <h2 className="slide-headline">Projects</h2>
-                <p className="slide-subtext">Play Together. Win Together. <br /> A new layer where games and Web3 connect seamlessly.</p>
-              </div>
-              <div className="slide-image">
-                <img src="/logo.jpg" alt="Projects" />
-                <div className="image-glow" />
-              </div>
+          <div className="functional-slide reverse">
+            <div className="func-content">
+              <h2 className="func-headline">Projects</h2>
+              <p className="func-subtext">Play Together. Win Together. A new layer where games and Web3 connect seamlessly.</p>
+            </div>
+            <div className="func-image">
+              <img src="/logo.jpg" alt="Projects" />
             </div>
           </div>
 
           {/* Slide 3: Vision */}
-          <div className="story-slide">
-            <div className="slide-content-wrapper">
-              <div className="slide-content">
-                <h2 className="slide-headline">Vision First. Always.</h2>
-                <p className="slide-subtext">A new layer where games and Web3 connect seamlessly.</p>
-              </div>
-              <div className="slide-image">
-                <img src="/logo.jpg" alt="Unified Vision" />
-                <div className="image-glow" />
-              </div>
+          <div className="functional-slide">
+            <div className="func-content">
+              <h2 className="func-headline">Vision First. Always.</h2>
+              <p className="func-subtext">A new layer where games and Web3 connect seamlessly.</p>
+            </div>
+            <div className="func-image">
+              <img src="/logo.jpg" alt="Unified Vision" />
             </div>
           </div>
 
@@ -232,20 +176,43 @@ const Home: React.FC = () => {
       <section className="events-grid-section reveal">
         <h2 className="section-title">Momentum</h2>
         <div className="events-grid">
-          <div className="event-card glass">
-            <FaTrophy className="event-icon" />
-            <h3 className="event-title">Won Monad Blitz for new feature</h3>
-            <span className="event-date">March 2025</span>
+          {/* Tweet 1 */}
+          <div className="tweet-card">
+            <div className="tweet-header">
+              <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
+              <div className="tweet-user">
+                <span className="tweet-name">World of Nads</span>
+                <span className="tweet-handle">@WorldOfNads · Mar 2025</span>
+              </div>
+            </div>
+            <p className="tweet-body">Won Monad Blitz for our new feature! 🏆 Extremely excited for what's next.</p>
+            <a href="#" className="tweet-link">View Post</a>
           </div>
-          <div className="event-card glass">
-            <FaUsers className="event-icon" />
-            <h3 className="event-title">Crossed 200K active players</h3>
-            <span className="event-date">Feb 2025</span>
+
+          {/* Tweet 2 */}
+          <div className="tweet-card">
+            <div className="tweet-header">
+              <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
+              <div className="tweet-user">
+                <span className="tweet-name">World of Nads</span>
+                <span className="tweet-handle">@WorldOfNads · Feb 2025</span>
+              </div>
+            </div>
+            <p className="tweet-body">Just crossed 200K active players! The community momentum is absolutely insane right now. 🚀</p>
+            <a href="#" className="tweet-link">View Post</a>
           </div>
-          <div className="event-card glass">
-            <FaGamepad className="event-icon" />
-            <h3 className="event-title">Raised community funding runde</h3>
-            <span className="event-date">Jan 2025</span>
+
+          {/* Tweet 3 */}
+          <div className="tweet-card">
+            <div className="tweet-header">
+              <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
+              <div className="tweet-user">
+                <span className="tweet-name">World of Nads</span>
+                <span className="tweet-handle">@WorldOfNads · Jan 2025</span>
+              </div>
+            </div>
+            <p className="tweet-body">Officially raised our community funding round! Thank you to everyone who believes in the vision. 🎮</p>
+            <a href="#" className="tweet-link">View Post</a>
           </div>
         </div>
       </section>
