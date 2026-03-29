@@ -5,80 +5,17 @@ import "./Home.css";
 import { FaDiscord } from "react-icons/fa";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-// Register the ScrollTrigger plugin
-gsap.registerPlugin(ScrollTrigger);
 
 const Home: React.FC = () => {
   const { login, authenticated, ready } = usePrivy();
   const navigate = useNavigate();
 
-  // Refs for GSAP animations
-  const container = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
+  // Refs for buttons
   const discordBtnRef = useRef<HTMLAnchorElement>(null);
   const playBtnRef = useRef<HTMLButtonElement>(null);
 
-  // GSAP animations
+  // Button hover animations
   useGSAP(() => {
-    // ---------- HERO TITLE (still load-based, allowed)
-    gsap.from(titleRef.current, {
-      opacity: 0,
-      y: 60,
-      ease: "power3.out",
-      duration: 1.8,
-      delay: 0.3
-    });
-
-    // ---------- WONS CARDS (true scroll-y driven)
-    gsap.utils.toArray<HTMLElement>(".wons-card").forEach((card, i) => {
-      gsap.from(card, {
-        opacity: 0,
-        y: 90,
-        scale: 0.94,
-        rotation: i % 2 ? 4 : -3,
-        ease: "none", // important for scrub
-        scrollTrigger: {
-          trigger: card,
-          start: "top 90%",
-          end: "top 60%",
-          scrub: true
-        }
-      });
-    });
-
-    // ---------- STATS
-    gsap.utils.toArray<HTMLElement>(".stats-card").forEach((card, i) => {
-      gsap.from(card, {
-        opacity: 0,
-        y: 70,
-        ease: "none",
-        scrollTrigger: {
-          trigger: card,
-          start: "top 85%",
-          end: "top 55%",
-          scrub: true
-        }
-      });
-    });
-
-    // ---------- EVENTS
-    gsap.utils.toArray<HTMLElement>(".event-card").forEach((card, i) => {
-      gsap.from(card, {
-        opacity: 0,
-        y: 60,
-        ease: "none",
-        scrollTrigger: {
-          trigger: card,
-          start: "top 85%",
-          end: "top 60%",
-          scrub: true
-        }
-      });
-    });
-
-    // ---------- BUTTON HOVER (unchanged, not scroll-based)
     const hoverIn = (el: Element) =>
       gsap.to(el, { border: "8px solid rgba(255,255,255,0.2)", duration: 0.25 });
 
@@ -97,9 +34,7 @@ const Home: React.FC = () => {
       playBtn.addEventListener("mouseenter", () => hoverIn(playBtn));
       playBtn.addEventListener("mouseleave", () => hoverOut(playBtn));
     }
-
-    return () => ScrollTrigger.getAll().forEach(t => t.kill());
-  }, { scope: container });
+  }, []);
 
   const btnBase: React.CSSProperties = {
     width: "120px",
@@ -123,10 +58,10 @@ const Home: React.FC = () => {
     backgroundColor: "#907cff",
     color: "#ffffff",
     width: "60px",
-    padding: '5px'
+    padding: "5px",
   };
 
-  const playBtn: React.CSSProperties = {
+  const playBtnStyle: React.CSSProperties = {
     ...btnBase,
     backgroundColor: "#907cff",
     color: "#ffffff",
@@ -144,207 +79,116 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div
-      ref={container}
-      className="home-container"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-      }}
-    >
-      {/* Centered Section */}
-      <div
-        className="hero-center"
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-
-        <h1 className="title" ref={titleRef}>
-          World of Nads
-        </h1>
-
+    <div className="home-container">
+      <div className="footer-buttons">
+        <a
+          ref={discordBtnRef}
+          href="https://discord.gg/z4SUdrKayb"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={discordBtn}
+          className="discord-btn"
+          title="Join Discord"
+        >
+          <FaDiscord size={28} />
+        </a>
+        <button
+          ref={playBtnRef}
+          onClick={handlePlay}
+          disabled={!ready}
+          style={playBtnStyle}
+          className="play-btn sparkle-btn"
+          title="Play"
+        >
+          <span className="sparkle-particle">⭐</span>
+          <span className="sparkle-particle">🐔</span>
+          <span className="sparkle-particle">✨</span>
+          <span className="btn-text">Play</span>
+        </button>
       </div>
 
-      {/* Contents Section */}
-      <div>
-        {/* --- WHAT'S ON WONS SECTION --- */}
-        <section className="wons-section">
-          <div className="wons-grid">
-            <div className="wons-card"><h2>Enter the Arena</h2></div>
-            <div className="wons-card"><h2>Steal the Chicken</h2></div>
-            <div className="wons-card"><h2>Outrun Everyone</h2></div>
-            <div className="wons-card"><h2>Become a Problem</h2></div>
-          </div>
+      <style>
+        {`
+          .footer-buttons {
+            position: fixed;
+            bottom: 20px;
+            display: flex;
+            flex-direction: row;
+          }
 
-        </section>
-
-
-
-
-        {/* ====== WONs HAPPENINGS ====== */}
-        <section className="events-section">
-          <h2>WONs Happenings</h2>
-          <div className="events-grid">
-            <div className="event-card">
-              <h3>Latest on WONs</h3>
-              <p>Read the latest development drops from the core team.</p>
-              <a href="https://www.google.com" target="_blank" rel="noopener noreferrer" className="match-details-twitter">
-                Read ↗
-              </a>
-            </div>
-            <div className="event-card">
-              <h3>WON Batches</h3>
-              <p>Seasonal competitive game waves and challenge rounds.</p>
-              <a href="https://www.google.com" target="_blank" rel="noopener noreferrer" className="match-details-twitter">
-                Read ↗
-              </a>
-            </div>
-            <div className="event-card">
-              <h3>WON CREATORS Kekek</h3>
-              <p>2025 Wons creators program —  start your wonstreaming career with Wons.</p>
-              <a href="https://www.google.com" target="_blank" rel="noopener noreferrer" className="match-details-twitter">
-                Read ↗
-              </a>
-            </div>
-          </div>
-
-        </section>
-
-
-
-
-      </div>
-
-      {/* Footer Section */}
-      <footer
-        style={{
-          padding: "10px",
-          color: "rgba(0, 0, 0, 0.51)",
-          textAlign: "center",
-          fontSize: "medium",
-          position: "relative",
-        }}
-      >
-        &copy; {new Date().getFullYear()} WON – All rights reserved
-        {/* Button container */}
-        <div className="footer-buttons">
-          <a
-            ref={discordBtnRef}
-            href="https://discord.gg/z4SUdrKayb"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={discordBtn}
-            className="discord-btn"
-            title="Join Discord"
-          >
-            <FaDiscord size={28} />
-          </a>
-          <button
-            ref={playBtnRef}
-            onClick={handlePlay}
-            disabled={!ready}
-            style={playBtn}
-            className="play-btn sparkle-btn"
-            title="Play"
-          >
-            <span className="sparkle-particle">⭐</span>
-            <span className="sparkle-particle">🐔</span>
-            <span className="sparkle-particle">✨</span>
-            <span className="btn-text">Play</span>
-          </button>
-        </div>
-
-        {/* Inline Styles */}
-        <style>
-          {`
+          @media (min-width: 768px) {
             .footer-buttons {
-              position: fixed;
-              bottom: 20px;
-              display: flex;
-              flex-direction: row;
+              right: 20px;
+              left: auto;
+              justify-content: flex-end;
             }
+          }
 
-            @media (min-width: 768px) {
-              .footer-buttons {
-                right: 20px;
-                left: auto;
-                justify-content: flex-end;
-              }
-            }
-
-            @media (max-width: 767px) {
-              .footer-buttons {
-                left: 50%;
-                transform: translateX(-50%);
-                right: auto;
-                justify-content: center;
-              }
-            }
-
-            .sparkle-btn {
-              position: relative;
-              overflow: visible !important;
-            }
-
-            .sparkle-btn .btn-text {
-              position: relative;
-              z-index: 2;
-            }
-
-            .sparkle-particle {
-              position: absolute;
-              font-size: 14px;
-              scale:2.0;
-              opacity: 0;
-              pointer-events: none;
-              animation: sparkle-rise 4s ease-out infinite;
-              text-shadow: 0 0 10px rgba(144, 124, 255, 0.2), 0 0 20px rgba(144, 124, 255, 0.15);
-              filter: drop-shadow(0 0 8px rgba(144, 124, 255, 0.2));
-            }
-
-            .sparkle-particle:nth-child(1) {
-              left: 20%;
-              animation-delay: 0s;
-            }
-            .sparkle-particle:nth-child(2) {
+          @media (max-width: 767px) {
+            .footer-buttons {
               left: 50%;
-              animation-delay: 1.3s;
+              transform: translateX(-50%);
+              right: auto;
+              justify-content: center;
             }
-            .sparkle-particle:nth-child(3) {
-              left: 80%;
-              animation-delay: 2.6s;
-            }
+          }
 
-            @keyframes sparkle-rise {
-              0% {
-                opacity: 0;
-                transform: translateY(0) scale(0.6);
-                bottom: 50%;
-              }
-              15% {
-                opacity: 0.7;
-              }
-              50% {
-                opacity: 0.5;
-              }
-              100% {
-                opacity: 0;
-                transform: translateY(-50px) scale(1.5);
-                bottom: 100%;
-              }
-            }
-        
-          `}
-        </style>
-      </footer>
+          .sparkle-btn {
+            position: relative;
+            overflow: visible !important;
+          }
 
+          .sparkle-btn .btn-text {
+            position: relative;
+            z-index: 2;
+          }
+
+          .sparkle-particle {
+            position: absolute;
+            font-size: 14px;
+            scale: 2.0;
+            opacity: 0;
+            pointer-events: none;
+            animation: sparkle-rise 4s ease-out infinite;
+            text-shadow: 0 0 10px rgba(144, 124, 255, 0.2), 0 0 20px rgba(144, 124, 255, 0.15);
+            filter: drop-shadow(0 0 8px rgba(144, 124, 255, 0.2));
+          }
+
+          .sparkle-particle:nth-child(1) {
+            left: 20%;
+            animation-delay: 0s;
+          }
+          .sparkle-particle:nth-child(2) {
+            left: 50%;
+            animation-delay: 1.3s;
+          }
+          .sparkle-particle:nth-child(3) {
+            left: 80%;
+            animation-delay: 2.6s;
+          }
+
+          @keyframes sparkle-rise {
+            0% {
+              opacity: 0;
+              transform: translateY(0) scale(0.6);
+              bottom: 50%;
+            }
+            15% {
+              opacity: 0.7;
+            }
+            50% {
+              opacity: 0.5;
+            }
+            100% {
+              opacity: 0;
+              transform: translateY(-50px) scale(1.5);
+              bottom: 100%;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };
 
-export default Home;
+export default Home;
