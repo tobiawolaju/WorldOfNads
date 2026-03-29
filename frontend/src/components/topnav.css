@@ -118,3 +118,18 @@
     /* Show hamburger button on mobile */
   }
 }
+
+/* Home Page Overrides */
+.topnav.home-nav .nav-links .link {
+  color: #ffffff;
+}
+
+.topnav.home-nav .nav-links .link:hover,
+.topnav.home-nav .nav-links .active-link {
+  color: #ffffff;
+  opacity: 0.8;
+}
+
+.hamburger-btn.home-hamburger {
+  color: #ffffff;
+}

@@ -6,6 +6,7 @@ const TopNavbar = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
 
+  const isHome = location.pathname === '/';
   const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
 
   // central nav config
@@ -33,12 +34,12 @@ const TopNavbar = () => {
     ));
 
   return (
-    <nav className="topnav">
+    <nav className={`topnav ${isHome ? 'home-nav' : ''}`}>
       {/* Logo + Optional Page Text */}
       <div className="logo-section" style={{ display: 'flex', alignItems: 'center' }}>
         <img src="/logo.jpg" alt="logo" style={{ width: '40px', zIndex: 999 }} />
         {currentText && (
-          <p style={{ fontSize: 'larger', margin: '10px', color: '#000', fontFamily: "'Font1', sans-serif", fontWeight: 'bold' }}>
+          <p style={{ fontSize: 'larger', margin: '10px', color: isHome ? '#ffffff' : '#000', fontFamily: "'Font1', sans-serif", fontWeight: 'bold' }}>
             {currentText}
           </p>
         )}
@@ -48,7 +49,7 @@ const TopNavbar = () => {
       <div className="nav-links">{renderNavLinks()}</div>
 
       {/* Hamburger */}
-      <button onClick={toggleDrawer} className="hamburger-btn" aria-expanded={isDrawerOpen}>
+      <button onClick={toggleDrawer} className={`hamburger-btn ${isHome ? 'home-hamburger' : ''}`} aria-expanded={isDrawerOpen}>
         ☰
       </button>
 

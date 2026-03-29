@@ -174,7 +174,7 @@ const Home: React.FC = () => {
 
       {/* SECTION 4: EVENTS GRID */}
       <section className="events-grid-section reveal">
-        <h2 className="section-title">Momentum</h2>
+        <h2 className="section-title">News</h2>
         <div className="events-grid">
           {/* Tweet 1 */}
           <div className="tweet-card">

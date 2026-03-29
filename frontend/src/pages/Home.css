@@ -267,9 +267,9 @@ html, body, #root, .home-wrapper {
 }
 
 .section-title {
-  font-size: clamp(32px, 5vw, 48px);
+  font-size: clamp(28px, 4vw, 36px);
   font-weight: 900;
-  margin-bottom: 80px;
+  margin-bottom: 60px;
   text-align: center;
   color: #000000;
 }
