@@ -162,7 +162,7 @@ const Home: React.FC = () => {
                 <p className="slide-subtext">No grind. Just pure skill, chaos, and rewards.</p>
               </div>
               <div className="slide-image">
-                <img src="/test.png" alt="Gameplay" />
+                <img src="/logo.jpg" alt="Gameplay" />
                 <div className="image-glow" />
               </div>
             </div>
@@ -176,7 +176,7 @@ const Home: React.FC = () => {
                 <p className="slide-subtext">Reward engagement and grow your ecosystem organically.</p>
               </div>
               <div className="slide-image">
-                <img src="/test.png" alt="Projects" />
+                <img src="/logo.jpg" alt="Projects" />
                 <div className="image-glow" />
               </div>
             </div>
@@ -190,7 +190,7 @@ const Home: React.FC = () => {
                 <p className="slide-subtext">A new layer where games and Web3 connect seamlessly.</p>
               </div>
               <div className="slide-image">
-                <img src="/test.png" alt="Unified Vision" />
+                <img src="/logo.jpg" alt="Unified Vision" />
                 <div className="image-glow" />
               </div>
             </div>
