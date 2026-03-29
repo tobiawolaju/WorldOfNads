@@ -14,7 +14,7 @@ html, body, #root, .home-wrapper {
   padding: 0 !important;
   width: 100%;
   overflow-x: hidden;
-  background: #ffffff; /* White Theme */
+  background: transparent;
 }
 
 .home-wrapper {
@@ -146,7 +146,7 @@ html, body, #root, .home-wrapper {
 /* 3️⃣ Section 2: Scroll Story */
 .scroll-story-container.functional-purple {
   position: relative;
-  background: #fdf5ff; /* Light purple background */
+  background: transparent;
   padding: 100px 20px;
 }
 
@@ -204,7 +204,7 @@ html, body, #root, .home-wrapper {
 
 /* 4️⃣ Section 3: Stats Bar */
 .stats-bar-section {
-  background: #ffffff;
+  background: transparent;
   border-top: 1px solid #f0f0f0;
   border-bottom: 1px solid #f0f0f0;
   overflow: hidden;
@@ -281,8 +281,9 @@ html, body, #root, .home-wrapper {
 }
 
 .tweet-card {
-  background: #ffffff;
-  border: 1px solid #eaeaea;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 12px;
   padding: 24px;
   transition: all 0.2s ease;
@@ -292,7 +293,7 @@ html, body, #root, .home-wrapper {
 }
 
 .tweet-card:hover {
-  background: #f9f9f9;
+  background: rgba(255, 255, 255, 0.1);
   cursor: pointer;
 }
 
