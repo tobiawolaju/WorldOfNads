@@ -100,9 +100,9 @@ const Home: React.FC = () => {
           className="play-btn sparkle-btn"
           title="Play"
         >
-          <span className="sparkle-particle">⭐</span>
+          <span className="sparkle-particle">👻</span>
           <span className="sparkle-particle">🐔</span>
-          <span className="sparkle-particle">✨</span>
+          <span className="sparkle-particle">😶‍🌫️</span>
           <span className="btn-text">Play</span>
         </button>
       </div>
@@ -191,4 +191,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default Home;
