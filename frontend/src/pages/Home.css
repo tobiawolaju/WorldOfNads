@@ -121,7 +121,7 @@ body,
   -webkit-text-stroke: 0.5px #ffffff;
   z-index: -1;
   width: 100%;
-  opacity: 0.1;
+  opacity: 0.3;
 }
 
 .hero-subtext {
