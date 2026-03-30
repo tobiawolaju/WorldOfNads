@@ -190,6 +190,7 @@ body,
 }
 
 .func-headline {
+  font-family: 'Font2', sans-serif;
   font-size: clamp(32px, 5vw, 56px);
   font-weight: 850;
   margin-bottom: 20px;
