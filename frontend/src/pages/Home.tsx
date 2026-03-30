@@ -142,12 +142,6 @@ const Home: React.FC = () => {
     container.addEventListener('touchend', onTouchEnd);
     container.addEventListener('mouseenter', onMouseEnter);
 
-    // Initial load for Twitter widgets
-    const script = document.createElement("script");
-    script.src = "https://platform.twitter.com/widgets.js";
-    script.async = true;
-    document.body.appendChild(script);
-
     let wheelTimeout: ReturnType<typeof setTimeout>;
     const onWheel = () => {
       isUserInteracting = true;
@@ -280,24 +274,42 @@ const Home: React.FC = () => {
         <h2 className="section-title">News</h2>
         <div className="events-grid">
           {/* Tweet 1 */}
-          <div className="tweet-wrapper">
-            <blockquote className="twitter-tweet" data-theme="light">
-              <a href="https://x.com/monad/status/2021278828484567142"></a>
-            </blockquote>
+          <div className="tweet-card">
+            <div className="tweet-header">
+              <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
+              <div className="tweet-user">
+                <span className="tweet-name">World of Nads</span>
+                <span className="tweet-handle">@WorldOfNads · Mar 2026</span>
+              </div>
+            </div>
+            <p className="tweet-body">Won Monad Blitz for our new feature! 🏆 Extremely excited for what's next.</p>
+            <a href="#" className="tweet-link">View Post</a>
           </div>
 
           {/* Tweet 2 */}
-          <div className="tweet-wrapper">
-            <blockquote className="twitter-tweet" data-theme="light">
-              <a href="https://x.com/pipeline_xyz/status/2038273205807284696"></a>
-            </blockquote>
+          <div className="tweet-card">
+            <div className="tweet-header">
+              <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
+              <div className="tweet-user">
+                <span className="tweet-name">World of Nads</span>
+                <span className="tweet-handle">@WorldOfNads · Feb 2026</span>
+              </div>
+            </div>
+            <p className="tweet-body">Just crossed 200K active players! The community momentum is absolutely insane right now. 🚀</p>
+            <a href="#" className="tweet-link">View Post</a>
           </div>
 
           {/* Tweet 3 */}
-          <div className="tweet-wrapper">
-            <blockquote className="twitter-tweet" data-theme="light">
-              <a href="https://x.com/monad/status/2037542234350850442"></a>
-            </blockquote>
+          <div className="tweet-card">
+            <div className="tweet-header">
+              <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
+              <div className="tweet-user">
+                <span className="tweet-name">World of Nads</span>
+                <span className="tweet-handle">@WorldOfNads · Jan 2026</span>
+              </div>
+            </div>
+            <p className="tweet-body">Officially raised our community funding round! Thank you to everyone who believes in the vision. 🎮</p>
+            <a href="#" className="tweet-link">View Post</a>
           </div>
         </div>
       </section>
