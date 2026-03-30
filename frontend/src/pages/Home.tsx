@@ -184,7 +184,7 @@ const Home: React.FC = () => {
   const tweets = [
     {
       month: "Mar 2026",
-      body: "Just crossed 200K active players! The community momentum is absolutely insane right now. 🚀",
+      body: "Won Monad Blitz for our new feature! 🏆 Extremely excited for what's next.",
       image: "/tweets/img1.jpg",
     },
     {
