@@ -247,12 +247,6 @@ body,
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .wave-char {
-    animation: none;
-  }
-}
-
 .func-image {
   flex: 1;
   display: flex;
