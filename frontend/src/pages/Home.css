@@ -109,6 +109,18 @@ body,
   color: #ffffff;
   opacity: 1;
   text-transform: uppercase;
+  position: relative;
+}
+
+.hero-headline::after {
+  content: " WORLD OF NADS";
+  position: absolute;
+  left: -50px;
+  bottom: -50px;
+  color: transparent;
+  -webkit-text-stroke: 3px #ffffff;
+  z-index: -1;
+  width: 100%;
 }
 
 .hero-subtext {
