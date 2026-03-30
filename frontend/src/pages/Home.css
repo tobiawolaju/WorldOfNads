@@ -210,6 +210,8 @@ body,
   margin-bottom: 20px;
   line-height: 1.1;
   color: var(--secondary);
+  -webkit-text-stroke: 0.5px #000000;
+  text-shadow: -0.5px 0 #000000, 0 0.5px #000000, 0.5px 0 #000000, 0 -0.5px #000000;
   letter-spacing: -0.02em;
 }
 
