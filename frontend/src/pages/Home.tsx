@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import "./Home.css";
-import { FaDiscord, FaArrowDown, FaGamepad, FaUsers, FaTrophy } from "react-icons/fa";
+import { FaDiscord } from "react-icons/fa";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -181,6 +181,24 @@ const Home: React.FC = () => {
     };
   }, []);
 
+  const tweets = [
+    {
+      month: "Mar 2026",
+      body: "Won Monad Blitz for our new feature! 🏆 Extremely excited for what's next.",
+      image: "/tweets/img1.jpg",
+    },
+    {
+      month: "Feb 2026",
+      body: "Just crossed 200K active players! The community momentum is absolutely insane right now. 🚀",
+      image: "/tweets/img2.jpg",
+    },
+    {
+      month: "Jan 2026",
+      body: "Officially raised our community funding round! Thank you to everyone who believes in the vision. 🎮",
+      image: "/tweets/img3.jpg",
+    },
+  ];
+
   return (
     <div className="home-wrapper">
       {/* Noise Overlay */}
@@ -273,44 +291,24 @@ const Home: React.FC = () => {
       <section className="events-grid-section reveal">
         <h2 className="section-title">News</h2>
         <div className="events-grid">
-          {/* Tweet 1 */}
-          <div className="tweet-card">
-            <div className="tweet-header">
-              <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
-              <div className="tweet-user">
-                <span className="tweet-name">World of Nads</span>
-                <span className="tweet-handle">@WorldOfNads · Mar 2026</span>
+          {tweets.map((tweet, index) => (
+            <article className="tweet-card" key={tweet.month}>
+              <div className="tweet-header">
+                <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
+                <div className="tweet-user">
+                  <span className="tweet-name">World of Nads</span>
+                  <span className="tweet-handle">@WorldOfNads · {tweet.month}</span>
+                </div>
               </div>
-            </div>
-            <p className="tweet-body">Won Monad Blitz for our new feature! 🏆 Extremely excited for what's next.</p>
-            <a href="#" className="tweet-link">View Post</a>
-          </div>
-
-          {/* Tweet 2 */}
-          <div className="tweet-card">
-            <div className="tweet-header">
-              <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
-              <div className="tweet-user">
-                <span className="tweet-name">World of Nads</span>
-                <span className="tweet-handle">@WorldOfNads · Feb 2026</span>
-              </div>
-            </div>
-            <p className="tweet-body">Just crossed 200K active players! The community momentum is absolutely insane right now. 🚀</p>
-            <a href="#" className="tweet-link">View Post</a>
-          </div>
-
-          {/* Tweet 3 */}
-          <div className="tweet-card">
-            <div className="tweet-header">
-              <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
-              <div className="tweet-user">
-                <span className="tweet-name">World of Nads</span>
-                <span className="tweet-handle">@WorldOfNads · Jan 2026</span>
-              </div>
-            </div>
-            <p className="tweet-body">Officially raised our community funding round! Thank you to everyone who believes in the vision. 🎮</p>
-            <a href="#" className="tweet-link">View Post</a>
-          </div>
+              <p className="tweet-body">{tweet.body}</p>
+              <img
+                src={tweet.image}
+                alt={`World of Nads post ${index + 1}`}
+                className="tweet-image"
+              />
+              <a href="#" className="tweet-link">View Post</a>
+            </article>
+          ))}
         </div>
       </section>
 

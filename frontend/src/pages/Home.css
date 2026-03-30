@@ -380,6 +380,14 @@ body,
   text-decoration: underline;
 }
 
+.tweet-image {
+  width: 100%;
+  border-radius: 14px;
+  object-fit: cover;
+  aspect-ratio: 16 / 10;
+  border: 1px solid rgba(15, 20, 25, 0.08);
+}
+
 /* 6️⃣ Fixed Buttons */
 .footer-buttons {
   position: fixed;
