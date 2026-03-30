@@ -1,31 +1,18 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import "./Home.css";
 import { FaDiscord } from "react-icons/fa";
-import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-// Register ScrollTrigger
-gsap.registerPlugin(ScrollTrigger);
 
 const Home: React.FC = () => {
   const { login, authenticated, ready } = usePrivy();
   const navigate = useNavigate();
-
-  // Refs for Scroll Story
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const stickyRef = useRef<HTMLDivElement>(null);
   const statsContainerRef = useRef<HTMLDivElement>(null);
-
-  // Refs for buttons
-  const discordBtnRef = useRef<HTMLAnchorElement>(null);
-  const playBtnRef = useRef<HTMLButtonElement>(null);
 
   // Hero Parallax
   const heroRef = useRef<HTMLDivElement>(null);
-  const heroContentRef = useRef<HTMLDivElement>(null);
+  const heroBgRef = useRef<HTMLImageElement>(null);
+  const [showFooterButtons, setShowFooterButtons] = useState(false);
 
   const handlePlay = (): void => {
     if (!ready) return;
@@ -36,71 +23,92 @@ const Home: React.FC = () => {
     }
   };
 
-  useGSAP(() => {
-    // ---------- HERO PARALLAX ----------
+  useEffect(() => {
+    // ---------- HERO PARALLAX (throttled with rAF) ----------
     const hero = heroRef.current;
-    if (hero) {
-      const handleMouseMove = (e: MouseEvent) => {
-        const { clientX, clientY } = e;
-        const xPos = (clientX / window.innerWidth - 0.5) * 20;
-        const yPos = (clientY / window.innerHeight - 0.5) * 20;
-        gsap.to(".hero-bg-video", {
-          x: xPos,
-          y: yPos,
-          duration: 1,
-          ease: "power2.out"
-        });
-      };
-      hero.addEventListener("mousemove", handleMouseMove);
-      return () => hero.removeEventListener("mousemove", handleMouseMove);
-    }
-  }, { scope: heroRef });
+    const heroBg = heroBgRef.current;
+    if (!hero || !heroBg) return;
 
-  useGSAP(() => {
-    // ---------- FADE BUTTONS ON SCROLL ----------
-    gsap.set(".footer-buttons", { opacity: 0.0, pointerEvents: "none", y: 20 });
-    ScrollTrigger.create({
-      start: 100,
-      onEnter: () => gsap.to(".footer-buttons", { opacity: 1, pointerEvents: "auto", y: 0, duration: 0.4 }),
-      onLeaveBack: () => gsap.to(".footer-buttons", { opacity: 0.0, pointerEvents: "none", y: 20, duration: 0.4 })
-    });
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+    let rafId = 0;
 
-    // ---------- FADE IN SECTIONS ----------
-    gsap.utils.toArray<HTMLElement>(".reveal").forEach((el) => {
-      gsap.from(el, {
-        scrollTrigger: {
-          trigger: el,
-          start: "top 85%",
-        },
-        opacity: 0,
-        y: 60,
-        duration: 1.2,
-        ease: "power3.out"
-      });
-    });
+    const animate = () => {
+      currentX += (targetX - currentX) * 0.12;
+      currentY += (targetY - currentY) * 0.12;
+      heroBg.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      rafId = requestAnimationFrame(animate);
+    };
 
-    // ---------- BUTTON HOVER ----------
-    const hoverIn = (el: Element) =>
-      gsap.to(el, { border: "8px solid rgba(255,255,255,0.2)", duration: 0.25 });
-    const hoverOut = (el: Element) =>
-      gsap.to(el, { border: "none", duration: 0.25 });
+    const onMouseMove = (e: MouseEvent) => {
+      const xPos = (e.clientX / window.innerWidth - 0.5) * 20;
+      const yPos = (e.clientY / window.innerHeight - 0.5) * 20;
+      targetX = xPos;
+      targetY = yPos;
+    };
 
-    [discordBtnRef.current, playBtnRef.current].forEach(btn => {
-      if (btn) {
-        btn.addEventListener("mouseenter", () => hoverIn(btn));
-        btn.addEventListener("mouseleave", () => hoverOut(btn));
-      }
-    });
+    const onMouseLeave = () => {
+      targetX = 0;
+      targetY = 0;
+    };
 
+    hero.addEventListener("mousemove", onMouseMove);
+    hero.addEventListener("mouseleave", onMouseLeave);
+    rafId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      hero.removeEventListener("mousemove", onMouseMove);
+      hero.removeEventListener("mouseleave", onMouseLeave);
+    };
   }, []);
 
-  // Marquee logic for stats bar
+  // Native reveal animations + footer buttons visibility
+  useEffect(() => {
+    const revealEls = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
+    const revealObserver = new IntersectionObserver(
+      (entries, observer) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -10% 0px" }
+    );
+
+    revealEls.forEach((el) => revealObserver.observe(el));
+
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setShowFooterButtons(window.scrollY > 100);
+        ticking = false;
+      });
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      revealObserver.disconnect();
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  // Marquee logic for stats bar (pauses when out of viewport)
   useEffect(() => {
     const container = statsContainerRef.current;
     if (!container) return;
 
     let animId: number;
     let isUserInteracting = false;
+    let isInView = false;
     let isDown = false;
     let startX: number;
     let scrollLeftPos: number;
@@ -150,8 +158,16 @@ const Home: React.FC = () => {
     };
     container.addEventListener('wheel', onWheel, { passive: true });
 
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        isInView = Boolean(entry?.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+    visibilityObserver.observe(container);
+
     const step = () => {
-      if (!isUserInteracting) {
+      if (isInView && !isUserInteracting) {
         container.scrollLeft += 1;
       }
 
@@ -177,6 +193,7 @@ const Home: React.FC = () => {
       container.removeEventListener('touchend', onTouchEnd);
       container.removeEventListener('mouseenter', onMouseEnter);
       container.removeEventListener('wheel', onWheel);
+      visibilityObserver.disconnect();
       clearTimeout(wheelTimeout);
     };
   }, []);
@@ -199,20 +216,24 @@ const Home: React.FC = () => {
     },
   ];
 
-  const renderWaveText = (text: string) => (
-    <span className="wave-text" aria-label={text}>
-      {text.split("").map((char, index) => (
+  const renderWaveText = (text: string) => {
+    const words = text.split(" ");
+    return (
+      <span className="wave-text" aria-label={text}>
+        {words.map((word, index) => (
         <span
-          key={`${char}-${index}`}
-          className="wave-char"
+          key={`${word}-${index}`}
+          className="wave-word"
           style={{ "--wave-index": index } as React.CSSProperties}
           aria-hidden="true"
         >
-          {char === " " ? "\u00A0" : char}
+          {word}
+          {index < words.length - 1 ? "\u00A0" : ""}
         </span>
-      ))}
-    </span>
-  );
+        ))}
+      </span>
+    );
+  };
 
   return (
     <div className="home-wrapper">
@@ -222,11 +243,11 @@ const Home: React.FC = () => {
       {/* SECTION 1: HERO */}
       <section className="hero-section" ref={heroRef}>
         <div className="hero-bg-container">
-          <img src="/wons.gif" alt="World of Nads Gameplay" className="hero-bg-video" />
+          <img ref={heroBgRef} src="/wons.gif" alt="World of Nads Gameplay" className="hero-bg-video" />
           <div className="hero-overlay" />
         </div>
 
-        <div className="hero-content" ref={heroContentRef}>
+        <div className="hero-content">
           <h1 className="hero-headline"> WORLD OF NADS</h1>
         </div>
         <p className="hero-subtext">Gmonad, Welcome too the edge of Web2, scroll down there Nad ⇙</p>
@@ -328,9 +349,8 @@ const Home: React.FC = () => {
       </section>
 
       {/* FIXED BUTTONS */}
-      <div className="footer-buttons">
+      <div className={`footer-buttons ${showFooterButtons ? "is-visible" : ""}`}>
         <a
-          ref={discordBtnRef}
           href="https://discord.gg/z4SUdrKayb"
           target="_blank"
           rel="noopener noreferrer"
@@ -340,7 +360,6 @@ const Home: React.FC = () => {
           <FaDiscord size={28} />
         </a>
         <button
-          ref={playBtnRef}
           onClick={handlePlay}
           disabled={!ready}
           className="play-btn-fixed"
