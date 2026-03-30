@@ -462,9 +462,13 @@ body,
 @media (max-width: 767px) {
   .footer-buttons {
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(20px);
     right: auto;
     justify-content: center;
+  }
+
+  .footer-buttons.is-visible {
+    transform: translateX(-50%) translateY(0);
   }
 }
 
