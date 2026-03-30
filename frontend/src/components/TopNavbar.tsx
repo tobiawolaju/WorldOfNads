@@ -37,7 +37,7 @@ const TopNavbar = () => {
     <nav className={`topnav ${isHome ? 'home-nav' : ''}`}>
       {/* Logo + Optional Page Text */}
       <div className="logo-section" style={{ display: 'flex', alignItems: 'center' }}>
-        <img src="/logo.jpg" alt="logo" style={{ width: '40px', zIndex: 999 }} />
+        <img src="/logo.png" alt="logo" style={{ width: '40px', zIndex: 999 }} />
         {currentText && (
           <p style={{ fontSize: 'larger', margin: '10px', color: isHome ? '#ffffff' : '#000', fontFamily: "'Font1', sans-serif", fontWeight: 'bold' }}>
             {currentText}
