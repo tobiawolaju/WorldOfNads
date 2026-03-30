@@ -108,7 +108,7 @@ const Home: React.FC = () => {
     const onTouchStart = () => { isUserInteracting = true; };
     const onTouchEnd = () => { isUserInteracting = false; };
     const onMouseEnter = () => { isUserInteracting = true; };
-    
+
     const onMouseDown = (e: MouseEvent) => {
       isUserInteracting = true;
       isDown = true;
@@ -138,30 +138,30 @@ const Home: React.FC = () => {
     container.addEventListener('mouseleave', onMouseLeave);
     container.addEventListener('mouseup', onMouseUp);
     container.addEventListener('mousemove', onMouseMove);
-    container.addEventListener('touchstart', onTouchStart, {passive: true});
+    container.addEventListener('touchstart', onTouchStart, { passive: true });
     container.addEventListener('touchend', onTouchEnd);
     container.addEventListener('mouseenter', onMouseEnter);
 
     let wheelTimeout: ReturnType<typeof setTimeout>;
     const onWheel = () => {
-       isUserInteracting = true;
-       clearTimeout(wheelTimeout);
-       wheelTimeout = setTimeout(() => { isUserInteracting = false; }, 1000);
+      isUserInteracting = true;
+      clearTimeout(wheelTimeout);
+      wheelTimeout = setTimeout(() => { isUserInteracting = false; }, 1000);
     };
-    container.addEventListener('wheel', onWheel, {passive: true});
+    container.addEventListener('wheel', onWheel, { passive: true });
 
     const step = () => {
       if (!isUserInteracting) {
         container.scrollLeft += 1;
       }
-      
+
       // Infinite loop check
       if (container.scrollLeft >= container.scrollWidth / 2) {
         container.scrollLeft -= container.scrollWidth / 2;
       } else if (container.scrollLeft <= 0) {
         container.scrollLeft += container.scrollWidth / 2;
       }
-      
+
       animId = requestAnimationFrame(step);
     };
 
@@ -211,7 +211,7 @@ const Home: React.FC = () => {
               <p className="func-subtext">Turn Players Into Community. Reward engagement and grow your ecosystem organically.</p>
             </div>
             <div className="func-image">
-              <img src="/logo.jpg" alt="Gameplay" />
+              <img src="/w.png" alt="Gameplay" />
             </div>
           </div>
 
@@ -222,7 +222,7 @@ const Home: React.FC = () => {
               <p className="func-subtext">Play Together. Win Together. A new layer where games and Web3 connect seamlessly.</p>
             </div>
             <div className="func-image">
-              <img src="/logo.jpg" alt="Projects" />
+              <img src="/w.png" alt="Projects" />
             </div>
           </div>
 
@@ -233,7 +233,7 @@ const Home: React.FC = () => {
               <p className="func-subtext">A new layer where games and Web3 connect seamlessly.</p>
             </div>
             <div className="func-image">
-              <img src="/logo.jpg" alt="Unified Vision" />
+              <img src="/w.png" alt="Unified Vision" />
             </div>
           </div>
 
