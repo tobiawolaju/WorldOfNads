@@ -1,13 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import './topnav.css';
 
 const TopNavbar = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
+  const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
   const location = useLocation();
 
   const isHome = location.pathname === '/';
   const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setIsScrolledPastHero(window.scrollY >= window.innerHeight);
+    };
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
 
   // central nav config
   const navItems = [
@@ -33,13 +47,23 @@ const TopNavbar = () => {
       </NavLink>
     ));
 
+  const navClass = `topnav ${isHome ? 'home-nav' : ''} ${isHome && isScrolledPastHero ? 'home-nav-scrolled' : ''}`.trim();
+
   return (
-    <nav className={`topnav ${isHome ? 'home-nav' : ''}`}>
+    <nav className={navClass}>
       {/* Logo + Optional Page Text */}
       <div className="logo-section" style={{ display: 'flex', alignItems: 'center' }}>
         <img src="/logo.png" alt="logo" style={{ width: '40px', zIndex: 999 }} />
         {currentText && (
-          <p style={{ fontSize: 'larger', margin: '10px', color: isHome ? '#ffffff' : '#000', fontFamily: "'Font1', sans-serif", fontWeight: 'bold' }}>
+          <p
+            style={{
+              fontSize: 'larger',
+              margin: '10px',
+              color: isHome && !isScrolledPastHero ? '#ffffff' : '#000',
+              fontFamily: "'Font1', sans-serif",
+              fontWeight: 'bold',
+            }}
+          >
             {currentText}
           </p>
         )}
@@ -49,7 +73,7 @@ const TopNavbar = () => {
       <div className="nav-links">{renderNavLinks()}</div>
 
       {/* Hamburger */}
-      <button onClick={toggleDrawer} className={`hamburger-btn ${isHome ? 'home-hamburger' : ''}`} aria-expanded={isDrawerOpen}>
+      <button onClick={toggleDrawer} className={`hamburger-btn ${isHome && !isScrolledPastHero ? 'home-hamburger' : ''}`} aria-expanded={isDrawerOpen}>
         ☰
       </button>
 

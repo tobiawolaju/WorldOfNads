@@ -130,6 +130,13 @@
   opacity: 0.8;
 }
 
+.topnav.home-nav.home-nav-scrolled .nav-links .link,
+.topnav.home-nav.home-nav-scrolled .nav-links .link:hover,
+.topnav.home-nav.home-nav-scrolled .nav-links .active-link {
+  color: #000000;
+  opacity: 1;
+}
+
 .hamburger-btn.home-hamburger {
   color: #ffffff;
 }
