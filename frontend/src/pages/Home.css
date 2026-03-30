@@ -115,12 +115,13 @@ body,
 .hero-headline::after {
   content: " WORLD OF NADS";
   position: absolute;
-  left: -50px;
-  bottom: -50px;
+  left: -10px;
+  bottom: -10px;
   color: transparent;
-  -webkit-text-stroke: 3px #ffffff;
+  -webkit-text-stroke: 1px #ffffff;
   z-index: -1;
   width: 100%;
+  opacity: 0.4;
 }
 
 .hero-subtext {
