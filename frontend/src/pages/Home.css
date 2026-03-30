@@ -209,7 +209,7 @@ body,
   font-weight: 850;
   margin-bottom: 20px;
   line-height: 1.1;
-  color: #000000;
+  color: var(--secondary);
   letter-spacing: -0.02em;
 }
 

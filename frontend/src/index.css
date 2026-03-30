@@ -38,6 +38,9 @@
   --primary-active: #3F35D9;
   --primary-light: hsl(249, 100%, 74%);
 
+
+  --secondary: #d324ff;
+
   --background: #ffffff;
   --foreground: #171717;
   --foreground-muted: rgba(0, 0, 0, 0.7);
