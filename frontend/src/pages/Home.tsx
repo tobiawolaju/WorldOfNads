@@ -184,7 +184,7 @@ const Home: React.FC = () => {
   const tweets = [
     {
       month: "Mar 2026",
-      body: "Won Monad Blitz for our new feature! 🏆 Extremely excited for what's next.",
+      body: "Just crossed 200K active players! The community momentum is absolutely insane right now. 🚀",
       image: "/tweets/img1.jpg",
     },
     {
@@ -300,12 +300,12 @@ const Home: React.FC = () => {
                   <span className="tweet-handle">@WorldOfNads · {tweet.month}</span>
                 </div>
               </div>
-              <p className="tweet-body">{tweet.body}</p>
               <img
                 src={tweet.image}
                 alt={`World of Nads post ${index + 1}`}
                 className="tweet-image"
               />
+              <p className="tweet-body">{tweet.body}</p>
               <a href="#" className="tweet-link">View Post</a>
             </article>
           ))}
