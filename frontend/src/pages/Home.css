@@ -217,27 +217,24 @@ body,
 
 /* 4️⃣ Section 3: Stats Bar */
 .stats-bar-section {
-  background: transparent;
-  border-top: 1px solid #f0f0f0;
-  border-bottom: 1px solid #f0f0f0;
-  overflow: hidden;
+  background: #907cff;
+  border-top: none;
+  border-bottom: none;
+  overflow-x: auto;
+  overflow-y: hidden;
   padding: 60px 0;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  cursor: grab;
+}
+
+.stats-bar-section::-webkit-scrollbar {
+  display: none;
 }
 
 .stats-track {
   display: flex;
-  width: fit-content;
-  animation: scroll 40s linear infinite;
-}
-
-@keyframes scroll {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(-50%);
-  }
+  width: max-content;
 }
 
 .stats-group {
@@ -255,13 +252,13 @@ body,
 .stat-num {
   font-size: clamp(28px, 4vw, 42px);
   font-weight: 900;
-  color: #000000;
+  color: #ffffff;
   line-height: 1;
 }
 
 .stat-label {
   font-size: 13px;
-  color: #999999;
+  color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   margin-top: 6px;
@@ -270,9 +267,9 @@ body,
 .sponsor-logo {
   font-size: 28px;
   font-weight: 800;
-  color: #000000;
-  opacity: 0.25;
-  filter: grayscale(1);
+  color: #ffffff;
+  opacity: 0.8;
+  filter: none;
   transition: all 0.4s ease;
   white-space: nowrap;
 }

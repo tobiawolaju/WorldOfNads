@@ -17,6 +17,7 @@ const Home: React.FC = () => {
   // Refs for Scroll Story
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
+  const statsContainerRef = useRef<HTMLDivElement>(null);
 
   // Refs for buttons
   const discordBtnRef = useRef<HTMLAnchorElement>(null);
@@ -93,6 +94,93 @@ const Home: React.FC = () => {
 
   }, []);
 
+  // Marquee logic for stats bar
+  useEffect(() => {
+    const container = statsContainerRef.current;
+    if (!container) return;
+
+    let animId: number;
+    let isUserInteracting = false;
+    let isDown = false;
+    let startX: number;
+    let scrollLeftPos: number;
+
+    const onTouchStart = () => { isUserInteracting = true; };
+    const onTouchEnd = () => { isUserInteracting = false; };
+    const onMouseEnter = () => { isUserInteracting = true; };
+    
+    const onMouseDown = (e: MouseEvent) => {
+      isUserInteracting = true;
+      isDown = true;
+      startX = e.pageX - container.offsetLeft;
+      scrollLeftPos = container.scrollLeft;
+      container.style.cursor = 'grabbing';
+    };
+    const onMouseLeave = () => {
+      isUserInteracting = false;
+      isDown = false;
+      container.style.cursor = 'grab';
+    };
+    const onMouseUp = () => {
+      isUserInteracting = false;
+      isDown = false;
+      container.style.cursor = 'grab';
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - container.offsetLeft;
+      const walk = (x - startX) * 2;
+      container.scrollLeft = scrollLeftPos - walk;
+    };
+
+    container.addEventListener('mousedown', onMouseDown);
+    container.addEventListener('mouseleave', onMouseLeave);
+    container.addEventListener('mouseup', onMouseUp);
+    container.addEventListener('mousemove', onMouseMove);
+    container.addEventListener('touchstart', onTouchStart, {passive: true});
+    container.addEventListener('touchend', onTouchEnd);
+    container.addEventListener('mouseenter', onMouseEnter);
+
+    let wheelTimeout: ReturnType<typeof setTimeout>;
+    const onWheel = () => {
+       isUserInteracting = true;
+       clearTimeout(wheelTimeout);
+       wheelTimeout = setTimeout(() => { isUserInteracting = false; }, 1000);
+    };
+    container.addEventListener('wheel', onWheel, {passive: true});
+
+    const step = () => {
+      if (!isUserInteracting) {
+        container.scrollLeft += 1;
+      }
+      
+      // Infinite loop check
+      if (container.scrollLeft >= container.scrollWidth / 2) {
+        container.scrollLeft -= container.scrollWidth / 2;
+      } else if (container.scrollLeft <= 0) {
+        container.scrollLeft += container.scrollWidth / 2;
+      }
+      
+      animId = requestAnimationFrame(step);
+    };
+
+    animId = requestAnimationFrame(step);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      container.removeEventListener('mousedown', onMouseDown);
+      container.removeEventListener('mouseleave', onMouseLeave);
+      container.removeEventListener('mouseup', onMouseUp);
+      container.removeEventListener('mousemove', onMouseMove);
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchend', onTouchEnd);
+      container.removeEventListener('mouseenter', onMouseEnter);
+      container.removeEventListener('wheel', onWheel);
+      clearTimeout(wheelTimeout);
+    };
+  }, []);
+
   return (
     <div className="home-wrapper">
       {/* Noise Overlay */}
@@ -153,7 +241,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* SECTION 3: STATS BAR */}
-      <section className="stats-bar-section reveal">
+      <section className="stats-bar-section reveal" ref={statsContainerRef}>
         <div className="stats-track">
           {[...Array(2)].map((_, i) => (
             <div key={i} className="stats-group">
