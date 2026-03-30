@@ -314,71 +314,12 @@ body,
   gap: 40px;
 }
 
-.tweet-card {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  padding: 24px;
-  transition: all 0.2s ease;
+.tweet-wrapper {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  justify-content: center;
+  width: 100%;
 }
 
-.tweet-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-}
-
-.tweet-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.tweet-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.tweet-user {
-  display: flex;
-  flex-direction: column;
-}
-
-.tweet-name {
-  font-weight: 800;
-  font-size: 16px;
-  color: #0f1419;
-}
-
-.tweet-handle {
-  font-size: 15px;
-  color: #536471;
-}
-
-.tweet-body {
-  font-size: 18px;
-  color: #0f1419;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.tweet-link {
-  font-size: 15px;
-  color: #1d9bf0;
-  text-decoration: none;
-  font-weight: 600;
-  margin-top: 8px;
-}
-
-.tweet-link:hover {
-  text-decoration: underline;
-}
 
 /* 6️⃣ Fixed Buttons */
 .footer-buttons {
