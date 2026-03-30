@@ -538,6 +538,10 @@ body,
     margin: 0 auto;
   }
 
+  .func-image {
+    width: 100%;
+  }
+
   .func-image img,
   .slide1-placeholder,
   .slide2-placeholder,
