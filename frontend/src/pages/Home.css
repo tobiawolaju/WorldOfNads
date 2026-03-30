@@ -298,9 +298,9 @@ body,
 }
 
 .tweet-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px);
+  background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   border-radius: 12px;
   padding: 24px;
   transition: all 0.2s ease;
@@ -310,7 +310,8 @@ body,
 }
 
 .tweet-card:hover {
-  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
   cursor: pointer;
 }
 
@@ -348,12 +349,6 @@ body,
   color: #0f1419;
   line-height: 1.5;
   margin: 0;
-}
-
-.blur-news {
-  filter: blur(6px);
-  user-select: none;
-  opacity: 0.7;
 }
 
 .tweet-link {
