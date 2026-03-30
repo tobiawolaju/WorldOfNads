@@ -115,9 +115,10 @@ body,
   font-size: clamp(18px, 2vw, 22px);
   color: #ffffff;
   line-height: 1.5;
-  max-width: 300px;
+  max-width: 600px;
   text-align: center;
-  z-index: 2; /* Explicitly keep it above the overlay */
+  z-index: 2;
+  /* Explicitly keep it above the overlay */
 }
 
 .scroll-hint {
@@ -226,8 +227,10 @@ body,
   overflow-x: auto;
   overflow-y: hidden;
   padding: 60px 0;
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
   cursor: grab;
 }
 
