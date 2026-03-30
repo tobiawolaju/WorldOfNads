@@ -17,7 +17,7 @@ const Home: React.FC = () => {
   // Refs for Scroll Story
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
-  
+
   // Refs for buttons
   const discordBtnRef = useRef<HTMLAnchorElement>(null);
   const playBtnRef = useRef<HTMLButtonElement>(null);
@@ -57,11 +57,11 @@ const Home: React.FC = () => {
 
   useGSAP(() => {
     // ---------- FADE BUTTONS ON SCROLL ----------
-    gsap.set(".footer-buttons", { opacity: 0.2, pointerEvents: "none", y: 20 });
+    gsap.set(".footer-buttons", { opacity: 0.0, pointerEvents: "none", y: 20 });
     ScrollTrigger.create({
       start: 100,
       onEnter: () => gsap.to(".footer-buttons", { opacity: 1, pointerEvents: "auto", y: 0, duration: 0.4 }),
-      onLeaveBack: () => gsap.to(".footer-buttons", { opacity: 0.2, pointerEvents: "none", y: 20, duration: 0.4 })
+      onLeaveBack: () => gsap.to(".footer-buttons", { opacity: 0.0, pointerEvents: "none", y: 20, duration: 0.4 })
     });
 
     // ---------- FADE IN SECTIONS ----------
@@ -114,7 +114,7 @@ const Home: React.FC = () => {
       {/* SECTION 2: SCROLL STORY */}
       <section className="scroll-story-container functional-purple">
         <div className="story-content-wrapper">
-          
+
           {/* Slide 1: Gameplay */}
           <div className="functional-slide">
             <div className="func-content">
