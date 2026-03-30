@@ -110,6 +110,14 @@ body,
   text-transform: uppercase;
 }
 
+.hero-subtext {
+  font-size: clamp(18px, 2vw, 22px);
+  color: #ffffff;
+  line-height: 1.5;
+  max-width: 300px;
+  text-align: center;
+}
+
 .scroll-hint {
   position: absolute;
   bottom: 40px;
