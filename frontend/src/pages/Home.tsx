@@ -204,17 +204,17 @@ const Home: React.FC = () => {
   const tweets = [
     {
       month: "Mar 2026",
-      body: "Won Monad Blitz for our new feature! 🏆 Extremely excited for what's next.",
+      body: "Top players just got paid again. Skill is winning here. 🏆",
       image: "/tweets/img1.jpg",
     },
     {
-      month: "Feb 2026",
-      body: "Just crossed 200K active players! The community momentum is absolutely insane right now. 🚀",
+      month: "Mar 2026",
+      body: "200K+ matches. No bots. Just players competing. 🚀",
       image: "/tweets/img2.jpg",
     },
     {
-      month: "Jan 2026",
-      body: "Officially raised our community funding round! Thank you to everyone who believes in the vision. 🎮",
+      month: "Mar 2026",
+      body: "More sponsors joining. More prize pools going live. 🎮",
       image: "/tweets/img3.jpg",
     },
   ];
@@ -224,15 +224,15 @@ const Home: React.FC = () => {
     return (
       <span className="wave-text" aria-label={text}>
         {words.map((word, index) => (
-        <span
-          key={`${word}-${index}`}
-          className="wave-word"
-          style={{ "--wave-index": index } as React.CSSProperties}
-          aria-hidden="true"
-        >
-          {word}
-          {index < words.length - 1 ? "\u00A0" : ""}
-        </span>
+          <span
+            key={`${word}-${index}`}
+            className="wave-word"
+            style={{ "--wave-index": index } as React.CSSProperties}
+            aria-hidden="true"
+          >
+            {word}
+            {index < words.length - 1 ? "\u00A0" : ""}
+          </span>
         ))}
       </span>
     );
@@ -253,7 +253,7 @@ const Home: React.FC = () => {
         <div className="hero-content">
           <h1 className="hero-headline"> WORLD OF NADS</h1>
         </div>
-        <p className="hero-subtext">Gmonad, Welcome too the edge of Web2, scroll down there Nad ⇙</p>
+        <p className="hero-subtext">Play fast. Win real. No grind. No luck. Just skill. ↓</p>
 
       </section>
 
@@ -265,7 +265,7 @@ const Home: React.FC = () => {
           <div className="functional-slide">
             <div className="func-content">
               <h2 className="func-headline">Gameplay</h2>
-              <p className="func-subtext">{renderWaveText("Turn Players Into Community. Reward engagement and grow your ecosystem organically.")}</p>
+              <p className="func-subtext">{renderWaveText("Jump in. Compete. Win. Every match counts. Every win pays.")}</p>
             </div>
             <div className="func-image">
               <Slide1 />
@@ -276,7 +276,7 @@ const Home: React.FC = () => {
           <div className="functional-slide reverse">
             <div className="func-content">
               <h2 className="func-headline">Projects</h2>
-              <p className="func-subtext">{renderWaveText("Play Together. Win Together. A new layer where games and Web3 connect seamlessly.")}</p>
+              <p className="func-subtext">{renderWaveText("Sponsor matches. Get players. Be seen where the action is.")}</p>
             </div>
             <div className="func-image">
               <Slide2 />
@@ -287,7 +287,7 @@ const Home: React.FC = () => {
           <div className="functional-slide">
             <div className="func-content">
               <h2 className="func-headline">Vision First. Always.</h2>
-              <p className="func-subtext">{renderWaveText("A new layer where games and Web3 connect seamlessly.")}</p>
+              <p className="func-subtext">{renderWaveText("The competitive layer for every game. Built for billions.")}</p>
             </div>
             <div className="func-image">
               <Slide3 />
@@ -304,19 +304,19 @@ const Home: React.FC = () => {
             <div key={i} className="stats-group">
               <div className="stat-item">
                 <span className="stat-num">200K+</span>
-                <span className="stat-label">Matches Played</span>
+                <span className="stat-label">Matches Completed</span>
               </div>
               <div className="stat-item">
                 <span className="stat-num">$7.3K+</span>
-                <span className="stat-label">Paid Out</span>
+                <span className="stat-label">Winnings Paid</span>
               </div>
               <div className="stat-item">
                 <span className="stat-num">15K+</span>
-                <span className="stat-label">Active Players</span>
+                <span className="stat-label">Players Competing</span>
               </div>
               <div className="stat-item">
                 <span className="stat-num">42+</span>
-                <span className="stat-label">Integrated Projects</span>
+                <span className="stat-label">Live Sponsors</span>
               </div>
               {/* Sponsor Logos */}
               <div className="sponsor-logo">Monad Labs</div>
