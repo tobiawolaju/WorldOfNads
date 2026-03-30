@@ -199,6 +199,21 @@ const Home: React.FC = () => {
     },
   ];
 
+  const renderWaveText = (text: string) => (
+    <span className="wave-text" aria-label={text}>
+      {text.split("").map((char, index) => (
+        <span
+          key={`${char}-${index}`}
+          className="wave-char"
+          style={{ "--wave-index": index } as React.CSSProperties}
+          aria-hidden="true"
+        >
+          {char === " " ? "\u00A0" : char}
+        </span>
+      ))}
+    </span>
+  );
+
   return (
     <div className="home-wrapper">
       {/* Noise Overlay */}
@@ -226,7 +241,7 @@ const Home: React.FC = () => {
           <div className="functional-slide">
             <div className="func-content">
               <h2 className="func-headline">Gameplay</h2>
-              <p className="func-subtext">Turn Players Into Community. Reward engagement and grow your ecosystem organically.</p>
+              <p className="func-subtext">{renderWaveText("Turn Players Into Community. Reward engagement and grow your ecosystem organically.")}</p>
             </div>
             <div className="func-image">
               <img src="/w.png" alt="Gameplay" />
@@ -237,7 +252,7 @@ const Home: React.FC = () => {
           <div className="functional-slide reverse">
             <div className="func-content">
               <h2 className="func-headline">Projects</h2>
-              <p className="func-subtext">Play Together. Win Together. A new layer where games and Web3 connect seamlessly.</p>
+              <p className="func-subtext">{renderWaveText("Play Together. Win Together. A new layer where games and Web3 connect seamlessly.")}</p>
             </div>
             <div className="func-image">
               <img src="/w.png" alt="Projects" />
@@ -248,7 +263,7 @@ const Home: React.FC = () => {
           <div className="functional-slide">
             <div className="func-content">
               <h2 className="func-headline">Vision First. Always.</h2>
-              <p className="func-subtext">A new layer where games and Web3 connect seamlessly.</p>
+              <p className="func-subtext">{renderWaveText("A new layer where games and Web3 connect seamlessly.")}</p>
             </div>
             <div className="func-image">
               <img src="/w.png" alt="Unified Vision" />

@@ -220,6 +220,39 @@ body,
   max-width: 500px;
 }
 
+.wave-text {
+  display: inline;
+}
+
+.wave-char {
+  display: inline-block;
+  animation: text-wave 1.6s ease-in-out infinite;
+  animation-delay: calc(var(--wave-index) * 0.035s);
+  will-change: transform;
+}
+
+@keyframes text-wave {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-0.28em);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(0.12em);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave-char {
+    animation: none;
+  }
+}
+
 .func-image {
   flex: 1;
   display: flex;
