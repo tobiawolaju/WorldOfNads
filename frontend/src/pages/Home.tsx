@@ -4,6 +4,10 @@ import { usePrivy } from "@privy-io/react-auth";
 import "./Home.css";
 import { FaDiscord } from "react-icons/fa";
 
+const SlidePlaceholder: React.FC = () => (
+  <div className="func-placeholder" aria-hidden="true" />
+);
+
 const Home: React.FC = () => {
   const { login, authenticated, ready } = usePrivy();
   const navigate = useNavigate();
@@ -265,7 +269,7 @@ const Home: React.FC = () => {
               <p className="func-subtext">{renderWaveText("Turn Players Into Community. Reward engagement and grow your ecosystem organically.")}</p>
             </div>
             <div className="func-image">
-              <img src="/w.png" alt="Gameplay" />
+              <SlidePlaceholder />
             </div>
           </div>
 
@@ -276,7 +280,7 @@ const Home: React.FC = () => {
               <p className="func-subtext">{renderWaveText("Play Together. Win Together. A new layer where games and Web3 connect seamlessly.")}</p>
             </div>
             <div className="func-image">
-              <img src="/w.png" alt="Projects" />
+              <SlidePlaceholder />
             </div>
           </div>
 
@@ -287,7 +291,7 @@ const Home: React.FC = () => {
               <p className="func-subtext">{renderWaveText("A new layer where games and Web3 connect seamlessly.")}</p>
             </div>
             <div className="func-image">
-              <img src="/w.png" alt="Unified Vision" />
+              <SlidePlaceholder />
             </div>
           </div>
 

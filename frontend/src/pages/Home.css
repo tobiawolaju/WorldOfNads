@@ -276,6 +276,14 @@ body,
   border-radius: 16px;
 }
 
+.func-placeholder {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  background: #b8b8b8;
+}
+
 /* 4️⃣ Section 3: Stats Bar */
 .stats-bar-section {
   background: #907cff;
@@ -537,7 +545,8 @@ body,
     margin: 0 auto;
   }
 
-  .func-image img {
+  .func-image img,
+  .func-placeholder {
     max-width: 100%;
   }
 }
