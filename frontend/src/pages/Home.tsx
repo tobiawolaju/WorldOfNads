@@ -195,8 +195,8 @@ const Home: React.FC = () => {
 
         <div className="hero-content" ref={heroContentRef}>
           <h1 className="hero-headline"> WORLD OF NADS</h1>
-          <p className="hero-subtext">Gmonad, Welcome too the edge of Web2, scroll down there Nad ⇙</p>
         </div>
+        <p className="hero-subtext">Gmonad, Welcome too the edge of Web2, scroll down there Nad ⇙</p>
 
       </section>
 
