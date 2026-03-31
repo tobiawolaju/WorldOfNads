@@ -190,6 +190,7 @@ script = ExtResource("7_vob6w")
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 text = "Action"
+autowrap_trim_flags = 0
 expand_icon = true
 script = ExtResource("3_uw04a")
 

@@ -10,7 +10,7 @@ func _ready():
 	var viewport_size = get_viewport().get_visible_rect().size
 	global_position = Vector2(
 		viewport_size.x - 100,   # 100px left from right edge
-		viewport_size.y - 310    # 100px above bottom edge
+		viewport_size.y - 210    # 100px above bottom edge
 	)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
