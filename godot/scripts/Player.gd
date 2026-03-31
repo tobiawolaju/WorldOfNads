@@ -6,6 +6,7 @@ const JUMP_VELOCITY: float = 4.5
 const SPEED: float = 4.5
 const DEADZONE := 0.12
 const PICKUP_REQUEST_COOLDOWN_MS := 150
+const STEAL_RADIUS := 2.5
 
 # --- INPUT VARIABLES ---
 var gamepad_index := 0
@@ -210,7 +211,7 @@ func _try_pickup():
 		return
 	last_pickup_request_ms = now
 
-	# Only request pickup when a valid nearby target exists.
+	# Try Area3D overlap first (works when chicken is on the ground).
 	var bodies = pickup_area.get_overlapping_bodies()
 	var best_target: RigidBody3D = null
 	var shortest_dist: float = 999.0
@@ -221,6 +222,15 @@ func _try_pickup():
 			if dist < shortest_dist:
 				shortest_dist = dist
 				best_target = body
+
+	# Fallback: when the chicken is held by someone else, its frozen RigidBody3D
+	# may not register in Area3D overlaps.  Do a direct distance check instead.
+	if best_target == null and root and root.has_method("get_chicken_node"):
+		var chicken = root.get_chicken_node()
+		if chicken != null and chicken.is_in_group("pickup_items"):
+			var dist = global_position.distance_to(chicken.global_position)
+			if dist <= STEAL_RADIUS:
+				best_target = chicken
 
 	if best_target and root and root.ws and root.ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		root.ws.send_text(JSON.stringify({

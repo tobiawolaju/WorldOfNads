@@ -11,6 +11,7 @@ const FIXED_DT = 1 / BROADCAST_RATE;
 
 const MAX_PLAYER_SPEED = 12.0; // units/sec server-side clamp against teleport cheating
 const PICKUP_RADIUS = 1.1;
+const STEAL_RADIUS = 2.5;
 const MAX_THROW_IMPULSE = 8.0;
 const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 0.5869336;
@@ -482,13 +483,29 @@ gameWss.on('connection', (ws, req) => {
       }
 
       if (data.type === 'pickup_request') {
-        const dist = length3(
+        const distToChicken = length3(
           chicken.x - player.x,
           chicken.y - player.y,
           chicken.z - player.z
         );
 
-        if (dist <= PICKUP_RADIUS) {
+        // When chicken is on the ground, use normal pickup radius.
+        // When held by someone else, also allow stealing if close to the holder.
+        let canPickup = distToChicken <= PICKUP_RADIUS;
+
+        if (!canPickup && chicken.isHeld && chicken.holderId && chicken.holderId !== playerId) {
+          const holder = players[chicken.holderId];
+          if (holder) {
+            const distToHolder = length3(
+              holder.x - player.x,
+              holder.y - player.y,
+              holder.z - player.z
+            );
+            canPickup = distToHolder <= STEAL_RADIUS;
+          }
+        }
+
+        if (canPickup) {
           if (chicken.isHeld && chicken.holderId === playerId) {
             return;
           }
