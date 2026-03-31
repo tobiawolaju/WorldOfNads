@@ -114,6 +114,9 @@ func _process(delta):
 func _update_visuals():
 	if position.length_squared() > 10.0:
 		rotation = position.angle() + deg_to_rad(sprite_rotation_offset_degrees)
+	if is_auto_locked:
+		modulate.a = 0.5
+		return
 	var strength = clamp(position.length() / maxRadius, 0.0, 1.0)
 	modulate.a = lerp(min_opacity, max_opacity, strength)
 
@@ -185,12 +188,14 @@ func _lock_auto_move():
 	forward_hold_elapsed = 0.0
 	active_joystick_index = -1
 	touchInsideJoystick = false
+	modulate.a = 0.5
 
 func _unlock_auto_move():
 	is_auto_locked = false
 	forward_hold_elapsed = 0.0
 	position = Vector2.ZERO
 	_release_all_keys()
+	modulate.a = 1.0
 	_update_visuals()
 
 func _is_touch_on_knob(touch_pos: Vector2) -> bool:
