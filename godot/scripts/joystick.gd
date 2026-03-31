@@ -10,7 +10,7 @@ signal camera_dragged(relative: Vector2)
 @export var sprite_rotation_offset_degrees: float = 0.0
 @export var auto_lock_hold_seconds: float = 0.4
 @export var auto_lock_forward_min_strength: float = 0.6
-@export var auto_lock_north_distance_multiplier: float = 2.0
+@export var auto_lock_north_distance_multiplier: float = 6.0
 @export var portrait_zone_width_ratio: float = 0.5
 @export var portrait_zone_height_ratio: float = 0.25
 @export var landscape_zone_width_ratio: float = 0.5
