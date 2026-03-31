@@ -39,8 +39,9 @@ var active_joystick_index := -1
 var active_camera_index := -1
 var touchInsideJoystick = false
 var is_auto_locked := false
-var forward_hold_elapsed := 0.0
 var north_drag_distance_accumulated := 0.0
+var lock_candidate_started_at := -1.0
+var last_drag_was_north := false
 
 func _ready():
 	add_to_group("touch_joystick")
@@ -80,8 +81,9 @@ func _input(event):
 				if return_to_center and not is_auto_locked:
 					position = Vector2.ZERO
 					_release_all_keys()
-					forward_hold_elapsed = 0.0
+					lock_candidate_started_at = -1.0
 					north_drag_distance_accumulated = 0.0
+					last_drag_was_north = false
 					_update_visuals()
 				emit_signal("joystick_released")
 				if not is_auto_locked:
@@ -109,12 +111,14 @@ func _input(event):
 
 func _process(delta):
 	if not is_auto_locked and active_joystick_index != -1 and _is_forward_lock_candidate():
-		forward_hold_elapsed += delta
-		if forward_hold_elapsed >= auto_lock_hold_seconds:
+		var now := Time.get_ticks_msec() / 1000.0
+		if lock_candidate_started_at < 0.0:
+			lock_candidate_started_at = now
+		elif (now - lock_candidate_started_at) >= auto_lock_hold_seconds:
 			_lock_auto_move()
 	else:
 		if not is_auto_locked:
-			forward_hold_elapsed = 0.0
+			lock_candidate_started_at = -1.0
 
 	if return_to_center and position == Vector2.ZERO:
 		_release_all_keys()
@@ -194,7 +198,8 @@ func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick:
 	active_joystick_index = touch_index
 	touchInsideJoystick = true
 	north_drag_distance_accumulated = 0.0
-	forward_hold_elapsed = 0.0
+	lock_candidate_started_at = -1.0
+	last_drag_was_north = false
 	touch_joystick.position = touch_pos
 	global_position = touch_pos
 	touch_joystick.visible = true
@@ -207,19 +212,20 @@ func _is_forward_lock_candidate() -> bool:
 	var normalized_pos = position / maxRadius
 	var required_north_distance: float = float(maxRadius) * max(auto_lock_north_distance_multiplier, 0.0)
 	var has_required_north_drag: bool = north_drag_distance_accumulated >= required_north_distance
-	return normalized_pos.y <= -auto_lock_forward_min_strength and abs(normalized_pos.y) >= abs(normalized_pos.x) and has_required_north_drag
+	return normalized_pos.y <= -auto_lock_forward_min_strength and abs(normalized_pos.y) >= abs(normalized_pos.x) and has_required_north_drag and last_drag_was_north
 
 func _lock_auto_move():
 	is_auto_locked = true
-	forward_hold_elapsed = 0.0
+	lock_candidate_started_at = -1.0
 	active_joystick_index = -1
 	touchInsideJoystick = false
 	modulate.a = 0.5
 
 func _unlock_auto_move():
 	is_auto_locked = false
-	forward_hold_elapsed = 0.0
+	lock_candidate_started_at = -1.0
 	north_drag_distance_accumulated = 0.0
+	last_drag_was_north = false
 	position = Vector2.ZERO
 	_release_all_keys()
 	modulate.a = 1.0
@@ -231,7 +237,11 @@ func _is_touch_on_knob(touch_pos: Vector2) -> bool:
 func _update_north_drag_progress_from_screen_drag(drag_relative: Vector2) -> void:
 	var delta := drag_relative
 	if delta.length_squared() <= 0.0001:
+		last_drag_was_north = false
 		return
 	var north_progress := delta.dot(Vector2.UP)
 	if north_progress > 0.0:
+		last_drag_was_north = true
 		north_drag_distance_accumulated += north_progress
+	else:
+		last_drag_was_north = false
