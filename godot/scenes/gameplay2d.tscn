@@ -6,7 +6,26 @@
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/joystick.gd" id="3_1iwhs"]
 [ext_resource type="Script" uid="uid://vwbunt2j3px3" path="res://scripts/pick_button.gd" id="3_uw04a"]
 [ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/Events.gd" id="4_events"]
+[ext_resource type="Texture2D" uid="uid://bqxgl4xpiouhm" path="res://assets/images/kenny/joystick_circle_pad_a.png" id="5_22dhc"]
+[ext_resource type="Texture2D" uid="uid://c3y2bdv5bphd0" path="res://assets/images/pfp.jpg" id="7_8y4rh"]
 [ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/buttons.gd" id="7_vob6w"]
+[ext_resource type="Texture2D" uid="uid://matfhxfsymgl" path="res://assets/images/kenny/joystick_square_nub_b.png" id="8_22dhc"]
+[ext_resource type="Script" uid="uid://c3w1undwxjmrq" path="res://scripts/buttons2.gd" id="10_22dhc"]
+[ext_resource type="Texture2D" uid="uid://ttcayqyr81je" path="res://assets/images/kenny/joystick_polygon_pad_d.png" id="12_765kx"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_psyvr"]
+bg_color = Color(1, 1, 1, 0.49019608)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.47788018, 0.47788012, 0.47788012, 0.22745098)
+border_blend = true
+corner_radius_top_left = 25
+corner_radius_top_right = 25
+corner_radius_bottom_right = 25
+corner_radius_bottom_left = 25
+corner_detail = 10
 
 [node name="Gameplay2d" type="Node2D" unique_id=843521828]
 script = ExtResource("4_events")
@@ -166,15 +185,14 @@ grow_vertical = 2
 color = Color(1, 1, 1, 0)
 
 [node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=167824840]
-modulate = Color(0.60784316, 0, 0.7529412, 0.4)
 self_modulate = Color(18.892157, 18.892157, 18.892157, 0.14117648)
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("2_cqgoe")
 
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=1945660391]
 modulate = Color(1, 1, 1, 0.4745098)
-scale = Vector2(0.1, 0.1)
-texture = ExtResource("2_cqgoe")
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("5_22dhc")
 script = ExtResource("3_1iwhs")
 
 [node name="Node3" type="Node" parent="." unique_id=633834656]
@@ -189,22 +207,58 @@ script = ExtResource("7_vob6w")
 [node name="Button" type="Button" parent="Node3/CanvasLayer/VBoxContainer" unique_id=248895975]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
-text = "Action"
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_icons/icon = ExtResource("8_22dhc")
+theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
 autowrap_trim_flags = 0
+icon_alignment = 1
 expand_icon = true
 script = ExtResource("3_uw04a")
 
-[node name="Button2" type="Button" parent="Node3/CanvasLayer/VBoxContainer" unique_id=532683411]
+[node name="Button2" type="Button" parent="Node3/CanvasLayer/VBoxContainer" unique_id=1601328119]
+modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
-text = "Craft1"
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_icons/icon = ExtResource("7_8y4rh")
+theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
+autowrap_trim_flags = 0
+icon_alignment = 1
 expand_icon = true
+script = ExtResource("3_uw04a")
 
-[node name="Button3" type="Button" parent="Node3/CanvasLayer/VBoxContainer" unique_id=81431802]
+[node name="VBoxContainer2" type="VBoxContainer" parent="Node3/CanvasLayer" unique_id=557179051]
+offset_left = -79.0
+offset_right = -9.0
+offset_bottom = 144.0
+script = ExtResource("10_22dhc")
+
+[node name="Button" type="Button" parent="Node3/CanvasLayer/VBoxContainer2" unique_id=1922995274]
+modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
-text = "Craft2"
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_icons/icon = ExtResource("7_8y4rh")
+theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
+autowrap_trim_flags = 0
+icon_alignment = 1
 expand_icon = true
+script = ExtResource("3_uw04a")
+
+[node name="Button2" type="Button" parent="Node3/CanvasLayer/VBoxContainer2" unique_id=1230924147]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_icons/icon = ExtResource("12_765kx")
+theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
+autowrap_trim_flags = 0
+icon_alignment = 1
+expand_icon = true
+script = ExtResource("3_uw04a")
 
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer"]
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Bus"]
