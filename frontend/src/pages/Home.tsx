@@ -272,7 +272,7 @@ const Home: React.FC = () => {
             </div>
           </div>
 
-          {/* Slide 2: Projects */}
+          {/* Slide 2: Projcts */}
           <div className="functional-slide reverse">
             <div className="func-content">
               <h2 className="func-headline">Sponsors</h2>
