@@ -264,7 +264,7 @@ const Home: React.FC = () => {
           {/* Slide 1: Gameplay */}
           <div className="functional-slide">
             <div className="func-content">
-              <h2 className="func-headline">Gameplay</h2>
+              <h2 className="func-headline">Play</h2>
               <p className="func-subtext">{renderWaveText("Jump in. Compete. Win. Every match counts. Every win pays.")}</p>
             </div>
             <div className="func-image">
@@ -275,7 +275,7 @@ const Home: React.FC = () => {
           {/* Slide 2: Projects */}
           <div className="functional-slide reverse">
             <div className="func-content">
-              <h2 className="func-headline">Projects</h2>
+              <h2 className="func-headline">Sponsors</h2>
               <p className="func-subtext">{renderWaveText("Sponsor matches. Get players. Be seen where the action is.")}</p>
             </div>
             <div className="func-image">

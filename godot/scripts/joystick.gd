@@ -8,6 +8,8 @@ signal camera_dragged(relative: Vector2)
 @export var min_opacity: float = 0.2
 @export var max_opacity: float = 1.0
 @export var sprite_rotation_offset_degrees: float = 0.0
+@export var auto_lock_hold_seconds: float = 3.0
+@export var auto_lock_forward_min_strength: float = 0.6
 
 var radiusJoyStick
 var radiusJoyBase
@@ -30,6 +32,8 @@ var screen_orientation = "portrait"
 var active_joystick_index := -1
 var active_camera_index := -1
 var touchInsideJoystick = false
+var is_auto_locked := false
+var forward_hold_elapsed := 0.0
 
 func _ready():
 	add_to_group("touch_joystick")
@@ -48,17 +52,17 @@ func _input(event):
 
 	if event is InputEventScreenTouch:
 		if event.pressed:
+			if is_auto_locked and _is_touch_on_knob(event.position):
+				_unlock_auto_move()
+				_start_joystick_touch(event.position, event.index, touch_joystick)
+				get_viewport().set_input_as_handled()
+				return
+
 			if event.index == active_joystick_index or event.index == active_camera_index:
 				return
 			# --- Joystick touch ---
 			if _is_joystick_area(event.position, viewport_size) and active_joystick_index == -1:
-				active_joystick_index = event.index
-				touchInsideJoystick = true
-				touch_joystick.position = event.position
-				global_position = event.position
-				touch_joystick.visible = true
-				_check_double_tap(event.position)
-				_update_visuals()
+				_start_joystick_touch(event.position, event.index, touch_joystick)
 				get_viewport().set_input_as_handled()
 			# --- Camera touch ---
 			elif _is_camera_area(event.position, viewport_size) and active_camera_index == -1:
@@ -66,12 +70,14 @@ func _input(event):
 				emit_signal("camera_dragged", Vector2.ZERO)
 		else:
 			if event.index == active_joystick_index:
-				if return_to_center:
+				if return_to_center and not is_auto_locked:
 					position = Vector2.ZERO
 					_release_all_keys()
+					forward_hold_elapsed = 0.0
 					_update_visuals()
 				emit_signal("joystick_released")
-				touch_joystick.visible = false
+				if not is_auto_locked:
+					touch_joystick.visible = false
 				touchInsideJoystick = false
 				active_joystick_index = -1
 				get_viewport().set_input_as_handled()
@@ -93,6 +99,14 @@ func _input(event):
 			emit_signal("camera_dragged", event.relative)
 
 func _process(delta):
+	if not is_auto_locked and active_joystick_index != -1 and _is_forward_lock_candidate():
+		forward_hold_elapsed += delta
+		if forward_hold_elapsed >= auto_lock_hold_seconds:
+			_lock_auto_move()
+	else:
+		if not is_auto_locked:
+			forward_hold_elapsed = 0.0
+
 	if return_to_center and position == Vector2.ZERO:
 		_release_all_keys()
 		modulate.a = lerp(modulate.a, min_opacity, delta * 10)
@@ -150,3 +164,34 @@ func _check_double_tap(tap_pos: Vector2):
 
 func claims_touch(touch_index: int) -> bool:
 	return touch_index == active_joystick_index
+
+func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick: Node):
+	active_joystick_index = touch_index
+	touchInsideJoystick = true
+	touch_joystick.position = touch_pos
+	global_position = touch_pos
+	touch_joystick.visible = true
+	_check_double_tap(touch_pos)
+	_update_visuals()
+
+func _is_forward_lock_candidate() -> bool:
+	if maxRadius <= 0.0:
+		return false
+	var normalized_pos = position / maxRadius
+	return normalized_pos.y <= -auto_lock_forward_min_strength and abs(normalized_pos.y) >= abs(normalized_pos.x)
+
+func _lock_auto_move():
+	is_auto_locked = true
+	forward_hold_elapsed = 0.0
+	active_joystick_index = -1
+	touchInsideJoystick = false
+
+func _unlock_auto_move():
+	is_auto_locked = false
+	forward_hold_elapsed = 0.0
+	position = Vector2.ZERO
+	_release_all_keys()
+	_update_visuals()
+
+func _is_touch_on_knob(touch_pos: Vector2) -> bool:
+	return touch_pos.distance_to(global_position) <= radiusJoyStick * 1.35
