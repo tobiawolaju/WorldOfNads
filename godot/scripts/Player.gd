@@ -84,7 +84,7 @@ func _input(event: InputEvent) -> void:
 		return
 
 	# --- 1. MOUSE CAMERA CONTROLS ---
-	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not DisplayServer.is_touchscreen_available():
 		cam_rot_y -= event.relative.x * 0.005
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.005, min_pitch, max_pitch)
 
@@ -136,9 +136,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if touch_joystick and touch_joystick.call("claims_touch", event.index):
 			return
-		if active_camera_index == -1:
-			active_camera_index = event.index
-		elif event.index != active_camera_index:
+		# Camera drag must come from the touch that was explicitly claimed on press.
+		if active_camera_index == -1 or event.index != active_camera_index:
 			return
 		cam_rot_y -= event.relative.x * 0.0045
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.0045, min_pitch, max_pitch)
