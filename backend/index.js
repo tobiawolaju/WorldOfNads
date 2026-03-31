@@ -10,7 +10,7 @@ const BROADCAST_RATE = 20;
 const FIXED_DT = 1 / BROADCAST_RATE;
 
 const MAX_PLAYER_SPEED = 12.0; // units/sec server-side clamp against teleport cheating
-const PICKUP_RADIUS = 2.2;
+const PICKUP_RADIUS = 1.1;
 const MAX_THROW_IMPULSE = 8.0;
 const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 0.5869336;

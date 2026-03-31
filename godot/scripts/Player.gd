@@ -134,8 +134,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if touch_joystick and touch_joystick.call("claims_touch", event.index):
 			return
-		# Camera drag must come from the touch that was explicitly claimed on press.
-		if active_camera_index == -1 or event.index != active_camera_index:
+		# Claim camera on first valid drag too (some devices skip touch-start to _unhandled_input).
+		if active_camera_index == -1:
+			active_camera_index = event.index
+		elif event.index != active_camera_index:
 			return
 		cam_rot_y -= event.relative.x * 0.0045
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.0045, min_pitch, max_pitch)
