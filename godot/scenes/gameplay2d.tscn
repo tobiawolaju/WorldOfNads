@@ -180,6 +180,7 @@ color = Color(1, 1, 1, 0)
 [node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=167824840]
 self_modulate = Color(18.892157, 18.892157, 18.892157, 0.49019608)
 scale = Vector2(0.25, 0.25)
+texture = ExtResource("2_cqgoe")
 
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=1945660391]
 scale = Vector2(0.15, 0.15)
