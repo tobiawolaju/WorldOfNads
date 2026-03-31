@@ -10,6 +10,10 @@ signal camera_dragged(relative: Vector2)
 @export var sprite_rotation_offset_degrees: float = 0.0
 @export var auto_lock_hold_seconds: float = 3.0
 @export var auto_lock_forward_min_strength: float = 0.6
+@export var portrait_zone_width_ratio: float = 0.5
+@export var portrait_zone_height_ratio: float = 0.25
+@export var landscape_zone_width_ratio: float = 0.5
+@export var landscape_zone_height_ratio: float = 0.5
 
 var radiusJoyStick
 var radiusJoyBase
@@ -122,12 +126,22 @@ func _update_visuals():
 
 # --- QUADRANT CHECKS ---
 func _is_joystick_area(pos: Vector2, viewport_size: Vector2) -> bool:
-	# Bottom-left quadrant
-	return pos.x <= viewport_size.x / 2 and pos.y >= viewport_size.y / 2
+	var is_portrait := viewport_size.y > viewport_size.x
+	var zone_width_ratio := portrait_zone_width_ratio if is_portrait else landscape_zone_width_ratio
+	var zone_height_ratio := portrait_zone_height_ratio if is_portrait else landscape_zone_height_ratio
+
+	var zone_width = viewport_size.x * clamp(zone_width_ratio, 0.05, 1.0)
+	var zone_height = viewport_size.y * clamp(zone_height_ratio, 0.05, 1.0)
+
+	# Bottom-left rectangle zone
+	return pos.x <= zone_width and pos.y >= (viewport_size.y - zone_height)
 
 func _is_camera_area(pos: Vector2, viewport_size: Vector2) -> bool:
-	# Everything outside bottom-left quadrant
+	# Everything outside the joystick rectangle zone
 	return not _is_joystick_area(pos, viewport_size)
+
+func is_joystick_area_screen(pos: Vector2, viewport_size: Vector2) -> bool:
+	return _is_joystick_area(pos, viewport_size)
 
 func _update_input_from_joystick(pos: Vector2):
 	_release_all_keys()
