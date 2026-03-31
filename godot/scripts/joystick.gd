@@ -8,12 +8,14 @@ signal camera_dragged(relative: Vector2)
 @export var min_opacity: float = 0.2
 @export var max_opacity: float = 1.0
 @export var sprite_rotation_offset_degrees: float = 0.0
-@export var auto_lock_hold_seconds: float = 3.0
+@export var auto_lock_hold_seconds: float = 0.4
 @export var auto_lock_forward_min_strength: float = 0.6
+@export var auto_lock_north_distance_multiplier: float = 2.0
 @export var portrait_zone_width_ratio: float = 0.5
 @export var portrait_zone_height_ratio: float = 0.25
 @export var landscape_zone_width_ratio: float = 0.5
 @export var landscape_zone_height_ratio: float = 0.25
+
 
 var radiusJoyStick
 var radiusJoyBase
@@ -38,6 +40,7 @@ var active_camera_index := -1
 var touchInsideJoystick = false
 var is_auto_locked := false
 var forward_hold_elapsed := 0.0
+var north_drag_distance_accumulated := 0.0
 
 func _ready():
 	add_to_group("touch_joystick")
@@ -78,6 +81,7 @@ func _input(event):
 					position = Vector2.ZERO
 					_release_all_keys()
 					forward_hold_elapsed = 0.0
+					north_drag_distance_accumulated = 0.0
 					_update_visuals()
 				emit_signal("joystick_released")
 				if not is_auto_locked:
@@ -90,10 +94,12 @@ func _input(event):
 
 	elif event is InputEventScreenDrag:
 		if event.index == active_joystick_index:
+			var previous_pos := position
 			var local_pos = event.position - touch_joystick.global_position
 			if local_pos.length() > maxRadius:
 				local_pos = local_pos.normalized() * maxRadius
 			position = local_pos
+			_update_north_drag_progress(previous_pos, position)
 			emit_signal("joystick_moved", position)
 			touch_joystick.visible = true
 			_update_input_from_joystick(position)
@@ -188,6 +194,8 @@ func claims_touch(touch_index: int) -> bool:
 func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick: Node):
 	active_joystick_index = touch_index
 	touchInsideJoystick = true
+	north_drag_distance_accumulated = 0.0
+	forward_hold_elapsed = 0.0
 	touch_joystick.position = touch_pos
 	global_position = touch_pos
 	touch_joystick.visible = true
@@ -198,7 +206,9 @@ func _is_forward_lock_candidate() -> bool:
 	if maxRadius <= 0.0:
 		return false
 	var normalized_pos = position / maxRadius
-	return normalized_pos.y <= -auto_lock_forward_min_strength and abs(normalized_pos.y) >= abs(normalized_pos.x)
+	var required_north_distance: float = float(maxRadius) * max(auto_lock_north_distance_multiplier, 0.0)
+	var has_required_north_drag: bool = north_drag_distance_accumulated >= required_north_distance
+	return normalized_pos.y <= -auto_lock_forward_min_strength and abs(normalized_pos.y) >= abs(normalized_pos.x) and has_required_north_drag
 
 func _lock_auto_move():
 	is_auto_locked = true
@@ -210,6 +220,7 @@ func _lock_auto_move():
 func _unlock_auto_move():
 	is_auto_locked = false
 	forward_hold_elapsed = 0.0
+	north_drag_distance_accumulated = 0.0
 	position = Vector2.ZERO
 	_release_all_keys()
 	modulate.a = 1.0
@@ -217,3 +228,11 @@ func _unlock_auto_move():
 
 func _is_touch_on_knob(touch_pos: Vector2) -> bool:
 	return touch_pos.distance_to(global_position) <= radiusJoyStick * 1.35
+
+func _update_north_drag_progress(previous_pos: Vector2, new_pos: Vector2) -> void:
+	var delta := new_pos - previous_pos
+	if delta.length_squared() <= 0.0001:
+		return
+	var north_progress := delta.dot(Vector2.UP)
+	if north_progress > 0.0:
+		north_drag_distance_accumulated += north_progress
