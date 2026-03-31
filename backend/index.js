@@ -482,10 +482,6 @@ gameWss.on('connection', (ws, req) => {
       }
 
       if (data.type === 'pickup_request') {
-        if (chicken.isHeld) {
-          return;
-        }
-
         const dist = length3(
           chicken.x - player.x,
           chicken.y - player.y,
@@ -493,12 +489,21 @@ gameWss.on('connection', (ws, req) => {
         );
 
         if (dist <= PICKUP_RADIUS) {
+          if (chicken.isHeld && chicken.holderId === playerId) {
+            return;
+          }
+
+          const previousHolder = chicken.holderId;
           chicken.isHeld = true;
           chicken.holderId = playerId;
           chicken.vx = 0;
           chicken.vy = 0;
           chicken.vz = 0;
-          console.log(`🐔 Chicken picked by ${playerId}`);
+          if (previousHolder && previousHolder !== playerId) {
+            console.log(`🐔 Chicken stolen by ${playerId} from ${previousHolder}`);
+          } else {
+            console.log(`🐔 Chicken picked by ${playerId}`);
+          }
         }
       }
 
