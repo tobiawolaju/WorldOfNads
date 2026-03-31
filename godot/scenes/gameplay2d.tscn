@@ -6,12 +6,7 @@
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/joystick.gd" id="3_1iwhs"]
 [ext_resource type="Script" uid="uid://vwbunt2j3px3" path="res://scripts/pick_button.gd" id="3_uw04a"]
 [ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/Events.gd" id="4_events"]
-[ext_resource type="Texture2D" uid="uid://bqxgl4xpiouhm" path="res://assets/images/kenny/joystick_circle_pad_a.png" id="5_22dhc"]
-[ext_resource type="Texture2D" uid="uid://c3y2bdv5bphd0" path="res://assets/images/pfp.jpg" id="7_8y4rh"]
 [ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/buttons.gd" id="7_vob6w"]
-[ext_resource type="Texture2D" uid="uid://matfhxfsymgl" path="res://assets/images/kenny/joystick_square_nub_b.png" id="8_22dhc"]
-[ext_resource type="Script" uid="uid://c3w1undwxjmrq" path="res://scripts/buttons2.gd" id="10_22dhc"]
-[ext_resource type="Texture2D" uid="uid://ttcayqyr81je" path="res://assets/images/kenny/joystick_polygon_pad_d.png" id="12_765kx"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_psyvr"]
 bg_color = Color(1, 1, 1, 0.49019608)
@@ -191,69 +186,55 @@ texture = ExtResource("2_cqgoe")
 
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=1945660391]
 modulate = Color(1, 1, 1, 0.4745098)
-scale = Vector2(0.5, 0.5)
-texture = ExtResource("5_22dhc")
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("2_cqgoe")
 script = ExtResource("3_1iwhs")
 
 [node name="Node3" type="Node" parent="." unique_id=633834656]
 
 [node name="CanvasLayer" type="CanvasLayer" parent="Node3" unique_id=1670940751]
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Node3/CanvasLayer" unique_id=1752407755]
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="HBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer" unique_id=708294812]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -109.0
+offset_top = -97.0
+offset_right = 109.0
+offset_bottom = -27.0
+grow_horizontal = 2
+grow_vertical = 0
 script = ExtResource("7_vob6w")
 
-[node name="Button" type="Button" parent="Node3/CanvasLayer/VBoxContainer" unique_id=248895975]
+[node name="Button" type="Button" parent="Node3/CanvasLayer/HBoxContainer" unique_id=248895975]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 theme_override_constants/icon_max_width = 35
 theme_override_font_sizes/font_size = 25
-theme_override_icons/icon = ExtResource("8_22dhc")
 theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
 autowrap_trim_flags = 0
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("3_uw04a")
 
-[node name="Button2" type="Button" parent="Node3/CanvasLayer/VBoxContainer" unique_id=1601328119]
-modulate = Color(1, 1, 1, 0)
+[node name="Button2" type="Button" parent="Node3/CanvasLayer/HBoxContainer" unique_id=1601328119]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 theme_override_constants/icon_max_width = 35
 theme_override_font_sizes/font_size = 25
-theme_override_icons/icon = ExtResource("7_8y4rh")
 theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
 autowrap_trim_flags = 0
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("3_uw04a")
 
-[node name="VBoxContainer2" type="VBoxContainer" parent="Node3/CanvasLayer" unique_id=557179051]
-offset_left = -79.0
-offset_right = -9.0
-offset_bottom = 144.0
-script = ExtResource("10_22dhc")
-
-[node name="Button" type="Button" parent="Node3/CanvasLayer/VBoxContainer2" unique_id=1922995274]
-modulate = Color(1, 1, 1, 0)
+[node name="Button3" type="Button" parent="Node3/CanvasLayer/HBoxContainer" unique_id=1661679997]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 theme_override_constants/icon_max_width = 35
 theme_override_font_sizes/font_size = 25
-theme_override_icons/icon = ExtResource("7_8y4rh")
-theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
-autowrap_trim_flags = 0
-icon_alignment = 1
-expand_icon = true
-script = ExtResource("3_uw04a")
-
-[node name="Button2" type="Button" parent="Node3/CanvasLayer/VBoxContainer2" unique_id=1230924147]
-custom_minimum_size = Vector2(70, 70)
-layout_mode = 2
-theme_override_constants/icon_max_width = 35
-theme_override_font_sizes/font_size = 25
-theme_override_icons/icon = ExtResource("12_765kx")
 theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
 autowrap_trim_flags = 0
 icon_alignment = 1
