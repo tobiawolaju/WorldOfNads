@@ -9,18 +9,7 @@
 [ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/buttons.gd" id="7_vob6w"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_psyvr"]
-bg_color = Color(1, 1, 1, 0.49019608)
-border_width_left = 4
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 4
-border_color = Color(0.47788018, 0.47788012, 0.47788012, 0.22745098)
-border_blend = true
-corner_radius_top_left = 25
-corner_radius_top_right = 25
-corner_radius_bottom_right = 25
-corner_radius_bottom_left = 25
-corner_detail = 10
+bg_color = Color(1, 1, 1, 0.61960787)
 
 [node name="Gameplay2d" type="Node2D" unique_id=843521828]
 script = ExtResource("4_events")
@@ -182,10 +171,8 @@ color = Color(1, 1, 1, 0)
 [node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=167824840]
 self_modulate = Color(18.892157, 18.892157, 18.892157, 0.49019608)
 scale = Vector2(0.25, 0.25)
-texture = ExtResource("2_cqgoe")
 
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=1945660391]
-modulate = Color(1, 1, 1, 0.4745098)
 scale = Vector2(0.15, 0.15)
 texture = ExtResource("2_cqgoe")
 script = ExtResource("3_1iwhs")
