@@ -117,7 +117,10 @@ func _process(delta):
 
 func _update_visuals():
 	if position.length_squared() > 10.0:
-		rotation = position.angle() + deg_to_rad(sprite_rotation_offset_degrees)
+		# Godot angle 0 points right; add 90deg so an up-facing sprite is 0deg at forward/up drag.
+		rotation = position.angle() + PI * 0.5 + deg_to_rad(sprite_rotation_offset_degrees)
+	else:
+		rotation = deg_to_rad(sprite_rotation_offset_degrees)
 	if is_auto_locked:
 		modulate.a = 0.5
 		return
