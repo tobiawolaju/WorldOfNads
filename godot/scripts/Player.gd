@@ -130,8 +130,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventScreenDrag:
-		if _is_touch_on_joystick_area(event.position, size):
-			return
 		if ignored_touch_indices.has(event.index):
 			return
 		if touch_joystick and touch_joystick.call("claims_touch", event.index):
