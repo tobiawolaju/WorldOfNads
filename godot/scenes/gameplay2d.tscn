@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/joystick.gd" id="3_1iwhs"]
 [ext_resource type="Script" uid="uid://vwbunt2j3px3" path="res://scripts/pick_button.gd" id="3_uw04a"]
 [ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/Events.gd" id="4_events"]
+[ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/buttons.gd" id="7_vob6w"]
 
 [node name="Gameplay2d" type="Node2D" unique_id=843521828]
 script = ExtResource("4_events")
@@ -180,14 +181,29 @@ script = ExtResource("3_1iwhs")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="Node3" unique_id=1670940751]
 
-[node name="pick" type="TextureButton" parent="Node3/CanvasLayer" unique_id=1273709688]
-modulate = Color(1, 1, 1, 0.4745098)
-offset_right = 500.0
-offset_bottom = 500.0
-scale = Vector2(0.15, 0.15)
-texture_normal = ExtResource("2_cqgoe")
-stretch_mode = 4
+[node name="VBoxContainer" type="VBoxContainer" parent="Node3/CanvasLayer" unique_id=1752407755]
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("7_vob6w")
+
+[node name="Button" type="Button" parent="Node3/CanvasLayer/VBoxContainer" unique_id=248895975]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+text = "Action"
+expand_icon = true
 script = ExtResource("3_uw04a")
+
+[node name="Button2" type="Button" parent="Node3/CanvasLayer/VBoxContainer" unique_id=532683411]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+text = "Craft1"
+expand_icon = true
+
+[node name="Button3" type="Button" parent="Node3/CanvasLayer/VBoxContainer" unique_id=81431802]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+text = "Craft2"
+expand_icon = true
 
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer"]
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Bus"]

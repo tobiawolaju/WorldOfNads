@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_vuq5q"]
 [ext_resource type="ArrayMesh" uid="uid://c8jku1vjebweb" path="res://assets/models/terrain.obj" id="2_ocj2s"]
+[ext_resource type="PackedScene" uid="uid://bxrb26oedievv" path="res://assets/models/realistic_holstein_cow_-_game_ready_asset.glb" id="3_cyx30"]
 [ext_resource type="ArrayMesh" uid="uid://djlfoy1u834mc" path="res://assets/models/Chicken.obj" id="3_l1v76"]
 [ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="4_5bpam"]
 [ext_resource type="PackedScene" uid="uid://b7h08kmtune7s" path="res://assets/models/scene.gltf" id="4_cyx30"]
@@ -401,6 +402,9 @@ shape = SubResource("ConcavePolygonShape3D_ocj2s")
 transform = Transform3D(400, 0, 0, 0, 400, 0, 0, 0, 400, 2.6856513, 0, 0)
 material_override = SubResource("StandardMaterial3D_ct7aa")
 mesh = SubResource("PlaneMesh_vuq5q")
+
+[node name="cow" parent="PlayerManager" unique_id=1875346952 instance=ExtResource("3_cyx30")]
+transform = Transform3D(2.2000864, 0, -2.0395145, 0, 3, 0, 2.0395145, 0, 2.2000864, 4.301169, 1.1535469, -34.19008)
 
 [node name="Tree" type="StaticBody3D" parent="PlayerManager" unique_id=294611004]
 transform = Transform3D(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02, 0.83564377, 11.008205, 5.433979)
