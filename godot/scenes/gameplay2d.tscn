@@ -11,6 +11,15 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_psyvr"]
 bg_color = Color(1, 1, 1, 0.61960787)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vob6w"]
+bg_color = Color(1, 1, 1, 0.61960787)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8y4rh"]
+bg_color = Color(1, 1, 1, 0.31764707)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wnu4a"]
+bg_color = Color(0.328037, 0.86915797, 0.947568, 1)
+
 [node name="Gameplay2d" type="Node2D" unique_id=843521828]
 script = ExtResource("4_events")
 status_label_path = null
@@ -181,21 +190,36 @@ script = ExtResource("3_1iwhs")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="Node3" unique_id=1670940751]
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer" unique_id=708294812]
+[node name="VBoxContainer" type="VBoxContainer" parent="Node3/CanvasLayer" unique_id=954886284]
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -109.0
-offset_top = -97.0
+offset_top = -99.0
 offset_right = 109.0
-offset_bottom = -27.0
+offset_bottom = -29.0
 grow_horizontal = 2
 grow_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer/VBoxContainer" unique_id=708294812]
+layout_mode = 2
 script = ExtResource("7_vob6w")
 
-[node name="Button" type="Button" parent="Node3/CanvasLayer/HBoxContainer" unique_id=248895975]
+[node name="Button" type="Button" parent="Node3/CanvasLayer/VBoxContainer/HBoxContainer" unique_id=248895975]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_vob6w")
+autowrap_trim_flags = 0
+icon_alignment = 1
+expand_icon = true
+script = ExtResource("3_uw04a")
+
+[node name="Button2" type="Button" parent="Node3/CanvasLayer/VBoxContainer/HBoxContainer" unique_id=1601328119]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 theme_override_constants/icon_max_width = 35
@@ -206,7 +230,7 @@ icon_alignment = 1
 expand_icon = true
 script = ExtResource("3_uw04a")
 
-[node name="Button2" type="Button" parent="Node3/CanvasLayer/HBoxContainer" unique_id=1601328119]
+[node name="Button3" type="Button" parent="Node3/CanvasLayer/VBoxContainer/HBoxContainer" unique_id=1661679997]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 theme_override_constants/icon_max_width = 35
@@ -217,16 +241,12 @@ icon_alignment = 1
 expand_icon = true
 script = ExtResource("3_uw04a")
 
-[node name="Button3" type="Button" parent="Node3/CanvasLayer/HBoxContainer" unique_id=1661679997]
-custom_minimum_size = Vector2(70, 70)
+[node name="ProgressBar" type="ProgressBar" parent="Node3/CanvasLayer/VBoxContainer" unique_id=268391186]
 layout_mode = 2
-theme_override_constants/icon_max_width = 35
-theme_override_font_sizes/font_size = 25
-theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
-autowrap_trim_flags = 0
-icon_alignment = 1
-expand_icon = true
-script = ExtResource("3_uw04a")
+theme_override_font_sizes/font_size = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_8y4rh")
+theme_override_styles/fill = SubResource("StyleBoxFlat_wnu4a")
+value = 70.0
 
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer"]
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Bus"]
