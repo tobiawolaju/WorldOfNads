@@ -13,7 +13,7 @@ signal camera_dragged(relative: Vector2)
 @export var portrait_zone_width_ratio: float = 0.5
 @export var portrait_zone_height_ratio: float = 0.25
 @export var landscape_zone_width_ratio: float = 0.5
-@export var landscape_zone_height_ratio: float = 0.5
+@export var landscape_zone_height_ratio: float = 0.25
 
 var radiusJoyStick
 var radiusJoyBase
