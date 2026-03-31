@@ -8,19 +8,6 @@
 [ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/Events.gd" id="4_events"]
 [ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/buttons.gd" id="7_vob6w"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xqgb2"]
-bg_color = Color(1, 1, 1, 0.93333334)
-skew = Vector2(0.6, 0.1)
-border_width_left = 5
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 5
-border_color = Color(0, 0, 0, 0.58431375)
-corner_detail = 10
-expand_margin_left = 10.0
-expand_margin_top = 4.0
-expand_margin_right = 10.0
-
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_22dhc"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_psyvr"]
@@ -113,14 +100,12 @@ size_flags_vertical = 4
 
 [node name="Countdown" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer" unique_id=97871540]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.39607844)
 theme_override_constants/outline_size = 0
 theme_override_constants/shadow_outline_size = 10
 theme_override_fonts/font = ExtResource("2_ikted")
-theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxFlat_xqgb2")
-text = "0:00"
+theme_override_font_sizes/font_size = 55
+text = ":)"
 
 [node name="BoxContainer2" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=586681937]
 offset_left = 19.0
