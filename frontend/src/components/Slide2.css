@@ -5,11 +5,22 @@
   width: 100%;
   min-height: 100vh;
   padding: 24px;
+  display: grid;
+  place-items: center;
   background:
-    radial-gradient(circle at 15% 20%, rgba(236, 72, 153, 0.55), transparent 45%),
-    radial-gradient(circle at 80% 30%, rgba(139, 92, 246, 0.5), transparent 40%),
-    radial-gradient(circle at 50% 85%, rgba(107, 114, 128, 0.45), transparent 45%),
+    radial-gradient(circle at 15% 20%, rgba(236, 72, 153, 0.65), transparent 45%),
+    radial-gradient(circle at 80% 30%, rgba(139, 92, 246, 0.6), transparent 40%),
+    radial-gradient(circle at 50% 85%, rgba(107, 114, 128, 0.55), transparent 45%),
     linear-gradient(135deg, #5b21b6 0%, #be185d 45%, #6b7280 100%);
+  background-blend-mode: screen, overlay, soft-light, normal;
+  overflow: hidden;
+}
+
+.slide2-placeholder {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
   overflow: hidden;
 }
 
@@ -17,12 +28,15 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--slide2-gap);
-  height: calc(100vh - 48px);
+  width: 100%;
+  height: 100%;
+  padding: 10px;
 }
 
 .slide2-column {
   position: relative;
   overflow: hidden;
+  contain: layout paint style;
 }
 
 .slide2-column-track {
@@ -30,18 +44,19 @@
   flex-direction: column;
   gap: var(--slide2-gap);
   will-change: transform;
+  transform: translate3d(0, 0, 0);
 }
 
 .slide2-speed-1 {
-  animation: slide2-scroll-up 15s linear infinite;
+  animation: slide2-scroll-up 18s linear infinite;
 }
 
 .slide2-speed-2 {
-  animation: slide2-scroll-down 20s linear infinite;
+  animation: slide2-scroll-down 24s linear infinite;
 }
 
 .slide2-speed-3 {
-  animation: slide2-scroll-down 26s linear infinite;
+  animation: slide2-scroll-down 30s linear infinite;
 }
 
 .slide2-logo {
@@ -74,16 +89,16 @@
 
 @media (max-width: 900px) {
   .slide2 {
-    min-height: auto;
     padding: 16px;
   }
 
-  .slide2-grid {
-    grid-template-columns: 1fr;
-    height: auto;
+  .slide2-placeholder {
+    max-width: min(92vw, 480px);
   }
+}
 
-  .slide2-column {
-    height: 70vh;
+@media (prefers-reduced-motion: reduce) {
+  .slide2-column-track {
+    animation: none;
   }
 }

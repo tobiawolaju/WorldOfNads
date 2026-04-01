@@ -64,25 +64,27 @@ const Slide2: React.FC = () => {
 
   return (
     <section className="slide2" aria-label="Scrolling logo wall">
-      <div className="slide2-grid">
-        {columnData.map((columnItems, index) => (
-          <div key={`column-${index}`} className="slide2-column">
-            <div
-              className={`slide2-column-track slide2-speed-${index + 1}`}
-              aria-hidden="true"
-            >
-              {[...columnItems, ...columnItems].map((item, itemIndex) => (
-                <img
-                  key={`${item.id}-${itemIndex}`}
-                  src={item.imageUrl}
-                  alt={item.alt}
-                  className="slide2-logo"
-                  loading="lazy"
-                />
-              ))}
+      <div className="slide2-placeholder">
+        <div className="slide2-grid">
+          {columnData.map((columnItems, index) => (
+            <div key={`column-${index}`} className="slide2-column">
+              <div
+                className={`slide2-column-track slide2-speed-${index + 1}`}
+                aria-hidden="true"
+              >
+                {[...columnItems, ...columnItems].map((item, itemIndex) => (
+                  <img
+                    key={`${item.id}-${itemIndex}`}
+                    src={item.imageUrl}
+                    alt={item.alt}
+                    className="slide2-logo"
+                    loading="lazy"
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
