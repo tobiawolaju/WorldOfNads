@@ -9,6 +9,10 @@ const PICKUP_REQUEST_COOLDOWN_MS := 150
 const STEAL_RADIUS := 2.5
 const POS_SCALE := 100.0
 const ROT_SCALE := 1000.0
+const ANIM_NAME_TO_ID := {
+	"idle": 0,
+	"running": 1
+}
 
 # --- INPUT VARIABLES ---
 var gamepad_index := 0
@@ -245,7 +249,7 @@ func _try_pickup():
 				best_target = chicken
 
 	if best_target and root and root.ws and root.ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
-		root.ws.send_text(JSON.stringify({
+		root.ws.send(MsgPack.pack({
 			"type": "pickup_request",
 			"item_id": best_target.name
 		}))
@@ -259,7 +263,7 @@ func _drop_object():
 		return
 
 	var throw_dir = -camera.global_transform.basis.z
-	root.ws.send_text(JSON.stringify({
+	root.ws.send(MsgPack.pack({
 		"type": "drop_request",
 		"throw_x": throw_dir.x * 5.0,
 		"throw_y": max(1.0, throw_dir.y * 5.0),
@@ -341,7 +345,7 @@ func _send_state_to_server(force_send := false) -> void:
 			"qy": _quantize_pos(global_transform.origin.y),
 			"qz": _quantize_pos(global_transform.origin.z),
 			"qrot": _quantize_rot(mesh.rotation.y),
-			"animation": current_animation
+			"anim_id": int(ANIM_NAME_TO_ID.get(current_animation, 0))
 		}
 
 		# Only holder is allowed to stream chicken pose to server.
@@ -359,7 +363,7 @@ func _send_state_to_server(force_send := false) -> void:
 		if not force_send and signature == _last_payload_signature:
 			return
 		_last_payload_signature = signature
-		root.ws.send_text(signature)
+		root.ws.send(MsgPack.pack(payload))
 
 func set_animation_state(new_state: String):
 	if is_local: return

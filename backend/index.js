@@ -1,6 +1,7 @@
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
+import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
 import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward } from './firebaseClient.js';
 import { settleMatchOnchain } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
@@ -23,6 +24,14 @@ const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 0.5869336;
 const MATCH_DURATION_SECONDS = 180.0;
 const DEFAULT_MIN_PLAYERS_TO_START = 3;
+const ANIM_NAME_TO_ID = Object.freeze({
+  idle: 0,
+  running: 1
+});
+const ANIM_ID_TO_NAME = Object.freeze({
+  0: 'idle',
+  1: 'running'
+});
 
 const MAX_EVENT_HISTORY = 100;
 let eventSequence = 0;
@@ -271,6 +280,18 @@ function getPlayerCount() {
   return Object.keys(players).length;
 }
 
+function normalizeAnimId(data) {
+  if (data && Number.isFinite(Number(data.anim_id))) {
+    const n = Math.floor(Number(data.anim_id));
+    if (Object.prototype.hasOwnProperty.call(ANIM_ID_TO_NAME, n)) return n;
+  }
+  if (data && typeof data.animation === 'string') {
+    const key = data.animation.trim().toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(ANIM_NAME_TO_ID, key)) return ANIM_NAME_TO_ID[key];
+  }
+  return 0;
+}
+
 function normalizeLimitValue(value, fallback) {
   if (value === null || value === undefined) return fallback;
   if (typeof value === "string") {
@@ -341,7 +362,7 @@ function encodePlayerForNetwork(player) {
     y: quantizePosition(player.y),
     z: quantizePosition(player.z),
     r: quantizeRotation(player.rotationY),
-    a: player.animation === 'running' ? 1 : 0
+    a: normalizeAnimId(player)
   };
 }
 
@@ -423,7 +444,7 @@ function computeStateDelta() {
 }
 
 function broadcastPayload(payload) {
-  const body = JSON.stringify(payload);
+  const body = mpEncode(payload);
   gameWss.clients.forEach((client) => {
     if (client.readyState === 1) {
       client.send(body);
@@ -529,7 +550,7 @@ gameWss.on('connection', (ws, req) => {
   };
 
   console.log(`🎮 Player connected: ${playerId} (${username})`);
-  ws.send(JSON.stringify({ type: 'connect', id: playerId, username }));
+  ws.send(mpEncode({ type: 'connect', id: playerId, username }));
   if (!matchRunning && getPlayerCount() >= currentMinPlayersToStart) {
     matchRunning = true;
     matchStartedThisRound = true;
@@ -537,7 +558,7 @@ gameWss.on('connection', (ws, req) => {
 
   ws.on('message', (message) => {
     try {
-      const data = JSON.parse(message.toString());
+      const data = mpDecode(new Uint8Array(message));
       const player = players[playerId];
       if (!player || !data || typeof data.type !== 'string') {
         return;
@@ -558,7 +579,7 @@ gameWss.on('connection', (ws, req) => {
         const nz = hasQuantizedPos ? dequantizePosition(Number(data.qz)) : Number(data.z);
         const hasQuantizedRot = Number.isFinite(Number(data.qrot));
         const nrot = hasQuantizedRot ? dequantizeRotation(Number(data.qrot)) : Number(data.rotation_y);
-        const anim = typeof data.animation === 'string' ? data.animation : 'idle';
+        const animId = normalizeAnimId(data);
 
         if (!Number.isFinite(nx) || !Number.isFinite(ny) || !Number.isFinite(nz) || !Number.isFinite(nrot)) {
           return;
@@ -582,7 +603,7 @@ gameWss.on('connection', (ws, req) => {
         }
 
         player.rotationY = nrot;
-        player.animation = anim;
+        player.animation = ANIM_ID_TO_NAME[animId] || 'idle';
 
         // Holder is allowed to stream chicken pose, but it is distance-validated.
         if (chicken.isHeld && chicken.holderId === playerId && data.chicken && typeof data.chicken === 'object') {

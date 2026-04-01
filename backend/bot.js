@@ -1,4 +1,5 @@
 import { WebSocket } from "ws";
+import { encode as mpEncode, decode as mpDecode } from "@msgpack/msgpack";
 
 const SERVER_URL =
   process.env.BOT_SERVER_URL || "wss://worldofnads-129481786742.europe-west1.run.app";
@@ -36,6 +37,7 @@ class BotClient {
     this.position = createSpawn(index);
     this.rotationY = 0;
     this.animation = "idle";
+    this.animId = 0;
     this.lastState = null;
     this.stateByPlayerId = new Map();
     this.lastChicken = null;
@@ -57,7 +59,7 @@ class BotClient {
     });
 
     this.ws.on("message", (raw) => {
-      this.onMessage(raw.toString());
+      this.onMessage(raw);
     });
 
     this.ws.on("close", () => {
@@ -77,7 +79,7 @@ class BotClient {
   onMessage(raw) {
     let data;
     try {
-      data = JSON.parse(raw);
+      data = mpDecode(new Uint8Array(raw));
     } catch {
       return;
     }
@@ -223,8 +225,10 @@ class BotClient {
       this.position.z += nz * step;
       this.rotationY = Math.atan2(nx, nz);
       this.animation = "running";
+      this.animId = 1;
     } else {
       this.animation = "idle";
+      this.animId = 0;
     }
 
     const isHeld = Boolean(chicken.isHeld);
@@ -237,7 +241,7 @@ class BotClient {
       y: this.position.y,
       z: this.position.z,
       rotation_y: this.rotationY,
-      animation: this.animation,
+      anim_id: this.animId,
     };
 
     if (iHoldChicken) {
@@ -251,7 +255,7 @@ class BotClient {
       };
     }
 
-    this.ws.send(JSON.stringify(statePayload));
+    this.ws.send(mpEncode(statePayload));
 
     if (CAN_PICK && !isHeld) {
       const dist3D = Math.hypot(
@@ -261,7 +265,7 @@ class BotClient {
       );
       if (dist3D <= PICKUP_RADIUS) {
         this.ws.send(
-          JSON.stringify({
+          mpEncode({
             type: "pickup_request",
             item_id: "Chicken",
           }),

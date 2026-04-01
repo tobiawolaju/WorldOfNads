@@ -22,6 +22,10 @@ const CHICKEN_HOLD_DISTANCE := 0.9
 const CHICKEN_HOLD_HEIGHT := 1.0
 const POS_SCALE := 100.0
 const ROT_SCALE := 1000.0
+const ANIM_ID_TO_NAME := {
+	0: "idle",
+	1: "running"
+}
 
 # --- CHICKEN AUTHORITY STATE ---
 var chicken_node: RigidBody3D = null
@@ -114,8 +118,7 @@ func _receive_messages():
 		if raw_packet.is_empty():
 			continue
 
-		var raw_string = raw_packet.get_string_from_utf8()
-		var data = JSON.parse_string(raw_string)
+		var data = MsgPack.unpack(raw_packet)
 
 		if typeof(data) != TYPE_DICTIONARY:
 			continue
@@ -206,7 +209,8 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 			_decode_pos(p_state, "z", quantized)
 		)
 		var server_rot_y = _decode_rot(p_state, "r" if quantized else "rotationY", quantized)
-		var server_anim = "running" if int(p_state.get("a", 0)) == 1 else str(p_state.get("animation", "idle"))
+		var anim_id = int(p_state.get("a", p_state.get("anim_id", 0)))
+		var server_anim = str(ANIM_ID_TO_NAME.get(anim_id, "idle"))
 
 		# Spawn if new
 		if not players.has(id):
@@ -441,7 +445,7 @@ func _show_local_event(message: String) -> void:
 func _emit_player_event(event_type: String, message: String, meta: Dictionary = {}) -> void:
 	_show_local_event(message)
 	if ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
-		ws.send_text(JSON.stringify({
+		ws.send(MsgPack.pack({
 			"type": "client_event",
 			"eventType": event_type,
 			"message": message,
