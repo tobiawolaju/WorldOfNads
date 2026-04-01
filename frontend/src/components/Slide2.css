@@ -18,6 +18,7 @@
     linear-gradient(135deg, #e8daff 0%, #d1edff 45%, #f5f9ff 100%);
   background-blend-mode: screen, overlay, soft-light, normal;
   overflow: hidden;
+  scale: 0.8;
 }
 
 
@@ -35,20 +36,16 @@
   position: relative;
   overflow: hidden;
   contain: layout paint style;
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(0, 0, 0, 1) 12%,
-    rgba(0, 0, 0, 1) 88%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(0, 0, 0, 1) 12%,
-    rgba(0, 0, 0, 1) 88%,
-    transparent 100%
-  );
+  -webkit-mask-image: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 1) 12%,
+      rgba(0, 0, 0, 1) 88%,
+      transparent 100%);
+  mask-image: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 1) 12%,
+      rgba(0, 0, 0, 1) 88%,
+      transparent 100%);
 }
 
 .slide2-column-track {
