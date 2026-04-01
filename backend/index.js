@@ -8,6 +8,12 @@ import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTi
 const PORT = process.env.PORT || 8080;
 const BROADCAST_RATE = 20;
 const FIXED_DT = 1 / BROADCAST_RATE;
+const ACTIVE_NET_RATE = 10;
+const IDLE_NET_RATE = 2;
+const FULL_SNAPSHOT_INTERVAL_MS = 2000;
+const MATCH_HEARTBEAT_INTERVAL_MS = 1000;
+const POS_SCALE = 100; // centimeters
+const ROT_SCALE = 1000; // milliradians
 
 const MAX_PLAYER_SPEED = 12.0; // units/sec server-side clamp against teleport cheating
 const PICKUP_RADIUS = 1.1;
@@ -29,6 +35,12 @@ let matchStartedThisRound = false;
 let isBatchResetting = false;
 let currentMinPlayersToStart = DEFAULT_MIN_PLAYERS_TO_START;
 let currentMaxPlayers = null;
+let lastBroadcastAt = 0;
+let lastFullSnapshotAt = 0;
+let lastMatchHeartbeatAt = 0;
+let previousEncodedPlayers = new Map();
+let previousChickenSnapshot = null;
+let previousMatchSnapshot = null;
 
 const chicken = {
   id: 'Chicken',
@@ -52,6 +64,22 @@ const DEFAULT_CHICKEN_STATE = {
 
 function length3(x, y, z) {
   return Math.sqrt(x * x + y * y + z * z);
+}
+
+function quantizePosition(value) {
+  return Math.round(value * POS_SCALE);
+}
+
+function dequantizePosition(value) {
+  return value / POS_SCALE;
+}
+
+function quantizeRotation(value) {
+  return Math.round(value * ROT_SCALE);
+}
+
+function dequantizeRotation(value) {
+  return value / ROT_SCALE;
 }
 
 function sanitizeMessage(value) {
@@ -306,6 +334,103 @@ function buildMatchState() {
   };
 }
 
+function encodePlayerForNetwork(player) {
+  return {
+    id: player.id,
+    x: quantizePosition(player.x),
+    y: quantizePosition(player.y),
+    z: quantizePosition(player.z),
+    r: quantizeRotation(player.rotationY),
+    a: player.animation === 'running' ? 1 : 0
+  };
+}
+
+function buildEncodedPlayersMap() {
+  const map = new Map();
+  for (const player of Object.values(players)) {
+    map.set(player.id, encodePlayerForNetwork(player));
+  }
+  return map;
+}
+
+function buildEncodedChicken() {
+  return {
+    i: chicken.id,
+    x: quantizePosition(chicken.x),
+    y: quantizePosition(chicken.y),
+    z: quantizePosition(chicken.z),
+    r: quantizeRotation(chicken.rotationY),
+    h: chicken.isHeld ? 1 : 0,
+    o: chicken.holderId || ''
+  };
+}
+
+function buildEncodedMatch() {
+  const matchState = buildMatchState();
+  return {
+    t: Math.round(matchState.timeLeft * 100),
+    r: matchState.isRunning ? 1 : 0,
+    d: Math.round(matchState.durationSeconds * 100),
+    min: matchState.minPlayersToStart,
+    max: matchState.maxPlayers
+  };
+}
+
+function shallowEqualObject(a, b) {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (a[key] !== b[key]) return false;
+  }
+  return true;
+}
+
+function computeStateDelta() {
+  const currentPlayers = buildEncodedPlayersMap();
+  const changedPlayers = [];
+  const removedPlayerIds = [];
+
+  for (const [id, encoded] of currentPlayers.entries()) {
+    const previous = previousEncodedPlayers.get(id);
+    if (!previous || !shallowEqualObject(previous, encoded)) {
+      changedPlayers.push(encoded);
+    }
+  }
+
+  for (const id of previousEncodedPlayers.keys()) {
+    if (!currentPlayers.has(id)) {
+      removedPlayerIds.push(id);
+    }
+  }
+
+  const currentChicken = buildEncodedChicken();
+  const currentMatch = buildEncodedMatch();
+  const chickenChanged = !shallowEqualObject(previousChickenSnapshot, currentChicken);
+  const matchChanged = !shallowEqualObject(previousMatchSnapshot, currentMatch);
+
+  return {
+    changedPlayers,
+    removedPlayerIds,
+    chickenChanged,
+    matchChanged,
+    chicken: currentChicken,
+    match: currentMatch,
+    currentPlayers
+  };
+}
+
+function broadcastPayload(payload) {
+  const body = JSON.stringify(payload);
+  gameWss.clients.forEach((client) => {
+    if (client.readyState === 1) {
+      client.send(body);
+    }
+  });
+}
+
 function restartMatchIfEligible() {
   matchTimeLeft = MATCH_DURATION_SECONDS;
   matchRunning = getPlayerCount() >= currentMinPlayersToStart;
@@ -427,10 +552,12 @@ gameWss.on('connection', (ws, req) => {
       }
 
       if (data.type === 'update_state') {
-        const nx = Number(data.x);
-        const ny = Number(data.y);
-        const nz = Number(data.z);
-        const nrot = Number(data.rotation_y);
+        const hasQuantizedPos = Number.isFinite(Number(data.qx)) && Number.isFinite(Number(data.qy)) && Number.isFinite(Number(data.qz));
+        const nx = hasQuantizedPos ? dequantizePosition(Number(data.qx)) : Number(data.x);
+        const ny = hasQuantizedPos ? dequantizePosition(Number(data.qy)) : Number(data.y);
+        const nz = hasQuantizedPos ? dequantizePosition(Number(data.qz)) : Number(data.z);
+        const hasQuantizedRot = Number.isFinite(Number(data.qrot));
+        const nrot = hasQuantizedRot ? dequantizeRotation(Number(data.qrot)) : Number(data.rotation_y);
         const anim = typeof data.animation === 'string' ? data.animation : 'idle';
 
         if (!Number.isFinite(nx) || !Number.isFinite(ny) || !Number.isFinite(nz) || !Number.isFinite(nrot)) {
@@ -459,10 +586,13 @@ gameWss.on('connection', (ws, req) => {
 
         // Holder is allowed to stream chicken pose, but it is distance-validated.
         if (chicken.isHeld && chicken.holderId === playerId && data.chicken && typeof data.chicken === 'object') {
-          const cx = Number(data.chicken.x);
-          const cy = Number(data.chicken.y);
-          const cz = Number(data.chicken.z);
-          const crot = Number(data.chicken.rotation_y);
+          const c = data.chicken;
+          const hasQuantizedChicken = Number.isFinite(Number(c.qx)) && Number.isFinite(Number(c.qy)) && Number.isFinite(Number(c.qz));
+          const cx = hasQuantizedChicken ? dequantizePosition(Number(c.qx)) : Number(c.x);
+          const cy = hasQuantizedChicken ? dequantizePosition(Number(c.qy)) : Number(c.y);
+          const cz = hasQuantizedChicken ? dequantizePosition(Number(c.qz)) : Number(c.z);
+          const hasQuantizedChickenRot = Number.isFinite(Number(c.qrot));
+          const crot = hasQuantizedChickenRot ? dequantizeRotation(Number(c.qrot)) : Number(c.rotation_y);
 
           if (Number.isFinite(cx) && Number.isFinite(cy) && Number.isFinite(cz) && Number.isFinite(crot)) {
             const pdx = cx - player.x;
@@ -756,28 +886,55 @@ setInterval(() => {
     }
   }
 
-  const stateData = {
-    type: 'state',
-    players: Object.values(players),
-    match: buildMatchState(),
-    chicken: {
-      id: chicken.id,
-      x: chicken.x,
-      y: chicken.y,
-      z: chicken.z,
-      rotationY: chicken.rotationY,
-      isHeld: chicken.isHeld,
-      holderId: chicken.holderId
-    }
-  };
+  const now = Date.now();
+  const delta = computeStateDelta();
+  const hasMeaningfulChange = delta.changedPlayers.length > 0 || delta.removedPlayerIds.length > 0 || delta.chickenChanged || delta.matchChanged;
+  const targetIntervalMs = hasMeaningfulChange ? (1000 / ACTIVE_NET_RATE) : (1000 / IDLE_NET_RATE);
+  const shouldSendByCadence = (now - lastBroadcastAt) >= targetIntervalMs;
+  const shouldSendFullSnapshot = (now - lastFullSnapshotAt) >= FULL_SNAPSHOT_INTERVAL_MS;
+  const shouldSendMatchHeartbeat = (now - lastMatchHeartbeatAt) >= MATCH_HEARTBEAT_INTERVAL_MS;
 
-  const stateString = JSON.stringify(stateData);
-
-  gameWss.clients.forEach((client) => {
-    if (client.readyState === 1) {
-      client.send(stateString);
+  if (shouldSendByCadence || shouldSendFullSnapshot || shouldSendMatchHeartbeat) {
+    if (shouldSendFullSnapshot) {
+      const fullPlayers = Array.from(delta.currentPlayers.values()).map((p) => {
+        const source = players[p.id];
+        return source ? { ...p, u: source.username } : p;
+      });
+      broadcastPayload({
+        type: 'state_full',
+        q: 1,
+        players: fullPlayers,
+        chicken: delta.chicken,
+        match: delta.match
+      });
+      lastFullSnapshotAt = now;
+      lastMatchHeartbeatAt = now;
+    } else {
+      const payload = {
+        type: 'state_delta',
+        q: 1
+      };
+      if (delta.changedPlayers.length > 0) {
+        payload.players = delta.changedPlayers;
+      }
+      if (delta.removedPlayerIds.length > 0) {
+        payload.removed = delta.removedPlayerIds;
+      }
+      if (delta.chickenChanged || shouldSendMatchHeartbeat) {
+        payload.chicken = delta.chicken;
+      }
+      if (delta.matchChanged || shouldSendMatchHeartbeat) {
+        payload.match = delta.match;
+        lastMatchHeartbeatAt = now;
+      }
+      broadcastPayload(payload);
     }
-  });
+
+    previousEncodedPlayers = delta.currentPlayers;
+    previousChickenSnapshot = delta.chicken;
+    previousMatchSnapshot = delta.match;
+    lastBroadcastAt = now;
+  }
 }, 1000 / BROADCAST_RATE);
 
 initAnalyticsDb()

@@ -7,6 +7,8 @@ const SPEED: float = 4.5
 const DEADZONE := 0.12
 const PICKUP_REQUEST_COOLDOWN_MS := 150
 const STEAL_RADIUS := 2.5
+const POS_SCALE := 100.0
+const ROT_SCALE := 1000.0
 
 # --- INPUT VARIABLES ---
 var gamepad_index := 0
@@ -48,7 +50,11 @@ var ignored_touch_indices := {}
 var active_camera_index := -1
 var touch_joystick: Node = null
 var network_tick_timer: float = 0.0
-const NETWORK_TICK_RATE: float = 0.05
+var network_heartbeat_timer: float = 0.0
+const NETWORK_TICK_ACTIVE: float = 0.10
+const NETWORK_TICK_IDLE: float = 0.33
+const NETWORK_HEARTBEAT: float = 1.0
+var _last_payload_signature := ""
 
 var player_id: String = "" :
 	set(new_id):
@@ -196,10 +202,16 @@ func _physics_process(delta: float) -> void:
 	_update_camera(delta)
 	_handle_animations(move_direction)
 
+	var net_active := move_direction.length() > 0.05 or _is_local_holding_chicken() or current_animation == "running"
 	network_tick_timer += delta
-	if network_tick_timer >= NETWORK_TICK_RATE:
-		_send_state_to_server()
+	network_heartbeat_timer += delta
+	var tick_window := NETWORK_TICK_ACTIVE if net_active else NETWORK_TICK_IDLE
+	var force_heartbeat := network_heartbeat_timer >= NETWORK_HEARTBEAT
+	if network_tick_timer >= tick_window or force_heartbeat:
+		_send_state_to_server(force_heartbeat)
 		network_tick_timer = 0.0
+		if force_heartbeat:
+			network_heartbeat_timer = 0.0
 
 # --- PICKUP LOGIC (USING AREA3D) ---
 func _try_pickup():
@@ -310,16 +322,25 @@ func _update_camera(delta: float) -> void:
 	camera.look_at(target_pos, Vector3.UP)
 
 # --- ANIMATION & NETWORK ---
-func _send_state_to_server() -> void:
+func _quantize_pos(value: float) -> int:
+	return int(round(value * POS_SCALE))
+
+func _quantize_rot(value: float) -> int:
+	return int(round(value * ROT_SCALE))
+
+func _build_payload_signature(payload: Dictionary) -> String:
+	return JSON.stringify(payload)
+
+func _send_state_to_server(force_send := false) -> void:
 	if not root or not root.ws:
 		return
 	if root.ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		var payload = {
 			"type": "update_state",
-			"x": global_transform.origin.x,
-			"y": global_transform.origin.y,
-			"z": global_transform.origin.z,
-			"rotation_y": mesh.rotation.y,
+			"qx": _quantize_pos(global_transform.origin.x),
+			"qy": _quantize_pos(global_transform.origin.y),
+			"qz": _quantize_pos(global_transform.origin.z),
+			"qrot": _quantize_rot(mesh.rotation.y),
 			"animation": current_animation
 		}
 
@@ -327,9 +348,18 @@ func _send_state_to_server() -> void:
 		if _is_local_holding_chicken() and root.has_method("build_local_chicken_payload"):
 			var chicken_payload = root.build_local_chicken_payload(global_position, -camera.global_transform.basis.z, mesh.rotation.y)
 			if chicken_payload != null:
-				payload["chicken"] = chicken_payload
+				payload["chicken"] = {
+					"qx": _quantize_pos(float(chicken_payload.get("x", 0.0))),
+					"qy": _quantize_pos(float(chicken_payload.get("y", 0.0))),
+					"qz": _quantize_pos(float(chicken_payload.get("z", 0.0))),
+					"qrot": _quantize_rot(float(chicken_payload.get("rotation_y", 0.0)))
+				}
 
-		root.ws.send_text(JSON.stringify(payload))
+		var signature = _build_payload_signature(payload)
+		if not force_send and signature == _last_payload_signature:
+			return
+		_last_payload_signature = signature
+		root.ws.send_text(signature)
 
 func set_animation_state(new_state: String):
 	if is_local: return

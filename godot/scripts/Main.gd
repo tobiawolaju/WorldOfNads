@@ -19,6 +19,8 @@ var is_local: bool
 var root: Node
 const CHICKEN_HOLD_DISTANCE := 0.9
 const CHICKEN_HOLD_HEIGHT := 1.0
+const POS_SCALE := 100.0
+const ROT_SCALE := 1000.0
 
 # --- CHICKEN AUTHORITY STATE ---
 var chicken_node: RigidBody3D = null
@@ -133,19 +135,57 @@ func _receive_messages():
 
 			"state":
 				if data.has("players"):
-					_update_world_state(data["players"])
+					_update_world_state(data["players"], true, false)
 				if data.has("chicken"):
-					_update_chicken_state(data["chicken"])
+					_update_chicken_state(data["chicken"], false)
 				if data.has("match") and typeof(data["match"]) == TYPE_DICTIONARY:
-					_update_match_state(data["match"])
+					_update_match_state(data["match"], false)
+			"state_full":
+				var quantized_full := bool(data.get("q", 0)) or bool(data.get("quantized", false))
+				if data.has("players"):
+					_update_world_state(data["players"], true, quantized_full)
+				if data.has("chicken"):
+					_update_chicken_state(data["chicken"], quantized_full)
+				if data.has("match") and typeof(data["match"]) == TYPE_DICTIONARY:
+					_update_match_state(data["match"], quantized_full)
+			"state_delta":
+				var quantized_delta := bool(data.get("q", 0)) or bool(data.get("quantized", false))
+				if data.has("players"):
+					_update_world_state(data["players"], false, quantized_delta)
+				if data.has("removed") and typeof(data["removed"]) == TYPE_ARRAY:
+					_remove_disconnected_players(data["removed"])
+				if data.has("chicken"):
+					_update_chicken_state(data["chicken"], quantized_delta)
+				if data.has("match") and typeof(data["match"]) == TYPE_DICTIONARY:
+					_update_match_state(data["match"], quantized_delta)
 
 
 # --- WORLD STATE UPDATE ---
-func _update_world_state(players_state):
+func _decode_pos(p_state: Dictionary, key: String, quantized: bool) -> float:
+	if quantized:
+		return float(p_state.get(key, 0)) / POS_SCALE
+	return float(p_state.get(key, 0.0))
+
+func _decode_rot(p_state: Dictionary, key: String, quantized: bool) -> float:
+	if quantized:
+		return float(p_state.get(key, 0)) / ROT_SCALE
+	return float(p_state.get(key, 0.0))
+
+func _remove_disconnected_players(removed_ids: Array) -> void:
+	for item in removed_ids:
+		var removed_id := str(item)
+		if removed_id != "" and removed_id != player_id:
+			_remove_player(removed_id)
+
+func _update_world_state(players_state, is_full := true, quantized := false):
 	var received_ids = []
 
 	for p_state in players_state:
-		var id = p_state["id"]
+		if typeof(p_state) != TYPE_DICTIONARY:
+			continue
+		var id = str(p_state.get("id", ""))
+		if id == "":
+			continue
 		received_ids.append(id)
 		var resolved_name = _resolve_server_username(p_state, id)
 		player_display_names[id] = resolved_name
@@ -155,9 +195,13 @@ func _update_world_state(players_state):
 				players[id].display_name = resolved_name
 			continue
 
-		var server_pos = Vector3(p_state["x"], p_state["y"], p_state["z"])
-		var server_rot_y = p_state["rotationY"]
-		var server_anim = p_state["animation"]
+		var server_pos = Vector3(
+			_decode_pos(p_state, "x", quantized),
+			_decode_pos(p_state, "y", quantized),
+			_decode_pos(p_state, "z", quantized)
+		)
+		var server_rot_y = _decode_rot(p_state, "r" if quantized else "rotationY", quantized)
+		var server_anim = "running" if int(p_state.get("a", 0)) == 1 else str(p_state.get("animation", "idle"))
 
 		# Spawn if new
 		if not players.has(id):
@@ -179,10 +223,11 @@ func _update_world_state(players_state):
 		# Visibility (NO RETURN)
 		node.visible = node.global_position.y <= 100
 
-	# Remove disconnected players
-	for id in players.keys():
-		if id != player_id and not id in received_ids:
-			_remove_player(id)
+	# Remove disconnected players only on full snapshots.
+	if is_full:
+		for id in players.keys():
+			if id != player_id and not id in received_ids:
+				_remove_player(id)
 
 
 # --- CHICKEN SYNC ---
@@ -193,19 +238,19 @@ func _cache_chicken_node() -> void:
 	if pickup_nodes.size() > 0 and pickup_nodes[0] is RigidBody3D:
 		chicken_node = pickup_nodes[0]
 
-func _update_chicken_state(chicken_state: Dictionary) -> void:
+func _update_chicken_state(chicken_state: Dictionary, quantized := false) -> void:
 	_cache_chicken_node()
 	if chicken_node == null:
 		return
 
 	var server_target_pos = Vector3(
-		float(chicken_state.get("x", chicken_node.global_position.x)),
-		float(chicken_state.get("y", chicken_node.global_position.y)),
-		float(chicken_state.get("z", chicken_node.global_position.z))
+		(float(chicken_state.get("x", chicken_node.global_position.x)) / POS_SCALE) if quantized else float(chicken_state.get("x", chicken_node.global_position.x)),
+		(float(chicken_state.get("y", chicken_node.global_position.y)) / POS_SCALE) if quantized else float(chicken_state.get("y", chicken_node.global_position.y)),
+		(float(chicken_state.get("z", chicken_node.global_position.z)) / POS_SCALE) if quantized else float(chicken_state.get("z", chicken_node.global_position.z))
 	)
-	var server_target_rot_y = float(chicken_state.get("rotationY", chicken_node.global_rotation.y))
-	chicken_is_held = bool(chicken_state.get("isHeld", false))
-	chicken_holder_id = str(chicken_state.get("holderId", ""))
+	var server_target_rot_y = (float(chicken_state.get("r", chicken_node.global_rotation.y)) / ROT_SCALE) if quantized else float(chicken_state.get("rotationY", chicken_node.global_rotation.y))
+	chicken_is_held = bool(chicken_state.get("h", chicken_state.get("isHeld", false)))
+	chicken_holder_id = str(chicken_state.get("o", chicken_state.get("holderId", "")))
 	_handle_chicken_state_event(chicken_is_held, chicken_holder_id)
 	var target_pos = server_target_pos
 	var target_rot_y = server_target_rot_y
@@ -334,10 +379,15 @@ func _resolve_ui_nodes() -> void:
 		world_environment.environment = world_environment.environment.duplicate()
 		_world_env_duplicated = true
 
-func _update_match_state(match_state: Dictionary) -> void:
-	match_duration_seconds = maxf(1.0, float(match_state.get("durationSeconds", match_duration_seconds)))
-	match_time_left = clampf(float(match_state.get("timeLeft", match_time_left)), 0.0, match_duration_seconds)
-	match_is_running = bool(match_state.get("isRunning", false))
+func _update_match_state(match_state: Dictionary, quantized := false) -> void:
+	if quantized:
+		match_duration_seconds = maxf(1.0, float(match_state.get("d", int(match_duration_seconds * 100.0))) / 100.0)
+		match_time_left = clampf(float(match_state.get("t", int(match_time_left * 100.0))) / 100.0, 0.0, match_duration_seconds)
+		match_is_running = bool(match_state.get("r", 0))
+	else:
+		match_duration_seconds = maxf(1.0, float(match_state.get("durationSeconds", match_duration_seconds)))
+		match_time_left = clampf(float(match_state.get("timeLeft", match_time_left)), 0.0, match_duration_seconds)
+		match_is_running = bool(match_state.get("isRunning", false))
 	_update_match_ui()
 
 func is_match_running() -> bool:
@@ -413,7 +463,7 @@ func _build_ws_url_with_username(base_url: String) -> String:
 	return "%s%susername=%s" % [base_url, joiner, local_username.uri_encode()]
 
 func _resolve_server_username(data: Dictionary, fallback_id: String) -> String:
-	var candidate := str(data.get("username", "")).strip_edges()
+	var candidate := str(data.get("u", data.get("username", ""))).strip_edges()
 	if candidate != "":
 		return candidate
 	return _format_player_short_name(fallback_id)
