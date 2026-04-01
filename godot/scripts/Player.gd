@@ -202,7 +202,7 @@ func _physics_process(delta: float) -> void:
 	_update_camera(delta)
 	_handle_animations(move_direction)
 
-	var net_active := move_direction.length() > 0.05 or _is_local_holding_chicken() or current_animation == "running"
+	var net_active: bool = (move_direction.length() > 0.05) or _is_local_holding_chicken() or (current_animation == "running")
 	network_tick_timer += delta
 	network_heartbeat_timer += delta
 	var tick_window := NETWORK_TICK_ACTIVE if net_active else NETWORK_TICK_IDLE
