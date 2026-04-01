@@ -155,13 +155,13 @@ static func _read_u8(data: PackedByteArray, offset_ref: Array) -> int:
 	return v
 
 static func _read_u16(data: PackedByteArray, offset_ref: Array) -> int:
-	var base := offset_ref[0]
+	var base: int = int(offset_ref[0])
 	var v := (data[base] << 8) | data[base + 1]
 	offset_ref[0] += 2
 	return v
 
 static func _read_u32(data: PackedByteArray, offset_ref: Array) -> int:
-	var base := offset_ref[0]
+	var base: int = int(offset_ref[0])
 	var v := (data[base] << 24) | (data[base + 1] << 16) | (data[base + 2] << 8) | data[base + 3]
 	offset_ref[0] += 4
 	return v
@@ -172,7 +172,7 @@ static func _read_u64(data: PackedByteArray, offset_ref: Array) -> int:
 	return (hi << 32) | lo
 
 static func _read_string(data: PackedByteArray, offset_ref: Array, n: int) -> String:
-	var start := offset_ref[0]
+	var start: int = int(offset_ref[0])
 	var b := data.slice(start, start + n)
 	offset_ref[0] += n
 	return b.get_string_from_utf8()
