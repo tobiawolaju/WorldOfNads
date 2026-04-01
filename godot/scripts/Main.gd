@@ -26,6 +26,8 @@ const ANIM_ID_TO_NAME := {
 	0: "idle",
 	1: "running"
 }
+const REMOTE_INTERP_BACKTIME_MS := 100.0
+const REMOTE_MAX_EXTRAPOLATE_MS := 120.0
 
 # --- CHICKEN AUTHORITY STATE ---
 var chicken_node: RigidBody3D = null
@@ -37,6 +39,7 @@ var _last_chicken_holder_id := ""
 var local_username := ""
 var local_display_name := "player"
 var player_display_names := {}
+var remote_snapshots := {}
 var countdown_label: Label = null
 var world_environment: WorldEnvironment = null
 var camera_block: Node3D = null
@@ -102,6 +105,7 @@ func _process(_delta):
 
 	if connected:
 		_receive_messages()
+		_apply_remote_interpolation()
 
 func _trigger_fallback():
 	is_connecting_to_live = false
@@ -187,6 +191,7 @@ func _remove_disconnected_players(removed_ids: Array) -> void:
 
 func _update_world_state(players_state, is_full := true, quantized := false):
 	var received_ids = []
+	var now_ms := float(Time.get_ticks_msec())
 
 	for p_state in players_state:
 		if typeof(p_state) != TYPE_DICTIONARY:
@@ -216,6 +221,15 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 		if not players.has(id):
 			_spawn_player(id, false)
 			players[id].global_position = server_pos  # FIX: spawn at correct position
+			remote_snapshots[id] = {
+				"prev_pos": server_pos,
+				"curr_pos": server_pos,
+				"prev_rot": server_rot_y,
+				"curr_rot": server_rot_y,
+				"prev_t": now_ms,
+				"curr_t": now_ms,
+				"anim": server_anim
+			}
 
 		var node = players[id]
 		node.display_name = resolved_name
@@ -224,10 +238,7 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 		if p_state.has("vehicle") and p_state["vehicle"] != null:
 			_sync_vehicle_player(node, p_state)
 		else:
-			# Smooth movement
-			node.global_position = node.global_position.lerp(server_pos, 0.3)
-			node.rotation.y = lerp_angle(node.rotation.y, server_rot_y, 0.3)
-			node.set_animation_state(server_anim)
+			_push_remote_snapshot(id, server_pos, server_rot_y, server_anim, now_ms)
 
 		# Visibility (NO RETURN)
 		node.visible = node.global_position.y <= 100
@@ -373,6 +384,65 @@ func _remove_player(id: String):
 		players[id].queue_free()
 		players.erase(id)
 	player_display_names.erase(id)
+	remote_snapshots.erase(id)
+
+func _push_remote_snapshot(id: String, pos: Vector3, rot_y: float, anim: String, now_ms: float) -> void:
+	var snap = remote_snapshots.get(id, null)
+	if snap == null:
+		remote_snapshots[id] = {
+			"prev_pos": pos,
+			"curr_pos": pos,
+			"prev_rot": rot_y,
+			"curr_rot": rot_y,
+			"prev_t": now_ms,
+			"curr_t": now_ms,
+			"anim": anim
+		}
+		return
+
+	snap["prev_pos"] = snap["curr_pos"]
+	snap["curr_pos"] = pos
+	snap["prev_rot"] = snap["curr_rot"]
+	snap["curr_rot"] = rot_y
+	snap["prev_t"] = snap["curr_t"]
+	snap["curr_t"] = now_ms
+	snap["anim"] = anim
+	remote_snapshots[id] = snap
+
+func _apply_remote_interpolation() -> void:
+	var render_time := float(Time.get_ticks_msec()) - REMOTE_INTERP_BACKTIME_MS
+	for id in players.keys():
+		if id == player_id:
+			continue
+		if not remote_snapshots.has(id):
+			continue
+		var node = players[id]
+		if node == null:
+			continue
+		var snap: Dictionary = remote_snapshots[id]
+		var prev_t := float(snap.get("prev_t", render_time))
+		var curr_t := float(snap.get("curr_t", prev_t))
+		var prev_pos: Vector3 = snap.get("prev_pos", node.global_position)
+		var curr_pos: Vector3 = snap.get("curr_pos", prev_pos)
+		var prev_rot := float(snap.get("prev_rot", node.rotation.y))
+		var curr_rot := float(snap.get("curr_rot", prev_rot))
+
+		var dt := maxf(1.0, curr_t - prev_t)
+		var t := clampf((render_time - prev_t) / dt, 0.0, 1.0)
+		var out_pos := prev_pos.lerp(curr_pos, t)
+		var out_rot := lerp_angle(prev_rot, curr_rot, t)
+
+		# If we're beyond newest snapshot, apply a tiny extrapolation window.
+		if render_time > curr_t:
+			var late_ms := minf(render_time - curr_t, REMOTE_MAX_EXTRAPOLATE_MS)
+			if late_ms > 0.0:
+				var velocity := (curr_pos - prev_pos) / (dt / 1000.0)
+				out_pos = curr_pos + (velocity * (late_ms / 1000.0))
+				out_rot = curr_rot
+
+		node.global_position = node.global_position.lerp(out_pos, 0.55)
+		node.rotation.y = lerp_angle(node.rotation.y, out_rot, 0.55)
+		node.set_animation_state(str(snap.get("anim", "idle")))
 
 func _resolve_events_bridge() -> void:
 	var bridges = get_tree().get_nodes_in_group("events_bridge")

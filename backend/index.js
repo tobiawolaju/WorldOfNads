@@ -9,7 +9,7 @@ import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTi
 const PORT = process.env.PORT || 8080;
 const BROADCAST_RATE = 20;
 const FIXED_DT = 1 / BROADCAST_RATE;
-const ACTIVE_NET_RATE = 10;
+const ACTIVE_NET_RATE = 15;
 const IDLE_NET_RATE = 2;
 const FULL_SNAPSHOT_INTERVAL_MS = 2000;
 const MATCH_HEARTBEAT_INTERVAL_MS = 1000;
