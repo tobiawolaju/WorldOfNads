@@ -5,7 +5,6 @@ type LogoItem = {
   id: string;
   imageUrl: string;
   alt: string;
-  grayscale?: boolean;
 };
 
 const fallbackLogos: LogoItem[] = [
@@ -78,7 +77,7 @@ const Slide2: React.FC = () => {
                     key={`${item.id}-${itemIndex}`}
                     src={item.imageUrl}
                     alt={item.alt}
-                    className={`slide2-logo${item.grayscale ? " slide2-logo-grayscale" : ""}`}
+                    className="slide2-logo"
                     loading="lazy"
                   />
                 ))}
