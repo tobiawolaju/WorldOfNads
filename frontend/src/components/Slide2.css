@@ -82,6 +82,10 @@
   aspect-ratio: 1 / 1;
 }
 
+.slide2-logo-grayscale {
+  filter: grayscale(1);
+}
+
 @keyframes slide2-scroll-up {
   from {
     transform: translateY(0);
