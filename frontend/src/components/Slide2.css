@@ -2,8 +2,12 @@
   --slide2-gap: 20px;
   --slide2-logo-radius: 20px;
 
+
   width: 100%;
-  min-height: 100vh;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+
   padding: 24px;
   display: grid;
   place-items: center;
@@ -16,13 +20,7 @@
   overflow: hidden;
 }
 
-.slide2-placeholder {
-  width: 100%;
-  max-width: 480px;
-  aspect-ratio: 1 / 1;
-  border-radius: 16px;
-  overflow: hidden;
-}
+
 
 .slide2-grid {
   display: grid;
