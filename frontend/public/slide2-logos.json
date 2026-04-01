@@ -1,0 +1,14 @@
+[
+  { "id": "logo-1", "imageUrl": "/logo.png", "alt": "Brand logo 1" },
+  { "id": "logo-2", "imageUrl": "/logo.png", "alt": "Brand logo 2" },
+  { "id": "logo-3", "imageUrl": "/logo.png", "alt": "Brand logo 3" },
+  { "id": "logo-4", "imageUrl": "/logo.png", "alt": "Brand logo 4" },
+  { "id": "logo-5", "imageUrl": "/logo.png", "alt": "Brand logo 5" },
+  { "id": "logo-6", "imageUrl": "/logo.png", "alt": "Brand logo 6" },
+  { "id": "logo-7", "imageUrl": "/logo.png", "alt": "Brand logo 7" },
+  { "id": "logo-8", "imageUrl": "/logo.png", "alt": "Brand logo 8" },
+  { "id": "logo-9", "imageUrl": "/logo.png", "alt": "Brand logo 9" },
+  { "id": "logo-10", "imageUrl": "/logo.png", "alt": "Brand logo 10" },
+  { "id": "logo-11", "imageUrl": "/logo.png", "alt": "Brand logo 11" },
+  { "id": "logo-12", "imageUrl": "/logo.png", "alt": "Brand logo 12" }
+]
