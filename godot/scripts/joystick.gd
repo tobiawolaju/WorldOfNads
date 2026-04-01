@@ -64,7 +64,8 @@ func _input(event):
 			# Do not start joystick from touches meant for UI controls (buttons, panels, etc).
 			if _is_touch_over_ui(event.position):
 				return
-			if is_auto_locked and _is_touch_on_knob(event.position):
+			# One-touch break for lock mode: any touch in joystick zone unlocks and resumes control.
+			if is_auto_locked and _is_joystick_area(event.position, viewport_size):
 				_unlock_auto_move()
 				_start_joystick_touch(event.position, event.index, touch_joystick)
 				get_viewport().set_input_as_handled()
@@ -201,10 +202,11 @@ func _release_all_keys():
 	for key in keys_pressed.keys():
 		_release_key(key)
 
-func _check_double_tap(tap_pos: Vector2):
+func _check_double_tap(tap_pos: Vector2, touch_joystick: Node):
 	var now = Time.get_ticks_msec() / 1000.0
 	if (now - last_tap_time) <= double_tap_interval and (tap_pos - last_tap_position).length() < 80.0:
 		_press_key("jump")
+		_lock_auto_move_from_current(touch_joystick)
 		await get_tree().create_timer(0.2).timeout
 		_release_key("jump")
 	last_tap_time = now
@@ -223,7 +225,7 @@ func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick:
 	touch_joystick.position = zone_center
 	global_position = zone_center
 	touch_joystick.visible = true
-	_check_double_tap(touch_pos)
+	_check_double_tap(touch_pos, touch_joystick)
 	_update_visuals()
 
 func _is_forward_lock_candidate() -> bool:
@@ -240,6 +242,15 @@ func _lock_auto_move():
 	active_joystick_index = -1
 	touchInsideJoystick = false
 	modulate.a = 0.5
+
+func _lock_auto_move_from_current(touch_joystick: Node) -> void:
+	# If user double-taps without a drag delta yet, default to forward lock.
+	if position.length_squared() < 1.0:
+		position = Vector2(0.0, -maxRadius * 0.92)
+	_update_input_from_joystick(position)
+	_lock_auto_move()
+	if touch_joystick != null:
+		touch_joystick.visible = true
 
 func _unlock_auto_move():
 	is_auto_locked = false
