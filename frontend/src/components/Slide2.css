@@ -35,6 +35,20 @@
   position: relative;
   overflow: hidden;
   contain: layout paint style;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 1) 12%,
+    rgba(0, 0, 0, 1) 88%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 1) 12%,
+    rgba(0, 0, 0, 1) 88%,
+    transparent 100%
+  );
 }
 
 .slide2-column-track {
@@ -47,14 +61,17 @@
 
 .slide2-speed-1 {
   animation: slide2-scroll-up 22s linear infinite;
+  animation-play-state: running;
 }
 
 .slide2-speed-2 {
   animation: slide2-scroll-down 22s linear infinite;
+  animation-play-state: running;
 }
 
 .slide2-speed-3 {
   animation: slide2-scroll-up 22s linear infinite;
+  animation-play-state: running;
 }
 
 .slide2-logo {
@@ -92,11 +109,5 @@
 
   .slide2-placeholder {
     max-width: min(92vw, 480px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .slide2-column-track {
-    animation: none;
   }
 }
