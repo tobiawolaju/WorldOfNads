@@ -160,6 +160,16 @@ func _is_camera_area(pos: Vector2, viewport_size: Vector2) -> bool:
 func is_joystick_area_screen(pos: Vector2, viewport_size: Vector2) -> bool:
 	return _is_joystick_area(pos, viewport_size)
 
+func _get_joystick_zone_center(viewport_size: Vector2) -> Vector2:
+	var is_portrait := viewport_size.y > viewport_size.x
+	var zone_width_ratio := portrait_zone_width_ratio if is_portrait else landscape_zone_width_ratio
+	var zone_height_ratio := portrait_zone_height_ratio if is_portrait else landscape_zone_height_ratio
+	var zone_width = viewport_size.x * clamp(zone_width_ratio, 0.05, 1.0)
+	var zone_height = viewport_size.y * clamp(zone_height_ratio, 0.05, 1.0)
+	var zone_left = (viewport_size.x - zone_width) * 0.5
+	var zone_top = viewport_size.y - zone_height
+	return Vector2(zone_left + zone_width * 0.5, zone_top + zone_height * 0.5)
+
 func _update_input_from_joystick(pos: Vector2):
 	_release_all_keys()
 	if abs(pos.x) > abs(pos.y):
@@ -205,8 +215,9 @@ func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick:
 	north_drag_distance_accumulated = 0.0
 	lock_candidate_started_at = -1.0
 	last_drag_was_north = false
-	touch_joystick.position = touch_pos
-	global_position = touch_pos
+	var zone_center = _get_joystick_zone_center(get_viewport().get_visible_rect().size)
+	touch_joystick.position = zone_center
+	global_position = zone_center
 	touch_joystick.visible = true
 	_check_double_tap(touch_pos)
 	_update_visuals()
