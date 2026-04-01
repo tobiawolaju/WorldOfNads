@@ -206,7 +206,8 @@ func _check_double_tap(tap_pos: Vector2, touch_joystick: Node):
 	var now = Time.get_ticks_msec() / 1000.0
 	if (now - last_tap_time) <= double_tap_interval and (tap_pos - last_tap_position).length() < 80.0:
 		_press_key("jump")
-		_lock_auto_move_from_current(touch_joystick)
+		if _is_joystick_actively_moving():
+			_lock_auto_move_from_current(touch_joystick)
 		await get_tree().create_timer(0.2).timeout
 		_release_key("jump")
 	last_tap_time = now
@@ -251,6 +252,12 @@ func _lock_auto_move_from_current(touch_joystick: Node) -> void:
 	_lock_auto_move()
 	if touch_joystick != null:
 		touch_joystick.visible = true
+
+func _is_joystick_actively_moving() -> bool:
+	if maxRadius <= 0.0:
+		return false
+	var movement_strength := position.length() / maxRadius
+	return movement_strength >= 0.25
 
 func _unlock_auto_move():
 	is_auto_locked = false
