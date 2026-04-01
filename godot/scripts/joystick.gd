@@ -64,10 +64,19 @@ func _input(event):
 			# Do not start joystick from touches meant for UI controls (buttons, panels, etc).
 			if _is_touch_over_ui(event.position):
 				return
-			# One-touch break for lock mode: any touch in joystick zone unlocks and resumes control.
+			# While locked: taps may trigger jump, but must NOT unlock.
+			# Lock can only be broken by a drag in joystick zone.
 			if is_auto_locked and _is_joystick_area(event.position, viewport_size):
-				_unlock_auto_move()
-				_start_joystick_touch(event.position, event.index, touch_joystick)
+				if _is_double_tap(event.position):
+					_press_key("jump")
+					await get_tree().create_timer(0.2).timeout
+					_release_key("jump")
+					last_tap_time = Time.get_ticks_msec() / 1000.0
+					last_tap_position = event.position
+					get_viewport().set_input_as_handled()
+					return
+				last_tap_time = Time.get_ticks_msec() / 1000.0
+				last_tap_position = event.position
 				get_viewport().set_input_as_handled()
 				return
 
@@ -100,6 +109,21 @@ func _input(event):
 				active_camera_index = -1
 
 	elif event is InputEventScreenDrag:
+		if is_auto_locked and _is_joystick_area(event.position, viewport_size):
+			_unlock_auto_move()
+			_start_joystick_touch(event.position, event.index, touch_joystick)
+			var local_pos_unlock = event.position - touch_joystick.global_position
+			if local_pos_unlock.length() > maxRadius:
+				local_pos_unlock = local_pos_unlock.normalized() * maxRadius
+			position = local_pos_unlock
+			_update_north_drag_progress_from_screen_drag(event.relative)
+			emit_signal("joystick_moved", position)
+			touch_joystick.visible = true
+			_update_input_from_joystick(position)
+			_update_visuals()
+			get_viewport().set_input_as_handled()
+			return
+
 		if event.index == active_joystick_index:
 			var local_pos = event.position - touch_joystick.global_position
 			if local_pos.length() > maxRadius:
@@ -203,15 +227,19 @@ func _release_all_keys():
 		_release_key(key)
 
 func _check_double_tap(tap_pos: Vector2, touch_joystick: Node):
-	var now = Time.get_ticks_msec() / 1000.0
-	if (now - last_tap_time) <= double_tap_interval and (tap_pos - last_tap_position).length() < 80.0:
+	if _is_double_tap(tap_pos):
 		_press_key("jump")
 		if _is_joystick_actively_moving():
 			_lock_auto_move_from_current(touch_joystick)
 		await get_tree().create_timer(0.2).timeout
 		_release_key("jump")
+	var now = Time.get_ticks_msec() / 1000.0
 	last_tap_time = now
 	last_tap_position = tap_pos
+
+func _is_double_tap(tap_pos: Vector2) -> bool:
+	var now = Time.get_ticks_msec() / 1000.0
+	return (now - last_tap_time) <= double_tap_interval and (tap_pos - last_tap_position).length() < 80.0
 
 func claims_touch(touch_index: int) -> bool:
 	return touch_index == active_joystick_index
