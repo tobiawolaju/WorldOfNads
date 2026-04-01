@@ -42,6 +42,7 @@ class BotClient {
     this.stateByPlayerId = new Map();
     this.lastChicken = null;
     this.connected = false;
+    this.protocol = "unknown"; // unknown | msgpack | json
   }
 
   start() {
@@ -77,12 +78,8 @@ class BotClient {
   }
 
   onMessage(raw) {
-    let data;
-    try {
-      data = mpDecode(new Uint8Array(raw));
-    } catch {
-      return;
-    }
+    const data = this._decodeIncoming(raw);
+    if (!data) return;
     if (!data || typeof data !== "object") {
       return;
     }
@@ -107,6 +104,43 @@ class BotClient {
       this._applyDeltaState(data);
       return;
     }
+  }
+
+  _decodeIncoming(raw) {
+    // Prefer current beta protocol first, then fallback for live server compatibility.
+    if (this.protocol !== "json") {
+      try {
+        const decoded = mpDecode(new Uint8Array(raw));
+        if (decoded && typeof decoded === "object" && typeof decoded.type === "string") {
+          this.protocol = "msgpack";
+          return decoded;
+        }
+      } catch {
+        // fallback below
+      }
+    }
+
+    try {
+      const text = Buffer.isBuffer(raw) ? raw.toString("utf8") : String(raw);
+      const decoded = JSON.parse(text);
+      if (decoded && typeof decoded === "object" && typeof decoded.type === "string") {
+        this.protocol = "json";
+        return decoded;
+      }
+    } catch {
+      // no-op
+    }
+
+    return null;
+  }
+
+  _send(payload) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    if (this.protocol === "json") {
+      this.ws.send(JSON.stringify(payload));
+      return;
+    }
+    this.ws.send(mpEncode(payload));
   }
 
   _decodePos(value, quantized) {
@@ -255,7 +289,7 @@ class BotClient {
       };
     }
 
-    this.ws.send(mpEncode(statePayload));
+    this._send(statePayload);
 
     if (CAN_PICK && !isHeld) {
       const dist3D = Math.hypot(
@@ -264,12 +298,10 @@ class BotClient {
         cz - this.position.z,
       );
       if (dist3D <= PICKUP_RADIUS) {
-        this.ws.send(
-          mpEncode({
-            type: "pickup_request",
-            item_id: "Chicken",
-          }),
-        );
+        this._send({
+          type: "pickup_request",
+          item_id: "Chicken",
+        });
       }
     }
   }

@@ -18,7 +18,7 @@ const ROT_SCALE = 1000; // milliradians
 
 const MAX_PLAYER_SPEED = 12.0; // units/sec server-side clamp against teleport cheating
 const PICKUP_RADIUS = 1.1;
-const STEAL_RADIUS = 2.5;
+const STEAL_RADIUS = 1.4;
 const MAX_THROW_IMPULSE = 8.0;
 const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 0.5869336;

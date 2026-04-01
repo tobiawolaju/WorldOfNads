@@ -481,6 +481,9 @@ func _resolve_server_username(data: Dictionary, fallback_id: String) -> String:
 	var candidate := str(data.get("u", data.get("username", ""))).strip_edges()
 	if candidate != "":
 		return candidate
+	var cached := str(player_display_names.get(fallback_id, "")).strip_edges()
+	if cached != "":
+		return cached
 	return _format_player_short_name(fallback_id)
 
 func _handle_chicken_state_event(current_is_held: bool, current_holder_id: String) -> void:
