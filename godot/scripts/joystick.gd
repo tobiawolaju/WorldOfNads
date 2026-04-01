@@ -60,6 +60,9 @@ func _input(event):
 
 	if event is InputEventScreenTouch:
 		if event.pressed:
+			# Do not start joystick from touches meant for UI controls (buttons, panels, etc).
+			if _is_touch_over_ui(event.position):
+				return
 			if is_auto_locked and _is_touch_on_knob(event.position):
 				_unlock_auto_move()
 				_start_joystick_touch(event.position, event.index, touch_joystick)
@@ -247,3 +250,7 @@ func _update_north_drag_progress_from_screen_drag(drag_relative: Vector2) -> voi
 		north_drag_distance_accumulated += north_progress
 	else:
 		last_drag_was_north = false
+
+func _is_touch_over_ui(screen_pos: Vector2) -> bool:
+	var ui_control := get_viewport().gui_pick(screen_pos)
+	return ui_control != null and ui_control.is_visible_in_tree()
