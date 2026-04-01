@@ -9,6 +9,7 @@ const LOCAL_URL = "ws://localhost:8080"
 @export var myplayerswpanpoint: Marker3D
 @export var countdown_label_path: NodePath
 @export var world_environment_path: NodePath = NodePath("WorldEnvironment")
+@export var camera_block_path: NodePath = NodePath("CAMERABlock")
 
 # --- NETWORK & STATE VARIABLES ---
 var ws := WebSocketPeer.new()
@@ -34,6 +35,7 @@ var local_display_name := "player"
 var player_display_names := {}
 var countdown_label: Label = null
 var world_environment: WorldEnvironment = null
+var camera_block: Node3D = null
 var _world_env_duplicated := false
 var match_duration_seconds := 180.0
 var match_time_left := 180.0
@@ -124,6 +126,9 @@ func _receive_messages():
 				local_display_name = _resolve_server_username(data, player_id)
 				player_display_names[player_id] = local_display_name
 				print("My player ID:", player_id, "username:", local_display_name)
+				_resolve_ui_nodes()
+				if camera_block != null:
+					camera_block.visible = false
 				_spawn_player(player_id, true)
 				_set_local_username(local_display_name)
 				_set_local_player_id(player_id)
@@ -375,6 +380,8 @@ func _resolve_ui_nodes() -> void:
 		countdown_label = get_node_or_null(countdown_label_path)
 	if world_environment == null and world_environment_path != NodePath():
 		world_environment = get_node_or_null(world_environment_path)
+	if camera_block == null and camera_block_path != NodePath():
+		camera_block = get_node_or_null(camera_block_path)
 	if world_environment != null and world_environment.environment and not _world_env_duplicated:
 		world_environment.environment = world_environment.environment.duplicate()
 		_world_env_duplicated = true
@@ -406,6 +413,10 @@ func _update_match_ui() -> void:
 			countdown_label.text = "%02d:%02d" % [minutes, seconds]
 		else:
 			countdown_label.text = "Waiting for players"
+
+	# Keep camera blocker hidden after joining the server.
+	if camera_block != null and player_id != "":
+		camera_block.visible = false
 
 	if world_environment == null or world_environment.environment == null:
 		return

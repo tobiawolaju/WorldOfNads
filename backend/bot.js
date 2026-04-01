@@ -12,6 +12,7 @@ const RECONNECT_MS = 1200;
 const TICK_MS = 50;
 const HOLD_DISTANCE = 0.9;
 const HOLD_HEIGHT = 1.0;
+const POS_SCALE = 100;
 
 function createSpawn(index) {
   const ring = Math.floor(index / 8);
@@ -36,6 +37,8 @@ class BotClient {
     this.rotationY = 0;
     this.animation = "idle";
     this.lastState = null;
+    this.stateByPlayerId = new Map();
+    this.lastChicken = null;
     this.connected = false;
   }
 
@@ -89,7 +92,83 @@ class BotClient {
 
     if (data.type === "state") {
       this.lastState = data;
+      this.lastChicken = data.chicken || this.lastChicken;
+      return;
     }
+
+    if (data.type === "state_full") {
+      this._applyFullState(data);
+      return;
+    }
+
+    if (data.type === "state_delta") {
+      this._applyDeltaState(data);
+      return;
+    }
+  }
+
+  _decodePos(value, quantized) {
+    if (!quantized) return Number(value);
+    return Number(value) / POS_SCALE;
+  }
+
+  _decodeChicken(chicken, quantized) {
+    if (!chicken || typeof chicken !== "object") return null;
+    if (!quantized) {
+      return {
+        x: Number(chicken.x),
+        y: Number(chicken.y),
+        z: Number(chicken.z),
+        isHeld: Boolean(chicken.isHeld),
+        holderId: String(chicken.holderId || ""),
+      };
+    }
+    return {
+      x: this._decodePos(chicken.x, true),
+      y: this._decodePos(chicken.y, true),
+      z: this._decodePos(chicken.z, true),
+      isHeld: Boolean(chicken.h),
+      holderId: String(chicken.o || ""),
+    };
+  }
+
+  _applyFullState(data) {
+    const quantized = Boolean(data.q || data.quantized);
+    const players = Array.isArray(data.players) ? data.players : [];
+    this.stateByPlayerId.clear();
+    for (const p of players) {
+      if (!p || typeof p !== "object" || !p.id) continue;
+      this.stateByPlayerId.set(String(p.id), p);
+    }
+    if (data.chicken) {
+      this.lastChicken = this._decodeChicken(data.chicken, quantized);
+    }
+    this.lastState = {
+      chicken: this.lastChicken,
+      players,
+    };
+  }
+
+  _applyDeltaState(data) {
+    const quantized = Boolean(data.q || data.quantized);
+    if (Array.isArray(data.players)) {
+      for (const p of data.players) {
+        if (!p || typeof p !== "object" || !p.id) continue;
+        this.stateByPlayerId.set(String(p.id), p);
+      }
+    }
+    if (Array.isArray(data.removed)) {
+      for (const id of data.removed) {
+        this.stateByPlayerId.delete(String(id));
+      }
+    }
+    if (data.chicken) {
+      this.lastChicken = this._decodeChicken(data.chicken, quantized);
+    }
+    this.lastState = {
+      chicken: this.lastChicken,
+      players: Array.from(this.stateByPlayerId.values()),
+    };
   }
 
   tick() {
