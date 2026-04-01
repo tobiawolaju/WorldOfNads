@@ -26,8 +26,8 @@ const ANIM_ID_TO_NAME := {
 	0: "idle",
 	1: "running"
 }
-const REMOTE_INTERP_BACKTIME_MS := 100.0
-const REMOTE_MAX_EXTRAPOLATE_MS := 120.0
+const REMOTE_INTERP_BACKTIME_MS := 120.0
+const REMOTE_MAX_EXTRAPOLATE_MS := 0.0
 
 # --- CHICKEN AUTHORITY STATE ---
 var chicken_node: RigidBody3D = null
