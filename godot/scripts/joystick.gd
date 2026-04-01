@@ -144,9 +144,11 @@ func _is_joystick_area(pos: Vector2, viewport_size: Vector2) -> bool:
 
 	var zone_width = viewport_size.x * clamp(zone_width_ratio, 0.05, 1.0)
 	var zone_height = viewport_size.y * clamp(zone_height_ratio, 0.05, 1.0)
+	var zone_left = (viewport_size.x - zone_width) * 0.5
+	var zone_right = zone_left + zone_width
 
-	# Bottom-left rectangle zone
-	return pos.x <= zone_width and pos.y >= (viewport_size.y - zone_height)
+	# Bottom-center rectangle zone (middle width band, bottom height band)
+	return pos.x >= zone_left and pos.x <= zone_right and pos.y >= (viewport_size.y - zone_height)
 
 func _is_camera_area(pos: Vector2, viewport_size: Vector2) -> bool:
 	# Everything outside the joystick rectangle zone

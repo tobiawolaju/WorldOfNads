@@ -374,11 +374,13 @@ func _is_touch_on_joystick_area(pos: Vector2, size: Vector2) -> bool:
 	# Always use joystick script's own zone config to avoid mismatches.
 	if touch_joystick and touch_joystick.has_method("is_joystick_area_screen"):
 		return bool(touch_joystick.call("is_joystick_area_screen", pos, size))
-	# Fallback: bottom-left half width, quarter height in portrait.
+	# Fallback: bottom-center half width, quarter height.
 	var is_portrait := size.y > size.x
 	var zone_width := size.x * 0.5
-	var zone_height := size.y * (0.25 if is_portrait else 0.5)
-	return pos.x <= zone_width and pos.y >= (size.y - zone_height)
+	var zone_height := size.y * (0.25 if is_portrait else 0.25)
+	var zone_left := (size.x - zone_width) * 0.5
+	var zone_right := zone_left + zone_width
+	return pos.x >= zone_left and pos.x <= zone_right and pos.y >= (size.y - zone_height)
 
 func _refresh_touch_joystick() -> void:
 	touch_joystick = get_tree().get_first_node_in_group("touch_joystick")
