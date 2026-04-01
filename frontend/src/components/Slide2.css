@@ -8,7 +8,7 @@
   aspect-ratio: 1 / 1;
   border-radius: 16px;
 
-  padding: 24px;
+  padding: 0px;
   display: grid;
   place-items: center;
   background:
@@ -46,15 +46,15 @@
 }
 
 .slide2-speed-1 {
-  animation: slide2-scroll-up 18s linear infinite;
+  animation: slide2-scroll-up 22s linear infinite;
 }
 
 .slide2-speed-2 {
-  animation: slide2-scroll-down 24s linear infinite;
+  animation: slide2-scroll-down 22s linear infinite;
 }
 
 .slide2-speed-3 {
-  animation: slide2-scroll-down 30s linear infinite;
+  animation: slide2-scroll-up 22s linear infinite;
 }
 
 .slide2-logo {
