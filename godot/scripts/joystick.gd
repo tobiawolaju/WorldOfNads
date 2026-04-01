@@ -15,6 +15,7 @@ signal camera_dragged(relative: Vector2)
 @export var portrait_zone_height_ratio: float = 0.25
 @export var landscape_zone_width_ratio: float = 0.5
 @export var landscape_zone_height_ratio: float = 0.25
+@export var portrait_visual_y_offset: float = 65.0
 
 
 var radiusJoyStick
@@ -168,7 +169,10 @@ func _get_joystick_zone_center(viewport_size: Vector2) -> Vector2:
 	var zone_height = viewport_size.y * clamp(zone_height_ratio, 0.05, 1.0)
 	var zone_left = (viewport_size.x - zone_width) * 0.5
 	var zone_top = viewport_size.y - zone_height
-	return Vector2(zone_left + zone_width * 0.5, zone_top + zone_height * 0.5)
+	var center = Vector2(zone_left + zone_width * 0.5, zone_top + zone_height * 0.5)
+	if is_portrait:
+		center.y -= portrait_visual_y_offset
+	return center
 
 func _update_input_from_joystick(pos: Vector2):
 	_release_all_keys()
