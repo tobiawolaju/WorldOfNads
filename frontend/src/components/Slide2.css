@@ -8,10 +8,10 @@
   display: grid;
   place-items: center;
   background:
-    radial-gradient(circle at 15% 20%, rgba(236, 72, 153, 0.65), transparent 45%),
-    radial-gradient(circle at 80% 30%, rgba(139, 92, 246, 0.6), transparent 40%),
-    radial-gradient(circle at 50% 85%, rgba(107, 114, 128, 0.55), transparent 45%),
-    linear-gradient(135deg, #5b21b6 0%, #be185d 45%, #6b7280 100%);
+    radial-gradient(circle at 15% 20%, rgba(255, 233, 244, 0.65), transparent 45%),
+    radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.6), transparent 40%),
+    radial-gradient(circle at 50% 85%, rgba(208, 224, 255, 0.55), transparent 45%),
+    linear-gradient(135deg, #e8daff 0%, #d1edff 45%, #f5f9ff 100%);
   background-blend-mode: screen, overlay, soft-light, normal;
   overflow: hidden;
 }
