@@ -256,7 +256,7 @@ func _lock_auto_move_from_current(touch_joystick: Node) -> void:
 func _is_joystick_actively_moving() -> bool:
 	if maxRadius <= 0.0:
 		return false
-	var movement_strength := position.length() / maxRadius
+	var movement_strength: float = float(position.length()) / float(maxRadius)
 	return movement_strength >= 0.25
 
 func _unlock_auto_move():
