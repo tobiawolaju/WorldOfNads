@@ -31,7 +31,7 @@
   display: grid;
   grid-template-columns: 180px 40px 1fr;
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .milestone-time {
@@ -45,7 +45,7 @@
 
 .milestone-marker {
   position: relative;
-  min-height: 110px;
+  height: 100%;
   display: flex;
   justify-content: center;
 }
@@ -94,11 +94,6 @@
   margin-top: 8px !important;
   font-family: "Font3", sans-serif;
   color: #000 !important;
-}
-
-.milestone-row:last-child .milestone-marker::before {
-  bottom: auto;
-  height: 14px;
 }
 
 .milestone-row.unreached .milestone-time,

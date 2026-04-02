@@ -281,7 +281,7 @@ const Home: React.FC = () => {
           <div className="functional-slide reverse">
             <div className="func-content">
               <h2 className="func-headline">Hosts</h2>
-              <p className="func-subtext">{renderWaveText("The ones driving the competition")}</p>
+              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}> {renderWaveText("The ones driving the competition")}</p>
             </div>
             <div className="func-image">
               <Slide2 />
@@ -292,7 +292,7 @@ const Home: React.FC = () => {
           <div className="functional-slide">
             <div className="func-content">
               <h2 className="func-headline">Built for Competition</h2>
-              <p className="func-subtext">{renderWaveText("No bots. No artificial rewards. No shortcuts. Every match is real. Every win is earned. Skill decides everything.")}</p>
+              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>{renderWaveText("No bots. No artificial rewards. No shortcuts. Every match is real. Every win is earned. Skill decides everything.")}</p>
 
             </div>
           </div>
