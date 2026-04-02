@@ -1,5 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./Slide1.css";
+
+type Props = {
+  interval?: number;
+};
 
 const SETS: [string, string, string][] = [
   ["#ff6b6b", "#ffe66d", "#4ecdc4"],
@@ -7,7 +11,7 @@ const SETS: [string, string, string][] = [
   ["#51cf66", "#94d82d", "#fcc419"]
 ];
 
-const ParallaxStack: React.FC = () => {
+const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
   const [index, setIndex] = useState(0);
   const [stageClass, setStageClass] = useState("");
 
@@ -21,15 +25,12 @@ const ParallaxStack: React.FC = () => {
   const [isMorphing, setIsMorphing] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      cycle();
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [index]);
+    const id = setInterval(cycle, interval);
+    return () => clearInterval(id);
+  }, [index, interval]);
 
   const cycle = () => {
-    setStageClass("closing");
+    setStageClass("ps-closing");
 
     setTimeout(() => {
       const newIndex = (index + 1) % SETS.length;
@@ -37,6 +38,7 @@ const ParallaxStack: React.FC = () => {
 
       setIndex(newIndex);
       setNextCenter(center);
+
       setColors((prev) => ({
         ...prev,
         top,
@@ -46,16 +48,12 @@ const ParallaxStack: React.FC = () => {
       setIsMorphing(true);
 
       setTimeout(() => {
-        setColors({
-          top,
-          center,
-          bottom
-        });
+        setColors({ top, center, bottom });
         setIsMorphing(false);
       }, 400);
 
       setTimeout(() => {
-        setStageClass("opening");
+        setStageClass("ps-opening");
 
         setTimeout(() => {
           setStageClass("");
@@ -65,33 +63,34 @@ const ParallaxStack: React.FC = () => {
   };
 
   return (
-    <section className="slider">
-      <div className="frame">
-        <div className={`stage ${stageClass}`}>
+    <div className="ps-root">
+      <div className="ps-frame">
+        <div className={`ps-stage ${stageClass}`}>
           <div
-            className="card top"
+            className="ps-card ps-top"
             style={{ background: colors.top }}
           />
 
-          <div className="card center">
+          <div className="ps-card ps-center">
             <div
-              className="center-current"
+              className="ps-center-current"
               style={{ background: colors.center }}
             />
             <div
-              className={`center-next ${isMorphing ? "active" : ""}`}
+              className={`ps-center-next ${isMorphing ? "ps-active" : ""
+                }`}
               style={{ background: nextCenter }}
             />
           </div>
 
           <div
-            className="card bottom"
+            className="ps-card ps-bottom"
             style={{ background: colors.bottom }}
           />
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
-export default ParallaxStack;
+export default Slide1;
