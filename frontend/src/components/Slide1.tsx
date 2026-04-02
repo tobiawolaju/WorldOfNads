@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import "./Slide1.css";
 
 const STACK_SETS = [
@@ -7,128 +7,86 @@ const STACK_SETS = [
   ["/stacked/stackc1.png", "/stacked/stackc2.png", "/stacked/stackc3.png"]
 ];
 
-const CLOSE_MS = 2000;
-const OPEN_MS = 2000;
-const MORPH_MS = 400;
-const BEHIND_HOLD_MS = 200;
-const LOOP_MS = CLOSE_MS + BEHIND_HOLD_MS + OPEN_MS + 800;
-
-const Slide1: React.FC = () => {
-  const [setIndex, setSetIndex] = useState(0);
-  const [stageClass, setStageClass] = useState("");
+export default function Slide1() {
+  const [index, setIndex] = useState(0);
+  const [stage, setStage] = useState<"closing" | "opening" | "">("");
   const [centerCurrent, setCenterCurrent] = useState(STACK_SETS[0][1]);
   const [centerNext, setCenterNext] = useState<string | null>(null);
-  const setIndexRef = useRef(0);
 
   useEffect(() => {
-    let active = true;
-    let interval: ReturnType<typeof setInterval> | null = null;
-    let closeTimer: ReturnType<typeof setTimeout> | null = null;
-    let behindTimer: ReturnType<typeof setTimeout> | null = null;
-    let openTimer: ReturnType<typeof setTimeout> | null = null;
-    let morphTimer: ReturnType<typeof setTimeout> | null = null;
+    let mounted = true;
 
-    const runCycle = () => {
-      if (!active) {
-        return;
-      }
+    const run = () => {
+      if (!mounted) return;
 
-      setStageClass("closing");
+      setStage("closing");
 
-      closeTimer = setTimeout(() => {
-        if (!active) {
-          return;
-        }
+      setTimeout(() => {
+        if (!mounted) return;
 
-        const nextIndex = (setIndexRef.current + 1) % STACK_SETS.length;
+        const nextIndex = (index + 1) % STACK_SETS.length;
         const nextCenter = STACK_SETS[nextIndex][1];
 
-        setIndexRef.current = nextIndex;
-        setSetIndex(nextIndex);
+        setIndex(nextIndex);
         setCenterNext(nextCenter);
 
-        morphTimer = setTimeout(() => {
-          if (!active) {
-            return;
-          }
-
+        // morph center
+        setTimeout(() => {
+          if (!mounted) return;
           setCenterCurrent(nextCenter);
           setCenterNext(null);
-        }, MORPH_MS);
+        }, 400);
 
-        behindTimer = setTimeout(() => {
-          if (!active) {
-            return;
-          }
+        // open back
+        setTimeout(() => {
+          if (!mounted) return;
 
-          setStageClass("opening");
+          setStage("opening");
 
-          openTimer = setTimeout(() => {
-            if (!active) {
-              return;
-            }
+          setTimeout(() => {
+            if (!mounted) return;
+            setStage("");
+          }, 1200);
 
-            setStageClass("");
-          }, OPEN_MS);
-        }, BEHIND_HOLD_MS);
-      }, CLOSE_MS);
+        }, 200);
+
+      }, 1200);
     };
 
-    runCycle();
-    interval = setInterval(runCycle, LOOP_MS);
+    const interval = setInterval(run, 3000);
+    run(); // start immediately
 
     return () => {
-      active = false;
-      if (interval) {
-        clearInterval(interval);
-      }
-      if (closeTimer) {
-        clearTimeout(closeTimer);
-      }
-      if (behindTimer) {
-        clearTimeout(behindTimer);
-      }
-      if (openTimer) {
-        clearTimeout(openTimer);
-      }
-      if (morphTimer) {
-        clearTimeout(morphTimer);
-      }
+      mounted = false;
+      clearInterval(interval);
     };
-  }, []);
+  }, [index]);
 
-  const currentSet = STACK_SETS[setIndex];
+  const current = STACK_SETS[index];
 
   return (
-    <section className="slide1" aria-label="Animated stacked cards">
+    <section className="slide1">
       <div className="slide1-slider">
         <div className="slide1-frame">
-          <div className={`slide1-stage ${stageClass}`}>
-        <img
-          src={currentSet[0]}
-          alt="Stack image 1"
-          className="slide1-card slide1-top"
-          loading="lazy"
-        />
+          <div className={`slide1-stage ${stage}`}>
 
-        <div className="slide1-card slide1-center" aria-live="off">
-          <img src={centerCurrent} alt="Stack image 2" className="slide1-center-current" />
-          {centerNext && (
-            <img src={centerNext} alt="Stack image 2 next" className="slide1-center-next slide1-active" />
-          )}
-        </div>
+            <img src={current[0]} className="slide1-card slide1-top" />
 
-        <img
-          src={currentSet[2]}
-          alt="Stack image 3"
-          className="slide1-card slide1-bottom"
-          loading="lazy"
-        />
+            <div className="slide1-card slide1-center">
+              <img src={centerCurrent} className="slide1-center-current" />
+              {centerNext && (
+                <img
+                  src={centerNext}
+                  className="slide1-center-next slide1-active"
+                />
+              )}
+            </div>
+
+            <img src={current[2]} className="slide1-card slide1-bottom" />
+
           </div>
         </div>
       </div>
     </section>
   );
-};
-
-export default Slide1;
+}
