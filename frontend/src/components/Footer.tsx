@@ -21,9 +21,9 @@ const Footer = () => {
       <div className="footer-right">
         <div className="footer-section">
           <h3 className="footer-title">Social</h3>
-          <a href="https://x.com/worldofnad" target="_blank" rel="noopener noreferrer" className="footer-social-link">
+          <a href="https://x.com/worldofnads" target="_blank" rel="noopener noreferrer" className="footer-social-link">
             <FaXTwitter size={18} />
-            <span>x.com/worldofnad</span>
+            <span>WorldofNad</span>
           </a>
         </div>
 
