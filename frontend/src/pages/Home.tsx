@@ -267,7 +267,7 @@ const Home: React.FC = () => {
             <div className="func-content">
               <h2 className="func-headline">Play</h2>
               <p className="func-subtext">{renderWaveText("Jump in. Compete. Win. Every match counts. Every win pays.")}</p>
-              <p className="func-subtext">
+              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>
                 {renderWaveText("No tutorials. No onboarding friction. You already know what to do. Move, compete, win. The system handles the rest. Matches are instant, outcomes are clear, and every action has weight. This isn’t something you learn. It’s something you feel from the first second.")}
               </p>
             </div>
