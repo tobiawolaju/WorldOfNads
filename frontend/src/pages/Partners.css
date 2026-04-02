@@ -269,3 +269,38 @@
 .timeline-content:hover .t-handle {
   color: #fff;
 }
+
+.host-stats {
+  margin-top: 12px;
+  text-align: left;
+}
+
+.host-stats p {
+  margin: 4px 0;
+  font-size: 0.88rem;
+}
+
+.host-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.host-action-link {
+  display: inline-block;
+  font-size: 0.82rem;
+  text-decoration: none;
+  color: #5f31e6;
+  background: rgba(106, 56, 255, 0.1);
+  border: 1px solid rgba(106, 56, 255, 0.2);
+  padding: 6px 10px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+.timeline-content:hover .host-action-link {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
