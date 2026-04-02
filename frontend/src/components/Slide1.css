@@ -24,8 +24,8 @@
   margin: 5px;
   position: absolute;
   left: 0;
-  width: calc(100%-5px);
-  height: calc(33.33%-5px);
+  width: calc(100% -5px);
+  height: calc(33.33% -5px);
   border-radius: 16px;
   transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
