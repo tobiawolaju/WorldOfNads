@@ -8,6 +8,7 @@ const Footer = () => {
     { to: "/pre-tge-arena", label: "Pre-TGE Arena" },
     { to: "/roadmap", label: "Leaderboards" },
     { to: "/hosts", label: "Hosts" },
+    { to: "/milestone", label: "Milestone" },
     { to: "/community", label: "FAQ" },
     { to: "/careers", label: "Careers" },
   ];

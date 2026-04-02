@@ -18,6 +18,7 @@ const PreTGEArena = lazy(() => import("./pages/PreTGEArena"));
 const Roadmap = lazy(() => import("./pages/Leaderboard"));
 const Community = lazy(() => import("./pages/FAQ"));
 const Partners = lazy(() => import("./pages/Partners"));
+const Milestone = lazy(() => import("./pages/Milestone"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Play = lazy(() => import("./pages/Play"));
 const Careers = lazy(() => import("./pages/Careers"));
@@ -113,6 +114,7 @@ const AppContent: React.FC = () => {
               <Route path="/roadmap" element={<Roadmap />} />
               <Route path="/community" element={<Community />} />
               <Route path="/hosts" element={<Partners />} />
+              <Route path="/milestone" element={<Milestone />} />
               <Route path="/partners" element={<Navigate to="/hosts" replace />} />
               <Route path="/careers" element={<Careers />} />
               <Route

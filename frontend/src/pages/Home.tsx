@@ -275,10 +275,13 @@ const Home: React.FC = () => {
           </div>
 
           {/*sturbon */}
-
-          <p className="func-subtext">
-            {renderWaveText("No tutorials. No onboarding friction. You already know what to do. Move, compete, win. The system handles the rest. Matches are instant, outcomes are clear, and every action has weight. This isn’t something you learn. It’s something you feel from the first second.")}
-          </p>
+          <div className="functional-slide">
+            <div className="func-content">
+              <p className="func-subtext">
+                {renderWaveText("No tutorials. No onboarding friction. You already know what to do. Move, compete, win. The system handles the rest. Matches are instant, outcomes are clear, and every action has weight. This isn’t something you learn. It’s something you feel from the first second.")}
+              </p>
+            </div>
+          </div>
 
           {/* Slide 2: Hosts */}
           <div className="functional-slide reverse">

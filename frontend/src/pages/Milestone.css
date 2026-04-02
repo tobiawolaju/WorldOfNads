@@ -1,0 +1,131 @@
+.milestone-container {
+  text-align: center;
+  padding: 80px 20px;
+  font-family: "Font1", sans-serif;
+  color: #111;
+}
+
+.milestone-title {
+  font-size: 15vw;
+  font-weight: 800;
+  margin-bottom: 20px;
+  font-family: Font2, sans-serif;
+  color: #6a38ff;
+}
+
+.milestone-description {
+  color: #000;
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  margin-bottom: 50px;
+  max-width: 750px;
+  margin-inline: auto;
+  line-height: 1.6;
+}
+
+.milestone-track {
+  max-width: 980px;
+  margin: 50px auto 0;
+  border-left: 10px solid rgba(106, 56, 255, 0.25);
+}
+
+.milestone-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 24px;
+  align-items: stretch;
+  margin: 0 0 30px;
+  position: relative;
+}
+
+.milestone-row::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 24px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #6a38ff;
+  box-shadow: 0 0 0 4px rgba(106, 56, 255, 0.18);
+}
+
+.milestone-time {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-family: "Font2", sans-serif;
+  font-size: 1rem;
+  color: #4f2aca;
+  letter-spacing: 0.04em;
+  padding-right: 8px;
+}
+
+.milestone-event {
+  text-align: left;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(150, 120, 255, 0.15);
+  border-radius: 18px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transition: all 0.35s ease;
+}
+
+.milestone-event:hover {
+  background: #8559ff;
+  color: #fff;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.milestone-event h2 {
+  margin: 0 0 8px;
+  font-family: "Font2", sans-serif;
+  font-size: 1.4rem;
+}
+
+.milestone-event p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #333;
+}
+
+.milestone-event:hover p {
+  color: #f8f8ff;
+}
+
+.milestone-highlight {
+  margin-top: 10px !important;
+  font-family: "Font3", sans-serif;
+  color: #5a31d6 !important;
+}
+
+.milestone-event:hover .milestone-highlight {
+  color: #fff !important;
+}
+
+@media (max-width: 860px) {
+  .milestone-track {
+    border-left-width: 8px;
+  }
+
+  .milestone-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .milestone-row::before {
+    top: 14px;
+  }
+
+  .milestone-time {
+    justify-content: flex-start;
+    padding: 0 0 0 20px;
+  }
+
+  .milestone-event {
+    margin-left: 20px;
+  }
+}
