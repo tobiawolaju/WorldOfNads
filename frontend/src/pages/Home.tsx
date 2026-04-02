@@ -272,11 +272,11 @@ const Home: React.FC = () => {
             </div>
           </div>
 
-          {/* Slide 2: Proj3cts */}
+          {/* Slide 2: Hosts */}
           <div className="functional-slide reverse">
             <div className="func-content">
-              <h2 className="func-headline">Sponsors</h2>
-              <p className="func-subtext">{renderWaveText("Sponsor matches. Get players. Be seen where the action is.")}</p>
+              <h2 className="func-headline">Hosts</h2>
+              <p className="func-subtext">{renderWaveText("The ones driving the competition")}</p>
             </div>
             <div className="func-image">
               <Slide2 />
@@ -376,4 +376,3 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-
