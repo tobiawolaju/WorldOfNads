@@ -59,15 +59,15 @@ const Partners: React.FC = () => {
     <div className="partners-container">
       <div style={{ height: "60px" }}></div>
 
-      <h1 className="partners-title">Our Partners</h1>
+      <h1 className="partners-title">Hosts</h1>
       <p className="partners-description">
-        The projects building silently with us. 
+        The ones driving the competition.
       </p>
 
       <div className="search-wrapper">
         <input
           type="text"
-          placeholder="Search for a partner..."
+          placeholder="Search for a host..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="partner-search"
@@ -94,7 +94,7 @@ const Partners: React.FC = () => {
           ))
         ) : (
           <p style={{ marginTop: "40px", color: "#777" }}>
-            No matching partners found.
+            No matching hosts found.
           </p>
         )}
       </div>

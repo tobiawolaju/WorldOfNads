@@ -112,7 +112,8 @@ const AppContent: React.FC = () => {
               <Route path="/pre-tge-arena" element={<PreTGEArena />} />
               <Route path="/roadmap" element={<Roadmap />} />
               <Route path="/community" element={<Community />} />
-              <Route path="/partners" element={<Partners />} />
+              <Route path="/hosts" element={<Partners />} />
+              <Route path="/partners" element={<Navigate to="/hosts" replace />} />
               <Route path="/careers" element={<Careers />} />
               <Route
                 path="/admin/analytics"
