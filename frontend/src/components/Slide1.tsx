@@ -7,8 +7,10 @@ const STACK_SETS = [
   ["/stacked/stackc1.png", "/stacked/stackc2.png", "/stacked/stackc3.png"]
 ];
 
-const MOVE_MS = 1200;
-const MORPH_MS = 420;
+const MOVE_IN_MS = 2000;
+const MOVE_OUT_MS = 2000;
+const MORPH_MS = 500;
+const CENTER_HOLD_MS = 220;
 const HOLD_MS = 320;
 
 const Slide1: React.FC = () => {
@@ -21,6 +23,7 @@ const Slide1: React.FC = () => {
     let active = true;
     let cycleTimer: ReturnType<typeof setTimeout> | null = null;
     let moveInTimer: ReturnType<typeof setTimeout> | null = null;
+    let centerHoldTimer: ReturnType<typeof setTimeout> | null = null;
     let moveOutTimer: ReturnType<typeof setTimeout> | null = null;
     let morphTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -41,7 +44,6 @@ const Slide1: React.FC = () => {
           const nextCenter = STACK_SETS[nextIndex][1];
 
           setCenterNext(nextCenter);
-          setPhase("opening");
 
           morphTimer = setTimeout(() => {
             if (!active) {
@@ -55,15 +57,23 @@ const Slide1: React.FC = () => {
           return nextIndex;
         });
 
-        moveOutTimer = setTimeout(() => {
+        centerHoldTimer = setTimeout(() => {
           if (!active) {
             return;
           }
 
-          setPhase("rest");
-          cycleTimer = setTimeout(runCycle, HOLD_MS);
-        }, MOVE_MS);
-      }, MOVE_MS);
+          setPhase("opening");
+
+          moveOutTimer = setTimeout(() => {
+            if (!active) {
+              return;
+            }
+
+            setPhase("rest");
+            cycleTimer = setTimeout(runCycle, HOLD_MS);
+          }, MOVE_OUT_MS);
+        }, CENTER_HOLD_MS);
+      }, MOVE_IN_MS);
     };
 
     cycleTimer = setTimeout(runCycle, HOLD_MS);
@@ -75,6 +85,9 @@ const Slide1: React.FC = () => {
       }
       if (moveInTimer) {
         clearTimeout(moveInTimer);
+      }
+      if (centerHoldTimer) {
+        clearTimeout(centerHoldTimer);
       }
       if (moveOutTimer) {
         clearTimeout(moveOutTimer);
