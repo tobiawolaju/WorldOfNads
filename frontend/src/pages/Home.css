@@ -129,7 +129,7 @@ body,
   font-size: clamp(18px, 2vw, 22px);
   color: #ffffff;
   line-height: 1.5;
-  max-width: 600px;
+  max-width: 60vw;
   text-align: center;
   z-index: 2;
   /* Explicitly keep it above the overlay */

@@ -105,13 +105,18 @@
 
 @media (max-width: 860px) {
   .milestone-row {
-    grid-template-columns: 1fr 34px 1fr;
-    gap: 10px;
+    grid-template-columns: 92px 24px 1fr;
+    gap: 8px;
   }
 
   .milestone-time {
     font-size: 0.88rem;
     text-align: right;
+  }
+
+  .milestone-dot {
+    width: 12px;
+    height: 12px;
   }
 
   .milestone-event h2 {
