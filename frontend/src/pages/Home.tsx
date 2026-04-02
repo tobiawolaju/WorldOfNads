@@ -318,9 +318,6 @@ const Home: React.FC = () => {
                 <span className="stat-num">42+</span>
                 <span className="stat-label">Live Sponsors</span>
               </div>
-              {/* Sponsor Logos */}
-              <div className="sponsor-logo">Monad Labs</div>
-              <div className="sponsor-logo">Kizzy Mobile</div>
             </div>
           ))}
         </div>
