@@ -348,9 +348,11 @@ body,
 .section-title {
   font-size: clamp(28px, 4vw, 36px);
   font-weight: 900;
-  margin-bottom: 60px;
-  text-align: center;
-  color: #000000;
+  margin-bottom: 30px;
+  text-align: left;
+  color: #ffffff;
+  -webkit-text-stroke: 0.5px var(--secondary);
+
 }
 
 .events-grid {
