@@ -6,9 +6,9 @@ type Props = {
 };
 
 const SETS: [string, string, string][] = [
-  ["#ff6b6b", "#ffe66d", "#4ecdc4"],
-  ["#845ef7", "#5c7cfa", "#339af0"],
-  ["#51cf66", "#94d82d", "#fcc419"]
+  ["#f9e0ffff", "#f8c5ffff", "#f9e0ffff"],
+  ["#dff1ffff", "#ced8ffff", "#dff1ffff"],
+  ["#ffdbffff", "#e8ffc6ff", "#ffdbffff"]
 ];
 
 const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
