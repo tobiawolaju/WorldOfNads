@@ -1,92 +1,97 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Slide1.css";
 
-const STACK_SETS = [
-  ["/stacked/stacka1.png", "/stacked/stacka2.png", "/stacked/stacka3.png"],
-  ["/stacked/stackb1.png", "/stacked/stackb2.png", "/stacked/stackb3.png"],
-  ["/stacked/stackc1.png", "/stacked/stackc2.png", "/stacked/stackc3.png"]
+const SETS: [string, string, string][] = [
+  ["#ff6b6b", "#ffe66d", "#4ecdc4"],
+  ["#845ef7", "#5c7cfa", "#339af0"],
+  ["#51cf66", "#94d82d", "#fcc419"]
 ];
 
-export default function Slide1() {
+const ParallaxStack: React.FC = () => {
   const [index, setIndex] = useState(0);
-  const [stage, setStage] = useState<"closing" | "opening" | "">("");
-  const [centerCurrent, setCenterCurrent] = useState(STACK_SETS[0][1]);
-  const [centerNext, setCenterNext] = useState<string | null>(null);
+  const [stageClass, setStageClass] = useState("");
+
+  const [colors, setColors] = useState({
+    top: SETS[0][0],
+    center: SETS[0][1],
+    bottom: SETS[0][2]
+  });
+
+  const [nextCenter, setNextCenter] = useState(SETS[0][1]);
+  const [isMorphing, setIsMorphing] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
+    const interval = setInterval(() => {
+      cycle();
+    }, 3000);
 
-    const run = () => {
-      if (!mounted) return;
-
-      setStage("closing");
-
-      setTimeout(() => {
-        if (!mounted) return;
-
-        const nextIndex = (index + 1) % STACK_SETS.length;
-        const nextCenter = STACK_SETS[nextIndex][1];
-
-        setIndex(nextIndex);
-        setCenterNext(nextCenter);
-
-        // morph center
-        setTimeout(() => {
-          if (!mounted) return;
-          setCenterCurrent(nextCenter);
-          setCenterNext(null);
-        }, 400);
-
-        // open back
-        setTimeout(() => {
-          if (!mounted) return;
-
-          setStage("opening");
-
-          setTimeout(() => {
-            if (!mounted) return;
-            setStage("");
-          }, 1200);
-
-        }, 200);
-
-      }, 1200);
-    };
-
-    const interval = setInterval(run, 3000);
-    run(); // start immediately
-
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [index]);
 
-  const current = STACK_SETS[index];
+  const cycle = () => {
+    setStageClass("closing");
+
+    setTimeout(() => {
+      const newIndex = (index + 1) % SETS.length;
+      const [top, center, bottom] = SETS[newIndex];
+
+      setIndex(newIndex);
+      setNextCenter(center);
+      setColors((prev) => ({
+        ...prev,
+        top,
+        bottom
+      }));
+
+      setIsMorphing(true);
+
+      setTimeout(() => {
+        setColors({
+          top,
+          center,
+          bottom
+        });
+        setIsMorphing(false);
+      }, 400);
+
+      setTimeout(() => {
+        setStageClass("opening");
+
+        setTimeout(() => {
+          setStageClass("");
+        }, 1200);
+      }, 200);
+    }, 1200);
+  };
 
   return (
-    <section className="slide1">
-      <div className="slide1-slider">
-        <div className="slide1-frame">
-          <div className={`slide1-stage ${stage}`}>
+    <section className="slider">
+      <div className="frame">
+        <div className={`stage ${stageClass}`}>
+          <div
+            className="card top"
+            style={{ background: colors.top }}
+          />
 
-            <img src={current[0]} className="slide1-card slide1-top" />
-
-            <div className="slide1-card slide1-center">
-              <img src={centerCurrent} className="slide1-center-current" />
-              {centerNext && (
-                <img
-                  src={centerNext}
-                  className="slide1-center-next slide1-active"
-                />
-              )}
-            </div>
-
-            <img src={current[2]} className="slide1-card slide1-bottom" />
-
+          <div className="card center">
+            <div
+              className="center-current"
+              style={{ background: colors.center }}
+            />
+            <div
+              className={`center-next ${isMorphing ? "active" : ""}`}
+              style={{ background: nextCenter }}
+            />
           </div>
+
+          <div
+            className="card bottom"
+            style={{ background: colors.bottom }}
+          />
         </div>
       </div>
     </section>
   );
-}
+};
+
+export default ParallaxStack;
