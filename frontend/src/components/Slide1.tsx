@@ -78,7 +78,8 @@ const Slide1: React.FC = () => {
 
   return (
     <section className="slide1" aria-label="Animated stacked cards">
-      <div className="slide1-stage">
+      <div className="slide1-placeholder">
+        <div className="slide1-stage">
         <img
           src={currentSet[0]}
           alt="Stack image 1"
@@ -99,6 +100,7 @@ const Slide1: React.FC = () => {
           className={`slide1-card slide1-card-bottom ${moving ? "slide1-moving" : ""}`}
           loading="lazy"
         />
+        </div>
       </div>
     </section>
   );
