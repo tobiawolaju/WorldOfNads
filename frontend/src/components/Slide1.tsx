@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Slide1.css";
 
 const STACK_SETS = [
@@ -7,24 +7,25 @@ const STACK_SETS = [
   ["/stacked/stackc1.png", "/stacked/stackc2.png", "/stacked/stackc3.png"]
 ];
 
-const MOVE_IN_MS = 2000;
-const MOVE_OUT_MS = 2000;
-const MORPH_MS = 500;
-const CENTER_HOLD_MS = 220;
-const HOLD_MS = 320;
+const CLOSE_MS = 2000;
+const OPEN_MS = 2000;
+const MORPH_MS = 400;
+const BEHIND_HOLD_MS = 200;
+const LOOP_MS = CLOSE_MS + BEHIND_HOLD_MS + OPEN_MS + 800;
 
 const Slide1: React.FC = () => {
   const [setIndex, setSetIndex] = useState(0);
-  const [phase, setPhase] = useState<"rest" | "closing" | "opening">("rest");
+  const [stageClass, setStageClass] = useState("");
   const [centerCurrent, setCenterCurrent] = useState(STACK_SETS[0][1]);
   const [centerNext, setCenterNext] = useState<string | null>(null);
+  const setIndexRef = useRef(0);
 
   useEffect(() => {
     let active = true;
-    let cycleTimer: ReturnType<typeof setTimeout> | null = null;
-    let moveInTimer: ReturnType<typeof setTimeout> | null = null;
-    let centerHoldTimer: ReturnType<typeof setTimeout> | null = null;
-    let moveOutTimer: ReturnType<typeof setTimeout> | null = null;
+    let interval: ReturnType<typeof setInterval> | null = null;
+    let closeTimer: ReturnType<typeof setTimeout> | null = null;
+    let behindTimer: ReturnType<typeof setTimeout> | null = null;
+    let openTimer: ReturnType<typeof setTimeout> | null = null;
     let morphTimer: ReturnType<typeof setTimeout> | null = null;
 
     const runCycle = () => {
@@ -32,65 +33,63 @@ const Slide1: React.FC = () => {
         return;
       }
 
-      setPhase("closing");
+      setStageClass("closing");
 
-      moveInTimer = setTimeout(() => {
+      closeTimer = setTimeout(() => {
         if (!active) {
           return;
         }
 
-        setSetIndex((prevIndex) => {
-          const nextIndex = (prevIndex + 1) % STACK_SETS.length;
-          const nextCenter = STACK_SETS[nextIndex][1];
+        const nextIndex = (setIndexRef.current + 1) % STACK_SETS.length;
+        const nextCenter = STACK_SETS[nextIndex][1];
 
-          setCenterNext(nextCenter);
+        setIndexRef.current = nextIndex;
+        setSetIndex(nextIndex);
+        setCenterNext(nextCenter);
 
-          morphTimer = setTimeout(() => {
-            if (!active) {
-              return;
-            }
-
-            setCenterCurrent(nextCenter);
-            setCenterNext(null);
-          }, MORPH_MS);
-
-          return nextIndex;
-        });
-
-        centerHoldTimer = setTimeout(() => {
+        morphTimer = setTimeout(() => {
           if (!active) {
             return;
           }
 
-          setPhase("opening");
+          setCenterCurrent(nextCenter);
+          setCenterNext(null);
+        }, MORPH_MS);
 
-          moveOutTimer = setTimeout(() => {
+        behindTimer = setTimeout(() => {
+          if (!active) {
+            return;
+          }
+
+          setStageClass("opening");
+
+          openTimer = setTimeout(() => {
             if (!active) {
               return;
             }
 
-            setPhase("rest");
-            cycleTimer = setTimeout(runCycle, HOLD_MS);
-          }, MOVE_OUT_MS);
-        }, CENTER_HOLD_MS);
-      }, MOVE_IN_MS);
+            setStageClass("");
+          }, OPEN_MS);
+        }, BEHIND_HOLD_MS);
+      }, CLOSE_MS);
     };
 
-    cycleTimer = setTimeout(runCycle, HOLD_MS);
+    runCycle();
+    interval = setInterval(runCycle, LOOP_MS);
 
     return () => {
       active = false;
-      if (cycleTimer) {
-        clearTimeout(cycleTimer);
+      if (interval) {
+        clearInterval(interval);
       }
-      if (moveInTimer) {
-        clearTimeout(moveInTimer);
+      if (closeTimer) {
+        clearTimeout(closeTimer);
       }
-      if (centerHoldTimer) {
-        clearTimeout(centerHoldTimer);
+      if (behindTimer) {
+        clearTimeout(behindTimer);
       }
-      if (moveOutTimer) {
-        clearTimeout(moveOutTimer);
+      if (openTimer) {
+        clearTimeout(openTimer);
       }
       if (morphTimer) {
         clearTimeout(morphTimer);
@@ -102,28 +101,30 @@ const Slide1: React.FC = () => {
 
   return (
     <section className="slide1" aria-label="Animated stacked cards">
-      <div className="slide1-placeholder">
-        <div className="slide1-stage">
+      <div className="slide1-slider">
+        <div className="slide1-frame">
+          <div className={`slide1-stage ${stageClass}`}>
         <img
           src={currentSet[0]}
           alt="Stack image 1"
-          className={`slide1-card slide1-card-top slide1-phase-${phase}`}
+          className="slide1-card slide1-top"
           loading="lazy"
         />
 
-        <div className="slide1-card slide1-card-center" aria-live="off">
+        <div className="slide1-card slide1-center" aria-live="off">
           <img src={centerCurrent} alt="Stack image 2" className="slide1-center-current" />
           {centerNext && (
-            <img src={centerNext} alt="Stack image 2 next" className="slide1-center-next" />
+            <img src={centerNext} alt="Stack image 2 next" className="slide1-center-next slide1-active" />
           )}
         </div>
 
         <img
           src={currentSet[2]}
           alt="Stack image 3"
-          className={`slide1-card slide1-card-bottom slide1-phase-${phase}`}
+          className="slide1-card slide1-bottom"
           loading="lazy"
         />
+          </div>
         </div>
       </div>
     </section>
