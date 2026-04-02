@@ -2,6 +2,7 @@
 .ps-root {
   width: 100%;
   max-width: 420px;
+  padding: 10px;
 }
 
 /* frame */
