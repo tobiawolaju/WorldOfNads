@@ -350,7 +350,8 @@ body,
   font-weight: 900;
   margin-bottom: 30px;
   text-align: left;
-  color: var(--secondary);
+  color: #ffffff;
+  -webkit-text-stroke: 2px var(--secondary);
 
 }
 
