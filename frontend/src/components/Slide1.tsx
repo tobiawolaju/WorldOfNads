@@ -9,18 +9,19 @@ const STACK_SETS = [
 
 const MOVE_MS = 1200;
 const MORPH_MS = 420;
-const HOLD_MS = 380;
+const HOLD_MS = 320;
 
 const Slide1: React.FC = () => {
   const [setIndex, setSetIndex] = useState(0);
-  const [moving, setMoving] = useState(false);
+  const [phase, setPhase] = useState<"rest" | "closing" | "opening">("rest");
   const [centerCurrent, setCenterCurrent] = useState(STACK_SETS[0][1]);
   const [centerNext, setCenterNext] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-    let holdTimer: ReturnType<typeof setTimeout> | null = null;
-    let moveTimer: ReturnType<typeof setTimeout> | null = null;
+    let cycleTimer: ReturnType<typeof setTimeout> | null = null;
+    let moveInTimer: ReturnType<typeof setTimeout> | null = null;
+    let moveOutTimer: ReturnType<typeof setTimeout> | null = null;
     let morphTimer: ReturnType<typeof setTimeout> | null = null;
 
     const runCycle = () => {
@@ -28,9 +29,9 @@ const Slide1: React.FC = () => {
         return;
       }
 
-      setMoving(true);
+      setPhase("closing");
 
-      moveTimer = setTimeout(() => {
+      moveInTimer = setTimeout(() => {
         if (!active) {
           return;
         }
@@ -40,7 +41,7 @@ const Slide1: React.FC = () => {
           const nextCenter = STACK_SETS[nextIndex][1];
 
           setCenterNext(nextCenter);
-          setMoving(false);
+          setPhase("opening");
 
           morphTimer = setTimeout(() => {
             if (!active) {
@@ -54,19 +55,29 @@ const Slide1: React.FC = () => {
           return nextIndex;
         });
 
-        holdTimer = setTimeout(runCycle, HOLD_MS);
+        moveOutTimer = setTimeout(() => {
+          if (!active) {
+            return;
+          }
+
+          setPhase("rest");
+          cycleTimer = setTimeout(runCycle, HOLD_MS);
+        }, MOVE_MS);
       }, MOVE_MS);
     };
 
-    holdTimer = setTimeout(runCycle, HOLD_MS);
+    cycleTimer = setTimeout(runCycle, HOLD_MS);
 
     return () => {
       active = false;
-      if (holdTimer) {
-        clearTimeout(holdTimer);
+      if (cycleTimer) {
+        clearTimeout(cycleTimer);
       }
-      if (moveTimer) {
-        clearTimeout(moveTimer);
+      if (moveInTimer) {
+        clearTimeout(moveInTimer);
+      }
+      if (moveOutTimer) {
+        clearTimeout(moveOutTimer);
       }
       if (morphTimer) {
         clearTimeout(morphTimer);
@@ -83,7 +94,7 @@ const Slide1: React.FC = () => {
         <img
           src={currentSet[0]}
           alt="Stack image 1"
-          className={`slide1-card slide1-card-top ${moving ? "slide1-moving" : ""}`}
+          className={`slide1-card slide1-card-top slide1-phase-${phase}`}
           loading="lazy"
         />
 
@@ -97,7 +108,7 @@ const Slide1: React.FC = () => {
         <img
           src={currentSet[2]}
           alt="Stack image 3"
-          className={`slide1-card slide1-card-bottom ${moving ? "slide1-moving" : ""}`}
+          className={`slide1-card slide1-card-bottom slide1-phase-${phase}`}
           loading="lazy"
         />
         </div>
