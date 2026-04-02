@@ -291,11 +291,9 @@ const Home: React.FC = () => {
           {/* Slide 3: Vision */}
           <div className="functional-slide">
             <div className="func-content">
-              <h2 className="func-headline">Vision First. Always.</h2>
-              <p className="func-subtext">{renderWaveText("The competitive layer for every game. Built for billions.")}</p>
-            </div>
-            <div className="func-image">
-              <Slide3 />
+              <h2 className="func-headline">Built for Competition</h2>
+              <p className="func-subtext">{renderWaveText("No bots. No artificial rewards. No shortcuts. Every match is real. Every win is earned. Skill decides everything.")}</p>
+
             </div>
           </div>
 
