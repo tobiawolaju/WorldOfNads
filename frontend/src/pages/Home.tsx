@@ -267,21 +267,16 @@ const Home: React.FC = () => {
             <div className="func-content">
               <h2 className="func-headline">Play</h2>
               <p className="func-subtext">{renderWaveText("Jump in. Compete. Win. Every match counts. Every win pays.")}</p>
-
+              <p className="func-subtext">
+                {renderWaveText("No tutorials. No onboarding friction. You already know what to do. Move, compete, win. The system handles the rest. Matches are instant, outcomes are clear, and every action has weight. This isn’t something you learn. It’s something you feel from the first second.")}
+              </p>
             </div>
             <div className="func-image">
               <Slide1 />
             </div>
           </div>
 
-          {/*sturbon */}
-          <div className="functional-slide">
-            <div className="func-content">
-              <p className="func-subtext">
-                {renderWaveText("No tutorials. No onboarding friction. You already know what to do. Move, compete, win. The system handles the rest. Matches are instant, outcomes are clear, and every action has weight. This isn’t something you learn. It’s something you feel from the first second.")}
-              </p>
-            </div>
-          </div>
+
 
           {/* Slide 2: Hosts */}
           <div className="functional-slide reverse">
