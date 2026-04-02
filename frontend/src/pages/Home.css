@@ -351,7 +351,7 @@ body,
   margin-bottom: 30px;
   text-align: left;
   color: #ffffff;
-  -webkit-text-stroke: 2px var(--secondary);
+  -webkit-text-stroke: 1px var(--secondary);
 
 }
 
