@@ -7,6 +7,28 @@ import { initGoogleAnalytics } from "./lib/analyticsClient";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 
+const blockBrowserZoom = () => {
+  const handleWheel = (event: WheelEvent) => {
+    if (event.ctrlKey || event.metaKey) {
+      event.preventDefault();
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (!event.ctrlKey && !event.metaKey) {
+      return;
+    }
+
+    const blockedKeys = ["+", "-", "=", "0"];
+    if (blockedKeys.includes(event.key)) {
+      event.preventDefault();
+    }
+  };
+
+  window.addEventListener("wheel", handleWheel, { passive: false });
+  window.addEventListener("keydown", handleKeyDown);
+};
+
 const monad = {
   id: 143,
   name: 'Monad',
@@ -33,6 +55,7 @@ const monad = {
 };
 
 initGoogleAnalytics();
+blockBrowserZoom();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
