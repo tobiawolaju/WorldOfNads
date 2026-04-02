@@ -16,13 +16,6 @@ const Footer = () => {
     <footer className="footer-container">
       <div className="footer-left">
         <img src="/iarc12.webp" alt="IARC 12+ rating" className="footer-rating-image" />
-        <p className="footer-text">
-          12+
-          <br />
-          Moderate Violence
-          <br />
-          Users Interact
-        </p>
       </div>
 
       <div className="footer-right">
