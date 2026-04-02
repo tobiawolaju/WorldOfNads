@@ -6,6 +6,7 @@ import { FaDiscord } from "react-icons/fa";
 import Slide1 from "../components/Slide1";
 import Slide2 from "../components/Slide2";
 import Slide3 from "../components/Slide3";
+import Footer from "../components/Footer";
 
 const Home: React.FC = () => {
   const { login, authenticated, ready } = usePrivy();
@@ -347,6 +348,8 @@ const Home: React.FC = () => {
           ))}
         </div>
       </section>
+
+      <Footer />
 
       {/* FIXED BUTTONS */}
       <div className={`footer-buttons ${showFooterButtons ? "is-visible" : ""}`}>
