@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./PreTGEArena.css";
 // @ts-ignore
 import { fetchMatchesFromFirebase } from "./firebaseClient";
+import Footer from "../components/Footer";
 
 type MatchRecord = {
   id?: number;
@@ -189,6 +190,7 @@ function PreTGEArena() {
           </p>
         )}
       </div>
+      <Footer />
     </div>
   );
 }
