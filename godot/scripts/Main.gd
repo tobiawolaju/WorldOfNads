@@ -272,15 +272,14 @@ func _update_chicken_state(chicken_state: Dictionary, quantized := false) -> voi
 	chicken_is_held = bool(chicken_state.get("h", chicken_state.get("isHeld", false)))
 	chicken_holder_id = str(chicken_state.get("o", chicken_state.get("holderId", "")))
 	_handle_chicken_state_event(chicken_is_held, chicken_holder_id)
+
+	# Ignore server chicken pose while local player is holder.
+	# Local holder already drives a smoother client-side hold visual in Player.gd.
+	if chicken_is_held and chicken_holder_id == player_id:
+		return
+
 	var target_pos = server_target_pos
 	var target_rot_y = server_target_rot_y
-
-	# Visual attachment only for local holder to remove perceived self-lag.
-	# Remote clients must stay on server pose to keep one shared world state.
-	var holder_node = _get_player_node_by_id(chicken_holder_id)
-	if chicken_is_held and chicken_holder_id == player_id and holder_node != null:
-		target_pos = _build_hold_target_for_player(holder_node)
-		target_rot_y = holder_node.rotation.y
 
 	if chicken_node.has_method("apply_network_state"):
 		chicken_node.apply_network_state(target_pos, target_rot_y, chicken_is_held)
