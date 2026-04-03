@@ -13,7 +13,7 @@ signal camera_dragged(relative: Vector2)
 @export var auto_lock_north_distance_multiplier: float = 6.0
 @export var portrait_zone_width_ratio: float = 0.5
 @export var portrait_zone_height_ratio: float = 0.25
-@export var landscape_zone_width_ratio: float = 0.5
+@export var landscape_zone_width_ratio: float = 0.25
 @export var landscape_zone_height_ratio: float = 0.25
 @export var portrait_visual_y_offset: float = 46.5
 
@@ -168,15 +168,15 @@ func _update_visuals():
 # --- QUADRANT CHECKS ---
 func _is_joystick_area(pos: Vector2, viewport_size: Vector2) -> bool:
 	var is_portrait := viewport_size.y > viewport_size.x
-	var zone_width_ratio := portrait_zone_width_ratio if is_portrait else landscape_zone_width_ratio
-	var zone_height_ratio := portrait_zone_height_ratio if is_portrait else landscape_zone_height_ratio
+	var zone_width_ratio := portrait_zone_width_ratio if is_portrait else 0.25
+	var zone_height_ratio := portrait_zone_height_ratio if is_portrait else 0.25
 
 	var zone_width = viewport_size.x * clamp(zone_width_ratio, 0.05, 1.0)
 	var zone_height = viewport_size.y * clamp(zone_height_ratio, 0.05, 1.0)
-	var zone_left = (viewport_size.x - zone_width) * 0.5
+	var zone_left = (viewport_size.x - zone_width) * 0.5 if is_portrait else 0.0
 	var zone_right = zone_left + zone_width
 
-	# Bottom-center rectangle zone (middle width band, bottom height band)
+	# Portrait: bottom-center zone. Landscape: bottom-left zone.
 	return pos.x >= zone_left and pos.x <= zone_right and pos.y >= (viewport_size.y - zone_height)
 
 func _is_camera_area(pos: Vector2, viewport_size: Vector2) -> bool:
@@ -188,11 +188,11 @@ func is_joystick_area_screen(pos: Vector2, viewport_size: Vector2) -> bool:
 
 func _get_joystick_zone_center(viewport_size: Vector2) -> Vector2:
 	var is_portrait := viewport_size.y > viewport_size.x
-	var zone_width_ratio := portrait_zone_width_ratio if is_portrait else landscape_zone_width_ratio
-	var zone_height_ratio := portrait_zone_height_ratio if is_portrait else landscape_zone_height_ratio
+	var zone_width_ratio := portrait_zone_width_ratio if is_portrait else 0.25
+	var zone_height_ratio := portrait_zone_height_ratio if is_portrait else 0.25
 	var zone_width = viewport_size.x * clamp(zone_width_ratio, 0.05, 1.0)
 	var zone_height = viewport_size.y * clamp(zone_height_ratio, 0.05, 1.0)
-	var zone_left = (viewport_size.x - zone_width) * 0.5
+	var zone_left = (viewport_size.x - zone_width) * 0.5 if is_portrait else 0.0
 	var zone_top = viewport_size.y - zone_height
 	var center = Vector2(zone_left + zone_width * 0.5, zone_top + zone_height * 0.5)
 	if is_portrait:

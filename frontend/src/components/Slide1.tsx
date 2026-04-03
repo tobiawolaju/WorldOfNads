@@ -11,6 +11,8 @@ const SETS: [string, string, string][] = [
   ["#d6d6d6ff", "#bbbbbbff", "#d6d6d6ff"]
 ];
 
+
+
 const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
   const [index, setIndex] = useState(0);
   const [stageClass, setStageClass] = useState("");
