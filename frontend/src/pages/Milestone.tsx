@@ -1,5 +1,6 @@
 import React from "react";
 import "./Milestone.css";
+import Footer from "../components/Footer";
 
 type MilestoneEvent = {
   quarter: string;
@@ -81,6 +82,7 @@ const Milestone: React.FC = () => {
           </article>
         ))}
       </section>
+      <Footer />
     </div>
   );
 };

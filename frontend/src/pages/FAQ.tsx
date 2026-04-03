@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./FAQ.css";
+import Footer from "../components/Footer";
 
 interface FAQItem {
   question: string;
@@ -96,6 +97,7 @@ const FAQ: React.FC = () => {
           </div>
         ))}
       </div>
+      <Footer />
     </div>
   );
 };

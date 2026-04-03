@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./Careers.css";
+import Footer from "../components/Footer";
 
 interface TeamMember {
     name: string;
@@ -537,6 +538,7 @@ const Careers: React.FC = () => {
                     Email Us Anyway
                 </a>
             </div>
+            <Footer />
         </div>
     );
 };

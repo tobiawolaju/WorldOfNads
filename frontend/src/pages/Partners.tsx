@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./Partners.css";
+import Footer from "../components/Footer";
 
 type Host = {
   name: string;
@@ -154,6 +155,7 @@ const Partners: React.FC = () => {
           </p>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
