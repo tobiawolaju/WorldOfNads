@@ -47,8 +47,8 @@ var _world_env_duplicated := false
 var match_duration_seconds := 180.0
 var match_time_left := 180.0
 var match_is_running := false
-var fog_start_color: Color = Color8(152, 227, 254)
-var fog_end_color: Color = Color8(241, 118, 254)
+var fog_start_color: Color =  Color8(225, 150, 255)
+var fog_end_color: Color = Color8(255, 100, 200)
 
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live = true
@@ -319,7 +319,13 @@ func _build_hold_target_for_player(player_node: Node3D) -> Vector3:
 func build_local_chicken_payload(player_pos: Vector3, view_forward: Vector3, visual_rot_y: float):
 	if not is_local_player_holding_chicken():
 		return null
-	var target_pos = player_pos + (view_forward * CHICKEN_HOLD_DISTANCE)
+	var forward = view_forward
+	forward.y = 0.0
+	if forward.length_squared() < 0.0001:
+		forward = Vector3.FORWARD
+	else:
+		forward = forward.normalized()
+	var target_pos = player_pos + (forward * CHICKEN_HOLD_DISTANCE)
 	target_pos.y += CHICKEN_HOLD_HEIGHT
 	return {
 		"x": target_pos.x,

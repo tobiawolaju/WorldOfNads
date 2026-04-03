@@ -284,8 +284,15 @@ func _update_local_chicken_visual(delta: float) -> void:
 	if chicken == null:
 		return
 
-	var target_pos = global_position + (-camera.global_transform.basis.z * 0.9)
-	target_pos.y += 1.0
+	var forward = -global_transform.basis.z
+	forward.y = 0.0
+	if forward.length_squared() < 0.0001:
+		forward = Vector3.FORWARD
+	else:
+		forward = forward.normalized()
+
+	var target_pos = global_position + (forward * hold_distance)
+	target_pos.y += hold_height
 	chicken.global_position = chicken.global_position.lerp(target_pos, min(1.0, 16.0 * delta))
 
 # --- CAMERA LOGIC ---
@@ -358,7 +365,7 @@ func _send_state_to_server(force_send := false) -> void:
 
 		# Only holder is allowed to stream chicken pose to server.
 		if _is_local_holding_chicken() and root.has_method("build_local_chicken_payload"):
-			var chicken_payload = root.build_local_chicken_payload(global_position, -camera.global_transform.basis.z, mesh.rotation.y)
+			var chicken_payload = root.build_local_chicken_payload(global_position, -global_transform.basis.z, mesh.rotation.y)
 			if chicken_payload != null:
 				has_chicken = 1
 				cqx = _quantize_pos(float(chicken_payload.get("x", 0.0)))
