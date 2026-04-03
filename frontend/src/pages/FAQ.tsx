@@ -34,17 +34,17 @@ const FAQ: React.FC = () => {
     {
       question: "What happens when you win?",
       answer:
-        "You win the match. In certain games, there’s something extra waiting for the winner. No extra steps, no interruptions — it’s all part of the experience.",
+        "You win the match. In certain games, there’s an added reward waiting for the winner. No extra steps, no interruptions — it’s all part of the experience.",
     },
     {
       question: "Who sets up these matches?",
       answer:
-        "Some matches are backed by partners who want to be part of the action. They set the stage, players bring the competition, and everything plays out in real time.",
+        "Some matches are backed by sponsors who want to be part of the action. They set the stage, players bring the competition, and everything plays out in real time.",
     },
     {
-      question: "Why do partners get involved?",
+      question: "Why do sponsors get involved?",
       answer:
-        "Because it’s where real players are active. Instead of sitting on the sidelines, they become part of the experience players are already enjoying.",
+        "Because it’s where real players are active. Instead of interrupting gameplay, they become part of it — showing up inside matches players already want to play and staying visible while the action is happening.",
     },
     {
       question: "Is the game free to play?",
@@ -65,6 +65,11 @@ const FAQ: React.FC = () => {
       question: "Who is this for?",
       answer:
         "Anyone who enjoys fast, competitive games. If you like quick matches, chaotic gameplay, and outplaying real opponents, you’ll feel right at home.",
+    },
+    {
+      question: "Why can World of Nads grow beyond one game?",
+      answer:
+        "The core idea is simple: competitive matches that people enjoy playing and coming back to. As more players join, more matches run, and more sponsors take part. The experience scales naturally with activity, without changing how the game feels.",
     },
     {
       question: "How can I join early?",
