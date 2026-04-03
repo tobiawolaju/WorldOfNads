@@ -6,18 +6,16 @@ type Props = {
 };
 
 const SETS: [string, string, string][] = [
-  ["#d6d6d6ff", "#bbbbbbff", "#d6d6d6ff"],
-  ["#bbbbbbff", "#d6d6d6ff", "#bbbbbbff"],
-  ["#d6d6d6ff", "#bbbbbbff", "#d6d6d6ff"]
+  ["/stacked/stacka1.png", "/stacked/stacka2.png", "/stacked/stacka3.png"],
+  ["/stacked/stackb1.png", "/stacked/stackb2.png", "/stacked/stackb3.png"],
+  ["/stacked/stackc1.png", "/stacked/stackc2.png", "/stacked/stackc3.png"]
 ];
-
-
 
 const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
   const [index, setIndex] = useState(0);
   const [stageClass, setStageClass] = useState("");
 
-  const [colors, setColors] = useState({
+  const [images, setImages] = useState({
     top: SETS[0][0],
     center: SETS[0][1],
     bottom: SETS[0][2]
@@ -41,7 +39,7 @@ const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
       setIndex(newIndex);
       setNextCenter(center);
 
-      setColors((prev) => ({
+      setImages((prev) => ({
         ...prev,
         top,
         bottom
@@ -50,7 +48,7 @@ const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
       setIsMorphing(true);
 
       setTimeout(() => {
-        setColors({ top, center, bottom });
+        setImages({ top, center, bottom });
         setIsMorphing(false);
       }, 400);
 
@@ -68,27 +66,31 @@ const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
     <div className="ps-root">
       <div className="ps-frame">
         <div className={`ps-stage ${stageClass}`}>
+
+          {/* TOP */}
           <div
             className="ps-card ps-top"
-            style={{ background: colors.top }}
+            style={{ backgroundImage: `url(${images.top})` }}
           />
 
+          {/* CENTER */}
           <div className="ps-card ps-center">
             <div
               className="ps-center-current"
-              style={{ background: colors.center }}
+              style={{ backgroundImage: `url(${images.center})` }}
             />
             <div
-              className={`ps-center-next ${isMorphing ? "ps-active" : ""
-                }`}
-              style={{ background: nextCenter }}
+              className={`ps-center-next ${isMorphing ? "ps-active" : ""}`}
+              style={{ backgroundImage: `url(${nextCenter})` }}
             />
           </div>
 
+          {/* BOTTOM */}
           <div
             className="ps-card ps-bottom"
-            style={{ background: colors.bottom }}
+            style={{ backgroundImage: `url(${images.bottom})` }}
           />
+
         </div>
       </div>
     </div>

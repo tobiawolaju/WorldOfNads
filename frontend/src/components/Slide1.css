@@ -1,4 +1,4 @@
-/* root wrapper (scoped, no body styles anymore) */
+/* root wrapper */
 .ps-root {
   width: 100%;
   max-width: 420px;
@@ -9,7 +9,7 @@
   aspect-ratio: 1;
   border-radius: 20px;
   overflow: hidden;
-  background: #ffffff00;
+  background: transparent;
 }
 
 /* stage */
@@ -27,6 +27,11 @@
   width: calc(100% - 10px);
   height: calc(33.333% - 10px);
   border-radius: 0px;
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
   transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -50,13 +55,17 @@
 .ps-center-next {
   position: absolute;
   inset: 0;
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .ps-center-next {
   opacity: 0;
 }
 
-/* animation states */
+/* closing animation */
 .ps-closing .ps-top {
   transform: translateY(100%);
 }
@@ -65,6 +74,7 @@
   transform: translateY(-100%);
 }
 
+/* opening animation */
 .ps-opening .ps-top,
 .ps-opening .ps-bottom {
   transform: translateY(0);
