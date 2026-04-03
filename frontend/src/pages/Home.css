@@ -355,6 +355,16 @@ body,
 
 }
 
+@media (max-width: 900px) {
+
+  .section-title {
+    text-align: center;
+
+  }
+}
+
+
+
 .events-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -523,7 +533,7 @@ body,
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
-    font-size: 8px;
+    font-size: 12px;
   }
 
   .functional-slide,
