@@ -195,8 +195,7 @@ func _get_joystick_zone_center(viewport_size: Vector2) -> Vector2:
 	var zone_left = (viewport_size.x - zone_width) * 0.5 if is_portrait else 0.0
 	var zone_top = viewport_size.y - zone_height
 	var center = Vector2(zone_left + zone_width * 0.5, zone_top + zone_height * 0.5)
-	if is_portrait:
-		center.y -= portrait_visual_y_offset
+	center.y -= portrait_visual_y_offset
 	return center
 
 func _update_input_from_joystick(pos: Vector2):
