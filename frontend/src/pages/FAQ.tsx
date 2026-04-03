@@ -14,47 +14,62 @@ const FAQ: React.FC = () => {
     {
       question: "What is World of Nads?",
       answer:
-        "World of Nads (WONs) is a fast-paced multiplayer arena game built for the browser and powered by the Monad blockchain. It blends the chaos of playground games like Tag with the intensity of battle-royale competition. The focus is simple: fun gameplay first, real rewards second.",
+        "World of Nads (WONs) is a fast-paced multiplayer arena built around pure competition. You jump in, chase the objective, outplay other players, and try to win. It’s chaotic, skill-based, and designed to be genuinely fun from the first match.",
     },
     {
       question: "Is the game live?",
       answer:
-        "Yes. World of Nads already has a playable browser build. Players can jump into matches instantly with no downloads required. The game is currently in active testing as we expand features and prepare for a larger public release.",
+        "Yes. World of Nads already has a playable browser build. You can jump into matches instantly with no downloads. It’s currently in active testing as we expand features and prepare for a wider public release.",
     },
     {
       question: "How does the game work?",
       answer:
-        "Players drop into a chaotic arena where a chicken spawns in the center. The goal is simple: be the player holding the chicken when the timer reaches zero. Holding the chicken drains stamina, forcing players to move quickly, dodge opponents, and strategically pass it before time runs out.",
+        "Players enter a chaotic arena where a chicken spawns in the center. The goal is simple: be the one holding it when the timer ends. Holding it drains stamina, so you have to move, dodge, and outplay everyone else. It’s fast, unpredictable, and heavily skill-based.",
     },
     {
-      question: "What rewards do players earn?",
+      question: "Why do people keep playing?",
       answer:
-        "Matches and tournaments are funded using MON, the native token of the Monad network. Sponsors deposit prizes before the match starts, and when a match ends the winner automatically receives the reward on-chain. There are no manual claims and no hidden steps.",
+        "Because every match feels different. It’s quick, chaotic, and competitive. You’re constantly reacting, chasing, escaping, and making split-second decisions. Winning feels earned, and the tension never really drops.",
     },
     {
-      question: "Why is the game built on Monad?",
+      question: "What happens when you win?",
       answer:
-        "Monad provides extremely fast transaction processing with low fees. This allows match results to settle instantly on-chain while keeping the gameplay experience smooth and responsive for players.",
+        "You win the match. In certain games, there’s something extra waiting for the winner. No extra steps, no interruptions — it’s all part of the experience.",
+    },
+    {
+      question: "Who sets up these matches?",
+      answer:
+        "Some matches are backed by partners who want to be part of the action. They set the stage, players bring the competition, and everything plays out in real time.",
+    },
+    {
+      question: "Why do partners get involved?",
+      answer:
+        "Because it’s where real players are active. Instead of sitting on the sidelines, they become part of the experience players are already enjoying.",
     },
     {
       question: "Is the game free to play?",
       answer:
-        "Yes. Anyone can start playing for free. Players can sign in using simple social login through Privy, which creates a wallet automatically behind the scenes. This removes the usual blockchain friction and lets players start playing within seconds.",
+        "Yes. Anyone can start playing for free. You can jump in quickly and get into matches without any setup.",
     },
     {
-      question: "How do sponsored matches work?",
+      question: "Can the game be automated or exploited?",
       answer:
-        "Projects or communities can sponsor matches by funding a prize pool using MON. Players compete for the reward inside the arena. This creates a new way for projects to distribute incentives through gameplay instead of traditional airdrops.",
+        "Not really. The game relies on real-time movement, reactions, and decision-making. You have to be present, aware, and skilled to win.",
     },
     {
-      question: "What prevents bots from farming rewards?",
+      question: "Is World of Nads an investment?",
       answer:
-        "The game is skill-based and physics-driven. Winning requires movement, reaction time, and strategy inside a real-time arena. This makes it extremely difficult for automated scripts or bots to farm rewards.",
+        "No. It’s a game built around competition and enjoyment. The focus is on creating something people genuinely want to play and come back to.",
+    },
+    {
+      question: "Who is this for?",
+      answer:
+        "Anyone who enjoys fast, competitive games. If you like quick matches, chaotic gameplay, and outplaying real opponents, you’ll feel right at home.",
     },
     {
       question: "How can I join early?",
       answer:
-        "Follow @worldofnads on X and join the community Discord to stay updated on playtests, tournaments, and early access opportunities."
+        "Follow @worldofnads on X and join the Discord to stay updated on playtests, tournaments, and early access.",
     }
   ];
 
