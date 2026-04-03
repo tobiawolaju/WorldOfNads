@@ -322,7 +322,12 @@ func _update_camera(delta: float) -> void:
 
 	var space_state = get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(target_pos, desired_pos)
-	query.exclude = [self]
+	var exclude_nodes := [self]
+	if _is_local_holding_chicken() and root and root.has_method("get_chicken_node"):
+		var chicken_node = root.get_chicken_node()
+		if chicken_node:
+			exclude_nodes.append(chicken_node)
+	query.exclude = exclude_nodes
 	var hit = space_state.intersect_ray(query)
 
 	if hit and hit.has("position"):
