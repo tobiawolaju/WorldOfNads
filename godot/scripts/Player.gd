@@ -73,14 +73,11 @@ var display_name: String = "" :
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
 	_play_idle()
+	_refresh_name_label()
 	_refresh_touch_joystick()
 
 	if not pickup_area:
 		print("ERROR: $Area3D node not found! Please add an Area3D with a CollisionShape to the player.")
-
-func _process(delta: float):
-	_refresh_name_label()
-	_update_local_chicken_visual(delta)
 
 func _refresh_name_label() -> void:
 	if not name_label:
@@ -217,6 +214,8 @@ func _physics_process(delta: float) -> void:
 		if force_heartbeat:
 			network_heartbeat_timer = 0.0
 
+	_update_local_chicken_visual(delta)
+
 # --- PICKUP LOGIC (USING AREA3D) ---
 func _try_pickup():
 	if not pickup_area:
@@ -332,34 +331,51 @@ func _quantize_pos(value: float) -> int:
 func _quantize_rot(value: float) -> int:
 	return int(round(value * ROT_SCALE))
 
-func _build_payload_signature(payload: Dictionary) -> String:
-	return JSON.stringify(payload)
-
 func _send_state_to_server(force_send := false) -> void:
 	if not root or not root.ws:
 		return
 	if root.ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		var qx := _quantize_pos(global_transform.origin.x)
+		var qy := _quantize_pos(global_transform.origin.y)
+		var qz := _quantize_pos(global_transform.origin.z)
+		var qrot := _quantize_rot(mesh.rotation.y)
+		var anim_id := int(ANIM_NAME_TO_ID.get(current_animation, 0))
+
 		var payload = {
 			"type": "update_state",
-			"qx": _quantize_pos(global_transform.origin.x),
-			"qy": _quantize_pos(global_transform.origin.y),
-			"qz": _quantize_pos(global_transform.origin.z),
-			"qrot": _quantize_rot(mesh.rotation.y),
-			"anim_id": int(ANIM_NAME_TO_ID.get(current_animation, 0))
+			"qx": qx,
+			"qy": qy,
+			"qz": qz,
+			"qrot": qrot,
+			"anim_id": anim_id
 		}
+
+		var has_chicken := 0
+		var cqx := 0
+		var cqy := 0
+		var cqz := 0
+		var cqrot := 0
 
 		# Only holder is allowed to stream chicken pose to server.
 		if _is_local_holding_chicken() and root.has_method("build_local_chicken_payload"):
 			var chicken_payload = root.build_local_chicken_payload(global_position, -camera.global_transform.basis.z, mesh.rotation.y)
 			if chicken_payload != null:
+				has_chicken = 1
+				cqx = _quantize_pos(float(chicken_payload.get("x", 0.0)))
+				cqy = _quantize_pos(float(chicken_payload.get("y", 0.0)))
+				cqz = _quantize_pos(float(chicken_payload.get("z", 0.0)))
+				cqrot = _quantize_rot(float(chicken_payload.get("rotation_y", 0.0)))
 				payload["chicken"] = {
-					"qx": _quantize_pos(float(chicken_payload.get("x", 0.0))),
-					"qy": _quantize_pos(float(chicken_payload.get("y", 0.0))),
-					"qz": _quantize_pos(float(chicken_payload.get("z", 0.0))),
-					"qrot": _quantize_rot(float(chicken_payload.get("rotation_y", 0.0)))
+					"qx": cqx,
+					"qy": cqy,
+					"qz": cqz,
+					"qrot": cqrot
 				}
 
-		var signature = _build_payload_signature(payload)
+		var signature = "%d|%d|%d|%d|%d|%d|%d|%d|%d|%d" % [
+			qx, qy, qz, qrot, anim_id,
+			has_chicken, cqx, cqy, cqz, cqrot
+		]
 		if not force_send and signature == _last_payload_signature:
 			return
 		_last_payload_signature = signature

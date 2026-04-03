@@ -190,7 +190,7 @@ func _remove_disconnected_players(removed_ids: Array) -> void:
 			_remove_player(removed_id)
 
 func _update_world_state(players_state, is_full := true, quantized := false):
-	var received_ids = []
+	var received_ids := {}
 	var now_ms := float(Time.get_ticks_msec())
 
 	for p_state in players_state:
@@ -199,7 +199,7 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 		var id = str(p_state.get("id", ""))
 		if id == "":
 			continue
-		received_ids.append(id)
+		received_ids[id] = true
 		var resolved_name = _resolve_server_username(p_state, id)
 		player_display_names[id] = resolved_name
 
@@ -246,7 +246,7 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 	# Remove disconnected players only on full snapshots.
 	if is_full:
 		for id in players.keys():
-			if id != player_id and not id in received_ids:
+			if id != player_id and not received_ids.has(id):
 				_remove_player(id)
 
 
@@ -254,9 +254,9 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 func _cache_chicken_node() -> void:
 	if chicken_node != null and is_instance_valid(chicken_node):
 		return
-	var pickup_nodes = get_tree().get_nodes_in_group("pickup_items")
-	if pickup_nodes.size() > 0 and pickup_nodes[0] is RigidBody3D:
-		chicken_node = pickup_nodes[0]
+	var pickup_node = get_tree().get_first_node_in_group("pickup_items")
+	if pickup_node != null and pickup_node is RigidBody3D:
+		chicken_node = pickup_node
 
 func _update_chicken_state(chicken_state: Dictionary, quantized := false) -> void:
 	_cache_chicken_node()
@@ -445,9 +445,7 @@ func _apply_remote_interpolation() -> void:
 		node.set_animation_state(str(snap.get("anim", "idle")))
 
 func _resolve_events_bridge() -> void:
-	var bridges = get_tree().get_nodes_in_group("events_bridge")
-	if bridges.size() > 0:
-		events_bridge = bridges[0]
+	events_bridge = get_tree().get_first_node_in_group("events_bridge")
 
 func _resolve_ui_nodes() -> void:
 	if countdown_label == null and countdown_label_path != NodePath():
