@@ -523,6 +523,7 @@ body,
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
+    font-size: 8px;
   }
 
   .functional-slide,

@@ -281,7 +281,7 @@ const Home: React.FC = () => {
           <div className="functional-slide reverse">
             <div className="func-content">
               <h2 className="func-headline">Hosts</h2>
-              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}> {renderWaveText("The ones driving the competition")}</p>
+              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}> {renderWaveText("Fund matches. Attract players. Get seen where competition happens.Sponsors drive the ecosystem.")}</p>
             </div>
             <div className="func-image">
               <Slide2 />
@@ -293,6 +293,9 @@ const Home: React.FC = () => {
             <div className="func-content">
               <h2 className="func-headline">Built for Competition</h2>
               <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>{renderWaveText("No bots. No artificial rewards. No shortcuts. Every match is real. Every win is earned. Skill decides everything.")}</p>
+              <h2 className="section-title">How it works</h2>
+              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>{renderWaveText("Sponsors fund matches. Players compete for rewards. The platform scales with every game played.")}</p>
+
 
             </div>
           </div>
@@ -311,7 +314,7 @@ const Home: React.FC = () => {
               </div>
               <div className="stat-item">
                 <span className="stat-num">$7.3K+</span>
-                <span className="stat-label">Winnings Paid</span>
+                <span className="stat-label">Paid to Players</span>
               </div>
               <div className="stat-item">
                 <span className="stat-num">15K+</span>
@@ -328,7 +331,7 @@ const Home: React.FC = () => {
 
       {/* SECTION 4: EVENTS GRID */}
       <section className="events-grid-section reveal">
-        <h2 className="section-title">News</h2>
+        <h2 className="section-title">What’s happening</h2>
         <div className="events-grid">
           {tweets.map((tweet, index) => (
             <article className="tweet-card" key={tweet.month}>
