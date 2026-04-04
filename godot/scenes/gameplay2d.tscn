@@ -12,7 +12,16 @@
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_22dhc"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_psyvr"]
-bg_color = Color(1, 1, 1, 0.61960787)
+bg_color = Color(1, 1, 1, 0.13333334)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0.5921569)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vob6w"]
 bg_color = Color(1, 1, 1, 0.61960787)
@@ -22,11 +31,27 @@ border_width_right = 8
 border_width_bottom = 8
 border_color = Color(0, 0, 0, 0)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xqgb2"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8y4rh"]
-bg_color = Color(1, 1, 1, 0.31764707)
+bg_color = Color(0.17641911, 0.17641908, 0.17641908, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wnu4a"]
-bg_color = Color(1, 1, 1, 1)
+bg_color = Color(0.6664473, 0.0014910906, 0.821041, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
 
 [node name="Gameplay2d" type="Node2D" unique_id=843521828]
 script = ExtResource("4_events")
@@ -68,27 +93,6 @@ countdown_label_path = NodePath("../../../../../Node2/BoxContainer/Countdown")
 
 [node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cart/WaypointAnchor" parent_id_path=PackedInt32Array(280572712, 53948068) index="0" unique_id=232879054 node_paths=PackedStringArray("camera")]
 camera = NodePath("../../../PlayerManager/Camera3D")
-
-[node name="cloud" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="0" unique_id=524187468]
-surface_material_override/0 = null
-
-[node name="cloud3" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="1" unique_id=319399619]
-surface_material_override/0 = null
-
-[node name="cloud4" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="2" unique_id=934328590]
-surface_material_override/0 = null
-
-[node name="cloud5" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="3" unique_id=562575514]
-surface_material_override/0 = null
-
-[node name="cloud6" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="4" unique_id=1216161987]
-surface_material_override/0 = null
-
-[node name="cloud7" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="5" unique_id=19935141]
-surface_material_override/0 = null
-
-[node name="cloud8" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud" parent_id_path=PackedInt32Array(280572712, 370710878) index="6" unique_id=324572119]
-surface_material_override/0 = null
 
 [node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=2082930407]
 
@@ -206,15 +210,16 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -109.0
-offset_top = -99.0
-offset_right = 109.0
-offset_bottom = -29.0
+offset_left = -136.5
+offset_top = -117.0
+offset_right = 136.5
+offset_bottom = -34.0
 grow_horizontal = 2
 grow_vertical = 0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer/buttons_holder" unique_id=708294812]
 layout_mode = 2
+alignment = 1
 script = ExtResource("7_vob6w")
 
 [node name="Button1" type="Button" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer" unique_id=248895975]
@@ -237,7 +242,20 @@ icon_alignment = 1
 expand_icon = true
 script = ExtResource("3_uw04a")
 
-[node name="Button2" type="Button" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer" unique_id=867635059]
+[node name="Label" type="Label" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer/Button1" unique_id=194581627]
+layout_mode = 0
+offset_left = 22.0
+offset_top = -27.0
+offset_right = 47.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(0.67318934, 0.21754879, 0.99999994, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("StyleBoxFlat_xqgb2")
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Button2" type="Button" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer" unique_id=1166429840]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 theme_override_constants/icon_max_width = 35
@@ -257,7 +275,20 @@ icon_alignment = 1
 expand_icon = true
 script = ExtResource("3_uw04a")
 
-[node name="Button3" type="Button" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer" unique_id=1115372501]
+[node name="Label" type="Label" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer/Button2" unique_id=1039085227]
+layout_mode = 0
+offset_left = 22.0
+offset_top = -27.0
+offset_right = 47.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(0.67318934, 0.21754879, 0.99999994, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("StyleBoxFlat_xqgb2")
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Button3" type="Button" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer" unique_id=388452149]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 theme_override_constants/icon_max_width = 35
@@ -276,10 +307,23 @@ autowrap_trim_flags = 0
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("3_uw04a")
+
+[node name="Label" type="Label" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer/Button3" unique_id=35027999]
+layout_mode = 0
+offset_left = 22.0
+offset_top = -27.0
+offset_right = 47.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(0.67318934, 0.21754879, 0.99999994, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("StyleBoxFlat_xqgb2")
+text = "3"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="ProgressBar" type="ProgressBar" parent="Node3/CanvasLayer/buttons_holder" unique_id=268391186]
 layout_mode = 2
-theme_override_font_sizes/font_size = 2
+theme_override_font_sizes/font_size = 6
 theme_override_styles/background = SubResource("StyleBoxFlat_8y4rh")
 theme_override_styles/fill = SubResource("StyleBoxFlat_wnu4a")
 value = 70.0
