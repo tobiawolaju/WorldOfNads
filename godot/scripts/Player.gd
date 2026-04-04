@@ -158,10 +158,10 @@ func _physics_process(delta: float) -> void:
 	var movement_allowed := _is_movement_allowed()
 
 	if movement_allowed:
-		if Input.is_action_pressed("move_forward"): input_dir.y += 1
-		if Input.is_action_pressed("move_back"): input_dir.y -= 1
-		if Input.is_action_pressed("move_left"): input_dir.x -= 1
-		if Input.is_action_pressed("move_right"): input_dir.x += 1
+		input_dir.y += Input.get_action_strength("move_forward")
+		input_dir.y -= Input.get_action_strength("move_back")
+		input_dir.x -= Input.get_action_strength("move_left")
+		input_dir.x += Input.get_action_strength("move_right")
 
 	var lx := Input.get_joy_axis(gamepad_index, JOY_AXIS_LEFT_X)
 	var ly := Input.get_joy_axis(gamepad_index, JOY_AXIS_LEFT_Y)
@@ -335,10 +335,10 @@ func _update_camera(delta: float) -> void:
 
 	camera.global_position = camera.global_position.lerp(desired_pos, delta * camera_smoothness)
 	camera.look_at(target_pos, Vector3.UP)
-	var target_fov := 140.0 if _is_local_holding_chicken() else 95.0
+	var target_fov := 125.0 if _is_local_holding_chicken() else 95.0
 	camera.fov = lerp(camera.fov, target_fov, delta * camera_smoothness)
 	
-	var target_scale := 0.7 if _is_local_holding_chicken() else 1.0
+	var target_scale := 0.85 if _is_local_holding_chicken() else 1.0
 	if not is_equal_approx(get_viewport().scaling_3d_scale, target_scale):
 		get_viewport().scaling_3d_scale = target_scale
 

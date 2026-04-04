@@ -564,7 +564,7 @@ _data = {
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l43u4"]
 transparency = 1
-albedo_color = Color(0.99999994, 0.5801488, 0.17650077, 0.29411766)
+albedo_color = Color(1, 0.5803922, 0.1764706, 0.7058824)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_38u8m"]
 albedo_color = Color(0.54174244, 0.39818066, 1, 1)

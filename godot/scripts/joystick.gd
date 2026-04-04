@@ -200,21 +200,22 @@ func _get_joystick_zone_center(viewport_size: Vector2) -> Vector2:
 
 func _update_input_from_joystick(pos: Vector2):
 	_release_all_keys()
-	if abs(pos.x) > abs(pos.y):
-		if pos.x > 0:
-			_press_key("move_right")
-		else:
-			_press_key("move_left")
-	else:
-		if pos.y < 0:
-			_press_key("move_forward")
-		else:
-			_press_key("move_back")
+	var npos = pos / maxRadius
+	var deadzone = 0.05
+	
+	if npos.x > deadzone:
+		_press_key("move_right", npos.x)
+	elif npos.x < -deadzone:
+		_press_key("move_left", -npos.x)
+		
+	if npos.y < -deadzone:
+		_press_key("move_forward", -npos.y)
+	elif npos.y > deadzone:
+		_press_key("move_back", npos.y)
 
-func _press_key(action: String):
-	if !keys_pressed[action]:
-		Input.action_press(action)
-		keys_pressed[action] = true
+func _press_key(action: String, strength: float = 1.0):
+	Input.action_press(action, strength)
+	keys_pressed[action] = true
 
 func _release_key(action: String):
 	if keys_pressed[action]:
