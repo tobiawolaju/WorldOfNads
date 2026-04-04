@@ -47,8 +47,8 @@ var _world_env_duplicated := false
 var match_duration_seconds := 180.0
 var match_time_left := 180.0
 var match_is_running := false
-var fog_start_color: Color =  Color8(215, 215, 255)
-var fog_end_color: Color = Color8(255, 100, 200)
+var fog_start_color: Color =  Color8(215, 100, 255)
+var fog_end_color: Color = Color8(255, 100, 215)
 
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live = true
