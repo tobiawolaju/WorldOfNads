@@ -33,7 +33,7 @@ const TopNavbar = () => {
     { path: '/careers', label: 'Careers' },
   ];
 
-  const currentText = navItems.find(item => item.path === location.pathname)?.label || '';
+  const c = navItems.find(item => item.path === location.pathname)?.label || '';
 
   const renderNavLinks = (onClick?: () => void) =>
     navItems.map(item => (
