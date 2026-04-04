@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bok6pqa5jkw3a" path="res://scripts/bus.gd" id="1_wtq63"]
 [ext_resource type="Texture2D" uid="uid://bux033aiby60l" path="res://assets/models/VanTex.png" id="2_8154j"]
+[ext_resource type="Shader" uid="uid://fp172dybk1gm" path="res://scenes/components/transparent.gdshader" id="2_wtq63"]
 [ext_resource type="ArrayMesh" uid="uid://d2shs8xt2gill" path="res://assets/models/Parachute.obj" id="3_8154j"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qkeax"]
@@ -562,9 +563,16 @@ _data = {
 &"mixamo_com": SubResource("Animation_wb5gu")
 }
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l43u4"]
-transparency = 1
-albedo_color = Color(1, 0.5803922, 0.1764706, 0.7058824)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8er11"]
+render_priority = 0
+shader = ExtResource("2_wtq63")
+shader_parameter/color_inner = Color(0.7762004, 0.3640619, 3.85046e-07, 1)
+shader_parameter/color_mid = Color(0.18621123, 0.07573589, 0.40141815, 1)
+shader_parameter/color_outer = Color(0.2, 0.2, 1, 1)
+shader_parameter/radius_inner = 1.0
+shader_parameter/radius_outer = 1.0
+shader_parameter/opacity = 0.6
+shader_parameter/pixel_size = 64.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_38u8m"]
 albedo_color = Color(0.54174244, 0.39818066, 1, 1)
@@ -3417,7 +3425,7 @@ libraries/ = SubResource("AnimationLibrary_3eoc7")
 
 [node name="Parachute" type="MeshInstance3D" parent="." unique_id=321006622]
 transform = Transform3D(-2.1855692e-08, 0, -0.49999997, 0, 0.5, 0, 0.49999997, 0, -2.1855692e-08, 0.18050754, 2.444498, 0.022620916)
-material_override = SubResource("StandardMaterial3D_l43u4")
+material_override = SubResource("ShaderMaterial_8er11")
 mesh = ExtResource("3_8154j")
 
 [node name="Van" type="MeshInstance3D" parent="." unique_id=705404418]
