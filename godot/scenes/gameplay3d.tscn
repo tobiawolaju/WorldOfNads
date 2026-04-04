@@ -24,9 +24,9 @@ data = PackedVector3Array(-17.2244, 0, 24.605598, -17.2244, 0, 25, -17.5, 0, 24.
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_kxttn"]
 render_priority = 0
 shader = ExtResource("3_cyx30")
-shader_parameter/color_inner = Color(1, 0.5254902, 0.5058824, 1)
-shader_parameter/color_mid = Color(1, 0.5254902, 0.5058824, 1)
-shader_parameter/color_outer = Color(0.8745098, 0.45490196, 0.9137255, 1)
+shader_parameter/color_inner = Color(0.99607843, 0.72156864, 0.6745098, 1)
+shader_parameter/color_mid = Color(0.99607843, 0.72156864, 0.6745098, 1)
+shader_parameter/color_outer = Color(0.8666667, 0.45490196, 0.91764706, 1)
 shader_parameter/radius_inner = 0.3
 shader_parameter/radius_outer = 0.6
 

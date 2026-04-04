@@ -566,9 +566,9 @@ _data = {
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_8er11"]
 render_priority = 0
 shader = ExtResource("2_wtq63")
-shader_parameter/color_inner = Color(0.95862, 0.51470333, 0, 1)
-shader_parameter/color_mid = Color(0.99215686, 0.6156863, 0.47058824, 1)
-shader_parameter/color_outer = Color(0.99215686, 0.6156863, 0.47058824, 1)
+shader_parameter/color_inner = Color(0, 0, 0, 1)
+shader_parameter/color_mid = Color(0, 0, 0, 1)
+shader_parameter/color_outer = Color(0, 0, 0, 1)
 shader_parameter/radius_inner = 0.5
 shader_parameter/radius_outer = 1.0
 shader_parameter/opacity = 1.0
