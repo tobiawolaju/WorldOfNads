@@ -24,11 +24,11 @@ var held_object: RigidBody3D = null
 var last_pickup_request_ms: int = 0
 
 # --- CAMERA & ZOOM SETTINGS ---
-@export var camera_distance: float = 4.0
+@export var camera_distance: float =8.0
 @export var camera_smoothness: float = 8.0
 @export var min_pitch: float = deg_to_rad(0.0)
 @export var max_pitch: float = deg_to_rad(60.0)
-@export var min_zoom: float = 2.0
+@export var min_zoom: float = 6.0
 @export var max_zoom: float = 10.0
 @export var altitude_zoom_factor: float = 1.5
 
