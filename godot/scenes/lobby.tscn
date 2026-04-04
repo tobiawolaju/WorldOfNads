@@ -32,7 +32,7 @@ glow_bloom = 0.6
 glow_hdr_luminance_cap = 10.0
 fog_enabled = true
 fog_mode = 1
-fog_light_color = Color(1, 0.5882353, 1, 1)
+fog_light_color = Color(0.84313726, 0.84313726, 1, 1)
 fog_density = 1.0
 fog_sky_affect = 0.4
 fog_depth_begin = 1.0
@@ -288,8 +288,9 @@ environment = SubResource("Environment_tqy52")
 one_shot = true
 
 [node name="Camera3D" type="Camera3D" parent="PlayerManager" unique_id=299928795]
-transform = Transform3D(-0.005003814, -0.0054083173, 0.9999729, 0.00087060285, 0.999985, 0.0054127397, -0.9999871, 0.0008976635, -0.0049990304, 2.3647788, 1.1637373, 0.047125697)
+transform = Transform3D(-0.005016815, -0.32810614, 0.9446275, -0.00079225487, 0.9446406, 0.32810646, -0.99998724, 0.00089766365, -0.004999031, 2.3647788, 2.666788, 0.047125697)
 fov = 95.0
+far = 100.0
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1649691937]
 transform = Transform3D(0.99322146, -0.110632636, -0.035658754, 0.11623737, 0.9453303, 0.3046958, 0, -0.3067753, 0.951782, 0, 0.81719303, 2.8723717)

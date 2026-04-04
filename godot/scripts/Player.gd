@@ -335,6 +335,12 @@ func _update_camera(delta: float) -> void:
 
 	camera.global_position = camera.global_position.lerp(desired_pos, delta * camera_smoothness)
 	camera.look_at(target_pos, Vector3.UP)
+	var target_fov := 140.0 if _is_local_holding_chicken() else 95.0
+	camera.fov = lerp(camera.fov, target_fov, delta * camera_smoothness)
+	
+	var target_scale := 0.7 if _is_local_holding_chicken() else 1.0
+	if not is_equal_approx(get_viewport().scaling_3d_scale, target_scale):
+		get_viewport().scaling_3d_scale = target_scale
 
 # --- ANIMATION & NETWORK ---
 func _quantize_pos(value: float) -> int:

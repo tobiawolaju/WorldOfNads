@@ -562,12 +562,9 @@ _data = {
 &"mixamo_com": SubResource("Animation_wb5gu")
 }
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6x00d"]
-albedo_color = Color(1, 0.60605687, 0.29900518, 1)
-metallic_specular = 0.0
-roughness = 0.95
-shadow_to_opacity = true
-proximity_fade_distance = 0.01
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l43u4"]
+transparency = 1
+albedo_color = Color(0.99999994, 0.5801488, 0.17650077, 0.29411766)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_38u8m"]
 albedo_color = Color(0.54174244, 0.39818066, 1, 1)
@@ -3420,7 +3417,7 @@ libraries/ = SubResource("AnimationLibrary_3eoc7")
 
 [node name="Parachute" type="MeshInstance3D" parent="." unique_id=321006622]
 transform = Transform3D(-2.1855692e-08, 0, -0.49999997, 0, 0.5, 0, 0.49999997, 0, -2.1855692e-08, 0.18050754, 2.444498, 0.022620916)
-material_override = SubResource("StandardMaterial3D_6x00d")
+material_override = SubResource("StandardMaterial3D_l43u4")
 mesh = ExtResource("3_8154j")
 
 [node name="Van" type="MeshInstance3D" parent="." unique_id=705404418]
