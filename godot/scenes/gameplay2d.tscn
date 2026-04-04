@@ -22,21 +22,6 @@ border_width_right = 8
 border_width_bottom = 8
 border_color = Color(0, 0, 0, 0)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8y4rh"]
-bg_color = Color(1, 1, 1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 1, 1, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wnu4a"]
-bg_color = Color(0, 1, 0.14509805, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_bottom = 2
-border_color = Color(1, 1, 1, 1)
-
 [node name="Gameplay2d" type="Node2D" unique_id=843521828]
 script = ExtResource("4_events")
 status_label_path = null
@@ -268,24 +253,6 @@ autowrap_trim_flags = 0
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("3_uw04a")
-
-[node name="HBoxContainer" type="VBoxContainer" parent="Node3/CanvasLayer" unique_id=1276019424]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -199.0
-offset_top = 85.0
-offset_right = -18.0
-offset_bottom = 98.0
-grow_horizontal = 0
-alignment = 1
-
-[node name="ProgressBar" type="ProgressBar" parent="Node3/CanvasLayer/HBoxContainer" unique_id=1674480261]
-layout_mode = 2
-theme_override_font_sizes/font_size = 6
-theme_override_styles/background = SubResource("StyleBoxFlat_8y4rh")
-theme_override_styles/fill = SubResource("StyleBoxFlat_wnu4a")
-value = 70.0
 
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer"]
 [editable path="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/Bus"]

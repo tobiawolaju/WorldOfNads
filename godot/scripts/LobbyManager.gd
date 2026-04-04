@@ -23,7 +23,10 @@ func _wake_server():
 
 func _on_server_ping_completed(result, response_code, headers, body):
 	# Ignore errors, we just want to wake the server
-	status_label.text = "✅ Server awake. Loading game..."
+	for i in range(5, 0, -1):
+		status_label.text = "✅ Server awake. Loading in %d..." % i
+		await get_tree().create_timer(1.0).timeout
+	status_label.text = "✅ Let's go!"
 	
 	# Load the real gameplay scene that connects via WebSocket
 	get_tree().change_scene_to_file("res://scenes/gameplay2d.tscn")
