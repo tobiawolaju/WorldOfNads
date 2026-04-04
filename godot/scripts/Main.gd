@@ -500,7 +500,7 @@ func _update_match_ui() -> void:
 
 	var ratio := 1.0 - (match_time_left / match_duration_seconds)
 	var current_color = fog_start_color.lerp(fog_end_color, clampf(ratio, 0.0, 1.0))
-	world_environment.environment.fog_light_color = current_color
+	#world_environment.environment.fog_light_color = current_color
 	#world_environment.environment.volumetric_fog_albedo = current_color
 
 func _set_local_username(name_text: String) -> void:
