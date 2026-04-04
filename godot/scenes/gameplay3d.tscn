@@ -305,17 +305,6 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_owkwb")
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_64rvo"]
-render_priority = 0
-shader = ExtResource("12_w0mdd")
-shader_parameter/color_inner = Color(0.5529412, 0.5803922, 0.078431375, 1)
-shader_parameter/color_mid = Color(1, 0.3254902, 0.2, 1)
-shader_parameter/color_outer = Color(1, 0.39215687, 0.12156863, 1)
-shader_parameter/radius_inner = 5.0
-shader_parameter/radius_outer = 5.0
-shader_parameter/opacity = 0.6
-shader_parameter/pixel_size = 64.0
-
 [sub_resource type="ArrayMesh" id="ArrayMesh_bfe60"]
 _surfaces = [{
 "aabb": AABB(-214.93954, -191.88284, -211.93585, 401.84503, 511.7819, 472.7144),
@@ -353,7 +342,7 @@ shadow_mesh = SubResource("ArrayMesh_bfe60")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_aylnh"]
 render_priority = 0
 shader = ExtResource("12_w0mdd")
-shader_parameter/color_inner = Color(0.8946508, 0.8310638, 0.2361854, 1)
+shader_parameter/color_inner = Color(0.40392157, 0.3019608, 0.32156864, 1)
 shader_parameter/color_mid = Color(1, 0.3254902, 0.2, 1)
 shader_parameter/color_outer = Color(1, 0.39215687, 0.12156863, 1)
 shader_parameter/radius_inner = 5.0
@@ -593,7 +582,6 @@ transform = Transform3D(0.018, 0, 0, 0, 0.018, 0, 0, 0, 0.018, -8, 21.705, 4)
 [node name="Coconut-tree_Cononute_tree-Leafs_0" type="MeshInstance3D" parent="Coconut-tree" unique_id=1442033239]
 mesh = SubResource("ArrayMesh_cyqe2")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_64rvo")
 
 [node name="Coconut-tree_Cononute_tree-Leafs_02" type="MeshInstance3D" parent="Coconut-tree" unique_id=958674189]
 mesh = SubResource("ArrayMesh_p8u8h")
