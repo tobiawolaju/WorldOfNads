@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://q85dx3n5lik1" path="res://scenes/waypoint.tscn" id="6_cyx30"]
 [ext_resource type="Texture2D" uid="uid://stmyh37f16s3" path="res://assets/models/banana peel_0.png" id="6_din8e"]
 [ext_resource type="Texture2D" uid="uid://dk6pulccdwv63" path="res://assets/models/shoppingchart_0.png" id="7_e124b"]
-[ext_resource type="Texture2D" uid="uid://c8p482cmqow7y" path="res://assets/images/sky.png" id="10_k1ljg"]
+[ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="10_k1ljg"]
 [ext_resource type="Script" uid="uid://b7qxrbqb8hkxc" path="res://scripts/pickable.gd" id="11_kxttn"]
 [ext_resource type="Texture2D" uid="uid://beigkm6m4ovbc" path="res://assets/models/textures/Cononute_tree-Leafs_baseColor.jpeg" id="11_p80do"]
 [ext_resource type="Texture2D" uid="uid://ouqcikg4d64i" path="res://assets/models/textures/Coconut_tree-Trunk_baseColor.jpeg" id="12_k1ljg"]
@@ -237,10 +237,10 @@ data = PackedVector3Array(-17.2244, 0, 24.605598, -17.2244, 0, 25, -17.5, 0, 24.
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_kxttn"]
 render_priority = 0
 shader = ExtResource("3_cyx30")
-shader_parameter/color_inner = Color(1, 0.9607843, 0.7176471, 1)
-shader_parameter/color_mid = Color(1, 0.9607843, 0.7176471, 1)
-shader_parameter/color_outer = Color(0.6, 0.8901961, 1, 0.5019608)
-shader_parameter/radius_inner = 0.3
+shader_parameter/color_inner = Color(1, 0.7254902, 0.6784314, 1)
+shader_parameter/color_mid = Color(1, 0.7176471, 0.67058825, 1)
+shader_parameter/color_outer = Color(0.98039216, 0.7372549, 1, 0.5019608)
+shader_parameter/radius_inner = 0.34
 shader_parameter/radius_outer = 0.47
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_vuq5q"]
@@ -256,7 +256,6 @@ sky_rotation = Vector3(0, 0, -1.4695672)
 glow_intensity = 0.25
 glow_bloom = 0.6
 glow_hdr_luminance_cap = 10.0
-fog_enabled = true
 fog_mode = 1
 fog_light_color = Color(0.7921569, 0.7411765, 0.9411765, 1)
 fog_density = 1.0
@@ -343,9 +342,9 @@ shadow_mesh = SubResource("ArrayMesh_bfe60")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_aylnh"]
 render_priority = 0
 shader = ExtResource("12_w0mdd")
-shader_parameter/color_inner = Color(0.40392157, 0.3019608, 0.32156864, 1)
-shader_parameter/color_mid = Color(1, 0.3254902, 0.2, 1)
-shader_parameter/color_outer = Color(1, 0.39215687, 0.12156863, 1)
+shader_parameter/color_inner = Color(0.85882354, 0.56078434, 0.41568628, 1)
+shader_parameter/color_mid = Color(0.5951927, 0.024805073, 0.31025013, 1)
+shader_parameter/color_outer = Color(0.47094536, 0.1530219, 0.0827058, 1)
 shader_parameter/radius_inner = 5.0
 shader_parameter/radius_outer = 5.0
 shader_parameter/opacity = 0.6
@@ -427,7 +426,7 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_kbkst")
 
-[node name="Gameplay3d" type="Node3D" unique_id=844227963]
+[node name="Coconut-tree_Cononute_tree-Leafs_03" type="Node3D" unique_id=844227963]
 
 [node name="PlayerManager" type="Node3D" parent="." unique_id=1626271999]
 script = ExtResource("1_vuq5q")

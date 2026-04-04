@@ -512,8 +512,8 @@ body,
 }
 
 .play-btn-fixed {
-  background-color: #907cff;
-  color: #ffffff;
+  background-color: #ffd700;
+  color: #000000;
   position: relative;
   overflow: hidden;
 }
