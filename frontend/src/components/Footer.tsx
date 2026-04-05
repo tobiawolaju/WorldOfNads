@@ -5,7 +5,7 @@ import "./footer.css";
 const Footer = () => {
   const navItems = [
     { to: "/", label: "WONs" },
-    { to: "/pre-tge-arena", label: "Pre-TGE Arena" },
+    { to: "/nad-arena", label: "Nad Arena" },
     { to: "/roadmap", label: "Leaderboards" },
     { to: "/hosts", label: "Hosts" },
     { to: "/milestone", label: "Milestone" },

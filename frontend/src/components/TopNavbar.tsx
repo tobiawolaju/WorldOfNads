@@ -30,7 +30,7 @@ const TopNavbar = () => {
 
     { path: '/', label: 'WONs' },
 
-    { path: '/pre-tge-arena', label: 'Arena' },
+    { path: '/nad-arena', label: 'Nad Arena' },
 
     { path: '/roadmap', label: 'Leaderboards' },
     { path: '/hosts', label: 'Hosts' },

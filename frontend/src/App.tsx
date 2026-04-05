@@ -14,7 +14,7 @@ import { lazy, Suspense } from "react";
 
 // Pages (Lazy Loaded)
 const Home = lazy(() => import("./pages/Home"));
-const PreTGEArena = lazy(() => import("./pages/PreTGEArena"));
+const NadArena = lazy(() => import("./pages/NadArena"));
 const Roadmap = lazy(() => import("./pages/Leaderboard"));
 const Community = lazy(() => import("./pages/FAQ"));
 const Partners = lazy(() => import("./pages/Partners"));
@@ -110,7 +110,7 @@ const AppContent: React.FC = () => {
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={authenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
-              <Route path="/pre-tge-arena" element={<PreTGEArena />} />
+              <Route path="/nad-arena" element={<NadArena />} />
               <Route path="/roadmap" element={<Roadmap />} />
               <Route path="/community" element={<Community />} />
               <Route path="/hosts" element={<Partners />} />
