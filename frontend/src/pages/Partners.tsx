@@ -164,20 +164,6 @@ const Partners: React.FC = () => {
           </div>
         )}
       </div>
-                  <div className="host-actions">
-                    <a href="#" className="host-action-link">View Merch</a>
-                    <a href="#" className="host-action-link">View Live Matches ({partner.liveMatches})</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p style={{ marginTop: "40px", color: "#777" }}>
-            No matching hosts found.
-          </p>
-        )}
-      </div>
       <Footer />
     </div>
   );
