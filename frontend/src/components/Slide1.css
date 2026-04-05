@@ -34,7 +34,7 @@
   background-position: center;
   background-repeat: no-repeat;
 
-  transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* positions */
@@ -70,19 +70,16 @@
 /* closing animation */
 .ps-closing .ps-top {
   transform: translateY(100%);
-  opacity: 0.5;
 }
 
 .ps-closing .ps-bottom {
   transform: translateY(-100%);
-  opacity: 0.5;
 }
 
 /* opening animation */
 .ps-opening .ps-top,
 .ps-opening .ps-bottom {
   transform: translateY(0);
-  opacity: 1;
 }
 
 /* morph animation */
