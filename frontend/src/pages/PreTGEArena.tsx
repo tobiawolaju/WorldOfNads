@@ -216,7 +216,10 @@ function mapMatchToProject(match: MatchRecord): ProjectCard {
 
 function normalizeStage(status?: string): "live" | "upcoming" | "completed" {
   const normalized = String(status || "upcoming").toLowerCase();
-  if (normalized === "live" || normalized === "upcoming" || normalized === "completed") {
+  if (normalized === "settled" || normalized === "completed") {
+    return "completed";
+  }
+  if (normalized === "live" || normalized === "upcoming") {
     return normalized;
   }
   return "upcoming";

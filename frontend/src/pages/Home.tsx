@@ -204,18 +204,18 @@ const Home: React.FC = () => {
 
   const tweets = [
     {
-      month: "Mar 2026",
-      body: "Top players just got paid again. Skill is winning here. 🏆",
+      month: "Apr 2026",
+      body: "WORLD OF NADS\n\nFast matches. Real rewards.\nNo grind. No luck. Just skill.\n\nThis isn’t a game you play casually.\nIt’s a game you show up for.\n\nLearn more → worldofnads.xyz/faq",
       image: "/tweets/img1.jpg",
     },
     {
-      month: "Mar 2026",
-      body: "200K+ matches. No bots. Just players competing. 🚀",
+      month: "Apr 2026",
+      body: "Opening the first 100 player slots.\n\nNot everyone gets in.\nNot everyone stays.\n\nIf you’re early, you earn your position.\n\nJoin → Discord",
       image: "/tweets/img2.jpg",
     },
     {
-      month: "Mar 2026",
-      body: "More sponsors joining. More prize pools going live. 🎮",
+      month: "Apr 2026",
+      body: "The first players will understand this early.\n\nEveryone else will see it later.\n\nSomething bigger than just matches is coming.",
       image: "/tweets/img3.jpg",
     },
   ];

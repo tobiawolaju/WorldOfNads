@@ -259,7 +259,12 @@ export default function Dashboard() {
     (acc) => acc.type === "wallet" && acc.chainType === "ethereum"
   ) || []) as Wallet[];
 
-  const filteredMatches = matches.filter((match) => match.status === filter);
+  const filteredMatches = matches.filter((match) => {
+    if (filter === "completed") {
+      return match.status === "completed" || match.status === "settled";
+    }
+    return match.status === filter;
+  });
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
   const isLive = selectedMatchData?.status === "live";
   const isStartTimeReached = selectedMatchData?.startTime
