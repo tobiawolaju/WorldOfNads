@@ -190,6 +190,7 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
   const [introStartTime] = useState(Date.now());
   const [pendulumState, setPendulumState] = useState({
     baseAzimuth: 0,
+    baseDistance: baseDistance,
     startTime: 0
   });
 
@@ -199,19 +200,22 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
   useFrame(() => {
     if (isInteracting) {
       if (controls) {
-        // While interacting, capture the current angle continuously
+        // While interacting, continuously capture current state
         const currentAzimuth = (controls as any).getAzimuthalAngle();
+        // Use vector length to get camera distance from target (0,0,0)
+        const currentDistance = camera.position.length();
         setPendulumState({
           baseAzimuth: currentAzimuth,
+          baseDistance: currentDistance,
           startTime: Date.now()
         });
       }
-      setPhase('pendulum'); // If user interacts during intro, skip to pendulum
+      setPhase('pendulum'); // Transition immediately if interaction occurs
       wasInteracting.current = true;
       return;
     }
 
-    // If we just stopped interacting, reset the pendulum start time to avoid jumps
+    // On user interaction release
     if (wasInteracting.current && !isInteracting) {
       setPendulumState(prev => ({
         ...prev,
@@ -223,43 +227,45 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
     const now = Date.now();
 
     if (phase === 'intro') {
-      const duration = 5000; // 5 seconds
+      const duration = 5000;
       const elapsed = now - introStartTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // 360 Spin (0 to 2PI)
+      // 360 Spin
       const angle = progress * Math.PI * 2;
       
-      // Zoom out and back in using sine (0 -> 1 -> 0)
-      const zoomFactor = Math.sin(progress * Math.PI);
-      const distance = baseDistance + (zoomFactor * baseDistance * 1.2);
+      // Combined zoom logic: out (sine-based peak) and in (linear 70% target)
+      const zoomOutFactor = Math.sin(progress * Math.PI);
+      const finalZoomFactor = progress * 0.4; // Target 40% closer than start
+      
+      const distance = baseDistance + (zoomOutFactor * baseDistance * 1.2) - (finalZoomFactor * baseDistance);
 
       camera.position.x = Math.sin(angle) * distance;
       camera.position.z = Math.cos(angle) * distance;
-      camera.position.y = 2; // Keep at a slight height
+      camera.position.y = 2;
       camera.lookAt(0, 0, 0);
 
       if (progress >= 1) {
         setPhase('pendulum');
-        if (controls) {
-          setPendulumState({
-            baseAzimuth: (controls as any).getAzimuthalAngle(),
-            startTime: now
-          });
-        }
+        const finalDistance = camera.position.length();
+        const finalAzimuth = (controls as any)?.getAzimuthalAngle() || 0;
+        setPendulumState({
+          baseAzimuth: finalAzimuth,
+          baseDistance: finalDistance,
+          startTime: now
+        });
       }
     } else if (phase === 'pendulum') {
       const elapsed = (now - pendulumState.startTime) / 1000;
-      // Oscillate +/- 45 degrees (total 90 range)
+      // Oscillate +/- 45 degrees
       const oscillation = Math.sin(elapsed * 0.4) * (Math.PI / 4);
       const angle = pendulumState.baseAzimuth + oscillation;
 
-      camera.position.x = Math.sin(angle) * baseDistance;
-      camera.position.z = Math.cos(angle) * baseDistance;
+      camera.position.x = Math.sin(angle) * pendulumState.baseDistance;
+      camera.position.z = Math.cos(angle) * pendulumState.baseDistance;
       camera.lookAt(0, 0, 0);
     }
 
-    // Crucial: Update controls to reflect camera movement
     if (controls) (controls as any).update();
   });
 
@@ -279,7 +285,6 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
 
   useEffect(() => {
     const handleResize = () => {
-      // Adjusted values for better visibility with the chickens (radius 6)
       setCameraZ(window.innerWidth < 768 ? 10 : 8);
     };
     handleResize();

@@ -101,6 +101,11 @@ export default function Dashboard() {
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    isInitialMount.current = false;
+  }, []);
 
   useEffect(() => {
     if (authenticated && user) {
@@ -190,6 +195,7 @@ export default function Dashboard() {
   }, [authenticated, user]);
 
   useEffect(() => {
+    if (isInitialMount.current) return;
     if (!selectedMatch && !selectedReward && !selectedStore) return;
     window.scrollTo({
       top: document.body.scrollHeight,
