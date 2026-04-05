@@ -309,20 +309,20 @@ const Home: React.FC = () => {
           {[...Array(2)].map((_, i) => (
             <div key={i} className="stats-group">
               <div className="stat-item">
-                <span className="stat-num">200K+</span>
-                <span className="stat-label">Matches Completed</span>
+                <span className="stat-num">The First</span>
+                <span className="stat-label">Arena</span>
               </div>
               <div className="stat-item">
-                <span className="stat-num">$7.3K+</span>
-                <span className="stat-label">Paid to Players</span>
+                <span className="stat-num">100</span>
+                <span className="stat-label">Players</span>
               </div>
               <div className="stat-item">
-                <span className="stat-num">15K+</span>
-                <span className="stat-label">Players Competing</span>
+                <span className="stat-num">10</span>
+                <span className="stat-label">Sponsors</span>
               </div>
               <div className="stat-item">
-                <span className="stat-num">42+</span>
-                <span className="stat-label">Live Sponsors</span>
+                <span className="stat-num" style={{ fontSize: 'clamp(18px, 2vw, 28px)' }}>Real Matches. Real Rewards.</span>
+                <span className="stat-label" style={{ textTransform: 'none', letterSpacing: 'normal', fontSize: '13px' }}>Be early. Or compete later</span>
               </div>
             </div>
           ))}
@@ -371,9 +371,9 @@ const Home: React.FC = () => {
           onClick={handlePlay}
           disabled={!ready}
           className="play-btn-fixed"
-          title="Play"
+          title="Enter Arena"
         >
-          Play
+          Enter Arena
         </button>
       </div>
     </div>

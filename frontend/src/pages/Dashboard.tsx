@@ -525,7 +525,7 @@ export default function Dashboard() {
           ) : (
             <span>
               {canPlay
-                ? "PLAY"
+                ? "Enter Arena"
                 : isLive && selectedMatchData?.startTime
                   ? `Starts at ${formatLocalTime(selectedMatchData.startTime)}`
                   : "Not Live"}
