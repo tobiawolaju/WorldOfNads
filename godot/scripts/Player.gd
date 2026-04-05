@@ -70,6 +70,8 @@ var display_name: String = "" :
 		display_name = new_name.strip_edges()
 		_refresh_name_label()
 
+var last_input_was_touch := false
+
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
 	_play_idle()
@@ -91,8 +93,14 @@ func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
 
+	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+		last_input_was_touch = true
+
 	# --- 1. MOUSE CAMERA CONTROLS ---
-	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not DisplayServer.is_touchscreen_available():
+	# Skip mouse controls if we've detected touch or if touchscreen is explicitly reported.
+	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		if last_input_was_touch or DisplayServer.is_touchscreen_available():
+			return
 		cam_rot_y -= event.relative.x * 0.005
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.005, min_pitch, max_pitch)
 
@@ -123,32 +131,42 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if touch_joystick and touch_joystick.call("claims_touch", event.index):
 			return
+		
 		if event.pressed:
 			if _is_touch_on_joystick_area(event.position, size):
 				ignored_touch_indices[event.index] = true
 				return
+			
+			# Strictly claim camera if nothing else is active
 			if active_camera_index == -1:
 				active_camera_index = event.index
+				get_viewport().set_input_as_handled()
 		else:
 			if ignored_touch_indices.has(event.index):
 				ignored_touch_indices.erase(event.index)
 				return
+			
 			if event.index == active_camera_index:
 				active_camera_index = -1
+				get_viewport().set_input_as_handled()
 		return
 
 	if event is InputEventScreenDrag:
 		if ignored_touch_indices.has(event.index):
 			return
+		
 		if touch_joystick and touch_joystick.call("claims_touch", event.index):
 			return
-		# Claim camera on first valid drag too (some devices skip touch-start to _unhandled_input).
-		if active_camera_index == -1:
-			active_camera_index = event.index
-		elif event.index != active_camera_index:
+
+		# DO NOT claim camera during DRAG if a finger was already down but didn't claim it.
+		# This prevents "jumping" between fingers if one is lifted.
+		# We only orbit if the finger that started the "orbit session" is the one dragging.
+		if event.index != active_camera_index:
 			return
+
 		cam_rot_y -= event.relative.x * 0.0045
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.0045, min_pitch, max_pitch)
+		get_viewport().set_input_as_handled()
 
 func _physics_process(delta: float) -> void:
 	if not is_local:
