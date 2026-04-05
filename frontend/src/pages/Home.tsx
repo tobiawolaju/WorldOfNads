@@ -371,9 +371,9 @@ const Home: React.FC = () => {
           onClick={handlePlay}
           disabled={!ready}
           className="play-btn-fixed"
-          title="Enter Arena"
+          title="Play"
         >
-          Enter Arena
+          Play
         </button>
       </div>
     </div>
