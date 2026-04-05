@@ -366,7 +366,6 @@ const Careers: React.FC = () => {
             </div>
 
             <div className="careers-cta-wrapper" style={{ marginTop: "80px", textAlign: "center" }}>
-                <p style={{ marginBottom: "15px", color: "#555" }}>Don’t see your role? Send us a proposal anyway</p>
 
             </div>
             <Footer />
