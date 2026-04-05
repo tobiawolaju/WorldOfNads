@@ -151,7 +151,8 @@ export function normalizeMatchRecord(match, fallbackKey = "") {
     createdAt: String(match?.createdAt || new Date().toISOString()),
     startTime: Number(match?.startTime || 0),
     createdByWallet: String(match?.createdByWallet || ""),
-    depositTxHash: String(match?.depositTxHash || "")
+    depositTxHash: String(match?.depositTxHash || ""),
+    settleTxHash: String(match?.settleTxHash || "")
   };
 }
 

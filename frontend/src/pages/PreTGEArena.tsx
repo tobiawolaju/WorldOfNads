@@ -182,18 +182,6 @@ function PreTGEArena() {
                     Tx Hash
                   </a>
                 )}
-                {project.stage === "completed" && project.settleTxHash && (
-                  <a
-                    href={`https://monadexplorer.com/tx/${project.settleTxHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pretge-tx-link"
-                    title="View Settlement Transaction"
-                    style={{ marginLeft: '10px', color: '#6a38ff', fontWeight: 'bold', fontSize: '0.8rem', textDecoration: 'underline' }}
-                  >
-                    Tx Hash
-                  </a>
-                )}
                 <span className="pretge-handle">
                   {project.url ? (
                     <a
