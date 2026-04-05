@@ -364,23 +364,6 @@ const Careers: React.FC = () => {
                     </div>
                 ))}
             </div>
-
-            <div className="careers-cta-wrapper" style={{ marginTop: "80px", textAlign: "center" }}>
-                <p style={{ marginBottom: "15px", color: "#555" }}>Don’t see your role? Send us a proposal anyway</p>
-                <a
-                    href="mailto:careers@worldofnads.xyz?subject=General Application"
-                    className="careers-cta"
-                    style={{
-                        fontSize: "1.2rem",
-                        color: "#6a38ff",
-                        textDecoration: "none",
-                        fontWeight: "bold",
-                        borderBottom: "2px solid #6a38ff"
-                    }}
-                >
-                    careers@worldofnads.xyz
-                </a>
-            </div>
             <Footer />
         </div>
     );
