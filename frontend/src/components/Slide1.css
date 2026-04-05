@@ -21,11 +21,11 @@
 
 /* cards */
 .ps-card {
-  margin: 5px;
+  margin: 0px;
   position: absolute;
   left: 0;
-  width: calc(100% - 10px);
-  height: calc(33.333% - 10px);
+  width: calc(100% - 0px);
+  height: calc(33.333% - 0px);
   border-radius: 0px;
 
   background-size: cover;
