@@ -17,6 +17,7 @@ type MatchRecord = {
   url?: string;
   prize?: string;
   createdAt?: string;
+  settleTxHash?: string;
 };
 
 type ProjectCard = {
@@ -29,6 +30,7 @@ type ProjectCard = {
   xHandle: string;
   logo: string;
   url: string;
+  settleTxHash?: string;
 };
 
 const DEFAULT_LOGO = "/logo.jpg";
@@ -168,6 +170,30 @@ function PreTGEArena() {
               <p className="pretge-description">{project.description}</p>
               <div className="pretge-meta">
                 {renderStatusBadge(project.stage)}
+                {project.stage === "completed" && project.settleTxHash && (
+                  <a
+                    href={`https://monadexplorer.com/tx/${project.settleTxHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pretge-tx-link"
+                    title="View Settlement Transaction"
+                    style={{ marginLeft: '10px', color: '#6a38ff', fontWeight: 'bold', fontSize: '0.8rem', textDecoration: 'underline' }}
+                  >
+                    Tx Hash
+                  </a>
+                )}
+                {project.stage === "completed" && project.settleTxHash && (
+                  <a
+                    href={`https://monadexplorer.com/tx/${project.settleTxHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pretge-tx-link"
+                    title="View Settlement Transaction"
+                    style={{ marginLeft: '10px', color: '#6a38ff', fontWeight: 'bold', fontSize: '0.8rem', textDecoration: 'underline' }}
+                  >
+                    Tx Hash
+                  </a>
+                )}
                 <span className="pretge-handle">
                   {project.url ? (
                     <a
@@ -210,7 +236,8 @@ function mapMatchToProject(match: MatchRecord): ProjectCard {
     launchDate: status === "live" ? "Live Now" : status === "completed" ? "Completed" : "Upcoming",
     xHandle: handle,
     logo: match.image || DEFAULT_LOGO,
-    url
+    url,
+    settleTxHash: match.settleTxHash
   };
 }
 

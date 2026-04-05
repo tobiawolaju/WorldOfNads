@@ -44,6 +44,7 @@ type Match = {
   createdByWallet?: string;
   depositTxHash?: string;
   startTime?: number; // Unix timestamp in seconds
+  settleTxHash?: string;
 };
 
 type RewardItem = {
@@ -454,6 +455,19 @@ export default function Dashboard() {
                 Match Date: {selectedMatchData.date}
                 <br />
                 Start Time: {selectedMatchData.startTime ? `${formatLocalTime(selectedMatchData.startTime)} (24h Local)` : selectedMatchData.time}
+                {(selectedMatchData.status === "completed" || selectedMatchData.status === "settled") && selectedMatchData.settleTxHash && (
+                  <>
+                    <br />
+                    Settle Tx: <a 
+                      href={`https://monadexplorer.com/tx/${selectedMatchData.settleTxHash}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      style={{ color: '#5c00ff', textDecoration: 'underline' }}
+                    >
+                      {selectedMatchData.settleTxHash.slice(0, 10)}...
+                    </a>
+                  </>
+                )}
               </p>
               <a href={selectedMatchData.url} target="_blank" rel="noopener noreferrer" className="match-details-twitter">
                 Visit Sponsor -{'>'}
