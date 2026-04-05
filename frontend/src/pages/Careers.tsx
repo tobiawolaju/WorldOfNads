@@ -23,388 +23,211 @@ interface JobRole {
 
 const jobRoles: JobRole[] = [
     {
-        title: "Godot Game Artist",
-        category: "Art",
-        pay: "$18–$30/hr",
+        title: "Intern",
+        category: "General Support",
+        pay: "Negotiable",
         description: [
-            "Create stylized characters, props, and environment assets.",
-            "Work closely with animators and gameplay engineers.",
-            "Establish a unique and memorable visual identity for World of Nads."
+            "Learn the ropes of a fast-growing on-chain game studio.",
+            "Assist with testing, community, and basic production tasks.",
+            "Perfect for students or those looking to break into Web3 gaming."
         ],
         responsibilities: [
-            "Produce concept art, production art, and polished game assets.",
-            "Optimize assets for WebAssembly browser performance.",
-            "Collaborate with animator and game devs on fast iterations."
+            "Support daily operations and community engagement.",
+            "Assist in manual QA testing of new game builds.",
+            "Help with social media content and documentation."
         ],
         requirements: [
-            "Strong art fundamentals (shape, color, silhouette).",
-            "Experience with Godot, Blender, or similar tools.",
-            "Portfolio showing stylized game-ready assets."
+            "Fast learner with a passion for gaming/Web3.",
+            "Strong communication and organizational skills.",
+            "Independent thinker who gets things done."
         ],
         bonus: [
-            "Experience with shaders or VFX.",
-            "Worked on competitive arena-style games before.",
-            "Knowledge of asset compression for browser-based builds."
+            "Experience with Godot or basic coding.",
+            "Active in the Monad or general crypto ecosystem."
         ]
     },
     {
-        title: "Animator",
-        category: "Art",
-        pay: "$20–$32/hr",
-        description: [
-            "Create expressive gameplay animations for characters and abilities.",
-            "Ensure smooth transitions and responsive feel.",
-            "Work directly inside Godot, Rive, or Spine workflows."
-        ],
-        responsibilities: [
-            "Animate characters, weapons, abilities and effects.",
-            "Implement animations inside Godot animation tree.",
-            "Work with the designer on timing and hit feedback."
-        ],
-        requirements: [
-            "Strong understanding of motion and timing.",
-            "Experience animating for games (not just film).",
-            "Ability to work within tight, fast gameplay loops."
-        ],
-        bonus: [
-            "Experience with Rive state machines.",
-            "Knowledge of procedural animation.",
-            "Understanding of squash/stretch in stylized worlds."
-        ]
-    },
-    {
-        title: "UI/UX Designer",
-        category: "Design",
-        pay: "$18–$28/hr",
-        description: [
-            "Design clean, competitive-game style UI for gameplay and menus.",
-            "Own user flows for onboarding, matchmaking, and marketplace.",
-            "Work with engineers for pixel-perfect React/Godot UI."
-        ],
-        responsibilities: [
-            "Design wireframes, UI systems, and final assets.",
-            "Perform user testing to refine experience flow.",
-            "Ensure UI works seamlessly on web, mobile, and browser canvas."
-        ],
-        requirements: [
-            "Portfolio with UI/UX for games or apps.",
-            "Experience prototyping animations and flows.",
-            "Strong grasp of visual hierarchy and typography."
-        ],
-        bonus: [
-            "Experience designing for WebAssembly games.",
-            "Knowledge of gamification systems.",
-            "Familiarity with creator marketplaces."
-        ]
-    },
-    {
-        title: "Smart Contract Engineer",
+        title: "Security Researcher / Anti-Cheat",
         category: "Engineering",
-        pay: "$30–$55/hr",
+        pay: "Contract-based",
         description: [
-            "Build and deploy gas-optimized contracts on Monad.",
-            "Implement on-chain rewards and progression systems.",
-            "Work with CTO on rapid testnet deployment cycles."
+            "Protect the integrity of competitive browser-based arenas.",
+            "Research and patch exploits in WebAssembly and on-chain logic.",
+            "Build robust anti-cheat systems for high-stakes matches."
         ],
         responsibilities: [
-            "Develop Solidity smart contracts for gameplay rewards.",
-            "Write fuzz tests and ensure audit-grade safety.",
-            "Integrate contracts with the browser client."
+            "Perform security audits on game client and smart contracts.",
+            "Develop real-time detection for bots and memory tampering.",
+            "Investigate reports of unfair play and exploit attempts."
         ],
         requirements: [
-            "Deep experience writing Solidity.",
-            "Understanding of gas optimization techniques.",
-            "Ability to build fast and iterate with product team."
+            "Deep understanding of browser security and WebAssembly.",
+            "Experience with memory forensics or game security.",
+            "Proficient in networking and exploit analysis."
         ],
         bonus: [
-            "Experience with Monad.",
-            "Shipped a game or Web3 product before.",
+            "Experience securing high-stakes on-chain systems.",
+            "Background in competitive gaming anti-cheat."
+        ]
+    },
+    {
+        title: "Game Developer (Godot)",
+        category: "Engineering",
+        pay: "Contract-based",
+        description: [
+            "Ship fast, smooth, and responsive gameplay features in Godot.",
+            "Polish the browser-first experience for thousands of players.",
+            "Work directly on the core arena mechanics."
+        ],
+        responsibilities: [
+            "Implement gameplay systems and interactive UI in Godot.",
+            "Optimize performance for WebAssembly browser builds.",
+            "Integrate game logic with backend and on-chain systems."
+        ],
+        requirements: [
+            "Strong experience with Godot (GDScript/C#).",
+            "Understanding of performance optimization for web.",
+            "Portfolio of shipped game features or prototypes."
+        ],
+        bonus: [
+            "Knowledge of shading and VFX in Godot.",
+            "Familiarity with Web3 wallet integrations."
+        ]
+    },
+    {
+        title: "Artist (3D / 2D)",
+        category: "Art",
+        pay: "Contract-based",
+        description: [
+            "Define the visual identity of World of Nads arenas.",
+            "Create stylized assets, characters, and environment pieces.",
+            "Work closely with devs to ensure seamless asset integration."
+        ],
+        responsibilities: [
+            "Produce stylized characters, props, and environment assets.",
+            "Optimize assets for browser performance (WebAssembly).",
+            "Assist with basic animation and visual polish."
+        ],
+        requirements: [
+            "Strong art fundamentals and stylized portfolio.",
+            "Experience with Blender or similar 3D tools.",
+            "Understanding of asset compression for web builds."
+        ],
+        bonus: [
+            "Experience with Godot animations or shaders.",
+            "Worked on competitive or stylized games before."
+        ]
+    },
+    {
+        title: "Web3 Developer / Smart Contracts",
+        category: "Engineering",
+        pay: "Contract-based",
+        description: [
+            "Build and deploy the on-chain infrastructure for the WONs.",
+            "Implement high-stakes reward systems and progression.",
+            "Ensure secure, gas-efficient contracts on Monad."
+        ],
+        responsibilities: [
+            "Develop Solidity smart contracts for gameplay and rewards.",
+            "Integrate on-chain systems with the game client.",
+            "Write comprehensive tests and ensure contract safety."
+        ],
+        requirements: [
+            "Deep experience with Solidity and EVM environments.",
+            "Understanding of gas optimization techniques.",
+            "Ability to ship and iterate fast on testnet."
+        ],
+        bonus: [
+            "Experience with Monad or high-throughput chains.",
             "Knowledge of account abstraction."
+        ]
+    },
+    {
+        title: "Digital Marketer / Growth",
+        category: "Marketing",
+        pay: "Contract-based",
+        description: [
+            "Drive aggressive user acquisition and brand awareness.",
+            "Shape the narrative of World of Nads across social channels.",
+            "Master the art of hype and retention funnels."
+        ],
+        responsibilities: [
+            "Lead marketing campaigns and user growth experiments.",
+            "Create high-engagement social content (X, TikTok, etc.).",
+            "Analyze growth data and optimize player acquisition."
+        ],
+        requirements: [
+            "Proven track record in digital marketing or growth loops.",
+            "Deep understanding of gaming and Web3 culture.",
+            "Data-driven mindset with a focus on shipping fast."
+        ],
+        bonus: [
+            "Experience with video editing or viral content creation.",
+            "Contact list of creators and collaborators."
         ]
     },
     {
         title: "Community Manager",
         category: "Community",
-        pay: "$12–$20/hr",
+        pay: "Contract-based",
         description: [
-            "Shape the community culture and daily vibe.",
-            "Engage with players and creators on X and Discord.",
-            "Support onboarding and run hype events."
+            "Nurture the core culture of the WONs player base.",
+            "Manage daily engagement on X and Discord.",
+            "Run hype events and onboarding cycles."
         ],
         responsibilities: [
-            "Host events, challenges, and tournaments.",
-            "Respond and talk to the community daily.",
-            "Work with moderators and growth team."
+            "Lead community events, tournaments, and challenges.",
+            "Respond to community feedback and foster local culture.",
+            "Work with the growth team on onboarding new players."
         ],
         requirements: [
-            "Strong communication skills.",
-            "Good understanding of meme culture.",
-            "Experience running an online community."
+            "Exceptional communication and vibes management.",
+            "Experience running gaming or Web3 communities.",
+            "Deep understanding of hype cycles and meme culture."
         ],
         bonus: [
-            "Experience with gaming communities.",
-            "Has a personal following on X/TikTok.",
-            "Understands Web3 incentives."
-        ]
-    },
-    {
-        title: "Moderators",
-        category: "Community",
-        pay: "$8–$15/hr",
-        description: [
-            "Keep chats clean and troll-resistant.",
-            "Handle reports and maintain safe spaces.",
-            "Support players and escalate real issues."
-        ],
-        responsibilities: [
-            "Moderate Discord/X chats.",
-            "Enforce rules and remove harmful content.",
-            "Flag issues for community lead."
-        ],
-        requirements: [
-            "Active online presence.",
-            "Good judgment and calm conflict resolution.",
-            "Works well in fast communities."
-        ],
-        bonus: [
-            "Experience moderating large communities.",
-            "Gaming experience.",
-            "Simple bot-management skills."
-        ]
-    },
-    {
-        title: "Social Media Manager",
-        category: "Marketing",
-        pay: "$15–$25/hr",
-        description: [
-            "Drive hype across X, TikTok, and Instagram.",
-            "Post daily content that fits gaming culture.",
-            "Grow the online presence aggressively."
-        ],
-        responsibilities: [
-            "Create posting calendars.",
-            "Work with video editors and designers.",
-            "Track engagement and optimize content."
-        ],
-        requirements: [
-            "Experience running brand pages.",
-            "Strong sense of timing and trends.",
-            "Good with memes and short-form storytelling."
-        ],
-        bonus: [
-            "Worked with gaming creators.",
-            "Video editing or basic design skills.",
-            "Track record of viral posts."
-        ]
-    },
-    {
-        title: "Video Editor",
-        category: "Content",
-        pay: "$15–$30/hr",
-        description: [
-            "Edit gameplay highlights and memes.",
-            "Create fast-paced shorts for X and TikTok.",
-            "Work with social and community teams."
-        ],
-        responsibilities: [
-            "Edit weekly gameplay clips.",
-            "Create hype trailers for updates.",
-            "Maintain consistent style and pacing."
-        ],
-        requirements: [
-            "Good understanding of gaming pacing.",
-            "Experience editing short-form content.",
-            "Own equipment and editing tools."
-        ],
-        bonus: [
-            "Motion graphics skills.",
-            "Experience with OBS/game capture.",
-            "Knows TikTok editing style deeply."
-        ]
-    },
-    {
-        title: "Growth Lead",
-        category: "Growth",
-        pay: "$22–$40/hr",
-        description: [
-            "Lead user acquisition and retention loops.",
-            "Build growth funnels and partnerships.",
-            "Work directly with leadership on scaling."
-        ],
-        responsibilities: [
-            "Build campaigns that bring players in.",
-            "Run experiments and measure growth KPIs.",
-            "Manage creator partnerships."
-        ],
-        requirements: [
-            "Experience in growth marketing.",
-            "Data-driven mindset.",
-            "Understanding of gaming audiences."
-        ],
-        bonus: [
-            "Web3 or esports experience.",
-            "Track record of growing userbases.",
-            "Strong analytical tooling knowledge."
-        ]
-    },
-    {
-        title: "Anti-Cheat Engineer",
-        category: "Engineering",
-        pay: "$28–$45/hr",
-        description: [
-            "Build and maintain anti-cheat systems.",
-            "Detect suspicious activity in real-time.",
-            "Work closely with gameplay engineers."
-        ],
-        responsibilities: [
-            "Build anti-tamper systems for browser builds.",
-            "Create detection logic for unfair patterns.",
-            "Investigate reports of unusual behavior."
-        ],
-        requirements: [
-            "Experience in security or anti-cheat.",
-            "Strong understanding of networking.",
-            "Ability to patch exploits quickly."
-        ],
-        bonus: [
-            "Experience securing WebAssembly games.",
-            "Knowledge of bot detection.",
-            "Security research background."
+            "Has a personal following on X or Discord.",
+            "Experience with creator/KOL community management."
         ]
     },
     {
         title: "Partnership Manager",
         category: "Growth",
-        pay: "$18–$35/hr",
+        pay: "Contract-based",
         description: [
-            "Secure partnerships with creators and brands.",
-            "Manage communication and collab pipelines.",
-            "Coordinate co-marketing opportunities."
+            "Secure and coordinate partnerships with brands and creators.",
+            "Manage the pipeline for sponsor-backed arena matches.",
+            "Identify strategic growth opportunities."
         ],
         responsibilities: [
-            "Identify potential collaborators.",
-            "Pitch and negotiate partnership deals.",
-            "Maintain long-term partner relationships."
+            "Identify and pitch potential sponsors and collaborators.",
+            "Negotiate and manage partnership deliverables.",
+            "Maintain long-term relationships with core partners."
         ],
         requirements: [
-            "Strong communication and negotiation.",
-            "Experience in BD or partnerships.",
-            "Understanding of gaming culture."
+            "Strong communication and negotiation skills.",
+            "Experience in business development or partnerships.",
+            "Deeply networked in the gaming or Web3 ecosystem."
         ],
         bonus: [
-            "Web3 network.",
-            "Experience working with KOLs.",
-            "Has industry contacts."
-        ]
-    },
-    {
-        title: "QA Testers",
-        category: "Quality Assurance",
-        pay: "$10–$18/hr",
-        description: [
-            "Stress-test all gameplay and features.",
-            "Document reproducible bugs.",
-            "Ensure smooth browser performance."
-        ],
-        responsibilities: [
-            "Test new builds daily.",
-            "Write clear bug reports.",
-            "Test across devices and browsers."
-        ],
-        requirements: [
-            "Attention to detail.",
-            "Experience testing games.",
-            "Basic technical understanding."
-        ],
-        bonus: [
-            "Experience testing Godot games.",
-            "WebAssembly performance knowledge.",
-            "Competitive gamer."
-        ]
-    },
-    {
-        title: "Operations & Project Lead",
-        category: "Operations",
-        pay: "$18–$35/hr",
-        description: [
-            "Oversee team workflows and maintain structure.",
-            "Coordinate contractors, timelines, and deliverables.",
-            "Ensure smooth operations across the entire studio."
-        ],
-        responsibilities: [
-            "Manage sprints and cross-team communication.",
-            "Handle contractor onboarding and payouts.",
-            "Track milestone progress and deadlines."
-        ],
-        requirements: [
-            "Strong organizational skills.",
-            "Experience in project or operations roles.",
-            "Comfortable managing multiple teams."
-        ],
-        bonus: [
-            "Experience at a game studio.",
-            "Familiar with agile workflows.",
-            "Basic technical knowledge."
-        ]
-    },
-    {
-        title: "Technical Producer",
-        category: "Production",
-        pay: "$22–$40/hr",
-        description: [
-            "Bridge the gap between engineering and design.",
-            "Oversee feature production from start to finish.",
-            "Ensure teams ship on time with the right quality."
-        ],
-        responsibilities: [
-            "Lead feature planning and execution.",
-            "Break down tasks and manage pipelines.",
-            "Coordinate gameplay and art delivery."
-        ],
-        requirements: [
-            "Experience as a producer or similar role.",
-            "Strong communication skills.",
-            "Ability to manage technical discussions."
-        ],
-        bonus: [
-            "Experience with Godot or Unity.",
-            "Engineering background.",
-            "Worked on live games."
-        ]
-    },
-    {
-        title: "Community & Publishing Lead",
-        category: "Community",
-        pay: "$15–$28/hr",
-        description: [
-            "Lead all community communications and publishing efforts.",
-            "Manage creator cycles, update notes, and hype events.",
-            "Coordinate across teams to ensure smooth publishing."
-        ],
-        responsibilities: [
-            "Publish updates, devlogs, and patch notes.",
-            "Oversee Discord, X, TikTok operations.",
-            "Run creator campaigns and tournaments."
-        ],
-        requirements: [
-            "Experience managing online communities.",
-            "Strong writing and communication.",
-            "Understanding of gaming and content cycles."
-        ],
-        bonus: [
-            "Worked on game launches.",
-            "Social media management experience.",
-            "Web3 or esports background."
+            "Existing contact list of creators and brands.",
+            "Experience managing sponsorship pipelines."
         ]
     }
 ];
 
+
 const teamMembers: TeamMember[] = [
-    { name: "Tobi Awolaju", role: "Foundering ", imageUrl: "/pfps/pfp-tobi.png" },
-    { name: "Tobi-codex", role: "Game Dev", imageUrl: "/pfps/pfp-joshua.png" },
-    { name: "Tobi-clawbot", role: "Growth & Partnerships", imageUrl: "/pfps/pfp-spark.png" },
-    { name: "Tobi-gemini", role: "Security & SmartcontractsS", imageUrl: "/pfps/pfp-lone.png" },
-    { name: "Tobi-n8n", role: "Community & Content Lead", imageUrl: "/pfps/pfp-wisdom.png" },
+    {
+        name: "Tobi Awolaju",
+        role: "Technical Founder — Dev, Art, Growth & Security",
+        imageUrl: "/pfps/pfp-tobi.png"
+    },
+    {
+        name: "Codex (Tobi)",
+        role: "Code Review & QA Intern",
+        imageUrl: "/pfps/pfp-joshua.png"
+    }
 ];
 
 const Careers: React.FC = () => {
@@ -415,6 +238,17 @@ const Careers: React.FC = () => {
         setActiveIndex(activeIndex === i ? null : i);
     };
 
+    const hiringRoles = [
+        "Intern",
+        "Security Researcher / Anti-Cheat",
+        "Game Developer (Godot)",
+        "Artist (3D / 2D)",
+        "Web3 Developer / Smart Contracts",
+        "Digital Marketer / Growth",
+        "Community Manager",
+        "Partnership Manager"
+    ];
+
     return (
         <div className="careers-container">
             <div style={{ height: "60px" }} />
@@ -422,12 +256,13 @@ const Careers: React.FC = () => {
 
             <p className="careers-intro">
                 World of Nads is shaping fast, competitive, browser-first on-chain arenas.
-                We move fast and hire independent thinkers who ship.
+                <br />
+                We move fast and hire independent thinkers, contractors, and specialists who ship.
             </p>
 
             {/* TEAM SECTION */}
             <div className="team-section">
-                <h2>Meet the Team Shaping the WONs</h2>
+                <h2 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "40px" }}>Meet the Team</h2>
                 <div className="team-grid">
                     {teamMembers.map((m, i) => (
                         <div key={i} className="team-member-card">
@@ -440,7 +275,7 @@ const Careers: React.FC = () => {
             </div>
 
             {/* ROLES ACCORDION */}
-            <h2 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "30px", marginTop: "60px" }}>
+            <h2 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "30px", marginTop: "80px" }}>
                 Open Roles
             </h2>
 
@@ -456,7 +291,7 @@ const Careers: React.FC = () => {
                             <div style={{ textAlign: "left" }}>
                                 <h3 style={{ margin: 0, fontSize: "1.3rem" }}>{role.title}</h3>
                                 <span style={{ fontSize: "0.9rem", color: "#666", fontWeight: "normal" }}>
-                                    {role.category} • {role.pay}
+                                    {role.category}
                                 </span>
                             </div>
                             <span className="careers-icon">
@@ -465,7 +300,6 @@ const Careers: React.FC = () => {
                         </div>
 
                         {/* BODY: Collapsible Content */}
-                        {/* Inline style max-height adjusted because contents are long */}
                         <div
                             className="careers-answer"
                             style={activeIndex === index ? { maxHeight: "2000px" } : {}}
@@ -501,27 +335,29 @@ const Careers: React.FC = () => {
 
                                 {/* Apply Button Specific to this Role */}
                                 <div style={{ marginTop: "30px", textAlign: "left" }}>
-                                    <button
-                                        type="button"
-                                        className="apply-btn"
-                                        disabled
-                                        style={{
-                                            display: "inline-block",
-                                            background: "#6a38ff",
-                                            color: "white",
-                                            padding: "10px 25px",
-                                            borderRadius: "30px",
-                                            textDecoration: "none",
-                                            fontWeight: "bold",
-                                            fontSize: "1rem",
-                                            border: "none",
-                                            cursor: "not-allowed",
-                                            opacity: 0.6
-                                        }}
-                                        onClick={(e) => e.stopPropagation()} // Prevent closing accordion when clicking apply
-                                    >
-                                        Not hiring at the moment
-                                    </button>
+                                    {hiringRoles.includes(role.title) ? (
+                                        <a
+                                            href={`mailto:careers@worldofnads.xyz?subject=Application for ${role.title}`}
+                                            className="apply-btn"
+                                            style={{
+                                                display: "inline-block",
+                                                background: "#6a38ff",
+                                                color: "white",
+                                                padding: "10px 25px",
+                                                borderRadius: "30px",
+                                                textDecoration: "none",
+                                                fontWeight: "bold",
+                                                fontSize: "1rem"
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            Apply Now
+                                        </a>
+                                    ) : (
+                                        <span className="not-hiring" style={{ color: "#888", fontStyle: "italic" }}>
+                                            Not hiring at the moment
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -529,13 +365,20 @@ const Careers: React.FC = () => {
                 ))}
             </div>
 
-            <div className="careers-cta-wrapper">
-                <p style={{ marginBottom: "15px", color: "#555" }}>Don't see your role?</p>
+            <div className="careers-cta-wrapper" style={{ marginTop: "80px", textAlign: "center" }}>
+                <p style={{ marginBottom: "15px", color: "#555" }}>Don’t see your role? Send us a proposal anyway</p>
                 <a
                     href="mailto:careers@worldofnads.xyz?subject=General Application"
                     className="careers-cta"
+                    style={{
+                        fontSize: "1.2rem",
+                        color: "#6a38ff",
+                        textDecoration: "none",
+                        fontWeight: "bold",
+                        borderBottom: "2px solid #6a38ff"
+                    }}
                 >
-                    Email Us Anyway
+                    careers@worldofnads.xyz
                 </a>
             </div>
             <Footer />
