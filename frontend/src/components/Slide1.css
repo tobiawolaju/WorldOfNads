@@ -2,6 +2,8 @@
 .ps-root {
   width: 100%;
   max-width: 420px;
+  border-radius: 20px;
+  background-color: white;
 }
 
 /* frame */
