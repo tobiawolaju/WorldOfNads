@@ -16,6 +16,7 @@ type Host = {
 
 const Partners: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const hasHosts = false;
 
   const partners: Host[] = [
     {
@@ -122,25 +123,47 @@ const Partners: React.FC = () => {
       </div>
 
       <div className="partners-timeline">
-        {filteredPartners.length > 0 ? (
-          filteredPartners.map((partner, index) => (
-            <div
-              key={index}
-              className={`timeline-item ${index % 2 === 0 ? "left" : "right"}`}
-            >
-              <div className="timeline-content">
-                <img src={partner.logo} alt={partner.name} className="t-logo" />
+        {hasHosts ? (
+          filteredPartners.length > 0 ? (
+            filteredPartners.map((partner, index) => (
+              <div
+                key={index}
+                className={`timeline-item ${index % 2 === 0 ? "left" : "right"}`}
+              >
+                <div className="timeline-content">
+                  <img src={partner.logo} alt={partner.name} className="t-logo" />
 
-                <div className="t-info">
-                  <h2>{partner.name}</h2>
-                  <span className="t-handle">{partner.handle}</span>
-                  <p>{partner.bio}</p>
-                  <div className="host-stats">
-                    <p><strong>Matches Hosted:</strong> {partner.matchesHosted}</p>
-                    <p><strong>Total Paid Out:</strong> {partner.totalPaidOut}</p>
-                    <p><strong>Players Reached:</strong> {partner.playersReached}</p>
-                    <p><strong>Joined:</strong> {partner.joined}</p>
+                  <div className="t-info">
+                    <h2>{partner.name}</h2>
+                    <span className="t-handle">{partner.handle}</span>
+                    <p>{partner.bio}</p>
+                    <div className="host-stats">
+                      <p><strong>Matches Hosted:</strong> {partner.matchesHosted}</p>
+                      <p><strong>Total Paid Out:</strong> {partner.totalPaidOut}</p>
+                      <p><strong>Players Reached:</strong> {partner.playersReached}</p>
+                      <p><strong>Joined:</strong> {partner.joined}</p>
+                    </div>
+                    <div className="host-actions">
+                      <a href="#" className="host-action-link">View Merch</a>
+                      <a href="#" className="host-action-link">View Live Matches ({partner.liveMatches})</a>
+                    </div>
                   </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p style={{ marginTop: "40px", color: "#777" }}>
+              No matching hosts found.
+            </p>
+          )
+        ) : (
+          <div className="no-hosts">
+            No hosts at the moment.
+            <br />
+            Want to host? Reach out via <a href="https://x.com/worldofnads" target="_blank" rel="noopener noreferrer">X/DM</a> to join.
+          </div>
+        )}
+      </div>
                   <div className="host-actions">
                     <a href="#" className="host-action-link">View Merch</a>
                     <a href="#" className="host-action-link">View Live Matches ({partner.liveMatches})</a>

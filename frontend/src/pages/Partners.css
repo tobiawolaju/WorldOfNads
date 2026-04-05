@@ -332,3 +332,28 @@
   border-color: #7d5fff;
   background: white;
 }
+
+.no-hosts {
+  margin: 80px auto;
+  max-width: 600px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px dashed rgba(106, 56, 255, 0.3);
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  color: #4a5568;
+  font-size: 1.2rem;
+  line-height: 1.8;
+}
+
+.no-hosts a {
+  color: #6a38ff;
+  font-weight: bold;
+  text-decoration: underline;
+  transition: opacity 0.2s;
+}
+
+.timeline-item.left .timeline-content {
+  margin-right: auto;
+  margin-left: 0;
+}
