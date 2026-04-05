@@ -189,8 +189,7 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
   const [phase, setPhase] = useState<'intro' | 'pendulum'>('intro');
   const [introStartTime] = useState(Date.now());
   const [pendulumState, setPendulumState] = useState({
-    baseAzimuth: 0,
-    baseDistance: baseDistance,
+    basePosition: new THREE.Vector3(0, 2, baseDistance),
     startTime: 0
   });
 
@@ -199,28 +198,22 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
 
   useFrame(() => {
     if (isInteracting) {
-      if (controls) {
-        // While interacting, continuously capture current state
-        const currentAzimuth = (controls as any).getAzimuthalAngle();
-        // Use vector length to get camera distance from target (0,0,0)
-        const currentDistance = camera.position.length();
-        setPendulumState({
-          baseAzimuth: currentAzimuth,
-          baseDistance: currentDistance,
-          startTime: Date.now()
-        });
-      }
-      setPhase('pendulum'); // Transition immediately if interaction occurs
+      // While interacting, continuously capture the raw camera position
+      setPendulumState({
+        basePosition: camera.position.clone(),
+        startTime: Date.now()
+      });
+      setPhase('pendulum'); 
       wasInteracting.current = true;
       return;
     }
 
-    // On user interaction release
+    // On user interaction release, do a final state capture for absolute precision
     if (wasInteracting.current && !isInteracting) {
-      setPendulumState(prev => ({
-        ...prev,
+      setPendulumState({
+        basePosition: camera.position.clone(),
         startTime: Date.now()
-      }));
+      });
       wasInteracting.current = false;
     }
 
@@ -231,13 +224,10 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
       const elapsed = now - introStartTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // 360 Spin
+      // 360 Spin logic
       const angle = progress * Math.PI * 2;
-      
-      // Combined zoom logic: out (sine-based peak) and in (linear 70% target)
       const zoomOutFactor = Math.sin(progress * Math.PI);
-      const finalZoomFactor = progress * 0.4; // Target 40% closer than start
-      
+      const finalZoomFactor = progress * 0.4;
       const distance = baseDistance + (zoomOutFactor * baseDistance * 1.2) - (finalZoomFactor * baseDistance);
 
       camera.position.x = Math.sin(angle) * distance;
@@ -247,11 +237,8 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
 
       if (progress >= 1) {
         setPhase('pendulum');
-        const finalDistance = camera.position.length();
-        const finalAzimuth = (controls as any)?.getAzimuthalAngle() || 0;
         setPendulumState({
-          baseAzimuth: finalAzimuth,
-          baseDistance: finalDistance,
+          basePosition: camera.position.clone(),
           startTime: now
         });
       }
@@ -259,10 +246,16 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
       const elapsed = (now - pendulumState.startTime) / 1000;
       // Oscillate +/- 45 degrees
       const oscillation = Math.sin(elapsed * 0.4) * (Math.PI / 4);
-      const angle = pendulumState.baseAzimuth + oscillation;
 
-      camera.position.x = Math.sin(angle) * pendulumState.baseDistance;
-      camera.position.z = Math.cos(angle) * pendulumState.baseDistance;
+      // Create rotation matrix for the oscillation around the Y axis
+      const pivot = new THREE.Vector3(0, 0, 0);
+      const axis = new THREE.Vector3(0, 1, 0);
+      
+      // We apply the rotation to the captured base position
+      const newPos = pendulumState.basePosition.clone();
+      newPos.applyAxisAngle(axis, oscillation);
+      
+      camera.position.copy(newPos);
       camera.lookAt(0, 0, 0);
     }
 
