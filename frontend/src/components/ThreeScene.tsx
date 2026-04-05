@@ -26,23 +26,6 @@ interface ThreeSceneProps {
   onLogout: () => void;
 }
 
-// 🟢 HOOK — select object and orbit camera to it
-const useSelectToOrbit = () => {
-  const controlsRef = useRef<any>(null);
-
-  const onSelect = (obj: THREE.Object3D) => {
-    if (!obj || !controlsRef.current) return;
-
-    const center = new THREE.Vector3();
-    obj.getWorldPosition(center);
-
-    controlsRef.current.target.copy(center);
-    controlsRef.current.update();
-  };
-
-  return { controlsRef, onSelect };
-};
-
 // --- Shader Definition for Water Bubble Effect ---
 const vertexShader = `
   varying vec3 vNormal;
@@ -78,13 +61,11 @@ interface ChickenProps {
   position: [number, number, number];
   rotation: [number, number, number];
   scale?: number;
-  onSelect: (obj: THREE.Object3D) => void;
 }
 const Chicken: React.FC<ChickenProps> = ({
   position,
   rotation,
   scale = 6,
-  onSelect,
 }) => {
   const fbx = useFBX("/Chicken.fbx");
   const model = useMemo(() => fbx.clone(), [fbx]);
@@ -119,10 +100,6 @@ const Chicken: React.FC<ChickenProps> = ({
       position={position}
       rotation={rotation}
       scale={scale}
-      onClick={(e: any) => {
-        e.stopPropagation();
-        onSelect(model);
-      }}
     />
   );
 };
@@ -132,13 +109,11 @@ interface NadModelProps {
   position?: [number, number, number];
   rotation?: [number, number, number];
   scale?: number;
-  onSelect: (obj: THREE.Object3D) => void;
 }
 const NadModel: React.FC<NadModelProps> = ({
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
-  onSelect,
 }) => {
   const fbx = useFBX("/nad.fbx");
   const model = useMemo(() => SkeletonUtils.clone(fbx), [fbx]);
@@ -175,10 +150,6 @@ const NadModel: React.FC<NadModelProps> = ({
       position={position}
       rotation={rotation}
       scale={scale}
-      onClick={(e: any) => {
-        e.stopPropagation();
-        onSelect(model);
-      }}
     />
   );
 };
@@ -247,11 +218,7 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
       // Oscillate +/- 45 degrees
       const oscillation = Math.sin(elapsed * 0.4) * (Math.PI / 4);
 
-      // Create rotation matrix for the oscillation around the Y axis
-      const pivot = new THREE.Vector3(0, 0, 0);
       const axis = new THREE.Vector3(0, 1, 0);
-      
-      // We apply the rotation to the captured base position
       const newPos = pendulumState.basePosition.clone();
       newPos.applyAxisAngle(axis, oscillation);
       
@@ -285,7 +252,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const { controlsRef, onSelect } = useSelectToOrbit();
+  const controlsRef = useRef<any>(null);
 
   const chickenCount = 6;
   const radius = 6;
@@ -330,7 +297,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       <directionalLight position={[5, 5, 5]} intensity={1} />
 
       <Suspense fallback={null}>
-        <NadModel scale={0.5} position={[0, -2, 0]} onSelect={onSelect} />
+        <NadModel scale={0.5} position={[0, -2, 0]} />
 
         <CardRig>
           <group rotation={[-0.5, 1, 1]} position={[4, 0.5, 0]} scale={0.3}>
@@ -345,7 +312,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
         </CardRig>
 
         {chickens.map((data) => (
-          <Chicken key={data.key} {...data} onSelect={onSelect} />
+          <Chicken key={data.key} {...data} />
         ))}
       </Suspense>
 
