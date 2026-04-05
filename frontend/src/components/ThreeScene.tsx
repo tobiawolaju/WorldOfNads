@@ -104,7 +104,7 @@ const Chicken: React.FC<ChickenProps> = ({
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-    });
+      })
     shaderRef.current = bubbleMaterial;
     model.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -183,6 +183,89 @@ const NadModel: React.FC<NadModelProps> = ({
   );
 };
 
+// --- Camera Animation Logic ---
+const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }> = ({ isInteracting, baseDistance }) => {
+  const { camera, controls } = useThree();
+  const [phase, setPhase] = useState<'intro' | 'pendulum'>('intro');
+  const [introStartTime] = useState(Date.now());
+  const [pendulumState, setPendulumState] = useState({
+    baseAzimuth: 0,
+    startTime: 0
+  });
+
+  // Track if we were interacting in the previous frame
+  const wasInteracting = useRef(isInteracting);
+
+  useFrame(() => {
+    if (isInteracting) {
+      if (controls) {
+        // While interacting, capture the current angle continuously
+        const currentAzimuth = (controls as any).getAzimuthalAngle();
+        setPendulumState({
+          baseAzimuth: currentAzimuth,
+          startTime: Date.now()
+        });
+      }
+      setPhase('pendulum'); // If user interacts during intro, skip to pendulum
+      wasInteracting.current = true;
+      return;
+    }
+
+    // If we just stopped interacting, reset the pendulum start time to avoid jumps
+    if (wasInteracting.current && !isInteracting) {
+      setPendulumState(prev => ({
+        ...prev,
+        startTime: Date.now()
+      }));
+      wasInteracting.current = false;
+    }
+
+    const now = Date.now();
+
+    if (phase === 'intro') {
+      const duration = 5000; // 5 seconds
+      const elapsed = now - introStartTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // 360 Spin (0 to 2PI)
+      const angle = progress * Math.PI * 2;
+      
+      // Zoom out and back in using sine (0 -> 1 -> 0)
+      const zoomFactor = Math.sin(progress * Math.PI);
+      const distance = baseDistance + (zoomFactor * baseDistance * 1.2);
+
+      camera.position.x = Math.sin(angle) * distance;
+      camera.position.z = Math.cos(angle) * distance;
+      camera.position.y = 2; // Keep at a slight height
+      camera.lookAt(0, 0, 0);
+
+      if (progress >= 1) {
+        setPhase('pendulum');
+        if (controls) {
+          setPendulumState({
+            baseAzimuth: (controls as any).getAzimuthalAngle(),
+            startTime: now
+          });
+        }
+      }
+    } else if (phase === 'pendulum') {
+      const elapsed = (now - pendulumState.startTime) / 1000;
+      // Oscillate +/- 45 degrees (total 90 range)
+      const oscillation = Math.sin(elapsed * 0.4) * (Math.PI / 4);
+      const angle = pendulumState.baseAzimuth + oscillation;
+
+      camera.position.x = Math.sin(angle) * baseDistance;
+      camera.position.z = Math.cos(angle) * baseDistance;
+      camera.lookAt(0, 0, 0);
+    }
+
+    // Crucial: Update controls to reflect camera movement
+    if (controls) (controls as any).update();
+  });
+
+  return null;
+};
+
 // --- Main Scene Component ---
 export const ThreeScene: React.FC<ThreeSceneProps> = ({
   twitter,
@@ -192,10 +275,12 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
   onLogout,
 }) => {
   const [cameraZ, setCameraZ] = useState(22);
+  const [isInteracting, setIsInteracting] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
-      setCameraZ(window.innerWidth < 768 ? 5 : 4);
+      // Adjusted values for better visibility with the chickens (radius 6)
+      setCameraZ(window.innerWidth < 768 ? 10 : 8);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -269,14 +354,18 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       <OrbitControls
         ref={controlsRef}
         enableZoom={true}
-        enablePan={true}
+        enablePan={false}
         enableRotate={true}
+        onStart={() => setIsInteracting(true)}
+        onEnd={() => setIsInteracting(false)}
         mouseButtons={{
           LEFT: THREE.MOUSE.ROTATE,
           MIDDLE: null as any,
           RIGHT: null as any,
         }}
       />
+
+      <CameraAnimator isInteracting={isInteracting} baseDistance={cameraZ} />
     </Canvas>
   );
 };
