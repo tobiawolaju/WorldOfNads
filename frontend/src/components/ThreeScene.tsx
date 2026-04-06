@@ -219,9 +219,19 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
 
       // 360 Spin logic
       const angle = progress * Math.PI * 2;
-      const zoomOutFactor = Math.sin(progress * Math.PI);
-      const finalZoomFactor = progress * 0.4;
-      const distance = baseDistance + (zoomOutFactor * baseDistance * 1.2) - (finalZoomFactor * baseDistance);
+      
+      // Starts at the old end zoom (60% of baseDistance) 
+      const startDistance = baseDistance * 0.6;
+      // Ends even closer to the center (35% of baseDistance)
+      const endDistance = baseDistance * 0.35;
+      
+      // Smoothly interpolate between start and end distance
+      const currentBaseDist = startDistance - (startDistance - endDistance) * progress;
+      
+      // Add a pull-back effect during the middle of the 360 spin
+      const pullBackEffect = Math.sin(progress * Math.PI) * (baseDistance * 1.2);
+      
+      const distance = currentBaseDist + pullBackEffect;
 
       camera.position.x = Math.sin(angle) * distance;
       camera.position.z = Math.cos(angle) * distance;
