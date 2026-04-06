@@ -85,7 +85,7 @@ const Chicken: React.FC<ChickenProps> = ({
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      })
+    })
     shaderRef.current = bubbleMaterial;
     model.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -185,7 +185,7 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
   }, [gl.domElement]);
 
   const isInteracting = propIsInteracting || isWheelInteracting;
-  
+
   // Track if we were interacting in the previous frame
   const wasInteracting = useRef(isInteracting);
 
@@ -196,7 +196,7 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
         basePosition: camera.position.clone(),
         startTime: Date.now()
       });
-      setPhase('pendulum'); 
+      setPhase('pendulum');
       wasInteracting.current = true;
       return;
     }
@@ -219,18 +219,18 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
 
       // 360 Spin logic
       const angle = progress * Math.PI * 2;
-      
+
       // Starts at the old end zoom (60% of baseDistance) 
-      const startDistance = baseDistance * 0.6;
+      const startDistance = baseDistance * 0.45;
       // Ends even closer to the center (35% of baseDistance)
-      const endDistance = baseDistance * 0.35;
-      
+      const endDistance = baseDistance * 0.2;
+
       // Smoothly interpolate between start and end distance
       const currentBaseDist = startDistance - (startDistance - endDistance) * progress;
-      
+
       // Add a pull-back effect during the middle of the 360 spin
       const pullBackEffect = Math.sin(progress * Math.PI) * (baseDistance * 1.2);
-      
+
       const distance = currentBaseDist + pullBackEffect;
 
       camera.position.x = Math.sin(angle) * distance;
@@ -253,7 +253,7 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
       const axis = new THREE.Vector3(0, 1, 0);
       const newPos = pendulumState.basePosition.clone();
       newPos.applyAxisAngle(axis, oscillation);
-      
+
       camera.position.copy(newPos);
       camera.lookAt(0, 0, 0);
     }
