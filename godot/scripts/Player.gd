@@ -70,7 +70,7 @@ var display_name: String = "" :
 		display_name = new_name.strip_edges()
 		_refresh_name_label()
 
-var last_input_was_touch := false
+var active_touches: int = 0
 
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
@@ -93,13 +93,16 @@ func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
 
-	if event is InputEventScreenTouch or event is InputEventScreenDrag:
-		last_input_was_touch = true
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			active_touches += 1
+		else:
+			active_touches = max(0, active_touches - 1)
 
 	# --- 1. MOUSE CAMERA CONTROLS ---
-	# Skip mouse controls if we've detected touch or if touchscreen is explicitly reported.
+	# Skip mouse controls if we have an active touch (prevents emulated mouse double-rotation)
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		if last_input_was_touch or DisplayServer.is_touchscreen_available():
+		if active_touches > 0:
 			return
 		cam_rot_y -= event.relative.x * 0.005
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.005, min_pitch, max_pitch)

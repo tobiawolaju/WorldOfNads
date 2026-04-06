@@ -52,6 +52,7 @@ var afk_timer := 0.0
 var cam_noise = FastNoiseLite.new()
 var cam_noise_time: float = 0.0
 var current_framing_offset: Vector3 = Vector3.ZERO
+var active_touches: int = 0
 
 var player_id: String = "" :
 	set(new_id):
@@ -83,6 +84,13 @@ func _input(event: InputEvent) -> void:
 	var size = viewport.size
 	var portrait = size.y > size.x
 
+	# Track active touches 
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			active_touches += 1
+		else:
+			active_touches = max(0, active_touches - 1)
+
 	# Touch Zones
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
 		if portrait:
@@ -97,8 +105,10 @@ func _input(event: InputEvent) -> void:
 		cam_rot_y -= event.relative.x * 0.0045
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.0045, min_pitch, max_pitch)
 
-	# Mouse Camera Rotation
+	# Mouse Camera Rotation (prevent firing alongside emulated touches)
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		if active_touches > 0:
+			return
 		cam_rot_y -= event.relative.x * 0.005
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.005, min_pitch, max_pitch)
 
