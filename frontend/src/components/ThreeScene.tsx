@@ -221,9 +221,9 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
       const angle = progress * Math.PI * 2;
 
       // Starts at the old end zoom (60% of baseDistance) 
-      const startDistance = baseDistance * 0.45;
+      const startDistance = baseDistance * 0.5;
       // Ends even closer to the center (35% of baseDistance)
-      const endDistance = baseDistance * 0.2;
+      const endDistance = baseDistance * 0.3;
 
       // Smoothly interpolate between start and end distance
       const currentBaseDist = startDistance - (startDistance - endDistance) * progress;
