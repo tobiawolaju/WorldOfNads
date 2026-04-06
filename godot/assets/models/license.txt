@@ -1,11 +1,11 @@
 Model Information:
-* title:	Coconut Tree
-* source:	https://sketchfab.com/3d-models/coconut-tree-2b959f888db340259e0679839cd224e1
-* author:	gelmi.com.br (https://sketchfab.com/rodrigogelmi)
+* title:	Wood is from angry birds isle of pigs
+* source:	https://sketchfab.com/3d-models/wood-is-from-angry-birds-isle-of-pigs-8a5487cad69d468d8436c081b39e89f5
+* author:	alex.andain.777 (https://sketchfab.com/alex.andain.777)
 
 Model License:
 * license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
 * requirements:	Author must be credited. Commercial use is allowed.
 
 If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
-This work is based on "Coconut Tree" (https://sketchfab.com/3d-models/coconut-tree-2b959f888db340259e0679839cd224e1) by gelmi.com.br (https://sketchfab.com/rodrigogelmi) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+This work is based on "Wood is from angry birds isle of pigs" (https://sketchfab.com/3d-models/wood-is-from-angry-birds-isle-of-pigs-8a5487cad69d468d8436c081b39e89f5) by alex.andain.777 (https://sketchfab.com/alex.andain.777) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
