@@ -38,6 +38,10 @@ const Footer = () => {
             ))}
           </nav>
         </div>
+
+        <div className="footer-section">
+          <span style={{ color: "#ff4444", cursor: "pointer", fontWeight: "bold" }}>Log Out</span>
+        </div>
       </div>
     </footer>
   );
