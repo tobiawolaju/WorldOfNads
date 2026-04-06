@@ -19,6 +19,9 @@
   align-items: center;
   justify-content: center;
   border: none;
+  /* Fade out the right edge on desktop */
+  -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to right, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
 }
 
 .right-info-section {
@@ -84,6 +87,9 @@
   .left-3d-section {
     width: 100%;
     height: 50vh;
+    /* Fade out the bottom edge on mobile */
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%);
   }
 
   .right-info-section {
