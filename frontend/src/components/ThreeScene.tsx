@@ -235,8 +235,11 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
 
       camera.position.x = Math.sin(angle) * distance;
       camera.position.z = Math.cos(angle) * distance;
-      // Dynamically lower the camera height as it gets closer to prevent a top-down view
-      camera.position.y = Math.max(0.3, (distance / baseDistance) * 2);
+      
+      // Calculate a ratio (1.0 at origin distance, ~0.3 at closest zoom)
+      const heightRatio = distance / baseDistance;
+      // Slopes from ~1.8 (high) down to ~ -0.3 (low front view)
+      camera.position.y = (heightRatio * 3) - 1.2;
       camera.lookAt(0, 0, 0);
 
       if (progress >= 1) {
