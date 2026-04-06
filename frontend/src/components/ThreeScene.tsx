@@ -155,8 +155,8 @@ const NadModel: React.FC<NadModelProps> = ({
 };
 
 // --- Camera Animation Logic ---
-const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }> = ({ isInteracting, baseDistance }) => {
-  const { camera, controls } = useThree();
+const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }> = ({ isInteracting: propIsInteracting, baseDistance }) => {
+  const { camera, controls, gl } = useThree();
   const [phase, setPhase] = useState<'intro' | 'pendulum'>('intro');
   const [introStartTime] = useState(Date.now());
   const [pendulumState, setPendulumState] = useState({
@@ -164,6 +164,28 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
     startTime: 0
   });
 
+  const [isWheelInteracting, setIsWheelInteracting] = useState(false);
+  const wheelTimeout = useRef<any>(null);
+
+  useEffect(() => {
+    const handleWheel = () => {
+      setIsWheelInteracting(true);
+      if (wheelTimeout.current) clearTimeout(wheelTimeout.current);
+      wheelTimeout.current = setTimeout(() => {
+        setIsWheelInteracting(false);
+      }, 250);
+    };
+
+    const domElement = gl.domElement;
+    domElement.addEventListener('wheel', handleWheel, { passive: true });
+    return () => {
+      domElement.removeEventListener('wheel', handleWheel);
+      if (wheelTimeout.current) clearTimeout(wheelTimeout.current);
+    };
+  }, [gl.domElement]);
+
+  const isInteracting = propIsInteracting || isWheelInteracting;
+  
   // Track if we were interacting in the previous frame
   const wasInteracting = useRef(isInteracting);
 
