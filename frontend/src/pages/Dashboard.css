@@ -20,8 +20,8 @@
   justify-content: center;
   border: none;
   /* Fade out the right edge on desktop */
-  -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
-  mask-image: linear-gradient(to right, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0) 100%);
 }
 
 .right-info-section {
@@ -88,8 +88,8 @@
     width: 100%;
     height: 50vh;
     /* Fade out the bottom edge on mobile */
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%);
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 75%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 75%, rgba(0, 0, 0, 0) 100%);
   }
 
   .right-info-section {
@@ -99,7 +99,8 @@
     border-top: none;
   }
 
-  .play-fixed, .play-fixed.counting {
+  .play-fixed,
+  .play-fixed.counting {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
@@ -311,7 +312,7 @@
 }
 
 .match-card.selected {
-  transform: perspective(600px) rotateY(-6deg) translateY(4px) scale(1.08);
+  transform: perspective(600px) rotateY(-6deg) translateY(4px);
   box-shadow:
     0 0 40px #0000002c,
     inset 0 0 20px rgba(0, 0, 0, 0.25);
@@ -650,7 +651,7 @@
 
 /* --- MATCH DETAILS ON CARD --- */
 .match-card-overlay.selected-overlay {
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(183, 0, 255, 0.295);
   justify-content: space-between;
   text-align: center;
   align-items: center;
