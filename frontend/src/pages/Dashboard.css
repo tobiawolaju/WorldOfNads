@@ -99,7 +99,14 @@
     border-top: none;
   }
 
+  .play-fixed {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: 20px;
+  }
 }
+
 
 
 
@@ -495,31 +502,31 @@
 
 .ticket-action-bar {
   position: absolute;
-  bottom: -60px;
-  right: 0px;
+  bottom: -90px;
+  left: 0;
+  width: 100%;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 12px;
+  justify-content: center;
 }
 
 .ticket-action-button {
-  padding: 5px 10px;
+  padding: 10px 20px;
   border-radius: var(--radius-full);
   border: 3px solid #7c6dff;
-  background: transparent;
-  color: #7c6dff;
-  font-size: 1.1rem;
+  background: #7c6dff;
+  color: #ffffff;
+  font-size: 1.3rem;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: bold;
+  white-space: nowrap;
 }
 
 .ticket-action-button:hover {
-  background: #7c6dff;
-  color: #ffffff;
-  border: none;
-  font-weight: bold;
+  background: transparent;
+  color: #7c6dff;
 }
 
 
