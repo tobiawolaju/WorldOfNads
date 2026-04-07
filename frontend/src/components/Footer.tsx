@@ -1,8 +1,10 @@
 import { FaXTwitter } from "react-icons/fa6";
 import { NavLink } from "react-router-dom";
+import { usePrivy } from "@privy-io/react-auth";
 import "./footer.css";
 
 const Footer = () => {
+  const { authenticated, logout } = usePrivy();
   const navItems = [
     { to: "/", label: "WONs" },
     { to: "/nad-arena", label: "Nad Arena" },
@@ -39,9 +41,16 @@ const Footer = () => {
           </nav>
         </div>
 
-        <div className="footer-section">
-          <span style={{ color: "#ff4444", cursor: "pointer", fontWeight: "bold" }}>Log Out</span>
-        </div>
+        {authenticated && (
+          <div className="footer-section">
+            <span 
+              onClick={logout}
+              style={{ color: "#ff4444", cursor: "pointer", fontWeight: "bold", userSelect: "none" }}
+            >
+              Log Out
+            </span>
+          </div>
+        )}
       </div>
     </footer>
   );
