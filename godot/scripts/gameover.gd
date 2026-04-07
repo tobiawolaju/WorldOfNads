@@ -6,7 +6,7 @@ extends Node2D
 @onready var loser_bg: CanvasItem = get_node_or_null("LoserBg")
 @onready var lobby_countdown: Node = get_node_or_null("Node2/BoxContainer/LobbyCoundown")
 
-var countdown_time := 10
+var countdown_time := 15
 
 func _ready() -> void:
 	var did_win := false
