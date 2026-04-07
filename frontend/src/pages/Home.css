@@ -464,7 +464,7 @@ body,
   transform: translateY(0);
 }
 
-@media (min-width: 901px) {
+@media (min-width: 768px) {
   .footer-buttons {
     right: 30px;
     left: auto;
@@ -472,7 +472,7 @@ body,
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 767px) {
   .footer-buttons {
     left: 50%;
     transform: translateX(-50%) translateY(20px);
