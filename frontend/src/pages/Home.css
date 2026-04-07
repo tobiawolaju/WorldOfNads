@@ -464,15 +464,15 @@ body,
   transform: translateY(0);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 901px) {
   .footer-buttons {
-    left: 30px;
-    right: auto;
-    justify-content: flex-start;
+    right: 30px;
+    left: auto;
+    justify-content: flex-end;
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 900px) {
   .footer-buttons {
     left: 50%;
     transform: translateX(-50%) translateY(20px);
