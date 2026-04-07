@@ -390,15 +390,35 @@ export default function Dashboard() {
                     }, 600);
                   }}
                 >
-                  <div className="match-card-overlay">
-                    <h3 className="match-sponsor">{match.sponsor}</h3>
-                    <p className="match-reward">{match.prize}</p>
-                    <p className="match-time">
-                      {match.status === "upcoming" && match.startTime
-                        ? `${formatLocalTime(match.startTime)} (Local)`
-                        : match.time}
-                    </p>
-                  </div>
+                  {selectedMatch === match.matchId ? (
+                    <div className="match-card-overlay selected-overlay">
+                      <h3 className="match-sponsor">{match.sponsor}</h3>
+                      <div className="match-details-inner">
+                        <p className="match-desc">{match.description}</p>
+                        <p className="match-info">Prize: {match.prize}</p>
+                        <p className="match-info">Time: {match.startTime ? `${formatLocalTime(match.startTime)}` : match.time}</p>
+                      </div>
+                      <a 
+                        href={match.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="match-sponsor-btn"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Visit Sponsor
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="match-card-overlay">
+                      <h3 className="match-sponsor">{match.sponsor}</h3>
+                      <p className="match-reward">{match.prize}</p>
+                      <p className="match-time">
+                        {match.status === "upcoming" && match.startTime
+                          ? `${formatLocalTime(match.startTime)} (Local)`
+                          : match.time}
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -450,91 +470,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        <div className="match-details">
-          {tab === "events" && selectedMatchData && (
-            <div className="match-details-box">
-              <h2 className="match-details-title">{selectedMatchData.sponsor}</h2>
-              <p className="match-details-description">{selectedMatchData.description}</p>
-              <p className="match-details-description">
-                Match ID: {selectedMatchData.matchId}
-                <br />
-                Prize Deposited: {selectedMatchData.prize}
-                <br />
-                Match Date: {selectedMatchData.date}
-                <br />
-                Start Time: {selectedMatchData.startTime ? `${formatLocalTime(selectedMatchData.startTime)} (24h Local)` : selectedMatchData.time}
-                {(selectedMatchData.status === "completed" || selectedMatchData.status === "settled") && selectedMatchData.settleTxHash && (
-                  <>
-                    <br />
-                    Settle Tx: <a 
-                      href={`https://monadexplorer.com/tx/${selectedMatchData.settleTxHash}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      style={{ color: '#5c00ff', textDecoration: 'underline' }}
-                    >
-                      {selectedMatchData.settleTxHash.slice(0, 10)}...
-                    </a>
-                  </>
-                )}
-              </p>
-              <a href={selectedMatchData.url} target="_blank" rel="noopener noreferrer" className="match-details-twitter">
-                Visit Sponsor -{'>'}
-              </a>
-            </div>
-          )}
 
-          {tab === "rewards" && selectedReward && (
-            <div className="match-details-box">
-              {(() => {
-                const r = rewards.find((x) => x.id === selectedReward);
-                if (!r) return null;
-                return (
-                  <>
-                    <h2 className="match-details-title">Reward Detail</h2>
-                    <p className="match-details-description">
-                      Username: {r.username}
-                      <br />
-                      Reward: {r.amount}
-                      <br />
-                      Source: {r.source}
-                      <br />
-                      Type: {r.category}
-                      <br />
-                      Date: {r.date}
-                    </p>
-                  </>
-                );
-              })()}
-            </div>
-          )}
-
-          {tab === "store" && selectedStore && (
-            <div className="match-details-box">
-              {(() => {
-                const s = dummyStore.find((x) => x.id === selectedStore);
-                if (!s) return null;
-                return (
-                  <>
-                    <h2 className="match-details-title">{s.name}</h2>
-                    <p className="match-details-description">{s.description}</p>
-                    <p className="match-details-description">
-                      Price: {s.price}
-                      <br />
-                      Category: {s.category}
-                    </p>
-                    <button className="sponsor-dashboard__cta" style={{ width: '100%', marginTop: '10px', opacity: 0.5 }}>Not Yet Availiable</button>
-                  </>
-                );
-              })()}
-            </div>
-          )}
-
-          {((tab === "events" && !selectedMatchData) || (tab === "rewards" && !selectedReward) || (tab === "store" && !selectedStore)) && (
-            <div className="match-details-empty">
-              <p>Select an item to view details</p>
-            </div>
-          )}
-        </div>
       </div>
 
       {tab === "events" && (
