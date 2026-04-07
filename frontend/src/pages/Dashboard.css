@@ -103,11 +103,11 @@
 
 
 
-/* --- FIXED PLAY BUTTON (BOTTOM RIGHT) --- */
+/* --- FIXED PLAY BUTTON (BOTTOM LEFT) --- */
 .play-fixed {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  left: 20px;
   background: #ffd700;
   color: #000000;
   cursor: pointer;

@@ -466,9 +466,9 @@ body,
 
 @media (min-width: 768px) {
   .footer-buttons {
-    right: 30px;
-    left: auto;
-    justify-content: flex-end;
+    left: 30px;
+    right: auto;
+    justify-content: flex-start;
   }
 }
 

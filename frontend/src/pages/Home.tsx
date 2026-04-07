@@ -350,6 +350,16 @@ const Home: React.FC = () => {
 
       {/* FIXED BUTTONS */}
       <div className={`footer-buttons ${showFooterButtons ? "is-visible" : ""}`}>
+
+        <button
+          onClick={handlePlay}
+          disabled={!ready}
+          className="play-btn-fixed"
+          title="Play"
+        >
+          Play
+        </button>
+
         <a
           href="https://discord.gg/z4SUdrKayb"
           target="_blank"
@@ -359,14 +369,8 @@ const Home: React.FC = () => {
         >
           <FaDiscord size={28} />
         </a>
-        <button
-          onClick={handlePlay}
-          disabled={!ready}
-          className="play-btn-fixed"
-          title="Play"
-        >
-          Play
-        </button>
+
+
       </div>
     </div>
   );
