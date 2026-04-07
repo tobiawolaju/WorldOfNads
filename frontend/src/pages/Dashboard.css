@@ -99,11 +99,12 @@
     border-top: none;
   }
 
-  .play-fixed {
+  .play-fixed, .play-fixed.counting {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
     bottom: 20px;
+    width: 50vw;
   }
 }
 
