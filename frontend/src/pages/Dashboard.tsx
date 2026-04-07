@@ -398,15 +398,6 @@ export default function Dashboard() {
                         <p className="match-info">Prize: {match.prize}</p>
                         <p className="match-info">Time: {match.startTime ? `${formatLocalTime(match.startTime)}` : match.time}</p>
                       </div>
-                      <a 
-                        href={match.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="match-sponsor-btn"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Visit Sponsor
-                      </a>
                     </div>
                   ) : (
                     <div className="match-card-overlay">
