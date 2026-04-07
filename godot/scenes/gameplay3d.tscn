@@ -3825,7 +3825,7 @@ shape = SubResource("CylinderShape3D_a1hl4")
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.005, 9.994387, 0)
 billboard = 1
 outline_modulate = Color(0.5058824, 0.47058824, 0.9647059, 0.49019608)
-text = "Kizzy.io "
+text = "Gmonad"
 font = ExtResource("26_1v67w")
 font_size = 400
 outline_size = 127
@@ -3835,7 +3835,8 @@ uppercase = true
 transform = Transform3D(-0.5, 0, -7.54979e-08, 0, 0.5, 0, 7.54979e-08, 0, -0.5, 0.26932108, 11.372416, 0.005)
 billboard = 1
 outline_modulate = Color(0.5058824, 0.47058824, 0.9647059, 0.49019608)
-text = "Earn  on "
+text = "gmonad
+"
 font = ExtResource("26_1v67w")
 font_size = 400
 outline_size = 127
@@ -3845,147 +3846,147 @@ uppercase = true
 transform = Transform3D(1, 0, 0, 0, 2.220446e-16, 1, 0, -1, 2.220446e-16, 0, 0, 0)
 
 [node name="Wood_Long_2x2x1_Broken_Geo_����������������_006_0" type="MeshInstance3D" parent="woods" unique_id=112302235]
-transform = Transform3D(-0.05980724, -0.38350365, -0.096685335, 0.17285605, 0.062605046, -0.35524836, 0.35573006, -0.094897665, 0.15636674, -15.537805, 12.785158, -0.4785509)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_luj06")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x2x1_Whole_Geo_����������������_017_0" type="MeshInstance3D" parent="woods" unique_id=1213721727]
-transform = Transform3D(0.24142237, -0.31892827, 1.3940798e-08, 0, -1.7484556e-08, -0.4, 0.31892827, 0.24142237, -1.0552907e-08, -10.5311575, -3.8502612, -0.36801672)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_02ito")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x2x1_Halfbroken_Geo_����������������_021_0" type="MeshInstance3D" parent="woods" unique_id=1010983562]
-transform = Transform3D(0.5, 0, 0, 0, -2.1855694e-08, -0.5, 0, 0.5, -2.1855694e-08, 14.083553, -8.898337, 6.144285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_3nxqx")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x4x1_Broken_Geo_����������������_027_0" type="MeshInstance3D" parent="woods" unique_id=2116690048]
-transform = Transform3D(0.5, 0, 0, 0, -2.1855694e-08, -0.5, 0, 0.5, -2.1855694e-08, -9.777327, -22.858425, 6.144285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_2turr")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x6x1_Broken_Geo_����������������_019_0" type="MeshInstance3D" parent="woods" unique_id=348818027]
-transform = Transform3D(0.4, 0, 0, 0, -1.7484556e-08, -0.4, 0, 0.4, -1.7484556e-08, -14.188363, 3.8151178, 0.99992275)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_3xvgw")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x4x1_Whole_Geo_����������������_003_0" type="MeshInstance3D" parent="woods" unique_id=1392050178]
-transform = Transform3D(0.4, 0, 0, 0, -1.7484556e-08, -0.4, 0, 0.4, -1.7484556e-08, -13.266563, 10.777173, 0.4277134)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_r7gtb")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x6x1_Halfbroken_Geo_����������������_023_0" type="MeshInstance3D" parent="woods" unique_id=2054729456]
-transform = Transform3D(0.05231288, 0.39331117, -0.050692316, -0.39650008, 0.05279653, 0.000461644, 0.0071448707, 0.0501884, 0.39677462, -12.155789, 10.746529, 1.7715721)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_88tlw")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x6x1_Whole_Geo_����������������_013_0" type="MeshInstance3D" parent="woods" unique_id=759471560]
-transform = Transform3D(0.4, 0, 0, 0, -1.7484556e-08, -0.4, 0, 0.4, -1.7484556e-08, -14.413408, 7.059102, 0.8610344)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_n460p")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x8x1_Broken_Geo_����������������_005_0" type="MeshInstance3D" parent="woods" unique_id=1210974610]
-transform = Transform3D(0.4, 0, 0, 0, -1.7484556e-08, -0.4, 0, 0.4, -1.7484556e-08, -10.44352, 4.122568, 0.9009342)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_ux25i")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x8x1_Halfbroken_Geo_����������������_012_0" type="MeshInstance3D" parent="woods" unique_id=1371252499]
-transform = Transform3D(0.5, 0, 0, 0, -2.1855694e-08, -0.5, 0, 0.5, -2.1855694e-08, 26.103252, 21.78571, 1.0636783)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_fhhpa")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x8x1_Whole_Geo_����������������_007_0" type="MeshInstance3D" parent="woods" unique_id=978005266]
-transform = Transform3D(-0.016247753, -0.38628128, 0.10258069, -0.39909846, 0.010192886, -0.024830515, 0.021364924, -0.10335809, -0.38582465, -12.572556, 2.0057526, 2.2423635)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_ya4tj")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x10x1_Broken_Geo_����������������_020_0" type="MeshInstance3D" parent="woods" unique_id=153229301]
-transform = Transform3D(0.4, 0, 0, 0, 0.30035815, -0.26416847, 0, 0.26416847, 0.30035815, -10.229477, -0.3995905, 1.1120338)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_qndl3")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x10x1_Halfbroken_Geo_����������������_009_0" type="MeshInstance3D" parent="woods" unique_id=1752644802]
-transform = Transform3D(0.4, 0, 0, 0, -1.7484556e-08, -0.4, 0, 0.4, -1.7484556e-08, -16.263988, 7.9520516, 2.7336183)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_rhfwe")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x10x1_Whole_Geo_����������������_015_0" type="MeshInstance3D" parent="woods" unique_id=1822508990]
-transform = Transform3D(-0.03890116, 6.68687e-08, 0.3981039, 0.3981039, -1.7401673e-08, 0.03890116, 2.382236e-08, 0.4, -6.485936e-08, -17.244562, 6.0659714, 2.0973997)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_qe2ye")
 skeleton = NodePath("")
 
 [node name="Wood_Platform_8x1x8_Geo_����������������_018_1" type="MeshInstance3D" parent="woods" unique_id=307741439]
-transform = Transform3D(0.0022414343, 0.029858714, -0.3988777, 0.3988777, -0.029942725, 1.7604247e-08, -0.029858714, -0.39775857, -0.029942725, -12.700823, 5.1138225, 2.7752604)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_uaviq")
 skeleton = NodePath("")
 
 [node name="Wood_Platform_8x1x8_Geo_����������������_018_0" type="MeshInstance3D" parent="woods" unique_id=272483121]
-transform = Transform3D(0.029942736, 0.3988777, -1.7435498e-08, 0, -1.7484556e-08, -0.4, -0.3988777, 0.029942736, -1.3088386e-09, -10.710795, 2.3956313, 4.0280094)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_uaviq")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x4x1_Halfbroken_Geo_����������������_002_0" type="MeshInstance3D" parent="woods" unique_id=1710271878]
-transform = Transform3D(0.5, 0, 0, 0, -2.1855694e-08, -0.5, 0, 0.5, -2.1855694e-08, 14.181303, 1.3643054e-15, 6.144285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_awxt2")
 skeleton = NodePath("")
 
 [node name="Wood_Ramp_4x4x4_Whole_Geo_����������������_016_0" type="MeshInstance3D" parent="woods" unique_id=137265800]
-transform = Transform3D(0.37662348, 3.808515e-09, 0.13473955, 0.13473955, -2.1951859e-08, -0.37662348, 3.808515e-09, 0.4, -2.1951859e-08, -12.1502495, 13.045082, 0.51910496)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_xg4hq")
 skeleton = NodePath("")
 
 [node name="Wood_Ramp_4x4x4_Broken_Geo_����������������_001_0" type="MeshInstance3D" parent="woods" unique_id=631086497]
-transform = Transform3D(0.5, 0, 0, 0, -2.1855694e-08, -0.5, 0, 0.5, -2.1855694e-08, 0, 1.3643054e-15, 6.144285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_j0afn")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x2x2_Broken_Geo_����������������_024_0" type="MeshInstance3D" parent="woods" unique_id=1654782914]
-transform = Transform3D(0.5, 0, 0, 0, -2.1855694e-08, -0.5, 0, 0.5, -2.1855694e-08, 7.077927, -16.82257, 6.144285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_sd725")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x2x2_HalfBroken_Geo_����������������_025_0" type="MeshInstance3D" parent="woods" unique_id=1372594223]
-transform = Transform3D(0.5, 0, 0, 0, -2.1855694e-08, -0.5, 0, 0.5, -2.1855694e-08, 6.7922215, -22.744423, 6.144285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_aqakx")
 skeleton = NodePath("")
 
 [node name="Wood_Ramp_4x4x4_HalfBroken_Geo_����������������_0" type="MeshInstance3D" parent="woods" unique_id=884344010]
-transform = Transform3D(0.5, 0, 0, 0, -2.1855694e-08, -0.5, 0, 0.5, -2.1855694e-08, 6.7075357, 1.3643054e-15, 6.144285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_2wjmg")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x2x2_Whole_Geo_����������������_011_0" type="MeshInstance3D" parent="woods" unique_id=1631412566]
-transform = Transform3D(0.5, 0, 0, 0, -2.1855694e-08, -0.5, 0, 0.5, -2.1855694e-08, 7.0537744, 21.710949, 6.144285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_annkn")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x4x2_Broken_Geo_����������������_010_0" type="MeshInstance3D" parent="woods" unique_id=1624731320]
-transform = Transform3D(0.4, 0, 0, 0, 0.39989176, 0.009305258, 0, -0.009305258, 0.39989176, -10.72232, 10.648346, 0.5786023)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_c06gw")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x4x2_HalfBroken_Geo_����������������_014_0" type="MeshInstance3D" parent="woods" unique_id=1212293583]
-transform = Transform3D(0.5, 0, 0, 0, -2.1855694e-08, -0.5, 0, 0.5, -2.1855694e-08, 0, 29.507412, 6.144285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_lpnps")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x4x2_Whole_Geo_����������������_026_0" type="MeshInstance3D" parent="woods" unique_id=2140464779]
-transform = Transform3D(0.5, 0, 0, 0, -2.1855694e-08, -0.5, 0, 0.5, -2.1855694e-08, 0, -22.951767, 6.144285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_fb8dt")
 skeleton = NodePath("")
 
 [node name="Wood_Square_4x2x4_Broken_Geo_����������������_008_0" type="MeshInstance3D" parent="woods" unique_id=1645443489]
-transform = Transform3D(0.4, 0, 0, 0, -1.7484556e-08, -0.4, 0, 0.4, -1.7484556e-08, -16.576897, 7.3157406, -0.25899744)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_uwhy4")
 skeleton = NodePath("")
 
 [node name="Wood_Square_4x2x4_HalfBroken_Geo_����������������_004_0" type="MeshInstance3D" parent="woods" unique_id=8956992]
-transform = Transform3D(0.4, 0, 0, 0, -1.7484556e-08, -0.4, 0, 0.4, -1.7484556e-08, -15.942426, 6.71868, 3.6913457)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_0byrt")
 skeleton = NodePath("")
 
 [node name="Wood_Square_4x2x4_Whole_Geo_����������������_022_0" type="MeshInstance3D" parent="woods" unique_id=1022096082]
-transform = Transform3D(0.0025411737, -0.39999193, 1.7484203e-08, 0, -1.7484556e-08, -0.4, 0.39999193, 0.0025411737, -1.1107822e-10, -13.861767, 1.4679682, 0.5118544)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.111071, 20.023216, -4.446047e-15)
 mesh = SubResource("ArrayMesh_8mg2d")
 skeleton = NodePath("")
 
