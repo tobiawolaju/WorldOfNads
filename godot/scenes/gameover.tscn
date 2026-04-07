@@ -29,6 +29,7 @@ size_flags_vertical = 4
 [node name="Congrats" type="Label" parent="Node2/Winner/BoxContainer" unique_id=2030613253]
 modulate = Color(1, 1, 1, 0.7176471)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.4745098, 0.14901961, 1, 1)
 theme_override_fonts/font = ExtResource("1_ncp31")
 theme_override_font_sizes/font_size = 60
 text = "Congratulations"
@@ -40,6 +41,7 @@ size_flags_vertical = 4
 
 [node name="Countdown" type="Label" parent="Node2/Winner/BoxContainer2" unique_id=1201116873]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.4745098, 0.14901961, 1, 1)
 theme_override_fonts/font = ExtResource("1_ncp31")
 theme_override_font_sizes/font_size = 120
 text = "You won"
@@ -52,6 +54,7 @@ size_flags_vertical = 4
 [node name="Countdown" type="Label" parent="Node2/Winner/BoxContainer3" unique_id=2142499783]
 modulate = Color(1, 1, 1, 0.7176471)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.4745098, 0.14901961, 1, 1)
 theme_override_fonts/font = ExtResource("1_ncp31")
 theme_override_font_sizes/font_size = 30
 text = "you outplayed other nads"
@@ -76,8 +79,9 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 
 [node name="Congrats" type="Label" parent="Node2/Loser/BoxContainer" unique_id=1598761661]
-modulate = Color(1, 1, 1, 0.7176471)
+modulate = Color(1, 1, 1, 0.7058824)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.8784314, 0, 0.65882355, 1)
 theme_override_fonts/font = ExtResource("1_ncp31")
 theme_override_font_sizes/font_size = 60
 text = "You almost made it"
@@ -89,6 +93,7 @@ size_flags_vertical = 4
 
 [node name="Countdown" type="Label" parent="Node2/Loser/BoxContainer2" unique_id=1206262197]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.8784314, 0, 0.65882355, 1)
 theme_override_fonts/font = ExtResource("1_ncp31")
 theme_override_font_sizes/font_size = 120
 text = "You Tried"
@@ -101,10 +106,30 @@ size_flags_vertical = 4
 [node name="Countdown" type="Label" parent="Node2/Loser/BoxContainer3" unique_id=811400797]
 modulate = Color(1, 1, 1, 0.7176471)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.8784314, 0, 0.65882355, 1)
 theme_override_fonts/font = ExtResource("1_ncp31")
 theme_override_font_sizes/font_size = 30
 text = "you got outplayed"
 horizontal_alignment = 1
+
+[node name="BoxContainer" type="BoxContainer" parent="Node2" unique_id=1329528941]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -115.0
+offset_top = -58.0
+offset_right = 115.0
+offset_bottom = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="LobbyCoundown" type="Label" parent="Node2/BoxContainer" unique_id=826638092]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "Returning to Lobby >> 8"
 
 [node name="LoserBg" type="ColorRect" parent="." unique_id=314910917]
 anchors_preset = 8
@@ -118,7 +143,7 @@ offset_right = 1262.0
 offset_bottom = 1251.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.87758064, 5.0826075e-05, 0.6595774, 1)
+color = Color(1, 0.89674956, 0.9532617, 1)
 metadata/_edit_use_anchors_ = true
 
 [node name="WinnerBg" type="ColorRect" parent="." unique_id=1614391081]
@@ -133,5 +158,5 @@ offset_right = 1255.0
 offset_bottom = 1255.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.4745098, 0.14901961, 1, 1)
+color = Color(0.9412752, 0.934846, 1, 1)
 metadata/_edit_use_anchors_ = true
