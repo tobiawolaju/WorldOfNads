@@ -26,6 +26,9 @@
 [ext_resource type="Texture2D" uid="uid://w7rqhhcc2l3y" path="res://assets/models/telephone_poles_8.png" id="24_fhcis"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="26_1v67w"]
 [ext_resource type="Texture2D" uid="uid://32apeyeuqkoo" path="res://assets/models/textures/.006_baseColor.png" id="26_4n2wh"]
+[ext_resource type="Texture2D" uid="uid://bpgvj4u80ry1k" path="res://assets/models/ladder/textures/lambert1_baseColor.png" id="27_4ha07"]
+[ext_resource type="Texture2D" uid="uid://bbybaaa87606x" path="res://assets/models/ladder/textures/lambert1_metallicRoughness.png" id="28_2k23a"]
+[ext_resource type="Texture2D" uid="uid://comosaa7b0nr1" path="res://assets/models/ladder/textures/lambert1_normal.png" id="29_2btq0"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_kxttn"]
 size = Vector3(17.716457, 1, 50.13232)
@@ -682,7 +685,7 @@ blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_p813l")
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_4ha07"]
-size = Vector3(8.206665, 9.66748, 2)
+size = Vector3(3.871399, 9.66748, 2)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gxev6"]
 resource_name = "Wire"
@@ -2179,46 +2182,6 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_hy0rk")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qdtkf"]
-resource_name = "material_0"
-cull_mode = 2
-albedo_texture = ExtResource("26_4n2wh")
-roughness = 0.82111454
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_jc42q"]
-_surfaces = [{
-"aabb": AABB(-0.9999997, -2, -0.5000011, 2.0000026, 4, 1.0000052),
-"format": 34896613377,
-"index_count": 60,
-"index_data": PackedByteArray("CAABAAIAAQADAAIAAwAIAAIABQADAAEAAwAJAAgAAwAFAAkACgABAAgABQABAAoACAAEAAoACAAJAAQACgALAAUACQAFAAsAAAALAAoACgAEAAAACwAGAAkABgAEAAkABwAGAAsABgAHAAQABwALAAAABAAHAAAA"),
-"lods": [0.18923338, PackedByteArray("AAABAAIAAQADAAIAAgAEAAAABQADAAEABQABAAAAAwAGAAIAAwAFAAYAAgAGAAQAAAAHAAUABgAFAAcABAAHAAAABgAHAAQA")],
-"name": "material_0",
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 12,
-"vertex_data": PackedByteArray("//8F9QAAAAD//wAAAAAAAP//AAD+/wAAAAAAAP7/AAD//wX1/v8AAAAAAAAAAAAAAAD/////AAAAAP//AAAAAHLuWHT+/wAAdAepwf7/AABy7lh0AAAAAHQHqcEAAAAA")
-}]
-blend_shape_mode = 0
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_r7gtb"]
-resource_name = "Sketchfab_Scene_Wood_Long_2x4x1_Whole_Geo_����������������_003_0"
-_surfaces = [{
-"aabb": AABB(-0.9999997, -2, -0.5000011, 2.0000026, 4, 1.0000052),
-"attribute_data": PackedByteArray("4xQxQeMUTi24EA4tuBB1QccEzkHUAKgt1AAtQccEUC3HBFAtxwTOQbgQDi24EHVBuBAwJ8cEUC24EA4txwRRJ7gQdUHHBK1HuBBjR8cEzkHjFDFBBB89QgQfLi3jFE4tuBCyNuMUuzbjFE4tuBCyNscE0TzUALc81ACoLccE0TzUALc8xwTRPMcEzkHUALc84xS7NrgQsja4EHVB4xS7NrgQsjbHBNE8xwRQLccE0Ty4ELI2uBB1QccE0TzHBK1HuBB1QeMUuzYEHxs9BB8bPeMUMUE="),
-"format": 34896613399,
-"index_count": 60,
-"index_data": PackedByteArray("GAABAAIAGQAaABsAHAAFAB0ABwAeAB8AIAAEACEABgAiACMAJAADAAAAJQAmACcACAAoAAoAKAApAAsAKgArACwACQAtAC4ADAANAA4ADwANAAwAEAARABIAEwAvADAAMQAyABYAFAAyADEAFgAXADEAFQAzADQA"),
-"lods": [0.18923338, PackedByteArray("AAABAAIAAgADAAAABAAFAAYABwAFAAQACAAJAAoACgAJAAsADAANAA4ADwANAAwAEAARABIAEwARABAAFAAVABYAFgAXABQA")],
-"material": SubResource("StandardMaterial3D_qdtkf"),
-"name": "material_0",
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 53,
-"vertex_data": PackedByteArray("//8F9QAA/j///wAAAAD9P///AAD+//0///8F9f7//j8AAP/////7PwAAAAAAAPs/AAD//wAA8D8AAAAA/v/5PwAAAAD+/wJ/AAD/////4n3//wAA/v8Cf///BfX+/5l+//8AAAAA/j8AAAAA/v//P///AAD+//4/AAAAAAAA/z///wX1/v/2PwAA//8AAPY///8F9QAA9j8AAP/////3P///BfUAAAAAAAD//wAAAAAAAAAAAAAAAP//AAAAAAAAcu5YdP7//T9y7lh0AADzP///AAAAAPM/cu5YdP7/8z90B6nB/v/7P3QHqcEAAPs/AAAAAAAA+T90B6nB/v/5P3QHqcEAAPs/dAepwf7/+z8AAP/////wP3QHqcEAAPA/cu5YdAAA/j9y7lh0/v/xP///BfX+//E/cu5YdAAA8T9y7lh0/v+ZfnQHqcH+/5l+AAAAAP7/sn90B6nB/v+yf3LuWHT+/7J///8F9f7/4n10B6nB/v/ifQAA//8AAPc///8F9f7/9z9y7lh0AAAAAHQHqcEAAAAAdAepwQAAAAD//wX1AAAAANt4Kwj4iEQH+IhEB9t4KwjHeDH77n9y/e10mPAOiND6//////x//n///////3//fyoBVYLjAMWBXgG8gq8AXYHm9YF55vWBeeb1gXnm9TV5an9q/yJ/Iv9UgKr/w4A7//iIRAf2iOcE9ojnBPaI5wTuf3L97n9y/Q6I0PoOiND6x3gx+8d4MfvtdJjw7XSY8Nt4KwhUfCkIVHwpCFR8KQj/f/9//3//f/9//3//f/9//3//f/x//n/8f/5/5vU1eeb1NXn5f/j/qH+o/yJ/Iv8ifyL/")
-}]
-blend_shape_mode = 0
-shadow_mesh = SubResource("ArrayMesh_jc42q")
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o8iqd"]
 resource_name = ".023"
 cull_mode = 2
@@ -2373,6 +2336,9 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_wsd0t")
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_4n2wh"]
+size = Vector3(1.7980957, 8.416077, 0.7375488)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ggrx4"]
 resource_name = ".007"
 cull_mode = 2
@@ -2450,6 +2416,9 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_quurv")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1v67w"]
+size = Vector3(1.7042236, 9.859375, 0.583374)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_20rmy"]
 resource_name = ".009"
@@ -2566,6 +2535,9 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_l58ft")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_a1hl4"]
+size = Vector3(7.8970337, 1.0509644, 7.6881714)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o67nu"]
 resource_name = ".002"
@@ -3064,6 +3036,57 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_g72jy")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fhcis"]
+size = Vector3(57.625076, 309.07596, 11.588867)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cdu35"]
+resource_name = "lambert1"
+cull_mode = 2
+albedo_texture = ExtResource("27_4ha07")
+metallic = 1.0
+metallic_texture = ExtResource("28_2k23a")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("28_2k23a")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("29_2btq0")
+ao_enabled = true
+ao_texture = ExtResource("28_2k23a")
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_5k431"]
+_surfaces = [{
+"aabb": AABB(-44.60349, -149.90205, -3.8551548, 84.76117, 299.8041, 10.624937),
+"format": 34896613377,
+"index_count": 432,
+"index_data": PackedByteArray("AAABAAIAAAADAAEAAgABAAQAAwAEAAEABQAAAAIABQADAAAAAgAEAAYABQACAAYAAwAHAAQABQAHAAMABwAGAAQABwAFAAYACAAJAAoACAALAAkACgAJAAwACwAMAAkADQAIAAoADQALAAgACgAMAA4ADQAKAA4ACwAPAAwADQAPAAsADwAOAAwADwANAA4AIAAhACIAIAAjACEAIgAhACQAIwAkACEAJQAgACIAJQAjACAAIgAkACYAJQAiACYAIwAnACQAJQAnACMAJwAmACQAJwAlACYAEAARABIAEAATABEAEgARABQAEwAUABEAFQAQABIAFQATABAAEgAUABYAFQASABYAEwAXABQAFQAXABMAFwAWABQAFwAVABYAGAAZABoAGAAbABkAGgAZABwAGwAcABkAHQAYABoAHQAbABgAGgAcAB4AHQAaAB4AGwAfABwAHQAfABsAHwAeABwAHwAdAB4AKAApACoAKAArACkAKgApACwAKwAsACkALQAoACoALQArACgAKgAsAC4ALQAqAC4AKwAvACwALQAvACsALwAuACwALwAtAC4AMAAxADIAMAAzADEAMgAxADQAMwA0ADEANQAwADIANQAzADAAMgA0ADYANQAyADYAMwA3ADQANQA3ADMANwA2ADQANwA1ADYAOAA5ADoAOAA7ADkAOgA5ADwAOwA8ADkAPQA4ADoAPQA7ADgAOgA8AD4APQA6AD4AOwA/ADwAPQA/ADsAPwA+ADwAPwA9AD4AQABBAEIAQABDAEEAQgBBAEQAQwBEAEEARQBAAEIARQBDAEAAQgBEAEYARQBCAEYAQwBHAEQARQBHAEMARwBGAEQARwBFAEYASABJAEoASABLAEkASgBJAEwASwBMAEkATQBIAEoATQBLAEgASgBMAE4ATQBKAE4ASwBPAEwATQBPAEsATwBOAEwATwBNAE4AUABRAFIAUABTAFEAUgBRAFQAUwBUAFEAVQBQAFIAVQBTAFAAUgBUAFYAVQBSAFYAUwBXAFQAVQBXAFMAVwBWAFQAVwBVAFYAWABZAFoAWABbAFkAWgBZAFwAWwBcAFkAXQBYAFoAXQBbAFgAWgBcAF4AXQBaAF4AWwBfAFwAXQBfAFsAXwBeAFwAXwBdAF4A"),
+"lods": [37.931274, PackedByteArray("AAABAAIAAAADAAEAAgABAAQAAwAEAAEABQAAAAIABQADAAAAAgAEAAYABQACAAYAAwAHAAQABQAHAAMABwAGAAQABwAFAAYACAAJAAoACAALAAkACgAJAAwACwAMAAkADQAIAAoADQALAAgACgAMAA4ADQAKAA4ACwAPAAwADQAPAAsADwAOAAwADwANAA4AEAARABIAEAATABEAEgARABQAEwAUABEAFQAQABIAFQATABAAEgAUABYAFQASABYAEwAXABQAFQAXABMAFwAWABQAFwAVABYAGAAZABoAGAAbABkAGgAZABwAGwAcABkAHQAYABoAHQAbABgAGgAcAB4AHQAaAB4AGwAfABwAHQAfABsAHwAeABwAHwAdAB4A"), 56.89691, PackedByteArray("AAABAAIAAAADAAEAAgABAAQAAwAEAAEABQAAAAIABQADAAAAAgAEAAYABQACAAYAAwAHAAQABQAHAAMABwAGAAQABwAFAAYACAAJAAoACAALAAkACgAJAAwACwAMAAkADQAIAAoADQALAAgACgAMAA4ADQAKAA4ACwAPAAwADQAPAAsADwAOAAwADwANAA4A")],
+"name": "lambert1",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 96,
+"vertex_data": PackedByteArray("TegAAMW5AAAdxv//xbkAACHyIgDFuQAASbzc/8W5AAAdxv//AAAAAE3oAAAAAAAAIfIiAAAAAABJvNz/AAAAAB8IVgDFuQAAPFKo/8W5AABoESYAxbkAAPNI2P/FuQAAPFKo/wAAAAAfCFYAAAAAAGgRJgAAAAAA80jY/wAAAAAsADsQ//8AANL/sBL//wAAp/5vDP//AABXAX0W//8AANL/sBLFwwAALAA7EMXDAACn/m8MxcMAAFcBfRbFwwAAYAJ6H///AACe/Vwt//8AAP//gSb//wAAAABVJv//AACe/VwtxcMAAGACeh/FwwAA//+BJsXDAAAAAFUmxcMAAOQN5jj//wAAGvJBPv//AAAa8uY4//8AAOQNQT7//wAAGvJBPsXDAADkDeY4xcMAABry5jjFwwAA5A1BPsXDAABbDtJU//8AAKPxA03//wAA8+3oR///AAALEu1Z//8AAKPxA03FwwAAWw7SVMXDAADz7ehHxcMAAAsS7VnFwwAAoRBZa///AABd70xu//8AADLuC2j//wAAzBGbcf//AABd70xuxcMAAKEQWWvFwwAAMu4LaMXDAADMEZtxxcMAAMcSS3v//wAAN+1EiP//AACX72mB//8AAGcQJoL//wAAN+1EiMXDAADHEkt7xcMAAJfvaYHFwwAAZxAmgsXDAACmHEOU//8AAFjjnpn//wAAWONDlP//AACmHJ6Z//8AAFjjnpnFwwAAphxDlMXDAABY40OUxcMAAKYcnpnFwwAA0RxZr///AAAt4zap//8AAH3fG6T//wAAgSB0tP//AAAt4zapxcMAANEcWa/FwwAAfd8bpMXDAACBIHS0xcMAACMlVcf//wAAr+DOyv//AACE34zE//8AAE4mls3//wAAr+DOysXDAAAjJVXHxcMAAITfjMTFwwAATiaWzcXDAAA5JwbY//8AAJjeBuT//wAA+eAr3f//AADZJOHe//8AAJjeBuTFwwAAOScG2MXDAAD54CvdxcMAANkk4d7FwwAA")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_860g3"]
+resource_name = "Sketchfab_Scene_ladder_lambert1_0"
+_surfaces = [{
+"aabb": AABB(-44.60349, -149.90205, -3.8551548, 84.76117, 299.8041, 10.624937),
+"attribute_data": PackedByteArray("DghwAA0JyFkKCXAACgjHWQoIx1lUCVNdDQnIWcAHVF3AB1RdVQmY8FQJU13BB5rwwQea8FgJYPRVCZjwvwdg9AoJcABhC8VZWwtyAA0JyFnCBW8ACgjHWQ4IcAC/BcdZMwIgABQDoVQSAyAAMQKgVDECoFR3A4BYFAOhVM4BgFjOAYBYdwO3+3cDgFjNAbf7zQG3+4ED1/93A7f7xAHe/xIDIABCBZ9UQAUjABQDoVQFACQAMQKgVDMCIAADAJ5UdA25A9cN8wCKDekA7Q2tA+0NrQPxDfQA1w3zAAEOrQMBDq0DHw4DAfEN9AAyDqUDMg6lA0UO+gAfDgMBSw6pA4oN6QAJDsUAbg2rANcN8wBjDf4D7Q2tA3QNuQMVDukDzhnQAzUa+wDxGfsATxrEA08axANPGvkANRr7AGUawwNlGsMDkxr9AE8a+QCpGsIDqRrCA6sa/QCTGv0AvhrBA/EZ+wBAGuMA7BnaADUa+wDZGeoDTxrEA84Z0ANKGt4DuBvWAw0cAQHSG/8ALBzFAywcxQMqHP0ADRwBAUUcxQNFHMUDYhz+ACoc/QCAHMMDgBzDA34c+wBiHP4AmRzCA9Ib/wAUHOQA0RvhAA0cAQHMG/EDLBzFA7gb1gMgHOEDKhLNA38SBAE+Ev0AmxK9A5sSvQObEgcBfxIEAbMSvQOzEr0DyxIHAZsSBwHpEroD6RK6A+0SCQHLEgcBAhO6Az4S/QCVEuAANBLVAH8SBAEsEvwDmxK9AyoSzQOlEu4D/BXRA2oW/QAfFvMAhRbBA4UWwQOGFvUAahb9AJ4WvgOeFr4DzBb+AIYW9QDkFsQD5BbEA+cW+QDMFv4A/Ra6Ax8W8wB1FtwAHBbUAGoW/QAJFvIDhRbBA/wV0QOAFuMDExTZA4YU+AA0FPQAohTNA6IUzQOfFPAAhhT4AL0UzQO9FM0D8BTuAJ8U8AAMFc4DDBXOAwoV8QDwFO4AJRXGAzQU9ACHFNcANBTXAIYU+AAjFPgDohTNAxMU2QOXFOwD5RfWA0YYAgEBGP4AYhjHA2IYxwNmGP4ARhgCAX0YxgN9GMYDqBgBAWYY/gDBGMUDwRjFA8cY/wCoGAEB3RjEAwEY/gBPGOAA/hfbAEYYAgH1F/YDYhjHA+UX1gNaGOgDAgzAA3EM8gAYDO4Afgy1A34MtQOJDPkAcQzyAK8MsAOvDLADvgwBAYkM+QDFDLQDxQy0A+sM9gC+DAEB+AyxAxgM7gCZDLwABAynAHEM8gD0CxAEfgy1AwIMwAOjDP0D0g7YA0kP+wDuDvQAaQ/IA2kPyANtD/kASQ/7AIkPyAOJD8gDvw/+AG0P+QDYD8YD2A/GA+EP/AC/D/4A9w/EA+4O9ABYD9QA6A7LAEkP+wDZDgUEaQ/IA9IO2ANqD/UDQRDkA8MQ/wBjEAEB6hDVA+oQ1QPgEPgAwxD/AAkR1AMJEdQDQhHxAOAQ+ABpEdEDaRHRA2ER/ABCEfEAhxHPA2MQAQHEENsAYxDYAMMQ/wBUEAcE6hDVA0EQ5APeEPkD"),
+"format": 34896613399,
+"index_count": 432,
+"index_data": PackedByteArray("AAABAAIAAAADAAEABAAFAAYABAAHAAUACAAJAAoACAALAAkADAANAA4ADAAPAA0AEAARABIAEAATABEAFAAVABYAFAAXABUAGAAZABoAGAAbABkAHAAdAB4AHAAfAB0AIAAhACIAIAAjACEAJAAlACYAJAAnACUAKAApACoAKAArACkALAAtAC4ALAAvAC0AYABhAGIAYABjAGEAZABlAGYAZABnAGUAaABpAGoAaABrAGkAbABtAG4AbABvAG0AcABxAHIAcABzAHEAdAB1AHYAdAB3AHUAMAAxADIAMAAzADEANAA1ADYANAA3ADUAOAA5ADoAOAA7ADkAPAA9AD4APAA/AD0AQABBAEIAQABDAEEARABFAEYARABHAEUASABJAEoASABLAEkATABNAE4ATABPAE0AUABRAFIAUABTAFEAVABVAFYAVABXAFUAWABZAFoAWABbAFkAXABdAF4AXABfAF0AeAB5AHoAeAB7AHkAfAB9AH4AfAB/AH0AgACBAIIAgACDAIEAhACFAIYAhACHAIUAiACJAIoAiACLAIkAjACNAI4AjACPAI0AkACRAJIAkACTAJEAlACVAJYAlACXAJUAmACZAJoAmACbAJkAnACdAJ4AnACfAJ0AoAChAKIAoACjAKEApAClAKYApACnAKUAqACpAKoAqACrAKkArACtAK4ArACvAK0AsACxALIAsACzALEAtAC1ALYAtAC3ALUAuAC5ALoAuAC7ALkAvAC9AL4AvAC/AL0AwADBAMIAwADDAMEAxADFAMYAxADHAMUAyADJAMoAyADLAMkAzADNAM4AzADPAM0A0ADRANIA0ADTANEA1ADVANYA1ADXANUA2ADZANoA2ADbANkA3ADdAN4A3ADfAN0A4ADhAOIA4ADjAOEA5ADlAOYA5ADnAOUA6ADpAOoA6ADrAOkA7ADtAO4A7ADvAO0A8ADxAPIA8ADzAPEA9AD1APYA9AD3APUA+AD5APoA+AD7APkA/AD9AP4A/AD/AP0AAAEBAQIBAAEDAQEBBAEFAQYBBAEHAQUBCAEJAQoBCAELAQkBDAENAQ4BDAEPAQ0BEAERARIBEAETAREBFAEVARYBFAEXARUBGAEZARoBGAEbARkBHAEdAR4BHAEfAR0B"),
+"lods": [37.931274, PackedByteArray("AAABAAIAAAADAAEABAAFAAYABAAHAAUACAAJAAoACAALAAkADAANAA4ADAAPAA0AEAARABIAEAATABEAFAAVABYAFAAXABUAGAAZABoAGAAbABkAHAAdAB4AHAAfAB0AIAAhACIAIAAjACEAJAAlACYAJAAnACUAKAApACoAKAArACkALAAtAC4ALAAvAC0AMAAxADIAMAAzADEANAA1ADYANAA3ADUAOAA5ADoAOAA7ADkAPAA9AD4APAA/AD0AQABBAEIAQABDAEEARABFAEYARABHAEUASABJAEoASABLAEkATABNAE4ATABPAE0AUABRAFIAUABTAFEAVABVAFYAVABXAFUAWABZAFoAWABbAFkAXABdAF4AXABfAF0A"), 56.89691, PackedByteArray("AAABAAIAAAADAAEABAAFAAYABAAHAAUACAAJAAoACAALAAkADAANAA4ADAAPAA0AEAARABIAEAATABEAFAAVABYAFAAXABUAGAAZABoAGAAbABkAHAAdAB4AHAAfAB0AIAAhACIAIAAjACEAJAAlACYAJAAnACUAKAApACoAKAArACkALAAtAC4ALAAvAC0A")],
+"material": SubResource("StandardMaterial3D_cdu35"),
+"name": "lambert1",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 288,
+"vertex_data": PackedByteArray("TegAAMW56oEdxv//xbnqgSHyIgDFuf2BSbzc/8W514FJvNz/xbkFwB3G//8AAAXAHcb//8W5BMBJvNz/AAAFwEm83P8AAP//IfIiAAAA//8dxv//AAD//03oAAAAAP//TegAAAAABcAh8iIAxbkFwCHyIgAAAAbATegAAMW5BcAh8iIAxbkFwB3G//8AAAXAIfIiAAAABMAdxv//xbkGwE3oAAAAAAXASbzc/8W5BcBN6AAAxbkFwEm83P8AAAXAHwhWAMW574I8Uqj/xbnvgmgRJgDFueWC80jY/8W5+YLzSNj/xbkMwDxSqP8AAAzAPFKo/8W5DMDzSNj/AAAMwPNI2P8AAP//aBEmAAAA//88Uqj/AAD//x8IVgAAAP//HwhWAAAACcBoESYAxbkJwGgRJgAAAAzAHwhWAMW5B8BoESYAxbkMwDxSqP8AAAzAaBEmAAAADsA8Uqj/xbkLwB8IVgAAAAzA80jY/8W5DMAfCFYAxbkKwPNI2P8AAA7ALAA7EP//Br3S/7AS//8Gvaf+bwz//1y3VwF9Fv//8sVXAX0W///Y09L/sBLFw9jT0v+wEv//89JXAX0WxcOH1FcBfRbFw///p/5vDMXD///S/7ASxcP//ywAOxDFw///LAA7EMXDP9Wn/m8M//8/1af+bwzFwx/eLAA7EP//x8+n/m8M///I0dL/sBLFw8jRp/5vDMXD1NDS/7AS//9i0iwAOxDFwwjWVwF9Fv//CNYsADsQ//+D1VcBfRbFw+DWYAJ6H///uMae/Vwt//+4xv//gSb//1XEAABVJv//McsAAFUm///k2J79XC3Fw+TYnv1cLf//ttkAAFUmxcMz2AAAVSbFw/////+BJsXD//+e/VwtxcP//2ACeh/Fw///YAJ6H8XDutf//4Em//+61///gSbFw0TXYAJ6H///Jdj//4Em///i1p79XC3Fw+LW//+BJsXDutWe/Vwt///a12ACeh/FwxTbAABVJv//FNtgAnof//9G2wAAVSbFw+za5A3mOP//48Ia8kE+///jwhry5jj//4++5A1BPv//JsvkDUE+//+b1xryQT7Fw5vXGvJBPv//n9nkDUE+xcPs1eQNQT7Fw///GvLmOMXD//8a8kE+xcP//+QN5jjFw///5A3mOMXDdtca8uY4//921xry5jjFw3DY5A3mOP//odYa8uY4//+o1BryQT7Fw6jUGvLmOMXDp9Qa8kE+//+p1OQN5jjFw/Xa5A1BPv//9drkDeY4//862+QNQT7Fw8vaWw7SVP//27ij8QNN///buPPt6Ef//wuzCxLtWf//w8ILEu1Z//+hz6PxA03Fw6HPo/EDTf//Ks4LEu1ZxcPq0AsS7VnFw///8+3oR8XD//+j8QNNxcP//1sO0lTFw///Ww7SVMXDHdDz7ehH//8d0PPt6EfFw+XOWw7SVP//DNHz7ehH///VzqPxA03Fw9XO8+3oR8XDc86j8QNN//8dz1sO0lTFw5/TCxLtWf//n9NbDtJU///F0wsS7VnFw3bToRBZa///kL1d70xu//+QvTLuC2j//524zBGbcf//gMbMEZtx//+R2V3vTG7Fw5HZXe9Mbv//AdzMEZtxxcNv18wRm3HFw///Mu4LaMXD//9d70xuxcP//6EQWWvFw///oRBZa8XDptsy7gto//+m2zLuC2jFw6zYoRBZa///V94y7gto////0V3vTG7Fw//RMu4LaMXDHdJd70xu///k0aEQWWvFw6jXzBGbcf//qNehEFlr///M18wRm3HFw4vXxxJLe///2sQ37USI///axJfvaYH///bBZxAmgv//3MlnECaC///K2zftRIjFw8rbN+1EiP//it9nECaCxcPE12cQJoLFw///l+9pgcXD//837USIxcP//8cSS3vFw///xxJLe8XD0tmX72mB///S2ZfvaYHFw/3UxxJLe///qN6X72mB//871zftRIjFwzvXl+9pgcXDuNc37USI///C1scSS3vFw5TaZxAmgv//lNrHEkt7//992mcQJoLFw6baphxDlP//gMFY456Z//+AwVjjQ5T//2y9phyemf//zMimHJ6Z//8k11jjnpnFwyTXWOOemf//+NimHJ6ZxcOW1aYcnpnFw///WONDlMXD//9Y456ZxcP//6YcQ5TFw///phxDlMXDgNZY40OU//+A1ljjQ5TFw87WphxDlP//OdZY40OU//8G1FjjnpnFwwbUWONDlMXD5tNY456Z//8i1KYcQ5TFw33Zphyemf//fdmmHEOU//+h2aYcnpnFw2LZ0RxZr///Xbkt4zap//9duX3fG6T//021gSB0tP//+b6BIHS0///2zS3jNqnFw/bNLeM2qf//QMuBIHS0xcNw1IEgdLTFw///fd8bpMXD//8t4zapxcP//9EcWa/Fw///0RxZr8XDg9Z93xuk//+D1n3fG6TFw5/Z0RxZr///9dJ93xuk//9Wzy3jNqnFw1bPfd8bpMXDMs4t4zap//8X0NEcWa/Fw3jSgSB0tP//eNLRHFmv//8X0oEgdLTFwwvTIyVVx///sr6v4M7K//+yvoTfjMT//6S6TiaWzf//UMVOJpbN//+z1K/gzsrFw7PUr+DOyv//IdVOJpbNxcNR1E4mls3Fw///hN+MxMXD//+v4M7KxcP//yMlVcfFw///IyVVx8XDkNWE34zE//+Q1YTfjMTFw2LVIyVVx///u9WE34zE//+R0q/gzsrFw5HShN+MxMXDZdKv4M7K//+20iMlVcfFw9rWTiaWzf//2tYjJVXH///w1k4mls3Fw8XWOScG2P//sMaY3gbk//+wxvngK93//73E2STh3v//HcrZJOHe//8q25jeBuTFwyrbmN4G5P//qN3ZJOHexcOL2Nkk4d7Fw///+eAr3cXD//+Y3gbkxcP//zknBtjFw///OScG2MXD+dP54Cvd///50/ngK93Fw5DPOScG2P//Bdn54Cvd//+f15jeBuTFw5/X+eAr3cXDMteY3gbk//8L2DknBtjFw8ba2STh3v//xto5JwbY///J2tkk4d7Fw8Ta//////////////////////j87oX4/O6F5fzuhRb97oUW/eiCFv3oggP9+oIo/dWC4AIQeuACEHrEAhB6/QIQeu6F5wLuhecC7oUjA+6FqgIQegL9EHoC/RB69/wQegz9/3//f/9//3//f/9//3//f3D3wHtw98B7cPfEe3D3tnuQ+5F7kPuRe5D7kXuQ+5B7jgi/hI4Iv4SOCEiEjgg8hcF7jgjBe44IAnyOCIB7jghNhHD3TYRw96GEcPf5g3D3//////////////////////fTOir30zoqg9RgK5DTYCmcwJxAnMCcQDDGMEapRajF2SyA19ksgNd/MU3haylC0OsswCrrLMAqOy4hKh4sIStx2LLScdiy0tLX/tJw2TrSAAAAAAAAAAAAAAAAAAAAAE/XqSpP16kq0dbDKbvXbSukw6RDpMOkQ+DE4ERnwmhC+CcJ1PgnCdSuJ4LTOiiB1O4sbyfuLG8nSi6wJtIrCyiv1wTWr9cE1uPX59WE1xzW//////////////////////7T/if+0/4n3tK/JfnU9CkyQDLAMkAywFDAUUDAQMDA6yvW1+sr1td4LPDYcCvg1nwrQSp8K0EqfStBKnsrQiqv2yfSr9sn0vjbAtKC2z3S/////////////////////wbQTCkG0Ewp6tB/K0nPeCcRRxHHEUcRxzFGMMYPSA/IPzBk1z8wZNeHL5zVyDC12HoqfS96Kn0vDitCLw8qqS8j3NTNI9zUzVPcwM3u2+nN/////////////////////8nQhCPJ0IQji8/kIOzR6SXAwcFBwMHBQULCQ0I9wT5BRjC53kYwud69LnzbmjGG4aIs4yqiLOMqeSz2KsYs0ipW2s3RVtrN0X/audE12tzR/////////////////////5zVkiec1ZInjNPRIwDY6ivWwtZC1sLWQl7CXkJLw0xDPSlY1j0pWNYxJs7Q+StR24YsqCeGLKgn9yv3JxMtWyco107WKNdO1hDXXNY710TW/////////////////////0LUhyhC1IcoOtN2JizVWipIwEhASMBIQDvBPEGvQK7AXSu51l0rudaKKxTXMitl1kYs3ClGLNwpbyzIKSMs7SkZ2vHSGdrx0kHa3dL82QDT/////////////////////wrRzysK0c8r39JXMGnN0iJDRELEQ0RCxM1CzMLfRN7EnTO3350zt98TNVbj0TFG27opyy+6KcsvcisZL6IoPDCi2m/OotpvziHapM5j2yHO/////////////////////3bTKSl20ykpNtOjKLDToylCQULBQkFCwQTABECBQoHCCC3i1wgt4tftLKrXIC0V2OArPyvgKz8rGiwjK68rVito2T7SaNk+0oLZMdJP2UnS//////////////////////jVOCj41TgokNSrJYXXCytpwWpBacFqQcDAwUAPwhBCfyWKz38lis8kInDJwyh61RQs5ycULOcnkSyiJ5srKihd1zHWXdcx1mDXMNZb1zPW")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_5k431")
 
 [node name="GamePlay3d" type="Node3D" unique_id=844227963]
 
@@ -3819,6 +3842,63 @@ skeleton = NodePath("")
 transform = Transform3D(1, 0, 0, 0, -0.0031764891, -0.99999493, 0, 0.99999493, -0.0031764891, -0.043017387, 0.00011968613, -0.03759747)
 shape = SubResource("CylinderShape3D_a1hl4")
 
+[node name="cloud3" type="Node3D" parent="." unique_id=1440261997]
+transform = Transform3D(-0.1537862, 0, 1.9940786, 0, 2, 0, -1.9940786, 0, -0.1537862, 0, 33.06391, 0)
+
+[node name="Mball_008" type="MeshInstance3D" parent="cloud3" unique_id=1728642353]
+transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, 0, 0, 0)
+mesh = SubResource("ArrayMesh_heff3")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_20psd")
+
+[node name="Mball_010" type="MeshInstance3D" parent="cloud3" unique_id=2127448763]
+transform = Transform3D(79.6308, 54.220703, 2.044828e-06, 0, -4.2110537e-06, 83.11764, 54.220707, -79.63079, -3.0031197e-06, 22.594826, 0, 0)
+mesh = SubResource("ArrayMesh_heff3")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_kh1jr")
+
+[node name="Mball_009" type="MeshInstance3D" parent="cloud3" unique_id=1744346309]
+transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, -15.579079, 0, 14.951401)
+mesh = SubResource("ArrayMesh_heff3")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_uitra")
+
+[node name="Mball_012" type="MeshInstance3D" parent="cloud3" unique_id=543253406]
+transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, -27.071926, 0, 44.629272)
+mesh = SubResource("ArrayMesh_heff3")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_i0ny8")
+
+[node name="Mball_011" type="MeshInstance3D" parent="cloud3" unique_id=15786570]
+transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, -15.579079, 0, -23.691864)
+mesh = SubResource("ArrayMesh_heff3")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("ShaderMaterial_as4xp")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="cloud3" unique_id=245119312]
+transform = Transform3D(0.5000001, 0, 0, 0, -2.1855694e-08, 0.5, 0, -0.5000001, -2.1855698e-08, 6.0616245, -16.553791, -7.6829567)
+
+[node name="Stone_5_Low2" type="MeshInstance3D" parent="cloud3/StaticBody3D" unique_id=248686716]
+material_override = SubResource("StandardMaterial3D_ct7aa")
+mesh = SubResource("ArrayMesh_gl1gq")
+skeleton = NodePath("")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="cloud3/StaticBody3D" unique_id=1643975613]
+transform = Transform3D(1, 0, 0, 0, -0.0031764891, -0.99999493, 0, 0.99999493, -0.0031764891, -0.043017387, 0.00011968613, -0.03759747)
+shape = SubResource("CylinderShape3D_a1hl4")
+
+[node name="StaticBody3D2" type="StaticBody3D" parent="cloud3" unique_id=848109464]
+transform = Transform3D(0.49994123, -0.00077586994, 0.007695912, -0.00769593, -0.09978973, 0.48988038, 0.00077579543, -0.48994115, -0.09978959, 9.07261, -16.850834, -5.7049723)
+
+[node name="Stone_5_Low2" type="MeshInstance3D" parent="cloud3/StaticBody3D2" unique_id=581341645]
+material_override = SubResource("StandardMaterial3D_ct7aa")
+mesh = SubResource("ArrayMesh_gl1gq")
+skeleton = NodePath("")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="cloud3/StaticBody3D2" unique_id=1527966425]
+transform = Transform3D(1, 0, 0, 0, -0.0031764891, -0.99999493, 0, 0.99999493, -0.0031764891, -0.043017387, 0.00011968613, -0.03759747)
+shape = SubResource("CylinderShape3D_a1hl4")
+
 [node name="Add" type="Node3D" parent="." unique_id=433299333]
 
 [node name="Label3D" type="Label3D" parent="Add" unique_id=863813002]
@@ -3843,151 +3923,822 @@ outline_size = 127
 uppercase = true
 
 [node name="woods" type="Node3D" parent="." unique_id=588889767]
-transform = Transform3D(1, 0, 0, 0, 2.220446e-16, 1, 0, -1, 2.220446e-16, -11.765377, -4.5761337, -14)
+transform = Transform3D(0.3, 0, 0, 0, -1.3113417e-08, 0.3, 0, -0.3, -1.3113417e-08, -11.765377, 0.7320783, -14)
 
 [node name="Wood_Long_2x2x1_Broken_Geo_����������������_006_0" type="MeshInstance3D" parent="woods" unique_id=112302235]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_luj06")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x2x1_Whole_Geo_����������������_017_0" type="MeshInstance3D" parent="woods" unique_id=1213721727]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_02ito")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x2x1_Halfbroken_Geo_����������������_021_0" type="MeshInstance3D" parent="woods" unique_id=1010983562]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_3nxqx")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x4x1_Broken_Geo_����������������_027_0" type="MeshInstance3D" parent="woods" unique_id=2116690048]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_2turr")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x6x1_Broken_Geo_����������������_019_0" type="MeshInstance3D" parent="woods" unique_id=348818027]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_3xvgw")
 skeleton = NodePath("")
 
-[node name="Wood_Long_2x4x1_Whole_Geo_����������������_003_0" type="MeshInstance3D" parent="woods" unique_id=1392050178]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
-mesh = SubResource("ArrayMesh_r7gtb")
-skeleton = NodePath("")
-
 [node name="Wood_Long_2x6x1_Halfbroken_Geo_����������������_023_0" type="MeshInstance3D" parent="woods" unique_id=2054729456]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_88tlw")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x6x1_Whole_Geo_����������������_013_0" type="MeshInstance3D" parent="woods" unique_id=759471560]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_n460p")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x8x1_Broken_Geo_����������������_005_0" type="MeshInstance3D" parent="woods" unique_id=1210974610]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_ux25i")
 skeleton = NodePath("")
 
-[node name="Wood_Long_2x8x1_Halfbroken_Geo_����������������_012_0" type="MeshInstance3D" parent="woods" unique_id=1371252499]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+[node name="StaticBody3D" type="StaticBody3D" parent="woods" unique_id=1563511584]
+transform = Transform3D(0.99999976, 0, 0, 0, 0.9976227, 0.06890333, 0, -0.06890333, 0.9976227, -5.1867485, 7.8320656, -1.355584)
+
+[node name="Wood_Long_2x8x1_Halfbroken_Geo_����������������_012_0" type="MeshInstance3D" parent="woods/StaticBody3D" unique_id=1371252499]
+transform = Transform3D(0.99999994, 0, 0, 0, 0.99999994, -1.7763568e-15, 0, 3.5527137e-15, 0.49999997, 0, 0, -0.25454122)
 mesh = SubResource("ArrayMesh_fhhpa")
 skeleton = NodePath("")
 
+[node name="CollisionShape3D" type="CollisionShape3D" parent="woods/StaticBody3D" unique_id=1062745265]
+transform = Transform3D(0.99999976, 0, 0, 0, 0.99999976, -9.947598e-14, 0, 9.947598e-14, 0.99999976, 0.020141602, 0.31063843, 1.2535397)
+shape = SubResource("BoxShape3D_4n2wh")
+
 [node name="Wood_Long_2x8x1_Whole_Geo_����������������_007_0" type="MeshInstance3D" parent="woods" unique_id=978005266]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.57499987, 0, 0, 0, -0.06365609, 0.9997995, 0, -3.1793623, -0.020017643, -5.7003746, -22.525333, 5.4739256)
 mesh = SubResource("ArrayMesh_ya4tj")
 skeleton = NodePath("")
 
-[node name="Wood_Long_2x10x1_Broken_Geo_����������������_020_0" type="MeshInstance3D" parent="woods" unique_id=153229301]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+[node name="Wood_Long_2x8x1_Whole_Geo_����������������_007_1" type="MeshInstance3D" parent="woods" unique_id=695016083]
+transform = Transform3D(0.57499987, 0, 0, 0, -0.06365605, 0.9997995, 0, -3.1793618, -0.020017643, -19.358456, -22.288519, 5.4739256)
+mesh = SubResource("ArrayMesh_ya4tj")
+skeleton = NodePath("")
+
+[node name="Wood_Long_2x8x1_Whole_Geo_����������������_007_2" type="MeshInstance3D" parent="woods" unique_id=641650104]
+transform = Transform3D(0.57499987, 0, 0, 0, -0.06365607, 0.9997995, 0, -3.1793618, -0.020017643, -5.11417, -7.9732475, 5.4739275)
+mesh = SubResource("ArrayMesh_ya4tj")
+skeleton = NodePath("")
+
+[node name="Wood_Long_2x8x1_Whole_Geo_����������������_007_3" type="MeshInstance3D" parent="woods" unique_id=1291374556]
+transform = Transform3D(0.57499987, 0, 0, 0, -0.06365604, 0.9997995, 0, -3.1793618, -0.020017643, -19.358456, -9.136528, 5.4739275)
+mesh = SubResource("ArrayMesh_ya4tj")
+skeleton = NodePath("")
+
+[node name="StaticBody3D2" type="StaticBody3D" parent="woods" unique_id=670797892]
+transform = Transform3D(0.7098288, 0.70421106, 0.015144643, -0.6609564, 0.67335314, -0.3312573, -0.24347281, 0.22512609, 0.94341856, 0.64554214, 13.562092, 0.078575134)
+
+[node name="Wood_Long_2x10x1_Broken_Geo_����������������_020_0" type="MeshInstance3D" parent="woods/StaticBody3D2" unique_id=153229301]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = SubResource("ArrayMesh_qndl3")
 skeleton = NodePath("")
 
+[node name="CollisionShape3D" type="CollisionShape3D" parent="woods/StaticBody3D2" unique_id=1695954366]
+transform = Transform3D(0.9999999, 0, 0, 0, 0.9999999, 0, 0, 0, 0.9999999, 0.07611084, -0.045898438, 1.5368655)
+shape = SubResource("BoxShape3D_1v67w")
+
 [node name="Wood_Long_2x10x1_Halfbroken_Geo_����������������_009_0" type="MeshInstance3D" parent="woods" unique_id=1752644802]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_rhfwe")
 skeleton = NodePath("")
 
 [node name="Wood_Long_2x10x1_Whole_Geo_����������������_015_0" type="MeshInstance3D" parent="woods" unique_id=1822508990]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.99999976, 0, 0, 0, 0.011379307, 0.9999348, 0, -0.9999348, 0.011379307, 3.4735603, 16.048248, -4.1322255)
 mesh = SubResource("ArrayMesh_qe2ye")
 skeleton = NodePath("")
 
-[node name="Wood_Platform_8x1x8_Geo_����������������_018_1" type="MeshInstance3D" parent="woods" unique_id=307741439]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+[node name="Wood_Long_2x10x1_Whole_Geo_����������������_015_1" type="MeshInstance3D" parent="woods" unique_id=1266954347]
+transform = Transform3D(0.49999997, 0, 0, 0, 0.01137931, 0.99993515, 0, -0.99993515, 0.01137931, 0.2722473, 13.446716, -5.2424)
+mesh = SubResource("ArrayMesh_qe2ye")
+skeleton = NodePath("")
+
+[node name="StaticBody3D3" type="StaticBody3D" parent="woods" unique_id=1203034130]
+transform = Transform3D(0.99999976, 0, 0, 0, 0.04489218, -0.99899125, 0, 0.99899125, 0.04489218, -6.8003044, -1.5240822, 0.5518012)
+
+[node name="Wood_Platform_8x1x8_Geo_����������������_018_0" type="MeshInstance3D" parent="woods/StaticBody3D3" unique_id=272483121]
+transform = Transform3D(0.49999994, 0, 0, 0, 0.9985053, -0.054653898, 0, 0.054653898, 0.9985053, 0.9777832, 0.18269157, -0.68507385)
 mesh = SubResource("ArrayMesh_uaviq")
 skeleton = NodePath("")
 
-[node name="Wood_Platform_8x1x8_Geo_����������������_018_0" type="MeshInstance3D" parent="woods" unique_id=272483121]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="woods/StaticBody3D3" unique_id=920737380]
+transform = Transform3D(0.9999999, 0, 0, 0, 1, 0, 0, 0, 1, -0.10982132, 1.4843597, 0.28817368)
+shape = SubResource("BoxShape3D_a1hl4")
+
+[node name="StaticBody3D4" type="StaticBody3D" parent="woods" unique_id=584663842]
+transform = Transform3D(3.9984875, -0.0264638, -0.014860427, -0.017200775, 0.11642489, -1.9863799, 0.10859459, 0.9928466, 0.23253423, -16.235363, -17.459822, 0.5166621)
+
+[node name="Wood_Platform_8x1x8_Geo_����������������_018_0" type="MeshInstance3D" parent="woods/StaticBody3D4" unique_id=2131268433]
+transform = Transform3D(0.49999994, 0, 0, 0, 0.9985053, -0.054653898, 0, 0.054653898, 0.9985053, 0.9777832, 0.18269157, -0.68507385)
 mesh = SubResource("ArrayMesh_uaviq")
 skeleton = NodePath("")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="woods/StaticBody3D4" unique_id=902316177]
+transform = Transform3D(0.9999999, 0, 0, 0, 1, 0, 0, 0, 1, -0.10982132, 1.4843597, 0.28817368)
+shape = SubResource("BoxShape3D_a1hl4")
+
+[node name="StaticBody3D5" type="StaticBody3D" parent="woods" unique_id=1970685426]
+transform = Transform3D(2.2288876, -0.031432204, 0.4359859, 0.49956968, 0.018464446, -1.9512651, 0.060875073, 0.9993352, 0.049766067, -10.468857, -17.389265, 17.711105)
+
+[node name="Wood_Platform_8x1x8_Geo_����������������_018_0" type="MeshInstance3D" parent="woods/StaticBody3D5" unique_id=1787971045]
+transform = Transform3D(0.49999994, 0, 0, 0, 0.9985053, -0.054653898, 0, 0.054653898, 0.9985053, 0.9777832, 0.18269157, -0.68507385)
+mesh = SubResource("ArrayMesh_uaviq")
+skeleton = NodePath("")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="woods/StaticBody3D5" unique_id=1880576485]
+transform = Transform3D(0.9999999, 0, 0, 0, 1, 0, 0, 0, 1, -0.10982132, 1.4843597, 0.28817368)
+shape = SubResource("BoxShape3D_a1hl4")
+
+[node name="StaticBody3D6" type="StaticBody3D" parent="woods" unique_id=1740720598]
+transform = Transform3D(2.1589663, -0.022999002, -0.15510465, -0.29646462, 0.028283635, -1.1239972, 0.0580778, 0.99933517, 0.02824225, -17.594212, -13.915665, 14.614659)
+
+[node name="Wood_Platform_8x1x8_Geo_����������������_018_0" type="MeshInstance3D" parent="woods/StaticBody3D6" unique_id=753893832]
+transform = Transform3D(0.49999994, 0, 0, 0, 0.9985053, -0.054653898, 0, 0.054653898, 0.9985053, 0.9777832, 0.18269157, -0.68507385)
+mesh = SubResource("ArrayMesh_uaviq")
+skeleton = NodePath("")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="woods/StaticBody3D6" unique_id=438283838]
+transform = Transform3D(0.9999999, 0, 0, 0, 1, 0, 0, 0, 1, -0.10982132, 1.4843597, 0.28817368)
+shape = SubResource("BoxShape3D_a1hl4")
 
 [node name="Wood_Long_2x4x1_Halfbroken_Geo_����������������_002_0" type="MeshInstance3D" parent="woods" unique_id=1710271878]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_awxt2")
 skeleton = NodePath("")
 
 [node name="Wood_Ramp_4x4x4_Whole_Geo_����������������_016_0" type="MeshInstance3D" parent="woods" unique_id=137265800]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.99999976, 0, 0, 0, 0.68374497, 0.72972035, 0, -0.72972035, 0.68374497, -56.373833, 91.021675, -8.548271)
 mesh = SubResource("ArrayMesh_xg4hq")
 skeleton = NodePath("")
 
 [node name="Wood_Ramp_4x4x4_Broken_Geo_����������������_001_0" type="MeshInstance3D" parent="woods" unique_id=631086497]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.99999976, 0, 0, 0, 0.99999976, 0, 0, 0, 0.99999976, -12.17067, 91.82682, -8.392237)
 mesh = SubResource("ArrayMesh_j0afn")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x2x2_Broken_Geo_����������������_024_0" type="MeshInstance3D" parent="woods" unique_id=1654782914]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_sd725")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x2x2_HalfBroken_Geo_����������������_025_0" type="MeshInstance3D" parent="woods" unique_id=1372594223]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_aqakx")
 skeleton = NodePath("")
 
 [node name="Wood_Ramp_4x4x4_HalfBroken_Geo_����������������_0" type="MeshInstance3D" parent="woods" unique_id=884344010]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.8841407, -0.012874026, -0.46704215, -0.46722007, -0.024362123, -0.8838044, -2.0422842e-08, 0.9996192, -0.027554566, -50.44262, 81.60761, -7.6469717)
 mesh = SubResource("ArrayMesh_2wjmg")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x2x2_Whole_Geo_����������������_011_0" type="MeshInstance3D" parent="woods" unique_id=1631412566]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_annkn")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x4x2_Broken_Geo_����������������_010_0" type="MeshInstance3D" parent="woods" unique_id=1624731320]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_c06gw")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x4x2_HalfBroken_Geo_����������������_014_0" type="MeshInstance3D" parent="woods" unique_id=1212293583]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_lpnps")
 skeleton = NodePath("")
 
 [node name="Wood_Square_2x4x2_Whole_Geo_����������������_026_0" type="MeshInstance3D" parent="woods" unique_id=2140464779]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_fb8dt")
 skeleton = NodePath("")
 
 [node name="Wood_Square_4x2x4_Broken_Geo_����������������_008_0" type="MeshInstance3D" parent="woods" unique_id=1645443489]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(0.9999998, 0, 0, 0, 0.9999998, 0, 0, 0, 0.9999998, -12.17067, 82.27882, -8.392237)
 mesh = SubResource("ArrayMesh_uwhy4")
 skeleton = NodePath("")
 
 [node name="Wood_Square_4x2x4_HalfBroken_Geo_����������������_004_0" type="MeshInstance3D" parent="woods" unique_id=8956992]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.17067, 20.023216, -4.446047e-15)
+transform = Transform3D(1.275, 0, 0, 0, 1.9899997, -1.4210855e-14, 0, 2.842171e-14, 1.1349998, -6.4435844, -16.959724, -1.6859845)
+mesh = SubResource("ArrayMesh_0byrt")
+skeleton = NodePath("")
+
+[node name="Wood_Square_4x2x4_HalfBroken_Geo_����������������_004_1" type="MeshInstance3D" parent="woods" unique_id=1710726662]
+transform = Transform3D(-0.04044909, 1.9889983, 9.524278e-08, -1.2743582, -0.0631323, -9.8313926e-08, -5.570397e-08, -8.9745186e-08, 2.1799998, -21.240189, -25.369637, -1.418441)
 mesh = SubResource("ArrayMesh_0byrt")
 skeleton = NodePath("")
 
 [node name="Wood_Square_4x2x4_Whole_Geo_����������������_022_0" type="MeshInstance3D" parent="woods" unique_id=1022096082]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.111071, 20.023216, -4.446047e-15)
+transform = Transform3D(0.99999976, 0, 0, 0, 0.9999521, -0.019477542, 0, 0.009738771, 1.9999042, -5.67297, -0.4112816, -3.2159264)
 mesh = SubResource("ArrayMesh_8mg2d")
+skeleton = NodePath("")
+
+[node name="wall1" type="StaticBody3D" parent="." unique_id=678922104]
+transform = Transform3D(0.24907888, 0, -0.021441191, 0, 0.25, 0, 0.021441191, 0, 0.24907888, -14.305942, 2.3894758, -6.9582143)
+
+[node name="wood1" type="MeshInstance3D" parent="wall1" unique_id=1927931611]
+transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood2" type="MeshInstance3D" parent="wall1" unique_id=1075046029]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
+mesh = SubResource("ArrayMesh_nekiu")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood3" type="MeshInstance3D" parent="wall1" unique_id=1088021331]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall1" unique_id=2028319750]
+transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall1" unique_id=954041108]
+transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall1" unique_id=1786920438]
+transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="sheet2" type="MeshInstance3D" parent="wall1" unique_id=233852567]
+transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
+mesh = SubResource("ArrayMesh_a1hl4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall1" unique_id=897452595]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
+visible = false
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="wall2" type="StaticBody3D" parent="." unique_id=988462383]
+transform = Transform3D(0.24907888, 0, -0.021441191, 0, 0.25, 0, 0.021441191, 0, 0.24907888, -16.68732, 2.3894758, -6.9582143)
+
+[node name="wood1" type="MeshInstance3D" parent="wall2" unique_id=1591756992]
+transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood2" type="MeshInstance3D" parent="wall2" unique_id=1789142775]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
+mesh = SubResource("ArrayMesh_nekiu")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood3" type="MeshInstance3D" parent="wall2" unique_id=153902986]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall2" unique_id=750220257]
+transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall2" unique_id=1229956321]
+transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall2" unique_id=1103994213]
+transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="sheet2" type="MeshInstance3D" parent="wall2" unique_id=1627913114]
+transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
+mesh = SubResource("ArrayMesh_a1hl4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall2" unique_id=797776099]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
+visible = false
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="wall5" type="StaticBody3D" parent="." unique_id=413653736]
+transform = Transform3D(-0.24778089, -0.029367015, 0.015562987, -0.029309265, 0.24826916, 0.0018408995, -0.015671488, 0, -0.24950835, -16.726484, 1.9077475, -11.56346)
+
+[node name="wood1" type="MeshInstance3D" parent="wall5" unique_id=1817496852]
+transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood2" type="MeshInstance3D" parent="wall5" unique_id=1302250580]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
+mesh = SubResource("ArrayMesh_nekiu")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood3" type="MeshInstance3D" parent="wall5" unique_id=2068117444]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall5" unique_id=1413485733]
+transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall5" unique_id=1232608296]
+transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall5" unique_id=543372734]
+transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="sheet2" type="MeshInstance3D" parent="wall5" unique_id=30931753]
+transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
+mesh = SubResource("ArrayMesh_a1hl4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall5" unique_id=2046465772]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
+visible = false
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="wall6" type="StaticBody3D" parent="." unique_id=1683457758]
+transform = Transform3D(-0.24610588, -0.0411457, 0.01545778, -0.041064784, 0.24659082, 0.0025792574, -0.015671488, -9.52156e-11, -0.24950835, -14.579702, 2.1714997, -11.411525)
+
+[node name="wood1" type="MeshInstance3D" parent="wall6" unique_id=581019166]
+transform = Transform3D(0.4737907, -0.1603233, 0.0008124858, 0.07695518, 0.9870135, -0.010069822, 0.00038999505, 0.01006982, 0.999949, 2.5387115, 3.7017593, -0.07634354)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood3" type="MeshInstance3D" parent="wall6" unique_id=464391778]
+transform = Transform3D(-0.046464078, -0.9989199, 0, 0.99891996, -0.04646408, -1.7309221e-10, 0, 0, 1, -1.7186012, 2.2940006, -0.53964996)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall6" unique_id=491322029]
+transform = Transform3D(0.4748446, -0.146167, 0.00017187372, 0.07015978, 0.98924917, -0.004643379, 0.00024417788, 0.0046186293, 0.99998915, 2.689495, 2.3171453, -0.08581543)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall6" unique_id=1143543638]
+transform = Transform3D(0.47630247, -0.12388342, 0.00017186627, 0.059463806, 0.9922861, -0.0046433797, 0.00019425713, 0.0046289014, 0.99998915, 3.126278, -3.7987938, -0.11325073)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall6" unique_id=401294099]
+transform = Transform3D(0.5718796, -0.03146596, 8.952618e-05, 0.031466052, 0.57187414, -0.0025363474, 4.9956143e-05, 0.0025374386, 0.5727384, 1.9584007, 0.24438763, -0.0131111145)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall6" unique_id=864045488]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
+visible = false
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="wall3" type="StaticBody3D" parent="." unique_id=594750945]
+transform = Transform3D(0.009243772, 0, 0.24982904, -0.04934635, 0.24507469, 0.0018258344, -0.2449071, -0.049380112, 0.009061659, -12.991603, 2.349019, -8.178076)
+
+[node name="wood1" type="MeshInstance3D" parent="wall3" unique_id=196547251]
+transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood2" type="MeshInstance3D" parent="wall3" unique_id=1832453483]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
+mesh = SubResource("ArrayMesh_nekiu")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood3" type="MeshInstance3D" parent="wall3" unique_id=707587467]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall3" unique_id=2106982689]
+transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall3" unique_id=160944988]
+transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall3" unique_id=2080945976]
+transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="sheet2" type="MeshInstance3D" parent="wall3" unique_id=1499723701]
+transform = Transform3D(0.5576169, -0.112651624, -0.066401854, 0.12619779, 0.5397926, 0.14399578, 0.034259357, -0.1548231, 0.55035627, -1.0346489, -7.0195637, 1.4972229)
+mesh = SubResource("ArrayMesh_a1hl4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall3" unique_id=1149913968]
+transform = Transform3D(1.0000002, 0, -2.9802322e-08, 4.3213367e-07, 1, -1.6298145e-08, -6.7055225e-08, 0, 1, 2.11911, 0.8225107, 0.49999237)
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="wall7" type="StaticBody3D" parent="." unique_id=1207687288]
+transform = Transform3D(0.011436641, -1.2232126e-10, -0.24973829, 0.0050427383, 0.24994904, 0.0002309297, 0.2496874, -0.0050480217, 0.011434309, -17.935326, 2.1299653, -8.091074)
+
+[node name="wood1" type="MeshInstance3D" parent="wall7" unique_id=1176058798]
+transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood2" type="MeshInstance3D" parent="wall7" unique_id=827550699]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
+mesh = SubResource("ArrayMesh_nekiu")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood3" type="MeshInstance3D" parent="wall7" unique_id=1271206917]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall7" unique_id=1991624635]
+transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall7" unique_id=374295762]
+transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall7" unique_id=69965286]
+transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="sheet2" type="MeshInstance3D" parent="wall7" unique_id=1134859972]
+transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
+mesh = SubResource("ArrayMesh_a1hl4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall7" unique_id=513232881]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
+visible = false
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="wall8" type="StaticBody3D" parent="." unique_id=294785295]
+transform = Transform3D(-0.019564975, 0.0006249919, -0.24923247, 0.0050427383, 0.24994905, 0.0002309297, 0.2491823, -0.0050091827, -0.01957359, -17.921837, 2.0822964, -10.3582945)
+
+[node name="wood1" type="MeshInstance3D" parent="wall8" unique_id=1226591102]
+transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood2" type="MeshInstance3D" parent="wall8" unique_id=130051309]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
+mesh = SubResource("ArrayMesh_nekiu")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood3" type="MeshInstance3D" parent="wall8" unique_id=1408194746]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall8" unique_id=265441421]
+transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall8" unique_id=1419883439]
+transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall8" unique_id=743925935]
+transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="sheet2" type="MeshInstance3D" parent="wall8" unique_id=720026]
+transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
+mesh = SubResource("ArrayMesh_a1hl4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall8" unique_id=1657801737]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
+visible = false
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="wall9" type="StaticBody3D" parent="." unique_id=1558336084]
+transform = Transform3D(0.011436641, -1.2232126e-10, -0.24973829, 0.0050427383, 0.24994904, 0.0002309297, 0.2496874, -0.0050480217, 0.011434309, -17.935326, 4.9079084, -8.091074)
+
+[node name="wood1" type="MeshInstance3D" parent="wall9" unique_id=1993709256]
+transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood2" type="MeshInstance3D" parent="wall9" unique_id=1062778305]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
+mesh = SubResource("ArrayMesh_nekiu")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood3" type="MeshInstance3D" parent="wall9" unique_id=1860827441]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall9" unique_id=1385214368]
+transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall9" unique_id=1541354254]
+transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall9" unique_id=1534019156]
+transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="sheet2" type="MeshInstance3D" parent="wall9" unique_id=333859283]
+transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
+mesh = SubResource("ArrayMesh_a1hl4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall9" unique_id=1154261257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
+visible = false
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="wall10" type="StaticBody3D" parent="." unique_id=1953825983]
+transform = Transform3D(-0.019564975, 0.0006249919, -0.24923247, 0.0050427383, 0.24994905, 0.0002309297, 0.2491823, -0.0050091827, -0.01957359, -17.921837, 4.8602395, -10.3582945)
+
+[node name="wood1" type="MeshInstance3D" parent="wall10" unique_id=2140904117]
+transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood2" type="MeshInstance3D" parent="wall10" unique_id=1108334605]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
+mesh = SubResource("ArrayMesh_nekiu")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood3" type="MeshInstance3D" parent="wall10" unique_id=1637146678]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall10" unique_id=415282017]
+transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall10" unique_id=2033582486]
+transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall10" unique_id=449389493]
+transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="sheet2" type="MeshInstance3D" parent="wall10" unique_id=587360343]
+transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
+mesh = SubResource("ArrayMesh_a1hl4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall10" unique_id=1166886374]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
+visible = false
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="wall11" type="StaticBody3D" parent="." unique_id=140211910]
+transform = Transform3D(0.24823377, -0.00503514, 0.029234704, 0.0050427387, 0.24994907, 0.00023092961, -0.029233411, 0.00036039372, 0.2482847, -14.460697, 4.9079084, -6.8906503)
+
+[node name="wood1" type="MeshInstance3D" parent="wall11" unique_id=1661071056]
+transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood2" type="MeshInstance3D" parent="wall11" unique_id=2133344294]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
+mesh = SubResource("ArrayMesh_nekiu")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood3" type="MeshInstance3D" parent="wall11" unique_id=605502832]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall11" unique_id=1603944091]
+transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall11" unique_id=1214670822]
+transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall11" unique_id=494610438]
+transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="sheet2" type="MeshInstance3D" parent="wall11" unique_id=614246573]
+transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
+mesh = SubResource("ArrayMesh_a1hl4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall11" unique_id=889277826]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
+visible = false
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="wall12" type="StaticBody3D" parent="." unique_id=2145749549]
+transform = Transform3D(0.24994324, -0.00504102, -0.0017301776, 0.0050427383, 0.24994905, 0.00023092974, 0.0017251652, -0.00026577635, 0.24999392, -16.723097, 4.8602395, -6.7422404)
+
+[node name="wood1" type="MeshInstance3D" parent="wall12" unique_id=1301445494]
+transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood2" type="MeshInstance3D" parent="wall12" unique_id=151246852]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
+mesh = SubResource("ArrayMesh_nekiu")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood3" type="MeshInstance3D" parent="wall12" unique_id=982026446]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall12" unique_id=322014736]
+transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall12" unique_id=844975280]
+transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall12" unique_id=443084729]
+transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="sheet2" type="MeshInstance3D" parent="wall12" unique_id=1072030435]
+transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
+mesh = SubResource("ArrayMesh_a1hl4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall12" unique_id=1580282904]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
+visible = false
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="wall4" type="StaticBody3D" parent="." unique_id=423878965]
+transform = Transform3D(0.009243772, 0, 0.24982904, -0.01548671, 0.24951921, 0.0005730144, -0.24934861, -0.015497308, 0.009225996, -12.991603, 2.1066976, -10.54935)
+
+[node name="wood1" type="MeshInstance3D" parent="wall4" unique_id=1384506876]
+transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
+mesh = SubResource("ArrayMesh_dxu76")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
+
+[node name="wood2" type="MeshInstance3D" parent="wall4" unique_id=93751636]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
+mesh = SubResource("ArrayMesh_nekiu")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood3" type="MeshInstance3D" parent="wall4" unique_id=290068722]
+transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
+mesh = SubResource("ArrayMesh_kwhfa")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood4" type="MeshInstance3D" parent="wall4" unique_id=816026603]
+transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
+mesh = SubResource("ArrayMesh_ir7h2")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="wood5" type="MeshInstance3D" parent="wall4" unique_id=2056097454]
+transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
+mesh = SubResource("ArrayMesh_oxlh4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
+
+[node name="sheet1" type="MeshInstance3D" parent="wall4" unique_id=1725606221]
+transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
+mesh = SubResource("ArrayMesh_4n2wh")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="sheet2" type="MeshInstance3D" parent="wall4" unique_id=545509248]
+transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
+mesh = SubResource("ArrayMesh_a1hl4")
+skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall4" unique_id=1617098350]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
+visible = false
+shape = SubResource("BoxShape3D_4ha07")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=1275534874]
+transform = Transform3D(0.001358851, -0.015042363, -0.013110332, 0.0003160893, 0.013155276, -0.015061167, 0.019951278, 0.0008160919, 0.0011315395, -15.648988, 3.033329, -7.9)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1541240696]
+transform = Transform3D(1, 1.4156103e-06, 0, -1.7881393e-07, 1.0000013, -5.820766e-09, 1.0058284e-07, 3.46452e-07, 1, -2.5143433, 1.0895996, -8.247711)
+shape = SubResource("BoxShape3D_fhcis")
+
+[node name="ladder_lambert1_0" type="MeshInstance3D" parent="StaticBody3D" unique_id=156929462]
+transform = Transform3D(1, 3.7252903e-09, 0, -3.7252903e-09, 1.0000001, -5.820766e-09, 0, -5.820766e-09, 1, 0, 0, 0)
+mesh = SubResource("ArrayMesh_860g3")
 skeleton = NodePath("")
 
 [editable path="Bus"]
