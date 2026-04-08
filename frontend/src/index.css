@@ -86,6 +86,13 @@ html {
   overflow-x: hidden;
 }
 
+/* Compensate for Android system nav bar clipping bottom in landscape */
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  body {
+    padding-bottom: 24px;
+  }
+}
+
 .button-primary {
   display: inline-flex;
   align-items: center;

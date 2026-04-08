@@ -89,7 +89,7 @@ const AppContent: React.FC = () => {
       // device screen exactly – no horizontal overscroll.
       // Subtract a small buffer for Android system UI (nav bar, status bar).
       const desktopWidth = 1280;
-      const deviceWidth = Math.max(screen.width, screen.height) - 24;
+      const deviceWidth = Math.max(screen.width, screen.height) - 50;
       const scale = Math.min(1, deviceWidth / desktopWidth);
       const desktopViewport =
         `width=${desktopWidth}, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=no`;
