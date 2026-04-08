@@ -32,7 +32,7 @@ const TopNavbar = () => {
 
     { path: '/nad-arena', label: 'Nad Arena' },
 
-    { path: '/roadmap', label: 'Leaderboards' },
+    { path: '/leaderboard', label: 'Leaderboards' },
     { path: '/hosts', label: 'Hosts' },
     { path: '/community', label: 'FAQ' },
     { path: '/careers', label: 'Careers' },

@@ -8,7 +8,7 @@ const Footer = () => {
   const navItems = [
     { to: "/", label: "WONs" },
     { to: "/nad-arena", label: "Nad Arena" },
-    { to: "/roadmap", label: "Leaderboards" },
+    { to: "/leaderboard", label: "Leaderboards" },
     { to: "/hosts", label: "Hosts" },
     { to: "/milestone", label: "Milestone" },
     { to: "/community", label: "FAQ" },
