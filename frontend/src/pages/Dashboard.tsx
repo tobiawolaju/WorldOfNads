@@ -101,7 +101,6 @@ export default function Dashboard() {
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasInitialSelectionBeenMade = useRef(false);
 
   useEffect(() => {
     if (authenticated && user) {
@@ -190,21 +189,6 @@ export default function Dashboard() {
     loadRewards();
   }, [authenticated, user]);
 
-  useEffect(() => {
-    if (!selectedMatch && !selectedReward && !selectedStore) return;
-    
-    // Skip the first selection event which happens automatically on load
-    if (!hasInitialSelectionBeenMade.current) {
-      hasInitialSelectionBeenMade.current = true;
-      return;
-    }
-
-    window.scrollTo({
-      top: document.body.scrollHeight,
-      behavior: "smooth"
-    });
-  }, [selectedMatch, selectedReward, selectedStore]);
-
   const handlePlayClick = async () => {
     if (!selectedMatch || !user) return;
 
@@ -220,8 +204,6 @@ export default function Dashboard() {
         metadata: { username }
       });
     }
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
 
     if (playButtonState === "idle") {
       setPlayButtonState("counting");
@@ -368,7 +350,8 @@ export default function Dashboard() {
           )}
         </div>
 
-        <div className="matches-wrapper">
+        <div className="tab-content-scroll">
+          <div className="matches-wrapper">
           {tab === "events" && (
             <div className="matches-carousel" ref={carouselRef}>
               {filteredMatches.map((match) => (
@@ -459,6 +442,7 @@ export default function Dashboard() {
                 ))}
             </div>
           )}
+        </div>
         </div>
 
 
