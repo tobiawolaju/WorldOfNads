@@ -3,7 +3,8 @@
   padding: 10px;
   color: #000000;
   display: flex;
-  width: 98%;
+  width: 100%;
+  box-sizing: border-box;
   justify-content: space-between;
   align-items: center;
   height: 60px;

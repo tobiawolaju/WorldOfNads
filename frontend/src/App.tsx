@@ -75,7 +75,6 @@ const AppContent: React.FC = () => {
     const defaultViewport =
       "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
     const desktopBaseWidth = 1280;
-    const desktopViewport = "width=1280, initial-scale=0.8, maximum-scale=0.8, user-scalable=no";
     const originalViewport = viewportMeta.getAttribute("content") || defaultViewport;
     const mobileDeviceQuery = window.matchMedia("(hover: none) and (pointer: coarse)");
     const landscapeQuery = window.matchMedia("(orientation: landscape)");
@@ -100,16 +99,33 @@ const AppContent: React.FC = () => {
       viewportMeta.setAttribute("content", desktopViewport);
     };
 
-    applyViewportMode();
-    landscapeQuery.addEventListener("change", applyViewportMode);
-    mobileDeviceQuery.addEventListener("change", applyViewportMode);
+    const runViewportSync = () => {
+      applyViewportMode();
+      requestAnimationFrame(applyViewportMode);
+    };
+
+    runViewportSync();
+
+    const resizeObserver = new ResizeObserver(() => {
+      runViewportSync();
+    });
+    resizeObserver.observe(document.documentElement);
+    if (document.body) {
+      resizeObserver.observe(document.body);
+    }
+
+    window.addEventListener("resize", runViewportSync);
+    landscapeQuery.addEventListener("change", runViewportSync);
+    mobileDeviceQuery.addEventListener("change", runViewportSync);
 
     return () => {
-      landscapeQuery.removeEventListener("change", applyViewportMode);
-      mobileDeviceQuery.removeEventListener("change", applyViewportMode);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", runViewportSync);
+      landscapeQuery.removeEventListener("change", runViewportSync);
+      mobileDeviceQuery.removeEventListener("change", runViewportSync);
       viewportMeta.setAttribute("content", originalViewport);
     };
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (user?.id && lastUserIdRef.current !== user.id) {
