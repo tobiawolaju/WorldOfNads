@@ -69,6 +69,33 @@ const AppContent: React.FC = () => {
   const lastUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const viewportMeta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+    if (!viewportMeta) return;
+
+    const defaultViewport =
+      "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
+    const desktopViewport = "width=1280, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
+    const originalViewport = viewportMeta.getAttribute("content") || defaultViewport;
+    const mobileDeviceQuery = window.matchMedia("(hover: none) and (pointer: coarse)");
+    const landscapeQuery = window.matchMedia("(orientation: landscape)");
+
+    const applyViewportMode = () => {
+      const shouldUseDesktopMode = mobileDeviceQuery.matches && landscapeQuery.matches;
+      viewportMeta.setAttribute("content", shouldUseDesktopMode ? desktopViewport : defaultViewport);
+    };
+
+    applyViewportMode();
+    landscapeQuery.addEventListener("change", applyViewportMode);
+    mobileDeviceQuery.addEventListener("change", applyViewportMode);
+
+    return () => {
+      landscapeQuery.removeEventListener("change", applyViewportMode);
+      mobileDeviceQuery.removeEventListener("change", applyViewportMode);
+      viewportMeta.setAttribute("content", originalViewport);
+    };
+  }, []);
+
+  useEffect(() => {
     if (user?.id && lastUserIdRef.current !== user.id) {
       sessionTrackedRef.current = false;
       lastUserIdRef.current = user.id;
