@@ -1,26 +1,17 @@
 /* 1️⃣ Global Wrapper & Effects */
-:root {
-  scrollbar-width: none;
-  /* Firefox */
-  -ms-overflow-style: none;
-  /* IE and Edge */
-}
-
-::-webkit-scrollbar {
+.home-wrapper::-webkit-scrollbar {
   display: none;
   /* Chrome, Safari, Opera */
 }
 
-/* Force zero margins/padding on all layout parents */
-html,
-body,
-#root,
 .home-wrapper {
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: 0;
+  padding: 0;
   width: 100%;
   overflow-x: hidden;
   background: transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .home-wrapper {
