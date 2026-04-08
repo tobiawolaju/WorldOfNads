@@ -102,7 +102,7 @@ func _input(event: InputEvent) -> void:
 	# --- 1. MOUSE CAMERA CONTROLS ---
 	# Skip mouse controls if we have an active touch (prevents emulated mouse double-rotation)
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		if active_touches > 0:
+		if active_touches > 0 or DisplayServer.is_touchscreen_available():
 			return
 		cam_rot_y -= event.relative.x * 0.005
 		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.005, min_pitch, max_pitch)
