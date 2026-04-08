@@ -1,8 +1,12 @@
 {
   "rewrites": [
     {
+      "source": "/godot/(.*)",
+      "destination": "/godot/$1"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/"
+      "destination": "/index.html"
     }
   ]
 }
