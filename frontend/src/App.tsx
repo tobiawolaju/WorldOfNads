@@ -86,43 +86,24 @@ const AppContent: React.FC = () => {
         return;
       }
 
-      // Calculate the desktop viewport width needed so content fits without
-      // introducing a horizontal scrollbar in mobile-landscape desktop mode.
-      const documentWidth = Math.max(
-        document.documentElement.scrollWidth,
-        document.body?.scrollWidth ?? 0,
-      );
-      const requiredDesktopWidth = Math.max(desktopBaseWidth, Math.ceil(documentWidth));
+      // Use a fixed desktop width – no scrollWidth measurement needed
+      // since all CSS now uses % instead of vw for widths.
       const desktopViewport =
-        `width=${requiredDesktopWidth}, initial-scale=1.0, maximum-scale=1.0, user-scalable=no`;
+        `width=${desktopBaseWidth}, initial-scale=1.0, maximum-scale=1.0, user-scalable=no`;
 
       viewportMeta.setAttribute("content", desktopViewport);
     };
 
-    const runViewportSync = () => {
-      applyViewportMode();
-      requestAnimationFrame(applyViewportMode);
-    };
+    applyViewportMode();
 
-    runViewportSync();
-
-    const resizeObserver = new ResizeObserver(() => {
-      runViewportSync();
-    });
-    resizeObserver.observe(document.documentElement);
-    if (document.body) {
-      resizeObserver.observe(document.body);
-    }
-
-    window.addEventListener("resize", runViewportSync);
-    landscapeQuery.addEventListener("change", runViewportSync);
-    mobileDeviceQuery.addEventListener("change", runViewportSync);
+    window.addEventListener("resize", applyViewportMode);
+    landscapeQuery.addEventListener("change", applyViewportMode);
+    mobileDeviceQuery.addEventListener("change", applyViewportMode);
 
     return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", runViewportSync);
-      landscapeQuery.removeEventListener("change", runViewportSync);
-      mobileDeviceQuery.removeEventListener("change", runViewportSync);
+      window.removeEventListener("resize", applyViewportMode);
+      landscapeQuery.removeEventListener("change", applyViewportMode);
+      mobileDeviceQuery.removeEventListener("change", applyViewportMode);
       viewportMeta.setAttribute("content", originalViewport);
     };
   }, [location.pathname]);

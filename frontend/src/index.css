@@ -83,6 +83,7 @@ html {
     "Segoe UI", Roboto, sans-serif;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 .button-primary {
@@ -215,7 +216,7 @@ html {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   pointer-events: none;
   z-index: -1;

@@ -3,7 +3,7 @@
 /* --- GLOBAL WRAPPER --- */
 .dashboard-wrapper {
   display: flex;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   font-family: 'Font1', sans-serif;
   overflow: hidden;
