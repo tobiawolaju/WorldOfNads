@@ -74,7 +74,6 @@ const AppContent: React.FC = () => {
 
     const defaultViewport =
       "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
-    const desktopBaseWidth = 1280;
     const originalViewport = viewportMeta.getAttribute("content") || defaultViewport;
     const mobileDeviceQuery = window.matchMedia("(hover: none) and (pointer: coarse)");
     const landscapeQuery = window.matchMedia("(orientation: landscape)");
@@ -86,10 +85,11 @@ const AppContent: React.FC = () => {
         return;
       }
 
-      // Use a fixed desktop width – no scrollWidth measurement needed
-      // since all CSS now uses % instead of vw for widths.
+      // Use the device's actual screen width so content scales to fit exactly.
+      // In landscape, screen.width is the longer dimension.
+      const deviceWidth = Math.max(screen.width, screen.height);
       const desktopViewport =
-        `width=${desktopBaseWidth}, initial-scale=1.0, maximum-scale=1.0, user-scalable=no`;
+        `width=${deviceWidth}, initial-scale=1.0, maximum-scale=1.0, user-scalable=no`;
 
       viewportMeta.setAttribute("content", desktopViewport);
     };
