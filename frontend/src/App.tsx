@@ -75,6 +75,7 @@ const AppContent: React.FC = () => {
     const defaultViewport =
       "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
     const desktopBaseWidth = 1280;
+    const desktopViewport = "width=1280, initial-scale=0.8, maximum-scale=0.8, user-scalable=no";
     const originalViewport = viewportMeta.getAttribute("content") || defaultViewport;
     const mobileDeviceQuery = window.matchMedia("(hover: none) and (pointer: coarse)");
     const landscapeQuery = window.matchMedia("(orientation: landscape)");
