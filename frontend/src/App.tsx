@@ -85,11 +85,13 @@ const AppContent: React.FC = () => {
         return;
       }
 
-      // Use the device's actual screen width so content scales to fit exactly.
-      // In landscape, screen.width is the longer dimension.
+      // Render at 1280px desktop width, then zoom out so it fits the
+      // device screen exactly – no horizontal overscroll.
+      const desktopWidth = 1280;
       const deviceWidth = Math.max(screen.width, screen.height);
+      const scale = Math.min(1, deviceWidth / desktopWidth);
       const desktopViewport =
-        `width=${deviceWidth}, initial-scale=1.0, maximum-scale=1.0, user-scalable=no`;
+        `width=${desktopWidth}, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=no`;
 
       viewportMeta.setAttribute("content", desktopViewport);
     };
