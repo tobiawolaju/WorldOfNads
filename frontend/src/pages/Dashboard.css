@@ -42,6 +42,12 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding-bottom: 100px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tab-content-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 
@@ -728,6 +734,12 @@
   gap: 12px;
   padding: 10px;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.reward-list::-webkit-scrollbar {
+  display: none;
 }
 
 .reward-empty {
@@ -782,6 +794,12 @@
   gap: 15px;
   padding: 10px;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.store-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .store-card {
