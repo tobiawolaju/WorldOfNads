@@ -573,6 +573,7 @@
 
 /* --- MATCH DETAILS ON CARD --- */
 .match-card-overlay.selected-overlay {
+  background: rgba(183, 0, 255, 0.295);
   justify-content: center;
   text-align: center;
   align-items: center;

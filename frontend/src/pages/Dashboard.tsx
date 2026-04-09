@@ -76,17 +76,6 @@ const dummyStore: StoreItem[] = [
   { id: "s8", name: "Llama Dance", price: "12 MON", image: "/logo.jpg", category: "emotes", description: "Celebrate with some llama energy." },
 ];
 
-const getDeterministicTheme = (id: string) => {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const h = Math.abs(hash % 360);
-  // Using dark HSL (lightness 20-30%) for white text contrast
-  // Incorporating a subtle gradient for a more premium "filter" look
-  return `linear-gradient(135deg, hsla(${h}, 70%, 25%, 0.9), hsla(${(h + 40) % 360}, 70%, 20%, 0.85))`;
-};
-
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
   const navigate = useNavigate();
@@ -385,10 +374,7 @@ export default function Dashboard() {
                   }}
                 >
                   {selectedMatch === match.matchId ? (
-                    <div 
-                      className="match-card-overlay selected-overlay"
-                      style={{ background: getDeterministicTheme(match.matchId) }}
-                    >
+                    <div className="match-card-overlay selected-overlay">
 
                       <div className="match-details-inner">
                         <p className="match-desc">{match.description}</p>
