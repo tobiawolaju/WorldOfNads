@@ -740,8 +740,8 @@
 /* Store Section */
 .store-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
   padding: 10px;
   overflow-y: auto;
   scrollbar-width: none;
@@ -772,7 +772,7 @@
 }
 
 .store-card-image {
-  height: 120px;
+  height: 80px;
   background-size: cover;
   background-position: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -785,20 +785,24 @@
 
 .store-card-info h3 {
   font-family: "Font1", sans-serif;
-  font-size: 14px;
-  margin-bottom: 4px;
+  font-size: 11px;
+  margin-bottom: 2px;
   color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .store-card-info p {
   color: #907cff;
   font-weight: bold;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 @media (max-width: 480px) {
   .store-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
   }
 }
 
