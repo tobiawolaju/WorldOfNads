@@ -526,9 +526,8 @@ export default function Dashboard() {
             const isOwned = dummyOwnedItems.includes(selectedStore);
             if (isOwned) {
               setEquippedSkin(item);
-              alert(`Equipping ${item.name}!`);
             } else {
-              alert(`Purchasing ${item.name} for ${item.price}!`);
+              // Future: Add purchase logic here
             }
           }}
           style={{
