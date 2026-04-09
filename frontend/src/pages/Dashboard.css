@@ -113,7 +113,8 @@
   }
 
   .play-fixed,
-  .play-fixed.counting {
+  .play-fixed.counting,
+  .buy-fixed {
     left: 50%;
     right: auto;
     transform: translateX(-50%);

@@ -459,19 +459,16 @@ export default function Dashboard() {
         </button>
       )}
 
-      {tab === "store" && (
+      {tab === "store" && selectedStore && (
         <button
-          className={`buy-fixed ${selectedStore ? "active" : "disabled"}`}
+          className={`buy-fixed active`}
           onClick={() => {
-            if (selectedStore) {
-              const item = dummyStore.find(i => i.id === selectedStore);
-              alert(`Purchasing ${item?.name} for ${item?.price}!`);
-            }
+            const item = dummyStore.find(i => i.id === selectedStore);
+            alert(`Purchasing ${item?.name} for ${item?.price}!`);
           }}
-          disabled={!selectedStore}
           style={{
-            opacity: selectedStore ? 1 : 0.5,
-            pointerEvents: selectedStore ? "auto" : "none"
+            opacity: 1,
+            pointerEvents: "auto"
           }}
         >
           <span>BUY</span>
