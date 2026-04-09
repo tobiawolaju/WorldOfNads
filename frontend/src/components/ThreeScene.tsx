@@ -152,13 +152,14 @@ const NadModel: React.FC<NadModelProps> = ({
       const existing = headBone.getObjectByName("bone-cube-attachment");
       if (existing) headBone.remove(existing);
 
-      const geometry = new THREE.BoxGeometry(20, 20, 20); // Using standard scale, will be affected by model scale
+      const geometry = new THREE.BoxGeometry(100, 100, 100); 
       const material = new THREE.MeshStandardMaterial({ color: "red" });
       const cube = new THREE.Mesh(geometry, material);
       cube.name = "bone-cube-attachment";
+      cube.scale.setScalar(0.1);
       
-      // Position it at the head bone's origin (or slightly offset)
-      cube.position.set(0, 0, 0); 
+      // Position it slightly above the pivot (neck area) to sit on the head
+      cube.position.set(0, 10, 0); 
       
       headBone.add(cube);
       console.log("Attached cube to bone:", headBone.name);
