@@ -76,6 +76,8 @@ const dummyStore: StoreItem[] = [
   { id: "s8", name: "Llama Dance", price: "12 MON", image: "/logo.jpg", category: "emotes", description: "Celebrate with some llama energy." },
 ];
 
+const dummyOwnedItems: string[] = ["s1", "s5"]; // IDs matching dummyStore
+
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
   const navigate = useNavigate();
@@ -461,17 +463,27 @@ export default function Dashboard() {
 
       {tab === "store" && selectedStore && (
         <button
-          className={`buy-fixed active`}
+          className="buy-fixed active"
           onClick={() => {
             const item = dummyStore.find(i => i.id === selectedStore);
-            alert(`Purchasing ${item?.name} for ${item?.price}!`);
+            if (!item) return;
+            const isOwned = dummyOwnedItems.includes(selectedStore);
+            if (isOwned) {
+              alert(`Equipping ${item.name}!`);
+            } else {
+              alert(`Purchasing ${item.name} for ${item.price}!`);
+            }
           }}
           style={{
             opacity: 1,
             pointerEvents: "auto"
           }}
         >
-          <span>BUY</span>
+          <span>
+            {dummyOwnedItems.includes(selectedStore)
+              ? "EQUIP"
+              : `BUY (${dummyStore.find(i => i.id === selectedStore)?.price})`}
+          </span>
         </button>
       )}
     </div>
