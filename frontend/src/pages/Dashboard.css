@@ -172,8 +172,8 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: #00e676;
-  color: #000000;
+  background: #907cff;
+  color: #ffffff;
   cursor: pointer;
   z-index: 20;
   font-family: font1;
@@ -197,8 +197,8 @@
 }
 
 .buy-fixed.disabled {
-  background: #00e676;
-  color: #000000;
+  background: #907cff;
+  color: #ffffff;
   border: 8px solid rgba(255, 255, 255, 0.197);
   cursor: not-allowed;
   opacity: 0.5;
