@@ -425,7 +425,9 @@ export default function Dashboard() {
                     </div>
                     <div className="store-card-info">
                       <h3>{item.name}</h3>
-                      <p>{item.price}</p>
+                      <p>
+                        {dummyOwnedItems.includes(item.id) ? "Owned" : item.price}
+                      </p>
                     </div>
                   </div>
                 ))}
