@@ -482,9 +482,7 @@ export default function Dashboard() {
           }}
         >
           <span>
-            {dummyOwnedItems.includes(selectedStore)
-              ? "EQUIP"
-              : `BUY (${dummyStore.find(i => i.id === selectedStore)?.price})`}
+            {dummyOwnedItems.includes(selectedStore) ? "EQUIP" : "BUY"}
           </span>
         </button>
       )}
