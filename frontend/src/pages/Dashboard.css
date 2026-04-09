@@ -167,6 +167,47 @@
   border: 8px solid rgba(255, 255, 255, 0.407);
 }
 
+/* --- FIXED BUY BUTTON (BOTTOM RIGHT) --- */
+.buy-fixed {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #00e676;
+  color: #000000;
+  cursor: pointer;
+  z-index: 20;
+  font-family: font1;
+  font-weight: bold;
+  font-size: 20px;
+  border-radius: var(--radius-full);
+  height: 50px;
+  margin: 10px;
+  padding: 5px 30px;
+  transition: 0.25s ease, transform 0.25s ease;
+  width: 120px;
+  opacity: 1;
+  border: none;
+}
+
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  .buy-fixed {
+    transform: scale(var(--rev-scale, 1.25));
+    transform-origin: bottom right;
+  }
+}
+
+.buy-fixed.disabled {
+  background: #00e676;
+  color: #000000;
+  border: 8px solid rgba(255, 255, 255, 0.197);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.buy-fixed.active:hover {
+  border: 8px solid rgba(255, 255, 255, 0.407);
+}
+
 /* --- TABS --- */
 .tabs {
   display: flex;

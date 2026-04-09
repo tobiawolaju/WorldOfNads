@@ -458,6 +458,25 @@ export default function Dashboard() {
           )}
         </button>
       )}
+
+      {tab === "store" && (
+        <button
+          className={`buy-fixed ${selectedStore ? "active" : "disabled"}`}
+          onClick={() => {
+            if (selectedStore) {
+              const item = dummyStore.find(i => i.id === selectedStore);
+              alert(`Purchasing ${item?.name} for ${item?.price}!`);
+            }
+          }}
+          disabled={!selectedStore}
+          style={{
+            opacity: selectedStore ? 1 : 0.5,
+            pointerEvents: selectedStore ? "auto" : "none"
+          }}
+        >
+          <span>BUY</span>
+        </button>
+      )}
     </div>
   );
 }
