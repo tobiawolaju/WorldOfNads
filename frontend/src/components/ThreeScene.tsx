@@ -282,8 +282,8 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
       }
     } else if (phase === 'pendulum') {
       const elapsed = (now - pendulumState.startTime) / 1000;
-      // Oscillate +/- 45 degrees
-      const oscillation = Math.sin(elapsed * 0.4) * (Math.PI / 4);
+      // Oscillate +/- 18 degrees
+      const oscillation = Math.sin(elapsed * 0.4) * (18 * Math.PI / 180);
 
       const axis = new THREE.Vector3(0, 1, 0);
       const newPos = pendulumState.basePosition.clone();
