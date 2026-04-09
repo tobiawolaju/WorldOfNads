@@ -374,7 +374,10 @@ export default function Dashboard() {
                   }}
                 >
                   {selectedMatch === match.matchId ? (
-                    <div className="match-card-overlay selected-overlay">
+                    <div 
+                      className="match-card-overlay selected-overlay"
+                      style={{ background: getDeterministicTheme(match.matchId) }}
+                    >
 
                       <div className="match-details-inner">
                         <p className="match-desc">{match.description}</p>
