@@ -535,6 +535,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -580,7 +581,7 @@
 
 /* --- MATCH DETAILS ON CARD --- */
 .match-card-overlay.selected-overlay {
-  background: rgba(183, 0, 255, 0.295);
+  background: rgba(183, 0, 255, 0.637);
   justify-content: center;
   text-align: center;
   align-items: center;
