@@ -159,7 +159,7 @@ const NadModel: React.FC<NadModelProps> = ({
       cube.scale.setScalar(0.015);
 
       // Applying Godot values: x:left, y:top, z:forward
-      cube.position.set(0, -2.25, 0.15);
+      cube.position.set(0, -2.25, 0.025);
 
       headBone.add(cube);
       console.log("Attached cube to bone:", headBone.name);
