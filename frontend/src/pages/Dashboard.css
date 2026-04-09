@@ -314,8 +314,13 @@
 
 .match-card {
   scroll-snap-align: center;
+  flex: 0 0 160px;
+  width: 160px;
   min-width: 160px;
+  max-width: 160px;
   height: 220px;
+  min-height: 220px;
+  max-height: 220px;
   border-radius: 0px;
   border: 6px solid rgb(255, 255, 255);
   position: relative;
