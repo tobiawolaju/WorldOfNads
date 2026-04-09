@@ -219,6 +219,7 @@
   font-family: font2;
   font-size: 1.8rem;
   user-select: none;
+  margin-top: 50px;
 }
 
 @media (max-width:768px) {
