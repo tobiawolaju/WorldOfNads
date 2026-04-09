@@ -96,8 +96,8 @@ const Play: React.FC = () => {
             width: "3rem",
             height: "3rem",
             borderRadius: "999px",
-            border: "4px solid rgba(255, 255, 255, 0.5)",
-            background: "rgba(255, 255, 255, 0.3)",
+            border: "4px solid transparent",
+            background: "transparent",
             color: "#fff",
             display: "inline-flex",
             alignItems: "center",
@@ -108,7 +108,11 @@ const Play: React.FC = () => {
           <span
             className="material-symbols-rounded"
             aria-hidden="true"
-            style={{ fontSize: "1.5rem", lineHeight: 1 }}
+            style={{
+              fontSize: "1.5rem",
+              lineHeight: 1,
+              fontVariationSettings: "'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 48",
+            }}
           >
             fullscreen
           </span>
