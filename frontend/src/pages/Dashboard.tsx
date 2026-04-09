@@ -87,8 +87,6 @@ export default function Dashboard() {
 
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
-  const [rewardFilter, setRewardFilter] = useState<"earned" | "gifted">("earned");
-  const [storeFilter, setStoreFilter] = useState<"skins" | "emotes" | "bundles">("skins");
 
   const [matches, setMatches] = useState<Match[]>(staticMatches as Match[]);
   const [rewards, setRewards] = useState<RewardItem[]>([]);
@@ -333,21 +331,6 @@ export default function Dashboard() {
               <span className={filter === "completed" ? "filter active" : "filter"} onClick={() => { setFilter("completed"); setSelectedMatch(null); }}>Completed</span>
             </>
           )}
-
-          {tab === "rewards" && (
-            <>
-              <span className={rewardFilter === "earned" ? "filter active" : "filter"} onClick={() => { setRewardFilter("earned"); setSelectedReward(null); }}>Earned</span>
-              <span className={rewardFilter === "gifted" ? "filter active" : "filter"} onClick={() => { setRewardFilter("gifted"); setSelectedReward(null); }}>Gifted</span>
-            </>
-          )}
-
-          {tab === "store" && (
-            <>
-              <span className={storeFilter === "skins" ? "filter active" : "filter"} onClick={() => { setStoreFilter("skins"); setSelectedStore(null); }}>Skins</span>
-              <span className={storeFilter === "emotes" ? "filter active" : "filter"} onClick={() => { setStoreFilter("emotes"); setSelectedStore(null); }}>Emotes</span>
-              <span className={storeFilter === "bundles" ? "filter active" : "filter"} onClick={() => { setStoreFilter("bundles"); setSelectedStore(null); }}>Bundles</span>
-            </>
-          )}
         </div>
 
         <div className="tab-content-scroll">
@@ -400,22 +383,25 @@ export default function Dashboard() {
 
           {tab === "rewards" && (
             <div className="reward-list">
-              {rewards.filter((r) => r.category === rewardFilter).length === 0 ? (
+              {rewards.length === 0 ? (
                 <div className="reward-empty">
                   No rewards yet. Join a match to win some.
                 </div>
               ) : (
                 rewards
-                  .filter((r) => r.category === rewardFilter)
                   .map((reward) => (
                     <div
                       key={reward.id}
                       className={`reward-item ${selectedReward === reward.id ? "selected" : ""}`}
                       onClick={() => setSelectedReward(reward.id)}
                     >
-                      <div className="reward-item-icon">??</div>
+                      <div className="reward-item-icon">🏆</div>
                       <div className="reward-item-text">
-                        <strong>{reward.username}</strong> won <span>{reward.amount}</span> from {reward.source}
+                        <div className="reward-item-header">
+                           <strong>{reward.username}</strong>
+                           <span className={`item-badge badge-${reward.category}`}>{reward.category}</span>
+                        </div>
+                        <div>won <span>{reward.amount}</span> from {reward.source}</div>
                       </div>
                     </div>
                   ))
@@ -426,14 +412,15 @@ export default function Dashboard() {
           {tab === "store" && (
             <div className="store-grid">
               {dummyStore
-                .filter((s) => s.category === storeFilter)
                 .map((item) => (
                   <div
                     key={item.id}
                     className={`store-card ${selectedStore === item.id ? "selected" : ""}`}
                     onClick={() => setSelectedStore(item.id)}
                   >
-                    <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}></div>
+                    <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}>
+                       <span className={`item-badge badge-store badge-${item.category}`}>{item.category}</span>
+                    </div>
                     <div className="store-card-info">
                       <h3>{item.name}</h3>
                       <p>{item.price}</p>

@@ -756,3 +756,65 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* --- ITEM BADGES --- */
+.item-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-block;
+  margin-left: 8px;
+}
+
+/* Reward Specific Badges */
+.badge-earned {
+  background: rgba(0, 255, 128, 0.15);
+  color: #008040;
+  border: 1px solid rgba(0, 255, 128, 0.3);
+}
+
+.badge-gifted {
+  background: rgba(255, 215, 0, 0.15);
+  color: #8b7500;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+/* Store Specific Badges */
+.badge-store {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  margin: 0;
+  z-index: 5;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.badge-skins {
+  background: rgba(144, 124, 255, 0.85);
+  color: #ffffff;
+}
+
+.badge-emotes {
+  background: rgba(255, 107, 107, 0.85);
+  color: #ffffff;
+}
+
+.badge-bundles {
+  background: rgba(255, 159, 64, 0.85);
+  color: #ffffff;
+}
+
+.reward-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.store-card-image {
+  position: relative; /* Base for badge positioning */
+}
