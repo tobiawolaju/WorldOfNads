@@ -156,10 +156,10 @@ const NadModel: React.FC<NadModelProps> = ({
       const material = new THREE.MeshStandardMaterial({ color: "red" });
       const cube = new THREE.Mesh(geometry, material);
       cube.name = "bone-cube-attachment";
-      cube.scale.setScalar(0.1);
+      cube.scale.setScalar(0.018);
       
-      // Position it slightly above the pivot (neck area) to sit on the head
-      cube.position.set(0, 10, 0); 
+      // Applying Godot values: x:13.9, y:0.0, z:3.7
+      cube.position.set(13.9, 0.0, 3.7); 
       
       headBone.add(cube);
       console.log("Attached cube to bone:", headBone.name);
