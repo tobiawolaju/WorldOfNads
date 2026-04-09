@@ -221,7 +221,7 @@
   font-family: font2;
   font-size: 1.8rem;
   user-select: none;
-  margin-top: 100px;
+  margin-top: 50px;
 }
 
 @media (max-width:768px) {
@@ -865,5 +865,6 @@
 }
 
 .store-card-image {
-  position: relative; /* Base for badge positioning */
+  position: relative;
+  /* Base for badge positioning */
 }
