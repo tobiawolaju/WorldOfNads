@@ -82,19 +82,21 @@ const AppContent: React.FC = () => {
       const shouldUseDesktopMode = mobileDeviceQuery.matches && landscapeQuery.matches;
       if (!shouldUseDesktopMode) {
         viewportMeta.setAttribute("content", defaultViewport);
+        document.documentElement.style.setProperty('--rev-scale', '1');
         return;
       }
 
       // Render at 1280px desktop width, then zoom out so it fits the
       // device screen exactly – no horizontal overscroll.
-      // Subtract a small buffer for Android system UI (nav bar, status bar).
       const desktopWidth = 1280;
       const deviceWidth = Math.max(screen.width, screen.height) - 50;
       const scale = Math.min(1, deviceWidth / desktopWidth);
+      const revScale = 1 / scale;
       const desktopViewport =
         `width=${desktopWidth}, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=no`;
 
       viewportMeta.setAttribute("content", desktopViewport);
+      document.documentElement.style.setProperty('--rev-scale', revScale.toString());
     };
 
     applyViewportMode();
@@ -108,6 +110,7 @@ const AppContent: React.FC = () => {
       landscapeQuery.removeEventListener("change", applyViewportMode);
       mobileDeviceQuery.removeEventListener("change", applyViewportMode);
       viewportMeta.setAttribute("content", originalViewport);
+      document.documentElement.style.setProperty('--rev-scale', '1');
     };
   }, [location.pathname]);
 

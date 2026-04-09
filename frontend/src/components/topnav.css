@@ -15,6 +15,15 @@
   background-color: rgba(255, 255, 255, 0);
   backdrop-filter: blur(2px);
   /* Adjust the blur intensity as needed */
+  transition: transform 0.25s ease, width 0.25s ease;
+}
+
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  .topnav {
+    transform: scale(var(--rev-scale, 1.25));
+    transform-origin: top left;
+    width: calc(100% / var(--rev-scale, 1.25));
+  }
 }
 
 

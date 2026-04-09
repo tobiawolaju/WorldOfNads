@@ -138,11 +138,18 @@
   height: 50px;
   margin: 10px;
   padding: 5px, 30px;
-  transition: 0.25s ease;
+  transition: 0.25s ease, transform 0.25s ease;
   width: 120px;
   opacity: 1;
   border: none;
   cursor: pointer;
+}
+
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  .play-fixed {
+    transform: scale(var(--rev-scale, 1.25));
+    transform-origin: bottom right;
+  }
 }
 
 /* Disabled / Active White Background State */
