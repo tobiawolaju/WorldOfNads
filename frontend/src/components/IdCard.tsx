@@ -37,6 +37,7 @@ const vertexShader = `
 `;
 
 const fragmentShader = `
+  precision mediump float;
   uniform float uTime;
   varying vec3 vNormal;
   varying vec3 vViewPosition;
@@ -93,6 +94,13 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, userna
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   }), []);
+
+  // Cleanup effect for GPU memory
+  useEffect(() => {
+    return () => {
+      bubbleMaterial.dispose();
+    };
+  }, [bubbleMaterial]);
 
   return (
     <group position={[0, 0, 0]} rotation={[0, 0, 0]}>

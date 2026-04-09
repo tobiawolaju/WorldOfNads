@@ -99,14 +99,21 @@ const AppContent: React.FC = () => {
       document.documentElement.style.setProperty('--rev-scale', revScale.toString());
     };
 
+    let resizeTimeout: NodeJS.Timeout;
+    const throttledApply = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(applyViewportMode, 200);
+    };
+
     applyViewportMode();
 
-    window.addEventListener("resize", applyViewportMode);
+    window.addEventListener("resize", throttledApply);
     landscapeQuery.addEventListener("change", applyViewportMode);
     mobileDeviceQuery.addEventListener("change", applyViewportMode);
 
     return () => {
-      window.removeEventListener("resize", applyViewportMode);
+      clearTimeout(resizeTimeout);
+      window.removeEventListener("resize", throttledApply);
       landscapeQuery.removeEventListener("change", applyViewportMode);
       mobileDeviceQuery.removeEventListener("change", applyViewportMode);
       viewportMeta.setAttribute("content", originalViewport);

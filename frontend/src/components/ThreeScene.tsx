@@ -39,6 +39,7 @@ const vertexShader = `
 `;
 
 const fragmentShader = `
+  precision mediump float;
   uniform float uTime;
   varying vec3 vNormal;
   varying vec3 vViewPosition;
@@ -92,6 +93,19 @@ const Chicken: React.FC<ChickenProps> = ({
         child.material = bubbleMaterial;
       }
     });
+    return () => {
+      bubbleMaterial.dispose();
+      model.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach((m) => m.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
+    };
   }, [model]);
 
   return (
@@ -163,6 +177,11 @@ const NadModel: React.FC<NadModelProps> = ({
 
       headBone.add(cube);
       console.log("Attached cube to bone:", headBone.name);
+
+      return () => {
+        geometry.dispose();
+        material.dispose();
+      };
     }
   }, [model]);
 
@@ -359,9 +378,9 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
 
   return (
     <Canvas
-      dpr={[1, 2]}
+      dpr={[1, 1.5]}
       camera={{ position: [0, 0, cameraZ] }}
-      gl={{ alpha: true, preserveDrawingBuffer: true }}
+      gl={{ alpha: true, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
       style={{ background: "none", pointerEvents: "auto" }}
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
     >
