@@ -135,6 +135,33 @@ const NadModel: React.FC<NadModelProps> = ({
     model.position.sub(center.multiplyScalar(model.scale.x));
   }, [model]);
 
+  // Bone attachment logic
+  useEffect(() => {
+    let headBone: THREE.Object3D | null = null;
+    model.traverse((child) => {
+      if (child instanceof THREE.Bone && (child.name.toLocaleLowerCase().includes("head"))) {
+        headBone = child;
+      }
+    });
+
+    if (headBone) {
+      // Remove existing cube if any (prevent duplication)
+      const existing = headBone.getObjectByName("bone-cube-attachment");
+      if (existing) headBone.remove(existing);
+
+      const geometry = new THREE.BoxGeometry(20, 20, 20); // Using standard scale, will be affected by model scale
+      const material = new THREE.MeshStandardMaterial({ color: "red" });
+      const cube = new THREE.Mesh(geometry, material);
+      cube.name = "bone-cube-attachment";
+      
+      // Position it at the head bone's origin (or slightly offset)
+      cube.position.set(0, 0, 0); 
+      
+      headBone.add(cube);
+      console.log("Attached cube to bone:", headBone.name);
+    }
+  }, [model]);
+
   useEffect(() => {
     if (!model.animations || model.animations.length === 0) return;
     const action = mixer.clipAction(model.animations[0]);
