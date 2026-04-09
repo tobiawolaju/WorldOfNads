@@ -18,12 +18,24 @@ interface Wallet {
   address: string;
 }
 
+interface SkinConfig {
+  attachmentShape?: "box" | "cone" | "sphere" | "cylinder";
+  color?: string;
+}
+
+interface StoreItem {
+  id: string;
+  name: string;
+  skinConfig?: SkinConfig;
+}
+
 interface ThreeSceneProps {
   twitter?: Twitter;
   wallets: Wallet[];
   earned: number;
   username: string;
   onLogout: () => void;
+  equippedSkin?: StoreItem | null;
 }
 
 // --- Shader Definition for Water Bubble Effect ---
@@ -123,11 +135,13 @@ interface NadModelProps {
   position?: [number, number, number];
   rotation?: [number, number, number];
   scale?: number;
+  equippedSkin?: StoreItem | null;
 }
 const NadModel: React.FC<NadModelProps> = ({
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
+  equippedSkin,
 }) => {
   const fbx = useFBX("/nad.fbx");
   const model = useMemo(() => SkeletonUtils.clone(fbx), [fbx]);
@@ -149,6 +163,22 @@ const NadModel: React.FC<NadModelProps> = ({
     model.position.sub(center.multiplyScalar(model.scale.x));
   }, [model]);
 
+  // Handle character color change
+  useEffect(() => {
+    const color = equippedSkin?.skinConfig?.color || "#ffffff";
+    model.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        // Only change material if it's the main body (assuming it's not the red cube)
+        if (child.name !== "bone-attachment") {
+          if (child.material) {
+            child.material = child.material.clone();
+            child.material.color.set(color);
+          }
+        }
+      }
+    });
+  }, [model, equippedSkin]);
+
   // Bone attachment logic
   useEffect(() => {
     let headBone: THREE.Object3D | null = null;
@@ -162,28 +192,60 @@ const NadModel: React.FC<NadModelProps> = ({
     });
 
     if (headBone) {
-      // Remove existing cube if any (prevent duplication)
-      const existing = headBone.getObjectByName("bone-cube-attachment");
-      if (existing) headBone.remove(existing);
+      // Remove existing attachment if any
+      const existing = headBone.getObjectByName("bone-attachment");
+      if (existing) {
+        headBone.remove(existing);
+        // Explicitly dispose to prevent leaks
+        if (existing instanceof THREE.Mesh) {
+          existing.geometry.dispose();
+          if (Array.isArray(existing.material)) {
+            existing.material.forEach(m => m.dispose());
+          } else {
+            existing.material.dispose();
+          }
+        }
+      }
 
-      const geometry = new THREE.BoxGeometry(100, 100, 100);
-      const material = new THREE.MeshStandardMaterial({ color: "red" });
-      const cube = new THREE.Mesh(geometry, material);
-      cube.name = "bone-cube-attachment";
-      cube.scale.setScalar(0.018);
+      if (!equippedSkin?.skinConfig?.attachmentShape) return;
 
-      // Applying Godot values: x:left, y:top, z:forward
-      cube.position.set(0, -2.25, -0.05);
+      let geometry: THREE.BufferGeometry;
+      const shape = equippedSkin.skinConfig.attachmentShape;
 
-      headBone.add(cube);
-      console.log("Attached cube to bone:", headBone.name);
+      switch(shape) {
+        case "cone":
+          geometry = new THREE.ConeGeometry(60, 120, 32);
+          break;
+        case "sphere":
+          geometry = new THREE.SphereGeometry(60, 32, 32);
+          break;
+        case "cylinder":
+          geometry = new THREE.CylinderGeometry(50, 50, 100, 32);
+          break;
+        case "box":
+        default:
+          geometry = new THREE.BoxGeometry(100, 100, 100);
+          break;
+      }
+
+      const material = new THREE.MeshStandardMaterial({ 
+        color: equippedSkin.skinConfig.color || "red" 
+      });
+      const attachment = new THREE.Mesh(geometry, material);
+      attachment.name = "bone-attachment";
+      attachment.scale.setScalar(0.018);
+
+      // Positioning adjustment
+      attachment.position.set(0, -2.25, -0.05);
+
+      headBone.add(attachment);
 
       return () => {
         geometry.dispose();
         material.dispose();
       };
     }
-  }, [model]);
+  }, [model, equippedSkin]);
 
   useEffect(() => {
     if (!model.animations || model.animations.length === 0) return;
@@ -325,6 +387,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
   earned,
   username,
   onLogout,
+  equippedSkin,
 }) => {
   const [cameraZ, setCameraZ] = useState(22);
   const [targetY, setTargetY] = useState(0);
@@ -388,7 +451,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       <directionalLight position={[5, 5, 5]} intensity={1} />
 
       <Suspense fallback={null}>
-        <NadModel scale={0.5} position={[0, -2, 0]} />
+        <NadModel scale={0.5} position={[0, -2, 0]} equippedSkin={equippedSkin} />
 
         <CardRig>
           <group rotation={[-0.5, 1, 1]} position={[4, 0.5, 0]} scale={0.3}>

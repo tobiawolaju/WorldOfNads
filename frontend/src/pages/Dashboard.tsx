@@ -56,24 +56,76 @@ type RewardItem = {
   date: string;
 };
 
+type SkinConfig = {
+  attachmentShape?: "box" | "cone" | "sphere" | "cylinder";
+  color?: string;
+};
+
 type StoreItem = {
   id: string;
   name: string;
   price: string;
   image: string;
-  category: "skins" | "emotes" | "bundles";
+  category: "skins" | "costumes" | "bundles";
   description: string;
+  skinConfig?: SkinConfig;
 };
 
 const dummyStore: StoreItem[] = [
-  { id: "s1", name: "Gladiator Skin", price: "20 MON", image: "/logo.jpg", category: "skins", description: "Battle-hardened armor for your character." },
-  { id: "s2", name: "Heart Wave", price: "5 MON", image: "/logo.jpg", category: "emotes", description: "Spread the love in the arena." },
-  { id: "s3", name: "Starter Bundle", price: "45 MON", image: "/logo.jpg", category: "bundles", description: "Everything a new Nad needs to survive." },
-  { id: "s4", name: "Ninja Skin", price: "35 MON", image: "/logo.jpg", category: "skins", description: "Move like a shadow, strike like lightning." },
-  { id: "s5", name: "Chicken Dance", price: "8 MON", image: "/logo.jpg", category: "emotes", description: "A classic victory taunt." },
-  { id: "s6", name: "Elite Bundle", price: "150 MON", image: "/logo.jpg", category: "bundles", description: "Full set of elite gear and exclusive emotes." },
-  { id: "s7", name: "Cyberpunk Skin", price: "60 MON", image: "/logo.jpg", category: "skins", description: "Neon-soaked aesthetic for the modern warrior." },
-  { id: "s8", name: "Llama Dance", price: "12 MON", image: "/logo.jpg", category: "emotes", description: "Celebrate with some llama energy." },
+  { 
+    id: "s1", 
+    name: "Gladiator Skin", 
+    price: "20 MON", 
+    image: "/logo.jpg", 
+    category: "skins", 
+    description: "Battle-hardened armor for your character.",
+    skinConfig: { attachmentShape: "box", color: "#ff4444" }
+  },
+  { 
+    id: "s2", 
+    name: "Ninja Costume", 
+    price: "35 MON", 
+    image: "/logo.jpg", 
+    category: "costumes", 
+    description: "Move like a shadow.",
+    skinConfig: { attachmentShape: "cylinder", color: "#222222" }
+  },
+  { 
+    id: "s3", 
+    name: "Golden Nad Bundle", 
+    price: "150 MON", 
+    image: "/logo.jpg", 
+    category: "bundles", 
+    description: "The elite choice.",
+    skinConfig: { attachmentShape: "sphere", color: "#ffd700" }
+  },
+  { 
+    id: "s4", 
+    name: "Cyberpunk Skin", 
+    price: "60 MON", 
+    image: "/logo.jpg", 
+    category: "skins", 
+    description: "Neon-soaked aesthetic.",
+    skinConfig: { attachmentShape: "box", color: "#b026ff" }
+  },
+  { 
+    id: "s5", 
+    name: "Witch Costume", 
+    price: "40 MON", 
+    image: "/logo.jpg", 
+    category: "costumes", 
+    description: "Spooky and mysterious.",
+    skinConfig: { attachmentShape: "cone", color: "#4b0082" }
+  },
+  { 
+    id: "s6", 
+    name: "Starter Bundle", 
+    price: "45 MON", 
+    image: "/logo.jpg", 
+    category: "bundles", 
+    description: "Essential gear.",
+    skinConfig: { attachmentShape: "box", color: "#44ff44" }
+  },
 ];
 
 const dummyOwnedItems: string[] = ["s1", "s5"]; // IDs matching dummyStore
@@ -86,6 +138,7 @@ export default function Dashboard() {
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [selectedReward, setSelectedReward] = useState<string | null>(null);
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
+  const [equippedSkin, setEquippedSkin] = useState<StoreItem | null>(null);
 
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
@@ -309,6 +362,7 @@ export default function Dashboard() {
           earned={earned}
           username={getUsernameFromPrivy(user)}
           onLogout={logout}
+          equippedSkin={equippedSkin}
         />
       </div>
 
@@ -471,6 +525,7 @@ export default function Dashboard() {
             if (!item) return;
             const isOwned = dummyOwnedItems.includes(selectedStore);
             if (isOwned) {
+              setEquippedSkin(item);
               alert(`Equipping ${item.name}!`);
             } else {
               alert(`Purchasing ${item.name} for ${item.price}!`);
