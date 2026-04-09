@@ -2,142 +2,242 @@ import React from "react";
 import "./Milestone.css";
 import Footer from "../components/Footer";
 
-type MilestoneEvent = {
-  quarter: string;
+type MilestoneItem = {
+  phase: "live" | "next" | "growth" | "scale" | "future" | "beyond";
   title: string;
   description: string;
-  highlight: string;
-  reached: boolean;
+  metrics: Record<string, string | number | boolean>;
+  status: "completed" | "in_progress" | "pending";
+};
+
+const formatPhase = (phase: MilestoneItem["phase"]) =>
+  phase.charAt(0).toUpperCase() + phase.slice(1);
+
+const formatMetricKey = (key: string) =>
+  key
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+
+const formatMetricValue = (value: string | number | boolean) => {
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  return String(value);
 };
 
 const Milestone: React.FC = () => {
-  const events: MilestoneEvent[] = [
+  const events: MilestoneItem[] = [
     {
-      quarter: "Live",
-      title: "Playable Game + Core System",
+      phase: "live",
+      title: "Playable Core System",
       description:
-        "A fully playable browser-based multiplayer game with real-time matches, payout system, and smooth session flow.",
-      highlight: "Live game with real players",
-      reached: true,
+        "Real-time multiplayer browser game with working match flow and session lifecycle.",
+      metrics: {
+        matches_completed: 2,
+        match_completion_rate: 100,
+        avg_players_per_match: 2.0,
+      },
+      status: "completed",
     },
     {
-      quarter: "Live",
-      title: "Payout & Escrow System",
+      phase: "live",
+      title: "Escrow Validation",
       description:
-        "Matches settle instantly with built-in escrow. Winners receive rewards automatically without manual steps.",
-      highlight: "$7K+ paid to players",
-      reached: true,
+        "Working payout system with real value transfers and automated settlement.",
+      metrics: {
+        total_rewards_distributed: 0.1,
+        successful_payouts: 2,
+        failed_payouts: 0,
+      },
+      status: "completed",
     },
     {
-      quarter: "Live",
-      title: "Analytics & Tracking",
+      phase: "live",
+      title: "Early Analytics Layer",
       description:
-        "Full visibility into gameplay and transactions through Google Analytics, Dune dashboards, and internal tracking tools.",
-      highlight: "200K+ matches tracked",
-      reached: true,
+        "Tracking gameplay, users, and reward flow across matches.",
+      metrics: {
+        total_users: 4,
+        daily_active_users: 2,
+        matches_tracked: 2,
+      },
+      status: "completed",
     },
     {
-      quarter: "Live",
-      title: "Community & Distribution",
+      phase: "live",
+      title: "Initial Community",
       description:
-        "Active Discord and X presence with early players testing matches and providing feedback.",
-      highlight: "Early player base established",
-      reached: true,
+        "Early testers actively playing matches and providing feedback.",
+      metrics: {
+        returning_users: 2,
+        total_players: 4,
+      },
+      status: "completed",
     },
     {
-      quarter: "Live",
-      title: "Security & Audit Readiness",
+      phase: "next",
+      title: "First Competitive Loop",
       description:
-        "Core systems structured for transparency and review, with audit processes prepared as the platform scales.",
-      highlight: "Audit-ready architecture",
-      reached: true,
-    },
-
-    // 🚀 NEXT PHASE
-
-    {
-      quarter: "Next",
-      title: "Initial Sponsor Onboarding",
-      description:
-        "Bring in the first wave of sponsors to fund matches and establish consistent competitive activity.",
-      highlight: "Target: 10 sponsors",
-      reached: false,
+        "Players return to play multiple matches and begin exhibiting competitive behavior.",
+      metrics: {
+        target_repeat_player_rate: "20%",
+        target_matches_per_user: 3,
+      },
+      status: "in_progress",
     },
     {
-      quarter: "Next",
-      title: "Early Player Growth",
+      phase: "next",
+      title: "Match Reliability Layer",
       description:
-        "Grow the active player base through direct onboarding and community-driven playtests.",
-      highlight: "Target: 100 active players",
-      reached: false,
+        "Ensure matches are fair, synchronized, and consistently complete without errors.",
+      metrics: {
+        target_match_success_rate: "95%+",
+        target_desync_rate: "<5%",
+      },
+      status: "pending",
     },
     {
-      quarter: "Next",
-      title: "Gameplay Optimization",
+      phase: "next",
+      title: "Sponsor-to-Match Flow",
       description:
-        "Improve responsiveness, reduce latency, and refine core mechanics to make matches smoother and more engaging.",
-      highlight: "Faster, smoother matches",
-      reached: false,
+        "End-to-end flow where sponsors fund matches and payouts complete automatically.",
+      metrics: {
+        target_sponsor_funded_matches: 5,
+        target_sponsor_conversion: "50%",
+      },
+      status: "pending",
     },
     {
-      quarter: "Next",
-      title: "Retention & Competitive Loop",
+      phase: "next",
+      title: "Closed Economy Test",
       description:
-        "Enhance the gameplay loop to increase repeat play through better match flow, tension, and competitive dynamics.",
-      highlight: "Higher player return rate",
-      reached: false,
-    },
-
-    // 🔥 SCALE PHASE
-
-    {
-      quarter: "Scale",
-      title: "Sponsor Expansion",
-      description:
-        "Expand sponsor participation as match activity increases and visibility grows inside the game.",
-      highlight: "Target: 50+ sponsors",
-      reached: false,
+        "Validate loop where rewards are reinvested into new matches.",
+      metrics: {
+        target_reinvestment_rate: "30%",
+        target_repeat_matches_from_rewards: 5,
+      },
+      status: "pending",
     },
     {
-      quarter: "Scale",
-      title: "Player Growth",
+      phase: "next",
+      title: "Player Onboarding Funnel",
       description:
-        "Scale the player base through improved gameplay, competition, and organic engagement loops.",
-      highlight: "Target: 1,000+ players",
-      reached: false,
+        "Optimize flow from landing → match start → match completion.",
+      metrics: {
+        target_start_rate: "60%",
+        target_completion_rate: "80%",
+      },
+      status: "pending",
     },
     {
-      quarter: "Scale",
-      title: "System Scaling",
+      phase: "next",
+      title: "Anti-Cheat / Fair Play Layer (V1)",
       description:
-        "Increase match volume, optimize session flow, and support higher concurrency across players and matches.",
-      highlight: "High match throughput",
-      reached: false,
+        "Detect abnormal gameplay behavior and flag suspicious matches.",
+      metrics: {
+        target_detection_accuracy: "80%",
+        flagged_matches_tracked: true,
+      },
+      status: "pending",
     },
     {
-      quarter: "Future",
-      title: "Mass Adoption Push",
+      phase: "growth",
+      title: "Retention Signal",
       description:
-        "Grow into a large-scale competitive platform with strong retention and continuous match activity.",
-      highlight: "10K+ players → 100K+ → 1M",
-      reached: false,
+        "Measure and improve player return behavior over time.",
+      metrics: {
+        target_day1_retention: "25%",
+        target_day7_retention: "15%",
+      },
+      status: "pending",
     },
     {
-      quarter: "Beyond",
+      phase: "growth",
+      title: "Skill Expression Layer",
+      description:
+        "Introduce mechanics that reward strategy, timing, and positioning.",
+      metrics: {
+        player_skill_variance_detected: true,
+        repeat_competitive_matches: 10,
+      },
+      status: "pending",
+    },
+    {
+      phase: "growth",
+      title: "Insights & Analytics Upgrade",
+      description:
+        "Move from tracking to actionable insights like player behavior and win patterns.",
+      metrics: {
+        top_player_tracking: true,
+        win_pattern_analysis: true,
+      },
+      status: "pending",
+    },
+    {
+      phase: "scale",
+      title: "Lightweight Matchmaking",
+      description:
+        "Group players by skill level or win rate for fairer matches.",
+      metrics: {
+        skill_based_matches: "enabled",
+        reduced_skill_gap: true,
+      },
+      status: "pending",
+    },
+    {
+      phase: "scale",
+      title: "Competitive Identity",
+      description:
+        "Introduce player profiles, stats, streaks, and leaderboard.",
+      metrics: {
+        leaderboard_active: true,
+        player_profiles_created: 100,
+      },
+      status: "pending",
+    },
+    {
+      phase: "scale",
+      title: "Sponsor Marketplace",
+      description:
+        "Allow sponsors to fund specific match types and formats.",
+      metrics: {
+        target_active_sponsors: 50,
+        match_types_sponsored: 3,
+      },
+      status: "pending",
+    },
+    {
+      phase: "future",
+      title: "Game Engine Abstraction",
+      description:
+        "Abstract core systems (escrow, matchmaking, competition) into reusable modules.",
+      metrics: {
+        core_modules_extracted: 3,
+        sdk_ready: true,
+      },
+      status: "pending",
+    },
+    {
+      phase: "future",
       title: "Multi-Game Expansion",
       description:
-        "Expand beyond a single game into multiple competitive experiences built on the same core system. New modes, mini-games, and formats plug into the same match and competition layer.",
-      highlight: "From one game → many experiences",
-      reached: false,
+        "Enable multiple games to plug into the same competitive infrastructure.",
+      metrics: {
+        games_integrated: 3,
+        shared_player_pool: true,
+      },
+      status: "pending",
     },
     {
-      quarter: "Beyond",
-      title: "Competitive Gaming Layer",
+      phase: "beyond",
+      title: "On-Chain Competitive Layer",
       description:
-        "Evolve into a shared competitive layer that can power multiple games and experiences. Matches, rewards, and competition become reusable across different formats and audiences.",
-      highlight: "A system that grows with every game",
-      reached: false,
-    }
+        "Transform into a reusable competition and reward infrastructure for games.",
+      metrics: {
+        external_games_integrated: 5,
+        monthly_active_players: 10000,
+      },
+      status: "pending",
+    },
   ];
 
   return (
@@ -150,10 +250,10 @@ const Milestone: React.FC = () => {
         {events.map((event) => (
           <article
             key={event.title}
-            className={`milestone-row ${event.reached ? "reached" : "unreached"}`}
+            className={`milestone-row ${event.status === "completed" ? "reached" : "unreached"}`}
           >
             <div className="milestone-time">
-              <span>{event.quarter}</span>
+              <span>{formatPhase(event.phase)}</span>
             </div>
             <div className="milestone-marker" aria-hidden="true">
               <span className="milestone-dot" />
@@ -161,7 +261,11 @@ const Milestone: React.FC = () => {
             <div className="milestone-event">
               <h2>{event.title}</h2>
               <p>{event.description}</p>
-              <p className="milestone-highlight">{event.highlight}</p>
+              <p className="milestone-highlight">
+                {Object.entries(event.metrics)
+                  .map(([key, value]) => `${formatMetricKey(key)}: ${formatMetricValue(value)}`)
+                  .join(" • ")}
+              </p>
             </div>
           </article>
         ))}
