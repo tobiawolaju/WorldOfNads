@@ -50,12 +50,6 @@
   display: none;
 }
 
-
-
-
-
-
-
 /* Matches */
 .mode-title {
   font-size: 0.5rem;
@@ -75,8 +69,6 @@
   display: none;
 }
 
-
-
 .match-button.live {
   background: #a000ff;
   border-radius: 10px;
@@ -90,8 +82,6 @@
 .match-button.live:hover {
   transform: scale(1.06);
 }
-
-
 
 /* ===== MOBILE LAYOUT ===== */
 @media (max-width: 768px) {
@@ -132,9 +122,6 @@
   }
 }
 
-
-
-
 /* --- FIXED PLAY BUTTON (BOTTOM RIGHT) --- */
 .play-fixed {
   position: fixed;
@@ -157,20 +144,6 @@
   border: none;
   cursor: pointer;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* Disabled / Active White Background State */
 .play-fixed.disabled {
@@ -245,9 +218,6 @@
   border-radius: var(--radius-full);
 }
 
-
-
-
 /* Wrapper stays fixed and holds the fade */
 .matches-wrapper {
   position: relative;
@@ -301,16 +271,9 @@
   background: linear-gradient(to left, #ffffff94 0%, rgba(255, 255, 255, 0) 100%);
 }
 
-
-
-
 .matches-carousel::-webkit-scrollbar {
   display: none;
 }
-
-
-
-
 
 .match-card {
   scroll-snap-align: center;
@@ -339,7 +302,6 @@
 .grayscale-card {
   filter: grayscale(100%);
 }
-
 
 .match-card:hover {
   transform: perspective(600px) rotateY(8deg) translateY(-6px) scale(1.08);
@@ -377,9 +339,11 @@
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.384));
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
   padding: 14px;
-  font-family: font2;
+  font-family: var(--font-inter), sans-serif;
   color: #ffffff;
   letter-spacing: 0.5px;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
@@ -387,9 +351,9 @@
 
 /* Sponsor Title */
 .match-sponsor {
-  font-size: 1.5rem;
+  font-size: 1.125rem;
   font-weight: bolder;
-  font-family: font1;
+  font-family: var(--font-inter), sans-serif;
   text-transform: uppercase;
   margin-bottom: 4px;
   color: #ffffff;
@@ -397,7 +361,7 @@
 
 /* Reward Text */
 .match-reward {
-  font-family: font1;
+  font-family: var(--font-inter), sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
   color: #ffffff;
@@ -411,9 +375,6 @@
   opacity: 0.85;
   color: #e0e0e0;
 }
-
-
-
 
 /* Logout Button */
 .id-card-logout-button {
@@ -436,10 +397,6 @@
   transform: translateY(-2px);
   color: #000000
 }
-
-
-
-
 
 .golden-ticket-container {
   width: 380px;
@@ -566,18 +523,11 @@
   color: #7c6dff;
 }
 
-
-
-
-
 /* --- PLAY BUTTON - COUNTDOWN STATE --- */
-
-/* Add a keyframes animation for the border rotation */
 @keyframes rotate-border {
   from {
     transform: rotate(0deg);
   }
-
   to {
     transform: rotate(360deg);
   }
@@ -585,16 +535,11 @@
 
 .play-fixed.counting {
   background: #ffd700;
-  /* Dark background for contrast */
   color: #000000;
   width: 160px;
-  /* Wider to fit the new text */
   overflow: hidden;
-  /* Important: keeps the pseudo-element contained */
-
 }
 
-/* This is the gradient layer that will spin */
 .play-fixed.counting:hover::before {
   content: "";
   position: absolute;
@@ -602,92 +547,34 @@
   top: -50%;
   left: -50%;
   width: 200%;
-
   height: 200%;
   background: conic-gradient(from 0deg,
       transparent 0%,
       transparent 50%,
       #ffffff 75%,
-      /* Purple */
       #6200ff 90%,
-      /* Pink */
       #ffffff 100%);
   animation: rotate-border 4s linear infinite;
 }
 
-/* This creates an inner background, making the spinning '::before' look like a border */
 .play-fixed.counting::after {
   content: "";
   position: absolute;
   z-index: 1;
   inset: 4px;
-  /* This value determines the border thickness */
   background: #ffd700;
-  /* Must match the button's background */
   border-radius: var(--radius-full);
-  /* Should match the button's border-radius */
 }
 
-/* Ensure the text content is on top of all pseudo-elements */
 .play-fixed.counting span {
   position: relative;
   z-index: 2;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* --- MATCH DETAILS ON CARD --- */
 .match-card-overlay.selected-overlay {
   background: rgba(183, 0, 255, 0.295);
-  justify-content: space-between;
+  justify-content: center;
   text-align: center;
   align-items: center;
 }
@@ -696,9 +583,8 @@
   font-size: 0.8rem;
   color: #fff;
   line-height: 1.2;
-  margin-bottom: auto;
   text-shadow: none;
-  margin-top: 10px;
+  font-family: var(--font-inter), sans-serif;
 }
 
 .match-desc {
