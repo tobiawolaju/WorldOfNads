@@ -152,15 +152,15 @@ const NadModel: React.FC<NadModelProps> = ({
       const existing = headBone.getObjectByName("bone-cube-attachment");
       if (existing) headBone.remove(existing);
 
-      const geometry = new THREE.BoxGeometry(100, 100, 100); 
+      const geometry = new THREE.BoxGeometry(100, 100, 100);
       const material = new THREE.MeshStandardMaterial({ color: "red" });
       const cube = new THREE.Mesh(geometry, material);
       cube.name = "bone-cube-attachment";
       cube.scale.setScalar(0.018);
-      
+
       // Applying Godot values: x:13.9, y:0.0, z:3.7
-      cube.position.set(13.9, 0.0, 3.7); 
-      
+      cube.position.set(0, 0.0, 3.7);
+
       headBone.add(cube);
       console.log("Attached cube to bone:", headBone.name);
     }
