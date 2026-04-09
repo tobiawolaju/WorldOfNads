@@ -375,7 +375,7 @@ export default function Dashboard() {
                 >
                   {selectedMatch === match.matchId ? (
                     <div className="match-card-overlay selected-overlay">
-                      <h3 className="match-sponsor">{match.sponsor}</h3>
+
                       <div className="match-details-inner">
                         <p className="match-desc">{match.description}</p>
                         <p className="match-info">Prize: {match.prize}</p>
