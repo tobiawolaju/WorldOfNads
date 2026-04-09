@@ -87,22 +87,31 @@ const Play: React.FC = () => {
         <button
           type="button"
           onClick={requestFullscreen}
+          aria-label="Enter full screen"
           style={{
             position: "absolute",
             top: "1rem",
             right: "1rem",
             zIndex: 20,
+            width: "3rem",
+            height: "3rem",
             borderRadius: "999px",
-            border: "1px solid rgba(255, 255, 255, 0.35)",
-            background: "rgba(0, 0, 0, 0.65)",
+            border: "4px solid rgba(255, 255, 255, 0.5)",
+            background: "rgba(255, 255, 255, 0.3)",
             color: "#fff",
-            padding: "0.55rem 0.9rem",
-            fontSize: "0.85rem",
-            fontWeight: 600,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
             cursor: "pointer",
           }}
         >
-          Full screen
+          <span
+            className="material-symbols-rounded"
+            aria-hidden="true"
+            style={{ fontSize: "1.5rem", lineHeight: 1 }}
+          >
+            fullscreen
+          </span>
         </button>
       )}
       <iframe
