@@ -155,7 +155,7 @@ const NadModel: React.FC<NadModelProps> = ({
 };
 
 // --- Camera Animation Logic ---
-const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }> = ({ isInteracting: propIsInteracting, baseDistance }) => {
+const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; targetY: number; cameraYOffset: number }> = ({ isInteracting: propIsInteracting, baseDistance, targetY, cameraYOffset }) => {
   const { camera, controls, gl } = useThree();
   const [phase, setPhase] = useState<'intro' | 'pendulum'>('intro');
   const [introStartTime] = useState(Date.now());
@@ -239,8 +239,8 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
       // Calculate a ratio (1.0 at origin distance, ~0.3 at closest zoom)
       const heightRatio = distance / baseDistance;
       // Slopes from ~1.8 (high) down to ~ -0.3 (low front view)
-      camera.position.y = (heightRatio * 3) - 1.2;
-      camera.lookAt(0, 0, 0);
+      camera.position.y = (heightRatio * 3) - 1.2 + cameraYOffset;
+      camera.lookAt(0, targetY, 0);
 
       if (progress >= 1) {
         setPhase('pendulum');
@@ -259,7 +259,7 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number }>
       newPos.applyAxisAngle(axis, oscillation);
 
       camera.position.copy(newPos);
-      camera.lookAt(0, 0, 0);
+      camera.lookAt(0, targetY, 0);
     }
 
     if (controls) (controls as any).update();
@@ -277,11 +277,16 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
   onLogout,
 }) => {
   const [cameraZ, setCameraZ] = useState(22);
+  const [targetY, setTargetY] = useState(0);
+  const [cameraYOffset, setCameraYOffset] = useState(0);
   const [isInteracting, setIsInteracting] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
-      setCameraZ(window.innerWidth < 768 ? 10 : 8);
+      const isMobile = window.innerWidth < 768;
+      setCameraZ(isMobile ? 10 : 8);
+      setTargetY(isMobile ? 0 : -1.0);
+      setCameraYOffset(isMobile ? 0 : -1.0);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -354,6 +359,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
 
       <OrbitControls
         ref={controlsRef}
+        target={[0, targetY, 0]}
         enableZoom={true}
         enablePan={false}
         enableRotate={true}
@@ -366,7 +372,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
         }}
       />
 
-      <CameraAnimator isInteracting={isInteracting} baseDistance={cameraZ} />
+      <CameraAnimator isInteracting={isInteracting} baseDistance={cameraZ} targetY={targetY} cameraYOffset={cameraYOffset} />
     </Canvas>
   );
 };
