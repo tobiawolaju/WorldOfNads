@@ -156,7 +156,7 @@ const NadModel: React.FC<NadModelProps> = ({
       const material = new THREE.MeshStandardMaterial({ color: "red" });
       const cube = new THREE.Mesh(geometry, material);
       cube.name = "bone-cube-attachment";
-      cube.scale.setScalar(0.018);
+      cube.scale.setScalar(0.016);
 
       // Applying Godot values: x:13.9, y:0.0, z:3.7
       cube.position.set(0, -2.15, 0);
