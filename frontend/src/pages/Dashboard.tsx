@@ -435,7 +435,7 @@ export default function Dashboard() {
 
       </div>
 
-      {tab === "events" && (
+      {tab === "events" && selectedMatch && (
         <button
           className={`play-fixed ${canPlay ? "active" : "disabled"} ${playButtonState === "counting" ? "counting" : ""}`}
           onClick={canPlay ? handlePlayClick : undefined}
