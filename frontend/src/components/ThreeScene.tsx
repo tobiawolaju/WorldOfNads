@@ -285,8 +285,8 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     const handleResize = () => {
       const isMobile = window.innerWidth < 768;
       setCameraZ(isMobile ? 10 : 8);
-      setTargetY(isMobile ? 0 : -1.0);
-      setCameraYOffset(isMobile ? 0 : -1.0);
+      setTargetY(isMobile ? 0 : -2.5);
+      setCameraYOffset(isMobile ? 0 : -2.5);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
