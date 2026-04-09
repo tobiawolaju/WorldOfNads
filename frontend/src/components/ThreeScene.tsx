@@ -139,8 +139,11 @@ const NadModel: React.FC<NadModelProps> = ({
   useEffect(() => {
     let headBone: THREE.Object3D | null = null;
     model.traverse((child) => {
-      if (child instanceof THREE.Bone && (child.name.toLocaleLowerCase().includes("head"))) {
-        headBone = child;
+      if (child instanceof THREE.Bone) {
+        const name = child.name;
+        if (name === "mixamorig_Head" || name.toLowerCase().includes("head")) {
+          headBone = child;
+        }
       }
     });
 
