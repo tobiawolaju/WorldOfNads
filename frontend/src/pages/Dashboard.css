@@ -191,6 +191,9 @@
 .tabs {
   display: flex;
   gap: 20px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
   font-family: font2;
   font-size: 1.8rem;
   user-select: none;
@@ -213,14 +216,17 @@
   opacity: 1;
   scale: 1.2;
   color: var(--primary-light);
-  transform: translateX(8px);
 }
 
 /* --- FILTERS --- */
 .filters {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
   gap: 10px;
   margin-bottom: 24px;
+  text-align: center;
 }
 
 .filter {
