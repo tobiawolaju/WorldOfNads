@@ -415,6 +415,16 @@
   margin: 0;
 }
 
+.tweet-inline-link {
+  color: #1d9bf0;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.tweet-inline-link:hover {
+  text-decoration: underline;
+}
+
 .tweet-link {
   font-size: 15px;
   color: #1d9bf0;

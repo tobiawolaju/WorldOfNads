@@ -205,7 +205,13 @@ const Home: React.FC = () => {
   const tweets = [
     {
       month: "Apr 2026",
-      body: "See you at Monad Blitz Nigeria.\n\nFirst public test matches go live this Saturday.\n\nFirst players. First outcomes. Real competition.\n\nThe early ones will understand it first.\n\nJoin → discord.gg/z4SUdrKayb.",
+      bodyLines: [
+        "See you at Monad Blitz Nigeria.",
+        "First public test matches go live this Saturday.",
+        "First players. First outcomes. Real competition.",
+        "The early ones will understand it first.",
+      ],
+      discordLink: "https://discord.gg/z4SUdrKayb",
       link: "https://x.com/i/status/2042161890462208386",
     },
   ];
@@ -332,7 +338,25 @@ const Home: React.FC = () => {
                   <span className="tweet-handle">@WorldOfNads · {tweet.month}</span>
                 </div>
               </div>
-              <p className="tweet-body">{tweet.body}</p>
+              <p className="tweet-body">
+                {tweet.bodyLines.map((line) => (
+                  <React.Fragment key={line}>
+                    {line}
+                    <br />
+                    <br />
+                  </React.Fragment>
+                ))}
+                Join →{" "}
+                <a
+                  href={tweet.discordLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tweet-inline-link"
+                >
+                  discord.gg/z4SUdrKayb
+                </a>
+                .
+              </p>
               <a href={tweet.link} className="tweet-link" target="_blank" rel="noopener noreferrer">View Post</a>
             </article>
           ))}
