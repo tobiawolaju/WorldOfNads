@@ -205,15 +205,8 @@ const Home: React.FC = () => {
   const tweets = [
     {
       month: "Apr 2026",
-      body: "WORLD OF NADS\n\nFast matches. Real rewards.\nNo grind. No luck. Just skill.\n\nThis isn’t a game you play casually.\nIt’s a game you show up for.\n\nLearn more → worldofnads.xyz/faq",
-    },
-    {
-      month: "Apr 2026",
-      body: "Opening the first 100 player slots.\n\nNot everyone gets in.\nNot everyone stays.\n\nIf you’re early, you earn your position.\n\nJoin → Discord",
-    },
-    {
-      month: "Apr 2026",
-      body: "The first players will understand this early.\n\nEveryone else will see it later.\n\nSomething bigger than just matches is coming.",
+      body: "See you at Monad Blitz Nigeria.\n\nFirst public test matches go live this Saturday.\n\nFirst players. First outcomes. Real competition.\n\nThe early ones will understand it first.\n\nJoin → discord.gg/z4SUdrKayb.",
+      link: "https://x.com/i/status/2042161890462208386",
     },
   ];
 
@@ -330,7 +323,7 @@ const Home: React.FC = () => {
       <section className="events-grid-section reveal">
         <h2 className="section-title">What’s happening</h2>
         <div className="events-grid">
-          {tweets.map((tweet, index) => (
+          {tweets.map((tweet) => (
             <article className="tweet-card" key={tweet.month}>
               <div className="tweet-header">
                 <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
@@ -340,7 +333,7 @@ const Home: React.FC = () => {
                 </div>
               </div>
               <p className="tweet-body">{tweet.body}</p>
-              <a href="#" className="tweet-link">View Post</a>
+              <a href={tweet.link} className="tweet-link" target="_blank" rel="noopener noreferrer">View Post</a>
             </article>
           ))}
         </div>
