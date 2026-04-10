@@ -136,6 +136,15 @@ const dummyStore: StoreItem[] = [
     description: "Essential gear.",
     skinConfig: { attachmentShape: "box", color: "#44ff44" }
   },
+  { 
+    id: "s7", 
+    name: "Ghost Skin", 
+    price: "80 MON", 
+    image: "/logo.jpg", 
+    category: "skins", 
+    description: "Spooky and spectral.",
+    skinConfig: { color: "#ffffff", cheekColor: "#ffffff" }
+  },
 ];
 
 const dummyOwnedItems: string[] = ["s0", "s1", "s5"]; // IDs matching dummyStore
