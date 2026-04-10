@@ -65,10 +65,10 @@ func _input(event):
 			# Do not start joystick from touches meant for UI controls (buttons, panels, etc).
 			if _is_touch_over_ui(event.position):
 				return
-			# While locked: first touch is tracked for potential unlock/jump.
-			# Other touches pass through for camera orbit.
+			# While locked: only touches directly on the joystick base are tracked 
+			# for potential unlock or jump. Touches elsewhere pass through for camera orbit.
 			if is_auto_locked:
-				if auto_lock_touch_index == -1:
+				if auto_lock_touch_index == -1 and touch_joystick != null and event.position.distance_to(touch_joystick.global_position) <= radiusJoyBase * 2.5:
 					auto_lock_touch_index = event.index
 					if _is_double_tap(event.position):
 						_press_key("jump")
@@ -77,10 +77,9 @@ func _input(event):
 					last_tap_time = Time.get_ticks_msec() / 1000.0
 					last_tap_position = event.position
 					get_viewport().set_input_as_handled()
-					return
-				else:
-					# Second finger — let it pass through for camera
-					return
+				# Return so we don't accidentally start a new joystick from outside the base.
+				# If set_input_as_handled() wasn't called, it will pass through to Player.gd!
+				return
 
 			if event.index == active_joystick_index or event.index == active_camera_index:
 				return
@@ -240,7 +239,7 @@ func _is_double_tap(tap_pos: Vector2) -> bool:
 	return (now - last_tap_time) <= double_tap_interval and (tap_pos - last_tap_position).length() < 80.0
 
 func claims_touch(touch_index: int) -> bool:
-	return touch_index == active_joystick_index
+	return touch_index == active_joystick_index or (is_auto_locked and touch_index == auto_lock_touch_index)
 
 func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick: Node):
 	active_joystick_index = touch_index
