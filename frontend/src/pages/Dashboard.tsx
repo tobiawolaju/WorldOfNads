@@ -485,7 +485,6 @@ export default function Dashboard() {
                     onClick={() => setSelectedStore(item.id)}
                   >
                     <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}>
-                       <span className={`item-badge badge-store badge-${item.category}`}>{item.category}</span>
                     </div>
                     <div className="store-card-info">
                       <h3>{item.name}</h3>
