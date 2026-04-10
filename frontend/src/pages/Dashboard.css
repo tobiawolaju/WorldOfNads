@@ -759,6 +759,8 @@
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  height: 100px;
 }
 
 .store-card:hover {
@@ -767,36 +769,47 @@
 }
 
 .store-card.selected {
-  border-color: #907cff;
-  box-shadow: 0 0 15px rgba(144, 124, 255, 0.3);
+  border-color: #000;
+  border-width: 2px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
 }
 
 .store-card-image {
-  height: 80px;
+  height: 100%;
   background-size: cover;
   background-position: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .store-card-info {
-  padding: 10px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 5px 5px;
   text-align: center;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 60%, transparent 100%);
+  /* Skew effect */
+  clip-path: polygon(0 20%, 100% 0, 100% 100%, 0 100%);
+  backdrop-filter: blur(2px);
 }
 
 .store-card-info h3 {
   font-family: "Font1", sans-serif;
-  font-size: 11px;
-  margin-bottom: 2px;
+  font-size: 10px;
+  margin-bottom: 0px;
   color: #000;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.1;
 }
 
 .store-card-info p {
   color: #907cff;
-  font-weight: bold;
-  font-size: 10px;
+  font-weight: 900;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 @media (max-width: 480px) {
