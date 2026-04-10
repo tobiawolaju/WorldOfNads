@@ -365,7 +365,7 @@
   box-shadow:
     0 0 40px #0000002c,
     inset 0 0 20px rgba(0, 0, 0, 0.25);
-  border: 12px solid #ffffff;
+  border: 8px solid #ffffff;
   opacity: 1;
 }
 
@@ -755,19 +755,21 @@
 .store-card {
   background: #ffffff;
   border: 4px solid #ffffff;
-  border-radius: 0px; /* Sharp corners */
+  border-radius: 0px;
+  /* Sharp corners */
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s ease-out;
   position: relative;
   height: 110px;
-  transform: skewX(-5deg); /* Game feel skew */
+  transform: skewX(-5deg);
+  /* Game feel skew */
   margin: 5px;
   opacity: 0.7;
 }
 
 .store-card:hover {
-  background: #ffffff; 
+  background: #ffffff;
   transform: skewX(-5deg) scale(1.05);
   z-index: 10;
   opacity: 1;
@@ -785,7 +787,8 @@
   height: 100%;
   background-size: cover;
   background-position: center;
-  transform: skewX(5deg) scale(1.2); /* Un-skew content and fill gaps */
+  transform: skewX(5deg) scale(1.2);
+  /* Un-skew content and fill gaps */
 }
 
 .store-card-info {
@@ -799,7 +802,8 @@
   /* Slanted top edge overlapping image */
   clip-path: polygon(0 25%, 100% 0, 100% 100%, 0 100%);
   backdrop-filter: blur(2px);
-  transform: skewX(5deg); /* Un-skew text */
+  transform: skewX(5deg);
+  /* Un-skew text */
 }
 
 .store-card-info h3 {
@@ -815,7 +819,8 @@
 }
 
 .store-card-info p {
-  color: #ff2496; /* Matching default pink */
+  color: #ff2496;
+  /* Matching default pink */
   font-weight: 900;
   font-size: 9px;
   text-transform: uppercase;
