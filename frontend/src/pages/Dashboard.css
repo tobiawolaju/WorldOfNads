@@ -633,6 +633,19 @@
   justify-content: center;
   text-align: center;
   align-items: center;
+  transform: skewX(5deg);
+  border: 6px solid #ffffff;
+  box-sizing: border-box;
+}
+
+.match-card-overlay.selected-overlay.status-upcoming,
+.match-card-overlay.selected-overlay.status-completed {
+  background: rgba(255, 255, 255, 0.637);
+}
+
+.match-card-overlay.selected-overlay.status-upcoming .match-details-inner,
+.match-card-overlay.selected-overlay.status-completed .match-details-inner {
+  color: #000;
 }
 
 .match-details-inner {
