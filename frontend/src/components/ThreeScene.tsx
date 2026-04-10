@@ -165,14 +165,29 @@ const NadModel: React.FC<NadModelProps> = ({
 
   // Handle character color change
   useEffect(() => {
-    const color = equippedSkin?.skinConfig?.color || "#ffffff";
+    const baseColorHex = equippedSkin?.skinConfig?.color || "#ffffff";
+    const baseColor = new THREE.Color(baseColorHex);
+    const cheekColor = baseColor.clone().lerp(new THREE.Color("#ffffff"), 0.4); // Lighter variant for cheeks
+    const eyeColor = new THREE.Color("#ffffff");
+
     model.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         // Only change material if it's the main body (assuming it's not the red cube)
         if (child.name !== "bone-attachment") {
           if (child.material) {
             child.material = child.material.clone();
-            child.material.color.set(color);
+            
+            // Refined mapping based on model hierarchy
+            if (["Cube", "Cube_001", "Cube_002", "Cube_003"].includes(child.name)) {
+              // Head and Body parts
+              child.material.color.copy(baseColor);
+            } else if (["Cube_004", "Cube_005"].includes(child.name)) {
+              // Butt cheeks (Lighter)
+              child.material.color.copy(cheekColor);
+            } else if (["Cube_006", "Cube_007"].includes(child.name)) {
+              // Eyes (Always white)
+              child.material.color.copy(eyeColor);
+            }
           }
         }
       }
