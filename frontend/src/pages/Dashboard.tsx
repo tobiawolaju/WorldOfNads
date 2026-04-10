@@ -75,6 +75,15 @@ type StoreItem = {
 
 const dummyStore: StoreItem[] = [
   {
+    id: "s-default",
+    name: "Default Nad",
+    price: "0 MON",
+    image: "/logo.jpg",
+    category: "skins",
+    description: "Default pink skin. No attachment.",
+    skinConfig: { color: "#ff2496", cheekColor: "#ff40bf" }
+  },
+  {
     id: "s0",
     name: "Ghost Nad",
     price: "0 MON",
@@ -139,7 +148,7 @@ const dummyStore: StoreItem[] = [
   },
 ];
 
-const dummyOwnedItems: string[] = ["s0"]; // IDs matching dummyStore
+const dummyOwnedItems: string[] = ["s-default", "s0"]; // IDs matching dummyStore
 
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
@@ -573,7 +582,8 @@ export default function Dashboard() {
             if (!item) return;
             const isOwned = dummyOwnedItems.includes(selectedStore);
             if (isOwned) {
-              // Equip Function Blank for now
+              setEquippedSkin(item);
+              setSelectedStore(null);
             } else {
               // Buy Function Blank for now
             }
