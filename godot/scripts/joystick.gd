@@ -43,6 +43,7 @@ var is_auto_locked := false
 var north_drag_distance_accumulated := 0.0
 var lock_candidate_started_at := -1.0
 var last_drag_was_north := false
+var auto_lock_touch_index := -1
 
 func _ready():
 	add_to_group("touch_joystick")
@@ -64,21 +65,22 @@ func _input(event):
 			# Do not start joystick from touches meant for UI controls (buttons, panels, etc).
 			if _is_touch_over_ui(event.position):
 				return
-			# While locked: taps may trigger jump, but must NOT unlock.
-			# Lock can only be broken by a drag in joystick zone.
-			if is_auto_locked and _is_joystick_area(event.position, viewport_size):
-				if _is_double_tap(event.position):
-					_press_key("jump")
-					await get_tree().create_timer(0.2).timeout
-					_release_key("jump")
+			# While locked: first touch is tracked for potential unlock/jump.
+			# Other touches pass through for camera orbit.
+			if is_auto_locked:
+				if auto_lock_touch_index == -1:
+					auto_lock_touch_index = event.index
+					if _is_double_tap(event.position):
+						_press_key("jump")
+						await get_tree().create_timer(0.2).timeout
+						_release_key("jump")
 					last_tap_time = Time.get_ticks_msec() / 1000.0
 					last_tap_position = event.position
 					get_viewport().set_input_as_handled()
 					return
-				last_tap_time = Time.get_ticks_msec() / 1000.0
-				last_tap_position = event.position
-				get_viewport().set_input_as_handled()
-				return
+				else:
+					# Second finger — let it pass through for camera
+					return
 
 			if event.index == active_joystick_index or event.index == active_camera_index:
 				return
@@ -107,9 +109,12 @@ func _input(event):
 				get_viewport().set_input_as_handled()
 			elif event.index == active_camera_index:
 				active_camera_index = -1
+			if event.index == auto_lock_touch_index:
+				auto_lock_touch_index = -1
 
 	elif event is InputEventScreenDrag:
-		if is_auto_locked and _is_joystick_area(event.position, viewport_size):
+		# Only unlock auto-move from the tracked joystick finger, not the camera finger.
+		if is_auto_locked and event.index == auto_lock_touch_index:
 			_unlock_auto_move()
 			_start_joystick_touch(event.position, event.index, touch_joystick)
 			var local_pos_unlock = event.position - touch_joystick.global_position
@@ -263,6 +268,7 @@ func _lock_auto_move():
 	lock_candidate_started_at = -1.0
 	active_joystick_index = -1
 	touchInsideJoystick = false
+	auto_lock_touch_index = -1
 	modulate.a = 0.5
 
 func _lock_auto_move_from_current(touch_joystick: Node) -> void:
@@ -285,6 +291,7 @@ func _unlock_auto_move():
 	lock_candidate_started_at = -1.0
 	north_drag_distance_accumulated = 0.0
 	last_drag_was_north = false
+	auto_lock_touch_index = -1
 	position = Vector2.ZERO
 	_release_all_keys()
 	modulate.a = 1.0
