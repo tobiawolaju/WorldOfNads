@@ -7,7 +7,7 @@ radius = 0.23692703
 height = 0.805861
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qkeax"]
-albedo_color = Color(0.99999994, 0.14157677, 0.5880843, 1)
+albedo_color = Color(1, 0.14117648, 0.5882353, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1usnk"]
 
@@ -159,7 +159,7 @@ bind/25/bone = -1
 bind/25/pose = Transform3D(0.07971042, 0.1733621, 0.9816271, -0.99360865, 0.09277714, 0.064298265, -0.07992567, -0.98047847, 0.1796494, 0.0002988852, -0.01704338, 0.0034920515)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ndbr4"]
-albedo_color = Color(0.99999994, 0.25160655, 0.7472611, 1)
+albedo_color = Color(1, 0.2509804, 0.7490196, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dqrtb"]
 
@@ -5696,6 +5696,7 @@ mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
 [node name="Cube_004" type="MeshInstance3D" parent="Skeleton3D" unique_id=2036297002]
+visible = false
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
@@ -5816,9 +5817,9 @@ collision_mask = 2
 shape = SubResource("SphereShape3D_hqo6i")
 
 [node name="Label3D" type="Label3D" parent="." unique_id=851294382]
-transform = Transform3D(-3.059797e-09, 0, 0.07, 0, 0.07, 0, -0.07, 0, -3.059797e-09, -0.005, 0.592, 0)
+transform = Transform3D(-2.6226832e-09, 0, 0.06, 0, 0.06, 0, -0.06, 0, -2.6226832e-09, -0.005, 0.592, 0)
 billboard = 1
-outline_modulate = Color(0.015686275, 0.03137255, 0.10980392, 1)
+outline_modulate = Color(1, 1, 1, 1)
 text = "Username"
-font_size = 100
+font_size = 400
 outline_size = 100

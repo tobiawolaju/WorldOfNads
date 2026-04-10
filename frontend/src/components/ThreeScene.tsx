@@ -186,10 +186,10 @@ const NadModel: React.FC<NadModelProps> = ({
           if (child.material) {
             child.material = child.material.clone();
             
-            // Robust Regex matching to handle separators like _ or .
-            const isHeadOrBody = /Cube$|Cube[._]00[123]$/.test(name);
-            const isCheek = /Cube[._]00[45]$/.test(name);
-            const isEye = /Cube[._]00[67]$/.test(name);
+            // Updated Regex to handle names like "Cube001" (no underscore) based on console logs
+            const isHeadOrBody = /^Cube$|Cube[._]?00[123]$/.test(name);
+            const isCheek = /Cube[._]?00[45]$/.test(name);
+            const isEye = /Cube[._]?00[67]$/.test(name);
 
             if (isHeadOrBody) {
               child.material.color.copy(baseColor);

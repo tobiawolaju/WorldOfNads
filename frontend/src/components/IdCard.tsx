@@ -116,7 +116,7 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, userna
       <mesh position={[0, 0, -0.07]}>
         <planeGeometry args={[9.5, 5.5]} />
         <meshPhysicalMaterial
-          color="#ffd900ff"
+          color="#ffd900"
           transparent
           opacity={1}
           roughness={0.1}
