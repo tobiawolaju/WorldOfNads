@@ -341,7 +341,7 @@
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transform: perspective(600px) rotateY(0deg);
+  transform: perspective(600px) rotateY(0deg) skewX(-5deg);
   transition:
     transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.3s ease,
@@ -356,16 +356,18 @@
 }
 
 .match-card:hover {
-  transform: perspective(600px) rotateY(8deg) translateY(-6px) scale(1.08);
+  transform: perspective(600px) rotateY(8deg) translateY(-6px) scale(1.08) skewX(-5deg);
   opacity: 1;
 }
 
 .match-card.selected {
-  transform: perspective(600px) rotateY(-6deg) translateY(4px);
+  transform: perspective(600px) rotateY(-6deg) translateY(4px) skewX(-5deg);
   box-shadow:
+    0 0 0 4px #1a1a1a,
     0 0 40px #0000002c,
+    inset 0 0 0 6px #ffffff,
     inset 0 0 20px rgba(0, 0, 0, 0.25);
-  border: 8px solid #ffffff;
+  border: none;
   opacity: 1;
 }
 
@@ -399,6 +401,7 @@
   color: #ffffff;
   letter-spacing: 0.5px;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+  transform: skewX(5deg);
 }
 
 /* Sponsor Title */
