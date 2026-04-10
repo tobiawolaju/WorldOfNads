@@ -85,11 +85,12 @@ func _input(event):
 			# --- Joystick touch ---
 			if _is_joystick_area(event.position, viewport_size) and active_joystick_index == -1:
 				_start_joystick_touch(event.position, event.index, touch_joystick)
-				get_viewport().set_input_as_handled()
+				# get_viewport().set_input_as_handled()
 			# --- Camera touch ---
 			elif _is_camera_area(event.position, viewport_size) and active_camera_index == -1:
-				active_camera_index = event.index
-				emit_signal("camera_dragged", Vector2.ZERO)
+				# active_camera_index = event.index
+				# emit_signal("camera_dragged", Vector2.ZERO)
+				pass
 		else:
 			if event.index == active_joystick_index:
 				if return_to_center and not is_auto_locked:
@@ -104,7 +105,7 @@ func _input(event):
 					touch_joystick.visible = false
 				touchInsideJoystick = false
 				active_joystick_index = -1
-				get_viewport().set_input_as_handled()
+				# get_viewport().set_input_as_handled()
 			elif event.index == active_camera_index:
 				active_camera_index = -1
 
@@ -121,7 +122,7 @@ func _input(event):
 			touch_joystick.visible = true
 			_update_input_from_joystick(position)
 			_update_visuals()
-			get_viewport().set_input_as_handled()
+			# get_viewport().set_input_as_handled()
 			return
 
 		if event.index == active_joystick_index:
@@ -134,7 +135,7 @@ func _input(event):
 			touch_joystick.visible = true
 			_update_input_from_joystick(position)
 			_update_visuals()
-			get_viewport().set_input_as_handled()
+			# get_viewport().set_input_as_handled()
 		elif event.index == active_camera_index:
 			emit_signal("camera_dragged", event.relative)
 

@@ -132,13 +132,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	var size = viewport.size
 
 	if event is InputEventScreenTouch:
-		if touch_joystick and touch_joystick.call("claims_touch", event.index):
-			return
+		# [REMOVED] Exclusivity check
+		# if touch_joystick and touch_joystick.call("claims_touch", event.index):
+		# 	return
 		
 		if event.pressed:
-			if _is_touch_on_joystick_area(event.position, size):
-				ignored_touch_indices[event.index] = true
-				return
+			# [REMOVED] Allow overlapping camera starting on joystick area
+			# if _is_touch_on_joystick_area(event.position, size):
+			# 	ignored_touch_indices[event.index] = true
+			# 	return
 			
 			# Strictly claim camera if nothing else is active
 			if active_camera_index == -1:
@@ -158,8 +160,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if ignored_touch_indices.has(event.index):
 			return
 		
-		if touch_joystick and touch_joystick.call("claims_touch", event.index):
-			return
+		# [REMOVED] Exclusivity check
+		# if touch_joystick and touch_joystick.call("claims_touch", event.index):
+		# 	return
 
 		# DO NOT claim camera during DRAG if a finger was already down but didn't claim it.
 		# This prevents "jumping" between fingers if one is lifted.
