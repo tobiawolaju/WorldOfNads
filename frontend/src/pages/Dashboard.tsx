@@ -576,7 +576,7 @@ export default function Dashboard() {
 
       {tab === "store" && selectedStore && (
         <button
-          className="buy-fixed active"
+          className="play-fixed active"
           onClick={() => {
             const item = dummyStore.find(i => i.id === selectedStore);
             if (!item) return;
