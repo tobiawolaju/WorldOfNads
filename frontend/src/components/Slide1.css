@@ -1,3 +1,11 @@
+.slide3-placeholder {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  background: #f5f5f5;
+}
+
 /* root wrapper */
 .ps-root {
   width: 100%;
@@ -16,6 +24,7 @@
 
 /* stage */
 .ps-stage {
+  --ps-seam-offset: 18px;
   position: relative;
   width: 100%;
   height: 100%;
@@ -23,12 +32,11 @@
 
 /* cards */
 .ps-card {
-  margin: 2.5px;
   position: absolute;
   left: 0;
-  width: calc(100% - 5px);
-  height: calc(33.333% - 5px);
-  border-radius: 0px;
+  width: 100%;
+  height: 33.333%;
+  border-radius: 0;
 
   background-size: cover;
   background-position: center;
@@ -40,16 +48,19 @@
 /* positions */
 .ps-top {
   top: 0;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--ps-seam-offset)), 0 100%);
 }
 
 .ps-center {
   top: 33.333%;
   z-index: 2;
   overflow: hidden;
+  clip-path: polygon(0 var(--ps-seam-offset), 100% 0, 100% calc(100% - var(--ps-seam-offset)), 0 100%);
 }
 
 .ps-bottom {
   top: 66.666%;
+  clip-path: polygon(0 var(--ps-seam-offset), 100% 0, 100% 100%, 0 100%);
 }
 
 /* center layers */
