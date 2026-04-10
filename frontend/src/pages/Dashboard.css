@@ -753,31 +753,34 @@
 }
 
 .store-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  background: #fffafa; /* Very light pink/white */
+  border: 4px solid #ffffff;
+  border-radius: 0px; /* Sharp corners */
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.2s ease-out;
   position: relative;
-  height: 100px;
+  height: 110px;
+  transform: skewX(-5deg); /* Game feel skew */
+  margin: 5px;
 }
 
 .store-card:hover {
-  transform: scale(1.05);
-  background: rgba(255, 255, 255, 0.1);
+  background: #ffe4e1; /* Misty Rose */
+  transform: skewX(-5deg) scale(1.05);
+  z-index: 10;
 }
 
 .store-card.selected {
-  border-color: #000;
-  border-width: 2px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  border-color: #000000;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .store-card-image {
   height: 100%;
   background-size: cover;
   background-position: center;
+  transform: skewX(5deg) scale(1.2); /* Un-skew content and fill gaps */
 }
 
 .store-card-info {
@@ -785,12 +788,13 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 10px 5px 5px;
+  padding: 12px 5px 5px;
   text-align: center;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 60%, transparent 100%);
-  /* Skew effect */
-  clip-path: polygon(0 20%, 100% 0, 100% 100%, 0 100%);
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 70%, transparent 100%);
+  /* Slanted top edge overlapping image */
+  clip-path: polygon(0 25%, 100% 0, 100% 100%, 0 100%);
   backdrop-filter: blur(2px);
+  transform: skewX(5deg); /* Un-skew text */
 }
 
 .store-card-info h3 {
@@ -802,10 +806,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.1;
+  font-weight: 800;
 }
 
 .store-card-info p {
-  color: #907cff;
+  color: #ff2496; /* Matching default pink */
   font-weight: 900;
   font-size: 9px;
   text-transform: uppercase;
