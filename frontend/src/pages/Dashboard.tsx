@@ -553,7 +553,7 @@ export default function Dashboard() {
           onClick={canPlay ? handlePlayClick : undefined}
           disabled={!canPlay}
           style={{
-            opacity: canPlay ? 1 : 0.5,
+            opacity: 1,
             pointerEvents: canPlay ? "auto" : "none"
           }}
         >
@@ -563,9 +563,11 @@ export default function Dashboard() {
             <span>
               {canPlay
                 ? "PLAY"
-                : isLive && selectedMatchData?.startTime
-                  ? `Starts at ${formatLocalTime(selectedMatchData.startTime)}`
-                  : "Not Live"}
+                : normalizeMatchStatus(selectedMatchData?.status) === "upcoming"
+                  ? "•°••"
+                  : isLive && selectedMatchData?.startTime
+                    ? `Starts at ${formatLocalTime(selectedMatchData.startTime)}`
+                    : "Not Live"}
             </span>
           )}
         </button>
