@@ -166,8 +166,10 @@ func _update_visuals():
 	modulate.a = lerp(min_opacity, max_opacity, strength)
 
 # --- QUADRANT CHECKS ---
+func _is_joystick_area(_pos: Vector2, _viewport_size: Vector2) -> bool:
 	# Joystick can now be initiated from anywhere on the screen
-	return true;
+	return true
+
 
 func _is_camera_area(pos: Vector2, viewport_size: Vector2) -> bool:
 	# Camera can be used anywhere as long as the joystick isn't already claiming this finger
