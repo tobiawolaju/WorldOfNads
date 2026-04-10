@@ -753,7 +753,7 @@
 }
 
 .store-card {
-  background: #fffafa; /* Very light pink/white */
+  background: #ffffff;
   border: 4px solid #ffffff;
   border-radius: 0px; /* Sharp corners */
   overflow: hidden;
@@ -767,7 +767,7 @@
 }
 
 .store-card:hover {
-  background: #ffe4e1; /* Misty Rose */
+  background: #ffffff; 
   transform: skewX(-5deg) scale(1.05);
   z-index: 10;
   opacity: 1;
