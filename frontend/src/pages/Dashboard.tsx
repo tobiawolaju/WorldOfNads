@@ -99,7 +99,7 @@ const dummyStore: StoreItem[] = [
     image: "/logo.jpg",
     category: "skins",
     description: "Default skin with a gold sphere on the head.",
-    skinConfig: { attachmentShape: "sphere", color: "#ff2496", cheekColor: "#ff40bf", attachmentColor: "#ffd700" }
+    skinConfig: { attachmentShape: "sphere", color: "#ffd700", cheekColor: "#ffd700", attachmentColor: "#ffd700" }
   },
   {
     id: "s2",
@@ -117,7 +117,7 @@ const dummyStore: StoreItem[] = [
     image: "/logo.jpg",
     category: "skins",
     description: "Default skin with a red cube on the head.",
-    skinConfig: { attachmentShape: "box", color: "#ff2496", cheekColor: "#ff40bf", attachmentColor: "#ff0000" }
+    skinConfig: { attachmentShape: "box", color: "#ff0000", cheekColor: "#ff0000", attachmentColor: "#ff0000" }
   },
   {
     id: "s4",
@@ -126,7 +126,7 @@ const dummyStore: StoreItem[] = [
     image: "/logo.jpg",
     category: "skins",
     description: "Default skin with a white cube on the head.",
-    skinConfig: { attachmentShape: "box", color: "#ff2496", cheekColor: "#ff40bf", attachmentColor: "#ffffff" }
+    skinConfig: { attachmentShape: "box", color: "#ffffff", cheekColor: "#ffffff", attachmentColor: "#ffffff" }
   },
   {
     id: "s5",
@@ -148,7 +148,7 @@ const dummyStore: StoreItem[] = [
   },
 ];
 
-const dummyOwnedItems: string[] = ["s-default", "s0"]; // IDs matching dummyStore
+const dummyOwnedItems: string[] = ["s-default", "s0", "s1", "s3", "s4"]; // IDs matching dummyStore
 
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
