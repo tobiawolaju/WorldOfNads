@@ -5,10 +5,14 @@ extends Node2D
 @onready var winner_bg: CanvasItem = get_node_or_null("WinnerBg")
 @onready var loser_bg: CanvasItem = get_node_or_null("LoserBg")
 @onready var lobby_countdown: Node = get_node_or_null("Node2/BoxContainer/LobbyCoundown")
+@onready var skip_button: Button = get_node_or_null("Node2/skiptimmer")
 
 var countdown_time := 15
 
 func _ready() -> void:
+	if skip_button != null:
+		skip_button.pressed.connect(_return_to_lobby)
+
 	var did_win := false
 	if get_tree().has_meta("match_result_won"):
 		did_win = bool(get_tree().get_meta("match_result_won"))
@@ -41,8 +45,11 @@ func _on_countdown_tick() -> void:
 	_update_countdown_label()
 	
 	if countdown_time <= 0:
-		if OS.has_feature("web"):
-			# Try going back first, or default to dashboard
-			JavaScriptBridge.eval("if(window.history.length > 1) { window.history.back(); } else { window.location.href = '/dashboard'; }")
-		else:
-			get_tree().quit()
+		_return_to_lobby()
+
+func _return_to_lobby() -> void:
+	if OS.has_feature("web"):
+		# Try going back first, or default to dashboard
+		JavaScriptBridge.eval("if(window.history.length > 1) { window.history.back(); } else { window.location.href = '/dashboard'; }")
+	else:
+		get_tree().quit()

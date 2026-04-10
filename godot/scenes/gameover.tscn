@@ -3,6 +3,20 @@
 [ext_resource type="Script" uid="uid://13gqwbhom86x" path="res://scripts/gameover.gd" id="1_dy3ie"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="1_ncp31"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dy3ie"]
+bg_color = Color(0.99607843, 0.84313726, 0, 1)
+border_width_left = 20
+border_width_top = 10
+border_width_right = 20
+border_width_bottom = 10
+border_color = Color(0.99607843, 0.84313726, 0, 1)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dy3ie"]
+
 [node name="Gameover" type="Node2D" unique_id=532376623]
 script = ExtResource("1_dy3ie")
 
@@ -129,7 +143,32 @@ grow_vertical = 0
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_dy3ie")
 text = "Returning to Lobby >> 8"
+
+[node name="skiptimmer" type="Button" parent="Node2" unique_id=1512798298]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -143.0
+offset_top = -74.0
+offset_right = 142.0
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/normal = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/normal_mirrored = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/pressed_mirrored = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/hover_mirrored = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/disabled_mirrored = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_dy3ie")
 
 [node name="LoserBg" type="ColorRect" parent="." unique_id=314910917]
 anchors_preset = 8
@@ -143,7 +182,6 @@ offset_right = 1262.0
 offset_bottom = 1251.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(1, 0.89674956, 0.9532617, 1)
 metadata/_edit_use_anchors_ = true
 
 [node name="WinnerBg" type="ColorRect" parent="." unique_id=1614391081]
@@ -158,5 +196,4 @@ offset_right = 1255.0
 offset_bottom = 1255.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.9412752, 0.934846, 1, 1)
 metadata/_edit_use_anchors_ = true
