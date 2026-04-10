@@ -194,49 +194,7 @@ layout_mode = 2
 alignment = 1
 script = ExtResource("7_vob6w")
 
-[node name="Button1" type="Button" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer" unique_id=248895975]
-modulate = Color(1, 1, 1, 0.49019608)
-custom_minimum_size = Vector2(70, 70)
-layout_mode = 2
-theme_override_constants/icon_max_width = 35
-theme_override_font_sizes/font_size = 25
-theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/pressed_mirrored = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/hover = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/hover_mirrored = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/disabled_mirrored = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/focus = SubResource("StyleBoxFlat_vob6w")
-autowrap_trim_flags = 0
-icon_alignment = 1
-expand_icon = true
-script = ExtResource("3_uw04a")
-
 [node name="Button2" type="Button" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer" unique_id=1166429840]
-custom_minimum_size = Vector2(70, 70)
-layout_mode = 2
-theme_override_constants/icon_max_width = 35
-theme_override_font_sizes/font_size = 25
-theme_override_styles/normal = SubResource("StyleBoxFlat_psyvr")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/pressed_mirrored = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/hover = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/hover_mirrored = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/disabled_mirrored = SubResource("StyleBoxFlat_vob6w")
-theme_override_styles/focus = SubResource("StyleBoxFlat_vob6w")
-autowrap_trim_flags = 0
-icon_alignment = 1
-expand_icon = true
-script = ExtResource("3_uw04a")
-
-[node name="Button3" type="Button" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer" unique_id=388452149]
-modulate = Color(1, 1, 1, 0.49019608)
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 theme_override_constants/icon_max_width = 35
