@@ -180,13 +180,16 @@ const NadModel: React.FC<NadModelProps> = ({
       if (child instanceof THREE.Mesh) {
         // Only change material if it's the main body (assuming it's not the red cube)
         if (child.name !== "bone-attachment") {
+          const name = child.name;
+          console.log("NadModel Mesh found:", name); // Debugging aid for the user
+          
           if (child.material) {
             child.material = child.material.clone();
             
-            const name = child.name;
-            const isHeadOrBody = name.endsWith("Cube") || name.endsWith("Cube_001") || name.endsWith("Cube_002") || name.endsWith("Cube_003");
-            const isCheek = name.endsWith("Cube_004") || name.endsWith("Cube_005");
-            const isEye = name.endsWith("Cube_006") || name.endsWith("Cube_007");
+            // Robust Regex matching to handle separators like _ or .
+            const isHeadOrBody = /Cube$|Cube[._]00[123]$/.test(name);
+            const isCheek = /Cube[._]00[45]$/.test(name);
+            const isEye = /Cube[._]00[67]$/.test(name);
 
             if (isHeadOrBody) {
               child.material.color.copy(baseColor);
