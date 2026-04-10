@@ -166,22 +166,12 @@ func _update_visuals():
 	modulate.a = lerp(min_opacity, max_opacity, strength)
 
 # --- QUADRANT CHECKS ---
-func _is_joystick_area(pos: Vector2, viewport_size: Vector2) -> bool:
-	var is_portrait := viewport_size.y > viewport_size.x
-	var zone_width_ratio := portrait_zone_width_ratio if is_portrait else 0.25
-	var zone_height_ratio := portrait_zone_height_ratio if is_portrait else 0.25
-
-	var zone_width = viewport_size.x * clamp(zone_width_ratio, 0.05, 1.0)
-	var zone_height = viewport_size.y * clamp(zone_height_ratio, 0.05, 1.0)
-	var zone_left = (viewport_size.x - zone_width) * 0.5 if is_portrait else 0.0
-	var zone_right = zone_left + zone_width
-
-	# Portrait: bottom-center zone. Landscape: bottom-left zone.
-	return pos.x >= zone_left and pos.x <= zone_right and pos.y >= (viewport_size.y - zone_height)
+	# Joystick can now be initiated from anywhere on the screen
+	return true;
 
 func _is_camera_area(pos: Vector2, viewport_size: Vector2) -> bool:
-	# Everything outside the joystick rectangle zone
-	return not _is_joystick_area(pos, viewport_size)
+	# Camera can be used anywhere as long as the joystick isn't already claiming this finger
+	return true;
 
 func is_joystick_area_screen(pos: Vector2, viewport_size: Vector2) -> bool:
 	return _is_joystick_area(pos, viewport_size)
@@ -250,9 +240,10 @@ func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick:
 	north_drag_distance_accumulated = 0.0
 	lock_candidate_started_at = -1.0
 	last_drag_was_north = false
-	var zone_center = _get_joystick_zone_center(get_viewport().get_visible_rect().size)
-	touch_joystick.position = zone_center
-	global_position = zone_center
+	
+	# Dynamic positioning: Use the touch point as the temporary center
+	touch_joystick.global_position = touch_pos
+	global_position = touch_pos
 	touch_joystick.visible = true
 	_check_double_tap(touch_pos, touch_joystick)
 	_update_visuals()
