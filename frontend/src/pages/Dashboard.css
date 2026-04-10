@@ -774,7 +774,7 @@
 }
 
 .store-card.selected {
-  border-color: #000000;
+  border: 3px solid #000000;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   opacity: 1;
   transform: skewX(-5deg) scale(1.1);

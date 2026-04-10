@@ -147,7 +147,7 @@ const dummyStore: StoreItem[] = [
   },
 ];
 
-const dummyOwnedItems: string["s7","s0"] =["s0"]; // IDs matching dummyStore
+const dummyOwnedItems: string[] = ["s0"]; // IDs matching dummyStore
 
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
