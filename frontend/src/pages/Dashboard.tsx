@@ -147,7 +147,7 @@ const dummyStore: StoreItem[] = [
   },
 ];
 
-const dummyOwnedItems: string[] = ["s0", "s1", "s2", "s3", "s4", "s5", "s7"]; // IDs matching dummyStore
+const dummyOwnedItems: string[] = ["s0"]; // IDs matching dummyStore
 
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
@@ -161,6 +161,9 @@ export default function Dashboard() {
 
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
+
+  const currentStoreItem = dummyStore.find(i => i.id === selectedStore);
+  const displayedSkin = (tab === "store" && currentStoreItem) ? currentStoreItem : equippedSkin;
 
   const [matches, setMatches] = useState<Match[]>(staticMatches as Match[]);
   const [rewards, setRewards] = useState<RewardItem[]>([]);
@@ -381,7 +384,7 @@ export default function Dashboard() {
           earned={earned}
           username={getUsernameFromPrivy(user)}
           onLogout={logout}
-          equippedSkin={equippedSkin}
+          equippedSkin={displayedSkin}
         />
       </div>
 
@@ -543,9 +546,9 @@ export default function Dashboard() {
             if (!item) return;
             const isOwned = dummyOwnedItems.includes(selectedStore);
             if (isOwned) {
-              setEquippedSkin(item);
+              // Equip Function Blank for now
             } else {
-              // Future: Add purchase logic here
+              // Buy Function Blank for now
             }
           }}
           style={{
