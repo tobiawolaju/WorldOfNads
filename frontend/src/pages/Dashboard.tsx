@@ -325,12 +325,17 @@ export default function Dashboard() {
     (acc) => acc.type === "wallet" && acc.chainType === "ethereum"
   ) || []) as Wallet[];
 
-  const filteredMatches = matches.filter((match) => {
-    if (filter === "completed") {
-      return match.status === "completed" || match.status === "settled";
-    }
-    return match.status === filter;
+  const normalizeMatchStatus = (status: Match["status"] | string) =>
+    status === "settled" ? "completed" : status;
+
+  const statusOrder: Array<"upcoming" | "live" | "completed"> = ["upcoming", "live", "completed"];
+  const orderedMatches = [...matches].sort((a, b) => {
+    const aRank = statusOrder.indexOf(normalizeMatchStatus(a.status) as "upcoming" | "live" | "completed");
+    const bRank = statusOrder.indexOf(normalizeMatchStatus(b.status) as "upcoming" | "live" | "completed");
+    if (aRank !== bRank) return aRank - bRank;
+    return (a.startTime || 0) - (b.startTime || 0);
   });
+
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
   const isLive = selectedMatchData?.status === "live";
   const isStartTimeReached = selectedMatchData?.startTime
@@ -358,6 +363,10 @@ export default function Dashboard() {
 
     if (closest && (closest as HTMLElement).dataset.id) {
       setSelectedMatch(String((closest as HTMLElement).dataset.id));
+      const closestStatus = (closest as HTMLElement).dataset.status as "upcoming" | "live" | "completed" | undefined;
+      if (closestStatus && closestStatus !== filter) {
+        setFilter(closestStatus);
+      }
     }
   };
 
@@ -373,7 +382,30 @@ export default function Dashboard() {
     el.addEventListener("scroll", handleScroll);
     updateSelectedCard();
     return () => el.removeEventListener("scroll", handleScroll);
-  }, [filter, filteredMatches.length]);
+  }, [orderedMatches.length, filter]);
+
+  const jumpToStatus = (status: "upcoming" | "live" | "completed") => {
+    setFilter(status);
+    setSelectedMatch(null);
+
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+
+    const targetCard = Array.from(carousel.children).find(
+      (child) => (child as HTMLElement).dataset.status === status
+    ) as HTMLElement | undefined;
+
+    if (!targetCard) return;
+
+    const target = targetCard.offsetLeft - carousel.offsetWidth / 2 + targetCard.offsetWidth / 2;
+    isManuallyScrolling.current = true;
+    carousel.scrollTo({ left: target, behavior: "smooth" });
+    setSelectedMatch(targetCard.dataset.id || null);
+    setTimeout(() => {
+      isManuallyScrolling.current = false;
+      updateSelectedCard();
+    }, 600);
+  };
 
   return (
     <div className="dashboard-wrapper">
@@ -404,9 +436,9 @@ export default function Dashboard() {
         <div className="filters">
           {tab === "events" && (
             <>
-              <span className={filter === "upcoming" ? "filter active" : "filter"} onClick={() => { setFilter("upcoming"); setSelectedMatch(null); }}>Upcoming</span>
-              <span className={filter === "live" ? "filter active" : "filter"} onClick={() => { setFilter("live"); setSelectedMatch(null); }}>Live</span>
-              <span className={filter === "completed" ? "filter active" : "filter"} onClick={() => { setFilter("completed"); setSelectedMatch(null); }}>Completed</span>
+              <span className={filter === "upcoming" ? "filter active" : "filter"} onClick={() => jumpToStatus("upcoming")}>Upcoming</span>
+              <span className={filter === "live" ? "filter active" : "filter"} onClick={() => jumpToStatus("live")}>Live</span>
+              <span className={filter === "completed" ? "filter active" : "filter"} onClick={() => jumpToStatus("completed")}>Completed</span>
             </>
           )}
         </div>
@@ -415,10 +447,11 @@ export default function Dashboard() {
           <div className="matches-wrapper">
             {tab === "events" && (
               <div className="matches-carousel" ref={carouselRef}>
-                {filteredMatches.map((match) => (
+                {orderedMatches.map((match) => (
                   <div
                     key={match.matchId}
                     data-id={match.matchId}
+                    data-status={normalizeMatchStatus(match.status)}
                     className={`match-card ${selectedMatch === match.matchId ? "selected" : ""} ${match.status !== "live" ? "grayscale-card" : ""}`}
                     style={{ backgroundImage: `url(${match.image})` }}
                     onClick={(event) => {
