@@ -13,6 +13,10 @@
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_psyvr"]
 bg_color = Color(1, 1, 1, 0.5411765)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vob6w"]
 bg_color = Color(1, 1, 1, 0.61960787)
@@ -21,6 +25,10 @@ border_width_top = 8
 border_width_right = 8
 border_width_bottom = 8
 border_color = Color(0, 0, 0, 0)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
 
 [node name="Gameplay2d" type="Node2D" unique_id=843521828]
 script = ExtResource("4_events")

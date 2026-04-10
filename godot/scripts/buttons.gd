@@ -1,7 +1,7 @@
 extends HBoxContainer
 
-const RIGHT_MARGIN := 145.0
-const BOTTOM_MARGIN := 95.0
+const RIGHT_MARGIN := 187.5
+const BOTTOM_MARGIN := 107.5
 
 func _ready() -> void:
 	# This node is inside a Container; move the parent holder (if present),
