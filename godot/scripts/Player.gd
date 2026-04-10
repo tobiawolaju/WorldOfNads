@@ -50,7 +50,7 @@ var velocity_y: float = 0.0
 var cam_rot_x: float = deg_to_rad(30)
 var cam_rot_y: float = 0.0
 var current_animation: String = "idle"
-
+var ignored_touch_indices := {}
 var active_camera_index := -1
 var touch_joystick: Node = null
 var network_tick_timer: float = 0.0
@@ -135,13 +135,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		if touch_joystick and touch_joystick.call("claims_touch", event.index):
 			return
 		
-
+		if event.pressed:
+			if _is_touch_on_joystick_area(event.position, size):
+				ignored_touch_indices[event.index] = true
+				return
 			
 			# Strictly claim camera if nothing else is active
 			if active_camera_index == -1:
 				active_camera_index = event.index
 				get_viewport().set_input_as_handled()
-
+		else:
+			if ignored_touch_indices.has(event.index):
+				ignored_touch_indices.erase(event.index)
+				return
 			
 			if event.index == active_camera_index:
 				active_camera_index = -1
@@ -149,7 +155,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventScreenDrag:
-
+		if ignored_touch_indices.has(event.index):
+			return
 		
 		if touch_joystick and touch_joystick.call("claims_touch", event.index):
 			return
@@ -452,7 +459,17 @@ func _play_idle() -> void:
 	if not anim_idle.is_playing():
 		anim_idle.play("idle")
 
-
+func _is_touch_on_joystick_area(pos: Vector2, size: Vector2) -> bool:
+	# Always use joystick script's own zone config to avoid mismatches.
+	if touch_joystick and touch_joystick.has_method("is_joystick_area_screen"):
+		return bool(touch_joystick.call("is_joystick_area_screen", pos, size))
+	# Fallback: portrait uses bottom-center; landscape uses bottom-left (1/4 x 1/4).
+	var is_portrait := size.y > size.x
+	var zone_width := size.x * (0.5 if is_portrait else 0.25)
+	var zone_height := size.y * (0.25 if is_portrait else 0.25)
+	var zone_left := (size.x - zone_width) * 0.5 if is_portrait else 0.0
+	var zone_right := zone_left + zone_width
+	return pos.x >= zone_left and pos.x <= zone_right and pos.y >= (size.y - zone_height)
 
 func _refresh_touch_joystick() -> void:
 	touch_joystick = get_tree().get_first_node_in_group("touch_joystick")
