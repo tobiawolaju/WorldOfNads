@@ -50,7 +50,7 @@ var velocity_y: float = 0.0
 var cam_rot_x: float = deg_to_rad(30)
 var cam_rot_y: float = 0.0
 var current_animation: String = "idle"
-var ignored_touch_indices := {}
+
 var active_camera_index := -1
 var touch_joystick: Node = null
 var network_tick_timer: float = 0.0
@@ -136,27 +136,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		
 		if event.pressed:
-			if _is_touch_on_joystick_area(event.position, size):
-				ignored_touch_indices[event.index] = true
-				return
-			
 			# Strictly claim camera if nothing else is active
 			if active_camera_index == -1:
 				active_camera_index = event.index
 				get_viewport().set_input_as_handled()
 		else:
-			if ignored_touch_indices.has(event.index):
-				ignored_touch_indices.erase(event.index)
-				return
-			
 			if event.index == active_camera_index:
 				active_camera_index = -1
 				get_viewport().set_input_as_handled()
 		return
 
 	if event is InputEventScreenDrag:
-		if ignored_touch_indices.has(event.index):
-			return
 		
 		if touch_joystick and touch_joystick.call("claims_touch", event.index):
 			return
