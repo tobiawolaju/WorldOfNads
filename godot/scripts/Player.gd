@@ -32,7 +32,7 @@ var last_pickup_request_ms: int = 0
 @export var max_zoom: float = 10.0
 @export var altitude_zoom_factor: float = 1.5
 @export var touch_orbit_sensitivity: float = 0.0045
-@export var joystick_orbit_sensitivity: float = 0.00225
+@export var joystick_orbit_sensitivity: float = 0.0 #0.00225
 
 # --- NODE REFERENCES ---
 @onready var camera: Camera3D = get_node("../Camera3D")
