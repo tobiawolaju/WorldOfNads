@@ -60,6 +60,7 @@ type SkinConfig = {
   attachmentShape?: "box" | "cone" | "sphere" | "cylinder";
   color?: string;
   cheekColor?: string;
+  attachmentColor?: string;
 };
 
 type StoreItem = {
@@ -75,75 +76,66 @@ type StoreItem = {
 const dummyStore: StoreItem[] = [
   {
     id: "s0",
-    name: "Default Skin",
+    name: "Ghost Nad",
     price: "0 MON",
     image: "/logo.jpg",
     category: "skins",
-    description: "The classic Nad look.",
-    skinConfig: { color: "#ff2496", cheekColor: "#ff40bf" }
+    description: "White skin. No attachment.",
+    skinConfig: { color: "#ffffff", cheekColor: "#ffffff" }
   },
   {
     id: "s1",
-    name: "Gladiator Skin",
+    name: "Gold Nad",
     price: "20 MON",
     image: "/logo.jpg",
     category: "skins",
-    description: "Battle-hardened armor for your character.",
-    skinConfig: { attachmentShape: "box", color: "#ff4444" }
+    description: "Default skin with a gold sphere on the head.",
+    skinConfig: { attachmentShape: "sphere", color: "#ff2496", cheekColor: "#ff40bf", attachmentColor: "#ffd700" }
   },
   {
     id: "s2",
-    name: "Ninja Costume",
-    price: "35 MON",
+    name: "Shadow Nad",
+    price: "30 MON",
     image: "/logo.jpg",
-    category: "costumes",
-    description: "Move like a shadow.",
-    skinConfig: { attachmentShape: "cylinder", color: "#222222" }
+    category: "skins",
+    description: "All-black skin. No attachments.",
+    skinConfig: { color: "#000000", cheekColor: "#000000" }
   },
   {
     id: "s3",
-    name: "Golden Nad Bundle",
-    price: "150 MON",
+    name: "Red Nad",
+    price: "35 MON",
     image: "/logo.jpg",
-    category: "bundles",
-    description: "The elite choice.",
-    skinConfig: { attachmentShape: "sphere", color: "#ffd700" }
+    category: "skins",
+    description: "Default skin with a red cube on the head.",
+    skinConfig: { attachmentShape: "box", color: "#ff2496", cheekColor: "#ff40bf", attachmentColor: "#ff0000" }
   },
   {
     id: "s4",
-    name: "Cyberpunk Skin",
-    price: "60 MON",
+    name: "Angel Nad",
+    price: "40 MON",
     image: "/logo.jpg",
     category: "skins",
-    description: "Neon-soaked aesthetic.",
-    skinConfig: { attachmentShape: "box", color: "#b026ff" }
+    description: "Default skin with a white cube on the head.",
+    skinConfig: { attachmentShape: "box", color: "#ff2496", cheekColor: "#ff40bf", attachmentColor: "#ffffff" }
   },
   {
     id: "s5",
-    name: "Witch Costume",
+    name: "Mouch Nad",
     price: "40 MON",
     image: "/logo.jpg",
-    category: "costumes",
-    description: "Spooky and mysterious.",
-    skinConfig: { attachmentShape: "cone", color: "#4b0082" }
+    category: "skins",
+    description: "Purple skin with a cube attachment.",
+    skinConfig: { attachmentShape: "box", color: "#8000ff", cheekColor: "#8f33ff", attachmentColor: "#8000ff" }
   },
   {
     id: "s6",
-    name: "Starter Bundle",
+    name: "John Nad",
     price: "45 MON",
     image: "/logo.jpg",
-    category: "bundles",
-    description: "Essential gear.",
-    skinConfig: { attachmentShape: "box", color: "#44ff44" }
-  },
-  {
-    id: "s7",
-    name: "Ghost Skin",
-    price: "80 MON",
-    image: "/logo.jpg",
     category: "skins",
-    description: "Spooky and spectral.",
-    skinConfig: { color: "#ffffff", cheekColor: "#ffffff" }
+    description: "Default skin with a light-brown cube on the head.",
+    skinConfig: { attachmentShape: "box", color: "#ff2496", cheekColor: "#ff40bf", attachmentColor: "#c68642" }
   },
 ];
 

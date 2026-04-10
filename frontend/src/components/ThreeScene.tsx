@@ -22,6 +22,7 @@ interface SkinConfig {
   attachmentShape?: "box" | "cone" | "sphere" | "cylinder";
   color?: string;
   cheekColor?: string;
+  attachmentColor?: string;
 }
 
 interface StoreItem {
@@ -253,7 +254,7 @@ const NadModel: React.FC<NadModelProps> = ({
       }
 
       const material = new THREE.MeshStandardMaterial({ 
-        color: equippedSkin.skinConfig.color || "red" 
+        color: equippedSkin.skinConfig.attachmentColor || equippedSkin.skinConfig.color || "red" 
       });
       const attachment = new THREE.Mesh(geometry, material);
       attachment.name = "bone-attachment";
