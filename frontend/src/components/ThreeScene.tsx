@@ -169,10 +169,10 @@ const NadModel: React.FC<NadModelProps> = ({
     const baseColorHex = equippedSkin?.skinConfig?.color || "#ff2496";
     const baseColor = new THREE.Color(baseColorHex);
     
-    // Use explicit cheekColor if provided, otherwise lerp to white
+    // Use explicit cheekColor if provided, otherwise lerp to white (subtler)
     const cheekColor = equippedSkin?.skinConfig?.cheekColor 
       ? new THREE.Color(equippedSkin.skinConfig.cheekColor)
-      : baseColor.clone().lerp(new THREE.Color("#ffffff"), 0.4);
+      : baseColor.clone().lerp(new THREE.Color("#ffffff"), 0.15);
 
     const eyeColor = new THREE.Color("#ffffff");
 
@@ -181,12 +181,11 @@ const NadModel: React.FC<NadModelProps> = ({
         // Only change material if it's the main body (assuming it's not the red cube)
         if (child.name !== "bone-attachment") {
           const name = child.name;
-          console.log("NadModel Mesh found:", name); // Debugging aid for the user
           
           if (child.material) {
             child.material = child.material.clone();
             
-            // Updated Regex to handle names like "Cube001" (no underscore) based on console logs
+            // Regex to handle names like "Cube001" or "Cube_001"
             const isHeadOrBody = /^Cube$|Cube[._]?00[123]$/.test(name);
             const isCheek = /Cube[._]?00[45]$/.test(name);
             const isEye = /Cube[._]?00[67]$/.test(name);

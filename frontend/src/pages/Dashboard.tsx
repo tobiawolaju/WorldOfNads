@@ -73,81 +73,81 @@ type StoreItem = {
 };
 
 const dummyStore: StoreItem[] = [
-  { 
-    id: "s0", 
-    name: "Default Skin", 
-    price: "0 MON", 
-    image: "/logo.jpg", 
-    category: "skins", 
+  {
+    id: "s0",
+    name: "Default Skin",
+    price: "0 MON",
+    image: "/logo.jpg",
+    category: "skins",
     description: "The classic Nad look.",
     skinConfig: { color: "#ff2496", cheekColor: "#ff40bf" }
   },
-  { 
-    id: "s1", 
-    name: "Gladiator Skin", 
-    price: "20 MON", 
-    image: "/logo.jpg", 
-    category: "skins", 
+  {
+    id: "s1",
+    name: "Gladiator Skin",
+    price: "20 MON",
+    image: "/logo.jpg",
+    category: "skins",
     description: "Battle-hardened armor for your character.",
     skinConfig: { attachmentShape: "box", color: "#ff4444" }
   },
-  { 
-    id: "s2", 
-    name: "Ninja Costume", 
-    price: "35 MON", 
-    image: "/logo.jpg", 
-    category: "costumes", 
+  {
+    id: "s2",
+    name: "Ninja Costume",
+    price: "35 MON",
+    image: "/logo.jpg",
+    category: "costumes",
     description: "Move like a shadow.",
     skinConfig: { attachmentShape: "cylinder", color: "#222222" }
   },
-  { 
-    id: "s3", 
-    name: "Golden Nad Bundle", 
-    price: "150 MON", 
-    image: "/logo.jpg", 
-    category: "bundles", 
+  {
+    id: "s3",
+    name: "Golden Nad Bundle",
+    price: "150 MON",
+    image: "/logo.jpg",
+    category: "bundles",
     description: "The elite choice.",
     skinConfig: { attachmentShape: "sphere", color: "#ffd700" }
   },
-  { 
-    id: "s4", 
-    name: "Cyberpunk Skin", 
-    price: "60 MON", 
-    image: "/logo.jpg", 
-    category: "skins", 
+  {
+    id: "s4",
+    name: "Cyberpunk Skin",
+    price: "60 MON",
+    image: "/logo.jpg",
+    category: "skins",
     description: "Neon-soaked aesthetic.",
     skinConfig: { attachmentShape: "box", color: "#b026ff" }
   },
-  { 
-    id: "s5", 
-    name: "Witch Costume", 
-    price: "40 MON", 
-    image: "/logo.jpg", 
-    category: "costumes", 
+  {
+    id: "s5",
+    name: "Witch Costume",
+    price: "40 MON",
+    image: "/logo.jpg",
+    category: "costumes",
     description: "Spooky and mysterious.",
     skinConfig: { attachmentShape: "cone", color: "#4b0082" }
   },
-  { 
-    id: "s6", 
-    name: "Starter Bundle", 
-    price: "45 MON", 
-    image: "/logo.jpg", 
-    category: "bundles", 
+  {
+    id: "s6",
+    name: "Starter Bundle",
+    price: "45 MON",
+    image: "/logo.jpg",
+    category: "bundles",
     description: "Essential gear.",
     skinConfig: { attachmentShape: "box", color: "#44ff44" }
   },
-  { 
-    id: "s7", 
-    name: "Ghost Skin", 
-    price: "80 MON", 
-    image: "/logo.jpg", 
-    category: "skins", 
+  {
+    id: "s7",
+    name: "Ghost Skin",
+    price: "80 MON",
+    image: "/logo.jpg",
+    category: "skins",
     description: "Spooky and spectral.",
     skinConfig: { color: "#ffffff", cheekColor: "#ffffff" }
   },
 ];
 
-const dummyOwnedItems: string[] = ["s0", "s1", "s5"]; // IDs matching dummyStore
+const dummyOwnedItems: string[] = ["s0", "s1", "s2", "s3", "s4", "s5", "s7"]; // IDs matching dummyStore
 
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
@@ -410,102 +410,102 @@ export default function Dashboard() {
 
         <div className="tab-content-scroll">
           <div className="matches-wrapper">
-          {tab === "events" && (
-            <div className="matches-carousel" ref={carouselRef}>
-              {filteredMatches.map((match) => (
-                <div
-                  key={match.matchId}
-                  data-id={match.matchId}
-                  className={`match-card ${selectedMatch === match.matchId ? "selected" : ""} ${match.status !== "live" ? "grayscale-card" : ""}`}
-                  style={{ backgroundImage: `url(${match.image})` }}
-                  onClick={(event) => {
-                    const card = event.currentTarget;
-                    const carousel = carouselRef.current;
-                    if (!carousel) return;
-                    const target = card.offsetLeft - carousel.offsetWidth / 2 + card.offsetWidth / 2;
-                    carousel.scrollTo({ left: target, behavior: "smooth" });
-                    isManuallyScrolling.current = true;
-                    setSelectedMatch(match.matchId);
-                    setTimeout(() => {
-                      isManuallyScrolling.current = false;
-                    }, 600);
-                  }}
-                >
-                  {selectedMatch === match.matchId ? (
-                    <div className="match-card-overlay selected-overlay">
-
-                      <div className="match-details-inner">
-                        <p className="match-desc">{match.description}</p>
-                        <p className="match-info">Prize: {match.prize}</p>
-                        <p className="match-info">Time: {match.startTime ? `${formatLocalTime(match.startTime)}` : match.time}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="match-card-overlay">
-                      <h3 className="match-sponsor">{match.sponsor}</h3>
-                      <p className="match-reward">{match.prize}</p>
-                      <p className="match-time">
-                        {match.status === "upcoming" && match.startTime
-                          ? `${formatLocalTime(match.startTime)} (Local)`
-                          : match.time}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {tab === "rewards" && (
-            <div className="reward-list">
-              {rewards.length === 0 ? (
-                <div className="reward-empty">
-                  No rewards yet. Join a match to win some.
-                </div>
-              ) : (
-                rewards
-                  .map((reward) => (
-                    <div
-                      key={reward.id}
-                      className={`reward-item ${selectedReward === reward.id ? "selected" : ""}`}
-                      onClick={() => setSelectedReward(reward.id)}
-                    >
-                      <div className="reward-item-icon">🏆</div>
-                      <div className="reward-item-text">
-                        <div className="reward-item-header">
-                           <strong>{reward.username}</strong>
-                           <span className={`item-badge badge-${reward.category}`}>{reward.category}</span>
-                        </div>
-                        <div>won <span>{reward.amount}</span> from {reward.source}</div>
-                      </div>
-                    </div>
-                  ))
-              )}
-            </div>
-          )}
-
-          {tab === "store" && (
-            <div className="store-grid">
-              {dummyStore
-                .map((item) => (
+            {tab === "events" && (
+              <div className="matches-carousel" ref={carouselRef}>
+                {filteredMatches.map((match) => (
                   <div
-                    key={item.id}
-                    className={`store-card ${selectedStore === item.id ? "selected" : ""}`}
-                    onClick={() => setSelectedStore(item.id)}
+                    key={match.matchId}
+                    data-id={match.matchId}
+                    className={`match-card ${selectedMatch === match.matchId ? "selected" : ""} ${match.status !== "live" ? "grayscale-card" : ""}`}
+                    style={{ backgroundImage: `url(${match.image})` }}
+                    onClick={(event) => {
+                      const card = event.currentTarget;
+                      const carousel = carouselRef.current;
+                      if (!carousel) return;
+                      const target = card.offsetLeft - carousel.offsetWidth / 2 + card.offsetWidth / 2;
+                      carousel.scrollTo({ left: target, behavior: "smooth" });
+                      isManuallyScrolling.current = true;
+                      setSelectedMatch(match.matchId);
+                      setTimeout(() => {
+                        isManuallyScrolling.current = false;
+                      }, 600);
+                    }}
                   >
-                    <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}>
-                    </div>
-                    <div className="store-card-info">
-                      <h3>{item.name}</h3>
-                      <p>
-                        {dummyOwnedItems.includes(item.id) ? "Owned" : item.price}
-                      </p>
-                    </div>
+                    {selectedMatch === match.matchId ? (
+                      <div className="match-card-overlay selected-overlay">
+
+                        <div className="match-details-inner">
+                          <p className="match-desc">{match.description}</p>
+                          <p className="match-info">Prize: {match.prize}</p>
+                          <p className="match-info">Time: {match.startTime ? `${formatLocalTime(match.startTime)}` : match.time}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="match-card-overlay">
+                        <h3 className="match-sponsor">{match.sponsor}</h3>
+                        <p className="match-reward">{match.prize}</p>
+                        <p className="match-time">
+                          {match.status === "upcoming" && match.startTime
+                            ? `${formatLocalTime(match.startTime)} (Local)`
+                            : match.time}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+
+            {tab === "rewards" && (
+              <div className="reward-list">
+                {rewards.length === 0 ? (
+                  <div className="reward-empty">
+                    No rewards yet. Join a match to win some.
+                  </div>
+                ) : (
+                  rewards
+                    .map((reward) => (
+                      <div
+                        key={reward.id}
+                        className={`reward-item ${selectedReward === reward.id ? "selected" : ""}`}
+                        onClick={() => setSelectedReward(reward.id)}
+                      >
+                        <div className="reward-item-icon">🏆</div>
+                        <div className="reward-item-text">
+                          <div className="reward-item-header">
+                            <strong>{reward.username}</strong>
+                            <span className={`item-badge badge-${reward.category}`}>{reward.category}</span>
+                          </div>
+                          <div>won <span>{reward.amount}</span> from {reward.source}</div>
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+            )}
+
+            {tab === "store" && (
+              <div className="store-grid">
+                {dummyStore
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className={`store-card ${selectedStore === item.id ? "selected" : ""}`}
+                      onClick={() => setSelectedStore(item.id)}
+                    >
+                      <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}>
+                      </div>
+                      <div className="store-card-info">
+                        <h3>{item.name}</h3>
+                        <p>
+                          {dummyOwnedItems.includes(item.id) ? "Owned" : item.price}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
         </div>
 
 
