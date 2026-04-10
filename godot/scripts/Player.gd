@@ -478,4 +478,3 @@ func _on_joystick_camera_drag(relative: Vector2) -> void:
 		return
 	cam_rot_y -= relative.x * joystick_orbit_sensitivity
 	cam_rot_x = clamp(cam_rot_x + relative.y * joystick_orbit_sensitivity, min_pitch, max_pitch)
-
