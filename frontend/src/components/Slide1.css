@@ -24,7 +24,7 @@
 
 /* stage */
 .ps-stage {
-  --ps-seam-offset: 18px;
+  --ps-seam-offset: 9px;
   position: relative;
   width: 100%;
   height: 100%;
