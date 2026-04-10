@@ -31,6 +31,8 @@ var last_pickup_request_ms: int = 0
 @export var min_zoom: float = 6.0
 @export var max_zoom: float = 10.0
 @export var altitude_zoom_factor: float = 1.5
+@export var touch_orbit_sensitivity: float = 0.0045
+@export var joystick_orbit_sensitivity: float = 0.00225
 
 # --- NODE REFERENCES ---
 @onready var camera: Camera3D = get_node("../Camera3D")
@@ -77,6 +79,7 @@ func _ready() -> void:
 	_play_idle()
 	_refresh_name_label()
 	_refresh_touch_joystick()
+	_connect_joystick_signals()
 
 	if not pickup_area:
 		print("ERROR: $Area3D node not found! Please add an Area3D with a CollisionShape to the player.")
@@ -157,8 +160,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.index != active_camera_index:
 			return
 
-		cam_rot_y -= event.relative.x * 0.0045
-		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.0045, min_pitch, max_pitch)
+		cam_rot_y -= event.relative.x * touch_orbit_sensitivity
+		cam_rot_x = clamp(cam_rot_x + event.relative.y * touch_orbit_sensitivity, min_pitch, max_pitch)
 		get_viewport().set_input_as_handled()
 
 func _physics_process(delta: float) -> void:
@@ -463,3 +466,16 @@ func _is_touch_on_joystick_area(pos: Vector2, size: Vector2) -> bool:
 
 func _refresh_touch_joystick() -> void:
 	touch_joystick = get_tree().get_first_node_in_group("touch_joystick")
+
+func _connect_joystick_signals() -> void:
+	if touch_joystick == null:
+		_refresh_touch_joystick()
+	if touch_joystick and not touch_joystick.is_connected("camera_dragged", _on_joystick_camera_drag):
+		touch_joystick.connect("camera_dragged", _on_joystick_camera_drag)
+
+func _on_joystick_camera_drag(relative: Vector2) -> void:
+	if not is_local:
+		return
+	cam_rot_y -= relative.x * joystick_orbit_sensitivity
+	cam_rot_x = clamp(cam_rot_x + relative.y * joystick_orbit_sensitivity, min_pitch, max_pitch)
+

@@ -118,6 +118,7 @@ func _input(event):
 			position = local_pos_unlock
 			_update_north_drag_progress_from_screen_drag(event.relative)
 			emit_signal("joystick_moved", position)
+			emit_signal("camera_dragged", event.relative)
 			touch_joystick.visible = true
 			_update_input_from_joystick(position)
 			_update_visuals()
@@ -131,6 +132,7 @@ func _input(event):
 			position = local_pos
 			_update_north_drag_progress_from_screen_drag(event.relative)
 			emit_signal("joystick_moved", position)
+			emit_signal("camera_dragged", event.relative)
 			touch_joystick.visible = true
 			_update_input_from_joystick(position)
 			_update_visuals()
