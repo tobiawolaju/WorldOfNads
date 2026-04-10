@@ -183,15 +183,16 @@ const NadModel: React.FC<NadModelProps> = ({
           if (child.material) {
             child.material = child.material.clone();
             
-            // Refined mapping based on model hierarchy
-            if (["Cube", "Cube_001", "Cube_002", "Cube_003"].includes(child.name)) {
-              // Head and Body parts
+            const name = child.name;
+            const isHeadOrBody = name.endsWith("Cube") || name.endsWith("Cube_001") || name.endsWith("Cube_002") || name.endsWith("Cube_003");
+            const isCheek = name.endsWith("Cube_004") || name.endsWith("Cube_005");
+            const isEye = name.endsWith("Cube_006") || name.endsWith("Cube_007");
+
+            if (isHeadOrBody) {
               child.material.color.copy(baseColor);
-            } else if (["Cube_004", "Cube_005"].includes(child.name)) {
-              // Butt cheeks (Lighter)
+            } else if (isCheek) {
               child.material.color.copy(cheekColor);
-            } else if (["Cube_006", "Cube_007"].includes(child.name)) {
-              // Eyes (Always white)
+            } else if (isEye) {
               child.material.color.copy(eyeColor);
             }
           }
