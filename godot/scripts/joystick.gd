@@ -179,9 +179,9 @@ func _is_joystick_area(pos: Vector2, viewport_size: Vector2) -> bool:
 	# Portrait: bottom-center zone. Landscape: bottom-left zone.
 	return pos.x >= zone_left and pos.x <= zone_right and pos.y >= (viewport_size.y - zone_height)
 
-func _is_camera_area(pos: Vector2, viewport_size: Vector2) -> bool:
-	# Everything outside the joystick rectangle zone
-	return not _is_joystick_area(pos, viewport_size)
+func _is_camera_area(_pos: Vector2, _viewport_size: Vector2) -> bool:
+	# Everything is a camera area if it's not handled by the joystick
+	return true
 
 func is_joystick_area_screen(pos: Vector2, viewport_size: Vector2) -> bool:
 	return _is_joystick_area(pos, viewport_size)
