@@ -59,6 +59,7 @@ type RewardItem = {
 type SkinConfig = {
   attachmentShape?: "box" | "cone" | "sphere" | "cylinder";
   color?: string;
+  cheekColor?: string;
 };
 
 type StoreItem = {
@@ -72,6 +73,15 @@ type StoreItem = {
 };
 
 const dummyStore: StoreItem[] = [
+  { 
+    id: "s0", 
+    name: "Default Skin", 
+    price: "0 MON", 
+    image: "/logo.jpg", 
+    category: "skins", 
+    description: "The classic Nad look.",
+    skinConfig: { color: "#ff2496", cheekColor: "#ff40bf" }
+  },
   { 
     id: "s1", 
     name: "Gladiator Skin", 
@@ -128,7 +138,7 @@ const dummyStore: StoreItem[] = [
   },
 ];
 
-const dummyOwnedItems: string[] = ["s1", "s5"]; // IDs matching dummyStore
+const dummyOwnedItems: string[] = ["s0", "s1", "s5"]; // IDs matching dummyStore
 
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
@@ -138,7 +148,7 @@ export default function Dashboard() {
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [selectedReward, setSelectedReward] = useState<string | null>(null);
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
-  const [equippedSkin, setEquippedSkin] = useState<StoreItem | null>(null);
+  const [equippedSkin, setEquippedSkin] = useState<StoreItem | null>(dummyStore[0]);
 
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");

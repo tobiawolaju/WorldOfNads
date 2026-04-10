@@ -21,6 +21,7 @@ interface Wallet {
 interface SkinConfig {
   attachmentShape?: "box" | "cone" | "sphere" | "cylinder";
   color?: string;
+  cheekColor?: string;
 }
 
 interface StoreItem {
@@ -165,9 +166,14 @@ const NadModel: React.FC<NadModelProps> = ({
 
   // Handle character color change
   useEffect(() => {
-    const baseColorHex = equippedSkin?.skinConfig?.color || "#ffffff";
+    const baseColorHex = equippedSkin?.skinConfig?.color || "#ff2496";
     const baseColor = new THREE.Color(baseColorHex);
-    const cheekColor = baseColor.clone().lerp(new THREE.Color("#ffffff"), 0.4); // Lighter variant for cheeks
+    
+    // Use explicit cheekColor if provided, otherwise lerp to white
+    const cheekColor = equippedSkin?.skinConfig?.cheekColor 
+      ? new THREE.Color(equippedSkin.skinConfig.cheekColor)
+      : baseColor.clone().lerp(new THREE.Color("#ffffff"), 0.4);
+
     const eyeColor = new THREE.Color("#ffffff");
 
     model.traverse((child) => {
