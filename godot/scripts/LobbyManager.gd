@@ -29,4 +29,4 @@ func _on_server_ping_completed(result, response_code, headers, body):
 	status_label.text = "Let's go!"
 	
 	# Load the real gameplay scene that connects via WebSocket
-	get_tree().change_scene_to_file("res://scenes/gameplay2d.tscn")
+	TransitionScreen.change_scene("res://scenes/gameplay2d.tscn")

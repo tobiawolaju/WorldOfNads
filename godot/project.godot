@@ -120,3 +120,7 @@ GroundColor={
 "type": "vec4",
 "value": Vector4(0, 0, 0, 0)
 }
+
+[autoload]
+
+TransitionScreen="*res://scripts/TransitionScreen.gd"

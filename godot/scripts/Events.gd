@@ -135,7 +135,7 @@ func _handle_match_winner_event(event_data: Dictionary) -> void:
 	get_tree().set_meta("match_result_winner_id", winner_id)
 	get_tree().set_meta("match_result_winner_name", winner_name)
 	_navigated_to_gameover = true
-	get_tree().change_scene_to_file("res://scenes/gameover.tscn")
+	TransitionScreen.change_scene("res://scenes/gameover.tscn")
 
 func _show_local_status(text: String, actor: String = "system") -> void:
 	_push_event_line(actor, text)
