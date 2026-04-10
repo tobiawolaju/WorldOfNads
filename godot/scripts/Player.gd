@@ -24,12 +24,12 @@ var held_object: RigidBody3D = null
 var last_pickup_request_ms: int = 0
 
 # --- CAMERA & ZOOM SETTINGS ---
-@export var camera_distance: float = 8.0
+@export var camera_distance: float =8.0
 @export var camera_smoothness: float = 8.0
-@export var min_pitch: float = deg_to_rad(-85.0)
-@export var max_pitch: float = deg_to_rad(85.0)
-@export var min_zoom: float = 1.0
-@export var max_zoom: float = 30.0
+@export var min_pitch: float = deg_to_rad(0.0)
+@export var max_pitch: float = deg_to_rad(60.0)
+@export var min_zoom: float = 6.0
+@export var max_zoom: float = 10.0
 @export var altitude_zoom_factor: float = 1.5
 
 # --- NODE REFERENCES ---
@@ -132,15 +132,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	var size = viewport.size
 
 	if event is InputEventScreenTouch:
-		# [REMOVED] Exclusivity check
-		# if touch_joystick and touch_joystick.call("claims_touch", event.index):
-		# 	return
+		if touch_joystick and touch_joystick.call("claims_touch", event.index):
+			return
 		
 		if event.pressed:
-			# [REMOVED] Allow overlapping camera starting on joystick area
-			# if _is_touch_on_joystick_area(event.position, size):
-			# 	ignored_touch_indices[event.index] = true
-			# 	return
+			if _is_touch_on_joystick_area(event.position, size):
+				ignored_touch_indices[event.index] = true
+				return
 			
 			# Strictly claim camera if nothing else is active
 			if active_camera_index == -1:
@@ -160,9 +158,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if ignored_touch_indices.has(event.index):
 			return
 		
-		# [REMOVED] Exclusivity check
-		# if touch_joystick and touch_joystick.call("claims_touch", event.index):
-		# 	return
+		if touch_joystick and touch_joystick.call("claims_touch", event.index):
+			return
 
 		# DO NOT claim camera during DRAG if a finger was already down but didn't claim it.
 		# This prevents "jumping" between fingers if one is lifted.
