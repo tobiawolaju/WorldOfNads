@@ -68,6 +68,15 @@
   --radius-full: 9999px;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -88,9 +97,14 @@ html {
 
 /* Compensate for Android system nav bar clipping bottom in landscape */
 @media (orientation: landscape) and (hover: none) and (pointer: coarse) {
-  body {
+  body:not(.play-immersive) {
     padding-bottom: 24px;
   }
+}
+
+body.play-immersive {
+  padding-bottom: 0 !important;
+  overscroll-behavior: none;
 }
 
 .button-primary {

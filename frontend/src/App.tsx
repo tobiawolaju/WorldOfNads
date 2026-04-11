@@ -68,6 +68,15 @@ const AppContent: React.FC = () => {
   const sessionTrackedRef = useRef(false);
   const lastUserIdRef = useRef<string | null>(null);
 
+
+  useEffect(() => {
+    document.body.classList.toggle("play-immersive", location.pathname === "/play");
+
+    return () => {
+      document.body.classList.remove("play-immersive");
+    };
+  }, [location.pathname]);
+
   useEffect(() => {
     const viewportMeta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
     if (!viewportMeta) return;
