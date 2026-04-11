@@ -58,8 +58,14 @@ const TopNavbar = () => {
         className={({ isActive }) => (isActive ? 'link active-link' : 'link')}
 
       >
-
-        {item.label}
+        <span className={item.path === '/nad-arena' ? 'nav-link-with-badge' : ''}>
+          {item.label}
+          {item.path === '/nad-arena' && (
+            <span className="notif-badge">
+              <span className="notif-badge-text">1</span>
+            </span>
+          )}
+        </span>
 
       </NavLink>
 
@@ -102,6 +108,9 @@ const TopNavbar = () => {
 
       <button onClick={toggleDrawer} className={`hamburger-btn ${isHome && !isScrolledPastHero ? 'home-hamburger' : ''}`} aria-expanded={isDrawerOpen}>
         ☰
+        <span className="notif-badge">
+          <span className="notif-badge-text">1</span>
+        </span>
       </button>
 
 
