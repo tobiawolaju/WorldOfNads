@@ -98,8 +98,9 @@ export async function updateUserProjects(username, matchSponsorName) {
 
 function buildDefaultRoles(username) {
   const roles = ["player"];
-  if (String(username || "").toLowerCase() === "worldofnads") {
-    roles.push("admin");
+  const cleanUsername = String(username || "").toLowerCase().trim().replace(/^@/, "");
+  if (cleanUsername === "worldofnads") {
+    roles.push("admin", "sponsor");
   }
   return roles;
 }
@@ -108,8 +109,11 @@ function normalizeRoles(roles, username, fallbackRoles = null) {
   const base = Array.isArray(roles) && roles.length > 0 ? roles : (fallbackRoles || buildDefaultRoles(username));
   const normalized = Array.from(new Set(base.map((role) => String(role).toLowerCase().trim()).filter(Boolean)));
   if (!normalized.includes("player")) normalized.push("player");
-  if (String(username || "").toLowerCase() === "worldofnads" && !normalized.includes("admin")) {
-    normalized.push("admin");
+
+  const cleanUsername = String(username || "").toLowerCase().trim().replace(/^@/, "");
+  if (cleanUsername === "worldofnads") {
+    if (!normalized.includes("admin")) normalized.push("admin");
+    if (!normalized.includes("sponsor")) normalized.push("sponsor");
   }
   return normalized;
 }
