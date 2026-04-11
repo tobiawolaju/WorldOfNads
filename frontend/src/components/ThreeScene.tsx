@@ -23,7 +23,7 @@ interface SkinConfig {
   color?: string;
   cheekColor?: string;
   attachmentColor?: string;
-  shader?: "ghost" | "gold" | "shadow" | "angel" | "default";
+  shader?: "ghost" | "gold" | "shadow" | "angel" | "default" | "void";
   shaderTargets?: ("body" | "cheek" | "eye" | "attachment")[];
   rawFragmentShader?: string;
   rawVertexShader?: string;
@@ -215,9 +215,12 @@ const NadModel: React.FC<NadModelProps> = ({
                   (newMat as any).metalness = 1.0;
                   (newMat as any).roughness = 0.2;
                 }
-              } else if (shaderType === "shadow") {
+              } else if (shaderType === "shadow" || shaderType === "void") {
                 // Unshaded solid color
-                newMat = new THREE.MeshBasicMaterial();
+                newMat = new THREE.MeshBasicMaterial({
+                  depthWrite: shaderType === "void" ? false : true,
+                  transparent: shaderType === "void" ? true : false,
+                });
               } else if (shaderType === "angel") {
                 if (newMat.type === "MeshStandardMaterial") {
                   (newMat as any).emissive = baseColor.clone();
@@ -339,8 +342,12 @@ const NadModel: React.FC<NadModelProps> = ({
             material.metalness = 1.0;
             material.roughness = 0.2;
           }
-        } else if (shaderType === "shadow") {
-          material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        } else if (shaderType === "shadow" || shaderType === "void") {
+          material = new THREE.MeshBasicMaterial({ 
+            color: 0x000000,
+            depthWrite: shaderType === "void" ? false : true,
+            transparent: shaderType === "void" ? true : false,
+          });
         } else if (shaderType === "angel") {
           if (material instanceof THREE.MeshStandardMaterial) {
             material.emissive = new THREE.Color(equippedSkin.skinConfig.attachmentColor || equippedSkin.skinConfig.color || "#ffffff");
