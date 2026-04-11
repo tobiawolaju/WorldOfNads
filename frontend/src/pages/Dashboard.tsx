@@ -439,7 +439,6 @@ export default function Dashboard() {
               Store
               <span className="tab-notif-badge">
                 <span className="tab-notif-badge-text">{newStoreItemCount}</span>
-                <span className="tab-notif-badge-text">NEW</span>
               </span>
             </span>
           </div>
