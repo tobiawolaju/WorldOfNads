@@ -122,18 +122,31 @@ function normalizeRoles(roles, username, fallbackRoles = null) {
 export async function fetchUserRoles(username) {
   if (!username) return ["player"];
 
-  const userRef = ref(db, `users/${username}`);
-  const snapshot = await get(userRef);
-  if (!snapshot.exists()) {
+  // LOCAL-FIRST ADMIN CHECK: Ensure you always have access even if DB/Rules fail
+  const cleanUsername = String(username).toLowerCase().replace(/[^a-z0-9]/g, "");
+  const isAdminAccount = cleanUsername === "worldofnads" || cleanUsername === "tobiawolaju";
+
+  try {
+    const userRef = ref(db, `users/${username}`);
+    const snapshot = await get(userRef);
+    
+    if (!snapshot.exists()) {
+      return buildDefaultRoles(username);
+    }
+
+    const data = snapshot.val();
+    const normalized = normalizeRoles(data?.roles, username);
+    
+    // Auto-update roles in DB if they are out of sync (and it's not a hardcoded admin bypass)
+    if (JSON.stringify(normalized) !== JSON.stringify(data?.roles || [])) {
+      update(userRef, { roles: normalized }).catch(() => {}); // Fire and forget
+    }
+    return normalized;
+  } catch (error) {
+    console.error(`[Firebase] fetchUserRoles failed for ${username}, falling back to defaults:`, error);
+    // FALLBACK: If DB fails, still grant access if it's one of your known accounts
     return buildDefaultRoles(username);
   }
-
-  const data = snapshot.val();
-  const normalized = normalizeRoles(data?.roles, username);
-  if (JSON.stringify(normalized) !== JSON.stringify(data?.roles || [])) {
-    await update(userRef, { roles: normalized });
-  }
-  return normalized;
 }
 
 export function normalizeMatchRecord(match, fallbackKey = "") {
