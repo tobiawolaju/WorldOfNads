@@ -15,7 +15,7 @@
     "image": "/logo.jpg",
     "category": "skins",
     "description": "White skin. No attachment.",
-    "skinConfig": { "color": "#ffffff", "cheekColor": "#ffffff", "shader": "ghost", "shaderTargets": ["body", "cheek", "attachment"] }
+    "skinConfig": { "color": "#ffffff", "cheekColor": "#ffffff", "shader": "ghost", "shaderTargets": ["body", "cheek", "attachment"], "hasOutline": true }
   },
   {
     "id": "s1",
@@ -59,7 +59,7 @@
     "image": "/logo.jpg",
     "category": "skins",
     "description": "Default skin with a white cube on the head.",
-    "skinConfig": { "attachmentShape": "box", "color": "#ffffff", "cheekColor": "#ffffff", "attachmentColor": "#ffffff", "shader": "angel", "shaderTargets": ["body", "cheek", "attachment"] }
+    "skinConfig": { "attachmentShape": "box", "color": "#ffffff", "cheekColor": "#ffffff", "attachmentColor": "#ffffff", "shader": "angel", "shaderTargets": ["body", "cheek", "attachment"], "hasOutline": true }
   },
   {
     "id": "s5",
@@ -92,7 +92,8 @@
       "cheekColor": "#ff40bf", 
       "attachmentColor": "#c68642",
       "shaderTargets": ["body", "attachment"],
-      "rawVertexShader": "gl_Position.y += sin(gl_Position.x * 10.0 + uTime * 5.0) * 0.05;"
+      "rawVertexShader": "gl_Position.y += sin(gl_Position.x * 10.0 + uTime * 5.0) * 0.05;",
+      "hasOutline": true
     }
   }
 ]

@@ -27,6 +27,7 @@ interface SkinConfig {
   shaderTargets?: ("body" | "cheek" | "eye" | "attachment")[];
   rawFragmentShader?: string;
   rawVertexShader?: string;
+  hasOutline?: boolean;
 }
 
 interface StoreItem {
@@ -262,6 +263,38 @@ const NadModel: React.FC<NadModelProps> = ({
               if (child.material.type === "MeshStandardMaterial" || child.material.type === "MeshBasicMaterial") {
                  (child.material as any).color.copy(eyeColor);
               }
+            // --- Cartoon Outline Logic ---
+            if (equippedSkin?.skinConfig?.hasOutline && shouldApplyShader) {
+              const outlineName = `outline-${child.name}`;
+              if (!child.getObjectByName(outlineName)) {
+                const outlineMat = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide, depthWrite: true });
+                outlineMat.onBeforeCompile = (shader) => {
+                  shader.vertexShader = shader.vertexShader.replace(
+                    '#include <begin_vertex>',
+                    `
+                    #include <begin_vertex>
+                    transformed += normalize(objectNormal) * 2.5; 
+                    `
+                  );
+                };
+                let outlineMesh: THREE.Object3D;
+                if (child.type === 'SkinnedMesh') {
+                  outlineMesh = new THREE.SkinnedMesh(child.geometry, outlineMat);
+                  (outlineMesh as THREE.SkinnedMesh).bind((child as any).skeleton, child.matrixWorld);
+                } else {
+                  outlineMesh = new THREE.Mesh(child.geometry, outlineMat);
+                }
+                outlineMesh.name = outlineName;
+                child.add(outlineMesh);
+              }
+            } else {
+              const existingOutline = child.getObjectByName(`outline-${child.name}`);
+              if (existingOutline) {
+                child.remove(existingOutline);
+                if ((existingOutline as any).material) {
+                  (existingOutline as any).material.dispose();
+                }
+              }
             }
           }
         }
@@ -375,6 +408,22 @@ const NadModel: React.FC<NadModelProps> = ({
 
       // Positioning adjustment
       attachment.position.set(0, -2.25, -0.05);
+
+      if (equippedSkin.skinConfig.hasOutline && shouldApplyShader) {
+        const outlineMat = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide, depthWrite: true });
+        outlineMat.onBeforeCompile = (shader) => {
+          shader.vertexShader = shader.vertexShader.replace(
+            '#include <begin_vertex>',
+            `
+            #include <begin_vertex>
+            transformed += normalize(objectNormal) * 5.0;
+            `
+          );
+        };
+        const outlineMesh = new THREE.Mesh(geometry, outlineMat);
+        outlineMesh.name = "outline-attachment";
+        attachment.add(outlineMesh);
+      }
 
       headBone.add(attachment);
 
