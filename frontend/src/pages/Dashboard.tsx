@@ -433,10 +433,6 @@ export default function Dashboard() {
           </div>
           <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
             <span className="tab-with-badge">Rewards</span>
-            <span>Events</span>
-          </div>
-          <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
-            <span>Rewards</span>
           </div>
           <div className={tab === "store" ? "tab active" : "tab"} onClick={() => { setTab("store"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
             <span className="tab-with-badge">
