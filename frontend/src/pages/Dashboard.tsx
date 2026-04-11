@@ -548,6 +548,7 @@ export default function Dashboard() {
                       <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}>
                         {!dummyOwnedItems.includes(item.id) && (
                           <span className="item-badge badge-store">new</span>
+                        )}
                         {item.badge && (
                           <span className="item-badge badge-store badge-new">{item.badge}</span>
                         )}
