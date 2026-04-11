@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
-import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward } from './firebaseClient.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles } from './firebaseClient.js';
 import { settleMatchOnchain } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 
@@ -241,6 +241,30 @@ const server = createServer(async (req, res) => {
       sendJson(res, 403, { ok: false, error: 'Invalid access code' });
     } catch (error) {
       sendJson(res, 400, { ok: false, error: 'Invalid JSON payload' });
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/admin/update-user-roles') {
+    try {
+      const payload = await readJsonBody(req);
+      const code = typeof payload?.code === 'string' ? payload.code.trim() : '';
+      const { username, roles } = payload;
+      const expected = process.env.ADMIN_ACCESS_CODE || 'WONS';
+      
+      if (code && code === expected) {
+        if (!username || !Array.isArray(roles)) {
+          sendJson(res, 400, { ok: false, error: 'Invalid payload: username and roles (array) required' });
+          return;
+        }
+        await updateUserRoles(username, roles);
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+      sendJson(res, 403, { ok: false, error: 'Invalid access code' });
+    } catch (error) {
+      console.error('[Admin] Failed to update user roles:', error);
+      sendJson(res, 500, { ok: false, error: 'Internal server error' });
     }
     return;
   }

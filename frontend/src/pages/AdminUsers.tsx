@@ -37,6 +37,14 @@ const AdminUsers: React.FC = () => {
     const currentUser = users.find((user) => user.username === username);
     if (!currentUser) return;
 
+    // Get access code from session or prompt
+    let code = sessionStorage.getItem("admin_access_code") || "";
+    if (!code) {
+      const input = window.prompt("Enter admin access code to verify changes:");
+      if (!input) return;
+      code = input.trim();
+    }
+
     const previousRoles = Array.isArray(currentUser.roles) ? currentUser.roles : [];
     const roleSet = new Set(previousRoles);
     if (roleSet.has(role)) {
@@ -55,7 +63,14 @@ const AdminUsers: React.FC = () => {
 
     setSavingUsers((current) => ({ ...current, [username]: true }));
     try {
-      const updated = await updateUserRoles(username, pendingRoles);
+      // Pass the code to the backend-capable updateUserRoles
+      const updated = await updateUserRoles(username, pendingRoles, code);
+      
+      // If successful and we didn't have a code in session, save it
+      if (code && !sessionStorage.getItem("admin_access_code")) {
+        sessionStorage.setItem("admin_access_code", code);
+      }
+
       if (updated) {
         setUsers((current) =>
           current.map((user) =>
@@ -63,9 +78,10 @@ const AdminUsers: React.FC = () => {
           )
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update roles", err);
-      setError("Failed to update roles. Please try again.");
+      setError(err.message || "Failed to update roles. Please verify your access code.");
+      // Rollback
       setUsers((current) =>
         current.map((user) =>
           user.username === username ? { ...user, roles: previousRoles } : user

@@ -13,6 +13,12 @@ const firebaseConfig = {
   measurementId: "G-QP22W5T17Z"
 };
 
+const API_BASE = import.meta.env.VITE_ANALYTICS_API_URL || "";
+function buildUrl(path) {
+  if (!API_BASE) return path;
+  return `${API_BASE}${path}`;
+}
+
 export const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const db = getDatabase(firebaseApp);
 
@@ -227,11 +233,31 @@ export async function fetchUsersFromFirebase() {
   }));
 }
 
-export async function updateUserRoles(username, roles) {
+export async function updateUserRoles(username, roles, adminCode) {
   if (!username) return;
-  const normalized = normalizeRoles(roles, username);
-  await update(ref(db, `users/${username}`), { roles: normalized });
-  return normalized;
+
+  // Use the backend to update roles securely
+  try {
+    const response = await fetch(buildUrl("/admin/update-user-roles"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        username, 
+        roles, 
+        code: adminCode || sessionStorage.getItem("admin_access_code") || "" 
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Failed to update roles");
+    }
+
+    return roles;
+  } catch (error) {
+    console.error("Failed to update user roles via backend:", error);
+    throw error;
+  }
 }
 
 function sanitizeKey(value) {
@@ -273,7 +299,7 @@ export async function fetchSponsorDailyPlayers(days = 7) {
 
     const dayData = data?.[dateKey] || {};
     Object.entries(dayData).forEach(([sponsorKey, sponsorValue]) => {
-      if (!sponsorValue || sponsorKey === "__meta") return;
+      if (!sponsorValue || sponsorKey === "__name") return;
       const name = sponsorValue.__name || sponsorKey;
       if (!sponsors[name]) {
         sponsors[name] = { dailyCounts: {}, usersByDate: {} };

@@ -81,6 +81,13 @@ export async function updateMatchStatus(matchId, status) {
     await update(matchRef, { status });
 }
 
+export async function updateUserRoles(username, roles) {
+    if (!username) return;
+    const userRef = ref(db, `users/${username}`);
+    await update(userRef, { roles });
+    console.log(`[Firebase] Roles updated for ${username}:`, roles);
+}
+
 export async function saveReward(rewardData) {
     const rewardId = `reward-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const rewardRef = ref(db, `rewards/${rewardId}`);
