@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, useFBX } from "@react-three/drei";
+import { OrbitControls, useFBX, Environment, ContactShadows } from "@react-three/drei";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 
@@ -606,8 +606,25 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       style={{ background: "none", pointerEvents: "auto" }}
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
     >
-      <ambientLight intensity={3} />
-      <directionalLight position={[5, 5, 5]} intensity={1} />
+      <ambientLight intensity={1.5} />
+      {/* Professional Three-Point Lighting Setup */}
+      {/* Key Light: Strong primary light */}
+      <directionalLight position={[10, 10, 10]} intensity={2.5} />
+      {/* Fill Light: Softens shadows from the key light */}
+      <directionalLight position={[-10, 5, 5]} intensity={1.5} />
+      {/* Rim Light: Provides highlights on the edges (separated from BG) */}
+      <pointLight position={[0, 10, -10]} intensity={3.5} />
+
+      <Environment preset="city" />
+      <ContactShadows 
+        opacity={0.5} 
+        scale={6} 
+        blur={2} 
+        far={4.5} 
+        resolution={256} 
+        color="#000000" 
+        position={[0, -2, 0]} 
+      />
 
       <Suspense fallback={null}>
         <NadModel scale={0.5} position={[0, -2, 0]} equippedSkin={equippedSkin} />
