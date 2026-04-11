@@ -163,6 +163,7 @@ export default function Dashboard() {
   const [selectedReward, setSelectedReward] = useState<string | null>(null);
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
   const [equippedSkin, setEquippedSkin] = useState<StoreItem | null>(dummyStore[0]);
+  const newStoreItemCount = 3;
 
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
@@ -428,6 +429,10 @@ export default function Dashboard() {
       <div className="right-info-section">
         <div className="tabs">
           <div className={tab === "events" ? "tab active" : "tab"} onClick={() => { setTab("events"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
+            <span className="tab-with-badge">Events</span>
+          </div>
+          <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
+            <span className="tab-with-badge">Rewards</span>
             <span>Events</span>
           </div>
           <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
@@ -437,6 +442,7 @@ export default function Dashboard() {
             <span className="tab-with-badge">
               Store
               <span className="tab-notif-badge">
+                <span className="tab-notif-badge-text">{newStoreItemCount}</span>
                 <span className="tab-notif-badge-text">NEW</span>
               </span>
             </span>
@@ -540,6 +546,8 @@ export default function Dashboard() {
                       onClick={() => setSelectedStore(item.id)}
                     >
                       <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}>
+                        {!dummyOwnedItems.includes(item.id) && (
+                          <span className="item-badge badge-store">new</span>
                         {item.badge && (
                           <span className="item-badge badge-store badge-new">{item.badge}</span>
                         )}
