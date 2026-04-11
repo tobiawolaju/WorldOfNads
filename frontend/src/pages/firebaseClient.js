@@ -98,8 +98,9 @@ export async function updateUserProjects(username, matchSponsorName) {
 
 function buildDefaultRoles(username) {
   const roles = ["player"];
-  const cleanUsername = String(username || "").toLowerCase().trim().replace(/^@/, "");
-  if (cleanUsername === "worldofnads") {
+  // Strip all whitespace and @ symbols for robust comparison
+  const cleanUsername = String(username || "").toLowerCase().replace(/[\s@]/g, "");
+  if (cleanUsername === "worldofnads" || cleanUsername === "tobiawolaju") {
     roles.push("admin", "sponsor");
   }
   return roles;
@@ -110,8 +111,8 @@ function normalizeRoles(roles, username, fallbackRoles = null) {
   const normalized = Array.from(new Set(base.map((role) => String(role).toLowerCase().trim()).filter(Boolean)));
   if (!normalized.includes("player")) normalized.push("player");
 
-  const cleanUsername = String(username || "").toLowerCase().trim().replace(/^@/, "");
-  if (cleanUsername === "worldofnads") {
+  const cleanUsername = String(username || "").toLowerCase().replace(/[\s@]/g, "");
+  if (cleanUsername === "worldofnads" || cleanUsername === "tobiawolaju") {
     if (!normalized.includes("admin")) normalized.push("admin");
     if (!normalized.includes("sponsor")) normalized.push("sponsor");
   }

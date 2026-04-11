@@ -112,7 +112,8 @@ const AdminUsers: React.FC = () => {
             const isAdmin = roles.includes("admin");
             const isSponsor = roles.includes("sponsor");
             const isPlayer = roles.includes("player");
-            const isPrimaryAdmin = user.username?.toLowerCase() === "worldofnads";
+            const cleanRowUsername = String(user.username || "").toLowerCase().replace(/[\s@]/g, "");
+            const isPrimaryAdmin = cleanRowUsername === "worldofnads" || cleanRowUsername === "tobiawolaju";
             const isSaving = Boolean(savingUsers[user.username]);
             const looksLikeWallet = user.username?.startsWith("0x") || user.username?.includes(":");
             const handle = user.twitterUsername
