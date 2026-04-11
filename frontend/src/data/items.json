@@ -32,14 +32,14 @@
     "price": "20 MON",
     "image": "/logo.jpg",
     "category": "skins",
-    "description": "Gold skin. Pulsating shader.",
+    "description": "Gold skin. Metallic and reflective.",
     "skinConfig": { 
       "attachmentShape": "sphere", 
       "color": "#ffd700", 
       "cheekColor": "#ffd700", 
       "attachmentColor": "#ffd700",
-      "shaderTargets": ["body", "attachment"],
-      "rawFragmentShader": "gl_FragColor = vec4(gl_FragColor.rgb * (0.5 + 0.5 * sin(uTime * 5.0)), gl_FragColor.a);"
+      "shader": "gold",
+      "shaderTargets": ["body", "cheek", "attachment"]
     }
   },
   {
@@ -63,14 +63,12 @@
     "price": "35 MON",
     "image": "/logo.jpg",
     "category": "skins",
-    "description": "Red skin. Pulsating shader.",
+    "description": "Red skin.",
     "skinConfig": { 
       "attachmentShape": "box", 
       "color": "#ff0000", 
       "cheekColor": "#ff0000", 
-      "attachmentColor": "#ff0000",
-      "shaderTargets": ["body", "attachment"],
-      "rawFragmentShader": "gl_FragColor = vec4(gl_FragColor.rgb * (0.5 + 0.5 * sin(uTime * 5.0)), gl_FragColor.a);"
+      "attachmentColor": "#ff0000"
     }
   },
   {
@@ -79,14 +77,15 @@
     "price": "40 MON",
     "image": "/logo.jpg",
     "category": "skins",
-    "description": "Angel skin. Pulsating shader.",
+    "description": "Angel skin. Glowing eyes and golden attachment.",
     "skinConfig": { 
       "attachmentShape": "box", 
       "color": "#ffffff", 
       "cheekColor": "#ffffff", 
-      "attachmentColor": "#ffffff",
-      "shaderTargets": ["body", "attachment"],
-      "rawFragmentShader": "gl_FragColor = vec4(gl_FragColor.rgb * (0.5 + 0.5 * sin(uTime * 5.0)), gl_FragColor.a);"
+      "eyeColor": "#ffffff",
+      "attachmentColor": "#ffd700",
+      "shader": "angel",
+      "shaderTargets": ["eye", "attachment"]
     }
   },
   {
@@ -96,14 +95,12 @@
     "image": "/logo.jpg",
     "category": "skins",
     "badge": "new",
-    "description": "Purple skin. Pulsating shader.",
+    "description": "Purple skin.",
     "skinConfig": { 
       "attachmentShape": "box", 
       "color": "#8000ff", 
       "cheekColor": "#8f33ff", 
-      "attachmentColor": "#8000ff",
-      "shaderTargets": ["body", "attachment"],
-      "rawFragmentShader": "gl_FragColor = vec4(gl_FragColor.rgb * (0.5 + 0.5 * sin(uTime * 5.0)), gl_FragColor.a);"
+      "attachmentColor": "#8000ff"
     }
   },
   {
@@ -113,14 +110,12 @@
     "image": "/logo.jpg",
     "category": "skins",
     "badge": "new",
-    "description": "John Nad. Pulsating shader.",
+    "description": "John Nad.",
     "skinConfig": { 
       "attachmentShape": "box", 
       "color": "#ff2496", 
       "cheekColor": "#ff40bf", 
-      "attachmentColor": "#c68642",
-      "shaderTargets": ["body", "attachment"],
-      "rawFragmentShader": "gl_FragColor = vec4(gl_FragColor.rgb * (0.5 + 0.5 * sin(uTime * 5.0)), gl_FragColor.a);"
+      "attachmentColor": "#c68642"
     }
   }
 ]

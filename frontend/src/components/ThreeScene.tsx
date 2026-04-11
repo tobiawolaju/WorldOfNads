@@ -215,7 +215,7 @@ const NadModel: React.FC<NadModelProps> = ({
               } else if (shaderType === "gold") {
                 if (newMat.type === "MeshStandardMaterial") {
                   (newMat as any).metalness = 1.0;
-                  (newMat as any).roughness = 0.2;
+                  (newMat as any).roughness = 0.1;
                 }
               } else if (shaderType === "shadow" || shaderType === "void") {
                 // Unshaded solid color
@@ -225,8 +225,11 @@ const NadModel: React.FC<NadModelProps> = ({
                 });
               } else if (shaderType === "angel") {
                 if (newMat.type === "MeshStandardMaterial") {
-                  (newMat as any).emissive = baseColor.clone();
-                  (newMat as any).emissiveIntensity = 1.0;
+                  // Only eyes glow for Angel
+                  if (partName === "eye") {
+                    (newMat as any).emissive = eyeColor.clone();
+                    (newMat as any).emissiveIntensity = 1.0;
+                  }
                 }
               }
               
@@ -342,7 +345,7 @@ const NadModel: React.FC<NadModelProps> = ({
         } else if (shaderType === "gold") {
           if (material instanceof THREE.MeshStandardMaterial) {
             material.metalness = 1.0;
-            material.roughness = 0.2;
+            material.roughness = 0.1;
           }
         } else if (shaderType === "shadow" || shaderType === "void") {
           material = new THREE.MeshBasicMaterial({ 
@@ -352,8 +355,10 @@ const NadModel: React.FC<NadModelProps> = ({
           });
         } else if (shaderType === "angel") {
           if (material instanceof THREE.MeshStandardMaterial) {
-            material.emissive = new THREE.Color(equippedSkin.skinConfig.attachmentColor || equippedSkin.skinConfig.color || "#ffffff");
-            material.emissiveIntensity = 1.0;
+            // Angel attachment is metallic gold
+            material.metalness = 1.0;
+            material.roughness = 0.1;
+            material.color.set(equippedSkin.skinConfig.attachmentColor || "#ffd700");
           }
         }
 
