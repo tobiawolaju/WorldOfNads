@@ -384,7 +384,7 @@ const NadModel: React.FC<NadModelProps> = ({
       }
       const attachment = new THREE.Mesh(geometry, material);
       attachment.name = "bone-attachment";
-      attachment.scale.setScalar(0.0165);
+      attachment.scale.setScalar(0.017);
 
       // Positioning adjustment
       attachment.position.set(0, -2.25, -0.05);
