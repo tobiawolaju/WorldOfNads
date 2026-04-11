@@ -159,6 +159,7 @@ export default function Dashboard() {
   const [selectedReward, setSelectedReward] = useState<string | null>(null);
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
   const [equippedSkin, setEquippedSkin] = useState<StoreItem | null>(dummyStore[0]);
+  const newStoreItemCount = 3;
 
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
@@ -424,26 +425,16 @@ export default function Dashboard() {
       <div className="right-info-section">
         <div className="tabs">
           <div className={tab === "events" ? "tab active" : "tab"} onClick={() => { setTab("events"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
-            <span className="tab-with-badge">
-              Events
-              <span className="tab-notif-badge">
-                <span className="tab-notif-badge-text">1</span>
-              </span>
-            </span>
+            <span className="tab-with-badge">Events</span>
           </div>
           <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
-            <span className="tab-with-badge">
-              Rewards
-              <span className="tab-notif-badge">
-                <span className="tab-notif-badge-text">1</span>
-              </span>
-            </span>
+            <span className="tab-with-badge">Rewards</span>
           </div>
           <div className={tab === "store" ? "tab active" : "tab"} onClick={() => { setTab("store"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
             <span className="tab-with-badge">
               Store
               <span className="tab-notif-badge">
-                <span className="tab-notif-badge-text">1</span>
+                <span className="tab-notif-badge-text">{newStoreItemCount}</span>
               </span>
             </span>
           </div>
@@ -546,6 +537,9 @@ export default function Dashboard() {
                       onClick={() => setSelectedStore(item.id)}
                     >
                       <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}>
+                        {!dummyOwnedItems.includes(item.id) && (
+                          <span className="item-badge badge-store">new</span>
+                        )}
                       </div>
                       <div className="store-card-info">
                         <h3>{item.name}</h3>

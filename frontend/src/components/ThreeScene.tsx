@@ -468,7 +468,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     <Canvas
       dpr={[1, 1.5]}
       camera={{ position: [0, 0, cameraZ] }}
-      gl={{ alpha: true, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
+      gl={{ alpha: true, powerPreference: "high-performance" }}
       style={{ background: "none", pointerEvents: "auto" }}
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
     >

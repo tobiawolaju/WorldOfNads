@@ -896,7 +896,7 @@
 
 /* --- ITEM BADGES --- */
 .item-badge {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 800;
   padding: 2px 8px;
   border-radius: var(--radius-full);
@@ -926,23 +926,12 @@
   right: 8px;
   margin: 0;
   z-index: 5;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-.badge-skins {
-  background: rgba(144, 124, 255, 0.85);
-  color: #ffffff;
-}
-
-.badge-emotes {
-  background: rgba(255, 107, 107, 0.85);
-  color: #ffffff;
-}
-
-.badge-bundles {
-  background: rgba(255, 159, 64, 0.85);
-  color: #ffffff;
+  background: #ffeb3b;
+  color: #000000;
+  border: none;
+  box-shadow: none;
+  font-size: 0.5rem;
+  letter-spacing: 0.03em;
 }
 
 .reward-item-header {
