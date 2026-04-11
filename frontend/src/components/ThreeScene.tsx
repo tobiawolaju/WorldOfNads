@@ -383,7 +383,7 @@ const NadModel: React.FC<NadModelProps> = ({
         });
 
         obj.scale.setScalar(0.0085);
-        obj.position.set(0, -2.20, -0.05);
+        obj.position.set(0, -2.10, -0.05);
         headBone.add(obj);
         currentAttachment = obj;
       };
