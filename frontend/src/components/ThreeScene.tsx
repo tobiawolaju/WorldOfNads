@@ -1,6 +1,7 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, useFBX, Environment, ContactShadows } from "@react-three/drei";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 
@@ -306,94 +307,129 @@ const NadModel: React.FC<NadModelProps> = ({
 
       if (!equippedSkin?.skinConfig?.attachmentShape) return;
 
-      let geometry: THREE.BufferGeometry;
       const shape = equippedSkin.skinConfig.attachmentShape;
+      const isModel = shape.endsWith(".fbx");
 
-      switch (shape) {
-        case "cone":
-          geometry = new THREE.ConeGeometry(60, 120, 32);
-          break;
-        case "sphere":
-          geometry = new THREE.SphereGeometry(60, 32, 32);
-          break;
-        case "cylinder":
-          geometry = new THREE.CylinderGeometry(50, 50, 100, 32);
-          break;
-        case "box":
-        default:
-          geometry = new THREE.BoxGeometry(100, 100, 100);
-          break;
-      }
+      let currentAttachment: THREE.Object3D | null = null;
+      let isCleanup = false;
 
-      let material: THREE.Material = new THREE.MeshStandardMaterial({
-        color: equippedSkin.skinConfig.attachmentColor || equippedSkin.skinConfig.color || "red"
-      });
+      const applyThemeToMesh = (mesh: THREE.Mesh, skinConfig: any) => {
+        let material: THREE.Material = new THREE.MeshStandardMaterial({
+          color: skinConfig.attachmentColor || skinConfig.color || "red"
+        });
 
-      const shaderType = equippedSkin.skinConfig.shader || "default";
-      const targets = equippedSkin.skinConfig.shaderTargets || ["body", "cheek", "eye", "attachment"];
-      const shouldApplyShader = targets.includes("attachment");
+        const shaderType = skinConfig.shader || "default";
+        const targets = skinConfig.shaderTargets || ["body", "cheek", "eye", "attachment"];
+        const shouldApplyShader = targets.includes("attachment");
 
-      if (shouldApplyShader) {
-        if (shaderType === "ghost") {
-          material.transparent = true;
-          material.opacity = 0.6;
-          material.depthWrite = true;
-          if (material instanceof THREE.MeshStandardMaterial) {
-            material.roughness = 0.1;
+        if (shouldApplyShader) {
+          if (shaderType === "ghost") {
+            material.transparent = true;
+            material.opacity = 0.6;
+            material.depthWrite = true;
+            if (material instanceof THREE.MeshStandardMaterial) {
+              material.roughness = 0.1;
+            }
+          } else if (shaderType === "gold") {
+            if (material instanceof THREE.MeshStandardMaterial) {
+              material.metalness = 1.0;
+              material.roughness = 0.1;
+            }
+          } else if (shaderType === "shadow" || shaderType === "void") {
+            material = new THREE.MeshBasicMaterial({
+              color: 0x000000,
+              depthWrite: shaderType === "void" ? false : true,
+              transparent: shaderType === "void" ? true : false,
+            });
+          } else if (shaderType === "angel") {
+            if (material instanceof THREE.MeshStandardMaterial) {
+              material.metalness = 1.0;
+              material.roughness = 0.1;
+              material.color.set(skinConfig.attachmentColor || "#ffd700");
+            }
           }
-        } else if (shaderType === "gold") {
-          if (material instanceof THREE.MeshStandardMaterial) {
-            material.metalness = 1.0;
-            material.roughness = 0.1;
-          }
-        } else if (shaderType === "shadow" || shaderType === "void") {
-          material = new THREE.MeshBasicMaterial({
-            color: 0x000000,
-            depthWrite: shaderType === "void" ? false : true,
-            transparent: shaderType === "void" ? true : false,
-          });
-        } else if (shaderType === "angel") {
-          if (material instanceof THREE.MeshStandardMaterial) {
-            // Angel attachment is metallic gold
-            material.metalness = 1.0;
-            material.roughness = 0.1;
-            material.color.set(equippedSkin.skinConfig.attachmentColor || "#ffd700");
+
+          const rawFrag = skinConfig.rawFragmentShader;
+          const rawVert = skinConfig.rawVertexShader;
+          if (rawFrag || rawVert) {
+            material.onBeforeCompile = (shader) => {
+              shader.uniforms.uTime = { value: 0 };
+              if (rawFrag) {
+                shader.fragmentShader = `uniform float uTime;\n` + shader.fragmentShader.replace(
+                  '#include <dithering_fragment>',
+                  `#include <dithering_fragment>\n${rawFrag}`
+                );
+              }
+              if (rawVert) {
+                shader.vertexShader = `uniform float uTime;\n` + shader.vertexShader.replace(
+                  '#include <project_vertex>',
+                  `#include <project_vertex>\n${rawVert}`
+                );
+              }
+              material.userData.shader = shader;
+            };
           }
         }
+        mesh.material = material;
+      };
 
-        const rawFrag = equippedSkin.skinConfig.rawFragmentShader;
-        const rawVert = equippedSkin.skinConfig.rawVertexShader;
-        if (rawFrag || rawVert) {
-          material.onBeforeCompile = (shader) => {
-            shader.uniforms.uTime = { value: 0 };
-            if (rawFrag) {
-              shader.fragmentShader = `uniform float uTime;\n` + shader.fragmentShader.replace(
-                '#include <dithering_fragment>',
-                `#include <dithering_fragment>\n${rawFrag}`
-              );
-            }
-            if (rawVert) {
-              shader.vertexShader = `uniform float uTime;\n` + shader.vertexShader.replace(
-                '#include <project_vertex>',
-                `#include <project_vertex>\n${rawVert}`
-              );
-            }
-            material.userData.shader = shader;
-          };
+      const setupAttachment = (obj: THREE.Object3D) => {
+        obj.name = "bone-attachment";
+        // Apply materials to all meshes in the model
+        obj.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            applyThemeToMesh(child, equippedSkin.skinConfig);
+          }
+        });
+
+        obj.scale.setScalar(0.017);
+        obj.position.set(0, -2.25, -0.05);
+        headBone.add(obj);
+        currentAttachment = obj;
+      };
+
+      if (isModel) {
+        const loader = new FBXLoader();
+        loader.load(shape, (fbx) => {
+          if (isCleanup) return;
+          setupAttachment(fbx);
+        });
+      } else {
+        let geometry: THREE.BufferGeometry;
+        switch (shape) {
+          case "cone":
+            geometry = new THREE.ConeGeometry(60, 120, 32);
+            break;
+          case "sphere":
+            geometry = new THREE.SphereGeometry(60, 32, 32);
+            break;
+          case "cylinder":
+            geometry = new THREE.CylinderGeometry(50, 50, 100, 32);
+            break;
+          case "box":
+          default:
+            geometry = new THREE.BoxGeometry(100, 100, 100);
+            break;
         }
+        const mesh = new THREE.Mesh(geometry);
+        setupAttachment(mesh);
       }
-      const attachment = new THREE.Mesh(geometry, material);
-      attachment.name = "bone-attachment";
-      attachment.scale.setScalar(0.017);
-
-      // Positioning adjustment
-      attachment.position.set(0, -2.25, -0.05);
-
-      headBone.add(attachment);
 
       return () => {
-        geometry.dispose();
-        material.dispose();
+        isCleanup = true;
+        if (currentAttachment) {
+          headBone.remove(currentAttachment);
+          currentAttachment.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              child.geometry.dispose();
+              if (Array.isArray(child.material)) {
+                child.material.forEach(m => m.dispose());
+              } else {
+                child.material.dispose();
+              }
+            }
+          });
+        }
       };
     }
   }, [model, equippedSkin]);
