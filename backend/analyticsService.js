@@ -193,11 +193,20 @@ export async function logAnalyticsEvent(payload = {}) {
 }
 
 async function getEventsInRange(startIso, endIso) {
-  const eventsRef = ref(db, 'analytics/events');
-  const q = query(eventsRef, orderByChild('timestamp'), startAt(startIso), endAt(endIso));
-  const snapshot = await get(q);
-  if (!snapshot.exists()) return [];
-  return Object.values(snapshot.val());
+  try {
+    const eventsRef = ref(db, 'analytics/events');
+    const q = query(eventsRef, orderByChild('timestamp'), startAt(startIso), endAt(endIso));
+    const snapshot = await get(q);
+    if (!snapshot.exists()) return [];
+    return Object.values(snapshot.val());
+  } catch (error) {
+    if (error.message.includes('Index not defined')) {
+      console.error('[Analytics] MISSING INDEX: Please add ".indexOn": "timestamp" to your Firebase RTDB rules for path /analytics/events');
+    } else {
+      console.error('[Analytics] Query failed:', error);
+    }
+    return [];
+  }
 }
 
 async function getDailyCounts({ eventTypes, startIso, endIso, aggregate = 'count', distinctUser = false }) {
