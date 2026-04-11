@@ -1,6 +1,6 @@
 extends Node
 
-const LIVE_EVENTS_URL := "wss://worldofnads-129481786742.europe-west1.run.app/events"
+const LIVE_EVENTS_URL := "wss://worldofnads.onrender.com/events"
 const LOCAL_EVENTS_URL := "ws://localhost:8080/events"
 const MAX_STATUS_LINES := 4
 
