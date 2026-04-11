@@ -25,6 +25,7 @@ interface SkinConfig {
   attachmentColor?: string;
   shader?: "ghost" | "gold" | "shadow" | "angel" | "default" | "void";
   shaderTargets?: ("body" | "cheek" | "eye" | "attachment")[];
+  eyeColor?: string;
   rawFragmentShader?: string;
   rawVertexShader?: string;
 }
@@ -179,7 +180,8 @@ const NadModel: React.FC<NadModelProps> = ({
       ? new THREE.Color(equippedSkin.skinConfig.cheekColor)
       : baseColor.clone().lerp(new THREE.Color("#ffffff"), 0.15);
 
-    const eyeColor = new THREE.Color("#ffffff");
+    const eyeColorHex = equippedSkin?.skinConfig?.eyeColor || "#ffffff";
+    const eyeColor = new THREE.Color(eyeColorHex);
 
     model.traverse((child) => {
       if (child instanceof THREE.Mesh) {

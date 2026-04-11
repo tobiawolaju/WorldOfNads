@@ -64,6 +64,7 @@ type SkinConfig = {
   attachmentColor?: string;
   shader?: "ghost" | "gold" | "shadow" | "angel" | "default";
   shaderTargets?: ("body" | "cheek" | "eye" | "attachment")[];
+  eyeColor?: string;
   rawFragmentShader?: string;
   rawVertexShader?: string;
 };

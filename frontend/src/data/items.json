@@ -17,12 +17,13 @@
     "price": "0 MON",
     "image": "/logo.jpg",
     "category": "skins",
-    "description": "White skin. Pulsating shader.",
+    "description": "Ghost skin. Pure white with black eyes.",
     "skinConfig": { 
       "color": "#ffffff", 
       "cheekColor": "#ffffff", 
-      "shaderTargets": ["body", "attachment"],
-      "rawFragmentShader": "gl_FragColor = vec4(gl_FragColor.rgb * (0.5 + 0.5 * sin(uTime * 5.0)), gl_FragColor.a);"
+      "eyeColor": "#000000",
+      "shader": "ghost",
+      "shaderTargets": ["body", "cheek", "eye", "attachment"]
     }
   },
   {
