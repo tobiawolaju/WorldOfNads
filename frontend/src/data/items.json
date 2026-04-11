@@ -5,12 +5,10 @@
     "price": "0 MON",
     "image": "/logo.jpg",
     "category": "skins",
-    "description": "Default pink skin. Pulsating shader.",
+    "description": "Default pink skin.",
     "skinConfig": { 
       "color": "#ff2496", 
-      "cheekColor": "#ff40bf",
-      "shaderTargets": ["body", "attachment"],
-      "rawFragmentShader": "gl_FragColor = vec4(gl_FragColor.rgb * (0.5 + 0.5 * sin(uTime * 5.0)), gl_FragColor.a);"
+      "cheekColor": "#ff40bf"
     }
   },
   {
