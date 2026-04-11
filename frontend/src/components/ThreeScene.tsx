@@ -160,7 +160,10 @@ const NadModel: React.FC<NadModelProps> = ({
 
     const center = new THREE.Vector3();
     box.getCenter(center);
-    model.position.sub(center.multiplyScalar(model.scale.x));
+    // Center on X and Z axes, but align bottom (feet) to Y=0
+    model.position.x = -center.x * model.scale.x;
+    model.position.z = -center.z * model.scale.z;
+    model.position.y = -box.min.y * model.scale.y;
   }, [model]);
 
   // Handle character color change
@@ -629,13 +632,13 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
 
       <Environment preset="city" />
       <ContactShadows 
-        opacity={0.5} 
+        opacity={0.35} 
         scale={6} 
-        blur={2} 
-        far={4.5} 
+        blur={1.5} 
+        far={4} 
         resolution={256} 
         color="#000000" 
-        position={[0, -2, 0]} 
+        position={[0, -2.01, 0]} 
       />
 
       <Suspense fallback={null}>
