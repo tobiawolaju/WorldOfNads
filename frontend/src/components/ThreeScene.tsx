@@ -570,9 +570,11 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
   useEffect(() => {
     const handleResize = () => {
       const isMobile = window.innerWidth < 768;
-      setCameraZ(isMobile ? 10 : 8);
-      setTargetY(isMobile ? 0.5 : -1.0);
-      setCameraYOffset(isMobile ? 0.5 : -1.0);
+      // Z=10 for both helps keep character fully in view on all screens
+      setCameraZ(isMobile ? 10 : 10);
+      // Lowering targetY for desktop to bring the head down into view
+      setTargetY(isMobile ? 0.5 : -1.25);
+      setCameraYOffset(isMobile ? 0.5 : -1.25);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -632,17 +634,17 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
 
       <Environment preset="city" />
       <ContactShadows
-        opacity={0.1}
+        opacity={0.4}
         scale={6}
         blur={1.5}
         far={4}
         resolution={256}
-        color="#ffffffff"
+        color="#000000"
         position={[0, -2.01, 0]}
       />
 
       <Suspense fallback={null}>
-        <NadModel scale={0.5} position={[0, 10, 0]} equippedSkin={equippedSkin} />
+        <NadModel scale={0.5} position={[0, -2, 0]} equippedSkin={equippedSkin} />
 
         <CardRig>
           <group rotation={[-0.5, 1, 1]} position={[4, 0.5, 0]} scale={0.3}>
