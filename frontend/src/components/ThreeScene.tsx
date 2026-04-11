@@ -9,7 +9,8 @@ import CardRig from "./CardRig";
 import { IdCard } from "./IdCard";
 
 // --- Prop Types ---
-interface Twitter {
+interface SocialAccount {
+  provider: string;
   profilePictureUrl?: string;
   name?: string;
   username?: string;
@@ -38,7 +39,7 @@ interface StoreItem {
 }
 
 interface ThreeSceneProps {
-  twitter?: Twitter;
+  social?: SocialAccount;
   wallets: Wallet[];
   earned: number;
   username: string;
@@ -601,7 +602,7 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
 
 // --- Main Scene Component ---
 export const ThreeScene: React.FC<ThreeSceneProps> = ({
-  twitter,
+  social,
   wallets,
   earned,
   username,
@@ -696,7 +697,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
         <CardRig>
           <group rotation={[-0.5, 1, 1]} position={[4, 0.5, 0]} scale={0.3}>
             <IdCard
-              twitter={twitter}
+              social={social}
               wallets={wallets}
               earned={earned}
               username={username}

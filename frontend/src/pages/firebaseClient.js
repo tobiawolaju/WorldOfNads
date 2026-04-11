@@ -23,10 +23,31 @@ export const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(fireb
 export const db = getDatabase(firebaseApp);
 
 export function getUsernameFromPrivy(user) {
-  const twitter = user?.linkedAccounts?.find((acc) => acc.type === "twitter_oauth");
-  const ethWallet = user?.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "ethereum");
-  const solWallet = user?.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "solana");
-  return twitter?.username || ethWallet?.address || solWallet?.address || "Anon";
+  if (!user?.linkedAccounts) return "Anon";
+
+  // Priority order for social handles
+  const providers = [
+    { type: "twitter_oauth", field: "username" },
+    { type: "farcaster", field: "username" },
+    { type: "google_oauth", field: "name" },
+    { type: "twitch_oauth", field: "username" },
+    { type: "tiktok_oauth", field: "username" },
+    { type: "spotify_oauth", field: "name" }
+  ];
+
+  for (const provider of providers) {
+    const acc = user.linkedAccounts.find((a) => a.type === provider.type);
+    if (acc) {
+      const val = acc[provider.field];
+      if (val) return val;
+    }
+  }
+
+  // Fallback to wallets
+  const ethWallet = user.linkedAccounts.find((acc) => acc.type === "wallet" && acc.chainType === "ethereum");
+  const solWallet = user.linkedAccounts.find((acc) => acc.type === "wallet" && acc.chainType === "solana");
+  
+  return ethWallet?.address || solWallet?.address || "Anon";
 }
 
 export function getPrimaryWalletAddress(user) {

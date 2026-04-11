@@ -5,6 +5,10 @@ import { fetchUsersFromFirebase, updateUserRoles } from "./firebaseClient";
 interface UserRow {
   username: string;
   twitterUsername?: string | null;
+  googleName?: string | null;
+  farcasterUsername?: string | null;
+  tiktokUsername?: string | null;
+  twitchUsername?: string | null;
   roles: string[];
   profilePictureUrl?: string;
 }
@@ -114,7 +118,7 @@ const AdminUsers: React.FC = () => {
       <div className="admin-users__table">
         <div className="admin-users__row admin-users__row--head">
           <span>User</span>
-          <span>X Handle</span>
+          <span>Handle / Social</span>
           <span>Player</span>
           <span>Admin</span>
           <span>Sponsor</span>
@@ -132,11 +136,15 @@ const AdminUsers: React.FC = () => {
             const isPrimaryAdmin = cleanRowUsername === "worldofnads" || cleanRowUsername === "tobiawolaju";
             const isSaving = Boolean(savingUsers[user.username]);
             const looksLikeWallet = user.username?.startsWith("0x") || user.username?.includes(":");
-            const handle = user.twitterUsername
-              ? `@${user.twitterUsername}`
-              : looksLikeWallet
-                ? "N/A"
-                : `@${user.username}`;
+            
+            // Extract best handle
+            let handle = "N/A";
+            if (user.twitterUsername) handle = `@${user.twitterUsername} (X)`;
+            else if (user.farcasterUsername) handle = `@${user.farcasterUsername} (FC)`;
+            else if (user.tiktokUsername) handle = `@${user.tiktokUsername} (TT)`;
+            else if (user.twitchUsername) handle = `@${user.twitchUsername} (TW)`;
+            else if (user.googleName) handle = `${user.googleName} (G)`;
+            else if (!looksLikeWallet) handle = `@${user.username}`;
 
             return (
               <div className="admin-users__row" key={user.username}>

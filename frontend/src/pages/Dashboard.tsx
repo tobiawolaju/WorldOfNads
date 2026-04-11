@@ -247,14 +247,29 @@ export default function Dashboard() {
   if (!ready) return <FullScreenLoader />;
   if (!authenticated || !user) return null;
 
-  const twitterAcc = user.linkedAccounts?.find((acc) => acc.type === "twitter_oauth");
-  const twitterData: Twitter | undefined = twitterAcc
-    ? {
-      username: twitterAcc.username ?? undefined,
-      profilePictureUrl: twitterAcc.profilePictureUrl ?? undefined,
-      name: twitterAcc.name || twitterAcc.username || undefined
+  // --- Multi-Provider Social Extraction ---
+  const socialProviders = [
+    "twitter_oauth",
+    "farcaster",
+    "google_oauth",
+    "twitch_oauth",
+    "tiktok_oauth",
+    "spotify_oauth"
+  ];
+  
+  let socialData: any = undefined;
+  for (const pType of socialProviders) {
+    const acc = user.linkedAccounts?.find((a) => a.type === pType);
+    if (acc) {
+      socialData = {
+        provider: pType,
+        username: acc.username || undefined,
+        profilePictureUrl: acc.profilePictureUrl || undefined,
+        name: acc.name || acc.username || undefined
+      };
+      break;
     }
-    : undefined;
+  }
 
   // Filter for ONLY the Ethereum wallet (Monad)
   const wallets = (user.linkedAccounts?.filter(
@@ -347,7 +362,7 @@ export default function Dashboard() {
     <div className="dashboard-wrapper">
       <div className="left-3d-section">
         <ThreeScene
-          twitter={twitterData}
+          social={socialData}
           wallets={wallets}
           earned={earned}
           username={getUsernameFromPrivy(user)}

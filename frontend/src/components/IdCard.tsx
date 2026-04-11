@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { fetchUserRoles } from "../pages/firebaseClient";
 
 // --- Prop and Type Interfaces ---
-interface Twitter {
+interface SocialAccount {
+  provider: string;
   profilePictureUrl?: string;
   name?: string;
   username?: string;
@@ -17,7 +18,7 @@ interface Wallet {
 }
 
 interface IdCardProps {
-  twitter: Twitter | undefined;
+  social: SocialAccount | undefined;
   wallets: Wallet[];
   earned: number;
   username: string;
@@ -57,7 +58,7 @@ const fragmentShader = `
   }
 `;
 
-export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, username, onLogout }) => {
+export const IdCard: React.FC<IdCardProps> = ({ social, wallets, earned, username, onLogout }) => {
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
   const [copied, setCopied] = useState(false);
   const [roles, setRoles] = useState<string[]>([]);
@@ -148,14 +149,21 @@ export const IdCard: React.FC<IdCardProps> = ({ twitter, wallets, earned, userna
 
             <div className="ticket-content">
               <img
-                src={twitter?.profilePictureUrl || "/default-avatar.png"}
+                src={social?.profilePictureUrl || "/default-avatar.png"}
                 className="ticket-avatar"
                 alt="Avatar"
               />
 
               <div className="ticket-info">
-                <div className="ticket-name">{twitter?.name || "Player"}</div>
-                <div className="ticket-handle">@{twitter?.username || "guest"}</div>
+                <div className="ticket-name">{social?.name || "Player"}</div>
+                <div className="ticket-handle">
+                  {social ? (
+                    <>
+                      {["twitter_oauth", "tiktok_oauth", "twitch_oauth", "farcaster"].includes(social.provider) ? "@" : ""}
+                      {social.username || social.name || "guest"}
+                    </>
+                  ) : "guest"}
+                </div>
                 <div className="ticket-wallets">
                   {wallets.length > 0 ? (
                     <div 
