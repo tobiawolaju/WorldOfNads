@@ -61,6 +61,7 @@ type SkinConfig = {
   color?: string;
   cheekColor?: string;
   attachmentColor?: string;
+  shader?: "ghost" | "gold" | "shadow" | "angel" | "default";
 };
 
 type StoreItem = {
@@ -91,7 +92,7 @@ const dummyStore: StoreItem[] = [
     image: "/logo.jpg",
     category: "skins",
     description: "White skin. No attachment.",
-    skinConfig: { color: "#ffffff", cheekColor: "#ffffff" }
+    skinConfig: { color: "#ffffff", cheekColor: "#ffffff", shader: "ghost" }
   },
   {
     id: "s1",
@@ -100,7 +101,7 @@ const dummyStore: StoreItem[] = [
     image: "/logo.jpg",
     category: "skins",
     description: "Default skin with a gold sphere on the head.",
-    skinConfig: { attachmentShape: "sphere", color: "#ffd700", cheekColor: "#ffd700", attachmentColor: "#ffd700" }
+    skinConfig: { attachmentShape: "sphere", color: "#ffd700", cheekColor: "#ffd700", attachmentColor: "#ffd700", shader: "gold" }
   },
   {
     id: "s2",
@@ -110,7 +111,7 @@ const dummyStore: StoreItem[] = [
     category: "skins",
     badge: "new",
     description: "All-black skin. No attachments.",
-    skinConfig: { color: "#000000", cheekColor: "#000000" }
+    skinConfig: { color: "#000000", cheekColor: "#000000", shader: "shadow" }
   },
   {
     id: "s3",
@@ -128,7 +129,7 @@ const dummyStore: StoreItem[] = [
     image: "/logo.jpg",
     category: "skins",
     description: "Default skin with a white cube on the head.",
-    skinConfig: { attachmentShape: "box", color: "#ffffff", cheekColor: "#ffffff", attachmentColor: "#ffffff" }
+    skinConfig: { attachmentShape: "box", color: "#ffffff", cheekColor: "#ffffff", attachmentColor: "#ffffff", shader: "angel" }
   },
   {
     id: "s5",

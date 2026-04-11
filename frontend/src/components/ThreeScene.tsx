@@ -23,6 +23,7 @@ interface SkinConfig {
   color?: string;
   cheekColor?: string;
   attachmentColor?: string;
+  shader?: "ghost" | "gold" | "shadow" | "angel" | "default";
 }
 
 interface StoreItem {
@@ -184,7 +185,33 @@ const NadModel: React.FC<NadModelProps> = ({
           const name = child.name;
           
           if (child.material) {
-            child.material = child.material.clone();
+            let newMat = child.material.clone();
+            const shaderType = equippedSkin?.skinConfig?.shader || "default";
+
+            // Apply Custom Shader Logic
+            if (shaderType === "ghost") {
+              newMat.transparent = true;
+              newMat.opacity = 0.6;
+              newMat.depthWrite = true;
+              if (newMat.type === "MeshStandardMaterial") {
+                (newMat as any).roughness = 0.1;
+              }
+            } else if (shaderType === "gold") {
+              if (newMat.type === "MeshStandardMaterial") {
+                (newMat as any).metalness = 1.0;
+                (newMat as any).roughness = 0.2;
+              }
+            } else if (shaderType === "shadow") {
+              // Unshaded solid color
+              newMat = new THREE.MeshBasicMaterial();
+            } else if (shaderType === "angel") {
+              if (newMat.type === "MeshStandardMaterial") {
+                (newMat as any).emissive = baseColor.clone();
+                (newMat as any).emissiveIntensity = 1.0;
+              }
+            }
+            
+            child.material = newMat;
             
             // Regex to handle names like "Cube001" or "Cube_001"
             const isHeadOrBody = /^Cube$|Cube[._]?00[123]$/.test(name);
@@ -192,11 +219,17 @@ const NadModel: React.FC<NadModelProps> = ({
             const isEye = /Cube[._]?00[67]$/.test(name);
 
             if (isHeadOrBody) {
-              child.material.color.copy(baseColor);
+              if (child.material.type === "MeshStandardMaterial" || child.material.type === "MeshBasicMaterial") {
+                 (child.material as any).color.copy(baseColor);
+              }
             } else if (isCheek) {
-              child.material.color.copy(cheekColor);
+              if (child.material.type === "MeshStandardMaterial" || child.material.type === "MeshBasicMaterial") {
+                 (child.material as any).color.copy(cheekColor);
+              }
             } else if (isEye) {
-              child.material.color.copy(eyeColor);
+              if (child.material.type === "MeshStandardMaterial" || child.material.type === "MeshBasicMaterial") {
+                 (child.material as any).color.copy(eyeColor);
+              }
             }
           }
         }
@@ -253,9 +286,32 @@ const NadModel: React.FC<NadModelProps> = ({
           break;
       }
 
-      const material = new THREE.MeshStandardMaterial({ 
+      let material: THREE.Material = new THREE.MeshStandardMaterial({ 
         color: equippedSkin.skinConfig.attachmentColor || equippedSkin.skinConfig.color || "red" 
       });
+
+      const shaderType = equippedSkin.skinConfig.shader || "default";
+
+      if (shaderType === "ghost") {
+        material.transparent = true;
+        material.opacity = 0.6;
+        material.depthWrite = true;
+        if (material instanceof THREE.MeshStandardMaterial) {
+          material.roughness = 0.1;
+        }
+      } else if (shaderType === "gold") {
+        if (material instanceof THREE.MeshStandardMaterial) {
+          material.metalness = 1.0;
+          material.roughness = 0.2;
+        }
+      } else if (shaderType === "shadow") {
+        material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      } else if (shaderType === "angel") {
+        if (material instanceof THREE.MeshStandardMaterial) {
+          material.emissive = new THREE.Color(equippedSkin.skinConfig.attachmentColor || equippedSkin.skinConfig.color || "#ffffff");
+          material.emissiveIntensity = 1.0;
+        }
+      }
       const attachment = new THREE.Mesh(geometry, material);
       attachment.name = "bone-attachment";
       attachment.scale.setScalar(0.018);
