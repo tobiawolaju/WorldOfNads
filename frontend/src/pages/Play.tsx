@@ -81,7 +81,14 @@ const Play: React.FC = () => {
     <div
       ref={containerRef}
       className="play-container"
-      style={{ width: "100vw", height: "100dvh", position: "relative", overflow: "hidden" }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        width: "100vw",
+        height: "100dvh",
+        background: "#000",
+        overflow: "hidden",
+      }}
     >
       {canFullscreen && !isFullscreen && (
         <button
