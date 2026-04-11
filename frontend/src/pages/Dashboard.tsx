@@ -424,13 +424,28 @@ export default function Dashboard() {
       <div className="right-info-section">
         <div className="tabs">
           <div className={tab === "events" ? "tab active" : "tab"} onClick={() => { setTab("events"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
-            Events
+            <span className="tab-with-badge">
+              Events
+              <span className="tab-notif-badge">
+                <span className="tab-notif-badge-text">1</span>
+              </span>
+            </span>
           </div>
           <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
-            Rewards
+            <span className="tab-with-badge">
+              Rewards
+              <span className="tab-notif-badge">
+                <span className="tab-notif-badge-text">1</span>
+              </span>
+            </span>
           </div>
           <div className={tab === "store" ? "tab active" : "tab"} onClick={() => { setTab("store"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
-            Store
+            <span className="tab-with-badge">
+              Store
+              <span className="tab-notif-badge">
+                <span className="tab-notif-badge-text">1</span>
+              </span>
+            </span>
           </div>
         </div>
 

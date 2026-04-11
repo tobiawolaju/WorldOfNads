@@ -40,6 +40,10 @@
   transition: color 0.2s ease-in-out;
 }
 
+.nav-link-with-badge {
+  position: relative;
+  display: inline-block;
+}
 
 
 
@@ -61,6 +65,31 @@
   right: 10px;
   display: none;
   /* Hidden by default */
+}
+
+.notif-badge {
+  position: absolute;
+  top: -10px;
+  right: -12px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: #000000;
+  background: #ffeb3b;
+  border: 3px solid #ffffff;
+  border-radius: 0;
+  transform: skew(-12deg);
+  box-sizing: border-box;
+}
+
+.notif-badge-text {
+  transform: skew(12deg);
 }
 
 /* Drawer Menu */
