@@ -209,9 +209,19 @@ const NadModel: React.FC<NadModelProps> = ({
               (newMat as any).roughness = 0.1;
             }
           } else if (shaderType === "gold") {
-            if ((newMat as any).metalness !== undefined) {
-              (newMat as any).metalness = 1.0;
-              (newMat as any).roughness = 0.1;
+            // Material upgrade to MeshStandardMaterial if needed to support metallic/roughness
+            if (newMat.type !== "MeshStandardMaterial") {
+              const oldColor = (newMat as any).color ? (newMat as any).color.clone() : new THREE.Color("#ffd700");
+              const oldMap = (newMat as any).map;
+              newMat = new THREE.MeshStandardMaterial({
+                color: oldColor,
+                map: oldMap,
+                metalness: 1.0,
+                roughness: 0.1
+              });
+            } else {
+              (newMat as THREE.MeshStandardMaterial).metalness = 1.0;
+              (newMat as THREE.MeshStandardMaterial).roughness = 0.1;
             }
           } else if (shaderType === "shadow" || shaderType === "void") {
             newMat = new THREE.MeshBasicMaterial({
