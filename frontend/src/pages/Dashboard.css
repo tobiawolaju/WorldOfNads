@@ -945,6 +945,12 @@
   color: #ffffff;
 }
 
+.badge-new {
+  background: rgba(255, 235, 59, 0.95);
+  color: #000000;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
 .reward-item-header {
   display: flex;
   align-items: center;
