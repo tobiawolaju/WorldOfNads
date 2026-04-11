@@ -531,7 +531,7 @@ export default function Dashboard() {
               setEquippedSkin(item);
               setSelectedStore(null);
             } else {
-              // Buy Function Blank for now
+              // Mint Function Blank for now
             }
           }}
           style={{
@@ -540,7 +540,7 @@ export default function Dashboard() {
           }}
         >
           <span>
-            {dummyOwnedItems.includes(selectedStore) ? "EQUIP" : "BUY"}
+            {dummyOwnedItems.includes(selectedStore) ? "EQUIP" : "MINT"}
           </span>
         </button>
       )}
