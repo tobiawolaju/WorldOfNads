@@ -42,8 +42,15 @@
     "price": "35 MON",
     "image": "/logo.jpg",
     "category": "skins",
-    "description": "Default skin with a red cube on the head.",
-    "skinConfig": { "attachmentShape": "box", "color": "#ff0000", "cheekColor": "#ff0000", "attachmentColor": "#ff0000" }
+    "description": "Red skin with a glowing hologram scanning effect.",
+    "skinConfig": { 
+      "attachmentShape": "box", 
+      "color": "#ff0000", 
+      "cheekColor": "#ff0000", 
+      "attachmentColor": "#ff0000",
+      "shaderTargets": ["body", "attachment"],
+      "rawFragmentShader": "float scanline = sin(vViewPosition.y * 20.0 - uTime * 15.0); if(scanline > 0.8) { gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); } else { gl_FragColor = vec4(gl_FragColor.rgb * (1.0 + scanline * 0.2), gl_FragColor.a); }"
+    }
   },
   {
     "id": "s4",
@@ -78,7 +85,14 @@
     "image": "/logo.jpg",
     "category": "skins",
     "badge": "new",
-    "description": "Default skin with a light-brown cube on the head.",
-    "skinConfig": { "attachmentShape": "box", "color": "#ff2496", "cheekColor": "#ff40bf", "attachmentColor": "#c68642" }
+    "description": "Skin with a screen-space geometric wobble vertex shader.",
+    "skinConfig": { 
+      "attachmentShape": "box", 
+      "color": "#ff2496", 
+      "cheekColor": "#ff40bf", 
+      "attachmentColor": "#c68642",
+      "shaderTargets": ["body", "attachment"],
+      "rawVertexShader": "gl_Position.y += sin(gl_Position.x * 10.0 + uTime * 5.0) * 0.05;"
+    }
   }
 ]
