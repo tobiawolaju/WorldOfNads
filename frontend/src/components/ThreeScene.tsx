@@ -572,11 +572,10 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       const isMobile = window.innerWidth < 768;
       // Z=10 provides a consistent zoom level for both mobile and desktop
       setCameraZ(isMobile ? 10 : 10);
-      // We set target to 0.5 (above the character) to push the model down 
-      // towards the bottom of the screen. 
-      // Coordinates: Ground/Shadow = -2.0, Head = -1.5 (0.5 units distance)
-      setTargetY(isMobile ? 0.5 : 0.5);
-      setCameraYOffset(isMobile ? 0.5 : 0.5);
+      // Moving target up by +0.25 (half the head-to-shadow distance)
+      // Original: 0.5, New: 0.75
+      setTargetY(isMobile ? 0.75 : 0.75);
+      setCameraYOffset(isMobile ? 0.75 : 0.75);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
