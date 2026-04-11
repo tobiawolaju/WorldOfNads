@@ -23,6 +23,10 @@ config/icon="uid://rcj3xhh7u10x"
 config/macos_native_icon="uid://rcj3xhh7u10x"
 config/windows_native_icon="uid://rcj3xhh7u10x"
 
+[autoload]
+
+TransitionScreen="*res://scripts/TransitionScreen.gd"
+
 [display]
 
 window/size/viewport_width=500
@@ -120,7 +124,3 @@ GroundColor={
 "type": "vec4",
 "value": Vector4(0, 0, 0, 0)
 }
-
-[autoload]
-
-TransitionScreen="*res://scripts/TransitionScreen.gd"
