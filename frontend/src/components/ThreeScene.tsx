@@ -24,6 +24,9 @@ interface SkinConfig {
   cheekColor?: string;
   attachmentColor?: string;
   shader?: "ghost" | "gold" | "shadow" | "angel" | "default";
+  shaderTargets?: ("body" | "cheek" | "eye" | "attachment")[];
+  rawFragmentShader?: string;
+  rawVertexShader?: string;
 }
 
 interface StoreItem {
@@ -185,38 +188,67 @@ const NadModel: React.FC<NadModelProps> = ({
           const name = child.name;
           
           if (child.material) {
+            const name = child.name;
+            const isHeadOrBody = /^Cube$|Cube[._]?00[123]$/.test(name);
+            const isCheek = /Cube[._]?00[45]$/.test(name);
+            const isEye = /Cube[._]?00[67]$/.test(name);
+            
+            const partName = isHeadOrBody ? "body" : isCheek ? "cheek" : isEye ? "eye" : "unknown";
+            
             let newMat = child.material.clone();
             const shaderType = equippedSkin?.skinConfig?.shader || "default";
+            const targets = equippedSkin?.skinConfig?.shaderTargets || ["body", "cheek", "eye", "attachment"];
+            const shouldApplyShader = targets.includes(partName as any);
 
-            // Apply Custom Shader Logic
-            if (shaderType === "ghost") {
-              newMat.transparent = true;
-              newMat.opacity = 0.6;
-              newMat.depthWrite = true;
-              if (newMat.type === "MeshStandardMaterial") {
-                (newMat as any).roughness = 0.1;
+            // Apply Custom Shader Logic ONLY if part is targeted
+            if (shouldApplyShader) {
+              // Pre-configured custom shaders
+              if (shaderType === "ghost") {
+                newMat.transparent = true;
+                newMat.opacity = 0.6;
+                newMat.depthWrite = true;
+                if (newMat.type === "MeshStandardMaterial") {
+                  (newMat as any).roughness = 0.1;
+                }
+              } else if (shaderType === "gold") {
+                if (newMat.type === "MeshStandardMaterial") {
+                  (newMat as any).metalness = 1.0;
+                  (newMat as any).roughness = 0.2;
+                }
+              } else if (shaderType === "shadow") {
+                // Unshaded solid color
+                newMat = new THREE.MeshBasicMaterial();
+              } else if (shaderType === "angel") {
+                if (newMat.type === "MeshStandardMaterial") {
+                  (newMat as any).emissive = baseColor.clone();
+                  (newMat as any).emissiveIntensity = 1.0;
+                }
               }
-            } else if (shaderType === "gold") {
-              if (newMat.type === "MeshStandardMaterial") {
-                (newMat as any).metalness = 1.0;
-                (newMat as any).roughness = 0.2;
-              }
-            } else if (shaderType === "shadow") {
-              // Unshaded solid color
-              newMat = new THREE.MeshBasicMaterial();
-            } else if (shaderType === "angel") {
-              if (newMat.type === "MeshStandardMaterial") {
-                (newMat as any).emissive = baseColor.clone();
-                (newMat as any).emissiveIntensity = 1.0;
+              
+              // Raw GLSL Injection via onBeforeCompile
+              const rawFrag = equippedSkin?.skinConfig?.rawFragmentShader;
+              const rawVert = equippedSkin?.skinConfig?.rawVertexShader;
+              if (rawFrag || rawVert) {
+                newMat.onBeforeCompile = (shader) => {
+                  shader.uniforms.uTime = { value: 0 };
+                  if (rawFrag) {
+                    shader.fragmentShader = shader.fragmentShader.replace(
+                      '#include <dithering_fragment>',
+                      `#include <dithering_fragment>\n${rawFrag}`
+                    );
+                  }
+                  if (rawVert) {
+                    shader.vertexShader = shader.vertexShader.replace(
+                      '#include <project_vertex>',
+                      `#include <project_vertex>\n${rawVert}`
+                    );
+                  }
+                  newMat.userData.shader = shader;
+                };
               }
             }
             
             child.material = newMat;
-            
-            // Regex to handle names like "Cube001" or "Cube_001"
-            const isHeadOrBody = /^Cube$|Cube[._]?00[123]$/.test(name);
-            const isCheek = /Cube[._]?00[45]$/.test(name);
-            const isEye = /Cube[._]?00[67]$/.test(name);
 
             if (isHeadOrBody) {
               if (child.material.type === "MeshStandardMaterial" || child.material.type === "MeshBasicMaterial") {
@@ -291,25 +323,50 @@ const NadModel: React.FC<NadModelProps> = ({
       });
 
       const shaderType = equippedSkin.skinConfig.shader || "default";
+      const targets = equippedSkin.skinConfig.shaderTargets || ["body", "cheek", "eye", "attachment"];
+      const shouldApplyShader = targets.includes("attachment");
 
-      if (shaderType === "ghost") {
-        material.transparent = true;
-        material.opacity = 0.6;
-        material.depthWrite = true;
-        if (material instanceof THREE.MeshStandardMaterial) {
-          material.roughness = 0.1;
+      if (shouldApplyShader) {
+        if (shaderType === "ghost") {
+          material.transparent = true;
+          material.opacity = 0.6;
+          material.depthWrite = true;
+          if (material instanceof THREE.MeshStandardMaterial) {
+            material.roughness = 0.1;
+          }
+        } else if (shaderType === "gold") {
+          if (material instanceof THREE.MeshStandardMaterial) {
+            material.metalness = 1.0;
+            material.roughness = 0.2;
+          }
+        } else if (shaderType === "shadow") {
+          material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        } else if (shaderType === "angel") {
+          if (material instanceof THREE.MeshStandardMaterial) {
+            material.emissive = new THREE.Color(equippedSkin.skinConfig.attachmentColor || equippedSkin.skinConfig.color || "#ffffff");
+            material.emissiveIntensity = 1.0;
+          }
         }
-      } else if (shaderType === "gold") {
-        if (material instanceof THREE.MeshStandardMaterial) {
-          material.metalness = 1.0;
-          material.roughness = 0.2;
-        }
-      } else if (shaderType === "shadow") {
-        material = new THREE.MeshBasicMaterial({ color: 0x000000 });
-      } else if (shaderType === "angel") {
-        if (material instanceof THREE.MeshStandardMaterial) {
-          material.emissive = new THREE.Color(equippedSkin.skinConfig.attachmentColor || equippedSkin.skinConfig.color || "#ffffff");
-          material.emissiveIntensity = 1.0;
+
+        const rawFrag = equippedSkin.skinConfig.rawFragmentShader;
+        const rawVert = equippedSkin.skinConfig.rawVertexShader;
+        if (rawFrag || rawVert) {
+          material.onBeforeCompile = (shader) => {
+            shader.uniforms.uTime = { value: 0 };
+            if (rawFrag) {
+              shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <dithering_fragment>',
+                `#include <dithering_fragment>\n${rawFrag}`
+              );
+            }
+            if (rawVert) {
+              shader.vertexShader = shader.vertexShader.replace(
+                '#include <project_vertex>',
+                `#include <project_vertex>\n${rawVert}`
+              );
+            }
+            material.userData.shader = shader;
+          };
         }
       }
       const attachment = new THREE.Mesh(geometry, material);
@@ -335,7 +392,21 @@ const NadModel: React.FC<NadModelProps> = ({
     return () => mixer.stopAllAction();
   }, [mixer, model.animations]);
 
-  useFrame((_, delta) => mixer.update(delta));
+  useFrame((_, delta) => {
+    mixer.update(delta);
+    const clockTime = _.clock.getElapsedTime();
+    model.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.material) {
+        const mat = child.material as THREE.Material;
+        if (mat.userData?.shader) {
+          if (!mat.userData.shader.uniforms.uTime) {
+            mat.userData.shader.uniforms.uTime = { value: 0 };
+          }
+          mat.userData.shader.uniforms.uTime.value = clockTime;
+        }
+      }
+    });
+  });
 
   return (
     <primitive

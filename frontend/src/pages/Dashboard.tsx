@@ -62,6 +62,9 @@ type SkinConfig = {
   cheekColor?: string;
   attachmentColor?: string;
   shader?: "ghost" | "gold" | "shadow" | "angel" | "default";
+  shaderTargets?: ("body" | "cheek" | "eye" | "attachment")[];
+  rawFragmentShader?: string;
+  rawVertexShader?: string;
 };
 
 type StoreItem = {
@@ -92,7 +95,7 @@ const dummyStore: StoreItem[] = [
     image: "/logo.jpg",
     category: "skins",
     description: "White skin. No attachment.",
-    skinConfig: { color: "#ffffff", cheekColor: "#ffffff", shader: "ghost" }
+    skinConfig: { color: "#ffffff", cheekColor: "#ffffff", shader: "ghost", shaderTargets: ["body", "cheek", "attachment"] }
   },
   {
     id: "s1",
@@ -101,7 +104,7 @@ const dummyStore: StoreItem[] = [
     image: "/logo.jpg",
     category: "skins",
     description: "Default skin with a gold sphere on the head.",
-    skinConfig: { attachmentShape: "sphere", color: "#ffd700", cheekColor: "#ffd700", attachmentColor: "#ffd700", shader: "gold" }
+    skinConfig: { attachmentShape: "sphere", color: "#ffd700", cheekColor: "#ffd700", attachmentColor: "#ffd700", shader: "gold", shaderTargets: ["body", "cheek", "attachment"] }
   },
   {
     id: "s2",
@@ -111,7 +114,7 @@ const dummyStore: StoreItem[] = [
     category: "skins",
     badge: "new",
     description: "All-black skin. No attachments.",
-    skinConfig: { color: "#000000", cheekColor: "#000000", shader: "shadow" }
+    skinConfig: { color: "#000000", cheekColor: "#000000", shader: "shadow", shaderTargets: ["body", "cheek", "eye", "attachment"] }
   },
   {
     id: "s3",
@@ -129,7 +132,7 @@ const dummyStore: StoreItem[] = [
     image: "/logo.jpg",
     category: "skins",
     description: "Default skin with a white cube on the head.",
-    skinConfig: { attachmentShape: "box", color: "#ffffff", cheekColor: "#ffffff", attachmentColor: "#ffffff", shader: "angel" }
+    skinConfig: { attachmentShape: "box", color: "#ffffff", cheekColor: "#ffffff", attachmentColor: "#ffffff", shader: "angel", shaderTargets: ["body", "cheek", "attachment"] }
   },
   {
     id: "s5",
@@ -138,8 +141,15 @@ const dummyStore: StoreItem[] = [
     image: "/logo.jpg",
     category: "skins",
     badge: "new",
-    description: "Purple skin with a cube attachment.",
-    skinConfig: { attachmentShape: "box", color: "#8000ff", cheekColor: "#8f33ff", attachmentColor: "#8000ff" }
+    description: "Purple skin with a time-based pulsating raw glitch fragment shader.",
+    skinConfig: { 
+      attachmentShape: "box", 
+      color: "#8000ff", 
+      cheekColor: "#8f33ff", 
+      attachmentColor: "#8000ff",
+      shaderTargets: ["body", "attachment"],
+      rawFragmentShader: "gl_FragColor = vec4(gl_FragColor.rgb * (0.5 + 0.5 * sin(uTime * 5.0)), gl_FragColor.a);"
+    }
   },
   {
     id: "s6",
