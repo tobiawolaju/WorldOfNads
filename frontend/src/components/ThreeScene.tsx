@@ -232,13 +232,13 @@ const NadModel: React.FC<NadModelProps> = ({
                 newMat.onBeforeCompile = (shader) => {
                   shader.uniforms.uTime = { value: 0 };
                   if (rawFrag) {
-                    shader.fragmentShader = shader.fragmentShader.replace(
+                    shader.fragmentShader = `uniform float uTime;\n` + shader.fragmentShader.replace(
                       '#include <dithering_fragment>',
                       `#include <dithering_fragment>\n${rawFrag}`
                     );
                   }
                   if (rawVert) {
-                    shader.vertexShader = shader.vertexShader.replace(
+                    shader.vertexShader = `uniform float uTime;\n` + shader.vertexShader.replace(
                       '#include <project_vertex>',
                       `#include <project_vertex>\n${rawVert}`
                     );
@@ -354,13 +354,13 @@ const NadModel: React.FC<NadModelProps> = ({
           material.onBeforeCompile = (shader) => {
             shader.uniforms.uTime = { value: 0 };
             if (rawFrag) {
-              shader.fragmentShader = shader.fragmentShader.replace(
+              shader.fragmentShader = `uniform float uTime;\n` + shader.fragmentShader.replace(
                 '#include <dithering_fragment>',
                 `#include <dithering_fragment>\n${rawFrag}`
               );
             }
             if (rawVert) {
-              shader.vertexShader = shader.vertexShader.replace(
+              shader.vertexShader = `uniform float uTime;\n` + shader.vertexShader.replace(
                 '#include <project_vertex>',
                 `#include <project_vertex>\n${rawVert}`
               );
