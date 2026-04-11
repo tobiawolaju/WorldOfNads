@@ -170,9 +170,9 @@ const NadModel: React.FC<NadModelProps> = ({
   useEffect(() => {
     const baseColorHex = equippedSkin?.skinConfig?.color || "#ff2496";
     const baseColor = new THREE.Color(baseColorHex);
-    
+
     // Use explicit cheekColor if provided, otherwise lerp to white (subtler)
-    const cheekColor = equippedSkin?.skinConfig?.cheekColor 
+    const cheekColor = equippedSkin?.skinConfig?.cheekColor
       ? new THREE.Color(equippedSkin.skinConfig.cheekColor)
       : baseColor.clone().lerp(new THREE.Color("#ffffff"), 0.15);
 
@@ -188,13 +188,13 @@ const NadModel: React.FC<NadModelProps> = ({
 
         // Start with a fresh clone of the original material
         let newMat: THREE.Material = child.userData.originalMaterial.clone();
-        
+
         const name = child.name;
         const isHeadOrBody = /^Cube$|Cube[._]?00[123]$/.test(name);
         const isCheek = /Cube[._]?00[45]$/.test(name);
         const isEye = /Cube[._]?00[67]$/.test(name);
         const partName = isHeadOrBody ? "body" : isCheek ? "cheek" : isEye ? "eye" : "unknown";
-        
+
         const shaderType = equippedSkin?.skinConfig?.shader || "default";
         const targets = equippedSkin?.skinConfig?.shaderTargets || ["body", "cheek", "eye", "attachment"];
         const shouldApplyShader = targets.includes(partName as any);
@@ -224,7 +224,7 @@ const NadModel: React.FC<NadModelProps> = ({
               (newMat as any).emissiveIntensity = 1.0;
             }
           }
-          
+
           const rawFrag = equippedSkin?.skinConfig?.rawFragmentShader;
           const rawVert = equippedSkin?.skinConfig?.rawVertexShader;
           if (rawFrag || rawVert) {
@@ -246,7 +246,7 @@ const NadModel: React.FC<NadModelProps> = ({
             };
           }
         }
-        
+
         // Before assigning, dispose the current material IF it's a clone (not the original)
         if (child.material && child.material !== child.userData.originalMaterial) {
           child.material.dispose();
@@ -299,7 +299,7 @@ const NadModel: React.FC<NadModelProps> = ({
       let geometry: THREE.BufferGeometry;
       const shape = equippedSkin.skinConfig.attachmentShape;
 
-      switch(shape) {
+      switch (shape) {
         case "cone":
           geometry = new THREE.ConeGeometry(60, 120, 32);
           break;
@@ -315,8 +315,8 @@ const NadModel: React.FC<NadModelProps> = ({
           break;
       }
 
-      let material: THREE.Material = new THREE.MeshStandardMaterial({ 
-        color: equippedSkin.skinConfig.attachmentColor || equippedSkin.skinConfig.color || "red" 
+      let material: THREE.Material = new THREE.MeshStandardMaterial({
+        color: equippedSkin.skinConfig.attachmentColor || equippedSkin.skinConfig.color || "red"
       });
 
       const shaderType = equippedSkin.skinConfig.shader || "default";
@@ -337,7 +337,7 @@ const NadModel: React.FC<NadModelProps> = ({
             material.roughness = 0.1;
           }
         } else if (shaderType === "shadow" || shaderType === "void") {
-          material = new THREE.MeshBasicMaterial({ 
+          material = new THREE.MeshBasicMaterial({
             color: 0x000000,
             depthWrite: shaderType === "void" ? false : true,
             transparent: shaderType === "void" ? true : false,
@@ -411,7 +411,7 @@ const NadModel: React.FC<NadModelProps> = ({
 
   useFrame((state, delta) => {
     mixer.update(delta);
-    
+
     // Invalidate the frame to ensure animations continue rendering in "demand" modo
     state.invalidate();
 
@@ -631,14 +631,14 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       <pointLight position={[0, 10, -10]} intensity={3.5} />
 
       <Environment preset="city" />
-      <ContactShadows 
-        opacity={0.35} 
-        scale={6} 
-        blur={1.5} 
-        far={4} 
-        resolution={256} 
-        color="#000000" 
-        position={[0, -2.01, 0]} 
+      <ContactShadows
+        opacity={0.1}
+        scale={6}
+        blur={1.5}
+        far={4}
+        resolution={256}
+        color="#ffffffff"
+        position={[0, -2.01, 0]}
       />
 
       <Suspense fallback={null}>
