@@ -112,18 +112,11 @@ const Chicken: React.FC<ChickenProps> = ({
         child.material = bubbleMaterial;
       }
     });
+    // Cleanup
     return () => {
       bubbleMaterial.dispose();
-      model.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-          child.geometry.dispose();
-          if (Array.isArray(child.material)) {
-            child.material.forEach((m) => m.dispose());
-          } else {
-            child.material.dispose();
-          }
-        }
-      });
+      // Note: We DO NOT dispose of child.geometry or child.material here
+      // because they are shared assets from the FBX loader cache.
     };
   }, [model]);
 
@@ -392,6 +385,20 @@ const NadModel: React.FC<NadModelProps> = ({
     }
   }, [model, equippedSkin]);
 
+  // Overall model cleanup on unmount
+  useEffect(() => {
+    return () => {
+      model.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          // Dispose of any temporary material clones created during skin selection
+          if (child.material && child.material !== child.userData.originalMaterial) {
+            child.material.dispose();
+          }
+        }
+      });
+    };
+  }, [model]);
+
   useEffect(() => {
     if (!model.animations || model.animations.length === 0) return;
     const action = mixer.clipAction(model.animations[0]);
@@ -399,9 +406,13 @@ const NadModel: React.FC<NadModelProps> = ({
     return () => mixer.stopAllAction();
   }, [mixer, model.animations]);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     mixer.update(delta);
-    const clockTime = _.clock.getElapsedTime();
+    
+    // Invalidate the frame to ensure animations continue rendering in "demand" modo
+    state.invalidate();
+
+    const clockTime = state.clock.getElapsedTime();
     model.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material) {
         const mat = child.material as THREE.Material;
@@ -602,6 +613,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     <Canvas
       dpr={[1, 1.5]}
       camera={{ position: [0, 0, cameraZ] }}
+      frameloop="demand"
       gl={{ alpha: true, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
       style={{ background: "none", pointerEvents: "auto" }}
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
