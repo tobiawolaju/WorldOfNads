@@ -418,6 +418,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
   const [targetY, setTargetY] = useState(0);
   const [cameraYOffset, setCameraYOffset] = useState(0);
   const [isInteracting, setIsInteracting] = useState(false);
+  const [showBackgroundChicken, setShowBackgroundChicken] = useState(true);
 
   useEffect(() => {
     const handleResize = () => {
@@ -425,15 +426,31 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       setCameraZ(isMobile ? 10 : 8);
       setTargetY(isMobile ? 0 : -1.5);
       setCameraYOffset(isMobile ? 0 : -1.5);
+      setShowBackgroundChicken(!isMobile);
     };
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handleMotionPreference = () => {
+      if (reducedMotion.matches) {
+        setShowBackgroundChicken(false);
+      }
+    };
+
     handleResize();
+    handleMotionPreference();
+
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    reducedMotion.addEventListener("change", handleMotionPreference);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      reducedMotion.removeEventListener("change", handleMotionPreference);
+    };
   }, []);
 
   const controlsRef = useRef<any>(null);
 
-  const chickenCount = 6;
+  const chickenCount = 2;
   const radius = 6;
   const seed = 12345;
   const rand = (s: number) => () => {
@@ -490,7 +507,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
           </group>
         </CardRig>
 
-        {chickens.map((data) => (
+        {showBackgroundChicken && chickens.map((data) => (
           <Chicken key={data.key} {...data} />
         ))}
       </Suspense>

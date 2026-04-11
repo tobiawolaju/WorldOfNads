@@ -70,6 +70,7 @@ type StoreItem = {
   image: string;
   category: "skins" | "costumes" | "bundles";
   description: string;
+  badge?: "new";
   skinConfig?: SkinConfig;
 };
 
@@ -107,6 +108,7 @@ const dummyStore: StoreItem[] = [
     price: "30 MON",
     image: "/logo.jpg",
     category: "skins",
+    badge: "new",
     description: "All-black skin. No attachments.",
     skinConfig: { color: "#000000", cheekColor: "#000000" }
   },
@@ -134,6 +136,7 @@ const dummyStore: StoreItem[] = [
     price: "40 MON",
     image: "/logo.jpg",
     category: "skins",
+    badge: "new",
     description: "Purple skin with a cube attachment.",
     skinConfig: { attachmentShape: "box", color: "#8000ff", cheekColor: "#8f33ff", attachmentColor: "#8000ff" }
   },
@@ -143,6 +146,7 @@ const dummyStore: StoreItem[] = [
     price: "45 MON",
     image: "/logo.jpg",
     category: "skins",
+    badge: "new",
     description: "Default skin with a light-brown cube on the head.",
     skinConfig: { attachmentShape: "box", color: "#ff2496", cheekColor: "#ff40bf", attachmentColor: "#c68642" }
   },
@@ -429,12 +433,17 @@ export default function Dashboard() {
           </div>
           <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
             <span className="tab-with-badge">Rewards</span>
+            <span>Events</span>
+          </div>
+          <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
+            <span>Rewards</span>
           </div>
           <div className={tab === "store" ? "tab active" : "tab"} onClick={() => { setTab("store"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
             <span className="tab-with-badge">
               Store
               <span className="tab-notif-badge">
                 <span className="tab-notif-badge-text">{newStoreItemCount}</span>
+                <span className="tab-notif-badge-text">NEW</span>
               </span>
             </span>
           </div>
@@ -539,6 +548,8 @@ export default function Dashboard() {
                       <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}>
                         {!dummyOwnedItems.includes(item.id) && (
                           <span className="item-badge badge-store">new</span>
+                        {item.badge && (
+                          <span className="item-badge badge-store badge-new">{item.badge}</span>
                         )}
                       </div>
                       <div className="store-card-info">
