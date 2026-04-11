@@ -16,6 +16,7 @@ import {
 } from "./firebaseClient";
 import { trackMatchJoined } from "../lib/analyticsClient";
 import { staticMatches } from "./staticMatches.js";
+import storeItemsData from "../data/items.json";
 
 type Twitter = {
   username?: string;
@@ -78,90 +79,7 @@ type StoreItem = {
   skinConfig?: SkinConfig;
 };
 
-const dummyStore: StoreItem[] = [
-  {
-    id: "s-default",
-    name: "Default Nad",
-    price: "0 MON",
-    image: "/logo.jpg",
-    category: "skins",
-    description: "Default pink skin. No attachment.",
-    skinConfig: { color: "#ff2496", cheekColor: "#ff40bf" }
-  },
-  {
-    id: "s0",
-    name: "Ghost Nad",
-    price: "0 MON",
-    image: "/logo.jpg",
-    category: "skins",
-    description: "White skin. No attachment.",
-    skinConfig: { color: "#ffffff", cheekColor: "#ffffff", shader: "ghost", shaderTargets: ["body", "cheek", "attachment"] }
-  },
-  {
-    id: "s1",
-    name: "Gold Nad",
-    price: "20 MON",
-    image: "/logo.jpg",
-    category: "skins",
-    description: "Default skin with a gold sphere on the head.",
-    skinConfig: { attachmentShape: "sphere", color: "#ffd700", cheekColor: "#ffd700", attachmentColor: "#ffd700", shader: "gold", shaderTargets: ["body", "cheek", "attachment"] }
-  },
-  {
-    id: "s2",
-    name: "Shadow Nad",
-    price: "30 MON",
-    image: "/logo.jpg",
-    category: "skins",
-    badge: "new",
-    description: "All-black skin. No attachments.",
-    skinConfig: { color: "#000000", cheekColor: "#000000", shader: "shadow", shaderTargets: ["body", "cheek", "eye", "attachment"] }
-  },
-  {
-    id: "s3",
-    name: "Red Nad",
-    price: "35 MON",
-    image: "/logo.jpg",
-    category: "skins",
-    description: "Default skin with a red cube on the head.",
-    skinConfig: { attachmentShape: "box", color: "#ff0000", cheekColor: "#ff0000", attachmentColor: "#ff0000" }
-  },
-  {
-    id: "s4",
-    name: "Angel Nad",
-    price: "40 MON",
-    image: "/logo.jpg",
-    category: "skins",
-    description: "Default skin with a white cube on the head.",
-    skinConfig: { attachmentShape: "box", color: "#ffffff", cheekColor: "#ffffff", attachmentColor: "#ffffff", shader: "angel", shaderTargets: ["body", "cheek", "attachment"] }
-  },
-  {
-    id: "s5",
-    name: "Mouch Nad",
-    price: "40 MON",
-    image: "/logo.jpg",
-    category: "skins",
-    badge: "new",
-    description: "Purple skin with a time-based pulsating raw glitch fragment shader.",
-    skinConfig: { 
-      attachmentShape: "box", 
-      color: "#8000ff", 
-      cheekColor: "#8f33ff", 
-      attachmentColor: "#8000ff",
-      shaderTargets: ["body", "attachment"],
-      rawFragmentShader: "gl_FragColor = vec4(gl_FragColor.rgb * (0.5 + 0.5 * sin(uTime * 5.0)), gl_FragColor.a);"
-    }
-  },
-  {
-    id: "s6",
-    name: "John Nad",
-    price: "45 MON",
-    image: "/logo.jpg",
-    category: "skins",
-    badge: "new",
-    description: "Default skin with a light-brown cube on the head.",
-    skinConfig: { attachmentShape: "box", color: "#ff2496", cheekColor: "#ff40bf", attachmentColor: "#c68642" }
-  },
-];
+const dummyStore: StoreItem[] = storeItemsData as StoreItem[];
 
 const dummyOwnedItems: string[] = ["s-default", "s0", "s1", "s3", "s4"]; // IDs matching dummyStore
 
