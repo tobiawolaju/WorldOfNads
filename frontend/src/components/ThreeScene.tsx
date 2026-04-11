@@ -184,94 +184,87 @@ const NadModel: React.FC<NadModelProps> = ({
     const eyeColor = new THREE.Color(eyeColorHex);
 
     model.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        // Only change material if it's the main body (assuming it's not the red cube)
-        if (child.name !== "bone-attachment") {
-          const name = child.name;
-          
-          if (child.material) {
-            const name = child.name;
-            const isHeadOrBody = /^Cube$|Cube[._]?00[123]$/.test(name);
-            const isCheek = /Cube[._]?00[45]$/.test(name);
-            const isEye = /Cube[._]?00[67]$/.test(name);
-            
-            const partName = isHeadOrBody ? "body" : isCheek ? "cheek" : isEye ? "eye" : "unknown";
-            
-            let newMat = child.material.clone();
-            const shaderType = equippedSkin?.skinConfig?.shader || "default";
-            const targets = equippedSkin?.skinConfig?.shaderTargets || ["body", "cheek", "eye", "attachment"];
-            const shouldApplyShader = targets.includes(partName as any);
+      if (child instanceof THREE.Mesh && child.name !== "bone-attachment") {
+        // Store original material if not already stored
+        if (!child.userData.originalMaterial) {
+          child.userData.originalMaterial = child.material;
+        }
 
-            // Apply Custom Shader Logic ONLY if part is targeted
-            if (shouldApplyShader) {
-              // Pre-configured custom shaders
-              if (shaderType === "ghost") {
-                newMat.transparent = true;
-                newMat.opacity = 0.6;
-                newMat.depthWrite = true;
-                if (newMat.type === "MeshStandardMaterial") {
-                  (newMat as any).roughness = 0.1;
-                }
-              } else if (shaderType === "gold") {
-                if (newMat.type === "MeshStandardMaterial") {
-                  (newMat as any).metalness = 1.0;
-                  (newMat as any).roughness = 0.1;
-                }
-              } else if (shaderType === "shadow" || shaderType === "void") {
-                // Unshaded solid color
-                newMat = new THREE.MeshBasicMaterial({
-                  depthWrite: shaderType === "void" ? false : true,
-                  transparent: shaderType === "void" ? true : false,
-                });
-              } else if (shaderType === "angel") {
-                if (newMat.type === "MeshStandardMaterial") {
-                  // Only eyes glow for Angel
-                  if (partName === "eye") {
-                    (newMat as any).emissive = eyeColor.clone();
-                    (newMat as any).emissiveIntensity = 1.0;
-                  }
-                }
-              }
-              
-              // Raw GLSL Injection via onBeforeCompile
-              const rawFrag = equippedSkin?.skinConfig?.rawFragmentShader;
-              const rawVert = equippedSkin?.skinConfig?.rawVertexShader;
-              if (rawFrag || rawVert) {
-                newMat.onBeforeCompile = (shader) => {
-                  shader.uniforms.uTime = { value: 0 };
-                  if (rawFrag) {
-                    shader.fragmentShader = `uniform float uTime;\n` + shader.fragmentShader.replace(
-                      '#include <dithering_fragment>',
-                      `#include <dithering_fragment>\n${rawFrag}`
-                    );
-                  }
-                  if (rawVert) {
-                    shader.vertexShader = `uniform float uTime;\n` + shader.vertexShader.replace(
-                      '#include <project_vertex>',
-                      `#include <project_vertex>\n${rawVert}`
-                    );
-                  }
-                  newMat.userData.shader = shader;
-                };
-              }
+        // Start with a fresh clone of the original material
+        let newMat: THREE.Material = child.userData.originalMaterial.clone();
+        
+        const name = child.name;
+        const isHeadOrBody = /^Cube$|Cube[._]?00[123]$/.test(name);
+        const isCheek = /Cube[._]?00[45]$/.test(name);
+        const isEye = /Cube[._]?00[67]$/.test(name);
+        const partName = isHeadOrBody ? "body" : isCheek ? "cheek" : isEye ? "eye" : "unknown";
+        
+        const shaderType = equippedSkin?.skinConfig?.shader || "default";
+        const targets = equippedSkin?.skinConfig?.shaderTargets || ["body", "cheek", "eye", "attachment"];
+        const shouldApplyShader = targets.includes(partName as any);
+
+        // Apply Custom Shader Logic
+        if (shouldApplyShader) {
+          if (shaderType === "ghost") {
+            newMat.transparent = true;
+            newMat.opacity = 0.6;
+            newMat.depthWrite = true;
+            if ((newMat as any).roughness !== undefined) {
+              (newMat as any).roughness = 0.1;
             }
-            
-            child.material = newMat;
-
-            if (isHeadOrBody) {
-              if (child.material.type === "MeshStandardMaterial" || child.material.type === "MeshBasicMaterial") {
-                 (child.material as any).color.copy(baseColor);
-              }
-            } else if (isCheek) {
-              if (child.material.type === "MeshStandardMaterial" || child.material.type === "MeshBasicMaterial") {
-                 (child.material as any).color.copy(cheekColor);
-              }
-            } else if (isEye) {
-              if (child.material.type === "MeshStandardMaterial" || child.material.type === "MeshBasicMaterial") {
-                 (child.material as any).color.copy(eyeColor);
-              }
+          } else if (shaderType === "gold") {
+            if ((newMat as any).metalness !== undefined) {
+              (newMat as any).metalness = 1.0;
+              (newMat as any).roughness = 0.1;
+            }
+          } else if (shaderType === "shadow" || shaderType === "void") {
+            newMat = new THREE.MeshBasicMaterial({
+              depthWrite: shaderType === "void" ? false : true,
+              transparent: shaderType === "void" ? true : false,
+            });
+          } else if (shaderType === "angel") {
+            if (partName === "eye" && (newMat as any).emissive !== undefined) {
+              (newMat as any).emissive = eyeColor.clone();
+              (newMat as any).emissiveIntensity = 1.0;
             }
           }
+          
+          const rawFrag = equippedSkin?.skinConfig?.rawFragmentShader;
+          const rawVert = equippedSkin?.skinConfig?.rawVertexShader;
+          if (rawFrag || rawVert) {
+            newMat.onBeforeCompile = (shader) => {
+              shader.uniforms.uTime = { value: 0 };
+              if (rawFrag) {
+                shader.fragmentShader = `uniform float uTime;\n` + shader.fragmentShader.replace(
+                  '#include <dithering_fragment>',
+                  `#include <dithering_fragment>\n${rawFrag}`
+                );
+              }
+              if (rawVert) {
+                shader.vertexShader = `uniform float uTime;\n` + shader.vertexShader.replace(
+                  '#include <project_vertex>',
+                  `#include <project_vertex>\n${rawVert}`
+                );
+              }
+              newMat.userData.shader = shader;
+            };
+          }
+        }
+        
+        // Before assigning, dispose the current material IF it's a clone (not the original)
+        if (child.material && child.material !== child.userData.originalMaterial) {
+          child.material.dispose();
+        }
+
+        child.material = newMat;
+
+        // Apply base colors
+        if (isHeadOrBody) {
+          if ((child.material as any).color) (child.material as any).color.copy(baseColor);
+        } else if (isCheek) {
+          if ((child.material as any).color) (child.material as any).color.copy(cheekColor);
+        } else if (isEye) {
+          if ((child.material as any).color) (child.material as any).color.copy(eyeColor);
         }
       }
     });
