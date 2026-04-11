@@ -70,6 +70,7 @@ type StoreItem = {
   image: string;
   category: "skins" | "costumes" | "bundles";
   description: string;
+  badge?: "new";
   skinConfig?: SkinConfig;
 };
 
@@ -107,6 +108,7 @@ const dummyStore: StoreItem[] = [
     price: "30 MON",
     image: "/logo.jpg",
     category: "skins",
+    badge: "new",
     description: "All-black skin. No attachments.",
     skinConfig: { color: "#000000", cheekColor: "#000000" }
   },
@@ -134,6 +136,7 @@ const dummyStore: StoreItem[] = [
     price: "40 MON",
     image: "/logo.jpg",
     category: "skins",
+    badge: "new",
     description: "Purple skin with a cube attachment.",
     skinConfig: { attachmentShape: "box", color: "#8000ff", cheekColor: "#8f33ff", attachmentColor: "#8000ff" }
   },
@@ -143,6 +146,7 @@ const dummyStore: StoreItem[] = [
     price: "45 MON",
     image: "/logo.jpg",
     category: "skins",
+    badge: "new",
     description: "Default skin with a light-brown cube on the head.",
     skinConfig: { attachmentShape: "box", color: "#ff2496", cheekColor: "#ff40bf", attachmentColor: "#c68642" }
   },
@@ -424,26 +428,16 @@ export default function Dashboard() {
       <div className="right-info-section">
         <div className="tabs">
           <div className={tab === "events" ? "tab active" : "tab"} onClick={() => { setTab("events"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
-            <span className="tab-with-badge">
-              Events
-              <span className="tab-notif-badge">
-                <span className="tab-notif-badge-text">1</span>
-              </span>
-            </span>
+            <span>Events</span>
           </div>
           <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
-            <span className="tab-with-badge">
-              Rewards
-              <span className="tab-notif-badge">
-                <span className="tab-notif-badge-text">1</span>
-              </span>
-            </span>
+            <span>Rewards</span>
           </div>
           <div className={tab === "store" ? "tab active" : "tab"} onClick={() => { setTab("store"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
             <span className="tab-with-badge">
               Store
               <span className="tab-notif-badge">
-                <span className="tab-notif-badge-text">1</span>
+                <span className="tab-notif-badge-text">NEW</span>
               </span>
             </span>
           </div>
@@ -546,6 +540,9 @@ export default function Dashboard() {
                       onClick={() => setSelectedStore(item.id)}
                     >
                       <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}>
+                        {item.badge && (
+                          <span className="item-badge badge-store badge-new">{item.badge}</span>
+                        )}
                       </div>
                       <div className="store-card-info">
                         <h3>{item.name}</h3>
