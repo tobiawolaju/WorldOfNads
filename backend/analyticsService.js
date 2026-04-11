@@ -1,11 +1,5 @@
-import pg from 'pg';
-
-const { Pool } = pg;
-
-const pool = new Pool({
-  connectionString: process.env.ANALYTICS_DB_URL,
-  ssl: process.env.NODE_ENV === 'development' ? false : { rejectUnauthorized: false }
-});
+import { db } from './firebaseClient.js';
+import { ref, push, get, query, orderByChild, startAt, endAt } from "firebase/database";
 
 const MAX_METADATA_KEYS = 64;
 const MAX_METADATA_STRING = 200;
@@ -162,21 +156,8 @@ function computeRetention(cohortRows, activityRows) {
 }
 
 export async function initAnalyticsDb() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS analytics_events (
-      id SERIAL PRIMARY KEY,
-      event_type TEXT NOT NULL,
-      user_id TEXT,
-      match_id TEXT,
-      sponsor_id TEXT,
-      value NUMERIC,
-      metadata JSONB,
-      timestamp TIMESTAMP DEFAULT NOW()
-    );
-  `);
-  await pool.query('CREATE INDEX IF NOT EXISTS idx_event_type ON analytics_events(event_type);');
-  await pool.query('CREATE INDEX IF NOT EXISTS idx_timestamp ON analytics_events(timestamp);');
-  await pool.query('CREATE INDEX IF NOT EXISTS idx_user_id ON analytics_events(user_id);');
+  // No-op for Firebase RTDB as it's schemaless
+  console.log('[Analytics] Firebase RTDB connected');
 }
 
 export async function logAnalyticsEvent(payload = {}) {
@@ -193,44 +174,69 @@ export async function logAnalyticsEvent(payload = {}) {
   const metadata = sanitizeMetadata(payload.metadata);
   const timestamp = normalizeTimestamp(payload.timestamp);
 
-  const result = await pool.query(
-    `
-      INSERT INTO analytics_events
-        (event_type, user_id, match_id, sponsor_id, value, metadata, timestamp)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id, timestamp
-    `,
-    [eventType, userId, matchId, sponsorId, value, metadata, timestamp]
-  );
+  const eventsRef = ref(db, 'analytics/events');
+  const newEventRef = push(eventsRef);
+  
+  const eventData = {
+    event_type: eventType,
+    user_id: userId,
+    match_id: matchId,
+    sponsor_id: sponsorId,
+    value: value,
+    metadata: metadata,
+    timestamp: timestamp
+  };
 
-  return { ok: true, id: result.rows[0]?.id, timestamp: result.rows[0]?.timestamp };
+  await push(eventsRef, eventData);
+
+  return { ok: true, id: newEventRef.key, timestamp: timestamp };
+}
+
+async function getEventsInRange(startIso, endIso) {
+  const eventsRef = ref(db, 'analytics/events');
+  const q = query(eventsRef, orderByChild('timestamp'), startAt(startIso), endAt(endIso));
+  const snapshot = await get(q);
+  if (!snapshot.exists()) return [];
+  return Object.values(snapshot.val());
 }
 
 async function getDailyCounts({ eventTypes, startIso, endIso, aggregate = 'count', distinctUser = false }) {
-  const selectValue = aggregate === 'sum'
-    ? 'SUM(COALESCE(value, 0))'
-    : distinctUser
-      ? 'COUNT(DISTINCT user_id)'
-      : 'COUNT(*)';
-
-  const result = await pool.query(
-    `
-      SELECT to_char("timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as day, ${selectValue} as total
-      FROM analytics_events
-      WHERE "timestamp" >= $1 AND "timestamp" <= $2
-        AND event_type = ANY($3)
-      GROUP BY day
-      ORDER BY day
-    `,
-    [startIso, endIso, eventTypes]
-  );
-
-  return result.rows;
+  const events = await getEventsInRange(startIso, endIso);
+  const filtered = events.filter(e => eventTypes.includes(e.event_type));
+  
+  const dayGroups = {};
+  filtered.forEach(e => {
+    const day = e.timestamp.slice(0, 10);
+    if (!dayGroups[day]) dayGroups[day] = [];
+    dayGroups[day].push(e);
+  });
+  
+  return Object.entries(dayGroups).map(([day, dayEvents]) => {
+    let total = 0;
+    if (aggregate === 'sum') {
+      total = dayEvents.reduce((sum, e) => sum + (Number(e.value) || 0), 0);
+    } else if (distinctUser) {
+      total = new Set(dayEvents.map(e => e.user_id).filter(id => !!id)).size;
+    } else {
+      total = dayEvents.length;
+    }
+    return { day, total };
+  }).sort((a, b) => a.day.localeCompare(b.day));
 }
 
 export async function getAnalyticsSummary({ start, end } = {}) {
   const { start: startIso, end: endIso } = toIsoRange(start, end);
   const days = buildDayList(startIso, endIso);
+
+  // Fetch all events needed for the current range once to optimize
+  const allEventsInRange = await getEventsInRange(startIso, endIso);
+
+  // Helper for in-memory counting
+  const countEvents = (events, types, distinct = false) => {
+    const filtered = events.filter(e => types.includes(e.event_type));
+    if (distinct) return new Set(filtered.map(e => e.user_id).filter(id => !!id)).size;
+    return filtered.length;
+  };
 
   const dauRows = await getDailyCounts({ eventTypes: ACTIVE_EVENT_TYPES, startIso, endIso, distinctUser: true });
   const dauSeries = fillSeries(days, dauRows);
@@ -242,14 +248,11 @@ export async function getAnalyticsSummary({ start, end } = {}) {
   );
   const matchesToday = matchesCreatedSeries.length ? matchesCreatedSeries[matchesCreatedSeries.length - 1].value : 0;
 
-  const totalUsersResult = await pool.query(
-    `
-      SELECT COUNT(DISTINCT user_id) as total
-      FROM analytics_events
-      WHERE user_id IS NOT NULL AND user_id != ''
-    `
-  );
-  const totalUsers = Number(totalUsersResult.rows[0]?.total || 0);
+  // Total users (across all time is harder without full scan, but we can do a broad scan or use range)
+  // For simplicity since we moved to RTDB, we scan all analytics/events for now or broad range
+  const totalUsersEventsSnapshot = await get(ref(db, 'analytics/events'));
+  const allEvents = totalUsersEventsSnapshot.exists() ? Object.values(totalUsersEventsSnapshot.val()) : [];
+  const totalUsers = new Set(allEvents.map(e => e.user_id).filter(id => !!id)).size;
 
   const newUsersSeries = fillSeries(
     days,
@@ -275,249 +278,96 @@ export async function getAnalyticsSummary({ start, end } = {}) {
   const mauStart = new Date(endIso);
   mauStart.setUTCDate(mauStart.getUTCDate() - 29);
 
-  const weeklyCurrent = await pool.query(
-    `
-      SELECT COUNT(DISTINCT user_id) as total
-      FROM analytics_events
-      WHERE "timestamp" >= $1 AND "timestamp" <= $2
-        AND event_type = ANY($3)
-        AND user_id IS NOT NULL AND user_id != ''
-    `,
-    [last7Start.toISOString(), endIso, ACTIVE_EVENT_TYPES]
-  );
+  const weeklyCurrentEvents = await getEventsInRange(last7Start.toISOString(), endIso);
+  const weeklyCurrentTotal = new Set(weeklyCurrentEvents.filter(e => ACTIVE_EVENT_TYPES.includes(e.event_type) && !!e.user_id).map(e => e.user_id)).size;
 
-  const weeklyPrevious = await pool.query(
-    `
-      SELECT COUNT(DISTINCT user_id) as total
-      FROM analytics_events
-      WHERE "timestamp" >= $1 AND "timestamp" <= $2
-        AND event_type = ANY($3)
-        AND user_id IS NOT NULL AND user_id != ''
-    `,
-    [prev7Start.toISOString(), prev7End.toISOString(), ACTIVE_EVENT_TYPES]
-  );
+  const weeklyPreviousEvents = await getEventsInRange(prev7Start.toISOString(), prev7End.toISOString());
+  const weeklyPreviousTotal = new Set(weeklyPreviousEvents.filter(e => ACTIVE_EVENT_TYPES.includes(e.event_type) && !!e.user_id).map(e => e.user_id)).size;
 
-  const weeklyGrowthRate = computeGrowthRate(
-    Number(weeklyCurrent.rows[0]?.total || 0),
-    Number(weeklyPrevious.rows[0]?.total || 0)
-  );
+  const weeklyGrowthRate = computeGrowthRate(weeklyCurrentTotal, weeklyPreviousTotal);
 
-  const matchCreatedCurrent = await pool.query(
-    `
-      SELECT COUNT(*) as total
-      FROM analytics_events
-      WHERE event_type = 'match_created' AND "timestamp" >= $1 AND "timestamp" <= $2
-    `,
-    [last7Start.toISOString(), endIso]
-  );
+  const matchCreatedCurrent = allEventsInRange.filter(e => e.event_type === 'match_created' && e.timestamp >= last7Start.toISOString()).length;
+  const matchCreatedPrevious = allEvents.filter(e => e.event_type === 'match_created' && e.timestamp >= prev7Start.toISOString() && e.timestamp <= prev7End.toISOString()).length;
 
-  const matchCreatedPrevious = await pool.query(
-    `
-      SELECT COUNT(*) as total
-      FROM analytics_events
-      WHERE event_type = 'match_created' AND "timestamp" >= $1 AND "timestamp" <= $2
-    `,
-    [prev7Start.toISOString(), prev7End.toISOString()]
-  );
+  const matchCreationGrowthRate = computeGrowthRate(matchCreatedCurrent, matchCreatedPrevious);
 
-  const matchCreationGrowthRate = computeGrowthRate(
-    Number(matchCreatedCurrent.rows[0]?.total || 0),
-    Number(matchCreatedPrevious.rows[0]?.total || 0)
-  );
+  const matchesFinishedCount = allEventsInRange.filter(e => e.event_type === 'match_finished').length;
+  const matchesStartedCount = allEventsInRange.filter(e => e.event_type === 'match_started').length;
 
-  const matchesFinishedResult = await pool.query(
-    `
-      SELECT COUNT(*) as total
-      FROM analytics_events
-      WHERE event_type = 'match_finished' AND "timestamp" >= $1 AND "timestamp" <= $2
-    `,
-    [startIso, endIso]
-  );
+  const matchCompletionRate = matchesStartedCount ? (matchesFinishedCount / matchesStartedCount) * 100 : 0;
 
-  const matchesStartedResult = await pool.query(
-    `
-      SELECT COUNT(*) as total
-      FROM analytics_events
-      WHERE event_type = 'match_started' AND "timestamp" >= $1 AND "timestamp" <= $2
-    `,
-    [startIso, endIso]
-  );
+  const matchPlayersMap = new Map();
+  allEvents.filter(e => e.event_type === 'match_joined' && !!e.match_id && !!e.user_id).forEach(e => {
+    if (!matchPlayersMap.has(e.match_id)) matchPlayersMap.set(e.match_id, new Set());
+    matchPlayersMap.get(e.match_id).add(e.user_id);
+  });
 
-  const matchCompletionRate = Number(matchesStartedResult.rows[0]?.total || 0)
-    ? (Number(matchesFinishedResult.rows[0]?.total || 0) / Number(matchesStartedResult.rows[0]?.total || 0)) * 100
+  const avgPlayersPerMatch = matchPlayersMap.size 
+    ? Array.from(matchPlayersMap.values()).reduce((sum, set) => sum + set.size, 0) / matchPlayersMap.size 
     : 0;
 
-  const matchPlayersResult = await pool.query(
-    `
-      SELECT match_id, COUNT(DISTINCT user_id) as players
-      FROM analytics_events
-      WHERE event_type = 'match_joined'
-        AND match_id IS NOT NULL AND match_id != ''
-        AND user_id IS NOT NULL AND user_id != ''
-      GROUP BY match_id
-    `
-  );
+  const matchUserJoins = allEvents.filter(e => e.event_type === 'match_joined' && !!e.user_id);
+  const distinctMatchUsers = new Set(matchUserJoins.map(e => e.user_id)).size;
+  const matchesPerUser = distinctMatchUsers ? matchUserJoins.length / distinctMatchUsers : 0;
 
-  const avgPlayersPerMatch = matchPlayersResult.rows.length
-    ? matchPlayersResult.rows.reduce((sum, row) => sum + Number(row.players || 0), 0) / matchPlayersResult.rows.length
-    : 0;
-
-  const matchesPerUserResult = await pool.query(
-    `
-      SELECT COUNT(*) as total, COUNT(DISTINCT user_id) as users
-      FROM analytics_events
-      WHERE event_type = 'match_joined'
-        AND user_id IS NOT NULL AND user_id != ''
-    `
-  );
-
-  const matchesPerUser = Number(matchesPerUserResult.rows[0]?.users || 0)
-    ? Number(matchesPerUserResult.rows[0]?.total || 0) / Number(matchesPerUserResult.rows[0]?.users || 0)
-    : 0;
-
-  const rewardsTotalResult = await pool.query(
-    `
-      SELECT SUM(COALESCE(value, 0)) as total
-      FROM analytics_events
-      WHERE event_type = 'reward_paid'
-    `
-  );
-
+  const rewardsEvents = allEvents.filter(e => e.event_type === 'reward_paid');
+  const rewardsTotal = rewardsEvents.reduce((sum, e) => sum + (Number(e.value) || 0), 0);
   const rewardsSeries = fillSeries(
     days,
     await getDailyCounts({ eventTypes: ['reward_paid'], startIso, endIso, aggregate: 'sum' })
   );
 
-  const rewardsTotal = Number(rewardsTotalResult.rows[0]?.total || 0);
-  const rewardsPerMatch = Number(matchesFinishedResult.rows[0]?.total || 0)
-    ? rewardsTotal / Number(matchesFinishedResult.rows[0]?.total || 0)
-    : 0;
+  const rewardsPerMatch = matchesFinishedCount ? rewardsTotal / matchesFinishedCount : 0;
 
-  const topWinnersResult = await pool.query(
-    `
-      SELECT user_id, SUM(COALESCE(value, 0)) as total
-      FROM analytics_events
-      WHERE event_type = 'reward_paid' AND user_id IS NOT NULL AND user_id != ''
-      GROUP BY user_id
-      ORDER BY total DESC
-      LIMIT 5
-    `
-  );
+  const winnerRewards = new Map();
+  rewardsEvents.filter(e => !!e.user_id).forEach(e => {
+    winnerRewards.set(e.user_id, (winnerRewards.get(e.user_id) || 0) + (Number(e.value) || 0));
+  });
+  const topWinners = Array.from(winnerRewards.entries())
+    .map(([user_id, total]) => ({ user_id, total }))
+    .sort((a,b) => b.total - a.total)
+    .slice(0, 5);
 
-  const sponsorCountResult = await pool.query(
-    `
-      SELECT COUNT(DISTINCT sponsor_id) as total
-      FROM analytics_events
-      WHERE sponsor_id IS NOT NULL AND sponsor_id != ''
-    `
-  );
-
-  const sponsoredMatchesResult = await pool.query(
-    `
-      SELECT COUNT(*) as total
-      FROM analytics_events
-      WHERE event_type = 'sponsor_match_created'
-    `
-  );
-
-  const sponsorFundingResult = await pool.query(
-    `
-      SELECT SUM(COALESCE(value, 0)) as total
-      FROM analytics_events
-      WHERE event_type = 'sponsor_match_created'
-    `
-  );
-
-  const totalSponsors = Number(sponsorCountResult.rows[0]?.total || 0);
-  const sponsorFundingVolume = Number(sponsorFundingResult.rows[0]?.total || 0);
+  const totalSponsors = new Set(allEvents.map(e => e.sponsor_id).filter(id => !!id)).size;
+  const sponsoredMatchesCount = allEvents.filter(e => e.event_type === 'sponsor_match_created').length;
+  const sponsorFundingVolume = allEvents.filter(e => e.event_type === 'sponsor_match_created').reduce((sum, e) => sum + (Number(e.value) || 0), 0);
   const avgSponsorValue = totalSponsors ? sponsorFundingVolume / totalSponsors : 0;
 
-  const activeMatchesResult = await pool.query(
-    `
-      SELECT match_id,
-        MAX(CASE WHEN event_type = 'match_started' THEN "timestamp" END) as started_at,
-        MAX(CASE WHEN event_type = 'match_finished' THEN "timestamp" END) as finished_at
-      FROM analytics_events
-      WHERE match_id IS NOT NULL AND match_id != ''
-      GROUP BY match_id
-    `
-  );
+  const activeMatchesMap = new Map();
+  allEvents.filter(e => !!e.match_id).forEach(e => {
+    if (!activeMatchesMap.has(e.match_id)) activeMatchesMap.set(e.match_id, { started: null, finished: null });
+    if (e.event_type === 'match_started') activeMatchesMap.get(e.match_id).started = e.timestamp;
+    if (e.event_type === 'match_finished') activeMatchesMap.get(e.match_id).finished = e.timestamp;
+  });
 
-  const matchesCurrentlyActive = activeMatchesResult.rows.filter((row) => {
-    if (!row.started_at) return false;
-    if (!row.finished_at) return true;
-    return row.finished_at < row.started_at;
-  }).length;
+  const matchesCurrentlyActive = Array.from(activeMatchesMap.values()).filter(m => m.started && (!m.finished || m.finished < m.started)).length;
 
   const returningUsers = Math.max(todayUsers - (newUsersSeries[lastIndex]?.value || 0), 0);
-  const gamesPlayedPerUser = Number(matchesFinishedResult.rows[0]?.total || 0)
-    ? Number(matchesFinishedResult.rows[0]?.total || 0) / Math.max(todayUsers, 1)
-    : 0;
-
-  const sessionRowsResult = await pool.query(
-    `
-      SELECT event_type, metadata, "timestamp"
-      FROM analytics_events
-      WHERE event_type IN ('session_started', 'session_ended')
-        AND "timestamp" >= $1 AND "timestamp" <= $2
-    `,
-    [startIso, endIso]
-  );
+  const gamesPlayedPerUser = matchesFinishedCount ? matchesFinishedCount / Math.max(todayUsers, 1) : 0;
 
   const sessionStarts = new Map();
   const sessionDurations = [];
-
-  for (const row of sessionRowsResult.rows) {
-    const meta = row.metadata || {};
-    const sessionId = meta?.session_id;
-    if (!sessionId) continue;
-    if (row.event_type === 'session_started') {
-      sessionStarts.set(sessionId, row.timestamp);
-    } else if (row.event_type === 'session_ended') {
+  allEventsInRange.filter(e => e.event_type === 'session_started' || e.event_type === 'session_ended').forEach(e => {
+    const sessionId = e.metadata?.session_id;
+    if (!sessionId) return;
+    if (e.event_type === 'session_started') sessionStarts.set(sessionId, e.timestamp);
+    else if (e.event_type === 'session_ended') {
       const started = sessionStarts.get(sessionId);
       if (started) {
-        const duration = new Date(row.timestamp).getTime() - new Date(started).getTime();
-        if (Number.isFinite(duration) && duration >= 0) {
-          sessionDurations.push(duration / 1000);
-        }
+        const dur = new Date(e.timestamp).getTime() - new Date(started).getTime();
+        if (dur >= 0) sessionDurations.push(dur / 1000);
       }
     }
-  }
+  });
 
-  const avgSessionDuration = sessionDurations.length
-    ? sessionDurations.reduce((sum, value) => sum + value, 0) / sessionDurations.length
-    : 0;
+  const avgSessionDuration = sessionDurations.length ? sessionDurations.reduce((s,v) => s+v, 0) / sessionDurations.length : 0;
 
-  const cohortRowsResult = await pool.query(
-    `
-      SELECT user_id, to_char("timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as day
-      FROM analytics_events
-      WHERE event_type = 'user_registered'
-    `
-  );
+  const cohortEvents = allEvents.filter(e => e.event_type === 'user_registered').map(e => ({ user_id: e.user_id, day: e.timestamp.slice(0, 10) }));
+  const activityEvents = allEvents.filter(e => ACTIVE_EVENT_TYPES.includes(e.event_type) && !!e.user_id).map(e => ({ user_id: e.user_id, day: e.timestamp.slice(0, 10) }));
+  const retention = computeRetention(cohortEvents, activityEvents);
 
-  const activityRowsResult = await pool.query(
-    `
-      SELECT user_id, to_char("timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as day
-      FROM analytics_events
-      WHERE event_type = ANY($1)
-        AND user_id IS NOT NULL AND user_id != ''
-    `,
-    [ACTIVE_EVENT_TYPES]
-  );
-
-  const retention = computeRetention(cohortRowsResult.rows, activityRowsResult.rows);
-
-  const mauResult = await pool.query(
-    `
-      SELECT COUNT(DISTINCT user_id) as total
-      FROM analytics_events
-      WHERE "timestamp" >= $1 AND "timestamp" <= $2
-        AND event_type = ANY($3)
-        AND user_id IS NOT NULL AND user_id != ''
-    `,
-    [mauStart.toISOString(), endIso, ACTIVE_EVENT_TYPES]
-  );
+  const mauEvents = await getEventsInRange(mauStart.toISOString(), endIso);
+  const mauTotal = new Set(mauEvents.filter(e => ACTIVE_EVENT_TYPES.includes(e.event_type) && !!e.user_id).map(e => e.user_id)).size;
 
   return {
     range: { start: startIso, end: endIso },
@@ -530,8 +380,8 @@ export async function getAnalyticsSummary({ start, end } = {}) {
     },
     userMetrics: {
       dau,
-      wau: Number(weeklyCurrent.rows[0]?.total || 0),
-      mau: Number(mauResult.rows[0]?.total || 0),
+      wau: weeklyCurrentTotal,
+      mau: mauTotal,
       totalUsers,
       newUsersPerDay: newUsersSeries[lastIndex]?.value || 0,
       uniqueUsersPerDay: todayUsers
@@ -543,7 +393,7 @@ export async function getAnalyticsSummary({ start, end } = {}) {
     },
     gameMetrics: {
       matchesCreatedPerDay: matchesCreatedSeries[lastIndex]?.value || 0,
-      matchesCompleted: Number(matchesFinishedResult.rows[0]?.total || 0),
+      matchesCompleted: matchesFinishedCount,
       matchesCurrentlyActive,
       averagePlayersPerMatch: avgPlayersPerMatch,
       matchCompletionRate,
@@ -554,11 +404,11 @@ export async function getAnalyticsSummary({ start, end } = {}) {
       rewardsDistributedPerDay: rewardsSeries[lastIndex]?.value || 0,
       averageRewardPerMatch: rewardsPerMatch,
       totalRewardVolume: rewardsTotal,
-      topWinningPlayers: topWinnersResult.rows
+      topWinningPlayers: topWinners
     },
     sponsorMetrics: {
       totalSponsors,
-      matchesSponsored: Number(sponsoredMatchesResult.rows[0]?.total || 0),
+      matchesSponsored: sponsoredMatchesCount,
       sponsorFundingVolume,
       averageSponsorValue: avgSponsorValue
     },
@@ -582,7 +432,7 @@ export async function getAnalyticsSummary({ start, end } = {}) {
     grantMetrics: {
       dailyActiveUsers: dau,
       totalUsers,
-      totalMatchesPlayed: Number(matchesFinishedResult.rows[0]?.total || 0),
+      totalMatchesPlayed: matchesFinishedCount,
       totalRewardsDistributed: rewardsTotal,
       numberOfSponsors: totalSponsors,
       averageMatchesPerUser: matchesPerUser,
@@ -596,6 +446,9 @@ export async function getAnalyticsSummary({ start, end } = {}) {
 export async function getAnalyticsTimeseries({ start, end } = {}) {
   const { start: startIso, end: endIso } = toIsoRange(start, end);
   const days = buildDayList(startIso, endIso);
+
+  const totalUsersEventsSnapshot = await get(ref(db, 'analytics/events'));
+  const allEvents = totalUsersEventsSnapshot.exists() ? Object.values(totalUsersEventsSnapshot.val()) : [];
 
   const dauSeries = fillSeries(
     days,
@@ -614,21 +467,15 @@ export async function getAnalyticsTimeseries({ start, end } = {}) {
     await getDailyCounts({ eventTypes: ['reward_paid'], startIso, endIso, aggregate: 'sum' })
   );
 
-  const sponsorRowsResult = await pool.query(
-    `
-      SELECT to_char("timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as day,
-        COUNT(DISTINCT sponsor_id) as total
-      FROM analytics_events
-      WHERE event_type = 'sponsor_added'
-        AND sponsor_id IS NOT NULL AND sponsor_id != ''
-        AND "timestamp" >= $1 AND "timestamp" <= $2
-      GROUP BY day
-      ORDER BY day
-    `,
-    [startIso, endIso]
-  );
-
-  const sponsorSeries = fillSeries(days, sponsorRowsResult.rows);
+  const sponsorHistory = allEvents.filter(e => e.event_type === 'sponsor_added' && !!e.sponsor_id && e.timestamp >= startIso && e.timestamp <= endIso);
+  const sponsorDayGroups = {};
+  sponsorHistory.forEach(e => {
+    const day = e.timestamp.slice(0, 10);
+    if (!sponsorDayGroups[day]) sponsorDayGroups[day] = new Set();
+    sponsorDayGroups[day].add(e.sponsor_id);
+  });
+  const sponsorRows = Object.entries(sponsorDayGroups).map(([day, set]) => ({ day, total: set.size }));
+  const sponsorSeries = fillSeries(days, sponsorRows);
 
   const cumulativeUsers = [];
   let total = 0;
@@ -650,25 +497,10 @@ export async function getAnalyticsTimeseries({ start, end } = {}) {
     return { date: day, value: users ? matches / users : 0 };
   });
 
-  const cohortRowsResult = await pool.query(
-    `
-      SELECT user_id, to_char("timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as day
-      FROM analytics_events
-      WHERE event_type = 'user_registered'
-    `
-  );
+  const cohortEvents = allEvents.filter(e => e.event_type === 'user_registered').map(e => ({ user_id: e.user_id, day: e.timestamp.slice(0, 10) }));
+  const activityEvents = allEvents.filter(e => ACTIVE_EVENT_TYPES.includes(e.event_type) && !!e.user_id).map(e => ({ user_id: e.user_id, day: e.timestamp.slice(0, 10) }));
 
-  const activityRowsResult = await pool.query(
-    `
-      SELECT user_id, to_char("timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as day
-      FROM analytics_events
-      WHERE event_type = ANY($1)
-        AND user_id IS NOT NULL AND user_id != ''
-    `,
-    [ACTIVE_EVENT_TYPES]
-  );
-
-  const retention = computeRetention(cohortRowsResult.rows, activityRowsResult.rows);
+  const retention = computeRetention(cohortEvents, activityEvents);
 
   return {
     range: { start: startIso, end: endIso },
@@ -690,17 +522,7 @@ export async function getAnalyticsTimeseries({ start, end } = {}) {
 
 export async function exportAnalyticsEvents({ start, end, format }) {
   const { start: startIso, end: endIso } = toIsoRange(start, end);
-  const rowsResult = await pool.query(
-    `
-      SELECT id, event_type, user_id, match_id, sponsor_id, value, metadata, "timestamp"
-      FROM analytics_events
-      WHERE "timestamp" >= $1 AND "timestamp" <= $2
-      ORDER BY "timestamp" ASC
-    `,
-    [startIso, endIso]
-  );
-
-  const rows = rowsResult.rows;
+  const rows = await getEventsInRange(startIso, endIso);
 
   if (format === 'csv') {
     const headers = ['id', 'event_type', 'user_id', 'match_id', 'sponsor_id', 'value', 'metadata', 'timestamp'];
