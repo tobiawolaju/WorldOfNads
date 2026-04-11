@@ -642,7 +642,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       />
 
       <Suspense fallback={null}>
-        <NadModel scale={0.5} position={[0, 1.5, 0]} equippedSkin={equippedSkin} />
+        <NadModel scale={0.5} position={[0, 2.5, 0]} equippedSkin={equippedSkin} />
 
         <CardRig>
           <group rotation={[-0.5, 1, 1]} position={[4, 0.5, 0]} scale={0.3}>
