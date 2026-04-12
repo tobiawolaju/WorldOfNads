@@ -158,8 +158,8 @@ const AppContent: React.FC = () => {
     return <FullScreenLoader />;
   }
 
-  // Hide navbar on /play route
-  const hideNavbar = location.pathname === "/play";
+  // Hide navbar on immersive/special landing routes
+  const hideNavbar = location.pathname === "/play" || location.pathname === "/waitlist";
 
   return (
     <>
