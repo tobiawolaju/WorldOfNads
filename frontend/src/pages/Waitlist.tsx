@@ -52,17 +52,7 @@ const Waitlist: React.FC = () => {
         </div>
       </section>
 
-      <section className="events-grid-section waitlist-section reveal">
-        <h2 className="section-title">This isn’t a concept. This is live.</h2>
-        <article className="tweet-card waitlist-preview-card">
-          <img
-            src="/videoplayback.jpg"
-            alt="Gameplay preview"
-            className="tweet-image"
-            loading="lazy"
-          />
-        </article>
-      </section>
+
 
       <section className="events-grid-section waitlist-section">
         <h2 className="section-title reveal">Early traction</h2>
