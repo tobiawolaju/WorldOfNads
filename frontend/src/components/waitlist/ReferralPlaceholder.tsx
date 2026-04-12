@@ -13,9 +13,9 @@ type ReferralPlaceholderProps = {
 };
 
 const ReferralPlaceholder: React.FC<ReferralPlaceholderProps> = ({ showAsPopup = false, onClose, data }) => {
-  const referralLink = data?.refCode 
-    ? `https://worldofnads.com/waitlist?ref=${data.refCode}`
-    : "https://worldofnads.com/waitlist";
+  const referralLink = data?.refCode
+    ? `https://worldofnads.xyz/waitlist?ref=${data.refCode}`
+    : "https://worldofnads.xyz/waitlist";
 
   const copyLink = async () => {
     try {
@@ -35,11 +35,11 @@ const ReferralPlaceholder: React.FC<ReferralPlaceholderProps> = ({ showAsPopup =
           ×
         </button>
       ) : null}
-      
+
       <div className="waitlist-ref-content">
         <h2 className="waitlist-ref-title">You’re #{displayPosition} in line</h2>
         <p className="waitlist-ref-subtitle">
-          {displayCount > 0 
+          {displayCount > 0
             ? `You've referred ${displayCount} people. Share your link to climb higher!`
             : "Invite your friends to skip the queue and get early access."}
         </p>
