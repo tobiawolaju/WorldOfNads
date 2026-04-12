@@ -7,7 +7,7 @@ type EmailCaptureProps = {
   className?: string;
 };
 
-const GAS_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx0Fg7id6ZG_lmPZ8bPPIgMhK2ZgVKkwYavrFhPsWdoKf5Vc5flJKAYOpOjy4X0d7KQ/exec";
 
 const EmailCapture: React.FC<EmailCaptureProps> = ({ buttonLabel, helperText, className = "" }) => {
   const [email, setEmail] = useState("");
