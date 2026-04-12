@@ -1,8 +1,6 @@
 import React, { useEffect } from "react";
-import Footer from "../components/Footer";
 import EmailCapture from "../components/waitlist/EmailCapture";
 import MetricsGrid from "../components/waitlist/MetricsGrid";
-import ReferralPlaceholder from "../components/waitlist/ReferralPlaceholder";
 import "./Waitlist.css";
 
 const waitlistMetrics = [
@@ -102,7 +100,6 @@ const Waitlist: React.FC = () => {
       </section>
 
 
-      <Footer />
     </div>
   );
 };
