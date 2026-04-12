@@ -101,23 +101,6 @@ const Waitlist: React.FC = () => {
         <p className="waitlist-powered">Powered onchain</p>
       </section>
 
-      <section className="events-grid-section waitlist-section waitlist-beta reveal">
-        <h2 className="section-title">Want early access?</h2>
-        <a href="https://discord.gg/z4SUdrKayb" target="_blank" rel="noopener noreferrer" className="play-btn-fixed waitlist-discord-btn">
-          Join Discord
-        </a>
-        <p className="waitlist-helper">Beta testers are selected based on activity</p>
-      </section>
-
-      <section className="events-grid-section waitlist-section">
-        <h2 className="section-title reveal">Referral queue</h2>
-        <ReferralPlaceholder />
-      </section>
-
-      <section className="events-grid-section waitlist-section reveal">
-        <h2 className="section-title">Join before first matches go live</h2>
-        <EmailCapture buttonLabel="Join Early Access" />
-      </section>
 
       <Footer />
     </div>
