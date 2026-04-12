@@ -59,8 +59,8 @@ const Waitlist: React.FC = () => {
 
 
       <div className="waitlist-scroll-container">
-        {/*  HERO SECTION */}
-        <section className="waitlist-hero revealed">
+        {/*HERO SECTION */}
+        <section className="waitlist-section">
           <div className="hero-content">
             <h1 className="hero-headline">Competitive gaming with real rewards.</h1>
           </div>
