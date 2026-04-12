@@ -226,3 +226,55 @@
     flex-direction: column;
   }
 }
+
+.waitlist-popup-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(7, 11, 18, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+}
+
+.waitlist-referral-popup {
+  width: min(860px, 100%);
+  margin: 0;
+  position: relative;
+  animation: waitlistPopupIn 180ms ease-out;
+}
+
+.waitlist-popup-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(15, 20, 25, 0.1);
+  color: #0f1419;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.waitlist-popup-close:hover {
+  background: rgba(15, 20, 25, 0.2);
+}
+
+@keyframes waitlistPopupIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
