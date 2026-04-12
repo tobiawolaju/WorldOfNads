@@ -9,6 +9,7 @@ import "./Dashboard.css";
 import {
   fetchMatchesFromFirebase,
   getUsernameFromPrivy,
+  getProfilePictureFromPrivy,
   saveUserToFirebase,
   updateUserProjects,
   fetchUserRewards,
@@ -264,7 +265,7 @@ export default function Dashboard() {
       socialData = {
         provider: pType,
         username: acc.username || undefined,
-        profilePictureUrl: acc.profilePictureUrl || undefined,
+        profilePictureUrl: getProfilePictureFromPrivy(user) || undefined,
         name: acc.name || acc.username || undefined
       };
       break;
