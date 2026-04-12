@@ -15,10 +15,11 @@
   left: 0;
   width: 100%;
   height: auto;
-  min-height: 280px; /* Reduced since form moved */
+  min-height: 280px;
+  /* Reduced since form moved */
   padding: 60px 20px 20px;
   z-index: 50;
-  background: linear-gradient(to bottom, rgba(5,7,12,0.98) 0%, rgba(5,7,12,0.85) 60%, transparent 100%);
+  background: linear-gradient(to bottom, rgba(5, 7, 12, 0.98) 0%, rgba(5, 7, 12, 0.85) 60%, transparent 100%);
   pointer-events: none;
 }
 
@@ -28,13 +29,15 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 24px; /* Explicit gap to prevent overlap */
+  gap: 24px;
+  /* Explicit gap to prevent overlap */
   align-items: center;
 }
 
 /* Override Home.css headline to reduce size by 20% and fix spacing */
 .waitlist-hero .hero-headline {
-  font-size: clamp(56px, 9.6vw, 112px); /* 20% reduction from Home.css */
+  font-size: clamp(56px, 9.6vw, 112px);
+  /* 20% reduction from Home.css */
   margin-bottom: 0px;
   line-height: 1;
 }
@@ -72,7 +75,8 @@
   height: 100vh;
   overflow-y: scroll;
   scroll-snap-type: y proximity;
-  padding-top: 300px; /* Reduced to match smaller hero */
+  padding-top: 300px;
+  /* Reduced to match smaller hero */
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -86,8 +90,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 80px auto;
-  padding: 0 20px;
+  margin: 40px auto;
+  padding: 0 10px;
   transition: opacity 0.5s ease;
 }
 
@@ -95,16 +99,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .pill-label-top {
   font-family: var(--font-inter), sans-serif;
-  font-weight: 600;
+  font-weight: 900;
   font-size: 18px;
   color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -113,7 +116,7 @@
   background: #ffffff;
   padding: 12px 32px;
   border-radius: 999px;
-  box-shadow: 0 10px 30px rgba(255, 20, 147, 0.6);
+  box-shadow: 0 10px 30px rgba(247, 20, 255, 0.322);
 }
 
 .pill-label-bottom {
@@ -126,9 +129,21 @@
 }
 
 /* Individual colors for variety */
-.pill-pair:nth-child(odd) .pill-capsule { background: #39ff14; } /* Lime */
-.pill-pair:nth-child(even) .pill-capsule { background: #00ffff; } /* Cyan */
-.pill-pair.alt-color .pill-capsule { background: #ffff00; } /* Yellow */
+.pill-pair:nth-child(odd) .pill-capsule {
+  background: #39ff14;
+}
+
+/* Lime */
+.pill-pair:nth-child(even) .pill-capsule {
+  background: #00ffff;
+}
+
+/* Cyan */
+.pill-pair.alt-color .pill-capsule {
+  background: #ffff00;
+}
+
+/* Yellow */
 
 /* Reveal animations */
 .waitlist-section {
@@ -180,7 +195,8 @@
 .waitlist-input {
   flex: 1;
   min-width: 0;
-  height: 60px; /* Increased to match pay button feel */
+  height: 60px;
+  /* Increased to match pay button feel */
   padding: 0 24px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -203,7 +219,8 @@
   width: auto;
   white-space: nowrap;
   padding: 0 40px;
-  height: 60px; /* Perfectly matching input height */
+  height: 60px;
+  /* Perfectly matching input height */
   border: none;
   border-radius: 999px;
   background: #ffd700;
@@ -232,7 +249,8 @@
   text-align: center;
 }
 
-.waitlist-success, .waitlist-error {
+.waitlist-success,
+.waitlist-error {
   margin-top: 14px;
   text-align: center;
   font-weight: 600;
@@ -289,12 +307,12 @@
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .waitlist-input {
     width: 100%;
     flex: none;
   }
-  
+
   .waitlist-submit {
     width: 100%;
     flex: none;
