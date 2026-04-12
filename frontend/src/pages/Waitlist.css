@@ -113,7 +113,7 @@
   background: #ffffff;
   padding: 12px 32px;
   border-radius: 999px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  box-shadow: 0 10px 30px rgba(255, 20, 147, 0.6);
 }
 
 .pill-label-bottom {
@@ -126,9 +126,9 @@
 }
 
 /* Individual colors for variety */
-.pill-pair:nth-child(odd) .pill-capsule { background: #ff2496; } /* Pink */
-.pill-pair:nth-child(even) .pill-capsule { background: #907cff; } /* Purple */
-.pill-pair.alt-color .pill-capsule { background: #ffd700; } /* Gold */
+.pill-pair:nth-child(odd) .pill-capsule { background: #39ff14; } /* Lime */
+.pill-pair:nth-child(even) .pill-capsule { background: #00ffff; } /* Cyan */
+.pill-pair.alt-color .pill-capsule { background: #ffff00; } /* Yellow */
 
 /* Reveal animations */
 .waitlist-section {
