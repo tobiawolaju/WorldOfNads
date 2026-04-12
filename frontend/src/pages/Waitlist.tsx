@@ -63,6 +63,7 @@ const Waitlist: React.FC = () => {
         </div>
       </section>
 
+
       <div className="waitlist-scroll-container">
         {/* EARLY TRACTION */}
         <section className="waitlist-section">
@@ -97,6 +98,16 @@ const Waitlist: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* HERO CAPTURE AREA (Now Scrolling) */}
+        <section className="waitlist-section" style={{ minHeight: '60vh', paddingBottom: '0' }}>
+          <EmailCapture
+            buttonLabel="Join Early Access"
+            helperText="Get beta access, rewards, and match invites"
+            className="reveal revealed"
+          />
+        </section>
+
       </div>
     </div>
   );
