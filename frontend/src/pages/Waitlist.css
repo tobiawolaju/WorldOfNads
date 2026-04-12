@@ -1,0 +1,228 @@
+@import "./Home.css";
+
+.waitlist-page {
+  color: #ffffff;
+}
+
+.waitlist-hero {
+  min-height: 100vh;
+  padding: 0 20px;
+}
+
+.waitlist-headline {
+  font-family: 'Font2', sans-serif;
+  font-size: clamp(42px, 7vw, 96px);
+  font-weight: 900;
+  line-height: 0.95;
+  margin: 0;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+
+.waitlist-subtext {
+  margin: 20px auto 0;
+  max-width: 720px;
+  font-size: clamp(18px, 2vw, 26px);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.waitlist-capture {
+  margin-top: 32px;
+}
+
+.waitlist-capture-form {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.waitlist-input {
+  width: min(420px, 100%);
+  padding: 15px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f1419;
+  font-size: 16px;
+  font-family: var(--font-inter), sans-serif;
+}
+
+.waitlist-input:focus {
+  outline: none;
+  border-color: #907cff;
+}
+
+.waitlist-submit {
+  width: auto;
+  min-width: 220px;
+  padding: 0 22px;
+}
+
+.waitlist-helper {
+  margin: 14px 0 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+}
+
+.waitlist-success {
+  color: #d8ffd8;
+}
+
+.waitlist-section {
+  padding-top: 110px;
+  padding-bottom: 110px;
+}
+
+.waitlist-preview-card {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.waitlist-preview-card .tweet-image {
+  aspect-ratio: 16/9;
+}
+
+.waitlist-metrics-grid,
+.waitlist-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+}
+
+.waitlist-metric-card,
+.waitlist-step-card {
+  text-align: center;
+}
+
+.waitlist-metric-value {
+  margin: 0;
+  font-size: clamp(34px, 5vw, 48px);
+  font-weight: 900;
+  color: #0f1419;
+  font-family: 'Font2', sans-serif;
+}
+
+.waitlist-metric-label {
+  margin: 4px 0 0;
+  color: #536471;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.waitlist-step-icon {
+  display: inline-flex;
+  width: 64px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #907cff;
+  color: #fff;
+  font-family: 'Font2', sans-serif;
+  font-size: 28px;
+}
+
+.waitlist-step-label {
+  margin: 14px 0 0;
+  color: #0f1419;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.waitlist-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.waitlist-pill {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
+  color: #0f1419;
+  padding: 10px 18px;
+  font-weight: 700;
+}
+
+.waitlist-powered {
+  margin-top: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.waitlist-beta {
+  text-align: center;
+}
+
+.waitlist-discord-btn {
+  display: inline-flex;
+  width: auto;
+  min-width: 220px;
+  padding: 0 24px;
+  margin: 0;
+  background: #907cff;
+  color: #ffffff;
+}
+
+.waitlist-referral-card {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.waitlist-ref-title {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 42px);
+  font-family: 'Font2', sans-serif;
+  color: #0f1419;
+}
+
+.waitlist-ref-subtitle {
+  margin: 8px 0 0;
+  color: #536471;
+}
+
+.waitlist-ref-link-row {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.waitlist-copy-button {
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.waitlist-ref-rewards {
+  margin-top: 16px;
+  color: #0f1419;
+  font-weight: 600;
+}
+
+@media (max-width: 767px) {
+  .waitlist-headline {
+    font-size: clamp(36px, 10vw, 64px);
+  }
+
+  .waitlist-section {
+    padding-top: 90px;
+    padding-bottom: 90px;
+  }
+
+  .waitlist-capture-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .waitlist-submit,
+  .waitlist-discord-btn {
+    width: 100%;
+  }
+
+  .waitlist-ref-link-row {
+    flex-direction: column;
+  }
+}
