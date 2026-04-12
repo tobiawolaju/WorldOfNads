@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import './topnav.css';
 
-const TopNavbar = () => {
+type TopNavbarProps = {
+  hideContents?: boolean;
+};
+
+const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
   const location = useLocation();
@@ -82,7 +86,7 @@ const TopNavbar = () => {
       <div className="logo-section" style={{ display: 'flex', alignItems: 'center' }}>
 
         <img src="/logo.png" alt="logo" style={{ width: '40px', zIndex: 999 }} />
-        {currentText && (
+        {!hideContents && currentText && (
           <p
             style={{
               fontSize: 'larger',
@@ -100,23 +104,25 @@ const TopNavbar = () => {
 
       {/* Desktop Links */}
 
-      <div className="nav-links">{renderNavLinks()}</div>
+      {!hideContents && <div className="nav-links">{renderNavLinks()}</div>}
 
 
 
       {/* Hamburger */}
 
-      <button onClick={toggleDrawer} className={`hamburger-btn ${isHome && !isScrolledPastHero ? 'home-hamburger' : ''}`} aria-expanded={isDrawerOpen}>
-        ☰
-        <span className="notif-badge">
-          <span className="notif-badge-text">1</span>
-        </span>
-      </button>
+      {!hideContents && (
+        <button onClick={toggleDrawer} className={`hamburger-btn ${isHome && !isScrolledPastHero ? 'home-hamburger' : ''}`} aria-expanded={isDrawerOpen}>
+          ☰
+          <span className="notif-badge">
+            <span className="notif-badge-text">1</span>
+          </span>
+        </button>
+      )}
 
 
       {/* Drawer */}
 
-      {isDrawerOpen && (
+      {!hideContents && isDrawerOpen && (
 
         <div className="drawer">
 

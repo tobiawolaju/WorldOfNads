@@ -159,14 +159,15 @@ const AppContent: React.FC = () => {
   }
 
   // Hide navbar on immersive/special landing routes
-  const hideNavbar = location.pathname === "/play" || location.pathname === "/waitlist";
+  const hideNavbar = location.pathname === "/play";
+  const hideTopNavbarContents = location.pathname === "/waitlist" || location.pathname === "/wait-list";
 
   return (
     <>
       <BackgroundPattern />
       <RainbowBeam />
       <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-        {!hideNavbar && <TopNavbar />}
+        {!hideNavbar && <TopNavbar hideContents={hideTopNavbarContents} />}
 
         <main style={{ flex: 1 }}>
           <Suspense fallback={<FullScreenLoader />}>
