@@ -1,6 +1,11 @@
 import React from "react";
 
-const ReferralPlaceholder: React.FC = () => {
+type ReferralPlaceholderProps = {
+  showAsPopup?: boolean;
+  onClose?: () => void;
+};
+
+const ReferralPlaceholder: React.FC<ReferralPlaceholderProps> = ({ showAsPopup = false, onClose }) => {
   const referralLink = "https://worldofnads.com/waitlist?ref=PLAYER4231";
 
   const copyLink = async () => {
@@ -13,7 +18,12 @@ const ReferralPlaceholder: React.FC = () => {
   };
 
   return (
-    <article className="tweet-card waitlist-referral-card reveal">
+    <article className={`tweet-card waitlist-referral-card ${showAsPopup ? "waitlist-referral-popup" : "reveal"}`.trim()}>
+      {showAsPopup ? (
+        <button className="waitlist-popup-close" type="button" onClick={onClose} aria-label="Close waitlist popup">
+          ×
+        </button>
+      ) : null}
       <p className="waitlist-ref-title">You’re #4,231 in line</p>
       <p className="waitlist-ref-subtitle">Invite friends to move up</p>
       <div className="waitlist-ref-link-row">
