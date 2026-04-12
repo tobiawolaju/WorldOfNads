@@ -159,12 +159,34 @@
 
 .waitlist-discord-btn {
   display: inline-flex;
-  width: auto;
-  min-width: 220px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 54px;
   padding: 0 24px;
   margin: 0;
   background: #907cff;
   color: #ffffff;
+  text-decoration: none;
+  font-weight: 800;
+  border-radius: 999px;
+  transition: transform 0.2s;
+}
+
+.waitlist-discord-btn:hover {
+  transform: scale(1.02);
+}
+
+.waitlist-popup-discord-section {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.waitlist-discord-note {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #536471;
+  font-weight: 500;
 }
 
 .waitlist-referral-card {
@@ -197,9 +219,41 @@
 }
 
 .waitlist-ref-rewards {
-  margin-top: 16px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(15, 20, 25, 0.1);
+}
+
+.waitlist-ref-rewards h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #536471;
+}
+
+.tier-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.tier-rank {
+  background: #f0f3f4;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 800;
+  color: #0f1419;
+  font-size: 13px;
+  min-width: 70px;
+  text-align: center;
+}
+
+.tier-desc {
   color: #0f1419;
   font-weight: 600;
+  font-size: 15px;
 }
 
 @media (max-width: 767px) {
@@ -234,9 +288,9 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(7, 11, 18, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: transparent;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 1000;
 }
 
