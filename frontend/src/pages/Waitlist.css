@@ -40,7 +40,7 @@
 }
 
 .waitlist-hero .hero-headline::after {
-  display: none; /* Remove shadow text to declutter waitlist hero */
+  content: "Competitive gaming with real rewards.";
 }
 
 .waitlist-hero .hero-subtext {
