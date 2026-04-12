@@ -245,8 +245,14 @@
     align-items: stretch;
   }
   
+  .waitlist-input {
+    width: 100%;
+    flex: none;
+  }
+  
   .waitlist-submit {
     width: 100%;
+    flex: none;
   }
 
   .pill-group {
