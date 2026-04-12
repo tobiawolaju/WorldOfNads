@@ -15,10 +15,10 @@
   left: 0;
   width: 100%;
   height: auto;
-  min-height: 480px; /* Increased slightly for better spacing */
-  padding: 80px 20px 60px;
+  min-height: 280px; /* Reduced since form moved */
+  padding: 60px 20px 20px;
   z-index: 50;
-  background: linear-gradient(to bottom, rgba(5,7,12,0.95) 0%, rgba(5,7,12,0.8) 70%, transparent 100%);
+  background: linear-gradient(to bottom, rgba(5,7,12,0.98) 0%, rgba(5,7,12,0.85) 60%, transparent 100%);
   pointer-events: none;
 }
 
@@ -72,7 +72,7 @@
   height: 100vh;
   overflow-y: scroll;
   scroll-snap-type: y proximity;
-  padding-top: 450px; /* Space for the fixed hero */
+  padding-top: 300px; /* Reduced to match smaller hero */
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
