@@ -3,8 +3,8 @@ import EmailCapture from "../components/waitlist/EmailCapture";
 import "./Waitlist.css";
 
 const PillPair: React.FC<{ top: string; bottom: string; rotation: number; isAlt?: boolean; isNearTop?: boolean }> = ({ top, bottom, rotation, isAlt, isNearTop }) => (
-  <div 
-    className={`pill-pair ${isAlt ? 'alt-color' : ''} ${isNearTop ? 'near-top' : ''}`} 
+  <div
+    className={`pill-pair ${isAlt ? 'alt-color' : ''} ${isNearTop ? 'near-top' : ''}`}
     style={{ transform: `rotate(${rotation}deg)` }}
   >
     <span className="pill-label-top">{top}</span>
@@ -27,7 +27,7 @@ const Waitlist: React.FC = () => {
         if (rect.top < window.innerHeight * 0.8) {
           section.classList.add('revealed');
         }
-        
+
         // Handle pill fade-out near top
         const pills = section.querySelectorAll('.pill-pair');
         pills.forEach((pill) => {
@@ -72,7 +72,7 @@ const Waitlist: React.FC = () => {
 
       <div className="waitlist-scroll-container">
         {/* EMPTY SPACER FOR THE FIXED HERO */}
-        <div style={{ height: '50px' }}></div>
+        <div style={{ height: '50vh' }}></div>
 
         {/* EARLY TRACTION */}
         <section className="waitlist-section">

@@ -144,72 +144,12 @@
 
 .waitlist-capture {
   width: 100%;
-  max-width: 600px;
+  max-width: 500px;
   margin: 0 auto;
-}
-
-.waitlist-capture-form {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  align-items: center;
-}
-
-.waitlist-input {
-  flex: 1;
-  height: 54px;
-  padding: 0 24px;
-  border-radius: 999px;
-  border: none;
-  background: #ffffff;
-  color: #0f1419;
-  font-size: 16px;
-  font-family: var(--font-inter), sans-serif;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.waitlist-input:focus {
-  outline: 2px solid #907cff;
-}
-
-.waitlist-submit {
-  width: auto;
-  min-width: 180px;
-  height: 54px;
-  padding: 0 32px;
-  border-radius: 999px;
-  background: #907cff;
-  color: #ffffff;
-  border: none;
-  font-weight: 800;
-  font-size: 16px;
-  cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
-}
-
-.waitlist-submit:hover {
-  background: #7c66ff;
-  transform: translateY(-2px);
-}
-
-.waitlist-helper {
-  margin-top: 14px;
-  text-align: center;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Mobile responsive fixes */
 @media (max-width: 768px) {
-  .waitlist-capture-form {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .waitlist-input, .waitlist-submit {
-    width: 100%;
-  }
-
   .pill-group {
     scale: 0.85;
     margin: 40px auto;
