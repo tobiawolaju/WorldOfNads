@@ -116,5 +116,6 @@ const EmailCapture: React.FC<EmailCaptureProps> = ({ buttonLabel, helperText, cl
       ) : null}
     </>
   );
+};
 
 export default EmailCapture;
