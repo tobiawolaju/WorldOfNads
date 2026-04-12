@@ -1,4 +1,5 @@
 import React, { FormEvent, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import ReferralPlaceholder from "./ReferralPlaceholder";
 
 type EmailCaptureProps = {
@@ -103,17 +104,17 @@ const EmailCapture: React.FC<EmailCaptureProps> = ({ buttonLabel, helperText, cl
         )}
       </div>
 
-      {showReferralPopup ? (
+      {showReferralPopup ? createPortal(
         <div className="waitlist-popup-overlay" role="dialog" aria-modal="true" aria-label="Referral waitlist details">
           <ReferralPlaceholder 
             showAsPopup 
             onClose={closePopup} 
             data={waitlistData}
           />
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );
-};
 
 export default EmailCapture;
