@@ -69,15 +69,16 @@ const ReferralPlaceholder: React.FC<ReferralPlaceholderProps> = ({ showAsPopup =
           </div>
         </div>
 
-        <div className="waitlist-popup-discord-section">
+        <div className="waitlist-popup-discord-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
           <a
             href="https://discord.gg/z4SUdrKayb"
             target="_blank"
             rel="noopener noreferrer"
-            className="play-btn-fixed waitlist-discord-btn"
+            className="discord-btn-fixed"
+            title="Join Discord"
+            style={{ position: 'relative', margin: '0 auto 10px auto' }}
           >
-            <FaDiscord size={24} style={{ marginRight: '10px' }} />
-            Join Discord
+            <FaDiscord size={28} />
           </a>
           <p className="waitlist-discord-note">Join our discord to stay in the loop</p>
         </div>
