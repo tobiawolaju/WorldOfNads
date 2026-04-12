@@ -120,24 +120,24 @@
   font-family: var(--font-inter), sans-serif;
   font-size: clamp(24px, 4vw, 36px);
   font-weight: 600;
-  color: #ffffff;
+  color: #000000;
   line-height: 1;
   margin: 0;
 }
 
 /* Individual colors for variety */
 .pill-pair:nth-child(odd) .pill-capsule {
-  background: #7056ff;
+  background: #fffc5d;
 }
 
 /* Lime */
 .pill-pair:nth-child(even) .pill-capsule {
-  background: #7056ff;
+  background: #ff58e3;
 }
 
 /* Cyan */
 .pill-pair.alt-color .pill-capsule {
-  background: #7056ff;
+  background: #40e2ff;
 }
 
 /* Yellow */
