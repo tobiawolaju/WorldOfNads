@@ -1,23 +1,39 @@
 /**
- * Google Apps Script for World of Nads Waitlist
- * 
- * SETUP INSTRUCTIONS:
- * 1. Create a new Google Sheet.
- * 2. Go to Extensions > Apps Script.
- * 3. Replace the code in the editor with this content.
- * 4. Deploy > New Deployment > Web App.
- * 5. Set "Execute as" to "Me" and "Who has access" to "Anyone".
- * 6. Copy the Web App URL and paste it into EmailCapture.tsx.
+ * World of Nads Waitlist - Unified Handler (v2)
+ * Fixes CORS/Preflight issues by supporting GET-based submissions.
  */
 
 const SHEET_NAME = 'Waitlist';
 
+function doGet(e) {
+  return handleAction(e);
+}
+
 function doPost(e) {
+  return handleAction(e);
+}
+
+function handleAction(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
-    const email = data.email.toLowerCase().trim();
-    const referredBy = data.referredBy || '';
-    
+    let email = '';
+    let referredBy = '';
+
+    // Handle GET parameters
+    if (e.parameter && e.parameter.email) {
+      email = e.parameter.email.toLowerCase().trim();
+      referredBy = e.parameter.referredBy || '';
+    } 
+    // Handle POST data
+    else if (e.postData && e.postData.contents) {
+      const data = JSON.parse(e.postData.contents);
+      email = data.email.toLowerCase().trim();
+      referredBy = data.referredBy || '';
+    }
+
+    if (!email) {
+      return createResponse({ status: 'live', message: 'Ready for submissions.' });
+    }
+
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName(SHEET_NAME);
     if (!sheet) {
@@ -32,7 +48,7 @@ function doPost(e) {
     for (let i = 1; i < rows.length; i++) {
       if (rows[i][0] === email) {
         existingUser = rows[i];
-        position = i; // Position is based on row index (1-based for data lines)
+        position = i;
         break;
       }
     }
@@ -48,17 +64,15 @@ function doPost(e) {
     }
 
     // New Signup
-    // 1. Generate Ref Code (Simple random string)
     const refCode = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, email + Date.now().toString()))
       .substring(0, 8)
       .replace(/[^a-zA-Z0-9]/g, '')
       .toUpperCase();
 
-    // 2. Append User
     sheet.appendRow([email, new Date().toISOString(), refCode, referredBy, 0]);
     position = sheet.getLastRow() - 1;
 
-    // 3. Update Ref Count for the referrer if exists
+    // Update Referrer
     if (referredBy) {
       for (let i = 1; i < rows.length; i++) {
         if (rows[i][2] === referredBy) {
@@ -85,9 +99,4 @@ function doPost(e) {
 function createResponse(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
-}
-
-// Simple GET test
-function doGet(e) {
-  return createResponse({ status: 'live', message: 'World of Nads Waitlist API is active.' });
 }

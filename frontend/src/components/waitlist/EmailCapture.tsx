@@ -44,23 +44,15 @@ const EmailCapture: React.FC<EmailCaptureProps> = ({ buttonLabel, helperText, cl
     const referredBy = localStorage.getItem("nad_referred_by") || "";
 
     try {
-      const response = await fetch(GAS_URL, {
-        method: "POST",
-        mode: "no-cors", // Required for Google Apps Script Web App
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, referredBy })
+      // Use standard GET request to bypass CORS preflight (OPTIONS) limitations of GAS
+      const url = `${GAS_URL}?email=${encodeURIComponent(email)}&referredBy=${encodeURIComponent(referredBy)}`;
+      
+      const response = await fetch(url, {
+        method: "GET",
+        mode: "cors", // Default, allows following redirects to googleusercontent.com
       });
 
-      // Since mode is no-cors, we can't read the response directly if it's a redirect.
-      // For proper data handling, we'd use JSONP or a proxy, but for simplicity
-      // and following the user's request for Apps Script, we'll implement a 
-      // fallback fetch with GET for data retrieval if POST succeeded (opaque).
-      
-      // Better approach for GAS: use GET with params for both submission and retrieval
-      // or handle the 'opaque' response as success and fetch details via GET separately.
-      
-      const detailsRes = await fetch(`${GAS_URL}?email=${encodeURIComponent(email)}`);
-      const data = await detailsRes.json();
+      const data = await response.json();
 
       if (data.status === "error") {
         throw new Error(data.message);
