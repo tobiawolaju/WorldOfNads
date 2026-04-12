@@ -1,3 +1,7 @@
+import React, { useEffect } from "react";
+import EmailCapture from "../components/waitlist/EmailCapture";
+import "./Waitlist.css";
+
 const PillPair: React.FC<{ top: string; bottom: string; rotation: number; isAlt?: boolean; isNearTop?: boolean }> = ({ top, bottom, rotation, isAlt, isNearTop }) => (
   <div 
     className={`pill-pair ${isAlt ? 'alt-color' : ''} ${isNearTop ? 'near-top' : ''}`} 
