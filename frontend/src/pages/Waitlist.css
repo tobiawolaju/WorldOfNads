@@ -15,17 +15,38 @@
   left: 0;
   width: 100%;
   height: auto;
-  min-height: 400px;
-  padding: 60px 20px 40px;
+  min-height: 480px; /* Increased slightly for better spacing */
+  padding: 80px 20px 60px;
   z-index: 50;
-  background: linear-gradient(to bottom, rgba(5,7,12,0.8) 0%, rgba(5,7,12,0.4) 60%, transparent 100%);
-  pointer-events: none; /* Allow scrolling underneath */
+  background: linear-gradient(to bottom, rgba(5,7,12,0.95) 0%, rgba(5,7,12,0.8) 70%, transparent 100%);
+  pointer-events: none;
 }
 
 .waitlist-hero .hero-content {
-  pointer-events: auto; /* Enable interaction with form */
-  max-width: 800px;
+  pointer-events: auto;
+  max-width: 900px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* Explicit gap to prevent overlap */
+  align-items: center;
+}
+
+/* Override Home.css headline to reduce size by 20% and fix spacing */
+.waitlist-hero .hero-headline {
+  font-size: clamp(56px, 9.6vw, 112px); /* 20% reduction from Home.css */
+  margin-bottom: 0px;
+  line-height: 1;
+}
+
+.waitlist-hero .hero-headline::after {
+  display: none; /* Remove shadow text to declutter waitlist hero */
+}
+
+.waitlist-hero .hero-subtext {
+  max-width: 720px;
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* Background stays fixed */
@@ -159,7 +180,7 @@
 .waitlist-input {
   flex: 1;
   min-width: 0;
-  height: 56px;
+  height: 60px; /* Increased to match pay button feel */
   padding: 0 24px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -167,30 +188,36 @@
   color: #0f1419;
   font-size: 16px;
   font-family: var(--font-inter), sans-serif;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
+  box-sizing: border-box;
 }
 
 .waitlist-input:focus {
   border-color: #907cff;
+  box-shadow: 0 6px 16px rgba(144, 124, 255, 0.3);
 }
 
 .waitlist-submit {
   width: auto;
   white-space: nowrap;
-  padding: 0 32px;
-  height: 56px;
+  padding: 0 40px;
+  height: 60px; /* Perfectly matching input height */
   border: none;
   border-radius: 999px;
-  background: #ffd700; /* Match Play button */
+  background: #ffd700;
   color: #000000;
   font-family: 'Font1', var(--font-inter), sans-serif;
   font-weight: 800;
   font-size: 18px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(255, 215, 0, 0.2);
+  box-shadow: 0 6px 15px rgba(255, 215, 0, 0.3);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .waitlist-submit:hover:not(:disabled) {
