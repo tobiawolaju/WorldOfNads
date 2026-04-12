@@ -22,6 +22,7 @@ const Milestone = lazy(() => import("./pages/Milestone"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Play = lazy(() => import("./pages/Play"));
 const Careers = lazy(() => import("./pages/Careers"));
+const Waitlist = lazy(() => import("./pages/Waitlist"));
 const SpounsorDashbaord = lazy(() => import("./pages/SpounsorDashbaord"));
 const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
@@ -179,6 +180,7 @@ const AppContent: React.FC = () => {
               <Route path="/milestone" element={<Milestone />} />
               <Route path="/partners" element={<Navigate to="/hosts" replace />} />
               <Route path="/careers" element={<Careers />} />
+              <Route path="/waitlist" element={<Waitlist />} />
               <Route
                 path="/admin/analytics"
                 element={
