@@ -117,7 +117,7 @@
 }
 
 .pill-label-bottom {
-  font-family: 'Font2', sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: clamp(24px, 4vw, 36px);
   font-weight: 900;
   color: #0f1419;
