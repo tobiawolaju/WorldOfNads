@@ -60,22 +60,10 @@ const Waitlist: React.FC = () => {
       <section className="waitlist-hero revealed">
         <div className="hero-content">
           <h1 className="hero-headline">Competitive gaming with real rewards.</h1>
-          <p className="hero-subtext" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '20px' }}>
-            Play. Win. Get paid. First matches live this week.
-          </p>
         </div>
       </section>
 
       <div className="waitlist-scroll-container">
-        {/* HERO CAPTURE AREA (Now Scrolling) */}
-        <section className="waitlist-section" style={{ minHeight: '60vh', paddingBottom: '0' }}>
-          <EmailCapture
-            buttonLabel="Join Early Access"
-            helperText="Get beta access, rewards, and match invites"
-            className="reveal revealed"
-          />
-        </section>
-
         {/* EARLY TRACTION */}
         <section className="waitlist-section">
           <h2 className="section-title">Early traction</h2>
