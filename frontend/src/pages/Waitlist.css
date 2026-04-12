@@ -253,49 +253,7 @@
   font-weight: 600;
 }
 
-/* Waitlist Referral Popup */
-.waitlist-popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
 
-.waitlist-referral-card {
-  background: #11141a !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-  max-width: 500px;
-  width: 90%;
-  position: relative;
-  border-radius: 12px;
-  padding: 30px;
-  text-align: center;
-}
-
-.waitlist-referral-card h2,
-.waitlist-referral-card p,
-.waitlist-referral-card h3,
-.waitlist-referral-card span {
-  color: #ffffff;
-}
-
-.waitlist-popup-close {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: transparent;
-  color: #ffffff;
-  border: none;
-  font-size: 28px;
-  cursor: pointer;
-}
 
 
 /* Mobile responsive fixes */

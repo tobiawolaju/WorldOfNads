@@ -1,5 +1,6 @@
 import React from "react";
 import { FaDiscord } from "react-icons/fa";
+import "./ReferralPlaceholder.css";
 
 type ReferralPlaceholderProps = {
   showAsPopup?: boolean;
