@@ -1,297 +1,55 @@
 @import "./Home.css";
 
-:root {
-  --waitlist-bg: #05070c;
-  --glow-pink: rgba(255, 36, 150, 0.4);
-  --glow-purple: rgba(144, 124, 255, 0.4);
-  --glow-gold: rgba(255, 215, 0, 0.4);
-  --font-heading: 'Font2', sans-serif;
-  --font-accent: 'Font1', sans-serif;
-}
-
 .waitlist-page {
   height: 100vh;
   overflow: hidden;
   position: relative;
   color: #ffffff;
-  background: var(--waitlist-bg);
   display: flex;
   flex-direction: column;
 }
 
-/* --- HERO SECTION --- */
 .waitlist-hero {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  padding: clamp(40px, 8vh, 100px) 20px 40px;
+  height: auto;
+  min-height: 280px; /* Reduced since form moved */
+  padding: 60px 20px 20px;
   z-index: 50;
-  background: linear-gradient(to bottom, 
-    rgba(5,7,12,1) 0%, 
-    rgba(5,7,12,0.9) 50%, 
-    transparent 100%);
+  background: linear-gradient(to bottom, rgba(5,7,12,0.98) 0%, rgba(5,7,12,0.85) 60%, transparent 100%);
   pointer-events: none;
-  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .waitlist-hero .hero-content {
   pointer-events: auto;
-  max-width: 1000px;
+  max-width: 900px;
   margin: 0 auto;
-  text-align: center;
   display: flex;
   flex-direction: column;
-  gap: clamp(16px, 3vh, 32px);
+  gap: 24px; /* Explicit gap to prevent overlap */
   align-items: center;
 }
 
+/* Override Home.css headline to reduce size by 20% and fix spacing */
 .waitlist-hero .hero-headline {
-  font-family: var(--font-heading);
-  font-size: clamp(48px, 10vw, 120px);
-  font-weight: 900;
-  line-height: 0.9;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
-  margin: 0;
-  color: #ffffff;
-  text-shadow: 0 0 40px rgba(0,0,0,0.5);
+  font-size: clamp(56px, 9.6vw, 112px); /* 20% reduction from Home.css */
+  margin-bottom: 0px;
+  line-height: 1;
+}
+
+.waitlist-hero .hero-headline::after {
+  display: none; /* Remove shadow text to declutter waitlist hero */
 }
 
 .waitlist-hero .hero-subtext {
-  font-family: var(--font-inter), sans-serif;
-  font-size: clamp(16px, 2vw, 24px);
-  color: rgba(255, 255, 255, 0.7);
-  max-width: 600px;
-  margin: 0;
-  line-height: 1.4;
-}
-
-/* --- SCROLL CONTAINER --- */
-.waitlist-scroll-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  overflow-y: scroll;
-  scroll-snap-type: y proximity;
-  padding-top: 40vh; /* Start content lower for better hero focus */
-  padding-bottom: 20vh;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.waitlist-scroll-container::-webkit-scrollbar {
-  display: none;
-}
-
-/* --- SECTION SYSTEM --- */
-.waitlist-section {
-  min-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  scroll-snap-align: center;
-  padding: 80px 20px;
-  opacity: 0;
-  transform: translateY(40px) scale(0.98);
-  transition: all 1s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform, opacity;
-}
-
-.waitlist-section.revealed {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.waitlist-section .section-title {
-  font-family: var(--font-heading);
-  font-size: clamp(32px, 6vw, 72px);
-  font-weight: 900;
-  margin-bottom: clamp(40px, 8vh, 80px);
-  text-align: center;
-  color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-}
-
-/* --- PILL UI REDESIGN --- */
-.pill-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(40px, 6vh, 80px);
-  width: 100%;
-  max-width: 800px;
-}
-
-.pill-pair {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  width: fit-content;
-}
-
-.pill-label-top {
-  font-family: var(--font-accent);
-  font-weight: 800;
-  font-size: clamp(18px, 2.5vw, 28px);
-  color: #ffffff;
-  text-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.pill-capsule {
-  padding: 16px 48px;
-  border-radius: 999px;
-  background: #ffffff;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.2);
-}
-
-.pill-capsule::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-  pointer-events: none;
-}
-
-.pill-label-bottom {
-  font-family: var(--font-heading);
-  font-size: clamp(24px, 4.5vw, 42px);
-  font-weight: 900;
-  color: #0f1419;
-  line-height: 1;
-  margin: 0;
-  white-space: nowrap;
-}
-
-/* Precise Colors with Matching Glows */
-.pill-pair:nth-child(odd) .pill-capsule { 
-  background: #ff2496; 
-  box-shadow: 0 15px 45px var(--glow-pink); 
-}
-.pill-pair:nth-child(even) .pill-capsule { 
-  background: #907cff; 
-  box-shadow: 0 15px 45px var(--glow-purple); 
-}
-.pill-pair.alt-color .pill-capsule { 
-  background: #ffd700; 
-  box-shadow: 0 15px 45px var(--glow-gold); 
-}
-
-/* Near top fade out effect */
-.pill-pair.near-top {
-  opacity: 0.15;
-  transform: translateY(-30px) scale(0.9);
-  filter: blur(4px);
-}
-
-/* --- EMAIL CAPTURE POLISH --- */
-.waitlist-capture {
-  width: 100%;
-  max-width: 650px;
+  max-width: 720px;
   margin: 0 auto;
-  position: relative;
-  z-index: 10;
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.waitlist-capture-form {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-.waitlist-input {
-  flex: 1;
-  min-width: 0;
-  height: 64px;
-  padding: 0 32px;
-  border-radius: 999px;
-  border: none;
-  background: #ffffff;
-  color: #0f1419;
-  font-size: 18px;
-  font-family: var(--font-inter), sans-serif;
-  font-weight: 500;
-  outline: none;
-  transition: all 0.3s;
-  box-sizing: border-box;
-}
-
-.waitlist-input::placeholder {
-  color: rgba(15, 20, 25, 0.4);
-}
-
-.waitlist-input:focus {
-  transform: scale(0.995);
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.waitlist-submit {
-  width: auto;
-  white-space: nowrap;
-  padding: 0 48px;
-  height: 64px;
-  border: none;
-  border-radius: 999px;
-  background: #ffd700;
-  color: #000000;
-  font-family: var(--font-accent);
-  font-weight: 900;
-  font-size: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 8px 20px var(--glow-gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.waitlist-submit:hover:not(:disabled) {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 15px 35px var(--glow-gold);
-  background: #ffec3d;
-}
-
-.waitlist-submit:active:not(:disabled) {
-  transform: translateY(1px) scale(0.98);
-}
-
-.waitlist-submit:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.waitlist-helper {
-  margin-top: 20px;
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.6);
-  text-align: center;
-  font-weight: 500;
-}
-
-/* --- ASSET OVERLAYS --- */
+/* Background stays fixed */
 .hero-bg-container {
   position: fixed;
   inset: 0;
@@ -303,63 +61,196 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.65;
-  filter: contrast(1.1) brightness(0.8);
+  opacity: 0.8;
 }
 
-.hero-overlay {
+.waitlist-scroll-container {
   position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, transparent 0%, rgba(5,7,12,0.8) 100%);
-  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y proximity;
+  padding-top: 300px; /* Reduced to match smaller hero */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.noise-overlay {
-  z-index: 1000;
-  opacity: 0.04;
+.waitlist-scroll-container::-webkit-scrollbar {
+  display: none;
 }
 
-/* --- MOBILE RESPONSIVE --- */
-@media (max-width: 820px) {
-  .waitlist-hero .hero-headline {
-    font-size: 64px;
-  }
-  
+/* Specific Pill UI */
+.pill-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 80px auto;
+  padding: 0 20px;
+  transition: opacity 0.5s ease;
+}
+
+.pill-pair {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.pill-label-top {
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pill-capsule {
+  background: #ffffff;
+  padding: 12px 32px;
+  border-radius: 999px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.pill-label-bottom {
+  font-family: 'Font2', sans-serif;
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 900;
+  color: #0f1419;
+  line-height: 1;
+  margin: 0;
+}
+
+/* Individual colors for variety */
+.pill-pair:nth-child(odd) .pill-capsule { background: #ff2496; } /* Pink */
+.pill-pair:nth-child(even) .pill-capsule { background: #907cff; } /* Purple */
+.pill-pair.alt-color .pill-capsule { background: #ffd700; } /* Gold */
+
+/* Reveal animations */
+.waitlist-section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  scroll-snap-align: center;
+  padding: 100px 20px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.waitlist-section.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Fade out at top */
+.pill-pair.near-top {
+  opacity: 0.1;
+  transform: translateY(-20px) scale(0.95);
+}
+
+.waitlist-section .section-title {
+  font-family: 'Font2', sans-serif;
+  font-size: clamp(32px, 5vw, 64px);
+  margin-bottom: 40px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.waitlist-capture {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.waitlist-capture-form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.waitlist-input {
+  flex: 1;
+  min-width: 0;
+  height: 60px; /* Increased to match pay button feel */
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #ffffff;
+  color: #0f1419;
+  font-size: 16px;
+  font-family: var(--font-inter), sans-serif;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.waitlist-input:focus {
+  border-color: #907cff;
+  box-shadow: 0 6px 16px rgba(144, 124, 255, 0.3);
+}
+
+.waitlist-submit {
+  width: auto;
+  white-space: nowrap;
+  padding: 0 40px;
+  height: 60px; /* Perfectly matching input height */
+  border: none;
+  border-radius: 999px;
+  background: #ffd700;
+  color: #000000;
+  font-family: 'Font1', var(--font-inter), sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 15px rgba(255, 215, 0, 0.3);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.waitlist-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(255, 215, 0, 0.3);
+}
+
+.waitlist-helper {
+  margin-top: 14px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.waitlist-success, .waitlist-error {
+  margin-top: 14px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 768px) {
   .waitlist-capture-form {
     flex-direction: column;
-    border-radius: 24px;
-    padding: 12px;
-    gap: 12px;
-    background: transparent;
-    border: none;
-    backdrop-filter: none;
-    box-shadow: none;
+    align-items: stretch;
   }
   
-  .waitlist-input, .waitlist-submit {
+  .waitlist-submit {
     width: 100%;
-    height: 60px;
   }
 
   .pill-group {
-    gap: 32px;
-  }
-
-  .pill-pair {
-    transform: scale(0.9);
-  }
-
-  .waitlist-section {
-    padding: 60px 16px;
-  }
-
-  .waitlist-scroll-container {
-    padding-top: 35vh;
-  }
-}
-
-@media (max-height: 700px) {
-  .waitlist-hero {
-    padding-top: 20px;
+    scale: 0.85;
+    margin: 40px auto;
   }
 }

@@ -86,23 +86,22 @@ const EmailCapture: React.FC<EmailCaptureProps> = ({ buttonLabel, helperText, cl
             disabled={isLoading}
             required
           />
-          <button className="waitlist-submit" type="submit" disabled={isLoading}>
+          <button className="play-btn-fixed waitlist-submit" type="submit" disabled={isLoading}>
             {isLoading ? "Joining..." : buttonLabel}
           </button>
         </form>
         {error ? (
           <p className="waitlist-helper waitlist-error" style={{ color: "#ff6b6b" }}>{error}</p>
         ) : waitlistData ? (
-          <p className="waitlist-helper waitlist-success" style={{ color: "#45f49a" }}>
+          <p className="waitlist-helper waitlist-success">
             {waitlistData.status === "already_on_list" 
               ? "Welcome back! You're already on the list." 
-              : "You’re in! Welcome to the elite."}
+              : "You’re in! Check your position below."}
           </p>
         ) : (
           helperText ? <p className="waitlist-helper">{helperText}</p> : null
         )}
       </div>
-
 
       {showReferralPopup ? (
         <div className="waitlist-popup-overlay" role="dialog" aria-modal="true" aria-label="Referral waitlist details">
