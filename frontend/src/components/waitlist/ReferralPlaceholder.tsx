@@ -42,7 +42,7 @@ const ReferralPlaceholder: React.FC<ReferralPlaceholderProps> = ({ showAsPopup =
         <p className="waitlist-ref-subtitle">
           {displayCount > 0
             ? `You've referred ${displayCount} people. Share your link to climb higher!`
-            : "Invite your friends to skip the queue and get early access."}
+            : "You have been addeded to the waitlist for World of Nads Early Access. We will notify you when it's your turn to drop in. Invite your friends to skip the queue and get early access."}
         </p>
 
         {data?.referredBy && (
@@ -57,6 +57,23 @@ const ReferralPlaceholder: React.FC<ReferralPlaceholderProps> = ({ showAsPopup =
             Copy Link
           </button>
         </div>
+
+        <div className="waitlist-ref-rewards">
+          <h3>Growth Tiers</h3>
+          <div className="tier-item">
+            <span className="tier-desc">The Nad Van is Loading up, your seat is saved.
+              while you wait:
+              - Explore the map at  worldofnads.xyz/maps
+              - Browse upcoming skins in the item shop
+              - Watch testnet matches on Twitch
+            </span>
+          </div>
+        </div>
+         <p className="waitlist-ref-subtitle">
+            Expected wait: shorther than spoting the chicken 
+            We'll email you at [ your@gmail.com] when you'r ready to deploy.
+         </p>
+
 
         <div className="waitlist-popup-discord-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
           <a
