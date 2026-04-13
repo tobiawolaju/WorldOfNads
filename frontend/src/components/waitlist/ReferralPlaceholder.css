@@ -88,7 +88,7 @@
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  color: #39ff14 !important;
+  color: #ffffff !important;
   /* Lime green link text */
   font-weight: 600;
   font-size: 15px;
@@ -106,62 +106,20 @@
   font-weight: 800;
   font-family: 'Font1', var(--font-inter), sans-serif;
   text-transform: uppercase;
-  background: #00ffff !important;
+  background: #ffffff !important;
   /* Cyan button */
   color: #000000 !important;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+  scale: 0.8;
 }
 
 .waitlist-copy-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(0, 255, 255, 0.6);
+  scale: 1;
 }
 
-/* Rewards / Tiers */
-.waitlist-ref-rewards {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
 
-.waitlist-ref-rewards h3 {
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 16px;
-  font-weight: 600;
-}
-
-.tier-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.tier-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.tier-rank {
-  font-weight: 800;
-  font-size: 18px;
-  color: #ffff00;
-  /* Yellow */
-}
-
-.tier-desc {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
-}
 
 /* Discord Section */
 .waitlist-discord-note {

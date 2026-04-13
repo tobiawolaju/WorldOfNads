@@ -58,18 +58,6 @@ const ReferralPlaceholder: React.FC<ReferralPlaceholderProps> = ({ showAsPopup =
           </button>
         </div>
 
-        <div className="waitlist-ref-rewards">
-          <h3>Growth Tiers</h3>
-          <div className="tier-item">
-            <span className="tier-rank">Top 100</span>
-            <span className="tier-desc">Guaranteed Alpha Access</span>
-          </div>
-          <div className="tier-item">
-            <span className="tier-rank">Top 10</span>
-            <span className="tier-desc">Early Token Rewards / OG Role</span>
-          </div>
-        </div>
-
         <div className="waitlist-popup-discord-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
           <a
             href="https://discord.gg/z4SUdrKayb"
