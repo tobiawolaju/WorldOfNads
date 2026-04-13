@@ -1,0 +1,252 @@
+/* --- Global & Base Styles for Careers Page --- */
+.careers-container {
+    text-align: center;
+    padding: 60px 20px 80px 20px;
+    font-family: 'Font1', sans-serif;
+    color: #111;
+    min-height: 100vh;
+}
+
+/* --- Header & Intro --- */
+.careers-header {
+    font-size: clamp(3rem, 10vw, 8rem); 
+    font-weight: 900;
+    margin-bottom: 20px;
+    font-family: 'Font2', sans-serif; 
+    color: #6a38ff;
+    line-height: 1;
+}
+
+.careers-intro {
+    max-width: 800px;
+    margin: 0 auto 50px auto; 
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #444;
+}
+
+/* --- NEW SECTION: Team Showcase Container --- */
+.team-section {
+    background: #11111127; /* Dark background to make the team stand out */
+    color: #ffffff;
+    padding: 40px 20px;
+    margin: 50px auto;
+    max-width: 100%;
+    border-radius: 20px; /* Large curved edges for the whole section */
+}
+
+.team-section h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #000000;
+    margin-bottom: 40px; padding-bottom: 10px;
+    max-width: 450px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+/* Team Grid Layout (Staggered/Masonry-like) */
+.team-grid {
+    display: grid;
+    /* Responsive columns: 1 for mobile, 2 for tablet, 3 for desktop */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.team-member-card {
+    background: #ffffff; /* Slightly lighter card background */
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.team-member-card:nth-child(even) {
+    /* Staggered effect: push every even card down on desktop */
+    margin-top: 20px;
+}
+
+.team-member-card:hover {
+    transform: translateY(-5px);
+}
+
+.team-member-image {
+    width: 150px;
+    height: 100px;
+    border-radius: 10%;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border: 4px solid #ffffff;
+}
+
+.team-member-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #000000;
+    margin: 0;
+}
+
+.team-member-role {
+    font-size: 1rem;
+    color: #cccccc;
+    margin: 5px 0 0 0;
+}
+
+/* --- Accordion List Container --- */
+.careers-list {
+    max-width: 900px;
+    margin: 0 auto 60px auto;
+    text-align: left;
+}
+
+/* --- Individual Accordion Item --- */
+.careers-item {
+    background: #fafafa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #eee;
+}
+
+.careers-item:hover {
+    background: #f6f6f6;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* The clickable title area */
+.careers-question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #222;
+}
+
+.careers-question h2 {
+    font-size: 1.5rem; 
+    font-weight: 800;
+    color: #111;
+    margin: 0;
+    padding: 0;
+}
+
+/* The plus/minus icon */
+.careers-icon {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #777;
+    transition: transform 0.3s ease;
+}
+
+.careers-item.active .careers-icon {
+    transform: rotate(180deg);
+    color: #000000; 
+}
+
+/* The collapsible content area */
+.careers-answer {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    color: #444;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-top: 10px;
+    padding-top: 0;
+    transition: all 0.4s ease;
+}
+
+.careers-item.active .careers-answer {
+    max-height: 600px;
+    opacity: 1;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+    margin-top: 15px;
+}
+
+/* List/Content inside the answer */
+.careers-answer ul {
+    list-style: none; 
+    padding: 0;
+    margin: 0;
+}
+
+.careers-answer li {
+    font-size: 1.05rem;
+    line-height: 1.5;
+    padding: 8px 0;
+    position: relative;
+    padding-left: 25px; 
+}
+
+.careers-answer li::before {
+    content: '→'; /* Simple arrow */
+    position: absolute;
+    left: 0;
+    color: #000000; 
+    font-weight: 900;
+    line-height: 1;
+}
+
+.remote-policy {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    color: #222;
+}
+
+/* Roles Grid Layout */
+.roles-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px 30px;
+}
+
+/* --- Call to Action (CTA) Button --- */
+.careers-cta-wrapper {
+    margin-top: 40px;
+    text-align: center;
+}
+
+
+
+
+
+.careers-cta {
+    display: inline-block;
+    padding: 15px 40px;
+  font-family: font1;
+  font-weight: bold;
+  font-size: 20px;
+    text-decoration: none;
+background: hsl(249, 100%, 74%);
+    color: #ffffff;
+    border-radius: 50px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+}
+
+.careers-cta:hover {
+ border: 8px solid rgba(255, 255, 255, 0.407);
+}
+
+.careers-cta:active {
+    transform: translateY(2px); 
+}
+
+/* --- Responsive Adjustments --- */
+@media (min-width: 768px) {
+    .roles-grid {
+        grid-template-columns: repeat(2, 1fr); 
+    }
+    .team-member-card:nth-child(even) {
+        margin-top: 50px; /* Increased stagger for visual effect */
+    }
+}
