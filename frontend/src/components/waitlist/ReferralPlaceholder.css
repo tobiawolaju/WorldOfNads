@@ -17,10 +17,8 @@
 
 /* Modal Card */
 .waitlist-referral-card {
-  background: rgba(15, 18, 25, 0.85) !important;
-  border: 1px solid rgba(0, 255, 255, 0.3) !important;
-  /* Cyan subtle border */
-  box-shadow: 0 0 50px rgba(255, 20, 147, 0.2), inset 0 0 20px rgba(0, 255, 255, 0.1) !important;
+  background: #7056ff !important;
+  border: none;
   /* Pink outer glow, cyan inner */
   color: #ffffff !important;
   max-width: 500px;
@@ -51,7 +49,7 @@
 }
 
 .waitlist-popup-close:hover {
-  color: #ff2496;
+  color: #ffffff;
   /* Pink hover */
   transform: scale(1.1);
 }
