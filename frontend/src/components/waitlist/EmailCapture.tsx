@@ -59,7 +59,7 @@ const EmailCapture: React.FC<EmailCaptureProps> = ({ buttonLabel, helperText, cl
         throw new Error(data.message);
       }
 
-      setWaitlistData(data);
+      setWaitlistData({ ...data, email });
       setShowReferralPopup(true);
       setEmail("");
     } catch (err) {

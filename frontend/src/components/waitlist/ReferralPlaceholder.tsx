@@ -61,27 +61,31 @@ const ReferralPlaceholder: React.FC<ReferralPlaceholderProps> = ({ showAsPopup =
         <div className="waitlist-ref-rewards">
           <div className="tier-item">
             <span className="tier-desc">
-              You have been addeded to the waitlist for World of Nads Early Access. We will notify you when it's your turn to drop in.
-
-              Expected wait: shorther than spoting the chicken
-              We'll email you at [ your@gmail.com] when you'r ready to deploy.
+              You have been added to the waitlist for World of Nads Early Access. We will notify you when it's your turn to drop in.
+              <br /><br />
+              Expected wait: shorter than spotting the chicken.
+              <br />
+              We'll email you at <span style={{ color: 'yellow', fontWeight: 'bold' }}>{data?.email || "your email address"}</span> when you're ready to deploy.
             </span>
           </div>
         </div>
 
 
         <div className="waitlist-popup-discord-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
-          <a
-            href="https://discord.gg/z4SUdrKayb"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="discord-btn-fixed"
-            title="Join Discord"
-            style={{ position: 'relative', margin: '0 auto 10px auto' }}
-          >
-            <FaDiscord size={28} />
-          </a>
-          <p className="waitlist-discord-note">Join our discord to stay in the loop</p>
+
+          <p className="waitlist-discord-note">
+            Join our discord to stay in the loop{' '}
+            <a
+              title="Join Discord"
+              style={{ color: 'yellow' }}
+              href="https://discord.gg/z4SUdrKayb"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Discord
+            </a>
+          </p>
+
         </div>
       </div>
     </article>
