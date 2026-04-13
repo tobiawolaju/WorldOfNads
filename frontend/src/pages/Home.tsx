@@ -205,13 +205,14 @@ const Home: React.FC = () => {
     {
       month: "Apr 2026",
       bodyLines: [
-        "See you at Monad Blitz Nigeria.",
-        "First public test matches go live this Saturday.",
-        "First players. First outcomes. Real competition.",
-        "The early ones will understand it first.",
+        "We're opening early access to a new competitive gaming platform today.",
+        "Test matches are already running with early players.",
+        "If you want in, join here:",
+        "👉 worldofnads.xyz/waitlist",
+        "Discord access + beta matches unlocked after sign up.",
       ],
       discordLink: "https://discord.gg/z4SUdrKayb",
-      link: "https://x.com/i/status/2042161890462208386",
+      link: "https://x.com/i/status/2043666277927956534",
     },
   ];
 
