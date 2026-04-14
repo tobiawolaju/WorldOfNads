@@ -14,67 +14,77 @@ const FAQ: React.FC = () => {
     {
       question: "What is World of Nads?",
       answer:
-        "World of Nads (WONs) is a fast-paced multiplayer arena built around pure competition. You jump in, chase the objective, outplay other players, and try to win. It’s chaotic, skill-based, and designed to be genuinely fun from the first match.",
+        "World of Nads (WONs) is a competitive arena where players fight for recognition. 100 players enter. Only the best rise. Every match is about outplaying others and earning your place.",
     },
     {
       question: "Is the game live?",
       answer:
-        "Yes. World of Nads already has a playable browser build. You can jump into matches instantly with no downloads. It’s currently in active testing as we expand features and prepare for a wider public release.",
+        "Yes. The arena is already active. You can jump into matches instantly in your browser. No downloads. No waiting.",
     },
     {
       question: "How does the game work?",
       answer:
-        "Players enter a chaotic arena where a chicken spawns in the center. The goal is simple: be the one holding it when the timer ends. Holding it drains stamina, so you have to move, dodge, and outplay everyone else. It’s fast, unpredictable, and heavily skill-based.",
+        "Players enter the arena and fight for control of the objective. You’ll need to move, dodge, and outplay everyone else. It’s fast, chaotic, and purely skill-driven.",
     },
     {
-      question: "Why do people keep playing?",
+      question: "What makes it different?",
       answer:
-        "Because every match feels different. It’s quick, chaotic, and competitive. You’re constantly reacting, chasing, escaping, and making split-second decisions. Winning feels earned, and the tension never really drops.",
+        "Every match matters. There are no bots, no shortcuts, and no artificial advantages. You win because you're better — not because you grinded longer.",
     },
     {
       question: "What happens when you win?",
       answer:
-        "You win the match. In certain games, there’s an added reward waiting for the winner. No extra steps, no interruptions — it’s all part of the experience.",
+        "You move closer to the top. Some matches include rewards, but more importantly, wins build your position toward recognition.",
     },
     {
-      question: "Who sets up these matches?",
+      question: "What does it mean to be a Nad?",
       answer:
-        "Some matches are backed by sponsors who want to be part of the action. They set the stage, players bring the competition, and everything plays out in real time.",
+        "Nads are the top players. Every month resets, and only the top 10 earn recognition as Nads. It’s a status earned through skill, not given.",
+    },
+    {
+      question: "What if I missed early opportunities?",
+      answer:
+        "Then this is your way back. Some players fumbled early. Some missed their moment. The arena resets everything. You earn it here.",
+    },
+    {
+      question: "Who creates the matches?",
+      answer:
+        "Some matches are backed by sponsors who want to be part of the competition. They shape the arena, but players decide the outcome.",
     },
     {
       question: "Why do sponsors get involved?",
       answer:
-        "Because it’s where real players are active. Instead of interrupting gameplay, they become part of it — showing up inside matches players already want to play and staying visible while the action is happening.",
+        "Because this is where real competition happens. Instead of interrupting gameplay, they become part of it — visible while players are fully engaged.",
     },
     {
       question: "Is the game free to play?",
       answer:
-        "Yes. Anyone can start playing for free. You can jump in quickly and get into matches without any setup.",
+        "Yes. Anyone can enter the arena for free and start competing immediately.",
     },
     {
       question: "Can the game be automated or exploited?",
       answer:
-        "Not really. The game relies on real-time movement, reactions, and decision-making. You have to be present, aware, and skilled to win.",
+        "No. Winning requires real-time decisions, movement, and awareness. You have to be present and skilled to rise.",
     },
     {
       question: "Is World of Nads an investment?",
       answer:
-        "No. It’s a game built around competition and enjoyment. The focus is on creating something people genuinely want to play and come back to.",
+        "No. It’s a competitive game. The focus is on skill, recognition, and gameplay — not speculation.",
     },
     {
       question: "Who is this for?",
       answer:
-        "Anyone who enjoys fast, competitive games. If you like quick matches, chaotic gameplay, and outplaying real opponents, you’ll feel right at home.",
+        "Anyone who enjoys fast, competitive gameplay and wants to prove they’re better than the rest.",
     },
     {
-      question: "Why can World of Nads grow beyond one game?",
+      question: "Why do players keep coming back?",
       answer:
-        "The core idea is simple: competitive matches that people enjoy playing and coming back to. As more players join, more matches run, and more sponsors take part. The experience scales naturally with activity, without changing how the game feels.",
+        "Because every match is different, and every win matters. You’re always chasing position, recognition, and the chance to become a Nad.",
     },
     {
       question: "How can I join early?",
       answer:
-        "Follow @worldofnads on X and join the Discord to stay updated on playtests, tournaments, and early access.",
+        "Join the waitlist and Discord to access early matches and compete before everyone else.",
     }
   ];
 
