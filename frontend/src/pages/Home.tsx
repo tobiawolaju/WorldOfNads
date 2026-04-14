@@ -208,9 +208,10 @@ const Home: React.FC = () => {
         "We're opening early access to a new competitive gaming platform today.",
         "Test matches are already running with early players.",
         "If you want in, join here:",
-        "👉 worldofnads.xyz/waitlist",
+        "👉 WAITLIST_LINK",
         "Discord access + beta matches unlocked after sign up.",
       ],
+      waitlistLink: "https://worldofnads.xyz/waitlist",
       discordLink: "https://discord.gg/z4SUdrKayb",
       link: "https://x.com/i/status/2043666277927956534",
     },
@@ -341,7 +342,21 @@ const Home: React.FC = () => {
               <p className="tweet-body">
                 {tweet.bodyLines.map((line) => (
                   <React.Fragment key={line}>
-                    {line}
+                    {line === "👉 WAITLIST_LINK" ? (
+                      <>
+                        👉{" "}
+                        <a
+                          href={tweet.waitlistLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="tweet-inline-link"
+                        >
+                          worldofnads.xyz/waitlist
+                        </a>
+                      </>
+                    ) : (
+                      line
+                    )}
                     <br />
                     <br />
                   </React.Fragment>
