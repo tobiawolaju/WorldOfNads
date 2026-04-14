@@ -251,7 +251,7 @@ const Home: React.FC = () => {
         <div className="hero-content">
           <h1 className="hero-headline"> WORLD OF NADS</h1>
         </div>
-        <p className="hero-subtext">100 Nads enter. Only one becomes Prime. No luck. Just skill. ↓</p>
+        <p className="hero-subtext">A million Nads enter. Only one becomes Prime. No luck. Just skill. ↓</p>
 
       </section>
 
