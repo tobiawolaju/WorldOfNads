@@ -251,7 +251,7 @@ const Home: React.FC = () => {
         <div className="hero-content">
           <h1 className="hero-headline"> WORLD OF NADS</h1>
         </div>
-        <p className="hero-subtext">Play fast. Win real. No grind. No luck. Just skill. ↓</p>
+        <p className="hero-subtext">100 Nads enter. Only one becomes Prime. No luck. Just skill. ↓</p>
 
       </section>
 
@@ -264,7 +264,7 @@ const Home: React.FC = () => {
             <div className="func-content">
               <h2 className="func-headline">Play</h2>
               <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>
-                {renderWaveText("Jump in. Compete. Win. Every match counts. Every win pays. No tutorials. No onboarding friction. You already know what to do.")}
+                {renderWaveText("Drop into the arena. Outplay everyone. Earn your place. Every match is a fight for position. Every win moves you closer to recognition.")}
               </p>
             </div>
             <div className="func-image">
@@ -278,7 +278,7 @@ const Home: React.FC = () => {
           <div className="functional-slide reverse">
             <div className="func-content">
               <h2 className="func-headline">Hosts</h2>
-              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}> {renderWaveText("Fund matches. Attract players. Get seen where competition happens.Sponsors drive the ecosystem.")}</p>
+              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}> {renderWaveText("Control the arena. Shape the battlefield. Get seen where competition happens. Sponsors don’t just fund matches — they influence the game.")}</p>
             </div>
             <div className="func-image">
               <Slide2 />
@@ -289,9 +289,9 @@ const Home: React.FC = () => {
           <div className="functional-slide">
             <div className="func-content">
               <h2 className="func-headline">Built for Competition</h2>
-              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>{renderWaveText("No bots. No artificial rewards. No shortcuts. Every match is real. Every win is earned. Skill decides everything.")}</p>
+              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>{renderWaveText("No bots. No shortcuts. No second chances. Every match is real. Every win is earned. Only skill decides who rises.")}</p>
               <h2 className="section-title">How it works</h2>
-              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>{renderWaveText("Sponsors fund matches. Players compete for rewards. The platform scales with every game played.")}</p>
+              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>{renderWaveText("The arena resets every month. Players compete. Only the top rise. The best become recognized Nads.")}</p>
 
 
             </div>
@@ -318,8 +318,8 @@ const Home: React.FC = () => {
                 <span className="stat-label">Sponsors</span>
               </div>
               <div className="stat-item">
-                <span className="stat-num" style={{ fontSize: 'clamp(18px, 2vw, 28px)' }}>Real Matches. Real Rewards.</span>
-                <span className="stat-label" style={{ textTransform: 'none', letterSpacing: 'normal', fontSize: '13px' }}>Be early. Or compete later</span>
+                <span className="stat-num" style={{ fontSize: 'clamp(18px, 2vw, 28px)' }}>100 enter. Only the best rise.</span>
+                <span className="stat-label" style={{ textTransform: 'none', letterSpacing: 'normal', fontSize: '13px' }}>Be early. Or fight your way in</span>
               </div>
             </div>
           ))}
@@ -387,9 +387,9 @@ const Home: React.FC = () => {
           onClick={handlePlay}
           disabled={!ready}
           className="play-btn-fixed"
-          title="Play"
+          title="Enter Arena"
         >
-          Play
+          Enter Arena
         </button>
 
         <a
