@@ -9,7 +9,6 @@
 [ext_resource type="Texture2D" uid="uid://dk6pulccdwv63" path="res://assets/models/shoppingchart_0.png" id="7_e124b"]
 [ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="10_k1ljg"]
 [ext_resource type="Script" uid="uid://b7qxrbqb8hkxc" path="res://scripts/pickable.gd" id="11_kxttn"]
-[ext_resource type="Shader" uid="uid://fp172dybk1gm" path="res://scenes/components/transparent.gdshader" id="12_w0mdd"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_kxttn"]
 size = Vector3(17.716457, 1, 50.13232)
@@ -262,7 +261,7 @@ render_priority = 0
 shader = ExtResource("3_cyx30")
 shader_parameter/color_inner = Color(1, 0.7372549, 0.68235296, 1)
 shader_parameter/color_mid = Color(1, 0.7607843, 0.69803923, 1)
-shader_parameter/color_outer = Color(0.8745098, 0.45490196, 0.9137255, 0.4862745)
+shader_parameter/color_outer = Color(1, 0.70980394, 0.9647059, 1)
 shader_parameter/radius_inner = 0.34
 shader_parameter/radius_outer = 0.47
 
@@ -325,9 +324,6 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_psej7")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dtgah"]
-albedo_color = Color(0.39294738, 0.13987097, 2.4065375e-08, 1)
-
 [sub_resource type="ArrayMesh" id="ArrayMesh_jcnnm"]
 _surfaces = [{
 "aabb": AABB(-7.15434, -1.6679, -0.259676, 10.351454, 0.41121364, 0.2077439),
@@ -359,9 +355,6 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_jcnnm")
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gprav"]
-albedo_color = Color(0.39294738, 0.13987097, 2.4065375e-08, 1)
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_cexaw"]
 _surfaces = [{
@@ -491,11 +484,6 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_npn73")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1v67w"]
-shading_mode = 2
-albedo_color = Color(1, 0.7623173, 0.3962487, 1)
-metallic_texture_channel = 1
-
 [sub_resource type="ArrayMesh" id="ArrayMesh_p813l"]
 _surfaces = [{
 "aabb": AABB(-3.75458, -8.60552, -0.0683417, 7.5090923, 17.27185, 0.13668208),
@@ -570,83 +558,6 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_n0076")
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_20psd"]
-render_priority = 0
-shader = ExtResource("12_w0mdd")
-shader_parameter/color_inner = Color(1, 1, 1, 1)
-shader_parameter/color_mid = Color(0.99750096, 0.8060693, 0.8584672, 1)
-shader_parameter/color_outer = Color(0.8745098, 0.45490196, 0.9137255, 1)
-shader_parameter/radius_inner = 5.0
-shader_parameter/radius_outer = 5.0
-shader_parameter/opacity = 0.6
-shader_parameter/pixel_size = 64.0
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_kh1jr"]
-render_priority = 0
-shader = ExtResource("12_w0mdd")
-shader_parameter/color_inner = Color(1, 1, 1, 1)
-shader_parameter/color_mid = Color(0.99750096, 0.8060693, 0.8584672, 1)
-shader_parameter/color_outer = Color(0.8745098, 0.45490196, 0.9137255, 1)
-shader_parameter/radius_inner = 5.0
-shader_parameter/radius_outer = 5.0
-shader_parameter/opacity = 0.6
-shader_parameter/pixel_size = 64.0
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_uitra"]
-render_priority = 0
-shader = ExtResource("12_w0mdd")
-shader_parameter/color_inner = Color(1, 1, 1, 1)
-shader_parameter/color_mid = Color(0.99750096, 0.8060693, 0.8584672, 1)
-shader_parameter/color_outer = Color(0.8745098, 0.45490196, 0.9137255, 1)
-shader_parameter/radius_inner = 5.0
-shader_parameter/radius_outer = 5.0
-shader_parameter/opacity = 0.6
-shader_parameter/pixel_size = 64.0
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_i0ny8"]
-render_priority = 0
-shader = ExtResource("12_w0mdd")
-shader_parameter/color_inner = Color(1, 1, 1, 1)
-shader_parameter/color_mid = Color(0.99750096, 0.8060693, 0.8584672, 1)
-shader_parameter/color_outer = Color(0.8745098, 0.45490196, 0.9137255, 1)
-shader_parameter/radius_inner = 5.0
-shader_parameter/radius_outer = 5.0
-shader_parameter/opacity = 0.6
-shader_parameter/pixel_size = 64.0
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_as4xp"]
-render_priority = 0
-shader = ExtResource("12_w0mdd")
-shader_parameter/color_inner = Color(1, 1, 1, 1)
-shader_parameter/color_mid = Color(0.99750096, 0.8060693, 0.8584672, 1)
-shader_parameter/color_outer = Color(0.8745098, 0.45490196, 0.9137255, 1)
-shader_parameter/radius_inner = 5.0
-shader_parameter/radius_outer = 5.0
-shader_parameter/opacity = 0.6
-shader_parameter/pixel_size = 64.0
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_gl1gq"]
-resource_name = "hp_001_004"
-_surfaces = [{
-"aabb": AABB(-0.54153043, -0.5385262, -0.77019995, 1.0350955, 1.0665504, 1.6553724),
-"attribute_data": PackedByteArray("/////48K8D3GkAY//////+KU/z70DOs+//////drAz/DXRc//////wAk8j3DXRc//////8sSyz6qhuk+/////4ISBzvUQe8+/////7zX9zsKSpk+/////x5Pyz6k5Zo+/////yRfwD597Bw//////0eiCz+0bxY//////zr3FT+F3Xg//////yjaxz5Eb38//////8s6vT5Kgxc//////7HaZz6leX8//////42wSD7WExY//////wr5sz7Honw//////+pjWD9O440+/////yL5Hj9UVFM+/////33zTz/YN/g9/////0QmJj+UdRI+/////0z4OD8OUaA+/////8MLSD8BNns//////5wNQj9mXkc//////107YD8Q0Tc//////x3jcT+Hc38//////wCAfz/ezFM//////+f3RTyXMX4//////+ll+DxgjhQ//////zLIQT7y2R0//////16FMj45fH8//////+GRtz5epxU//////9ZUrT4CMu4+/////wy0wz4iVcM+/////42wSD5k7D4//////7fJuT7d1m0//////zJzJj90J5E+/////9cTUj9AQlU+/////wxvFj+U/FE//////yRfwD7GfFk//////1RVRT9Gt0g//////6PKADv+U1U///////pILz6GkzU//////zLIQT7o0Vk//////8Lfoz4KSpk+/////6fbIz6OdfI+/////4f/QT6ERP8+/////1qTAT/Maw4//////9bFKj4+WhI///////54uj4xD0A//////7SFkz7lvH4//////wGfST9ieZs+/////4k4XT94620+/////xG6Rz90Zxc+/////+NkMD/YN/g9/////0RZFD+kqyA//////xEIAT+e1Bo//////9hEyT6iGk8//////0PxET+a4mY//////16t8z55aX0//////zlrSj9a3Hc//////5FoXz+RIlg//////5wNQj9+FGU//////9VBSD90qz8//////8rpbz9V0ns//////ygbfD9tpVQ//////2nZXz82Lzs//////wqKkT0owRo//////y8zej7CDcM+/////2u0HD5wY5s+/////3ldUj3C1q4+/////whbeT/rv2U//////+MIfD8Os2g//////99JSj8MqEI//////6RkRT9nrmQ//////whDtT6icvA+/////99xzz4yvAM///////ruKz/Sr4M+/////0W5UT8QXBM+/////3FjlD7c0xY//////wmRij6A8Cs//////wKyaD6njko//////yT6Uj7y22A//////6gWoz4o7mg//////wgtDT+0M0M///////YrizxkXzM//////wDGLT5WOhs//////4D4+D00OnA/"),
-"format": 34359742495,
-"index_count": 288,
-"index_data": PackedByteArray("KwAHACAAQwArACAAKwBDAEQAIAAfAEMAHwAgAAQALABDAB8AQwAsAEQALABFAEQABgBEAEUABQBFACwABQAGAEUAPABAAEYARgBAABkAGQBHAEYAGQBAAEEAPABBAEAAQQAXABkAPgAXAEEAPwBGAEcAPABGAD8ARwAYAD8APwAYABUAQQBIAD4AFgA+AEgAQQAnAEgASAAnABYAQQA8ACcAPQAWACcAFQA7AD8AOwAVAD0APwA7ADwAJwBJAD0APQBJADsASQAnADwASQA8ADsALQBKAEsASwBKAAEAAQAuAEsAHgBLAC4ASwAeAC0AAgAeAC4ALwAtAB4ALwAAAC0AAwAAAC8ATAAjABEATAAUACMATAAyABQAMgBMACQAEQAkAEwAJAAQADIAEAAkADMAJABNADMAJAARADQAJAA0AE0AEQATADQATQA0ABIANAATADUANQASADQAMABOAAwATwBOADAATwAOAE4ATwAhAA4AIQBPAFAAUABPADAAUABRACEAMABSAFAAUgBRAFAAUQBSAA0AUgAwACIADQBSADEAIgAxAFIADwAxACIANgAlAAkAJQBTAAkANwAJAFMAJQA5AFMACgA5ACUAOgA5AAoAOABTADkAUwA4ADcAOgA4ADkAOAAIADcAJgAIADgAOgAmADgAOgALACYAVAAbAEIAKABUAEIAKABCACkAVQApAEIAVQAcACkAKgApABwAKgAoACkAVgAoACoAGgAoAFYAHQBWACoAHQAaAFYA"),
-"lods": [0.070976794, PackedByteArray("KwAHACAAHwArACAAHwAgAAQAKwAfAAYAHwAsAAYABQAGACwALQABAB4AAQAuAB4AAgAeAC4ALwAtAB4ALwAAAC0AAwAAAC8AIQAOAAwAIQAMADAAMAAxACEAMQANACEAMQAwACIADwAxACIAEQAUACMAEQAyABQAMgARACQAJAAQADIAEAAkADMAJAASADMAJAARADQAJAA0ABIAEQATADQANQASADQANAATADUANgAlAAkANwAJACUAJQA4ADcAOAAIADcAJgAIADgAOAAlADkACgA5ACUAOgAmADgAOgA5AAoAOgA4ADkAOgALACYAOwAnADwAJwA7AD0APQAWACcAOwAVAD0AFgA+ACcAFQA7AD8APwA7ADwAPwAYABUAGQAYAD8APABAAD8APwBAABkAQQA8ACcAQQAnAD4APABBAEAAGQBAAEEAPgAXAEEAQQAXABkAKABCACkAKAAbAEIAHAApAEIAKgApABwAKgAoACkAHQAoACoAGgAoAB0A"), 0.17814241, PackedByteArray("AAABAB4AAQACAB4AAwAAAB4AHwAFAAYABwAfAAYAHwAHACAAHwAgAAQAIQAOAAwADAANACEADQAMACIADwANACIAEQAUACMAEQAQABQAEAARACQAJAASABAAJAARABIAEQATABIACAAJACUAJQAmAAgACwAmACUACwAlAAoAJwAZABgAJwAXABkAGAAVACcAFwAnABYAFQAWACcAKAAbACkAHAApABsAKgApABwAKgAoACkAHQAoACoAGgAoAB0A"), 0.40290052, PackedByteArray("AAABAAIAAwAAAAIABAAFAAYABwAEAAYACAAJAAoACwAIAAoADAANAA4ADQAMAA8AEAARABIAEQATABIAEQAQABQAFQAWABcAGAAVABcAFwAZABgAGgAbABwAHQAaABwA")],
-"material": SubResource("StandardMaterial3D_2ric8"),
-"name": "stones_moss",
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 87,
-"vertex_data": PackedByteArray("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")
-}]
-blend_shape_mode = 0
-shadow_mesh = SubResource("ArrayMesh_yqm7g")
-
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_a1hl4"]
-height = 1.8535156
-
 [node name="GamePlay3d" type="Node3D" unique_id=844227963]
 
 [node name="PlayerManager" type="Node3D" parent="." unique_id=1626271999]
@@ -686,13 +597,14 @@ transform = Transform3D(1.9106853e-15, 4.3711385e-08, 1, 0.99999994, -4.3711385e
 shape = SubResource("BoxShape3D_kxttn")
 
 [node name="CAMERABlock" type="MeshInstance3D" parent="PlayerManager" unique_id=2113137792]
-transform = Transform3D(1, 0, 0, 0, -0.0005934675, -0.9999998, 0, 0.9999998, -0.0005934675, 0, -11.384084, -0.60183656)
+transform = Transform3D(1, 0, 0, 0, -0.0005934675, -0.9999998, 0, 0.9999998, -0.0005934675, 0, 10.480542, -0.60183656)
+visible = false
 material_override = SubResource("StandardMaterial3D_vuq5q")
 mesh = SubResource("PlaneMesh_5bpam")
 skeleton = NodePath("../Camera3D")
 
 [node name="Camera3D" type="Camera3D" parent="PlayerManager" unique_id=590773890]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -11.384084, -0.026306748)
+transform = Transform3D(1, 0, 0, 0, 0.99625385, -0.08647761, 0, 0.08647761, 0.99625385, 0, 5.747875, 11.382333)
 fov = 95.0
 far = 100.0
 
@@ -806,43 +718,36 @@ transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 4.526157, 4.1360416)
 transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
 mesh = SubResource("ArrayMesh_dxu76")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
 
 [node name="wood2" type="MeshInstance3D" parent="walls/wall1" unique_id=802150029]
 transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
 mesh = SubResource("ArrayMesh_nekiu")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood3" type="MeshInstance3D" parent="walls/wall1" unique_id=1250459363]
 transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 5.1326284, -0.29999924)
 mesh = SubResource("ArrayMesh_kwhfa")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood4" type="MeshInstance3D" parent="walls/wall1" unique_id=1916649045]
 transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
 mesh = SubResource("ArrayMesh_ir7h2")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood5" type="MeshInstance3D" parent="walls/wall1" unique_id=1791884920]
 transform = Transform3D(0.6733257, -0.7175145, -2.4217206e-15, 0.6935974, 0.6965434, 2.5994315e-15, -9.020524e-17, 3.5527126e-15, 0.9999999, -1.890408, -1.8371186, -0.29999733)
 mesh = SubResource("ArrayMesh_oxlh4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="sheet1" type="MeshInstance3D" parent="walls/wall1" unique_id=49763412]
 transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.0646448, 0.19838047, -0.29123783)
 mesh = SubResource("ArrayMesh_4n2wh")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="sheet2" type="MeshInstance3D" parent="walls/wall1" unique_id=1765594154]
 transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
 mesh = SubResource("ArrayMesh_a1hl4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="walls/wall1" unique_id=1050611416]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
@@ -856,43 +761,36 @@ transform = Transform3D(-1.9989252, -0.027912075, 0.05933256, -0.027924364, 1.99
 transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
 mesh = SubResource("ArrayMesh_dxu76")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
 
 [node name="wood2" type="MeshInstance3D" parent="walls/wall2" unique_id=133404089]
 transform = Transform3D(-0.04646409, -0.99891996, 0, 0.99891984, -0.04646409, -5.820766e-11, -5.820766e-11, 0, 1, 2.5194168, 4.561062, -0.29999733)
 mesh = SubResource("ArrayMesh_nekiu")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood3" type="MeshInstance3D" parent="walls/wall2" unique_id=1692628487]
 transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
 mesh = SubResource("ArrayMesh_kwhfa")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood4" type="MeshInstance3D" parent="walls/wall2" unique_id=911881276]
 transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
 mesh = SubResource("ArrayMesh_ir7h2")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood5" type="MeshInstance3D" parent="walls/wall2" unique_id=113584657]
 transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
 mesh = SubResource("ArrayMesh_oxlh4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="sheet1" type="MeshInstance3D" parent="walls/wall2" unique_id=2119487541]
 transform = Transform3D(0.57271373, 0.005604633, -0.0020106323, -0.005070727, 0.56045413, 0.117906556, 0.003121281, -0.11788254, 0.56047285, 2.153638, 0.7565253, 1.2452793)
 mesh = SubResource("ArrayMesh_4n2wh")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="sheet2" type="MeshInstance3D" parent="walls/wall2" unique_id=1618607028]
 transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
 mesh = SubResource("ArrayMesh_a1hl4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="walls/wall2" unique_id=1984085630]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
@@ -906,43 +804,36 @@ transform = Transform3D(-1.9395214, -0.027082708, 0.48736542, 0.48731795, 0.0068
 transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
 mesh = SubResource("ArrayMesh_dxu76")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
 
 [node name="wood2" type="MeshInstance3D" parent="walls/wall3" unique_id=174164116]
 transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
 mesh = SubResource("ArrayMesh_nekiu")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood3" type="MeshInstance3D" parent="walls/wall3" unique_id=177157400]
 transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
 mesh = SubResource("ArrayMesh_kwhfa")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood4" type="MeshInstance3D" parent="walls/wall3" unique_id=277586101]
 transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
 mesh = SubResource("ArrayMesh_ir7h2")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood5" type="MeshInstance3D" parent="walls/wall3" unique_id=1143047532]
 transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
 mesh = SubResource("ArrayMesh_oxlh4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="sheet1" type="MeshInstance3D" parent="walls/wall3" unique_id=656403141]
 transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
 mesh = SubResource("ArrayMesh_4n2wh")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="sheet2" type="MeshInstance3D" parent="walls/wall3" unique_id=1920192971]
 transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
 mesh = SubResource("ArrayMesh_a1hl4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="walls/wall3" unique_id=1957324745]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
@@ -959,43 +850,36 @@ transform = Transform3D(0.46458218, 0, -1.9452927, 0, 2, 0, 1.9452925, 0, 0.4645
 transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
 mesh = SubResource("ArrayMesh_dxu76")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
 
 [node name="wood2" type="MeshInstance3D" parent="walls2/wall1" unique_id=2000437226]
 transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
 mesh = SubResource("ArrayMesh_nekiu")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood3" type="MeshInstance3D" parent="walls2/wall1" unique_id=655858989]
 transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
 mesh = SubResource("ArrayMesh_kwhfa")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood4" type="MeshInstance3D" parent="walls2/wall1" unique_id=1502670703]
 transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
 mesh = SubResource("ArrayMesh_ir7h2")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood5" type="MeshInstance3D" parent="walls2/wall1" unique_id=431705070]
 transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
 mesh = SubResource("ArrayMesh_oxlh4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="sheet1" type="MeshInstance3D" parent="walls2/wall1" unique_id=865075081]
 transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
 mesh = SubResource("ArrayMesh_4n2wh")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="sheet2" type="MeshInstance3D" parent="walls2/wall1" unique_id=838958389]
 transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
 mesh = SubResource("ArrayMesh_a1hl4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="walls2/wall1" unique_id=1868871532]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
@@ -1009,43 +893,36 @@ transform = Transform3D(-0.8790638, 0, 1.796454, 0, 2, 0, -1.7964549, 0, -0.8790
 transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
 mesh = SubResource("ArrayMesh_dxu76")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
 
 [node name="wood2" type="MeshInstance3D" parent="walls2/wall2" unique_id=877591048]
 transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
 mesh = SubResource("ArrayMesh_nekiu")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood3" type="MeshInstance3D" parent="walls2/wall2" unique_id=1870427831]
 transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
 mesh = SubResource("ArrayMesh_kwhfa")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood4" type="MeshInstance3D" parent="walls2/wall2" unique_id=1399296159]
 transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
 mesh = SubResource("ArrayMesh_ir7h2")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood5" type="MeshInstance3D" parent="walls2/wall2" unique_id=1285186236]
 transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
 mesh = SubResource("ArrayMesh_oxlh4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="sheet1" type="MeshInstance3D" parent="walls2/wall2" unique_id=299084034]
 transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
 mesh = SubResource("ArrayMesh_4n2wh")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="sheet2" type="MeshInstance3D" parent="walls2/wall2" unique_id=400890713]
 transform = Transform3D(0.5723851, 0.020231899, 0.0014365762, -0.020273458, 0.56944966, 0.057898875, 0.0006169081, -0.057913434, 0.5698082, -2.2508888, 0.5450001, 0.11573839)
 mesh = SubResource("ArrayMesh_a1hl4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="walls2/wall2" unique_id=1086972991]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
@@ -1059,126 +936,68 @@ transform = Transform3D(-1.7396966, 0, -0.98663926, 0, 2, 0, 0.9866394, 0, -1.73
 transform = Transform3D(0.96666694, -9.09446e-17, 0, -8.7913146e-17, 1, 0, -2.220446e-16, 0, 1, 2.115, 3.764, -0.3)
 mesh = SubResource("ArrayMesh_dxu76")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_dtgah")
 
 [node name="wood2" type="MeshInstance3D" parent="walls2/wall3" unique_id=712730440]
 transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, 0, 2.220446e-16, 1, 2.5457668, 2.674, -0.29999998)
 mesh = SubResource("ArrayMesh_nekiu")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood3" type="MeshInstance3D" parent="walls2/wall3" unique_id=1148531994]
 transform = Transform3D(-0.046464086, -0.9989199, 0, 0.99891984, -0.046464086, 3.5527137e-15, -3.5527137e-15, 4.440892e-16, 1, -5.534096, 2.2940001, -0.3)
 mesh = SubResource("ArrayMesh_kwhfa")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood4" type="MeshInstance3D" parent="walls2/wall3" unique_id=34476274]
 transform = Transform3D(0.9641139, -0.07263303, 0, 0.07021196, 0.9973589, 3.5527137e-15, -2.220446e-16, -3.5527137e-15, 1, 2.115, 2.898, -0.3)
 mesh = SubResource("ArrayMesh_ir7h2")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="wood5" type="MeshInstance3D" parent="walls2/wall3" unique_id=1815766373]
 transform = Transform3D(0.965449, -0.050185923, 0, 0.048513077, 0.99873996, 3.5527137e-15, -9.020562e-17, 3.5527137e-15, 1, 2.115, -3.415, -0.3)
 mesh = SubResource("ArrayMesh_oxlh4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_gprav")
 
 [node name="sheet1" type="MeshInstance3D" parent="walls2/wall3" unique_id=2005637810]
 transform = Transform3D(0.572675, 0.008933004, 0, -0.008933004, 0.572675, 0, 0, 0, 0.572744, 2.116, 0.756, -0.023)
 mesh = SubResource("ArrayMesh_4n2wh")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="sheet2" type="MeshInstance3D" parent="walls2/wall3" unique_id=1919991475]
-transform = Transform3D(0.5726869, -0.008107003, -1.110223e-16, 0.008107003, 0.5726869, 1.7763568e-15, -2.220446e-16, 0, 0.572744, -2.183, 0.545, -0.023)
+transform = Transform3D(0.5726869, -0.008107003, 0, 0.008107003, 0.5726869, 1.7763568e-15, 0, 0, 0.572744, -2.1830006, 0.5450001, -0.023002625)
 mesh = SubResource("ArrayMesh_a1hl4")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_1v67w")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="walls2/wall3" unique_id=364590000]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04852295, 0.82251024, 0.5)
 visible = false
 shape = SubResource("BoxShape3D_4ha07")
 
-[node name="cloud2" type="Node3D" parent="." unique_id=796749282]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 28.24664, 0)
+[node name="cloud" type="Node3D" parent="." unique_id=1440261997]
+transform = Transform3D(-0.1537862, 0, 1.9940786, 0, 2, 0, -1.9940786, 0, -0.1537862, 0, 10.305252, 0)
 
-[node name="Mball_008" type="MeshInstance3D" parent="cloud2" unique_id=90651632]
-transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, 0, 0, 0)
+[node name="Mball_008" type="MeshInstance3D" parent="cloud" unique_id=1728642353]
+transform = Transform3D(96.33774, 4.7683716e-07, -3.410605e-13, 0, -1.1484347e-05, 83.11763, 4.7683716e-07, -96.33773, -9.908401e-06, 39.0515, -2.400486, -29.95285)
 mesh = SubResource("ArrayMesh_heff3")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_20psd")
 
-[node name="Mball_010" type="MeshInstance3D" parent="cloud2" unique_id=1063269853]
+[node name="Mball_010" type="MeshInstance3D" parent="cloud" unique_id=2127448763]
 transform = Transform3D(79.6308, 54.220703, 2.044828e-06, 0, -4.2110537e-06, 83.11764, 54.220707, -79.63079, -3.0031197e-06, 22.594826, 0, 0)
 mesh = SubResource("ArrayMesh_heff3")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_kh1jr")
 
-[node name="Mball_009" type="MeshInstance3D" parent="cloud2" unique_id=867347751]
-transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, -16.579079, 0, 14.951401)
+[node name="Mball_009" type="MeshInstance3D" parent="cloud" unique_id=1744346309]
+transform = Transform3D(96.337715, 0, -1.7053026e-13, 0, -1.1484347e-05, 83.11763, 0, -96.33771, -9.908398e-06, -20.027187, -0.8407097, 27.29346)
 mesh = SubResource("ArrayMesh_heff3")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_uitra")
 
-[node name="Mball_012" type="MeshInstance3D" parent="cloud2" unique_id=1170120137]
-transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, -27.071926, 0, 44.629272)
+[node name="Mball_012" type="MeshInstance3D" parent="cloud" unique_id=543253406]
+transform = Transform3D(96.33774, 4.7683716e-07, -3.410605e-13, 0, -1.1484347e-05, 83.11763, 4.7683716e-07, -96.33773, -9.908401e-06, 13.381071, 5.6079674, 37.274292)
 mesh = SubResource("ArrayMesh_heff3")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_i0ny8")
 
-[node name="Mball_011" type="MeshInstance3D" parent="cloud2" unique_id=291339470]
-transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, -15.579079, 0, -23.691864)
+[node name="Mball_011" type="MeshInstance3D" parent="cloud" unique_id=15786570]
+transform = Transform3D(96.33772, 0, -2.2737368e-13, 0, -1.1484347e-05, 83.11763, 0, -96.337715, -9.908399e-06, -26.523066, 4.0523415, -24.780697)
 mesh = SubResource("ArrayMesh_heff3")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_as4xp")
-
-[node name="StaticBody3D" type="StaticBody3D" parent="cloud2" unique_id=380422289]
-transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 6.0616245, -15.219097, -7.682955)
-
-[node name="Stone_5_Low2" type="MeshInstance3D" parent="cloud2/StaticBody3D" unique_id=1591913238]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -37.721756)
-material_override = SubResource("StandardMaterial3D_ct7aa")
-mesh = SubResource("ArrayMesh_gl1gq")
-skeleton = NodePath("")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="cloud2/StaticBody3D" unique_id=1556593223]
-transform = Transform3D(1, 0, 0, 0, -0.0031764891, -0.99999493, 0, 0.99999493, -0.0031764891, -0.043017387, 0.00011968613, -0.03759747)
-shape = SubResource("CylinderShape3D_a1hl4")
-
-[node name="cloud3" type="Node3D" parent="." unique_id=1440261997]
-transform = Transform3D(-0.1537862, 0, 1.9940786, 0, 2, 0, -1.9940786, 0, -0.1537862, 0, 21.136795, 0)
-
-[node name="Mball_008" type="MeshInstance3D" parent="cloud3" unique_id=1728642353]
-transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, 0, 0, 0)
-mesh = SubResource("ArrayMesh_heff3")
-skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_20psd")
-
-[node name="Mball_010" type="MeshInstance3D" parent="cloud3" unique_id=2127448763]
-transform = Transform3D(79.6308, 54.220703, 2.044828e-06, 0, -4.2110537e-06, 83.11764, 54.220707, -79.63079, -3.0031197e-06, 22.594826, 0, 0)
-mesh = SubResource("ArrayMesh_heff3")
-skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_kh1jr")
-
-[node name="Mball_009" type="MeshInstance3D" parent="cloud3" unique_id=1744346309]
-transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, -15.579079, 0, 14.951401)
-mesh = SubResource("ArrayMesh_heff3")
-skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_uitra")
-
-[node name="Mball_012" type="MeshInstance3D" parent="cloud3" unique_id=543253406]
-transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, -27.071926, 0, 44.629272)
-mesh = SubResource("ArrayMesh_heff3")
-skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_i0ny8")
-
-[node name="Mball_011" type="MeshInstance3D" parent="cloud3" unique_id=15786570]
-transform = Transform3D(96.337685, 0, 0, 0, -1.1484347e-05, 83.11763, 0, -96.33768, -9.9083945e-06, -15.579079, 0, -23.691864)
-mesh = SubResource("ArrayMesh_heff3")
-skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_as4xp")
 
 [editable path="Bus"]
