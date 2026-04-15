@@ -42,7 +42,9 @@ var parallax_layer_3: ParallaxLayer
 @export var parallax_h_speed_1: float = 200.0
 @export var parallax_h_speed_2: float = 100.0
 @export var parallax_h_speed_3: float = 50.0
-@export var parallax_v_speed: float = 50.0
+@export var parallax_v_speed_1: float = 200.0
+@export var parallax_v_speed_2: float = 100.0
+@export var parallax_v_speed_3: float = 25.0
 @export var parallax_altitude_factor_h: float = 0.1
 @export var parallax_altitude_factor_v: float = 0.1
 @export var parallax_base_y_offset: float = -100.0
@@ -345,15 +347,15 @@ func _update_parallax(delta: float) -> void:
 	# apply to each layer with their respective speeds
 	if parallax_layer_1:
 		parallax_layer_1.motion_offset.x = h_offset * (parallax_h_speed_1 + (altitude * parallax_altitude_factor_h))
-		parallax_layer_1.motion_offset.y = cam_rot_x * parallax_v_speed + (altitude * parallax_altitude_factor_v) + parallax_base_y_offset
+		parallax_layer_1.motion_offset.y = cam_rot_x * parallax_v_speed_1 + (altitude * parallax_altitude_factor_v) + parallax_base_y_offset
 		
 	if parallax_layer_2:
 		parallax_layer_2.motion_offset.x = h_offset * (parallax_h_speed_2 + (altitude * (parallax_altitude_factor_h * 0.5)))
-		parallax_layer_2.motion_offset.y = cam_rot_x * (parallax_v_speed * 0.75) + (altitude * (parallax_altitude_factor_v * 0.5)) + parallax_base_y_offset
+		parallax_layer_2.motion_offset.y = cam_rot_x * parallax_v_speed_2 + (altitude * (parallax_altitude_factor_v * 0.5)) + parallax_base_y_offset
 		
 	if parallax_layer_3:
 		parallax_layer_3.motion_offset.x = h_offset * (parallax_h_speed_3 + (altitude * (parallax_altitude_factor_h * 0.25)))
-		parallax_layer_3.motion_offset.y = cam_rot_x * (parallax_v_speed * 0.5) + (altitude * (parallax_altitude_factor_v * 0.25)) + parallax_base_y_offset
+		parallax_layer_3.motion_offset.y = cam_rot_x * parallax_v_speed_3 + (altitude * (parallax_altitude_factor_v * 0.25)) + parallax_base_y_offset
 
 func _update_camera(delta: float) -> void:
 	var target_pos: Vector3 = global_transform.origin + Vector3(0, 1.5, 0)
