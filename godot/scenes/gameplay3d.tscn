@@ -261,7 +261,7 @@ render_priority = 0
 shader = ExtResource("3_cyx30")
 shader_parameter/color_inner = Color(1, 0.70980394, 0.6745098, 1)
 shader_parameter/color_mid = Color(1, 0.70980394, 0.6745098, 1)
-shader_parameter/color_outer = Color(1, 0.70980394, 0.9647059, 1)
+shader_parameter/color_outer = Color(0.5058824, 0.69411767, 0.13725491, 1)
 shader_parameter/radius_inner = 0.34
 shader_parameter/radius_outer = 0.47
 
