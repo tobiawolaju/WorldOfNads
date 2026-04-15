@@ -58,22 +58,22 @@ color = Color(0.81149143, 0.9999998, 0.99494106, 1)
 [node name="ParallaxLayer1" type="ParallaxLayer" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground" unique_id=1636289296]
 
 [node name="Sprite2D2" type="Sprite2D" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground/ParallaxLayer1" unique_id=1307648738]
-position = Vector2(257.00006, 270.50003)
-scale = Vector2(2.4599998, 2.1825)
+position = Vector2(292.49994, 106.999985)
+scale = Vector2(3.4774997, 3.6499999)
 texture = ExtResource("3_22dhc")
 
 [node name="ParallaxLayer2" type="ParallaxLayer" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground" unique_id=89824068]
 
 [node name="Sprite2D" type="Sprite2D" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground/ParallaxLayer2" unique_id=1801284766]
-position = Vector2(262.99994, 247)
-scale = Vector2(2.43, 2.3249998)
+position = Vector2(292.49994, 106.999985)
+scale = Vector2(3.4774997, 3.6499999)
 texture = ExtResource("2_xqgb2")
 
 [node name="ParallaxLayer3" type="ParallaxLayer" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground" unique_id=812731944]
 
 [node name="Sprite2D" type="Sprite2D" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground/ParallaxLayer3" unique_id=1682047907]
-position = Vector2(289.49997, 238.50002)
-scale = Vector2(2.2375002, 2.1975002)
+position = Vector2(292.49994, 106.999985)
+scale = Vector2(3.4774997, 3.6499999)
 texture = ExtResource("4_765kx")
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="CanvasLayer/BoxContainer/Node" unique_id=1886500815]

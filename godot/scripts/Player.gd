@@ -24,7 +24,8 @@ var held_object: RigidBody3D = null
 var last_pickup_request_ms: int = 0
 
 # --- CAMERA & ZOOM SETTINGS ---
-@export var camera_distance: float =8.0
+@export var camera_distance: float = 8.0
+@export var camera_screen_offset: Vector2 = Vector2(-0.1,-0.2) # x: -1 (left) to 1 (right), y: -1 (bottom) to 1 (top)
 @export var camera_smoothness: float = 8.0
 @export var min_pitch: float = deg_to_rad(0.0)
 @export var max_pitch: float = deg_to_rad(60.0)
@@ -42,12 +43,12 @@ var parallax_layer_3: ParallaxLayer
 @export var parallax_h_speed_1: float = 200.0
 @export var parallax_h_speed_2: float = 100.0
 @export var parallax_h_speed_3: float = 50.0
-@export var parallax_v_speed_1: float = 200.0
-@export var parallax_v_speed_2: float = 100.0
-@export var parallax_v_speed_3: float = 25.0
+@export var parallax_v_speed_1: float = 100.0
+@export var parallax_v_speed_2: float = 50.0
+@export var parallax_v_speed_3: float = 25.5
 @export var parallax_altitude_factor_h: float = 0.1
-@export var parallax_altitude_factor_v: float = 0.1
-@export var parallax_base_y_offset: float = -100.0
+@export var parallax_altitude_factor_v: float = 1
+@export var parallax_base_y_offset: float = 0.0
 
 # --- NODE REFERENCES ---
 @onready var camera: Camera3D = get_node("../Camera3D")
@@ -389,6 +390,21 @@ func _update_camera(delta: float) -> void:
 	camera.look_at(target_pos, Vector3.UP)
 	var target_fov := 125.0 if _is_local_holding_chicken() else 95.0
 	camera.fov = lerp(camera.fov, target_fov, delta * camera_smoothness)
+	
+	# --- SCREEN OFFSET CALCULATION ---
+	# We use the distance to the target to calculate the world-unit equivalent of screen-space -1.0 to 1.0
+	var dist_to_target = camera.global_position.distance_to(target_pos)
+	var v_fov_rad = deg_to_rad(camera.fov)
+	var viewport_size = get_viewport().get_visible_rect().size
+	var aspect = viewport_size.x / max(1.0, viewport_size.y)
+	
+	var half_height = dist_to_target * tan(v_fov_rad / 2.0)
+	var half_width = half_height * aspect
+	
+	# Godot's h_offset > 0 shifts camera Right (moves world Left). 
+	# So for camera_screen_offset.x = 1.0 (player on right), we need negative h_offset.
+	camera.h_offset = -camera_screen_offset.x * half_width
+	camera.v_offset = -camera_screen_offset.y * half_height
 	
 	_update_parallax(delta)
 
