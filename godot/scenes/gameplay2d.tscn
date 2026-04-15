@@ -3,9 +3,12 @@
 [ext_resource type="PackedScene" uid="uid://b48njcleqy6m3" path="res://scenes/gameplay3d.tscn" id="1_1iwhs"]
 [ext_resource type="Texture2D" uid="uid://c32ce524dwv4m" path="res://assets/images/white_circle.png" id="2_cqgoe"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="2_ikted"]
+[ext_resource type="Texture2D" uid="uid://bajv5ofkwgqai" path="res://assets/images/skybg1.png" id="2_xqgb2"]
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/joystick.gd" id="3_1iwhs"]
+[ext_resource type="Texture2D" uid="uid://boe2s7w82tqh6" path="res://assets/images/skybg2.png" id="3_22dhc"]
 [ext_resource type="Script" uid="uid://vwbunt2j3px3" path="res://scripts/pick_button.gd" id="3_uw04a"]
 [ext_resource type="Texture2D" uid="uid://bipdolhh0db82" path="res://assets/images/white_circle2.png" id="4_8y4rh"]
+[ext_resource type="Texture2D" uid="uid://ckhuppcn5r3xr" path="res://assets/images/skybg3.png" id="4_765kx"]
 [ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/Events.gd" id="4_events"]
 [ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/buttons.gd" id="7_vob6w"]
 
@@ -43,12 +46,35 @@ offset_bottom = 40.0
 
 [node name="Node" type="Node" parent="CanvasLayer/BoxContainer" unique_id=1938871911]
 
-[node name="ColorRect" type="ColorRect" parent="CanvasLayer/BoxContainer/Node" unique_id=442381683]
+[node name="ParallaxBackground" type="ParallaxBackground" parent="CanvasLayer/BoxContainer/Node" unique_id=841963704]
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground" unique_id=442381683]
 offset_left = -856.0
 offset_top = -706.0
 offset_right = 1197.0
 offset_bottom = 938.0
 color = Color(1, 0.70980394, 0.9647059, 1)
+
+[node name="ParallaxLayer1" type="ParallaxLayer" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground" unique_id=1636289296]
+
+[node name="Sprite2D" type="Sprite2D" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground/ParallaxLayer1" unique_id=1801284766]
+position = Vector2(237.5, 81.84726)
+scale = Vector2(1.3025, 1.4539753)
+texture = ExtResource("2_xqgb2")
+
+[node name="ParallaxLayer2" type="ParallaxLayer" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground" unique_id=89824068]
+
+[node name="Sprite2D" type="Sprite2D" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground/ParallaxLayer2" unique_id=1307648738]
+position = Vector2(237.5, 81.84726)
+scale = Vector2(1.3, 1.4)
+texture = ExtResource("3_22dhc")
+
+[node name="ParallaxLayer3" type="ParallaxLayer" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground" unique_id=812731944]
+
+[node name="Sprite2D" type="Sprite2D" parent="CanvasLayer/BoxContainer/Node/ParallaxBackground/ParallaxLayer3" unique_id=1682047907]
+position = Vector2(237.5, 81.84726)
+scale = Vector2(1.3, 1.4)
+texture = ExtResource("4_765kx")
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="CanvasLayer/BoxContainer/Node" unique_id=1886500815]
 custom_minimum_size = Vector2(1400, 1400)
@@ -78,162 +104,6 @@ countdown_label_path = NodePath("../../../../../Node2/BoxContainer/Countdown")
 
 [node name="Waypoint" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cart/WaypointAnchor" parent_id_path=PackedInt32Array(280572712, 53948068) index="0" unique_id=232879054 node_paths=PackedStringArray("camera")]
 camera = NodePath("../../../PlayerManager/Camera3D")
-
-[node name="wood1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall1" parent_id_path=PackedInt32Array(280572712, 1815059464) index="0" unique_id=2077925020]
-surface_material_override/0 = null
-
-[node name="wood2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall1" parent_id_path=PackedInt32Array(280572712, 1815059464) index="1" unique_id=802150029]
-surface_material_override/0 = null
-
-[node name="wood3" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall1" parent_id_path=PackedInt32Array(280572712, 1815059464) index="2" unique_id=1250459363]
-surface_material_override/0 = null
-
-[node name="wood4" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall1" parent_id_path=PackedInt32Array(280572712, 1815059464) index="3" unique_id=1916649045]
-surface_material_override/0 = null
-
-[node name="wood5" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall1" parent_id_path=PackedInt32Array(280572712, 1815059464) index="4" unique_id=1791884920]
-surface_material_override/0 = null
-
-[node name="sheet1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall1" parent_id_path=PackedInt32Array(280572712, 1815059464) index="5" unique_id=49763412]
-surface_material_override/0 = null
-
-[node name="sheet2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall1" parent_id_path=PackedInt32Array(280572712, 1815059464) index="6" unique_id=1765594154]
-surface_material_override/0 = null
-
-[node name="wood1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall2" parent_id_path=PackedInt32Array(280572712, 2016710155) index="0" unique_id=1974529204]
-surface_material_override/0 = null
-
-[node name="wood2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall2" parent_id_path=PackedInt32Array(280572712, 2016710155) index="1" unique_id=133404089]
-surface_material_override/0 = null
-
-[node name="wood3" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall2" parent_id_path=PackedInt32Array(280572712, 2016710155) index="2" unique_id=1692628487]
-surface_material_override/0 = null
-
-[node name="wood4" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall2" parent_id_path=PackedInt32Array(280572712, 2016710155) index="3" unique_id=911881276]
-surface_material_override/0 = null
-
-[node name="wood5" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall2" parent_id_path=PackedInt32Array(280572712, 2016710155) index="4" unique_id=113584657]
-surface_material_override/0 = null
-
-[node name="sheet1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall2" parent_id_path=PackedInt32Array(280572712, 2016710155) index="5" unique_id=2119487541]
-surface_material_override/0 = null
-
-[node name="sheet2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall2" parent_id_path=PackedInt32Array(280572712, 2016710155) index="6" unique_id=1618607028]
-surface_material_override/0 = null
-
-[node name="wood1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall3" parent_id_path=PackedInt32Array(280572712, 1809090519) index="0" unique_id=1373395373]
-surface_material_override/0 = null
-
-[node name="wood2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall3" parent_id_path=PackedInt32Array(280572712, 1809090519) index="1" unique_id=174164116]
-surface_material_override/0 = null
-
-[node name="wood3" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall3" parent_id_path=PackedInt32Array(280572712, 1809090519) index="2" unique_id=177157400]
-surface_material_override/0 = null
-
-[node name="wood4" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall3" parent_id_path=PackedInt32Array(280572712, 1809090519) index="3" unique_id=277586101]
-surface_material_override/0 = null
-
-[node name="wood5" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall3" parent_id_path=PackedInt32Array(280572712, 1809090519) index="4" unique_id=1143047532]
-surface_material_override/0 = null
-
-[node name="sheet1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall3" parent_id_path=PackedInt32Array(280572712, 1809090519) index="5" unique_id=656403141]
-surface_material_override/0 = null
-
-[node name="sheet2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls/wall3" parent_id_path=PackedInt32Array(280572712, 1809090519) index="6" unique_id=1920192971]
-surface_material_override/0 = null
-
-[node name="wood1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall1" parent_id_path=PackedInt32Array(280572712, 491119338) index="0" unique_id=211743368]
-surface_material_override/0 = null
-
-[node name="wood2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall1" parent_id_path=PackedInt32Array(280572712, 491119338) index="1" unique_id=2000437226]
-surface_material_override/0 = null
-
-[node name="wood3" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall1" parent_id_path=PackedInt32Array(280572712, 491119338) index="2" unique_id=655858989]
-surface_material_override/0 = null
-
-[node name="wood4" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall1" parent_id_path=PackedInt32Array(280572712, 491119338) index="3" unique_id=1502670703]
-surface_material_override/0 = null
-
-[node name="wood5" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall1" parent_id_path=PackedInt32Array(280572712, 491119338) index="4" unique_id=431705070]
-surface_material_override/0 = null
-
-[node name="sheet1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall1" parent_id_path=PackedInt32Array(280572712, 491119338) index="5" unique_id=865075081]
-surface_material_override/0 = null
-
-[node name="sheet2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall1" parent_id_path=PackedInt32Array(280572712, 491119338) index="6" unique_id=838958389]
-surface_material_override/0 = null
-
-[node name="wood1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall2" parent_id_path=PackedInt32Array(280572712, 1405044467) index="0" unique_id=1073039901]
-surface_material_override/0 = null
-
-[node name="wood2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall2" parent_id_path=PackedInt32Array(280572712, 1405044467) index="1" unique_id=877591048]
-surface_material_override/0 = null
-
-[node name="wood3" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall2" parent_id_path=PackedInt32Array(280572712, 1405044467) index="2" unique_id=1870427831]
-surface_material_override/0 = null
-
-[node name="wood4" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall2" parent_id_path=PackedInt32Array(280572712, 1405044467) index="3" unique_id=1399296159]
-surface_material_override/0 = null
-
-[node name="wood5" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall2" parent_id_path=PackedInt32Array(280572712, 1405044467) index="4" unique_id=1285186236]
-surface_material_override/0 = null
-
-[node name="sheet1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall2" parent_id_path=PackedInt32Array(280572712, 1405044467) index="5" unique_id=299084034]
-surface_material_override/0 = null
-
-[node name="sheet2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall2" parent_id_path=PackedInt32Array(280572712, 1405044467) index="6" unique_id=400890713]
-surface_material_override/0 = null
-
-[node name="wood1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall3" parent_id_path=PackedInt32Array(280572712, 140393069) index="0" unique_id=35553766]
-surface_material_override/0 = null
-
-[node name="wood2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall3" parent_id_path=PackedInt32Array(280572712, 140393069) index="1" unique_id=712730440]
-surface_material_override/0 = null
-
-[node name="wood3" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall3" parent_id_path=PackedInt32Array(280572712, 140393069) index="2" unique_id=1148531994]
-surface_material_override/0 = null
-
-[node name="wood4" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall3" parent_id_path=PackedInt32Array(280572712, 140393069) index="3" unique_id=34476274]
-surface_material_override/0 = null
-
-[node name="wood5" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall3" parent_id_path=PackedInt32Array(280572712, 140393069) index="4" unique_id=1815766373]
-surface_material_override/0 = null
-
-[node name="sheet1" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall3" parent_id_path=PackedInt32Array(280572712, 140393069) index="5" unique_id=2005637810]
-surface_material_override/0 = null
-
-[node name="sheet2" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/walls2/wall3" parent_id_path=PackedInt32Array(280572712, 140393069) index="6" unique_id=1919991475]
-surface_material_override/0 = null
-
-[node name="Mball_008" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud2" parent_id_path=PackedInt32Array(280572712, 796749282) index="0" unique_id=90651632]
-surface_material_override/0 = null
-
-[node name="Mball_010" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud2" parent_id_path=PackedInt32Array(280572712, 796749282) index="1" unique_id=1063269853]
-surface_material_override/0 = null
-
-[node name="Mball_009" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud2" parent_id_path=PackedInt32Array(280572712, 796749282) index="2" unique_id=867347751]
-surface_material_override/0 = null
-
-[node name="Mball_012" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud2" parent_id_path=PackedInt32Array(280572712, 796749282) index="3" unique_id=1170120137]
-surface_material_override/0 = null
-
-[node name="Mball_011" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud2" parent_id_path=PackedInt32Array(280572712, 796749282) index="4" unique_id=291339470]
-surface_material_override/0 = null
-
-[node name="Mball_008" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud3" parent_id_path=PackedInt32Array(280572712, 1440261997) index="0" unique_id=1728642353]
-surface_material_override/0 = null
-
-[node name="Mball_010" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud3" parent_id_path=PackedInt32Array(280572712, 1440261997) index="1" unique_id=2127448763]
-surface_material_override/0 = null
-
-[node name="Mball_009" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud3" parent_id_path=PackedInt32Array(280572712, 1440261997) index="2" unique_id=1744346309]
-surface_material_override/0 = null
-
-[node name="Mball_012" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud3" parent_id_path=PackedInt32Array(280572712, 1440261997) index="3" unique_id=543253406]
-surface_material_override/0 = null
-
-[node name="Mball_011" parent="CanvasLayer/BoxContainer/Node/SubViewportContainer/SubViewport/Gameplayer/cloud3" parent_id_path=PackedInt32Array(280572712, 1440261997) index="4" unique_id=15786570]
-surface_material_override/0 = null
 
 [node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=2082930407]
 
