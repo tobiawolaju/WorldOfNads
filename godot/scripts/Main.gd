@@ -11,6 +11,12 @@ const LOCAL_URL = "ws://localhost:8080"
 @export var world_environment_path: NodePath = NodePath("WorldEnvironment")
 @export var camera_block_path: NodePath = NodePath("CAMERABlock")
 
+# --- PARALLAX BACKGROUND NODES ---
+@export_group("Parallax Background")
+@export var parallax_layer_1: ParallaxLayer
+@export var parallax_layer_2: ParallaxLayer
+@export var parallax_layer_3: ParallaxLayer
+
 # --- NETWORK & STATE VARIABLES ---
 var ws := WebSocketPeer.new()
 var connected := false
@@ -369,6 +375,12 @@ func _spawn_player(id: String, is_local := false):
 	player.display_name = _get_player_display_name(id)
 	player.is_local = is_local
 	player.root = self
+
+	# Inject parallax layers if this is the local player
+	if is_local:
+		player.parallax_layer_1 = parallax_layer_1
+		player.parallax_layer_2 = parallax_layer_2
+		player.parallax_layer_3 = parallax_layer_3
 
 	if is_local and myplayerswpanpoint:
 		player.global_position = myplayerswpanpoint.global_position

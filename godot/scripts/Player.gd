@@ -34,6 +34,19 @@ var last_pickup_request_ms: int = 0
 @export var touch_orbit_sensitivity: float = 0.0045
 @export var joystick_orbit_sensitivity: float = 0.0005 #0.00225
 
+# --- PARALLAX SETTINGS ---
+var parallax_layer_1: ParallaxLayer
+var parallax_layer_2: ParallaxLayer
+var parallax_layer_3: ParallaxLayer
+@export_group("Parallax Settings Tuning")
+@export var parallax_h_speed_1: float = 200.0
+@export var parallax_h_speed_2: float = 100.0
+@export var parallax_h_speed_3: float = 50.0
+@export var parallax_v_speed: float = 50.0
+@export var parallax_altitude_factor_h: float = 0.1
+@export var parallax_altitude_factor_v: float = 0.1
+@export var parallax_base_y_offset: float = -100.0
+
 # --- NODE REFERENCES ---
 @onready var camera: Camera3D = get_node("../Camera3D")
 
@@ -319,6 +332,29 @@ func _handle_camera_gamepad(delta: float) -> void:
 	if abs(ry) > DEADZONE:
 		cam_rot_x = clamp(cam_rot_x + ry * 0.05 * delta * 60, min_pitch, max_pitch)
 
+func _update_parallax(delta: float) -> void:
+	# Calculate total parallax offsets
+	# Horizontal shift is based on the yaw rotation (cam_rot_y)
+	# Vertical shift is based on pitch (cam_rot_x) and player altitude
+	
+	var altitude = global_transform.origin.y
+	
+	# Horizontal parallax: Rotation + subtle altitude influence
+	var h_offset = cam_rot_y
+	
+	# apply to each layer with their respective speeds
+	if parallax_layer_1:
+		parallax_layer_1.motion_offset.x = h_offset * (parallax_h_speed_1 + (altitude * parallax_altitude_factor_h))
+		parallax_layer_1.motion_offset.y = cam_rot_x * parallax_v_speed + (altitude * parallax_altitude_factor_v) + parallax_base_y_offset
+		
+	if parallax_layer_2:
+		parallax_layer_2.motion_offset.x = h_offset * (parallax_h_speed_2 + (altitude * (parallax_altitude_factor_h * 0.5)))
+		parallax_layer_2.motion_offset.y = cam_rot_x * (parallax_v_speed * 0.75) + (altitude * (parallax_altitude_factor_v * 0.5)) + parallax_base_y_offset
+		
+	if parallax_layer_3:
+		parallax_layer_3.motion_offset.x = h_offset * (parallax_h_speed_3 + (altitude * (parallax_altitude_factor_h * 0.25)))
+		parallax_layer_3.motion_offset.y = cam_rot_x * (parallax_v_speed * 0.5) + (altitude * (parallax_altitude_factor_v * 0.25)) + parallax_base_y_offset
+
 func _update_camera(delta: float) -> void:
 	var target_pos: Vector3 = global_transform.origin + Vector3(0, 1.5, 0)
 	cam_rot_x = clamp(cam_rot_x, min_pitch, max_pitch)
@@ -351,6 +387,8 @@ func _update_camera(delta: float) -> void:
 	camera.look_at(target_pos, Vector3.UP)
 	var target_fov := 125.0 if _is_local_holding_chicken() else 95.0
 	camera.fov = lerp(camera.fov, target_fov, delta * camera_smoothness)
+	
+	_update_parallax(delta)
 
 # --- ANIMATION & NETWORK ---
 func _quantize_pos(value: float) -> int:
