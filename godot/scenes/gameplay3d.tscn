@@ -259,9 +259,9 @@ add_uv2 = true
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_kxttn"]
 render_priority = 0
 shader = ExtResource("3_cyx30")
-shader_parameter/color_inner = Color(1, 0.70980394, 0.6745098, 1)
-shader_parameter/color_mid = Color(1, 0.70980394, 0.6745098, 1)
-shader_parameter/color_outer = Color(0.9523148, 0.55593026, 1, 1)
+shader_parameter/color_inner = Color(1, 0.5019608, 0.49803922, 1)
+shader_parameter/color_mid = Color(1, 0.5019608, 0.49803922, 1)
+shader_parameter/color_outer = Color(0.9410791, 0.4580149, 0.9999996, 1)
 shader_parameter/radius_inner = 0.34
 shader_parameter/radius_outer = 0.47
 
@@ -278,11 +278,12 @@ sky_rotation = Vector3(0, 0, -1.4695672)
 glow_intensity = 0.25
 glow_bloom = 0.6
 glow_hdr_luminance_cap = 10.0
+fog_enabled = true
 fog_mode = 1
-fog_light_color = Color(0.7921569, 0.7411765, 0.9411765, 1)
+fog_light_color = Color(0.8745098, 0.45490196, 0.9137255, 1)
 fog_density = 1.0
 fog_sky_affect = 0.4
-fog_depth_begin = 1.0
+fog_depth_begin = 15.0
 fog_depth_end = 25.0
 volumetric_fog_albedo = Color(0.29411766, 0.2627451, 1, 1)
 
@@ -350,10 +351,9 @@ far = 100.0
 one_shot = true
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=2095516961]
-transform = Transform3D(0.99322146, -0.110632636, -0.035658754, 0.11623737, 0.9453303, 0.3046958, 0, -0.3067753, 0.951782, 0, 0.81719303, 2.8723717)
+transform = Transform3D(0.99322146, -0.11063264, -0.035658758, 0.11623737, 0.9453303, 0.3046958, 0, -0.3067753, 0.951782, 0, 3.5667095, 2.8723717)
 light_color = Color(1, 0.7611074, 0.5848961, 1)
 light_energy = 2.0
-shadow_enabled = true
 
 [node name="Bus" parent="." unique_id=1237644976 instance=ExtResource("5_ocj2s")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.228, 18, 28.03)
@@ -439,7 +439,7 @@ visible = false
 shape = SubResource("ConcavePolygonShape3D_cyx30")
 
 [node name="Floor2" type="MeshInstance3D" parent="GroundMesh" unique_id=1382789926]
-transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 0, -0.057919264, 0)
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 11.547409, 0.013620973, 8.1957245)
 mesh = SubResource("PlaneMesh_cyx30")
 surface_material_override/0 = SubResource("ShaderMaterial_kxttn")
 
