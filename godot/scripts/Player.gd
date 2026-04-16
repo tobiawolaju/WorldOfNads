@@ -25,7 +25,7 @@ var last_pickup_request_ms: int = 0
 
 # --- CAMERA & ZOOM SETTINGS ---
 @export var camera_distance: float = 8.0
-@export var camera_screen_offset: Vector2 = Vector2(-0.1,-0.2) # x: -1 (left) to 1 (right), y: -1 (bottom) to 1 (top)
+@export var camera_screen_offset: Vector2 = Vector2(0.1,-0.2) # x: -1 (left) to 1 (right), y: -1 (bottom) to 1 (top)
 @export var camera_smoothness: float = 8.0
 @export var min_pitch: float = deg_to_rad(0.0)
 @export var max_pitch: float = deg_to_rad(60.0)
@@ -43,12 +43,12 @@ var parallax_layer_3: ParallaxLayer
 @export var parallax_h_speed_1: float = 200.0
 @export var parallax_h_speed_2: float = 100.0
 @export var parallax_h_speed_3: float = 50.0
-@export var parallax_v_speed_1: float = 100.0
-@export var parallax_v_speed_2: float = 50.0
-@export var parallax_v_speed_3: float = 25.5
+@export var parallax_v_speed_1: float = 200.0
+@export var parallax_v_speed_2: float = 100.0
+@export var parallax_v_speed_3: float = 200.0
 @export var parallax_altitude_factor_h: float = 0.1
-@export var parallax_altitude_factor_v: float = 1
-@export var parallax_base_y_offset: float = 0.0
+@export var parallax_altitude_factor_v: float = 0.1
+@export var parallax_base_y_offset: float = 100.0
 
 # --- NODE REFERENCES ---
 @onready var camera: Camera3D = get_node("../Camera3D")
