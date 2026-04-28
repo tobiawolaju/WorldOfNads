@@ -83,7 +83,7 @@ const AppContent: React.FC = () => {
     if (!viewportMeta) return;
 
     const defaultViewport =
-      "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
+      "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover";
     const originalViewport = viewportMeta.getAttribute("content") || defaultViewport;
     const mobileDeviceQuery = window.matchMedia("(hover: none) and (pointer: coarse)");
     const landscapeQuery = window.matchMedia("(orientation: landscape)");
@@ -103,7 +103,7 @@ const AppContent: React.FC = () => {
       const scale = Math.min(1, deviceWidth / desktopWidth);
       const revScale = 1 / scale;
       const desktopViewport =
-        `width=${desktopWidth}, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=no`;
+        `width=${desktopWidth}, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=no, viewport-fit=cover`;
 
       viewportMeta.setAttribute("content", desktopViewport);
       document.documentElement.style.setProperty('--rev-scale', revScale.toString());
