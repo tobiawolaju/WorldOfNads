@@ -25,7 +25,7 @@ var last_pickup_request_ms: int = 0
 
 # --- CAMERA & ZOOM SETTINGS ---
 @export var camera_distance: float = 8.0
-@export var camera_screen_offset: Vector2 = Vector2(0.1,-0.2) # x: -1 (left) to 1 (right), y: -1 (bottom) to 1 (top)
+@export var camera_screen_offset: Vector2 = Vector2(-0.15,-0.2) # x: -1 (left) to 1 (right), y: -1 (bottom) to 1 (top)
 @export var camera_smoothness: float = 8.0
 @export var min_pitch: float = deg_to_rad(0.0)
 @export var max_pitch: float = deg_to_rad(60.0)

@@ -1,0 +1,199 @@
+[gd_scene format=3 uid="uid://cqwohrwlunqwn"]
+
+[ext_resource type="Script" uid="uid://13gqwbhom86x" path="res://scripts/gameover.gd" id="1_dy3ie"]
+[ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="1_ncp31"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dy3ie"]
+bg_color = Color(0.99607843, 0.84313726, 0, 1)
+border_width_left = 20
+border_width_top = 10
+border_width_right = 20
+border_width_bottom = 10
+border_color = Color(0.99607843, 0.84313726, 0, 1)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dy3ie"]
+
+[node name="Gameover" type="Node2D" unique_id=532376623]
+script = ExtResource("1_dy3ie")
+
+[node name="Node2" type="Node" parent="." unique_id=49671896]
+
+[node name="Winner" type="VBoxContainer" parent="Node2" unique_id=1112965181]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -171.0
+offset_top = -62.0
+offset_right = 171.0
+offset_bottom = 62.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BoxContainer" type="BoxContainer" parent="Node2/Winner" unique_id=1547773491]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Congrats" type="Label" parent="Node2/Winner/BoxContainer" unique_id=2030613253]
+modulate = Color(1, 1, 1, 0.7176471)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4745098, 0.14901961, 1, 1)
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 60
+text = "Congratulations"
+
+[node name="BoxContainer2" type="BoxContainer" parent="Node2/Winner" unique_id=1824911435]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Countdown" type="Label" parent="Node2/Winner/BoxContainer2" unique_id=1201116873]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4745098, 0.14901961, 1, 1)
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 120
+text = "You won"
+
+[node name="BoxContainer3" type="BoxContainer" parent="Node2/Winner" unique_id=1582980151]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Countdown" type="Label" parent="Node2/Winner/BoxContainer3" unique_id=2142499783]
+modulate = Color(1, 1, 1, 0.7176471)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4745098, 0.14901961, 1, 1)
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 30
+text = "you outplayed other nads"
+horizontal_alignment = 1
+
+[node name="Loser" type="VBoxContainer" parent="Node2" unique_id=204106690]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -171.0
+offset_top = -62.0
+offset_right = 171.0
+offset_bottom = 62.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BoxContainer" type="BoxContainer" parent="Node2/Loser" unique_id=117952747]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Congrats" type="Label" parent="Node2/Loser/BoxContainer" unique_id=1598761661]
+modulate = Color(1, 1, 1, 0.7058824)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8784314, 0, 0.65882355, 1)
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 60
+text = "You almost made it"
+
+[node name="BoxContainer2" type="BoxContainer" parent="Node2/Loser" unique_id=2087374139]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Countdown" type="Label" parent="Node2/Loser/BoxContainer2" unique_id=1206262197]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8784314, 0, 0.65882355, 1)
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 120
+text = "You Tried"
+
+[node name="BoxContainer3" type="BoxContainer" parent="Node2/Loser" unique_id=1829643382]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Countdown" type="Label" parent="Node2/Loser/BoxContainer3" unique_id=811400797]
+modulate = Color(1, 1, 1, 0.7176471)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8784314, 0, 0.65882355, 1)
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 30
+text = "you got outplayed"
+horizontal_alignment = 1
+
+[node name="BoxContainer" type="BoxContainer" parent="Node2" unique_id=1329528941]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -115.0
+offset_top = -58.0
+offset_right = 115.0
+offset_bottom = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="LobbyCoundown" type="Label" parent="Node2/BoxContainer" unique_id=826638092]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_dy3ie")
+text = "Returning to Lobby >> 8"
+
+[node name="skiptimmer" type="Button" parent="Node2" unique_id=1512798298]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -143.0
+offset_top = -74.0
+offset_right = 142.0
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/normal = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/normal_mirrored = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/pressed_mirrored = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/hover_mirrored = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/disabled_mirrored = SubResource("StyleBoxEmpty_dy3ie")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_dy3ie")
+
+[node name="LoserBg" type="ColorRect" parent="." unique_id=314910917]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -738.0
+offset_top = -749.0
+offset_right = 1262.0
+offset_bottom = 1251.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="WinnerBg" type="ColorRect" parent="." unique_id=1614391081]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -745.0
+offset_top = -745.0
+offset_right = 1255.0
+offset_bottom = 1255.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true

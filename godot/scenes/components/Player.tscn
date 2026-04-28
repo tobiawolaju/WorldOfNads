@@ -55,6 +55,9 @@ bind/6/name = &"mixamorig_RightArm"
 bind/6/bone = -1
 bind/6/pose = Transform3D(-0.00680141, 0.009168091, 0.99993485, -0.99623674, -0.08646715, -0.005983466, 0.086406656, -0.99621254, 0.009721688, -5.50056e-05, -0.006772674, 0.00445968)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wha0s"]
+albedo_color = Color(1, 0.14117648, 0.5882353, 1)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gj8f4"]
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_7yak0"]
@@ -159,7 +162,8 @@ bind/25/bone = -1
 bind/25/pose = Transform3D(0.07971042, 0.1733621, 0.9816271, -0.99360865, 0.09277714, 0.064298265, -0.07992567, -0.98047847, 0.1796494, 0.0002988852, -0.01704338, 0.0034920515)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ndbr4"]
-albedo_color = Color(1, 0.2509804, 0.7490196, 1)
+albedo_color = Color(0.9490196, 0.28235295, 0.9843137, 1)
+roughness = 0.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dqrtb"]
 
@@ -249,7 +253,7 @@ bind/5/pose = Transform3D(0.0019466444, 0.011397757, 0.9999331, -0.96902174, -0.
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3wy7d"]
 emission_enabled = true
-emission = Color(1, 1, 1, 1)
+emission = Color(0.7130416, 0.002413661, 0.92686063, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wogoh"]
 
@@ -5691,12 +5695,11 @@ mesh = SubResource("ArrayMesh_u2b1x")
 skin = SubResource("Skin_ps8c2")
 
 [node name="Cube_001" type="MeshInstance3D" parent="Skeleton3D" unique_id=1257854260]
-material_override = SubResource("StandardMaterial3D_qkeax")
+material_override = SubResource("StandardMaterial3D_wha0s")
 mesh = SubResource("ArrayMesh_7yak0")
 skin = SubResource("Skin_mg7oo")
 
 [node name="Cube_004" type="MeshInstance3D" parent="Skeleton3D" unique_id=2036297002]
-visible = false
 material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_doq46")
 skin = SubResource("Skin_6lfvw")
@@ -5717,12 +5720,12 @@ mesh = SubResource("ArrayMesh_ro1n6")
 skin = SubResource("Skin_73ut6")
 
 [node name="Cube_002" type="MeshInstance3D" parent="Skeleton3D" unique_id=1594527453]
-material_override = SubResource("StandardMaterial3D_qkeax")
+material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_wpd72")
 skin = SubResource("Skin_y7h1k")
 
 [node name="Cube_003" type="MeshInstance3D" parent="Skeleton3D" unique_id=230133579]
-material_override = SubResource("StandardMaterial3D_qkeax")
+material_override = SubResource("StandardMaterial3D_ndbr4")
 mesh = SubResource("ArrayMesh_iej4m")
 skin = SubResource("Skin_y7h1k")
 

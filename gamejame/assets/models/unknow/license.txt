@@ -1,0 +1,11 @@
+Model Information:
+* title:	Tendies Chop
+* source:	https://sketchfab.com/3d-models/tendies-chop-f6d5c54904344031911786ecf9d651b7
+* author:	suchaone (https://sketchfab.com/suchaone)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Tendies Chop" (https://sketchfab.com/3d-models/tendies-chop-f6d5c54904344031911786ecf9d651b7) by suchaone (https://sketchfab.com/suchaone) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
