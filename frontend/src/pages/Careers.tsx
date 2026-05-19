@@ -6,10 +6,8 @@ interface TeamMember {
     name: string;
     role: string;
     imageUrl: string;
-    twitter?: string;
+    summary?: string[];
 }
-
-// ---- JOB ROLES WITH FULL DETAILS ---- //
 
 interface JobRole {
     title: string;
@@ -23,258 +21,158 @@ interface JobRole {
 
 const jobRoles: JobRole[] = [
     {
-        title: "Intern",
-        category: "General Support",
-        pay: "Negotiable",
+        title: "Co-Founder, Business & Fundraising",
+        category: "Open Role",
+        pay: "Pre-raise: Equity only (20–30%, 4yr vest / 1yr cliff) | Post-raise: $3,000–$6,000 / month + equity",
         description: [
-            "Learn the ropes of a fast-growing on-chain game studio.",
-            "Assist with testing, community, and basic production tasks.",
-            "Perfect for students or those looking to break into Web3 gaming."
+            "The deal closer. You run the business so Tobi can run the product.",
+            "Lead investor-facing operations and scale the business side of World of Nads."
         ],
         responsibilities: [
-            "Support daily operations and community engagement.",
-            "Assist in manual QA testing of new game builds.",
-            "Help with social media content and documentation."
+            "Lead all VC outreach, investor meetings, and fundraising rounds.",
+            "Build and own the pitch deck and financial model.",
+            "Handle legal structure, company formation, and compliance.",
+            "Close BD deals with ecosystem sponsors, partners, and press.",
+            "Represent the business side in meetings without Tobi present.",
+            "Define go-to-market strategy alongside the Growth Lead."
         ],
         requirements: [
-            "Fast learner with a passion for gaming/Web3.",
-            "Strong communication and organizational skills.",
-            "Independent thinker who gets things done."
+            "Has raised a funding round before or worked directly inside a VC/startup.",
+            "Strong existing network in gaming, Web3, or mobile apps.",
+            "Can sell the vision without needing hand-holding.",
+            "US or Asia based preferred (network access for fundraising).",
+            "Ages 21–35, independent thinker.",
+            "Technically literate (does not need to code but must understand the product)."
         ],
-        bonus: [
-            "Experience with Godot or basic coding.",
-            "Active in the Monad or general crypto ecosystem."
-        ]
+        bonus: ["Priority role for immediate fundraising acceleration."]
     },
     {
-        title: "Security Researcher / Anti-Cheat",
-        category: "Engineering",
-        pay: "Contract-based",
+        title: "Growth Lead, Web2 Marketing",
+        category: "Open Role",
+        pay: "Pre-raise: $300–$600 / month + 0.5–1% equity | Post-raise: $2,000–$3,500 / month + equity",
         description: [
-            "Protect the integrity of competitive browser-based arenas.",
-            "Research and patch exploits in WebAssembly and on-chain logic.",
-            "Build robust anti-cheat systems for high-stakes matches."
+            "Make Web2 gamers obsessed with World of Nads.",
+            "Own player acquisition and social growth loops for launch momentum."
         ],
         responsibilities: [
-            "Perform security audits on game client and smart contracts.",
-            "Develop real-time detection for bots and memory tampering.",
-            "Investigate reports of unfair play and exploit attempts."
+            "Own social media across TikTok, Instagram, X, and YouTube Shorts.",
+            "Run influencer seeding campaigns targeting mobile gaming audiences.",
+            "Manage paid campaigns and track CAC.",
+            "Handle press outreach and game launch announcements.",
+            "Drive app store optimization when APK/desktop ships.",
+            "Report weekly growth metrics: DAU, retention, and spend."
         ],
         requirements: [
-            "Deep understanding of browser security and WebAssembly.",
-            "Experience with memory forensics or game security.",
-            "Proficient in networking and exploit analysis."
+            "Proven track record in mobile gaming growth (not just Web3).",
+            "Portfolio with real DAU/download outcomes.",
+            "Deep understanding of short-form video, viral loops, and creator marketing.",
+            "Understands the Fortnite / PUBG Mobile / CoD Mobile audience.",
+            "Ships independently without constant briefs.",
+            "US or Asia based, ages 21–35."
         ],
-        bonus: [
-            "Experience securing high-stakes on-chain systems.",
-            "Background in competitive gaming anti-cheat."
-        ]
+        bonus: ["Strong plus if you've scaled mobile titles from zero to traction."]
     },
     {
-        title: "Game Developer (Godot)",
-        category: "Engineering",
-        pay: "Contract-based",
+        title: "Game Artist, 2D/3D",
+        category: "Open Role",
+        pay: "Pre-raise: $400–$800 / month + 0.5–1% equity | Post-raise: $2,500–$4,000 / month + equity",
         description: [
-            "Ship fast, smooth, and responsive gameplay features in Godot.",
-            "Polish the browser-first experience for thousands of players.",
-            "Work directly on the core arena mechanics."
+            "Make the game look so good people screenshot it and post it.",
+            "Own core visual quality across gameplay and marketing assets."
         ],
         responsibilities: [
-            "Implement gameplay systems and interactive UI in Godot.",
-            "Optimize performance for WebAssembly browser builds.",
-            "Integrate game logic with backend and on-chain systems."
+            "Design in-game characters, skins, and cosmetics.",
+            "Own UI/UX across menus, store, HUD, and lobby screens.",
+            "Create animations for movement, drop, and combat.",
+            "Produce marketing visuals including banners and thumbnails.",
+            "Export assets cleanly into Godot 4.",
+            "Iterate fast and ship art weekly."
         ],
         requirements: [
-            "Strong experience with Godot (GDScript/C#).",
-            "Understanding of performance optimization for web.",
-            "Portfolio of shipped game features or prototypes."
+            "Strong 2D portfolio with at least one shipped game or product.",
+            "Can do basic 3D or stylized low-poly work.",
+            "Experience with Godot or can learn quickly.",
+            "Understands asset pipelines and texture atlases.",
+            "Fast turnaround and high responsiveness.",
+            "US or Asia based, ages 21–35."
         ],
-        bonus: [
-            "Knowledge of shading and VFX in Godot.",
-            "Familiarity with Web3 wallet integrations."
-        ]
-    },
-    {
-        title: "Artist (3D / 2D)",
-        category: "Art",
-        pay: "Contract-based",
-        description: [
-            "Define the visual identity of World of Nads arenas.",
-            "Create stylized assets, characters, and environment pieces.",
-            "Work closely with devs to ensure seamless asset integration."
-        ],
-        responsibilities: [
-            "Produce stylized characters, props, and environment assets.",
-            "Optimize assets for browser performance (WebAssembly).",
-            "Assist with basic animation and visual polish."
-        ],
-        requirements: [
-            "Strong art fundamentals and stylized portfolio.",
-            "Experience with Blender or similar 3D tools.",
-            "Understanding of asset compression for web builds."
-        ],
-        bonus: [
-            "Experience with Godot animations or shaders.",
-            "Worked on competitive or stylized games before."
-        ]
-    },
-    {
-        title: "Web3 Developer / Smart Contracts",
-        category: "Engineering",
-        pay: "Contract-based",
-        description: [
-            "Build and deploy the on-chain infrastructure for the WONs.",
-            "Implement high-stakes reward systems and progression.",
-            "Ensure secure, gas-efficient contracts on Monad."
-        ],
-        responsibilities: [
-            "Develop Solidity smart contracts for gameplay and rewards.",
-            "Integrate on-chain systems with the game client.",
-            "Write comprehensive tests and ensure contract safety."
-        ],
-        requirements: [
-            "Deep experience with Solidity and EVM environments.",
-            "Understanding of gas optimization techniques.",
-            "Ability to ship and iterate fast on testnet."
-        ],
-        bonus: [
-            "Experience with Monad or high-throughput chains.",
-            "Knowledge of account abstraction."
-        ]
-    },
-    {
-        title: "Digital Marketer / Growth",
-        category: "Marketing",
-        pay: "Contract-based",
-        description: [
-            "Drive aggressive user acquisition and brand awareness.",
-            "Shape the narrative of World of Nads across social channels.",
-            "Master the art of hype and retention funnels."
-        ],
-        responsibilities: [
-            "Lead marketing campaigns and user growth experiments.",
-            "Create high-engagement social content (X, TikTok, etc.).",
-            "Analyze growth data and optimize player acquisition."
-        ],
-        requirements: [
-            "Proven track record in digital marketing or growth loops.",
-            "Deep understanding of gaming and Web3 culture.",
-            "Data-driven mindset with a focus on shipping fast."
-        ],
-        bonus: [
-            "Experience with video editing or viral content creation.",
-            "Contact list of creators and collaborators."
-        ]
+        bonus: ["Portfolio pieces optimized for browser/mobile performance are a plus."]
     },
     {
         title: "Community Manager",
-        category: "Community",
-        pay: "Contract-based",
+        category: "Open Role",
+        pay: "Pre-raise: $200–$400 / month + 0.25–0.5% equity | Post-raise: $1,500–$2,500 / month + equity",
         description: [
-            "Nurture the core culture of the WONs player base.",
-            "Manage daily engagement on X and Discord.",
-            "Run hype events and onboarding cycles."
+            "Own the players, build the culture, and keep the hype alive.",
+            "Drive daily community energy and turn players into ambassadors."
         ],
         responsibilities: [
-            "Lead community events, tournaments, and challenges.",
-            "Respond to community feedback and foster local culture.",
-            "Work with the growth team on onboarding new players."
+            "Manage Discord and Telegram daily with moderation and engagement.",
+            "Plan and run events, tournaments, and hype campaigns.",
+            "Collect player feedback and relay it clearly to the dev team.",
+            "Handle announcements, patch notes, and community Q&As.",
+            "Identify and grow top community members as ambassadors.",
+            "Work with Growth Lead on content and viral moments."
         ],
         requirements: [
-            "Exceptional communication and vibes management.",
-            "Experience running gaming or Web3 communities.",
-            "Deep understanding of hype cycles and meme culture."
+            "Has managed a gaming or Web3 community with 1,000+ active members.",
+            "Strong written English (fast, clear, never corporate).",
+            "Available daily and responsive across time zones.",
+            "Understands genuine community building, not spam.",
+            "Genuine gamer who understands player priorities.",
+            "US or Asia based, ages 21–35."
         ],
-        bonus: [
-            "Has a personal following on X or Discord.",
-            "Experience with creator/KOL community management."
-        ]
-    },
-    {
-        title: "Partnership Manager",
-        category: "Growth",
-        pay: "Contract-based",
-        description: [
-            "Secure and coordinate partnerships with brands and creators.",
-            "Manage the pipeline for sponsor-backed arena matches.",
-            "Identify strategic growth opportunities."
-        ],
-        responsibilities: [
-            "Identify and pitch potential sponsors and collaborators.",
-            "Negotiate and manage partnership deliverables.",
-            "Maintain long-term relationships with core partners."
-        ],
-        requirements: [
-            "Strong communication and negotiation skills.",
-            "Experience in business development or partnerships.",
-            "Deeply networked in the gaming or Web3 ecosystem."
-        ],
-        bonus: [
-            "Existing contact list of creators and brands.",
-            "Experience managing sponsorship pipelines."
-        ]
+        bonus: ["Experience running tournament/community ops is a plus."]
     }
 ];
-
 
 const teamMembers: TeamMember[] = [
     {
         name: "Tobi Awolaju",
-        role: "Technical Founder — Dev, Art, Growth & Security",
-        imageUrl: "/pfps/pfp-tobi.png"
-    },
-    {
-        name: "Codex (Tobi)",
-        role: "Code Review & QA Intern",
-        imageUrl: "/pfps/pfp-joshua.png"
+        role: "CEO & Technical Founder",
+        imageUrl: "/pfps/pfp-tobi.png",
+        summary: [
+            "Owns product vision, architecture, and engineering decisions.",
+            "Ships game features, smart contracts, and infrastructure.",
+            "Leads technical fundraising narrative and public representation."
+        ]
     }
 ];
 
 const Careers: React.FC = () => {
-    // Stores the index of the currently open accordion. null means all closed.
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
-
-    const toggleSection = (i: number) => {
-        setActiveIndex(activeIndex === i ? null : i);
-    };
-
-    const hiringRoles = [
-        "Intern",
-        "Security Researcher / Anti-Cheat",
-        "Game Developer (Godot)",
-        "Artist (3D / 2D)",
-        "Web3 Developer / Smart Contracts",
-        "Digital Marketer / Growth",
-        "Community Manager",
-        "Partnership Manager"
-    ];
+    const toggleSection = (i: number) => setActiveIndex(activeIndex === i ? null : i);
 
     return (
         <div className="careers-container">
             <div style={{ height: "60px" }} />
-            <h1 className="careers-header">Work with the Nads</h1>
+            <h1 className="careers-header">Team Roles & Job Descriptions</h1>
 
             <p className="careers-intro">
-                World of Nads is shaping fast, competitive, browser-first on-chain arenas.
-                <br />
-                We move fast and hire independent thinkers, contractors, and specialists who ship.
+                Browser-first Web3 Battle Royale on Monad.<br />
+                Targeting US & Asia | Ages 21–35.
             </p>
 
-            {/* TEAM SECTION */}
             <div className="team-section">
-                <h2 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "40px" }}>Meet the Team</h2>
+                <h2 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "40px" }}>Leadership</h2>
                 <div className="team-grid">
                     {teamMembers.map((m, i) => (
                         <div key={i} className="team-member-card">
                             <img src={m.imageUrl} alt={m.name} className="team-member-image" />
                             <h3 className="team-member-name">{m.name}</h3>
                             <p className="team-member-role">{m.role}</p>
+                            {m.summary && (
+                                <ul style={{ textAlign: "left", marginTop: "10px" }}>
+                                    {m.summary.map((point, idx) => (
+                                        <li key={idx}>{point}</li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* ROLES ACCORDION */}
             <h2 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "30px", marginTop: "80px" }}>
                 Open Roles
             </h2>
@@ -286,7 +184,6 @@ const Careers: React.FC = () => {
                         className={`careers-item ${activeIndex === index ? "active" : ""}`}
                         onClick={() => toggleSection(index)}
                     >
-                        {/* HEADLINE: Visible when closed or open */}
                         <div className="careers-question">
                             <div style={{ textAlign: "left" }}>
                                 <h3 style={{ margin: 0, fontSize: "1.3rem" }}>{role.title}</h3>
@@ -294,70 +191,30 @@ const Careers: React.FC = () => {
                                     {role.category}
                                 </span>
                             </div>
-                            <span className="careers-icon">
-                                {activeIndex === index ? "–" : "+"}
-                            </span>
+                            <span className="careers-icon">{activeIndex === index ? "–" : "+"}</span>
                         </div>
 
-                        {/* BODY: Collapsible Content */}
-                        <div
-                            className="careers-answer"
-                            style={activeIndex === index ? { maxHeight: "2000px" } : {}}
-                        >
+                        <div className="careers-answer" style={activeIndex === index ? { maxHeight: "2000px" } : {}}>
                             <div className="job-card-content" style={{ paddingBottom: "20px" }}>
+                                <p><strong>Compensation:</strong> {role.pay}</p>
                                 <p><strong>Description:</strong></p>
-                                <ul>
-                                    {role.description.map((d, i) => (
-                                        <li key={i}>{d}</li>
-                                    ))}
-                                </ul>
-
+                                <ul>{role.description.map((d, i) => <li key={i}>{d}</li>)}</ul>
                                 <p style={{ marginTop: "15px" }}><strong>Responsibilities:</strong></p>
-                                <ul>
-                                    {role.responsibilities.map((r, i) => (
-                                        <li key={i}>{r}</li>
-                                    ))}
-                                </ul>
-
+                                <ul>{role.responsibilities.map((r, i) => <li key={i}>{r}</li>)}</ul>
                                 <p style={{ marginTop: "15px" }}><strong>Requirements:</strong></p>
-                                <ul>
-                                    {role.requirements.map((r, i) => (
-                                        <li key={i}>{r}</li>
-                                    ))}
-                                </ul>
+                                <ul>{role.requirements.map((r, i) => <li key={i}>{r}</li>)}</ul>
+                                <p style={{ marginTop: "15px" }}><strong>Notes:</strong></p>
+                                <ul>{role.bonus.map((b, i) => <li key={i}>{b}</li>)}</ul>
 
-                                <p style={{ marginTop: "15px" }}><strong>Bonus:</strong></p>
-                                <ul>
-                                    {role.bonus.map((b, i) => (
-                                        <li key={i}>{b}</li>
-                                    ))}
-                                </ul>
-
-                                {/* Apply Button Specific to this Role */}
                                 <div style={{ marginTop: "30px", textAlign: "left" }}>
-                                    {hiringRoles.includes(role.title) ? (
-                                        <a
-                                            href={`mailto:careers@worldofnads.xyz?subject=Application for ${role.title}`}
-                                            className="apply-btn"
-                                            style={{
-                                                display: "inline-block",
-                                                background: "#6a38ff",
-                                                color: "white",
-                                                padding: "10px 25px",
-                                                borderRadius: "30px",
-                                                textDecoration: "none",
-                                                fontWeight: "bold",
-                                                fontSize: "1rem"
-                                            }}
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            Apply Now
-                                        </a>
-                                    ) : (
-                                        <span className="not-hiring" style={{ color: "#888", fontStyle: "italic" }}>
-                                            Not hiring at the moment
-                                        </span>
-                                    )}
+                                    <a
+                                        href={`mailto:careers@worldofnads.xyz?subject=Application for ${role.title}`}
+                                        className="apply-btn"
+                                        style={{ display: "inline-block", background: "#6a38ff", color: "white", padding: "10px 25px", borderRadius: "30px", textDecoration: "none", fontWeight: "bold", fontSize: "1rem" }}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        Apply Now
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -365,9 +222,12 @@ const Careers: React.FC = () => {
                 ))}
             </div>
 
-            <div className="careers-cta-wrapper" style={{ marginTop: "80px", textAlign: "center" }}>
+            <p className="careers-intro" style={{ marginTop: "40px" }}>
+                Total pre-raise monthly burn: $900 – $1,800 / month. All roles are equity-first;
+                salary activates post-raise and vesting protects the founder.
+            </p>
 
-            </div>
+            <div className="careers-cta-wrapper" style={{ marginTop: "80px", textAlign: "center" }} />
             <Footer />
         </div>
     );
