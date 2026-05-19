@@ -154,7 +154,7 @@ const Careers: React.FC = () => {
             </p>
 
             <div className="team-section">
-                <h2 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "40px" }}>Leadership</h2>
+                <h2 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "40px" }}>Meet the Team at WoNs</h2>
                 <div className="team-grid">
                     {teamMembers.map((m, i) => (
                         <div key={i} className="team-member-card">
