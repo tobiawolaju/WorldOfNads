@@ -222,11 +222,6 @@ const Careers: React.FC = () => {
                 ))}
             </div>
 
-            <p className="careers-intro" style={{ marginTop: "40px" }}>
-                Total pre-raise monthly burn: $900 – $1,800 / month. All roles are equity-first;
-                salary activates post-raise and vesting protects the founder.
-            </p>
-
             <div className="careers-cta-wrapper" style={{ marginTop: "80px", textAlign: "center" }} />
             <Footer />
         </div>
