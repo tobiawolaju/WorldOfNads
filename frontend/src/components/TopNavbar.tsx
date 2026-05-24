@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import './topnav.css';
 
@@ -8,24 +8,12 @@ type TopNavbarProps = {
 
 const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
-  const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
   const location = useLocation();
 
   const isHome = location.pathname === '/';
   const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
 
-  useEffect(() => {
-    const onScroll = () => {
-      setIsScrolledPastHero(window.scrollY >= window.innerHeight);
-    };
 
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-    };
-  }, []);
 
 
   // central nav config
@@ -77,7 +65,7 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
 
 
 
-  const navClass = `topnav ${isHome ? 'home-nav' : ''} ${isHome && isScrolledPastHero ? 'home-nav-scrolled' : ''}`.trim();
+  const navClass = `topnav ${isHome ? 'home-nav' : ''}`.trim();
 
   return (
     <nav className={navClass}>
@@ -110,7 +98,7 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
       {/* Hamburger */}
 
       {!hideContents && (
-        <button onClick={toggleDrawer} className={`hamburger-btn ${isHome && !isScrolledPastHero ? 'home-hamburger' : ''}`} aria-expanded={isDrawerOpen}>
+        <button onClick={toggleDrawer} className="hamburger-btn" aria-expanded={isDrawerOpen}>
           ☰
           <span className="notif-badge">
             <span className="notif-badge-text">1</span>
