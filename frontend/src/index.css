@@ -71,6 +71,24 @@
   --radius-full: 9999px;
 }
 
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark mode mirrors light mode, swapping only white/black values */
+    --color-background: #000000;
+    --color-foreground: #ffffff;
+
+    --inline-light: #000000;
+    --inline-cta-text: #000000;
+
+    --background: #000000;
+    --foreground: #ffffff;
+    --foreground-muted: rgba(255, 255, 255, 0.7);
+
+    --overlay-bg: rgba(0, 0, 0, 0.3);
+  }
+}
+
 /* Inline-style replacements: all color/fill styling should consume CSS vars */
 .text-inline-yellow { color: var(--inline-yellow); }
 .text-inline-error { color: var(--inline-error); }
@@ -131,7 +149,7 @@ body.play-immersive {
   font-size: 0.875rem;
   line-height: 1.25rem;
   font-weight: 500;
-  color: white;
+  color: var(--inline-cta-text);
   background-color: var(--primary);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
@@ -146,7 +164,7 @@ body.play-immersive {
 .button-primary:focus {
   background-color: var(--primary-hover);
   outline: none;
-  box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary);
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--primary);
 }
 
 .button-primary:active {
@@ -179,7 +197,7 @@ body.play-immersive {
 .button-outline:hover,
 .button-outline:focus {
   background-color: var(--primary);
-  color: white;
+  color: var(--inline-cta-text);
   outline: none;
 }
 
@@ -198,10 +216,10 @@ body.play-immersive {
   align-items: center;
   padding: 0.5rem 0.75rem;
   gap: 0.75rem;
-  background-color: white;
+  background-color: var(--inline-light);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  color: #040217;
+  color: var(--foreground);
   font-weight: 400;
   font-size: 1rem;
   line-height: 1.5rem;
