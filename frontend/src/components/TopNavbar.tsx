@@ -91,7 +91,7 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
             style={{
               fontSize: 'larger',
               margin: '10px',
-              color: isHome && !isScrolledPastHero ? '#ffffff' : '#000',
+              color: '#ffffff',
               fontFamily: "'Font1', sans-serif",
               fontWeight: 'bold',
             }}
