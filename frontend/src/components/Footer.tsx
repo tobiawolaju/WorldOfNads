@@ -45,7 +45,7 @@ const Footer = () => {
           <div className="footer-section">
             <span 
               onClick={logout}
-              style={{ color: "#ff4444", cursor: "pointer", fontWeight: "bold", userSelect: "none" }}
+              className="text-inline-danger" style={{ cursor: "pointer", fontWeight: "bold", userSelect: "none" }}
             >
               Log Out
             </span>

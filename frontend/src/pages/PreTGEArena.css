@@ -114,6 +114,11 @@
   color: #0357ff;
 }
 
+/* Inline color replacement: keep Tx link color driven by CSS variable */
+.pretge-tx-link-inline-replaced {
+  color: var(--inline-accent);
+}
+
 /* --- FILTER BUTTONS --- */
 
 .filter-buttons {

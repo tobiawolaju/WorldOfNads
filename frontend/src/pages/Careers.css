@@ -241,6 +241,12 @@ background: hsl(249, 100%, 74%);
     transform: translateY(2px); 
 }
 
+/* Inline color replacement: apply button now uses theme variables */
+.careers-apply-inline-replaced {
+  background: var(--inline-accent);
+  color: var(--inline-cta-text);
+}
+
 /* --- Responsive Adjustments --- */
 @media (min-width: 768px) {
     .roles-grid {

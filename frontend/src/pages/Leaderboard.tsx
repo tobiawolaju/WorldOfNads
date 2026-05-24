@@ -132,7 +132,7 @@ const Leaderboard: React.FC = () => {
     return (
       <div className="leaderboard-container">
         <div style={{ height: "60px" }} />
-        <p style={{ color: "#fff", textAlign: "center" }}>Loading leaderboard...</p>
+        <p className="text-inline-light" style={{ textAlign: "center" }}>Loading leaderboard...</p>
       </div>
     );
   }
@@ -141,7 +141,7 @@ const Leaderboard: React.FC = () => {
     return (
       <div className="leaderboard-container">
         <div style={{ height: "60px" }} />
-        <p style={{ color: "#fff", textAlign: "center" }}>{loadError}</p>
+        <p className="text-inline-light" style={{ textAlign: "center" }}>{loadError}</p>
       </div>
     );
   }
@@ -199,7 +199,7 @@ const Leaderboard: React.FC = () => {
               );
             })
           ) : (
-            <p style={{ color: "#fff", textAlign: "center", width: "100%" }}>
+            <p className="text-inline-light" style={{ textAlign: "center", width: "100%" }}>
               No matching projects found.
             </p>
           )}
@@ -212,7 +212,7 @@ const Leaderboard: React.FC = () => {
               : "Global Rankings"}
           </h2>
           {filteredUsers.length === 0 ? (
-            <p style={{ color: "#fff" }}>No users yet.</p>
+            <p className="text-inline-light">No users yet.</p>
           ) : (
             <ul>
               {currentUsers.map((user, i) => (

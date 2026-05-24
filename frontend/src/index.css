@@ -32,6 +32,17 @@
 }
 
 :root {
+  /* Theme variable mappings for formerly inline colors (acceptable fallback palette) */
+  --inline-yellow: #ffff00;
+  --inline-error: #ff6b6b;
+  --inline-danger: #ff4444;
+  --inline-muted: #718096;
+  --inline-gray: #777777;
+  --inline-gray-2: #666666;
+  --inline-light: #ffffff;
+  --inline-accent: #6a38ff;
+  --inline-cta-text: #ffffff;
+  --inline-func-subtext: #808080;
   /* Colors */
   --primary: #5B4FFF;
   --primary-hover: #4A3EE6;
@@ -67,6 +78,19 @@
   --radius-lg: 1rem;
   --radius-full: 9999px;
 }
+
+/* Inline-style replacements: all color/fill styling should consume CSS vars */
+.text-inline-yellow { color: var(--inline-yellow); }
+.text-inline-error { color: var(--inline-error); }
+.text-inline-danger { color: var(--inline-danger); }
+.text-inline-muted { color: var(--inline-muted); }
+.text-inline-gray { color: var(--inline-gray); }
+.text-inline-gray-2 { color: var(--inline-gray-2); }
+.text-inline-light { color: var(--inline-light); }
+.text-inline-accent { color: var(--inline-accent); }
+.text-inline-func-subtext { color: var(--inline-func-subtext); }
+.bg-inline-accent { background: var(--inline-accent); }
+.text-inline-cta { color: var(--inline-cta-text); }
 
 html,
 body,

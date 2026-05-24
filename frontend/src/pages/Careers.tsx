@@ -187,7 +187,7 @@ const Careers: React.FC = () => {
                         <div className="careers-question">
                             <div style={{ textAlign: "left" }}>
                                 <h3 style={{ margin: 0, fontSize: "1.3rem" }}>{role.title}</h3>
-                                <span style={{ fontSize: "0.9rem", color: "#666", fontWeight: "normal" }}>
+                                <span className="text-inline-gray-2" style={{ fontSize: "0.9rem", fontWeight: "normal" }}>
                                     {role.category}
                                 </span>
                             </div>
@@ -209,8 +209,8 @@ const Careers: React.FC = () => {
                                 <div style={{ marginTop: "30px", textAlign: "left" }}>
                                     <a
                                         href={`mailto:careers@worldofnads.xyz?subject=Application for ${role.title}`}
-                                        className="apply-btn"
-                                        style={{ display: "inline-block", background: "#6a38ff", color: "white", padding: "10px 25px", borderRadius: "30px", textDecoration: "none", fontWeight: "bold", fontSize: "1rem" }}
+                                        className="apply-btn careers-apply-inline-replaced"
+                                        style={{ display: "inline-block", padding: "10px 25px", borderRadius: "30px", textDecoration: "none", fontWeight: "bold", fontSize: "1rem" }}
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         Apply Now
