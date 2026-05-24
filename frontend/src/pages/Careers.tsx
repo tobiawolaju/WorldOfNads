@@ -132,9 +132,6 @@ const teamMembers: TeamMember[] = [
         role: "CEO & Technical Founder",
         imageUrl: "/pfps/pfp-tobi.png",
         summary: [
-            "Owns product vision, architecture, and engineering decisions.",
-            "Ships game features, smart contracts, and infrastructure.",
-            "Leads technical fundraising narrative and public representation."
         ]
     }
 ];
