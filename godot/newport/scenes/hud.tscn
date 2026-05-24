@@ -1,0 +1,211 @@
+[gd_scene format=3 uid="uid://bjvhk14twbsb6"]
+
+[ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="1_fudvf"]
+[ext_resource type="Texture2D" uid="uid://bipdolhh0db82" path="res://assets/images/white_circle2.png" id="2_ycqod"]
+[ext_resource type="Texture2D" uid="uid://c32ce524dwv4m" path="res://assets/images/white_circle.png" id="3_32sg2"]
+[ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/joystick.gd" id="4_qsiy0"]
+[ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/buttons.gd" id="5_si2yd"]
+[ext_resource type="Script" uid="uid://vwbunt2j3px3" path="res://scripts/pick_button.gd" id="6_uwv0p"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_p3vpr"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ymhbd"]
+bg_color = Color(1, 1, 1, 0.5411765)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jji8u"]
+bg_color = Color(1, 1, 1, 0.61960787)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(0, 0, 0, 0)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[node name="Hud" type="Control" unique_id=861416889]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="." unique_id=1849541613]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 15.0
+offset_right = 120.0
+offset_bottom = 46.0
+grow_horizontal = 2
+theme_override_colors/font_outline_color = Color(0.43137255, 0.32941177, 1, 1)
+theme_override_constants/outline_size = 12
+theme_override_fonts/font = ExtResource("1_fudvf")
+theme_override_font_sizes/font_size = 30
+text = "Searching for Server"
+uppercase = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=701090656]
+
+[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer" unique_id=569957497]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=802481236]
+
+[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1842006099]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -38.0
+offset_top = 6.0
+offset_right = 38.0
+offset_bottom = 53.0
+grow_horizontal = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Countdown" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer" unique_id=404622455]
+layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.39607844)
+theme_override_constants/outline_size = 0
+theme_override_constants/shadow_outline_size = 10
+theme_override_fonts/font = ExtResource("1_fudvf")
+theme_override_font_sizes/font_size = 35
+text = ":)"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BoxContainer2" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1306771986]
+offset_left = 19.0
+offset_top = 66.0
+offset_right = 95.0
+offset_bottom = 85.0
+size_flags_horizontal = 0
+size_flags_vertical = 4
+
+[node name="username" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer2" unique_id=229289726]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.26106378, 0.6644564, 0.85876876, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.47058824)
+theme_override_constants/shadow_outline_size = 5
+theme_override_fonts/font = ExtResource("1_fudvf")
+theme_override_font_sizes/font_size = 18
+text = "username"
+
+[node name="BoxContainer3" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1509763072]
+offset_left = 20.0
+offset_top = 87.0
+offset_right = 223.0
+offset_bottom = 103.0
+size_flags_horizontal = 0
+size_flags_vertical = 4
+
+[node name="status2" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=2089582472]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 1, 0.1882353, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.541)
+theme_override_constants/shadow_outline_size = 5
+theme_override_fonts/font = ExtResource("1_fudvf")
+theme_override_font_sizes/font_size = 16
+text = "BeNad:"
+
+[node name="status" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=1931454316]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.541)
+theme_override_constants/shadow_outline_size = 5
+theme_override_fonts/font = ExtResource("1_fudvf")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxTexture_p3vpr")
+text = "you are holding the chicken"
+
+[node name="username_label" type="Label" parent="CanvasLayer" unique_id=10180358]
+visible = false
+offset_left = 140.0
+offset_top = -1.0
+offset_right = 293.0
+offset_bottom = 27.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "username  here"
+
+[node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]
+
+[node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=203270884]
+position = Vector2(-200, -200)
+
+[node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=121289564]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -75.0
+offset_top = -75.0
+offset_right = 75.0
+offset_bottom = 75.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0)
+
+[node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=420255833]
+self_modulate = Color(18.892157, 18.892157, 18.892157, 0.24705882)
+scale = Vector2(0.175, 0.175)
+texture = ExtResource("2_ycqod")
+
+[node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=661345483]
+scale = Vector2(0.16, 0.16)
+texture = ExtResource("3_32sg2")
+script = ExtResource("4_qsiy0")
+
+[node name="Node3" type="Node" parent="." unique_id=1974703911]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="Node3" unique_id=279152189]
+
+[node name="buttons_holder" type="VBoxContainer" parent="Node3/CanvasLayer" unique_id=1960719911]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -91.0
+offset_top = -117.0
+offset_right = 127.0
+offset_bottom = -47.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer/buttons_holder" unique_id=2097036458]
+layout_mode = 2
+alignment = 1
+script = ExtResource("5_si2yd")
+
+[node name="Button2" type="Button" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer" unique_id=849126213]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/pressed_mirrored = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/hover = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/hover_mirrored = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/disabled_mirrored = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/focus = SubResource("StyleBoxFlat_jji8u")
+autowrap_trim_flags = 0
+icon_alignment = 1
+expand_icon = true
+script = ExtResource("6_uwv0p")
