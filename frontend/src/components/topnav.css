@@ -1,5 +1,7 @@
 /* Navbar Container with glassmorphism */
 .topnav {
+  --topnav-blur: 14px;
+  --topnav-fade-height: 28px;
   padding: 10px 20px;
   color: #ffffff;
   display: flex;
@@ -10,14 +12,42 @@
   height: 60px;
   margin: 0;
   position: fixed;
+  overflow: visible;
+  isolation: isolate;
   top: 0px;
   z-index: 999;
-  background-color: rgba(17, 17, 17, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: transparent;
   transition: transform 0.25s ease, width 0.25s ease, background-color 0.25s ease;
 }
 
+
+
+.topnav::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: calc(-1 * var(--topnav-fade-height));
+  background: linear-gradient(
+    to bottom,
+    rgba(17, 17, 17, 0.58) 0%,
+    rgba(17, 17, 17, 0.42) 58%,
+    rgba(17, 17, 17, 0.12) 84%,
+    rgba(17, 17, 17, 0) 100%
+  );
+  backdrop-filter: blur(var(--topnav-blur));
+  -webkit-backdrop-filter: blur(var(--topnav-blur));
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 68%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 68%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.topnav > * {
+  position: relative;
+  z-index: 1;
+}
 @media (orientation: landscape) and (hover: none) and (pointer: coarse) {
   .topnav {
     transform: scale(var(--rev-scale, 1.25));
@@ -152,10 +182,6 @@
 
 /* Media Query for Mobile */
 @media (max-width: 768px) {
-  .topnav {
-    background-color: transparent;
-  }
-
   .nav-links {
     display: none;
   }
@@ -205,10 +231,6 @@
 
 /* Desktop mode: transparent glass bar with theme-aware text colors */
 @media (min-width: 769px) {
-  .topnav {
-    background-color: transparent;
-  }
-
   .topnav .nav-links .link,
   .topnav .nav-links .link:hover,
   .topnav .nav-links .active-link,
