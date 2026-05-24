@@ -152,7 +152,7 @@ const Partners: React.FC = () => {
               </div>
             ))
           ) : (
-            <p style={{ marginTop: "40px", color: "#777" }}>
+            <p className="text-inline-gray" style={{ marginTop: "40px" }}>
               No matching hosts found.
             </p>
           )

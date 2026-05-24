@@ -263,7 +263,7 @@ const Home: React.FC = () => {
           <div className="functional-slide">
             <div className="func-content">
               <h2 className="func-headline">Play</h2>
-              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>
+              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}>
                 {renderWaveText("Drop into the arena. Outplay everyone. Earn your place. Every match is a fight for position. Every win moves you closer to recognition.")}
               </p>
             </div>
@@ -278,7 +278,7 @@ const Home: React.FC = () => {
           <div className="functional-slide reverse">
             <div className="func-content">
               <h2 className="func-headline">Hosts</h2>
-              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}> {renderWaveText("Control the arena. Shape the battlefield. Get seen where competition happens. Sponsors don’t just fund matches — they influence the game.")}</p>
+              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}> {renderWaveText("Control the arena. Shape the battlefield. Get seen where competition happens. Sponsors don’t just fund matches — they influence the game.")}</p>
             </div>
             <div className="func-image">
               <Slide2 />
@@ -289,9 +289,9 @@ const Home: React.FC = () => {
           <div className="functional-slide">
             <div className="func-content">
               <h2 className="func-headline">Built for Competition</h2>
-              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>{renderWaveText("No bots. No shortcuts. No second chances. Every match is real. Every win is earned. Only skill decides who rises.")}</p>
+              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}>{renderWaveText("No bots. No shortcuts. No second chances. Every match is real. Every win is earned. Only skill decides who rises.")}</p>
               <h2 className="section-title">How it works</h2>
-              <p className="func-subtext" style={{ fontSize: '40px', color: 'grey' }}>{renderWaveText("The arena resets every month. Players compete. Only the top rise. The best become recognized Nads.")}</p>
+              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}>{renderWaveText("The arena resets every month. Players compete. Only the top rise. The best become recognized Nads.")}</p>
 
 
             </div>

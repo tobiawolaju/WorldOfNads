@@ -53,7 +53,7 @@ const ReferralPlaceholder: React.FC<ReferralPlaceholderProps> = ({ showAsPopup =
 
         <div className="waitlist-ref-link-row">
           <input className="waitlist-input" value={referralLink} readOnly aria-label="Referral link" />
-          <button className="button waitlist-copy-button" type="button" onClick={copyLink} style={{ background: "#907cff", color: "#fff" }}>
+          <button className="button waitlist-copy-button bg-inline-accent text-inline-cta" type="button" onClick={copyLink}>
             Copy Link
           </button>
         </div>
@@ -65,7 +65,7 @@ const ReferralPlaceholder: React.FC<ReferralPlaceholderProps> = ({ showAsPopup =
               <br /><br />
               Expected wait: shorter than spotting the chicken.
               <br />
-              We'll email you at <span style={{ color: 'yellow', fontWeight: 'bold' }}>{data?.email || "your email address"}</span> when you're ready to deploy.
+              We'll email you at <span className="text-inline-yellow" style={{ fontWeight: "bold" }}>{data?.email || "your email address"}</span> when you're ready to deploy.
             </span>
           </div>
         </div>
@@ -77,7 +77,7 @@ const ReferralPlaceholder: React.FC<ReferralPlaceholderProps> = ({ showAsPopup =
             Join our discord to stay in the loop{' '}
             <a
               title="Join Discord"
-              style={{ color: 'yellow' }}
+              className="text-inline-yellow"
               href="https://discord.gg/z4SUdrKayb"
               target="_blank"
               rel="noopener noreferrer"

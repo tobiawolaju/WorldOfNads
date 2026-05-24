@@ -223,6 +223,11 @@
   max-width: 500px;
 }
 
+/* Inline color replacement: functional subtext now comes from shared CSS var */
+.func-subtext-inline-replaced {
+  color: var(--inline-func-subtext);
+}
+
 .wave-text {
   display: inline;
 }

@@ -91,7 +91,7 @@ function PreTGEArena() {
     return (
       <div className="pretge-container">
         <div style={{ height: "60px" }}></div>
-        <p style={{ color: "#718096" }}>Loading matches...</p>
+        <p className="text-inline-muted">Loading matches...</p>
       </div>
     );
   }
@@ -100,7 +100,7 @@ function PreTGEArena() {
     return (
       <div className="pretge-container">
         <div style={{ height: "60px" }}></div>
-        <p style={{ color: "#718096" }}>{loadError}</p>
+        <p className="text-inline-muted">{loadError}</p>
       </div>
     );
   }
@@ -175,9 +175,9 @@ function PreTGEArena() {
                     href={`https://monadexplorer.com/tx/${project.settleTxHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="pretge-tx-link"
+                    className="pretge-tx-link pretge-tx-link-inline-replaced"
                     title="View Settlement Transaction"
-                    style={{ marginLeft: '10px', color: '#6a38ff', fontWeight: 'bold', fontSize: '0.8rem', textDecoration: 'underline' }}
+                    style={{ marginLeft: '10px', fontWeight: 'bold', fontSize: '0.8rem', textDecoration: 'underline' }}
                   >
                     Tx Hash
                   </a>
@@ -199,7 +199,7 @@ function PreTGEArena() {
             </div>
           ))
         ) : (
-          <p style={{ color: "#718096" }}>
+          <p className="text-inline-muted">
             No projects match your criteria.
           </p>
         )}

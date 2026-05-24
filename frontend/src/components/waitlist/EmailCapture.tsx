@@ -92,7 +92,7 @@ const EmailCapture: React.FC<EmailCaptureProps> = ({ buttonLabel, helperText, cl
           </button>
         </form>
         {error ? (
-          <p className="waitlist-helper waitlist-error" style={{ color: "#ff6b6b" }}>{error}</p>
+          <p className="waitlist-helper waitlist-error text-inline-error">{error}</p>
         ) : waitlistData ? (
           <p className="waitlist-helper waitlist-success">
             {waitlistData.status === "already_on_list" 
