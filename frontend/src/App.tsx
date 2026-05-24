@@ -131,6 +131,35 @@ const AppContent: React.FC = () => {
     };
   }, [location.pathname]);
 
+
+  useEffect(() => {
+    const themeColorMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!themeColorMeta) return;
+
+    const originalThemeColor = themeColorMeta.getAttribute("content") || "#e795e7";
+    const isHomeRoute = location.pathname === "/" || location.pathname === "/home";
+
+    if (isHomeRoute) {
+      themeColorMeta.setAttribute("content", originalThemeColor);
+      return;
+    }
+
+    const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const applyThemeColor = () => {
+      const routeThemeColor = darkModeQuery.matches ? "#6553c7" : "#171717";
+      themeColorMeta.setAttribute("content", routeThemeColor);
+    };
+
+    applyThemeColor();
+    darkModeQuery.addEventListener("change", applyThemeColor);
+
+    return () => {
+      darkModeQuery.removeEventListener("change", applyThemeColor);
+      themeColorMeta.setAttribute("content", originalThemeColor);
+    };
+  }, [location.pathname]);
+
   useEffect(() => {
     if (user?.id && lastUserIdRef.current !== user.id) {
       sessionTrackedRef.current = false;
