@@ -138,12 +138,16 @@
 
 /* Media Query for Mobile */
 @media (max-width: 768px) {
+  .topnav {
+    background-color: transparent;
+  }
+
   .nav-links {
     display: none;
   }
 
   .hamburger-btn {
-    color: #ffffff;
+    color: #111111;
     background: none;
     border: none;
     font-size: 24px;
@@ -152,6 +156,17 @@
     top: 10px;
     right: 20px;
     display: block;
+  }
+
+  .hamburger-btn.home-hamburger {
+    color: #111111;
+  }
+}
+
+@media (max-width: 768px) and (prefers-color-scheme: dark) {
+  .hamburger-btn,
+  .hamburger-btn.home-hamburger {
+    color: #ffffff;
   }
 }
 
