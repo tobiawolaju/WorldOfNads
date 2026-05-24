@@ -75,13 +75,13 @@
 @media (prefers-color-scheme: dark) {
   :root {
     /* Dark mode mirrors light mode, swapping only white/black values */
-    --color-background: #000000;
+    --color-background: #5B4FFF;
     --color-foreground: #ffffff;
 
     --inline-light: #000000;
     --inline-cta-text: #000000;
 
-    --background: #000000;
+    --background: #5B4FFF;
     --foreground: #ffffff;
     --foreground-muted: rgba(255, 255, 255, 0.7);
 
