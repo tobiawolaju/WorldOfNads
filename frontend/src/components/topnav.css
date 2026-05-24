@@ -136,6 +136,20 @@
   right: 10px;
 }
 
+
+@media (prefers-color-scheme: light) {
+  .drawer {
+    background: linear-gradient(180deg, #ffffff, #f4f4f4);
+  }
+
+  .drawer-links .link,
+  .drawer-links .link:hover,
+  .drawer-links .active-link,
+  .close-btn {
+    color: #111111 !important;
+  }
+}
+
 /* Media Query for Mobile */
 @media (max-width: 768px) {
   .topnav {
