@@ -147,7 +147,7 @@ const AppContent: React.FC = () => {
     const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const applyThemeColor = () => {
-      const routeThemeColor = darkModeQuery.matches ? "#6553c7" : "#171717";
+      const routeThemeColor = darkModeQuery.matches ? "#6553c7" : "#ffffff";
       themeColorMeta.setAttribute("content", routeThemeColor);
     };
 
