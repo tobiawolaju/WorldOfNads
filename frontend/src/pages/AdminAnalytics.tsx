@@ -291,7 +291,9 @@ export default function AdminAnalytics() {
   if (!summary || !series) {
     return (
       <div className="analytics-loading">
-        <p>{loading ? "Loading analytics..." : "No analytics data yet."}</p>
+        <p className={loading ? "text-inline-accent" : undefined}>
+          {loading ? "Loading analytics..." : "No analytics data yet."}
+        </p>
         {accessError ? <span className="analytics-auth__error">{accessError}</span> : null}
       </div>
     );

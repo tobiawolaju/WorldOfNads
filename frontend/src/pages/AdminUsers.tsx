@@ -101,7 +101,7 @@ const AdminUsers: React.FC = () => {
       <div className="admin-users">
         <div className="admin-users__header">
           <h1>Admin Users</h1>
-          <p>Loading users...</p>
+          <p className="text-inline-accent">Loading users...</p>
         </div>
       </div>
     );

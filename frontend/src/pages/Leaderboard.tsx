@@ -132,7 +132,7 @@ const Leaderboard: React.FC = () => {
     return (
       <div className="leaderboard-container">
         <div style={{ height: "60px" }} />
-        <p className="text-inline-light" style={{ textAlign: "center" }}>Loading leaderboard...</p>
+        <p className="text-inline-accent" style={{ textAlign: "center" }}>Loading leaderboard...</p>
       </div>
     );
   }
