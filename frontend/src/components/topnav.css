@@ -16,7 +16,7 @@
   isolation: isolate;
   top: 0px;
   z-index: 999;
-  background-color: transparent;
+  background-color: rgba(17, 17, 17, 0.45);
   backdrop-filter: blur(var(--topnav-blur));
   -webkit-backdrop-filter: blur(var(--topnav-blur));
   transition: transform 0.25s ease, width 0.25s ease, background-color 0.25s ease;
@@ -220,35 +220,10 @@
   opacity: 1;
 }
 
-
-@media (prefers-color-scheme: light) {
-  .topnav::before {
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.58) 0%,
-      rgba(255, 255, 255, 0.42) 58%,
-      rgba(255, 255, 255, 0.12) 84%,
-      rgba(255, 255, 255, 0) 100%
-    );
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .topnav::before {
-    background: linear-gradient(
-      to bottom,
-      rgba(17, 17, 17, 0.58) 0%,
-      rgba(17, 17, 17, 0.42) 58%,
-      rgba(17, 17, 17, 0.12) 84%,
-      rgba(17, 17, 17, 0) 100%
-    );
-  }
-}
-
 /* Theme-aware navbar text colors (mobile + desktop) */
 @media (prefers-color-scheme: light) {
   .topnav {
-    background-color: transparent;
+    background-color: rgba(255, 255, 255, 0.45);
     backdrop-filter: blur(var(--topnav-blur));
     -webkit-backdrop-filter: blur(var(--topnav-blur));
   }
@@ -264,7 +239,7 @@
 
 @media (prefers-color-scheme: dark) {
   .topnav {
-    background-color: transparent;
+    background-color: rgba(17, 17, 17, 0.45);
     backdrop-filter: blur(var(--topnav-blur));
     -webkit-backdrop-filter: blur(var(--topnav-blur));
   }
