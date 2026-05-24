@@ -3,7 +3,7 @@
   --topnav-blur: 12px;
   --topnav-fade-height: 28px;
   padding: 10px 20px;
-  color: #ffffff;
+  color: #111111;
   display: flex;
   width: 100%;
   box-sizing: border-box;
@@ -67,7 +67,7 @@
 .nav-links .link {
   font-size: 16px;
   text-decoration: none;
-  color: #ffffff;
+  color: inherit;
   opacity: 0.85;
   transition: opacity 0.2s ease-in-out;
 }
@@ -79,14 +79,14 @@
 
 .nav-links .link:hover,
 .nav-links .active-link {
-  color: #ffffff !important;
+  color: inherit !important;
   opacity: 1;
   font-weight: bold;
 }
 
 /* Hamburger Button - Always White */
 .hamburger-btn {
-  color: #ffffff;
+  color: inherit;
   background: none;
   border: none;
   font-size: 24px;
@@ -204,20 +204,25 @@
 
 /* Page Overrides - Simplified to guarantee white text */
 .topnav.home-nav .nav-links .link {
-  color: #ffffff;
+  color: inherit;
 }
 
 .topnav.home-nav .nav-links .link:hover,
 .topnav.home-nav .nav-links .active-link {
-  color: #ffffff;
+  color: inherit;
   opacity: 1;
 }
 
 .topnav.home-nav.home-nav-scrolled .nav-links .link,
 .topnav.home-nav.home-nav-scrolled .nav-links .link:hover,
 .topnav.home-nav.home-nav-scrolled .nav-links .active-link {
-  color: #ffffff;
+  color: inherit;
   opacity: 1;
 }
 
 /* Theme-aware navbar text colors (mobile + desktop) */
+@media (prefers-color-scheme: dark) {
+  .topnav {
+    color: #ffffff;
+  }
+}
