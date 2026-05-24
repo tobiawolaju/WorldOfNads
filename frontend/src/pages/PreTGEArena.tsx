@@ -91,7 +91,7 @@ function PreTGEArena() {
     return (
       <div className="pretge-container">
         <div style={{ height: "60px" }}></div>
-        <p className="text-inline-muted">Loading matches...</p>
+        <p className="text-inline-accent">Loading matches...</p>
       </div>
     );
   }
