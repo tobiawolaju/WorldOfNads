@@ -8,7 +8,7 @@
 [ext_resource type="Shader" uid="uid://b63b01dx833k" path="res://scenes/floor2.gdshader" id="6_oipnb"]
 [ext_resource type="Texture2D" uid="uid://w5ldcc8yjkgr" path="res://assets/models/stop_sign_texture_1024x1024.png" id="6_xbk5o"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="8_07nfq"]
-[ext_resource type="Shader" uid="uid://c3ksm6nb271ka" path="res://shaders/glicth.gdshader" id="8_oipnb"]
+[ext_resource type="Shader" uid="uid://c3ksm6nb271ka" path="res://assets/shaders/glicth.gdshader" id="8_oipnb"]
 [ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="9_07nfq"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oipnb"]

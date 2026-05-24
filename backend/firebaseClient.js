@@ -4,14 +4,14 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const firebaseConfig = {
-    apiKey: "AIzaSyD3Md8vlOQDg4QoTRJuwNmrv3mg11WMDss",
-    authDomain: "worldofnads-1afcf.firebaseapp.com",
-    databaseURL: "https://worldofnads-1afcf-default-rtdb.firebaseio.com",
-    projectId: "worldofnads-1afcf",
-    storageBucket: "worldofnads-1afcf.firebasestorage.app",
-    messagingSenderId: "129481786742",
-    appId: "1:129481786742:web:4bf0e136f1a6e9a72fa657",
-    measurementId: "G-QP22W5T17Z"
+  apiKey: "AIzaSyBNFaveUoWNE4bBTNBgCnK63Bp25BFr5gs",
+  authDomain: "worldofnads-3b1a2.firebaseapp.com",
+  databaseURL: "https://worldofnads-3b1a2-default-rtdb.firebaseio.com",
+  projectId: "worldofnads-3b1a2",
+  storageBucket: "worldofnads-3b1a2.firebasestorage.app",
+  messagingSenderId: "15570864804",
+  appId: "1:15570864804:web:23a40e23b715988f9af431",
+  measurementId: "G-K9Q3JQVRBW"
 };
 
 const app = initializeApp(firebaseConfig);

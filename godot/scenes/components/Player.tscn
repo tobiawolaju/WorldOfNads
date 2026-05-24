@@ -7,7 +7,7 @@ radius = 0.23692703
 height = 0.805861
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qkeax"]
-albedo_color = Color(1, 0.14117648, 0.5882353, 1)
+albedo_color = Color(1, 0.015686275, 0.34901962, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1usnk"]
 
@@ -56,7 +56,7 @@ bind/6/bone = -1
 bind/6/pose = Transform3D(-0.00680141, 0.009168091, 0.99993485, -0.99623674, -0.08646715, -0.005983466, 0.086406656, -0.99621254, 0.009721688, -5.50056e-05, -0.006772674, 0.00445968)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wha0s"]
-albedo_color = Color(1, 0.14117648, 0.5882353, 1)
+albedo_color = Color(1, 0.015686275, 0.34901962, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gj8f4"]
 
@@ -162,7 +162,8 @@ bind/25/bone = -1
 bind/25/pose = Transform3D(0.07971042, 0.1733621, 0.9816271, -0.99360865, 0.09277714, 0.064298265, -0.07992567, -0.98047847, 0.1796494, 0.0002988852, -0.01704338, 0.0034920515)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ndbr4"]
-albedo_color = Color(0.9490196, 0.28235295, 0.9843137, 1)
+albedo_color = Color(1, 0.15686275, 0.5058824, 1)
+metallic_specular = 0.0
 roughness = 0.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dqrtb"]
@@ -357,6 +358,9 @@ _surfaces = [{
 blend_shape_mode = 0
 
 [sub_resource type="BoxMesh" id="BoxMesh_3wy7d"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hqo6i"]
+albedo_color = Color(0.99999994, 0.5251779, 0.28323418, 1)
 
 [sub_resource type="Animation" id="Animation_wuweo"]
 resource_name = "idle"
@@ -5739,6 +5743,7 @@ transform = Transform3D(0.018, -1.047738e-10, -1.047738e-10, 1.047738e-10, 0.018
 visible = false
 mesh = SubResource("BoxMesh_3wy7d")
 skeleton = NodePath("../../../CollisionShape3D")
+surface_material_override/0 = SubResource("StandardMaterial3D_hqo6i")
 
 [node name="idle" type="AnimationPlayer" parent="." unique_id=1368350315]
 libraries/ = SubResource("AnimationLibrary_jpo2m")
