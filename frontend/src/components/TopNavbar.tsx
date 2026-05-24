@@ -91,7 +91,6 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
             style={{
               fontSize: 'larger',
               margin: '10px',
-              color: '#ffffff',
               fontFamily: "'Font1', sans-serif",
               fontWeight: 'bold',
             }}
