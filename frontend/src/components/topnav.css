@@ -1,6 +1,6 @@
 /* Navbar Container with glassmorphism */
 .topnav {
-  --topnav-blur: 14px;
+  --topnav-blur: 12px;
   --topnav-fade-height: 28px;
   padding: 10px 20px;
   color: #ffffff;
@@ -17,6 +17,8 @@
   top: 0px;
   z-index: 999;
   background-color: transparent;
+  backdrop-filter: blur(var(--topnav-blur));
+  -webkit-backdrop-filter: blur(var(--topnav-blur));
   transition: transform 0.25s ease, width 0.25s ease, background-color 0.25s ease;
 }
 
@@ -186,12 +188,8 @@
     display: none;
   }
 
-  .topnav .logo-section p {
-    color: #000000 !important;
-  }
-
   .hamburger-btn {
-    color: #000000;
+    color: inherit;
     background: none;
     border: none;
     font-size: 24px;
@@ -202,9 +200,6 @@
     display: block;
   }
 
-  .hamburger-btn.home-hamburger {
-    color: #000000;
-  }
 }
 
 /* Page Overrides - Simplified to guarantee white text */
@@ -225,25 +220,60 @@
   opacity: 1;
 }
 
-.hamburger-btn.home-hamburger {
-  color: #000000;
-}
 
-/* Desktop mode: transparent glass bar with theme-aware text colors */
-@media (min-width: 769px) {
-  .topnav .nav-links .link,
-  .topnav .nav-links .link:hover,
-  .topnav .nav-links .active-link,
-  .topnav .logo-section p {
-    color: #111111 !important;
+@media (prefers-color-scheme: light) {
+  .topnav::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.58) 0%,
+      rgba(255, 255, 255, 0.42) 58%,
+      rgba(255, 255, 255, 0.12) 84%,
+      rgba(255, 255, 255, 0) 100%
+    );
   }
 }
 
-@media (min-width: 769px) and (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark) {
+  .topnav::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(17, 17, 17, 0.58) 0%,
+      rgba(17, 17, 17, 0.42) 58%,
+      rgba(17, 17, 17, 0.12) 84%,
+      rgba(17, 17, 17, 0) 100%
+    );
+  }
+}
+
+/* Theme-aware navbar text colors (mobile + desktop) */
+@media (prefers-color-scheme: light) {
+  .topnav {
+    background-color: transparent;
+    backdrop-filter: blur(var(--topnav-blur));
+    -webkit-backdrop-filter: blur(var(--topnav-blur));
+  }
+
   .topnav .nav-links .link,
   .topnav .nav-links .link:hover,
   .topnav .nav-links .active-link,
-  .topnav .logo-section p {
+  .topnav .logo-section p,
+  .topnav .hamburger-btn {
+    color: #000000 !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .topnav {
+    background-color: transparent;
+    backdrop-filter: blur(var(--topnav-blur));
+    -webkit-backdrop-filter: blur(var(--topnav-blur));
+  }
+
+  .topnav .nav-links .link,
+  .topnav .nav-links .link:hover,
+  .topnav .nav-links .active-link,
+  .topnav .logo-section p,
+  .topnav .hamburger-btn {
     color: #ffffff !important;
   }
 }
