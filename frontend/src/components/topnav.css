@@ -160,8 +160,12 @@
     display: none;
   }
 
+  .topnav .logo-section p {
+    color: #000000 !important;
+  }
+
   .hamburger-btn {
-    color: #111111;
+    color: #000000;
     background: none;
     border: none;
     font-size: 24px;
@@ -173,14 +177,7 @@
   }
 
   .hamburger-btn.home-hamburger {
-    color: #111111;
-  }
-}
-
-@media (max-width: 768px) and (prefers-color-scheme: dark) {
-  .hamburger-btn,
-  .hamburger-btn.home-hamburger {
-    color: #ffffff;
+    color: #000000;
   }
 }
 
@@ -203,7 +200,7 @@
 }
 
 .hamburger-btn.home-hamburger {
-  color: #ffffff;
+  color: #000000;
 }
 
 /* Desktop mode: transparent glass bar with theme-aware text colors */
