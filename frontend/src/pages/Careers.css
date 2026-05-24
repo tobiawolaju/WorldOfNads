@@ -256,3 +256,84 @@ background: hsl(249, 100%, 74%);
         margin-top: 50px; /* Increased stagger for visual effect */
     }
 }
+
+@media (prefers-color-scheme: dark) {
+    .careers-container {
+        color: #ffffff !important;
+    }
+    
+    .careers-header {
+        color: #ffffff !important;
+    }
+    
+    .careers-intro {
+        color: #ffffff !important;
+    }
+    
+    .team-section h2 {
+        color: #ffffff !important;
+    }
+    
+    .team-member-card {
+        background: #6553c7 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .team-member-name {
+        color: #ffffff !important;
+    }
+    
+    .team-member-role {
+        color: #e2e8f0 !important;
+    }
+    
+    .team-member-card ul {
+        color: #ffffff !important;
+    }
+    
+    .careers-item {
+        background: #6553c7 !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        color: #ffffff !important;
+    }
+    
+    .careers-item:hover {
+        background: #7361d4 !important; /* Slightly lighter purple on hover for interactive feel */
+    }
+    
+    .careers-question {
+        color: #ffffff !important;
+    }
+    
+    .careers-question h2,
+    .careers-question h3 {
+        color: #ffffff !important;
+    }
+    
+    .careers-icon {
+        color: #ffffff !important;
+    }
+    
+    .careers-item.active .careers-icon {
+        color: #ffffff !important;
+    }
+    
+    .careers-answer {
+        color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    .careers-answer li::before {
+        color: #ffffff !important;
+    }
+    
+    .careers-answer strong {
+        color: #ffffff !important;
+    }
+
+    .text-inline-gray-2 {
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+}

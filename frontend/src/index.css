@@ -76,18 +76,133 @@
 @media (prefers-color-scheme: dark) {
     :root {
         /* Dark mode mirrors light mode, swapping only white/black values */
-        --color-background: 7056ff;
+        --color-background: #6553c7;
         --color-foreground: #ffffff;
 
-        --inline-light: #000000;
-        --inline-cta-text: #000000;
+        --inline-light: #6553c7;
+        --inline-cta-text: #ffffff;
 
-        --background: #7056ff;
+        --background: #6553c7;
         --foreground: #ffffff;
-        --foreground-muted: rgba(255, 255, 255, 0.7);
+        --foreground-muted: rgba(255, 255, 255, 0.75);
 
         --overlay-bg: rgba(117, 96, 230, 0.3);
         --inline-func-subtext: #ffffff;
+    }
+
+    /* ============================================================== */
+    /* 🌐 Global Dark Mode Theme Overrides (Applied to All Pages)      */
+    /* ============================================================== */
+
+    /* 1. Global Background Colors: Convert white backgrounds to #6553c7 */
+    .team-member-card,
+    .careers-item,
+    .faq-item,
+    .user-leaderboard,
+    .partner-search,
+    .partner-card,
+    .tweet-card,
+    .dashboard-card,
+    .sponsor-card,
+    .analytics-card,
+    .milestone-card,
+    .reward-empty,
+    .table-container,
+    .leaderboard-table,
+    .pagination button,
+    .pagination .page-btn,
+    .timeline-content,
+    .no-hosts {
+        background-color: #6553c7 !important;
+        background: #6553c7 !important;
+        color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    /* Specific Input styling for partner-search */
+    .partner-search {
+        background: #6553c7 !important;
+        color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+    .partner-search:focus {
+        background-color: #7361d4 !important;
+        background: #7361d4 !important;
+        border-color: #ffffff !important;
+        color: #ffffff !important;
+    }
+    .partner-search::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    /* Hover effects for interactive components */
+    .careers-item:hover,
+    .faq-item:hover,
+    .tweet-card:hover,
+    .partner-card:hover,
+    .team-member-card:hover,
+    .timeline-content:hover {
+        background-color: #7361d4 !important;
+        background: #7361d4 !important;
+        border-color: transparent !important;
+    }
+
+    /* 2. Global Text Colors: Force all purple / black texts to white */
+    body, h1, h2, h3, h4, h5, h6, p, span, li, strong, th, td, label, blockquote, input, select, textarea {
+        color: #ffffff !important;
+    }
+
+    /* Exclude specific buttons or badges if necessary, but keep titles white */
+    .careers-header,
+    .faq-header,
+    .partners-title,
+    .leaderboard-title,
+    .section-title,
+    .careers-intro,
+    .faq-question,
+    .faq-answer,
+    .careers-question,
+    .careers-answer,
+    .team-member-name,
+    .team-member-role,
+    .user-leaderboard h2,
+    .user-entry .won,
+    .user-entry .rank,
+    .reward-item-text,
+    .reward-item-text span,
+    .partner-name,
+    .partner-role,
+    .t-info h2,
+    .t-info p {
+        color: #ffffff !important;
+    }
+
+    /* Specific link handles that were purple */
+    .partner-handle,
+    .host-action-link,
+    .t-handle {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+    .partner-card:hover .partner-handle,
+    .timeline-content:hover .t-handle {
+        background: rgba(255, 255, 255, 0.3) !important;
+    }
+
+    /* List item indicators (arrows) */
+    .careers-answer li::before,
+    .faq-answer li::before {
+        color: #ffffff !important;
+    }
+
+    /* Section lines and separators */
+    .user-entry, 
+    .careers-answer, 
+    .faq-answer,
+    .timeline-content {
+        border-color: rgba(255, 255, 255, 0.15) !important;
     }
 }
 
