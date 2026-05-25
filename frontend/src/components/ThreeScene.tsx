@@ -613,16 +613,18 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
   const [targetY, setTargetY] = useState(0);
   const [cameraYOffset, setCameraYOffset] = useState(0);
   const [isInteracting, setIsInteracting] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
-      const isMobile = window.innerWidth < 768;
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
       // Z=10 provides a consistent zoom level for both mobile and desktop
-      setCameraZ(isMobile ? 10 : 10);
+      setCameraZ(mobile ? 9 : 10);
       // Moving target up by +0.25 (half the head-to-shadow distance)
       // Original: 0.5, New: 0.75
-      setTargetY(isMobile ? 0.75 : 0.75);
-      setCameraYOffset(isMobile ? 0.75 : 0.75);
+      setTargetY(mobile ? 0.7 : 0.75);
+      setCameraYOffset(mobile ? 0.65 : 0.75);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -664,10 +666,10 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
 
   return (
     <Canvas
-      dpr={[1, 1.5]}
+      dpr={isMobile ? [0.75, 1] : [1, 1.5]}
       camera={{ position: [0, 0, cameraZ] }}
       frameloop="demand"
-      gl={{ alpha: true, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
+      gl={{ alpha: true, preserveDrawingBuffer: true, powerPreference: "high-performance", antialias: !isMobile }}
       style={{ background: "none", pointerEvents: "auto" }}
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
     >
@@ -680,16 +682,18 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       {/* Rim Light: Provides highlights on the edges (separated from BG) */}
       <pointLight position={[0, 10, -10]} intensity={3.5} />
 
-      <Environment preset="city" />
-      <ContactShadows
-        opacity={0.4}
-        scale={6}
-        blur={1.5}
-        far={4}
-        resolution={256}
-        color="#000000"
-        position={[0, -2.01, 0]}
-      />
+      {!isMobile && <Environment preset="city" />}
+      {!isMobile && (
+        <ContactShadows
+          opacity={0.35}
+          scale={6}
+          blur={1.5}
+          far={4}
+          resolution={128}
+          color="#000000"
+          position={[0, -2.01, 0]}
+        />
+      )}
 
       <Suspense fallback={null}>
         <NadModel scale={0.5} position={[0, -2, 0]} equippedSkin={equippedSkin} />
@@ -702,11 +706,12 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
               earned={earned}
               username={username}
               onLogout={onLogout}
+              lightweight={isMobile}
             />
           </group>
         </CardRig>
 
-        {chickens.map((data) => (
+        {!isMobile && chickens.map((data) => (
           <Chicken key={data.key} {...data} />
         ))}
       </Suspense>
