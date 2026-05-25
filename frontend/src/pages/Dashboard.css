@@ -951,3 +951,23 @@
   position: relative;
   /* Base for badge positioning */
 }
+
+@media (prefers-color-scheme: dark) {
+  .matches-wrapper::before {
+    background: linear-gradient(to right, #6553c7 0%, rgba(101, 83, 199, 0) 100%);
+  }
+
+  .matches-wrapper::after {
+    background: linear-gradient(to left, #6553c7 0%, rgba(101, 83, 199, 0) 100%);
+  }
+
+  .store-card-info {
+    background: linear-gradient(
+      to top,
+      rgba(101, 83, 199, 0.96) 0%,
+      rgba(101, 83, 199, 0.88) 42%,
+      rgba(101, 83, 199, 0.55) 70%,
+      rgba(101, 83, 199, 0) 100%
+    );
+  }
+}
