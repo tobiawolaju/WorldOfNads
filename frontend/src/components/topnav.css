@@ -224,6 +224,6 @@
 @media (prefers-color-scheme: dark) {
   .topnav {
     color: #ffffff;
-    background-color: rgba(101, 83, 199, 0.2);
+    background-color: transparent;
   }
 }
