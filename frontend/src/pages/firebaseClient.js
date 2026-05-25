@@ -3,14 +3,16 @@ import { getDatabase, get, ref, set, update, remove } from "firebase/database";
 import { trackUserJoined, trackUserRegistered } from "../lib/analyticsClient";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD3Md8vlOQDg4QoTRJuwNmrv3mg11WMDss",
-  authDomain: "worldofnads-1afcf.firebaseapp.com",
-  databaseURL: "https://worldofnads-1afcf-default-rtdb.firebaseio.com",
-  projectId: "worldofnads-1afcf",
-  storageBucket: "worldofnads-1afcf.firebasestorage.app",
-  messagingSenderId: "129481786742",
-  appId: "1:129481786742:web:4bf0e136f1a6e9a72fa657",
-  measurementId: "G-QP22W5T17Z"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyD3Md8vlOQDg4QoTRJuwNmrv3mg11WMDss",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "worldofnads-1afcf.firebaseapp.com",
+  databaseURL:
+    import.meta.env.VITE_FIREBASE_DATABASE_URL ||
+    "https://worldofnads-1afcf-default-rtdb.firebaseio.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "worldofnads-1afcf",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "worldofnads-1afcf.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "129481786742",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:129481786742:web:4bf0e136f1a6e9a72fa657",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-QP22W5T17Z"
 };
 
 const API_BASE = import.meta.env.VITE_ANALYTICS_API_URL || "";
