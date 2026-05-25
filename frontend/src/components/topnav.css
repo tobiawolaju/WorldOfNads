@@ -1,15 +1,15 @@
 /* Navbar Container with glassmorphism */
 .topnav {
-  --topnav-blur: 12px;
-  --topnav-fade-height: 28px;
-  padding: 10px 20px;
+  --topnav-blur: 3px;
+  --topnav-fade-height: 8px;
+  padding: 4px 12px;
   color: #111111;
   display: flex;
   width: 100%;
   box-sizing: border-box;
   justify-content: space-between;
   align-items: center;
-  height: 60px;
+  height: 42px;
   margin: 0;
   position: fixed;
   overflow: visible;
