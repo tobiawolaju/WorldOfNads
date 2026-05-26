@@ -44,6 +44,7 @@ var north_drag_distance_accumulated := 0.0
 var lock_candidate_started_at := -1.0
 var last_drag_was_north := false
 var auto_lock_touch_index := -1
+var active_camera_last_position := Vector2.ZERO
 
 func _ready():
 	add_to_group("touch_joystick")
@@ -79,6 +80,7 @@ func _input(event):
 					get_viewport().set_input_as_handled()
 				elif active_camera_index == -1:
 					active_camera_index = event.index
+					active_camera_last_position = event.position
 					get_viewport().set_input_as_handled()
 					emit_signal("camera_dragged", Vector2.ZERO)
 				# Return so we don't accidentally start a new joystick from outside the base.
@@ -93,6 +95,7 @@ func _input(event):
 			# --- Camera touch ---
 			elif active_camera_index == -1:
 				active_camera_index = event.index
+				active_camera_last_position = event.position
 				get_viewport().set_input_as_handled()
 				emit_signal("camera_dragged", Vector2.ZERO)
 		else:
@@ -112,6 +115,7 @@ func _input(event):
 				get_viewport().set_input_as_handled()
 			elif event.index == active_camera_index:
 				active_camera_index = -1
+				active_camera_last_position = Vector2.ZERO
 			if event.index == auto_lock_touch_index:
 				auto_lock_touch_index = -1
 
@@ -145,7 +149,12 @@ func _input(event):
 			get_viewport().set_input_as_handled()
 		elif event.index == active_camera_index:
 			get_viewport().set_input_as_handled()
-			emit_signal("camera_dragged", event.relative)
+			var camera_delta: Vector2 = event.position - active_camera_last_position
+			active_camera_last_position = event.position
+			camera_delta.x = clamp(camera_delta.x, -64.0, 64.0)
+			camera_delta.y = clamp(camera_delta.y, -64.0, 64.0)
+			if camera_delta.length_squared() > 0.0:
+				emit_signal("camera_dragged", camera_delta)
 
 func _process(delta):
 	if not is_auto_locked and active_joystick_index != -1 and _is_forward_lock_candidate():

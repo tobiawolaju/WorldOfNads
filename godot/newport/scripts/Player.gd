@@ -88,6 +88,7 @@ var display_name: String = "" :
 		_refresh_name_label()
 
 var active_touches: int = 0
+var touch_orbit_pending := Vector2.ZERO
 
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
@@ -159,6 +160,8 @@ func _physics_process(delta: float) -> void:
 		if abs(lx) > DEADZONE: input_dir.x += lx
 		if abs(ly) > DEADZONE: input_dir.y -= ly
 	input_dir = input_dir.normalized()
+
+	_apply_touch_orbit()
 
 	if not is_on_floor():
 		velocity_y -= GRAVITY * delta
@@ -487,5 +490,16 @@ func _connect_joystick_signals() -> void:
 func _on_joystick_camera_drag(relative: Vector2) -> void:
 	if not is_local:
 		return
-	cam_rot_y -= relative.x * touch_orbit_sensitivity
-	cam_rot_x = clamp(cam_rot_x + relative.y * touch_orbit_sensitivity, min_pitch, max_pitch)
+	touch_orbit_pending += relative
+
+func _apply_touch_orbit() -> void:
+	if touch_orbit_pending == Vector2.ZERO:
+		return
+
+	var delta: Vector2 = touch_orbit_pending
+	touch_orbit_pending = Vector2.ZERO
+	delta.x = clamp(delta.x, -64.0, 64.0)
+	delta.y = clamp(delta.y, -64.0, 64.0)
+
+	cam_rot_y -= delta.x * touch_orbit_sensitivity
+	cam_rot_x = clamp(cam_rot_x + delta.y * touch_orbit_sensitivity, min_pitch, max_pitch)
