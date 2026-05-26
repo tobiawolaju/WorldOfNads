@@ -3,15 +3,591 @@
 [ext_resource type="Texture2D" uid="uid://c32ce524dwv4m" path="res://assets/images/white_circle.png" id="2_cqgoe"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="2_ikted"]
 [ext_resource type="Texture2D" uid="uid://bajv5ofkwgqai" path="res://assets/images/skybg1.png" id="2_xqgb2"]
-[ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/joystick.gd" id="3_1iwhs"]
 [ext_resource type="Texture2D" uid="uid://boe2s7w82tqh6" path="res://assets/images/skybg2.png" id="3_22dhc"]
-[ext_resource type="Script" uid="uid://vwbunt2j3px3" path="res://scripts/pick_button.gd" id="3_uw04a"]
 [ext_resource type="Texture2D" uid="uid://bipdolhh0db82" path="res://assets/images/white_circle2.png" id="4_8y4rh"]
 [ext_resource type="Texture2D" uid="uid://ckhuppcn5r3xr" path="res://assets/images/skybg3.png" id="4_765kx"]
-[ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/Events.gd" id="4_events"]
-[ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/buttons.gd" id="7_vob6w"]
+
+[sub_resource type="GDScript" id="GDScript_tcexf"]
+script/source = "extends Node
+
+const LIVE_EVENTS_URL := \"wss://worldofnads.onrender.com/events\"
+const LOCAL_EVENTS_URL := \"ws://localhost:8080/events\"
+const MAX_STATUS_LINES := 4
+
+@export var status_label_path: NodePath = NodePath(\"CanvasLayer/BoxContainer/Node2/BoxContainer3/status\")
+@export var status2_label_path: NodePath = NodePath(\"CanvasLayer/BoxContainer/Node2/BoxContainer3/status2\")
+
+@export var username_label_path: NodePath = NodePath(\"CanvasLayer/BoxContainer/Node2/BoxContainer2/username\")
+
+var ws := WebSocketPeer.new()
+var connected := false
+var tried_live := false
+var fallback_started := false
+
+var _username_locked := false
+var _actor_lines: Array[String] = []
+var _message_lines: Array[String] = []
+var _local_player_id := \"\"
+var _navigated_to_gameover := false
+
+@onready var status_label: Label = get_node_or_null(status_label_path)
+@onready var status_username: Label = get_node_or_null(status2_label_path)
+@onready var username_label: Label = get_node_or_null(username_label_path)
+
+func _ready() -> void:
+	add_to_group(\"events_bridge\")
+	_try_set_username_from_web_query()
+	tried_live = true
+	var err = ws.connect_to_url(LIVE_EVENTS_URL)
+	if err != OK:
+		_start_local_fallback(\"Could not start live events stream\")
+	else:
+		_show_local_status(\"Connecting events stream...\")
+
+func _process(_delta: float) -> void:
+	ws.poll()
+
+	var state = ws.get_ready_state()
+	if state == WebSocketPeer.STATE_OPEN:
+		if not connected:
+			connected = true
+			_show_local_status(\"Events live\")
+		_read_packets()
+	elif state == WebSocketPeer.STATE_CLOSED:
+		if connected:
+			connected = false
+			_show_local_status(\"Events disconnected\")
+		if tried_live and not fallback_started:
+			_start_local_fallback(\"Falling back to local events\")
+
+func set_local_username(id: String, force: bool = false) -> void:
+	if username_label == null:
+		username_label = get_node_or_null(username_label_path)
+	if username_label == null:
+		return
+	if _username_locked and not force:
+		return
+
+	var safe_id := id.strip_edges()
+	if safe_id == \"\":
+		return
+
+	username_label.text = safe_id
+
+func set_local_player_id(id: String) -> void:
+	_local_player_id = id.strip_edges()
+
+func show_local_event(message: String) -> void:
+	var parsed = _split_message_actor_and_text(message)
+	_push_event_line(parsed[\"actor\"], parsed[\"message\"])
+
+func _start_local_fallback(reason: String) -> void:
+	fallback_started = true
+	_show_local_status(reason)
+	var err = ws.connect_to_url(LOCAL_EVENTS_URL)
+	if err != OK:
+		_show_local_status(\"Events offline\", \"system\")
+
+func _read_packets() -> void:
+	while ws.get_available_packet_count() > 0:
+		var raw = ws.get_packet()
+		if raw.is_empty():
+			continue
+
+		var payload = JSON.parse_string(raw.get_string_from_utf8())
+		if typeof(payload) != TYPE_DICTIONARY:
+			continue
+
+		match payload.get(\"type\", \"\"):
+			\"event\":
+				if payload.has(\"event\") and typeof(payload[\"event\"]) == TYPE_DICTIONARY:
+					_render_event(payload[\"event\"], true)
+			\"events_snapshot\":
+				if payload.has(\"events\") and typeof(payload[\"events\"]) == TYPE_ARRAY:
+					_render_snapshot(payload[\"events\"])
+
+func _render_snapshot(events: Array) -> void:
+	if events.is_empty():
+		return
+	var start := maxi(0, events.size() - 2)
+	for i in range(start, events.size()):
+		var item = events[i]
+		if typeof(item) == TYPE_DICTIONARY:
+			_render_event(item, false)
+
+func _render_event(event_data: Dictionary, can_navigate: bool) -> void:
+	var message = str(event_data.get(\"message\", \"\"))
+	if message.strip_edges() == \"\":
+		return
+	var parsed = _split_message_actor_and_text(message)
+	var actor = _resolve_event_actor(event_data, parsed[\"actor\"])
+	_push_event_line(actor, parsed[\"message\"])
+
+	if can_navigate and str(event_data.get(\"eventType\", \"\")) == \"match_winner\":
+		_handle_match_winner_event(event_data)
+
+func _handle_match_winner_event(event_data: Dictionary) -> void:
+	if _navigated_to_gameover:
+		return
+
+	var winner_id := str(event_data.get(\"playerId\", \"\")).strip_edges()
+	var winner_name := \"\"
+
+	if event_data.has(\"meta\") and typeof(event_data[\"meta\"]) == TYPE_DICTIONARY:
+		var meta := event_data[\"meta\"] as Dictionary
+		var meta_winner_id := str(meta.get(\"winnerId\", \"\")).strip_edges()
+		if meta_winner_id != \"\":
+			winner_id = meta_winner_id
+		winner_name = str(meta.get(\"winnerName\", \"\")).strip_edges()
+
+	var did_win := winner_id != \"\" and winner_id == _local_player_id
+	get_tree().set_meta(\"match_result_won\", did_win)
+	get_tree().set_meta(\"match_result_winner_id\", winner_id)
+	get_tree().set_meta(\"match_result_winner_name\", winner_name)
+	_navigated_to_gameover = true
+	TransitionScreen.change_scene(\"res://scenes/gameover.tscn\")
+
+func _show_local_status(text: String, actor: String = \"system\") -> void:
+	_push_event_line(actor, text)
+
+func _push_event_line(actor: String, message: String) -> void:
+	if status_label == null:
+		status_label = get_node_or_null(status_label_path)
+	if status_username == null:
+		status_username = get_node_or_null(status2_label_path)
+	if status_label == null:
+		return
+	if status_username == null:
+		return
+
+	var safe_actor := actor.strip_edges()
+	var safe_message := message.strip_edges()
+	if safe_message == \"\":
+		return
+	if safe_actor == \"\":
+		safe_actor = \"system\"
+
+	_actor_lines.append(safe_actor)
+	_message_lines.append(safe_message)
+	if _actor_lines.size() > MAX_STATUS_LINES:
+		_actor_lines.pop_front()
+	if _message_lines.size() > MAX_STATUS_LINES:
+		_message_lines.pop_front()
+
+	status_username.text = \"\\n\".join(_actor_lines)
+	status_label.text = \"\\n\".join(_message_lines)
+
+func _resolve_event_actor(event_data: Dictionary, fallback_actor: String) -> String:
+	var candidate = str(event_data.get(\"username\", \"\")).strip_edges()
+	if candidate != \"\":
+		return candidate
+	if event_data.has(\"meta\") and typeof(event_data[\"meta\"]) == TYPE_DICTIONARY:
+		var meta := event_data[\"meta\"] as Dictionary
+		candidate = str(meta.get(\"username\", \"\")).strip_edges()
+		if candidate != \"\":
+			return candidate
+
+	if fallback_actor != \"\":
+		return fallback_actor
+
+	var player_id = str(event_data.get(\"playerId\", \"\")).strip_edges()
+	if player_id != \"\":
+		return player_id.substr(0, 8)
+
+	return \"system\"
+
+func _split_message_actor_and_text(message: String) -> Dictionary:
+	var safe_message := message.strip_edges()
+	if safe_message == \"\":
+		return {\"actor\": \"system\", \"message\": \"\"}
+
+	var split_patterns = [
+		\" joined the game\",
+		\" joined the match\",
+		\" left the game\",
+		\" left the match\",
+		\" picked the chicken\",
+		\" dropped the chicken\",
+		\" won the round\"
+	]
+	for suffix in split_patterns:
+		if safe_message.ends_with(suffix):
+			var actor = safe_message.trim_suffix(suffix).strip_edges()
+			if actor != \"\":
+				var parts = actor.split(\" \", false)
+				if parts.size() > 1:
+					actor = parts[parts.size() - 1]
+				return {\"actor\": actor, \"message\": suffix.strip_edges()}
+
+	return {\"actor\": \"system\", \"message\": safe_message}
+
+func _try_set_username_from_web_query() -> void:
+	if not OS.has_feature(\"web\"):
+		return
+
+	var raw_username = JavaScriptBridge.eval(\"new URLSearchParams(window.location.search).get('username') || ''\")
+	if typeof(raw_username) != TYPE_STRING:
+		return
+
+	var parsed_username := str(raw_username).strip_edges()
+	if parsed_username == \"\":
+		return
+
+	_username_locked = true
+	set_local_username(parsed_username, true)
+"
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_22dhc"]
+
+[sub_resource type="GDScript" id="GDScript_vob6w"]
+script/source = "extends Sprite2D
+
+signal joystick_moved
+signal joystick_released
+signal camera_dragged(relative: Vector2)
+
+# --- VISUAL SETTINGS ---
+@export var min_opacity: float = 0.2
+@export var max_opacity: float = 1.0
+@export var sprite_rotation_offset_degrees: float = 0.0
+@export var auto_lock_hold_seconds: float = 0.4
+@export var auto_lock_forward_min_strength: float = 0.6
+@export var auto_lock_north_distance_multiplier: float = 6.0
+@export var portrait_zone_width_ratio: float = 0.5
+@export var portrait_zone_height_ratio: float = 0.25
+@export var landscape_zone_width_ratio: float = 0.25
+@export var landscape_zone_height_ratio: float = 0.25
+@export var portrait_visual_y_offset: float = 46.5
+
+
+var radiusJoyStick
+var radiusJoyBase
+var maxRadius
+var return_to_center = true
+var keys_pressed = {
+	\"move_forward\": false,
+	\"move_back\": false,
+	\"move_left\": false,
+	\"move_right\": false,
+	\"jump\": false
+}
+
+var last_tap_time = 0.0
+var double_tap_interval = 0.3
+var last_tap_position = Vector2.ZERO
+var screen_orientation = \"portrait\"
+
+# --- MULTI-TOUCH TRACKING ---
+var active_joystick_index := -1
+var active_camera_index := -1
+var touchInsideJoystick = false
+var is_auto_locked := false
+var north_drag_distance_accumulated := 0.0
+var lock_candidate_started_at := -1.0
+var last_drag_was_north := false
+var auto_lock_touch_index := -1
+
+func _ready():
+	add_to_group(\"touch_joystick\")
+	var viewport_size = get_viewport().get_visible_rect().size
+	screen_orientation = \"portrait\" if viewport_size.y > viewport_size.x else \"landscape\"
+
+	radiusJoyStick = global_scale.x * texture.get_size().x / 2
+	radiusJoyBase = get_node(\"../JoyBase\").global_scale.x * $\"../JoyBase\".texture.get_size().x / 2
+	maxRadius = radiusJoyBase - radiusJoyStick
+	
+	modulate.a = min_opacity
+
+func _input(event):
+	var viewport_size = get_viewport().get_visible_rect().size
+	var touch_joystick = get_node(\"../../TouchJoyStick\")
+
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			# Do not start joystick from touches meant for UI controls (buttons, panels, etc).
+			if _is_touch_over_ui(event.position):
+				return
+			# While locked: only touches directly on the joystick base are tracked 
+			# for potential unlock or jump. Touches elsewhere pass through for camera orbit.
+			if is_auto_locked:
+				if auto_lock_touch_index == -1 and touch_joystick != null and event.position.distance_to(touch_joystick.global_position) <= radiusJoyBase * 2.5:
+					auto_lock_touch_index = event.index
+					if _is_double_tap(event.position):
+						_press_key(\"jump\")
+						await get_tree().create_timer(0.2).timeout
+						_release_key(\"jump\")
+					last_tap_time = Time.get_ticks_msec() / 1000.0
+					last_tap_position = event.position
+					get_viewport().set_input_as_handled()
+				# Return so we don't accidentally start a new joystick from outside the base.
+				# If set_input_as_handled() wasn't called, it will pass through to Player.gd!
+				return
+
+			if event.index == active_joystick_index or event.index == active_camera_index:
+				return
+			# --- Joystick touch ---
+			if _is_joystick_area(event.position, viewport_size) and active_joystick_index == -1:
+				_start_joystick_touch(event.position, event.index, touch_joystick)
+				get_viewport().set_input_as_handled()
+			# --- Camera touch ---
+			elif _is_camera_area(event.position, viewport_size) and active_camera_index == -1:
+				active_camera_index = event.index
+				emit_signal(\"camera_dragged\", Vector2.ZERO)
+		else:
+			if event.index == active_joystick_index:
+				if return_to_center and not is_auto_locked:
+					position = Vector2.ZERO
+					_release_all_keys()
+					lock_candidate_started_at = -1.0
+					north_drag_distance_accumulated = 0.0
+					last_drag_was_north = false
+					_update_visuals()
+				emit_signal(\"joystick_released\")
+				if not is_auto_locked:
+					touch_joystick.visible = false
+				touchInsideJoystick = false
+				active_joystick_index = -1
+				get_viewport().set_input_as_handled()
+			elif event.index == active_camera_index:
+				active_camera_index = -1
+			if event.index == auto_lock_touch_index:
+				auto_lock_touch_index = -1
+
+	elif event is InputEventScreenDrag:
+		# Only unlock auto-move from the tracked joystick finger, not the camera finger.
+		if is_auto_locked and event.index == auto_lock_touch_index:
+			_unlock_auto_move()
+			_start_joystick_touch(event.position, event.index, touch_joystick)
+			var local_pos_unlock = event.position - touch_joystick.global_position
+			if local_pos_unlock.length() > maxRadius:
+				local_pos_unlock = local_pos_unlock.normalized() * maxRadius
+			position = local_pos_unlock
+			_update_north_drag_progress_from_screen_drag(event.relative)
+			emit_signal(\"joystick_moved\", position)
+			emit_signal(\"camera_dragged\", event.relative)
+			touch_joystick.visible = true
+			_update_input_from_joystick(position)
+			_update_visuals()
+			get_viewport().set_input_as_handled()
+			return
+
+		if event.index == active_joystick_index:
+			var local_pos = event.position - touch_joystick.global_position
+			if local_pos.length() > maxRadius:
+				local_pos = local_pos.normalized() * maxRadius
+			position = local_pos
+			_update_north_drag_progress_from_screen_drag(event.relative)
+			emit_signal(\"joystick_moved\", position)
+			emit_signal(\"camera_dragged\", event.relative)
+			touch_joystick.visible = true
+			_update_input_from_joystick(position)
+			_update_visuals()
+			get_viewport().set_input_as_handled()
+		elif event.index == active_camera_index:
+			emit_signal(\"camera_dragged\", event.relative)
+
+func _process(delta):
+	if not is_auto_locked and active_joystick_index != -1 and _is_forward_lock_candidate():
+		var now := Time.get_ticks_msec() / 1000.0
+		if lock_candidate_started_at < 0.0:
+			lock_candidate_started_at = now
+		elif (now - lock_candidate_started_at) >= auto_lock_hold_seconds:
+			_lock_auto_move()
+	else:
+		if not is_auto_locked:
+			lock_candidate_started_at = -1.0
+
+	if return_to_center and position == Vector2.ZERO:
+		_release_all_keys()
+		modulate.a = lerp(modulate.a, min_opacity, delta * 10)
+
+func _update_visuals():
+	if position.length_squared() > 10.0:
+		# Godot angle 0 points right; add 90deg so an up-facing sprite is 0deg at forward/up drag.
+		rotation = position.angle() + PI * 0.5 + deg_to_rad(sprite_rotation_offset_degrees)
+	else:
+		rotation = deg_to_rad(sprite_rotation_offset_degrees)
+	if is_auto_locked:
+		modulate.a = 0.5
+		return
+	var strength = clamp(position.length() / maxRadius, 0.0, 1.0)
+	modulate.a = lerp(min_opacity, max_opacity, strength)
+
+# --- QUADRANT CHECKS ---
+func _is_joystick_area(_pos: Vector2, _viewport_size: Vector2) -> bool:
+	# Joystick can be activated from anywhere on screen.
+	return true
+
+func _is_camera_area(pos: Vector2, viewport_size: Vector2) -> bool:
+	# Everything outside the joystick rectangle zone
+	return not _is_joystick_area(pos, viewport_size)
+
+func is_joystick_area_screen(pos: Vector2, viewport_size: Vector2) -> bool:
+	return _is_joystick_area(pos, viewport_size)
+
+func _get_joystick_zone_center(viewport_size: Vector2) -> Vector2:
+	var is_portrait := viewport_size.y > viewport_size.x
+	var zone_width_ratio := portrait_zone_width_ratio if is_portrait else 0.25
+	var zone_height_ratio := portrait_zone_height_ratio if is_portrait else 0.25
+	var zone_width = viewport_size.x * clamp(zone_width_ratio, 0.05, 1.0)
+	var zone_height = viewport_size.y * clamp(zone_height_ratio, 0.05, 1.0)
+	var zone_left = (viewport_size.x - zone_width) * 0.5 if is_portrait else 0.0
+	var zone_top = viewport_size.y - zone_height
+	var center = Vector2(zone_left + zone_width * 0.5, zone_top + zone_height * 0.5)
+	center.y -= portrait_visual_y_offset
+	return center
+
+func _update_input_from_joystick(pos: Vector2):
+	_release_all_keys()
+	var npos = pos / maxRadius
+	var deadzone = 0.05
+	
+	if npos.x > deadzone:
+		_press_key(\"move_right\", npos.x)
+	elif npos.x < -deadzone:
+		_press_key(\"move_left\", -npos.x)
+		
+	if npos.y < -deadzone:
+		_press_key(\"move_forward\", -npos.y)
+	elif npos.y > deadzone:
+		_press_key(\"move_back\", npos.y)
+
+func _press_key(action: String, strength: float = 1.0):
+	Input.action_press(action, strength)
+	keys_pressed[action] = true
+
+func _release_key(action: String):
+	if keys_pressed[action]:
+		Input.action_release(action)
+		keys_pressed[action] = false
+
+func _release_all_keys():
+	for key in keys_pressed.keys():
+		_release_key(key)
+
+func _check_double_tap(tap_pos: Vector2, touch_joystick: Node):
+	if _is_double_tap(tap_pos):
+		_press_key(\"jump\")
+		if _is_joystick_actively_moving():
+			_lock_auto_move_from_current(touch_joystick)
+		await get_tree().create_timer(0.2).timeout
+		_release_key(\"jump\")
+	var now = Time.get_ticks_msec() / 1000.0
+	last_tap_time = now
+	last_tap_position = tap_pos
+
+func _is_double_tap(tap_pos: Vector2) -> bool:
+	var now = Time.get_ticks_msec() / 1000.0
+	return (now - last_tap_time) <= double_tap_interval and (tap_pos - last_tap_position).length() < 80.0
+
+func claims_touch(touch_index: int) -> bool:
+	return touch_index == active_joystick_index or (is_auto_locked and touch_index == auto_lock_touch_index)
+
+func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick: Node):
+	active_joystick_index = touch_index
+	touchInsideJoystick = true
+	north_drag_distance_accumulated = 0.0
+	lock_candidate_started_at = -1.0
+	last_drag_was_north = false
+	# Position joystick base at the touch location.
+	touch_joystick.position = touch_pos
+	global_position = touch_pos
+	touch_joystick.visible = true
+	_check_double_tap(touch_pos, touch_joystick)
+	_update_visuals()
+
+func _is_forward_lock_candidate() -> bool:
+	if maxRadius <= 0.0:
+		return false
+	var normalized_pos = position / maxRadius
+	var required_north_distance: float = float(maxRadius) * max(auto_lock_north_distance_multiplier, 0.0)
+	var has_required_north_drag: bool = north_drag_distance_accumulated >= required_north_distance
+	return normalized_pos.y <= -auto_lock_forward_min_strength and abs(normalized_pos.y) >= abs(normalized_pos.x) and has_required_north_drag and last_drag_was_north
+
+func _lock_auto_move():
+	is_auto_locked = true
+	lock_candidate_started_at = -1.0
+	active_joystick_index = -1
+	touchInsideJoystick = false
+	auto_lock_touch_index = -1
+	modulate.a = 0.5
+
+func _lock_auto_move_from_current(touch_joystick: Node) -> void:
+	# If user double-taps without a drag delta yet, default to forward lock.
+	if position.length_squared() < 1.0:
+		position = Vector2(0.0, -maxRadius * 0.92)
+	_update_input_from_joystick(position)
+	_lock_auto_move()
+	if touch_joystick != null:
+		touch_joystick.visible = true
+
+func _is_joystick_actively_moving() -> bool:
+	if maxRadius <= 0.0:
+		return false
+	var movement_strength: float = float(position.length()) / float(maxRadius)
+	return movement_strength >= 0.25
+
+func _unlock_auto_move():
+	is_auto_locked = false
+	lock_candidate_started_at = -1.0
+	north_drag_distance_accumulated = 0.0
+	last_drag_was_north = false
+	auto_lock_touch_index = -1
+	position = Vector2.ZERO
+	_release_all_keys()
+	modulate.a = 1.0
+	_update_visuals()
+
+func _is_touch_on_knob(touch_pos: Vector2) -> bool:
+	return touch_pos.distance_to(global_position) <= radiusJoyStick * 1.35
+
+func _update_north_drag_progress_from_screen_drag(drag_relative: Vector2) -> void:
+	var delta := drag_relative
+	if delta.length_squared() <= 0.0001:
+		last_drag_was_north = false
+		return
+	var north_progress := delta.dot(Vector2.UP)
+	if north_progress > 0.0:
+		last_drag_was_north = true
+		north_drag_distance_accumulated += north_progress
+	else:
+		last_drag_was_north = false
+
+func _is_touch_over_ui(screen_pos: Vector2) -> bool:
+	var buttons_holder: Control = get_node_or_null(\"../../../Node3/CanvasLayer/buttons_holder\")
+	if buttons_holder == null:
+		return false
+	if not buttons_holder.is_visible_in_tree():
+		return false
+	return buttons_holder.get_global_rect().has_point(screen_pos)
+"
+
+[sub_resource type="GDScript" id="GDScript_8y4rh"]
+script/source = "extends HBoxContainer
+
+const RIGHT_MARGIN := 187.5
+const BOTTOM_MARGIN := 107.5
+
+func _ready() -> void:
+	# This node is inside a Container; move the parent holder (if present),
+	# otherwise move self.
+	get_viewport().size_changed.connect(_reposition)
+	_reposition()
+
+func _reposition() -> void:
+	var viewport_size := get_viewport().get_visible_rect().size
+	var target: Control = self
+	var parent_control := get_parent() as Control
+	if parent_control != null:
+		target = parent_control
+
+	# Always position on the right side.
+	target.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	target.position = Vector2(
+		viewport_size.x - RIGHT_MARGIN,
+		viewport_size.y - BOTTOM_MARGIN
+	)
+"
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_psyvr"]
 bg_color = Color(1, 1, 1, 0.5411765)
@@ -32,8 +608,27 @@ corner_radius_top_right = 50
 corner_radius_bottom_right = 50
 corner_radius_bottom_left = 50
 
+[sub_resource type="GDScript" id="GDScript_psyvr"]
+script/source = "extends Button
+
+func _ready():
+	# Connect the pressed signal
+	pressed.connect(_on_pressed)
+
+func _on_pressed():
+	var ev := InputEventAction.new()
+	ev.action = \"pickup\"
+	ev.pressed = true
+	Input.parse_input_event(ev)
+
+func _input(event):
+	if event is InputEventScreenTouch and event.pressed:
+		if get_global_rect().has_point(event.position):
+			_on_pressed()
+"
+
 [node name="Gameplay2d" type="Node2D" unique_id=843521828]
-script = ExtResource("4_events")
+script = SubResource("GDScript_tcexf")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1992101475]
 
@@ -201,7 +796,7 @@ texture = ExtResource("4_8y4rh")
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=1945660391]
 scale = Vector2(0.16, 0.16)
 texture = ExtResource("2_cqgoe")
-script = ExtResource("3_1iwhs")
+script = SubResource("GDScript_vob6w")
 
 [node name="Node3" type="Node" parent="." unique_id=633834656]
 
@@ -223,7 +818,7 @@ grow_vertical = 0
 [node name="HBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer/buttons_holder" unique_id=708294812]
 layout_mode = 2
 alignment = 1
-script = ExtResource("7_vob6w")
+script = SubResource("GDScript_8y4rh")
 
 [node name="Button2" type="Button" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer" unique_id=1166429840]
 custom_minimum_size = Vector2(70, 70)
@@ -243,4 +838,4 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_vob6w")
 autowrap_trim_flags = 0
 icon_alignment = 1
 expand_icon = true
-script = ExtResource("3_uw04a")
+script = SubResource("GDScript_psyvr")

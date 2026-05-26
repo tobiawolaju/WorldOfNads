@@ -66,7 +66,7 @@ func _input(event):
 			if _is_touch_over_ui(event.position):
 				return
 			# While locked: only touches directly on the joystick base are tracked 
-			# for potential unlock or jump. Touches elsewhere pass through for camera orbit.
+			# for potential unlock or jump. Touches elsewhere become camera orbit.
 			if is_auto_locked:
 				if auto_lock_touch_index == -1 and touch_joystick != null and event.position.distance_to(touch_joystick.global_position) <= radiusJoyBase * 2.5:
 					auto_lock_touch_index = event.index
@@ -77,8 +77,11 @@ func _input(event):
 					last_tap_time = Time.get_ticks_msec() / 1000.0
 					last_tap_position = event.position
 					get_viewport().set_input_as_handled()
+				elif active_camera_index == -1:
+					active_camera_index = event.index
+					get_viewport().set_input_as_handled()
+					emit_signal("camera_dragged", Vector2.ZERO)
 				# Return so we don't accidentally start a new joystick from outside the base.
-				# If set_input_as_handled() wasn't called, it will pass through to Player.gd!
 				return
 
 			if event.index == active_joystick_index or event.index == active_camera_index:

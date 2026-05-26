@@ -397,12 +397,12 @@ size = Vector3(0.34240723, 0.3552246, 0.3293686)
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_dnpom"]
 panorama = ExtResource("10_u2xfo")
 
-[sub_resource type="Sky" id="Sky_5bpam"]
+[sub_resource type="Sky" id="Sky_w01lk"]
 sky_material = SubResource("PanoramaSkyMaterial_dnpom")
 
 [sub_resource type="Environment" id="Environment_mwu4b"]
 background_mode = 2
-sky = SubResource("Sky_5bpam")
+sky = SubResource("Sky_w01lk")
 sky_rotation = Vector3(0, 0, -1.4695672)
 glow_intensity = 0.25
 glow_bloom = 0.6
@@ -427,7 +427,7 @@ camera_block_path = NodePath("Camera3D/CAMERABlock")
 
 [node name="Camera3D" type="Camera3D" parent="PlayerManager" unique_id=411845509]
 transform = Transform3D(1, 0, 0, 0, 0.99625385, -0.08647761, 0, 0.08647761, 0.99625385, 0, 31.696651, 11.382333)
-fov = 80.0
+fov = 60.0
 far = 100.0
 
 [node name="CAMERABlock" type="MeshInstance3D" parent="PlayerManager/Camera3D" unique_id=780064081]

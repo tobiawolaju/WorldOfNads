@@ -240,15 +240,15 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_somuf")
 
-[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_w8oo7"]
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_xyhuh"]
 panorama = ExtResource("9_0552c")
 
-[sub_resource type="Sky" id="Sky_k1ljg"]
-sky_material = SubResource("PanoramaSkyMaterial_w8oo7")
+[sub_resource type="Sky" id="Sky_5bpam"]
+sky_material = SubResource("PanoramaSkyMaterial_xyhuh")
 
-[sub_resource type="Environment" id="Environment_efcmp"]
+[sub_resource type="Environment" id="Environment_0552c"]
 background_mode = 2
-sky = SubResource("Sky_k1ljg")
+sky = SubResource("Sky_5bpam")
 sky_rotation = Vector3(0, 0, -1.4695672)
 glow_intensity = 0.25
 glow_bloom = 0.6
@@ -292,8 +292,8 @@ surface_material_override/0 = SubResource("ShaderMaterial_vwhhg")
 one_shot = true
 
 [node name="Camera3D" type="Camera3D" parent="PlayerManager" unique_id=2009284967]
-transform = Transform3D(-0.005016815, -0.32810614, 0.9446275, -0.00079225487, 0.9446406, 0.32810646, -0.99998724, 0.00089766365, -0.004999031, 2.3647788, 2.666788, 0.047125697)
-fov = 80.0
+transform = Transform3D(-0.005050921, -0.072435245, 0.99736035, 0.0005331882, 0.9973727, 0.07243884, -0.9999871, 0.0008976637, -0.004999029, 4.3647785, 0.6667881, 0.047125697)
+fov = 60.0
 far = 100.0
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=590098905]
@@ -322,12 +322,12 @@ font_size = 400
 outline_size = 127
 uppercase = true
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=648981229]
-environment = SubResource("Environment_efcmp")
-
 [node name="walls" type="Node3D" parent="." unique_id=450079194]
 transform = Transform3D(1, 0, 0, 0, 1, -4.37114e-08, 0, 4.37114e-08, 1, 0, 4.030577, 0)
 
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("5_exue1")]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=822008938]
+environment = SubResource("Environment_0552c")
 
 [editable path="Hud"]
