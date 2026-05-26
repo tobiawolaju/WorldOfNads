@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
@@ -107,6 +107,9 @@ export default function Dashboard() {
   const [playButtonState, setPlayButtonState] = useState<"idle" | "counting">("idle");
   const [elapsedTime, setElapsedTime] = useState(0);
   const [nowMs, setNowMs] = useState(Date.now());
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [canFullscreen, setCanFullscreen] = useState(false);
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const isManuallyScrolling = useRef<boolean>(false);
@@ -245,6 +248,31 @@ export default function Dashboard() {
     }).format(new Date(timestamp * 1000));
   };
 
+  const requestFullscreen = useCallback(async () => {
+    const container = document.documentElement;
+    if (!container) return;
+
+    try {
+      if (document.fullscreenElement) return;
+      if (container.requestFullscreen) {
+        await container.requestFullscreen({ navigationUI: "hide" });
+      }
+    } catch (error) {
+      console.warn("Fullscreen request failed:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    setCanFullscreen(Boolean(document.fullscreenEnabled));
+
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
   if (!ready) return <FullScreenLoader />;
   if (!authenticated || !user) return null;
 
@@ -361,6 +389,16 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-wrapper">
+      {canFullscreen && !isFullscreen && (
+        <button
+          type="button"
+          className="dashboard-fullscreen-toggle"
+          onClick={requestFullscreen}
+          aria-label="Enter full screen"
+        >
+          <span className="material-symbols-rounded" aria-hidden="true">fullscreen</span>
+        </button>
+      )}
       <div className="left-3d-section">
         <ThreeScene
           social={socialData}
