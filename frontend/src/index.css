@@ -178,6 +178,24 @@
         color: #ffffff !important;
     }
 
+    /* Keep yellow button/badge labels black in dark mode */
+    .play-fixed,
+    .play-fixed span,
+    .buy-fixed,
+    .buy-fixed span,
+    .play-btn-fixed,
+    .play-btn-fixed span,
+    .waitlist-submit,
+    .waitlist-submit span,
+    .notif-badge,
+    .notif-badge-text,
+    .tab-notif-badge,
+    .tab-notif-badge-text,
+    .badge-store,
+    .badge-new {
+        color: #000000 !important;
+    }
+
     /* Specific link handles that were purple */
     .partner-handle,
     .host-action-link,

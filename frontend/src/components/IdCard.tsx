@@ -23,6 +23,7 @@ interface IdCardProps {
   earned: number;
   username: string;
   onLogout: () => void;
+  lightweight?: boolean;
 }
 
 // --- Shader Definition for Water Bubble Effect ---
@@ -58,7 +59,7 @@ const fragmentShader = `
   }
 `;
 
-export const IdCard: React.FC<IdCardProps> = ({ social, wallets, earned, username, onLogout }) => {
+export const IdCard: React.FC<IdCardProps> = ({ social, wallets, earned, username, onLogout, lightweight = false }) => {
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
   const [copied, setCopied] = useState(false);
   const [roles, setRoles] = useState<string[]>([]);
@@ -79,7 +80,7 @@ export const IdCard: React.FC<IdCardProps> = ({ social, wallets, earned, usernam
 
   // Animate the shader's time uniform
   useFrame(({ clock }) => {
-    if (shaderRef.current) {
+    if (!lightweight && shaderRef.current) {
       shaderRef.current.uniforms.uTime.value = clock.getElapsedTime();
     }
   });
@@ -106,32 +107,36 @@ export const IdCard: React.FC<IdCardProps> = ({ social, wallets, earned, usernam
   return (
     <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
 
-      {/* === GLASS BODY WITH SHADER === */}
-      <mesh>
-        <boxGeometry args={[9.5, 5.5, 0.12]} />
-        {/* Apply the custom shader material */}
-        <primitive object={bubbleMaterial} ref={shaderRef} attach="material" />
-      </mesh>
+      {!lightweight && (
+        <>
+          {/* === GLASS BODY WITH SHADER === */}
+          <mesh>
+            <boxGeometry args={[9.5, 5.5, 0.12]} />
+            {/* Apply the custom shader material */}
+            <primitive object={bubbleMaterial} ref={shaderRef} attach="material" />
+          </mesh>
 
-      {/* Soft backing plane (unchanged) */}
-      <mesh position={[0, 0, -0.07]}>
-        <planeGeometry args={[9.5, 5.5]} />
-        <meshPhysicalMaterial
-          color="#ffd900"
-          transparent
-          opacity={1}
-          roughness={0.1}
-          metalness={0.2}
-          transmission={0.85}
-          thickness={0.2}
-        />
-      </mesh>
+          {/* Soft backing plane */}
+          <mesh position={[0, 0, -0.07]}>
+            <planeGeometry args={[9.5, 5.5]} />
+            <meshPhysicalMaterial
+              color="#ffd900"
+              transparent
+              opacity={1}
+              roughness={0.1}
+              metalness={0.2}
+              transmission={0.85}
+              thickness={0.2}
+            />
+          </mesh>
+        </>
+      )}
 
       {/* === UI LAYER (UNCHANGED) === */}
       <Html
         transform
         center
-        occlude
+        occlude={!lightweight}
         position={[0, 0, 0.07]}
         zIndexRange={[0, 0]}
         style={{

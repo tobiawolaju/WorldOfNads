@@ -456,7 +456,7 @@
   bottom: 30px;
   display: flex;
   flex-direction: row;
-  z-index: 1000;
+  z-index: 950;
   opacity: 0;
   pointer-events: none;
   transform: translateY(20px);
@@ -590,4 +590,11 @@ h2,
 h3,
 p {
   margin-top: 0;
+}
+
+
+@media (prefers-color-scheme: dark) {
+  .func-headline {
+    -webkit-text-stroke: 0.5px #ffffff;
+  }
 }
