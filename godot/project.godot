@@ -25,7 +25,7 @@ config/windows_native_icon="uid://rcj3xhh7u10x"
 
 [autoload]
 
-TransitionScreen="*res://scripts/TransitionScreen.gd"
+TransitionScreen="*uid://cgubj1l8n18oh"
 
 [display]
 

@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://bjvhk14twbsb6"]
 
+[ext_resource type="Script" path="res://newport/scripts/Events.gd" id="1_32sg2"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="1_fudvf"]
 [ext_resource type="Texture2D" uid="uid://bipdolhh0db82" path="res://assets/images/white_circle2.png" id="2_ycqod"]
 [ext_resource type="Texture2D" uid="uid://c32ce524dwv4m" path="res://assets/images/white_circle.png" id="3_32sg2"]
@@ -35,6 +36,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_32sg2")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=701090656]
 

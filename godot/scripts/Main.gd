@@ -5,7 +5,7 @@ extends Node3D
 const LIVE_URL = "wss://worldofnads.onrender.com"
 const LOCAL_URL = "ws://localhost:8080"
 
-@export var player_scene: PackedScene = preload("res://scenes/components/Player.tscn")
+@export var player_scene: PackedScene 
 @export var myplayerswpanpoint: Marker3D
 @export var countdown_label_path: NodePath
 @export var world_environment_path: NodePath = NodePath("WorldEnvironment")

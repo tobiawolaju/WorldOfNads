@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://baf2iup5si1eu"]
 
-[ext_resource type="Script" uid="uid://bge6xn1tneo3a" path="res://scripts/Main.gd" id="1_jb4qf"]
+[ext_resource type="Script" uid="uid://ds7rfadg6n6k8" path="res://newport/scripts/PlayerManager.gd" id="1_hpwea"]
 [ext_resource type="PackedScene" uid="uid://badfcudlmkd0u" path="res://assets/models/floor.glb" id="2_hpwea"]
 [ext_resource type="PackedScene" uid="uid://chlxnv73ayyej" path="res://newport/scenes/Player.tscn" id="2_w01lk"]
 [ext_resource type="Shader" uid="uid://b63b01dx833k" path="res://scenes/floor2.gdshader" id="3_w01lk"]
@@ -415,10 +415,10 @@ fog_depth_begin = 1.0
 fog_depth_end = 25.0
 volumetric_fog_albedo = Color(0.29411766, 0.2627451, 1, 1)
 
-[node name="Gameplay" type="Node3D" unique_id=2001810245]
+[node name="GamePlay" type="Node3D" unique_id=2001810245]
 
 [node name="PlayerManager" type="Node3D" parent="." unique_id=226066109 node_paths=PackedStringArray("myplayerswpanpoint")]
-script = ExtResource("1_jb4qf")
+script = ExtResource("1_hpwea")
 player_scene = ExtResource("2_w01lk")
 myplayerswpanpoint = NodePath("../Bus/Marker3D")
 countdown_label_path = NodePath("../Hud/CanvasLayer/BoxContainer/Node2/BoxContainer/Countdown")
