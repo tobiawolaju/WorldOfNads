@@ -1,6 +1,6 @@
 extends Node
 
-@export var status_label: Label3D
+@export var status_label: Label
 
 # URL to "wake up" the server (can be the WS URL)
 const SERVER_URL := "wss://worldofnads.onrender.com"

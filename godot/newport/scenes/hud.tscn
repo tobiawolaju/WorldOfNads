@@ -36,23 +36,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Label" type="Label" parent="." unique_id=1849541613]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -120.0
-offset_top = 15.0
-offset_right = 120.0
-offset_bottom = 46.0
-grow_horizontal = 2
-theme_override_colors/font_outline_color = Color(0.43137255, 0.32941177, 1, 1)
-theme_override_constants/outline_size = 12
-theme_override_fonts/font = ExtResource("1_fudvf")
-theme_override_font_sizes/font_size = 30
-text = "Searching for Server"
-uppercase = true
-
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=701090656]
 
 [node name="BoxContainer" type="BoxContainer" parent="CanvasLayer" unique_id=569957497]
@@ -74,16 +57,14 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 alignment = 1
 
-[node name="Countdown" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer" unique_id=404622455]
+[node name="Countdown" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer" unique_id=1849541613]
 layout_mode = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.39607844)
-theme_override_constants/outline_size = 0
-theme_override_constants/shadow_outline_size = 10
+theme_override_colors/font_outline_color = Color(0.43137255, 0.32941177, 1, 1)
+theme_override_constants/outline_size = 12
 theme_override_fonts/font = ExtResource("1_fudvf")
-theme_override_font_sizes/font_size = 35
-text = ":)"
-horizontal_alignment = 1
-vertical_alignment = 1
+theme_override_font_sizes/font_size = 30
+text = "Searching for Server"
+uppercase = true
 
 [node name="BoxContainer2" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1306771986]
 offset_left = 19.0
