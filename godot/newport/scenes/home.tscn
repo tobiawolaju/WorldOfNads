@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dg0hj4afkds4y"]
 
-[ext_resource type="Script" path="res://newport/scripts/Home.gd" id="1_luov1"]
+[ext_resource type="Script" uid="uid://bip5384hhaetv" path="res://newport/scripts/home.gd" id="1_luov1"]
 [ext_resource type="Texture2D" uid="uid://rcj3xhh7u10x" path="res://assets/images/logo.png" id="2_o04ox"]
 
 [node name="Home" type="Node2D" unique_id=1450386627]
