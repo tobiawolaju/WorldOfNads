@@ -1,9 +1,9 @@
 [gd_scene format=4 uid="uid://dt1eg47e3a0gp"]
 
-[ext_resource type="Script" uid="uid://be68ag11ct64p" path="res://newport/scripts/lobby.gd" id="1_23n5n"]
+[ext_resource type="Script" uid="uid://dhmst23qnbx05" path="res://newport/scripts/lobbyx.gd" id="1_exue1"]
 [ext_resource type="Shader" uid="uid://c3ksm6nb271ka" path="res://assets/shaders/glicth.gdshader" id="2_23n5n"]
 [ext_resource type="PackedScene" uid="uid://chlxnv73ayyej" path="res://newport/scenes/Player.tscn" id="2_xyhuh"]
-[ext_resource type="Script" uid="uid://wja8ank84i1j" path="res://newport/scripts/LobbyManager.gd" id="3_xyhuh"]
+[ext_resource type="Script" uid="uid://crqpcrr878vy0" path="res://newport/scripts/LobbyManagerx.gd" id="3_xyhuh"]
 [ext_resource type="Texture2D" uid="uid://w5ldcc8yjkgr" path="res://assets/models/stop_sign_texture_1024x1024.png" id="3_y6h6p"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="4_bbjtq"]
 [ext_resource type="ArrayMesh" uid="uid://c8jku1vjebweb" path="res://assets/models/terrain.obj" id="4_exue1"]
@@ -262,7 +262,7 @@ fog_depth_end = 25.0
 volumetric_fog_albedo = Color(0.29411766, 0.2627451, 1, 1)
 
 [node name="Lobby" type="Node3D" unique_id=1071120033]
-script = ExtResource("1_23n5n")
+script = ExtResource("1_exue1")
 local_player_scene = ExtResource("2_xyhuh")
 camera_node = NodePath("PlayerManager/Camera3D")
 

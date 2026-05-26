@@ -1,0 +1,11 @@
+Model Information:
+* title:	Wooden Ladder
+* source:	https://sketchfab.com/3d-models/wooden-ladder-e7f6fa23b4a24fe1b752fefc00aacb78
+* author:	RubaQewar (https://sketchfab.com/RubaQewar)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Wooden Ladder" (https://sketchfab.com/3d-models/wooden-ladder-e7f6fa23b4a24fe1b752fefc00aacb78) by RubaQewar (https://sketchfab.com/RubaQewar) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

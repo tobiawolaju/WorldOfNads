@@ -4,9 +4,9 @@
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="1_fudvf"]
 [ext_resource type="Texture2D" uid="uid://bipdolhh0db82" path="res://assets/images/white_circle2.png" id="2_ycqod"]
 [ext_resource type="Texture2D" uid="uid://c32ce524dwv4m" path="res://assets/images/white_circle.png" id="3_32sg2"]
-[ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/joystick.gd" id="4_qsiy0"]
-[ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/buttons.gd" id="5_si2yd"]
-[ext_resource type="Script" uid="uid://vwbunt2j3px3" path="res://scripts/pick_button.gd" id="6_uwv0p"]
+[ext_resource type="Script" path="res://newport/scripts/joystick.gd" id="5_32sg2"]
+[ext_resource type="Script" path="res://newport/scripts/buttons.gd" id="6_32sg2"]
+[ext_resource type="Script" uid="uid://dm5vm0ohj0bo0" path="res://newport/scripts/pick_buttonx.gd" id="7_32sg2"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_p3vpr"]
 
@@ -149,7 +149,7 @@ texture = ExtResource("2_ycqod")
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=661345483]
 scale = Vector2(0.16, 0.16)
 texture = ExtResource("3_32sg2")
-script = ExtResource("4_qsiy0")
+script = ExtResource("5_32sg2")
 
 [node name="Node3" type="Node" parent="." unique_id=1974703911]
 
@@ -171,7 +171,7 @@ grow_vertical = 0
 [node name="HBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer/buttons_holder" unique_id=2097036458]
 layout_mode = 2
 alignment = 1
-script = ExtResource("5_si2yd")
+script = ExtResource("6_32sg2")
 
 [node name="Button2" type="Button" parent="Node3/CanvasLayer/buttons_holder/HBoxContainer" unique_id=849126213]
 custom_minimum_size = Vector2(70, 70)
@@ -191,4 +191,4 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_jji8u")
 autowrap_trim_flags = 0
 icon_alignment = 1
 expand_icon = true
-script = ExtResource("6_uwv0p")
+script = ExtResource("7_32sg2")

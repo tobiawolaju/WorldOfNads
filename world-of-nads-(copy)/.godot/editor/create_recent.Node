@@ -1,0 +1,15 @@
+Label
+MultiMeshInstance3D
+Camera3D
+MeshInstance3D
+DirectionalLight3D
+WorldEnvironment
+StaticBody3D
+Node3D
+CollisionShape3D
+Sprite2D
+ParallaxLayer
+ParallaxBackground
+Parallax2D
+ColorRect
+OccluderInstance3D

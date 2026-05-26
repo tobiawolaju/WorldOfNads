@@ -8,8 +8,8 @@
 [ext_resource type="PackedScene" uid="uid://xxadd67lsra2" path="res://newport/scenes/props/enviroment/bus.tscn" id="5_w01lk"]
 [ext_resource type="Texture2D" uid="uid://dk6pulccdwv63" path="res://assets/models/shoppingchart_0.png" id="6_joexv"]
 [ext_resource type="PackedScene" uid="uid://q85dx3n5lik1" path="res://scenes/waypoint.tscn" id="7_6rekl"]
-[ext_resource type="Script" uid="uid://b7qxrbqb8hkxc" path="res://scripts/pickable.gd" id="8_thcp8"]
 [ext_resource type="ArrayMesh" uid="uid://djlfoy1u834mc" path="res://assets/models/Chicken.obj" id="9_ut01r"]
+[ext_resource type="Script" uid="uid://bo6d71r4umug2" path="res://newport/scripts/pickablex.gd" id="9_w01lk"]
 [ext_resource type="Texture2D" uid="uid://bkhe2deo2blgx" path="res://assets/images/Untitledw.png" id="10_u2xfo"]
 [ext_resource type="PackedScene" uid="uid://bjvhk14twbsb6" path="res://newport/scenes/hud.tscn" id="11_hpwea"]
 
@@ -724,7 +724,7 @@ camera = NodePath("../../../PlayerManager/Camera3D")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9764378, 0.5869336, -1.5649502)
 collision_layer = 2
 collision_mask = 2
-script = ExtResource("8_thcp8")
+script = ExtResource("9_w01lk")
 
 [node name="Chicken" type="MeshInstance3D" parent="Chicken" unique_id=1336174753]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.605, 0.73399997, -0.20600772, -0.0039999485)

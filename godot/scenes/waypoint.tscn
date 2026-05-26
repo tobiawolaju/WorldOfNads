@@ -1,15 +1,15 @@
-[gd_scene load_steps=4 format=3 uid="uid://q85dx3n5lik1"]
+[gd_scene format=3 uid="uid://q85dx3n5lik1"]
 
-[ext_resource type="Script" uid="uid://c5plurlwbls7g" path="res://scripts/waypoint.gd" id="1_kvbum"]
+[ext_resource type="Script" uid="uid://dvip1ol15xua1" path="res://newport/scripts/waypointx.gd" id="1_hy65e"]
 [ext_resource type="FontFile" uid="uid://g5hbs5dk6ru4" path="res://assets/fonts/fortnite.otf" id="2_hy65e"]
 [ext_resource type="Texture2D" uid="uid://ueo3a7kil5nd" path="res://assets/images/point.webp" id="2_kvbum"]
 
-[node name="Waypoint" type="Control"]
+[node name="Waypoint" type="Control" unique_id=1984879985]
 layout_mode = 3
 anchors_preset = 0
-script = ExtResource("1_kvbum")
+script = ExtResource("1_hy65e")
 
-[node name="Label" type="Label" parent="."]
+[node name="Label" type="Label" parent="." unique_id=1458825978]
 layout_mode = 0
 offset_left = -70.0
 offset_top = -21.0
@@ -24,7 +24,7 @@ theme_override_font_sizes/font_size = 1000
 text = "Label"
 horizontal_alignment = 1
 
-[node name="Marker" type="TextureRect" parent="."]
+[node name="Marker" type="TextureRect" parent="." unique_id=1619728802]
 modulate = Color(1, 1, 1, 0.54509807)
 layout_mode = 0
 offset_left = -6.0
