@@ -84,12 +84,13 @@ func _input(event):
 			if event.index == active_joystick_index or event.index == active_camera_index:
 				return
 			# --- Joystick touch ---
-			if _is_joystick_area(event.position, viewport_size) and active_joystick_index == -1:
+			if active_joystick_index == -1:
 				_start_joystick_touch(event.position, event.index, touch_joystick)
 				get_viewport().set_input_as_handled()
 			# --- Camera touch ---
-			elif _is_camera_area(event.position, viewport_size) and active_camera_index == -1:
+			elif active_camera_index == -1:
 				active_camera_index = event.index
+				get_viewport().set_input_as_handled()
 				emit_signal("camera_dragged", Vector2.ZERO)
 		else:
 			if event.index == active_joystick_index:
@@ -122,7 +123,6 @@ func _input(event):
 			position = local_pos_unlock
 			_update_north_drag_progress_from_screen_drag(event.relative)
 			emit_signal("joystick_moved", position)
-			emit_signal("camera_dragged", event.relative)
 			touch_joystick.visible = true
 			_update_input_from_joystick(position)
 			_update_visuals()
@@ -136,12 +136,12 @@ func _input(event):
 			position = local_pos
 			_update_north_drag_progress_from_screen_drag(event.relative)
 			emit_signal("joystick_moved", position)
-			emit_signal("camera_dragged", event.relative)
 			touch_joystick.visible = true
 			_update_input_from_joystick(position)
 			_update_visuals()
 			get_viewport().set_input_as_handled()
 		elif event.index == active_camera_index:
+			get_viewport().set_input_as_handled()
 			emit_signal("camera_dragged", event.relative)
 
 func _process(delta):

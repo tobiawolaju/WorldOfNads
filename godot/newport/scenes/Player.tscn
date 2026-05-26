@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://chlxnv73ayyej"]
 
-[ext_resource type="Script" path="res://newport/scripts/Player.gd" id="1_cavoa"]
+[ext_resource type="Script" uid="uid://dt4bl1rmfjm12" path="res://newport/scripts/Player.gd" id="1_cavoa"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hqo6i"]
 radius = 0.23692703

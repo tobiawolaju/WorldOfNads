@@ -24,13 +24,13 @@ var held_object: RigidBody3D = null
 var last_pickup_request_ms: int = 0
 
 # --- CAMERA & ZOOM SETTINGS ---
-@export var camera_distance: float = 8.0
+@export var camera_distance: float = 4.5
 @export var camera_screen_offset: Vector2 = Vector2(-0.15,-0.2) # x: -1 (left) to 1 (right), y: -1 (bottom) to 1 (top)
 @export var camera_smoothness: float = 8.0
 @export var min_pitch: float = deg_to_rad(0.0)
 @export var max_pitch: float = deg_to_rad(60.0)
-@export var min_zoom: float = 6.0
-@export var max_zoom: float = 10.0
+@export var min_zoom: float = 3.5
+@export var max_zoom: float = 6.0
 @export var altitude_zoom_factor: float = 1.5
 @export var touch_orbit_sensitivity: float = 0.0045
 @export var joystick_orbit_sensitivity: float = 0.0005 #0.00225
@@ -69,7 +69,6 @@ var cam_rot_x: float = deg_to_rad(30)
 var cam_rot_y: float = 0.0
 var current_animation: String = "idle"
 
-var active_camera_index := -1
 var touch_joystick: Node = null
 var network_tick_timer: float = 0.0
 var network_heartbeat_timer: float = 0.0
@@ -139,46 +138,6 @@ func _input(event: InputEvent) -> void:
 			_drop_object()
 		else:
 			_try_pickup()
-
-func _unhandled_input(event: InputEvent) -> void:
-	if not is_local:
-		return
-
-	if touch_joystick == null:
-		_refresh_touch_joystick()
-
-	var viewport = get_viewport().get_visible_rect()
-	var size = viewport.size
-
-	if event is InputEventScreenTouch:
-		if touch_joystick and touch_joystick.call("claims_touch", event.index):
-			return
-		
-		if event.pressed:
-			# Strictly claim camera if nothing else is active
-			if active_camera_index == -1:
-				active_camera_index = event.index
-				get_viewport().set_input_as_handled()
-		else:
-			if event.index == active_camera_index:
-				active_camera_index = -1
-				get_viewport().set_input_as_handled()
-		return
-
-	if event is InputEventScreenDrag:
-		
-		if touch_joystick and touch_joystick.call("claims_touch", event.index):
-			return
-
-		# DO NOT claim camera during DRAG if a finger was already down but didn't claim it.
-		# This prevents "jumping" between fingers if one is lifted.
-		# We only orbit if the finger that started the "orbit session" is the one dragging.
-		if event.index != active_camera_index:
-			return
-
-		cam_rot_y -= event.relative.x * touch_orbit_sensitivity
-		cam_rot_x = clamp(cam_rot_x + event.relative.y * touch_orbit_sensitivity, min_pitch, max_pitch)
-		get_viewport().set_input_as_handled()
 
 func _physics_process(delta: float) -> void:
 	if not is_local:
@@ -528,5 +487,5 @@ func _connect_joystick_signals() -> void:
 func _on_joystick_camera_drag(relative: Vector2) -> void:
 	if not is_local:
 		return
-	cam_rot_y -= relative.x * joystick_orbit_sensitivity
-	cam_rot_x = clamp(cam_rot_x + relative.y * joystick_orbit_sensitivity, min_pitch, max_pitch)
+	cam_rot_y -= relative.x * touch_orbit_sensitivity
+	cam_rot_x = clamp(cam_rot_x + relative.y * touch_orbit_sensitivity, min_pitch, max_pitch)

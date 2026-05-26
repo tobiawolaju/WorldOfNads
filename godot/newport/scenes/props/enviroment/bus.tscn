@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://xxadd67lsra2"]
 
-[ext_resource type="Script" path="res://newport/scripts/bus.gd" id="1_xtfkx"]
+[ext_resource type="Script" uid="uid://bok6pqa5jkw3a" path="res://newport/scripts/bus.gd" id="1_xtfkx"]
 [ext_resource type="Texture2D" uid="uid://bux033aiby60l" path="res://assets/models/VanTex.png" id="2_8154j"]
 [ext_resource type="ArrayMesh" uid="uid://d2shs8xt2gill" path="res://assets/models/Parachute.obj" id="3_8154j"]
 
