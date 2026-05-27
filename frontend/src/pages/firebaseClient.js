@@ -58,30 +58,6 @@ export function getPrimaryWalletAddress(user) {
 }
 
 export function getProfilePictureFromPrivy(user) {
-  if (!user?.linkedAccounts) return null;
-
-  // Priority order for profile pictures (Twitter > Farcaster > others)
-  const priorityTypes = ["twitter_oauth", "farcaster", "google_oauth", "twitch_oauth", "tiktok_oauth", "spotify_oauth"];
-  
-  // Field names different providers use for images
-  const imageFields = ["profilePictureUrl", "picture", "pfp", "avatarUrl"];
-
-  for (const type of priorityTypes) {
-    const acc = user.linkedAccounts.find((a) => a.type === type);
-    if (acc) {
-      for (const field of imageFields) {
-        if (acc[field]) return acc[field];
-      }
-    }
-  }
-
-  // Final sweep of all accounts for ANY image if priority sweep failed
-  for (const acc of user.linkedAccounts) {
-    for (const field of imageFields) {
-      if (acc[field]) return acc[field];
-    }
-  }
-
   return null;
 }
 
@@ -107,7 +83,7 @@ export async function saveUserToFirebase(user) {
     latestVerifiedAt: ethAcc?.latestVerifiedAt || solAcc?.latestVerifiedAt || new Date().toISOString(),
     profilePictureUrl:
       getProfilePictureFromPrivy(user) ||
-      "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png",
+      "/logo.jpg",
     twitterUsername: twitter?.username || null,
     ethAddress: ethAcc?.address || null, // Capture specifically for Monad payouts
     solAddress: solAcc?.address || null,  // Capture for Solana compatibility

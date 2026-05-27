@@ -1,5 +1,6 @@
 const API_BASE = import.meta.env.VITE_ANALYTICS_API_URL || "";
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || "";
+const ENABLE_GA = false;
 
 const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 let gaInitialized = false;
@@ -43,7 +44,7 @@ function sendToGoogleAnalytics(payload) {
 }
 
 export function initGoogleAnalytics() {
-  if (!GA_MEASUREMENT_ID || gaInitialized || typeof window === "undefined") return false;
+  if (!ENABLE_GA || !GA_MEASUREMENT_ID || gaInitialized || typeof window === "undefined") return false;
 
   if (!window.dataLayer) {
     window.dataLayer = [];

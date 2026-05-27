@@ -154,7 +154,7 @@ export const IdCard: React.FC<IdCardProps> = ({ social, wallets, earned, usernam
 
             <div className="ticket-content">
               <img
-                src={social?.profilePictureUrl || "/default-avatar.png"}
+                src={social?.profilePictureUrl || "/logo.jpg"}
                 className="ticket-avatar"
                 alt="Avatar"
               />

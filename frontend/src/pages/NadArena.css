@@ -1,9 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Exo+2:wght@700;800&display=swap");
-
 .arena-container {
   text-align: center;
   padding: 80px 20px;
-  font-family: "Roboto Mono", monospace;
+  font-family: var(--font-inter), monospace;
 }
 
 .arena-title {
@@ -63,7 +61,7 @@
 }
 
 .arena-project-name {
-  font-family: "Exo 2", sans-serif;
+  font-family: "Font2", sans-serif;
   font-size: 1.8rem;
   font-weight: 700;
   color: #1a202c;
