@@ -27,6 +27,7 @@ boot_splash/transparent_background=false
 [autoload]
 
 TransitionScreen="*uid://cgubj1l8n18oh"
+SceneRegistry="*res://newport/scripts/SceneRegistry.gd"
 
 [display]
 
