@@ -1,0 +1,14 @@
+MultiMeshInstance3D
+MeshInstance3D
+DampedSpringJoint2D
+CollisionShape3D
+StaticBody3D
+Sprite2D
+ParallaxLayer
+ParallaxBackground
+Parallax2D
+ColorRect
+OccluderInstance3D
+LightmapGI
+Node3D
+Button

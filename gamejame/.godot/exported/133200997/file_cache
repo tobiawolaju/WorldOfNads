@@ -1,0 +1,12 @@
+res://scenes/components/bus.tscn::b1b531d0ae9cb92c4b159adf5cda2bed::1776915824::res://.godot/exported/133200997/export-4c55a4e6aef813e30d0e5625735bee08-bus.scn
+res://scenes/components/LobbyPlayer.tscn::f85f9f44b2dc51c765b71c8fc404c6de::1776915824::res://.godot/exported/133200997/export-df6ecc0f57475f7f6f392cfbbe0e7561-LobbyPlayer.scn
+res://scenes/components/NPCPlayer.tscn::2f4f48da907f14d5275bba3da1d65841::1776915824::res://.godot/exported/133200997/export-7cf7e79cbddacbef71608ad316504e5a-NPCPlayer.scn
+res://scenes/components/Player2.tscn::e39d176908ec3600dbd8d1135974406c::1776915824::res://.godot/exported/133200997/export-9b5451fc3e1172deac4df83b574490c8-Player2.scn
+res://scenes/components/Player.tscn::e434d645207b9623118d9fb31b81c3c6::1776915824::res://.godot/exported/133200997/export-5d25d3f5867e96b7eeacec191fe0b991-Player.scn
+res://scenes/components/PlayerProp.tscn::8f28072e75b3f518a9d106b403287522::1776915824::res://.godot/exported/133200997/export-a7a10d5e95beece9a43a0ea78e8b3fff-PlayerProp.scn
+res://scenes/gameover.tscn::6ac4a491a122937034d46c9bdd8a4c1c::1776915823::res://.godot/exported/133200997/export-e4f388fbff730b271b2c0f6514b3896d-gameover.scn
+res://scenes/gameplay2d.tscn::2c6d232b23825214ac1b0b725908fd4a::1776916041::res://.godot/exported/133200997/export-08e400769faa84e9aa61f42d9be678be-gameplay2d.scn
+res://scenes/gameplay3d.tscn::ba1926144709eaf3896f0b211bb92ccc::1776916437::res://.godot/exported/133200997/export-cc60debc9f2385a94c4065fb3aa9646d-gameplay3d.scn
+res://scenes/loading.tscn::b2aa7e554a678fa558add8b88a7e22ae::1776915823::res://.godot/exported/133200997/export-493f4b2de23f7fce37b70afa77504a8a-loading.scn
+res://scenes/lobby.tscn::a8155f0c638361a2eba698120e6f13e9::1776915824::res://.godot/exported/133200997/export-f3d5c683a2834285b3c292f8847bd661-lobby.scn
+res://scenes/waypoint.tscn::aa127941ff95ffd70eed01d2a9ea22cc::1776915824::res://.godot/exported/133200997/export-1bec5f37d14a1284a5acdae9c8c8773c-waypoint.scn

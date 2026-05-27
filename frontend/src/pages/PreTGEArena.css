@@ -1,0 +1,228 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Exo+2:wght@700;800&display=swap");
+
+.pretge-container {
+  text-align: center;
+  padding: 80px 20px;
+  font-family: "Roboto Mono", monospace;
+}
+
+.pretge-title {
+  font-size: 15vw;
+  font-weight: 800;
+  margin-bottom: 20px;
+  font-family: Font2;
+  color: #6a38ff;
+}
+
+.pretge-intro {
+  max-width: 700px;
+  margin: 0 auto 50px auto;
+  color: #4a5568;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+}
+
+.pretge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.pretge-card {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  /* Default card border */
+  background: #ffffff;
+  padding: 25px;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.pretge-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e0;
+}
+
+.pretge-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.pretge-logo {
+  width: 100px;
+  height: 100px;
+  border-radius: 20%;
+  object-fit: cover;
+  margin-right: 15px;
+  /* Default border for the logo */
+  border: 3px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.pretge-project-name {
+  font-family: "Exo 2", sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1a202c;
+}
+
+.pretge-tagline {
+  font-size: 1rem;
+  color: #718096;
+  margin-bottom: 15px;
+  font-style: italic;
+}
+
+.pretge-description {
+  color: #4a5568;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.pretge-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #2d3748;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 15px;
+}
+
+.pretge-stage {
+  background-color: #e6f7ff;
+  color: #3e7bff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.pretge-handle a {
+  color: #0000006c;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: bold;
+}
+
+.pretge-handle a:hover {
+  color: #0357ff;
+}
+
+/* Inline color replacement: keep Tx link color driven by CSS variable */
+.pretge-tx-link-inline-replaced {
+  color: var(--inline-accent);
+}
+
+/* --- FILTER BUTTONS --- */
+
+.filter-buttons {
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(2px);
+  position: sticky;
+  top: 120px;
+  padding: 4px;
+  cursor: pointer;
+  transition: 0.25s;
+  z-index: 900;
+}
+
+.filter-buttons button {
+  font-size: 1rem;
+  padding: 2px 15px;
+  margin: 2px;
+  border-radius: 50px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: 0.25s;
+}
+
+.filter-buttons button:hover {
+  background-color: #0000000c;
+}
+
+.filter-buttons button.active {
+  background-color: #00000021;
+  color: rgba(0, 0, 0, 0.644);
+  opacity: 1;
+}
+
+
+
+
+/* COMPLETED — no glow, desaturated */
+.pretge-card-completed .pretge-logo {
+  filter: grayscale(100%);
+  border-color: #adb5bd;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+
+
+
+
+
+
+/* Shared style for all status badges */
+.pretge-status {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  text-transform: uppercase;
+  color: white;
+  margin-top: 6px;
+}
+
+/* LIVE = bright green */
+.pretge-status-live {
+  background: #28a7462a;
+  color: #28a745;
+}
+
+/* UPCOMING = bright orange */
+.pretge-status-upcoming {
+  background: #fd7d1428;
+  color: #fd7e14;
+}
+
+/* COMPLETED = grey + subtle */
+.pretge-status-completed {
+  background: #6c757d;
+  opacity: 0.8;
+}
+
+.search-wrapper {
+  margin-bottom: 40px;
+  max-width: 500px;
+  margin-inline: auto;
+  position: sticky;
+  top: 60px;
+  z-index: 500;
+  scale: 0.9;
+}
+
+.partner-search {
+  width: 100%;
+  padding: 12px 18px;
+  font-size: 1rem;
+  border: 1px solid rgba(66, 63, 75, 0.219);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.863);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease;
+  font-family: "Font1", sans-serif;
+}
+
+.partner-search:focus {
+  outline: none;
+  border-color: #7d5fff;
+  background: white;
+}
