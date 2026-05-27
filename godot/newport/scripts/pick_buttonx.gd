@@ -1,12 +1,14 @@
 extends Button
 
+@export var input_action: StringName = &"pickup"
+
 func _ready():
 	# Connect the pressed signal
 	pressed.connect(_on_pressed)
 
 func _on_pressed():
 	var ev := InputEventAction.new()
-	ev.action = "pickup"
+	ev.action = input_action
 	ev.pressed = true
 	Input.parse_input_event(ev)
 
