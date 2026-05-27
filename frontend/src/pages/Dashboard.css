@@ -431,7 +431,7 @@
   align-items: center;
   text-align: center;
   padding: 14px;
-  font-family: var(--font-inter), sans-serif;
+  font-family: 'Poppins', sans-serif;
   color: #ffffff;
   letter-spacing: 0.5px;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
@@ -442,7 +442,7 @@
 .match-sponsor {
   font-size: 1.125rem;
   font-weight: bolder;
-  font-family: var(--font-inter), sans-serif;
+  font-family: 'Poppins', sans-serif;
   text-transform: uppercase;
   margin-bottom: 4px;
   color: #ffffff;
@@ -450,7 +450,7 @@
 
 /* Reward Text */
 .match-reward {
-  font-family: var(--font-inter), sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
   color: #ffffff;
@@ -493,7 +493,7 @@
   background: linear-gradient(45deg, #ffd700, #ffec80, #ffd700);
   border-radius: 15px;
   position: relative;
-  font-family: var(--font-inter), sans-serif;
+  font-family: 'Poppins', sans-serif;
   color: #4a2c00;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   display: flex;
@@ -511,7 +511,7 @@
 }
 
 .ticket-title {
-  font-family: "Font2", serif;
+  font-family: 'Playfair Display', serif;
   font-size: 1.7rem;
   font-weight: 700;
   margin: 0;
@@ -569,7 +569,7 @@
 }
 
 .stub-earned {
-  font-family: "Font2", serif;
+  font-family: 'Playfair Display', serif;
   font-size: 1.8rem;
   font-weight: 700;
   text-align: center;
@@ -578,7 +578,7 @@
 
 .stub-earned span {
   font-size: 0.9rem;
-  font-family: var(--font-inter), sans-serif;
+  font-family: 'Poppins', sans-serif;
   display: block;
   opacity: 0.8;
 }

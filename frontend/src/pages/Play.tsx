@@ -127,22 +127,17 @@ const Play: React.FC = () => {
             cursor: "pointer",
           }}
         >
-          <svg
+          <span
+            className="material-symbols-rounded"
             aria-hidden="true"
-            viewBox="0 0 24 24"
-            width="20"
-            height="20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            style={{
+              fontSize: "1.5rem",
+              lineHeight: 1,
+              fontVariationSettings: "'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 48",
+            }}
           >
-            <path d="M8 3H3v5" />
-            <path d="M16 3h5v5" />
-            <path d="M21 16v5h-5" />
-            <path d="M8 21H3v-5" />
-          </svg>
+            fullscreen
+          </span>
         </button>
       )}
       <iframe
