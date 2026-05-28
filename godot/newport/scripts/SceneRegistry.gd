@@ -7,6 +7,12 @@ const HOME_SCENE: PackedScene = preload("res://newport/scenes/home.tscn")
 const HUD_SCENE: PackedScene = preload("res://newport/scenes/hud.tscn")
 const GAMEOVER_SCENE: PackedScene = preload("res://newport/scenes/gameover.tscn")
 const SETTINGS_SCENE: PackedScene = preload("res://newport/scenes/settings.tscn")
+const MAP_CHUNKS_SCENE: PackedScene = preload("res://newport/scenes/maps/chunks.tscn")
+const MAP_MOUCHWELD_SCENE: PackedScene = preload("res://newport/scenes/maps/mouchweld.tscn")
+const MAP_NADISLAND_SCENE: PackedScene = preload("res://newport/scenes/maps/nadisland.tscn")
+const MAP_SALMOGRAD_SCENE: PackedScene = preload("res://newport/scenes/maps/salmograd.tscn")
+const PROP_BUS_SCENE: PackedScene = preload("res://newport/scenes/props/enviroment/bus.tscn")
+const PROP_WAYPOINT_SCENE: PackedScene = preload("res://newport/scenes/props/fx/waypoint.tscn")
 
 const COMPONENT_SCENES := {
 	"player2": preload("res://scenes/components/Player2.tscn"),
