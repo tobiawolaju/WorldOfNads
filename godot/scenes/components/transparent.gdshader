@@ -1,51 +1,75 @@
 shader_type spatial;
-render_mode unshaded;
+render_mode blend_mix, cull_back;
 
-uniform vec4 color_inner : source_color = vec4(1.0, 0.2, 0.2, 1.0);
-uniform vec4 color_mid   : source_color = vec4(0.2, 1.0, 0.2, 1.0);
-uniform vec4 color_outer : source_color = vec4(0.2, 0.2, 1.0, 1.0);
+//
+// =====================================
+// TEXTURE
+// =====================================
+//
 
-uniform float radius_inner = 0.3;
-uniform float radius_outer = 0.6;
+uniform sampler2D grass_texture : source_color;
 
-// fake transparency strength
-uniform float opacity = 0.6;
+//
+// =====================================
+// HEIGHT RANGE
+// =====================================
+//
 
-// pixelation amount (set to 0 to disable)
-uniform float pixel_size = 64.0;
+uniform float grass_start_height = 2.0;
+uniform float grass_end_height = 8.0;
+uniform float fade_size = 1.0;
+
+//
+// =====================================
+// VISIBILITY
+// =====================================
+//
+
+uniform float alpha_cutoff = 0.2;
+
+varying vec3 world_pos;
+
+//
+// =====================================
+// VERTEX
+// =====================================
+//
+
+void vertex() {
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
+//
+// =====================================
+// FRAGMENT
+// =====================================
+//
 
 void fragment() {
-    // 🔹 Pixel snap (optional)
-    vec2 uv = UV;
-    if (pixel_size > 0.0) {
-        uv = floor(UV * pixel_size) / pixel_size;
-    }
 
-    // 🔹 Radial distance
-    vec2 d = uv - vec2(0.5);
-    float dist = length(d);
+	// 🌍 height mask
+	float start_fade = smoothstep(
+		grass_start_height,
+		grass_start_height + fade_size,
+		world_pos.y
+	);
 
-    // 🔹 3-color gradient
-    vec3 col;
-    if (dist < radius_inner) {
-        float t = dist / radius_inner;
-        col = mix(color_inner.rgb, color_mid.rgb, t);
-    } else {
-        float t = (dist - radius_inner) / (radius_outer - radius_inner);
-        col = mix(color_mid.rgb, color_outer.rgb, t);
-    }
+	float end_fade = 1.0 - smoothstep(
+		grass_end_height - fade_size,
+		grass_end_height,
+		world_pos.y
+	);
 
-    // 🔹 Radial fade (stronger at edges)
-    float fade = 1.0 - clamp(dist / radius_outer, 0.0, 1.0);
-    float final_opacity = opacity * fade;
+	float height_mask = start_fade * end_fade;
 
-    // 🔹 Dithering (screen-door transparency)
-    vec2 grid = mod(floor(FRAGCOORD.xy), 4.0);
-    float threshold = (grid.x + grid.y * 4.0) / 16.0;
+	// ❌ discard invisible grass
+	if (height_mask < alpha_cutoff) {
+		discard;
+	}
 
-    if (threshold > final_opacity) {
-        discard;
-    }
+	// 🌿 texture
+	vec4 tex = texture(grass_texture, UV);
 
-    ALBEDO = col;
+	ALBEDO = tex.rgb;
+	ALPHA = tex.a * height_mask;
 }

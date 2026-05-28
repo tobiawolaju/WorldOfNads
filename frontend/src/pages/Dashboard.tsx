@@ -204,19 +204,6 @@ export default function Dashboard() {
   const handlePlayClick = async () => {
     if (!selectedMatch || !user) return;
 
-    const match = matches.find((item) => item.matchId === selectedMatch);
-    if (match) {
-      const username = getUsernameFromPrivy(user);
-      await updateUserProjects(username, match.sponsor);
-      await recordSponsorDailyUniquePlayer({ sponsor: match.sponsor, username });
-      trackMatchJoined({
-        userId: user.id,
-        matchId: match.matchId,
-        sponsorId: match.sponsor,
-        metadata: { username }
-      });
-    }
-
     if (playButtonState === "idle") {
       setPlayButtonState("counting");
       setElapsedTime(0);
@@ -224,11 +211,31 @@ export default function Dashboard() {
         setElapsedTime((prev) => prev + 0.1);
       }, 100);
 
-      navigationTimeoutRef.current = setTimeout(() => {
+      try {
+        const match = matches.find((item) => item.matchId === selectedMatch);
+        if (match) {
+          const username = getUsernameFromPrivy(user);
+          await updateUserProjects(username, match.sponsor);
+          await recordSponsorDailyUniquePlayer({ sponsor: match.sponsor, username });
+          trackMatchJoined({
+            userId: user.id,
+            matchId: match.matchId,
+            sponsorId: match.sponsor,
+            metadata: { username }
+          });
+        }
+
+        navigationTimeoutRef.current = setTimeout(() => {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          setPlayButtonState("idle");
+          navigate("/play");
+        }, 3000);
+      } catch (error) {
+        console.error("Failed to start play session", error);
         if (intervalRef.current) clearInterval(intervalRef.current);
+        if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
         setPlayButtonState("idle");
-        navigate("/play");
-      }, 3000);
+      }
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
@@ -289,11 +296,12 @@ export default function Dashboard() {
   });
 
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
-  const isLive = selectedMatchData?.status === "live";
+  const normalizedSelectedStatus = normalizeMatchStatus(selectedMatchData?.status);
+  const isLive = normalizedSelectedStatus === "live";
   const isStartTimeReached = selectedMatchData?.startTime
     ? nowMs >= selectedMatchData.startTime * 1000
     : true;
-  const canPlay = isLive && isStartTimeReached;
+  const canPlay = (isLive || (normalizedSelectedStatus === "upcoming" && isStartTimeReached)) && isStartTimeReached;
 
   const updateSelectedCard = () => {
     if (isManuallyScrolling.current) return;
@@ -526,7 +534,7 @@ export default function Dashboard() {
             <span>
               {canPlay
                 ? "PLAY"
-                : normalizeMatchStatus(selectedMatchData?.status) === "upcoming"
+                : normalizedSelectedStatus === "upcoming"
                   ? "•°••"
                   : isLive && selectedMatchData?.startTime
                     ? `Starts at ${formatLocalTime(selectedMatchData.startTime)}`
