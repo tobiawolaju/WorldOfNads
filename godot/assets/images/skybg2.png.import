@@ -3,8 +3,8 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bkhe2deo2blgx"
-path.s3tc="res://.godot/imported/Untitledw.png-efb245699420477805f9381369d7451f.s3tc.ctex"
-path.etc2="res://.godot/imported/Untitledw.png-efb245699420477805f9381369d7451f.etc2.ctex"
+path.s3tc="res://.godot/imported/skybg2.png-702d9ae4c771a9f2acd8a9e8a46f0ac5.s3tc.ctex"
+path.etc2="res://.godot/imported/skybg2.png-702d9ae4c771a9f2acd8a9e8a46f0ac5.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/images/Untitledw.png"
-dest_files=["res://.godot/imported/Untitledw.png-efb245699420477805f9381369d7451f.s3tc.ctex", "res://.godot/imported/Untitledw.png-efb245699420477805f9381369d7451f.etc2.ctex"]
+source_file="res://assets/images/skybg2.png"
+dest_files=["res://.godot/imported/skybg2.png-702d9ae4c771a9f2acd8a9e8a46f0ac5.s3tc.ctex", "res://.godot/imported/skybg2.png-702d9ae4c771a9f2acd8a9e8a46f0ac5.etc2.ctex"]
 
 [params]
 
