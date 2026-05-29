@@ -18,8 +18,11 @@ extends Node3D
 		cylinder_radius = value
 		update_mesh_scale()
 
+@export var check_interval: float = 0.1
+
 # Track player state to avoid running logic every frame
 var is_player_outside: bool = false
+var _check_accumulator: float = 0.0
 
 func _ready() -> void:
 	# Always set visual scale at launch
@@ -43,6 +46,11 @@ func _process(_delta: float) -> void:
 	# Prevent the distance checking math from running in the editor
 	if Engine.is_editor_hint():
 		return
+
+	_check_accumulator += _delta
+	if _check_accumulator < check_interval:
+		return
+	_check_accumulator = 0.0
 
 	# Safety check to prevent errors if references are missing
 	if not camera or not world_env or not light_normal or not light_storm:

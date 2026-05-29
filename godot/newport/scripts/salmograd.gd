@@ -29,6 +29,10 @@ extends Node3D
 # =========================
 
 var loaded_chunks = {}
+var _last_camera_chunk: Vector2i = Vector2i(2147483647, 2147483647)
+var _grid_origin_x: float = 0.0
+var _grid_origin_z: float = 0.0
+var _chunk_scan_radius: int = 0
 
 func _process(_delta):
 
@@ -36,23 +40,64 @@ func _process(_delta):
 		return
 
 	var cam_pos = camera.global_transform.origin
+	var current_chunk := Vector2i(
+		floori((cam_pos.x + _grid_origin_x) / chunk_size),
+		floori((cam_pos.z + _grid_origin_z) / chunk_size)
+	)
 
-	# Center the world around origin
-	var offset_x = (grid_width * chunk_size) * 0.5
-	var offset_z = (grid_height * chunk_size) * 0.5
+	if current_chunk == _last_camera_chunk:
+		return
 
-	for x in range(grid_width):
-		for z in range(grid_height):
+	_last_camera_chunk = current_chunk
+	_refresh_chunks(cam_pos, false)
 
-			var chunk_name = str(x, "_", z)
 
-			var chunk_pos = Vector3(
-				(x * chunk_size) - offset_x,
-				0,
-				(z * chunk_size) - offset_z
+func _ready() -> void:
+	_grid_origin_x = (grid_width * chunk_size) * 0.5
+	_grid_origin_z = (grid_height * chunk_size) * 0.5
+	_chunk_scan_radius = int(ceil(unload_distance / chunk_size))
+	if camera == null:
+		return
+	var initial_cam_pos := Vector3.ZERO
+	initial_cam_pos = camera.global_transform.origin
+	_last_camera_chunk = Vector2i(
+		floori((initial_cam_pos.x + _grid_origin_x) / chunk_size),
+		floori((initial_cam_pos.z + _grid_origin_z) / chunk_size)
+	)
+	_refresh_chunks(initial_cam_pos, false)
+
+
+func _refresh_chunks(cam_pos: Vector3, force_full_scan: bool) -> void:
+	if chunk_scene == null:
+		return
+
+	var visible_chunks := {}
+	var min_x := maxi(0, _last_camera_chunk.x - _chunk_scan_radius)
+	var max_x := mini(grid_width - 1, _last_camera_chunk.x + _chunk_scan_radius)
+	var min_z := maxi(0, _last_camera_chunk.y - _chunk_scan_radius)
+	var max_z := mini(grid_height - 1, _last_camera_chunk.y + _chunk_scan_radius)
+
+	if force_full_scan:
+		min_x = 0
+		max_x = grid_width - 1
+		min_z = 0
+		max_z = grid_height - 1
+
+	for x in range(min_x, max_x + 1):
+		for z in range(min_z, max_z + 1):
+			var chunk_name := str(x, "_", z)
+			visible_chunks[chunk_name] = true
+			var chunk_pos := Vector3(
+				(x * chunk_size) - _grid_origin_x,
+				0.0,
+				(z * chunk_size) - _grid_origin_z
 			)
-
 			handle_chunk(chunk_scene, chunk_pos, chunk_name, cam_pos)
+
+	for chunk_name in loaded_chunks.keys():
+		if not visible_chunks.has(chunk_name):
+			loaded_chunks[chunk_name].queue_free()
+			loaded_chunks.erase(chunk_name)
 
 
 func handle_chunk(scene: PackedScene, chunk_pos: Vector3, chunk_name: String, cam_pos: Vector3):
