@@ -3,46 +3,84 @@ extends CharacterBody3D
 @export var point_a: Vector3 = Vector3(10, 16, 0)
 @export var point_b: Vector3 = Vector3(-20, 14, 0)
 
-# seconds from A → B
-@export var travel_time: float = 90.0
+@export var travel_time: float = 36.0
 @export var rotation_speed: float = 4.0
-
-# If your model faces a different forward axis, tweak this.
-# Common values:
-#   0   -> model forward aligns with +Z
-#  -90  -> model forward aligns with +X (typical for many imports)
-#  +90  -> model forward aligns with -X
 @export var rotation_offset_degrees: float = -90.0
 
+@export var arc_height: float = 6.0
+@export var curve_strength: float = 10.0
+
+var _t: float = 0.0
+var _dir: int = 1
 var _editor_y: float
 
 
 func _ready():
-	# Keep the scene's Y position instead of using the hard-coded path heights.
 	_editor_y = global_position.y
 
 
 func _physics_process(delta):
-	# Global time in seconds
-	var t = Time.get_ticks_msec() * 0.001
+	# ---------------- TIME ----------------
+	_t += delta * _dir
 
-	# Ping-pong phase calculation (0 → 1 → 0 → 1)
-	var cycle = travel_time * 2.0
-	var normalized = fmod(t, cycle) / cycle
-	var phase = abs(normalized * 2.0 - 1.0)
+	if _t >= travel_time:
+		_t = travel_time
+		_dir = -1
+	elif _t <= 0.0:
+		_t = 0.0
+		_dir = 1
 
-	# Move between A and B on X/Z, but preserve the editor-set Y.
-	var pos = point_a.lerp(point_b, phase)
-	global_position = Vector3(pos.x, _editor_y, pos.z)
+	var alpha = _t / travel_time
 
-	# Determine horizontal direction to face (ignore Y)
-	var dir = (point_b - point_a) if phase < 0.5 else (point_a - point_b)
-	var horiz = Vector3(dir.x, 0.0, dir.z)
+	# smooth acceleration (important for “vehicle feel”)
+	alpha = alpha * alpha * (3.0 - 2.0 * alpha)
 
-	if horiz.length_squared() > 0.000001:
-		horiz = horiz.normalized()
-		# atan2(x, z) gives an angle around Y in Godot when using x,z order
-		var target_rot = atan2(horiz.x, horiz.z)
-		# apply user-configurable offset (convert degrees -> radians)
+	# ---------------- BUILD ORBIT PLANE ----------------
+	var a = point_a
+	var b = point_b
+
+	var center = (a + b) * 0.5
+	var forward = (b - a)
+	forward.y = 0.0
+	forward = forward.normalized()
+
+	var right = forward.cross(Vector3.UP).normalized()
+
+	# half distance = radius base
+	var distance = a.distance_to(b) * 0.5
+
+	# ---------------- TRUE ELLIPSE PARAMETER ----------------
+	var angle = lerp(-PI, PI, alpha)
+
+	# elliptical orbit (horizontal curve)
+	var x = cos(angle) * distance
+	var z = sin(angle) * distance * curve_strength * 0.1
+
+	# vertical arc
+	var y = sin(alpha * PI) * arc_height
+
+	var pos = center + right * x + forward * z
+	pos.y += y
+
+	global_position = Vector3(pos.x, _editor_y + pos.y, pos.z)
+
+	# ---------------- TRUE TANGENT ROTATION ----------------
+	var angle_next = angle + 0.01 * _dir
+
+	var x2 = cos(angle_next) * distance
+	var z2 = sin(angle_next) * distance * curve_strength * 0.1
+	var y2 = sin(clamp(alpha + 0.01, 0.0, 1.0) * PI) * arc_height
+
+	var pos_next = center + right * x2 + forward * z2
+	pos_next.y += y2
+
+	var dir = (pos_next - pos)
+	dir.y = 0.0
+
+	if dir.length_squared() > 0.000001:
+		dir = dir.normalized()
+
+		var target_rot = atan2(dir.x, dir.z)
 		target_rot += deg_to_rad(rotation_offset_degrees)
+
 		rotation.y = lerp_angle(rotation.y, target_rot, delta * rotation_speed)

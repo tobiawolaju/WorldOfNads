@@ -39,7 +39,10 @@ var last_pickup_request_ms: int = 0
 @export var max_zoom: float = 4.0
 @export var altitude_zoom_factor: float = 0.0
 @export var touch_orbit_sensitivity: float = 0.0060
-@export var joystick_orbit_sensitivity: float = 0.0005 #0.00225
+@export var joystick_orbit_sensitivity: float = 0.003
+@export var joystick_orbit_clamp: float = 40.0
+@export var joystick_orbit_invert_x: bool = false
+@export var joystick_orbit_invert_y: bool = false
 @export var swipe_down_threshold: float = 20.0
 @export var swipe_up_threshold: float = 70.0
 @export var swipe_x_tolerance: float = 80.0
@@ -98,6 +101,7 @@ var display_name: String = "" :
 
 var active_touches: int = 0
 var touch_orbit_pending := Vector2.ZERO
+var joystick_orbit_pending := Vector2.ZERO
 var _touch_slide_start_pos: Vector2 = Vector2.ZERO
 var _touch_slide_start_time_ms: int = 0
 var _touch_slide_start_cam_rot_x: float = 0.0
@@ -177,6 +181,7 @@ func _physics_process(delta: float) -> void:
 
 	var input_dir := Vector2.ZERO
 	var movement_allowed := _is_movement_allowed()
+	var is_falling_anim_playing := current_animation == "falling" or (anim_fall != null and anim_fall.is_playing())
 
 	if movement_allowed:
 		input_dir.y += Input.get_action_strength("move_forward")
@@ -195,7 +200,8 @@ func _physics_process(delta: float) -> void:
 	_apply_touch_orbit()
 
 	if not is_on_floor():
-		velocity_y -= GRAVITY * delta
+		var gravity_scale: float = 0.5 if is_falling_anim_playing else 1.0
+		velocity_y -= GRAVITY * gravity_scale * delta
 	else:
 		velocity_y = 0
 		if movement_allowed and (Input.is_action_just_pressed("jump") or Input.is_joy_button_pressed(gamepad_index, JOY_BUTTON_A)):
@@ -241,9 +247,9 @@ func _physics_process(delta: float) -> void:
 		var target_yaw := atan2(move_direction.x, move_direction.z)
 		mesh.rotation.y = lerp_angle(mesh.rotation.y, target_yaw, delta * 10.0)
 
+	_handle_animations(move_direction)
 	_handle_camera_gamepad(delta)
 	_update_camera(delta)
-	_handle_animations(move_direction)
 
 	var net_active: bool = (move_direction.length() > 0.05) or _is_local_holding_chicken() or (current_animation == "running")
 	if current_animation == "runningjump" or current_animation == "falling" or current_animation == "runningslide":
@@ -359,7 +365,9 @@ func _update_camera(delta: float) -> void:
 
 	var ground_zoom: float = lerp(min_zoom, vehicle_zoom_cap, 0.5)
 	var state_zoom: float = min_zoom
-	if camera_is_airborne:
+	if anim_fall != null and anim_fall.is_playing():
+		state_zoom = min_zoom
+	elif camera_is_airborne:
 		state_zoom = max_zoom
 	elif _is_on_bus() and not _is_movement_allowed():
 		state_zoom = vehicle_zoom_cap
@@ -367,7 +375,7 @@ func _update_camera(delta: float) -> void:
 		state_zoom = ground_zoom
 	elif not _is_movement_allowed() and root and root.has_method("is_waiting_for_players") and root.is_waiting_for_players():
 		state_zoom = max_zoom
-	var target_distance: float = clamp(state_zoom + camera_distance_bias, min_zoom, vehicle_zoom_cap)
+	var target_distance: float = min_zoom if (anim_fall != null and anim_fall.is_playing()) else clamp(state_zoom + camera_distance_bias, min_zoom, vehicle_zoom_cap)
 	camera_distance_current = lerp(camera_distance_current, target_distance, delta * camera_smoothness)
 
 	var altitude_zoom: float = clamp(global_transform.origin.y * altitude_zoom_factor, 0.0, vehicle_zoom_cap - min_zoom)
@@ -644,19 +652,34 @@ func _connect_joystick_signals() -> void:
 func _on_joystick_camera_drag(relative: Vector2) -> void:
 	if not is_local:
 		return
-	touch_orbit_pending += relative
+	joystick_orbit_pending += relative
 
 func _apply_touch_orbit() -> void:
-	if touch_orbit_pending == Vector2.ZERO:
+	var has_touch_orbit := touch_orbit_pending != Vector2.ZERO
+	var has_joystick_orbit := joystick_orbit_pending != Vector2.ZERO
+	if not has_touch_orbit and not has_joystick_orbit:
 		return
 
-	var delta: Vector2 = touch_orbit_pending
+	var touch_delta: Vector2 = touch_orbit_pending
+	var joystick_delta: Vector2 = joystick_orbit_pending
 	touch_orbit_pending = Vector2.ZERO
-	delta.x = clamp(delta.x, -64.0, 64.0)
-	delta.y = clamp(delta.y, -64.0, 64.0)
+	joystick_orbit_pending = Vector2.ZERO
 
-	cam_rot_y -= delta.x * touch_orbit_sensitivity
-	cam_rot_x = clamp(cam_rot_x + delta.y * touch_orbit_sensitivity, min_pitch, max_pitch)
+	if has_touch_orbit:
+		touch_delta.x = clamp(touch_delta.x, -64.0, 64.0)
+		touch_delta.y = clamp(touch_delta.y, -64.0, 64.0)
+		cam_rot_y -= touch_delta.x * touch_orbit_sensitivity
+		cam_rot_x = clamp(cam_rot_x + touch_delta.y * touch_orbit_sensitivity, min_pitch, max_pitch)
+
+	if has_joystick_orbit:
+		joystick_delta.x = clamp(joystick_delta.x, -joystick_orbit_clamp, joystick_orbit_clamp)
+		joystick_delta.y = clamp(joystick_delta.y, -joystick_orbit_clamp, joystick_orbit_clamp)
+		if joystick_orbit_invert_x:
+			joystick_delta.x = -joystick_delta.x
+		if joystick_orbit_invert_y:
+			joystick_delta.y = -joystick_delta.y
+		cam_rot_y -= joystick_delta.x * joystick_orbit_sensitivity
+		cam_rot_x = clamp(cam_rot_x + joystick_delta.y * joystick_orbit_sensitivity, min_pitch, max_pitch)
 
 func _apply_slide_camera_restore(delta: float) -> void:
 	if not _slide_camera_restore_active:

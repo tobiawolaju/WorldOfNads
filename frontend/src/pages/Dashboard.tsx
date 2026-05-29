@@ -114,6 +114,17 @@ export default function Dashboard() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const clearPlayTimers = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (navigationTimeoutRef.current) {
+      clearTimeout(navigationTimeoutRef.current);
+      navigationTimeoutRef.current = null;
+    }
+  };
+
   useEffect(() => {
     if (authenticated && user) {
       saveUserToFirebase(user).catch((error: any) => {
@@ -151,8 +162,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
+      clearPlayTimers();
     };
   }, []);
 
@@ -201,44 +211,45 @@ export default function Dashboard() {
     loadRewards();
   }, [authenticated, user]);
 
-  const handlePlayClick = async () => {
+  const handlePlayClick = () => {
     if (!selectedMatch || !user) return;
 
     if (playButtonState === "idle") {
       setPlayButtonState("counting");
       setElapsedTime(0);
+      clearPlayTimers();
       intervalRef.current = setInterval(() => {
-        setElapsedTime((prev) => prev + 0.1);
+        setElapsedTime((prev) => Math.min(prev + 0.1, 4));
       }, 100);
 
-      try {
+      navigationTimeoutRef.current = setTimeout(() => {
+        clearPlayTimers();
+        setPlayButtonState("idle");
+        navigate("/play");
+      }, 4000);
+
+      void (async () => {
         const match = matches.find((item) => item.matchId === selectedMatch);
-        if (match) {
+        if (!match) return;
+
+        try {
           const username = getUsernameFromPrivy(user);
-          await updateUserProjects(username, match.sponsor);
-          await recordSponsorDailyUniquePlayer({ sponsor: match.sponsor, username });
+          await Promise.allSettled([
+            updateUserProjects(username, match.sponsor),
+            recordSponsorDailyUniquePlayer({ sponsor: match.sponsor, username })
+          ]);
           trackMatchJoined({
             userId: user.id,
             matchId: match.matchId,
             sponsorId: match.sponsor,
             metadata: { username }
           });
+        } catch (error) {
+          console.error("Failed to start play session", error);
         }
-
-        navigationTimeoutRef.current = setTimeout(() => {
-          if (intervalRef.current) clearInterval(intervalRef.current);
-          setPlayButtonState("idle");
-          navigate("/play");
-        }, 3000);
-      } catch (error) {
-        console.error("Failed to start play session", error);
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
-        setPlayButtonState("idle");
-      }
+      })();
     } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
+      clearPlayTimers();
       setPlayButtonState("idle");
     }
   };
