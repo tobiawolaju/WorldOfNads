@@ -110,6 +110,8 @@ renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
 scaling_3d/fsr_sharpness=1.0
 occlusion_culling/use_occlusion_culling=true
+lights_and_shadows/directional_shadow/size.web=2048
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality.web=1
 2d/snap/snap_2d_transforms_to_pixel=true
 2d/snap/snap_2d_vertices_to_pixel=true
 

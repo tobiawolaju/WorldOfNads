@@ -108,6 +108,8 @@ var _touch_slide_start_cam_rot_x: float = 0.0
 var _touch_slide_start_cam_rot_y: float = 0.0
 var _slide_requested: bool = false
 var _slide_camera_restore_active: bool = false
+var _cached_viewport_size: Vector2 = Vector2.ZERO
+var _camera_ray_query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.new()
 
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
@@ -119,6 +121,7 @@ func _ready() -> void:
 	_was_on_floor = is_on_floor()
 	_slide_timer = 0.0
 	_is_sliding = false
+	_cached_viewport_size = get_viewport().get_visible_rect().size
 	_play_idle()
 	_refresh_name_label()
 	_refresh_touch_joystick()
@@ -390,14 +393,15 @@ func _update_camera(delta: float) -> void:
 	var desired_pos: Vector3 = target_pos + cam_offset
 
 	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
-	var query := PhysicsRayQueryParameters3D.create(target_pos, desired_pos)
+	_camera_ray_query.from = target_pos
+	_camera_ray_query.to = desired_pos
 	var exclude_nodes := [self]
 	if _is_local_holding_chicken() and root and root.has_method("get_chicken_node"):
 		var chicken_node: RigidBody3D = root.get_chicken_node()
 		if chicken_node:
 			exclude_nodes.append(chicken_node)
-	query.exclude = exclude_nodes
-	var hit: Dictionary = space_state.intersect_ray(query)
+	_camera_ray_query.exclude = exclude_nodes
+	var hit: Dictionary = space_state.intersect_ray(_camera_ray_query)
 
 	if hit and hit.has("position"):
 		desired_pos = hit.position
@@ -412,6 +416,8 @@ func _update_camera(delta: float) -> void:
 	var dist_to_target: float = camera.global_position.distance_to(target_pos)
 	var v_fov_rad: float = deg_to_rad(camera.fov)
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	if viewport_size != _cached_viewport_size:
+		_cached_viewport_size = viewport_size
 	var aspect: float = viewport_size.x / max(1.0, viewport_size.y)
 	
 	var half_height: float = dist_to_target * tan(v_fov_rad / 2.0)
