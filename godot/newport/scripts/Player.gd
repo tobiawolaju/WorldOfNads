@@ -130,6 +130,9 @@ func _ready() -> void:
 	if not pickup_area:
 		print("ERROR: $Area3D node not found! Please add an Area3D with a CollisionShape to the player.")
 
+	if is_local:
+		RenderingServer.global_shader_parameter_set("player_pos", global_position)
+
 func _refresh_name_label() -> void:
 	if not name_label:
 		return
@@ -268,6 +271,7 @@ func _physics_process(delta: float) -> void:
 			network_heartbeat_timer = 0.0
 
 	_update_local_chicken_visual(delta)
+	RenderingServer.global_shader_parameter_set("player_pos", global_position)
 
 # --- PICKUP LOGIC (USING AREA3D) ---
 func _try_pickup():
