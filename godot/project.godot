@@ -28,6 +28,7 @@ boot_splash/transparent_background=false
 
 TransitionScreen="*uid://cgubj1l8n18oh"
 SceneRegistry="*res://newport/scripts/SceneRegistry.gd"
+resolution="*res://newport/scripts/resolution.gd"
 
 [display]
 

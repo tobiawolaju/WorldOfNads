@@ -4,15 +4,15 @@ extends CharacterBody3D
 const GRAVITY: float = 9.8
 const JUMP_VELOCITY: float = 4.5
 const SPEED: float = 4.5
-const DEADZONE := 0.12
-const PICKUP_REQUEST_COOLDOWN_MS := 150
-const STEAL_RADIUS := 2.5
-const POS_SCALE := 100.0
-const ROT_SCALE := 1000.0
+const DEADZONE: float = 0.12
+const PICKUP_REQUEST_COOLDOWN_MS: int = 150
+const STEAL_RADIUS: float = 2.5
+const POS_SCALE: float = 100.0
+const ROT_SCALE: float = 1000.0
 const DEFAULT_MAX_JUMP_HEIGHT: float = (JUMP_VELOCITY * JUMP_VELOCITY) / (2.0 * GRAVITY)
 const SLIDE_DURATION: float = 0.55
 const SLIDE_SPEED_MULTIPLIER: float = 1.5
-const ANIM_NAME_TO_ID := {
+const ANIM_NAME_TO_ID: Dictionary = {
 	"idle": 0,
 	"running": 1,
 	"runningjump": 2,
@@ -21,7 +21,7 @@ const ANIM_NAME_TO_ID := {
 }
 
 # --- INPUT VARIABLES ---
-var gamepad_index := 0
+var gamepad_index: int = 0
 
 # --- PICKUP VARIABLES ---
 var held_object: RigidBody3D = null
@@ -38,7 +38,7 @@ var last_pickup_request_ms: int = 0
 @export var min_zoom: float = 1.5
 @export var max_zoom: float = 2.5
 @export var altitude_zoom_factor: float = 0.0
-@export var touch_orbit_sensitivity: float = 0.0060
+@export var touch_orbit_sensitivity: float = 0.024
 @export var joystick_orbit_sensitivity: float = 0.003
 @export var joystick_orbit_clamp: float = 40.0
 @export var joystick_orbit_invert_x: bool = false
@@ -71,14 +71,14 @@ var cam_rot_y: float = 0.0
 var current_animation: String = "idle"
 var camera_distance_current: float = 0.0
 var camera_distance_bias: float = 0.0
-var camera_is_airborne := false
-var camera_is_moving := false
+var camera_is_airborne: bool = false
+var camera_is_moving: bool = false
 @export var max_jump_height: float = DEFAULT_MAX_JUMP_HEIGHT
 var _last_world_y: float = 0.0
 var _airborne_start_y: float = 0.0
-var _was_on_floor := true
+var _was_on_floor: bool = true
 var _slide_timer: float = 0.0
-var _is_sliding := false
+var _is_sliding: bool = false
 var _slide_direction: Vector3 = Vector3.ZERO
 
 var touch_joystick: Node = null
@@ -87,7 +87,7 @@ var network_heartbeat_timer: float = 0.0
 const NETWORK_TICK_ACTIVE: float = 0.066
 const NETWORK_TICK_IDLE: float = 0.33
 const NETWORK_HEARTBEAT: float = 1.0
-var _last_payload_signature := ""
+var _last_payload_signature: String = ""
 
 var player_id: String = "" :
 	set(new_id):
@@ -100,8 +100,8 @@ var display_name: String = "" :
 		_refresh_name_label()
 
 var active_touches: int = 0
-var touch_orbit_pending := Vector2.ZERO
-var joystick_orbit_pending := Vector2.ZERO
+var touch_orbit_pending: Vector2 = Vector2.ZERO
+var joystick_orbit_pending: Vector2 = Vector2.ZERO
 var _touch_slide_start_pos: Vector2 = Vector2.ZERO
 var _touch_slide_start_time_ms: int = 0
 var _touch_slide_start_cam_rot_x: float = 0.0
@@ -110,6 +110,9 @@ var _slide_requested: bool = false
 var _slide_camera_restore_active: bool = false
 var _cached_viewport_size: Vector2 = Vector2.ZERO
 var _camera_ray_query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.new()
+var _camera_ray_exclude: Array = []
+var _cached_shader_player_pos: Vector3 = Vector3.INF
+var _cached_chicken_node: RigidBody3D = null
 
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
@@ -126,12 +129,10 @@ func _ready() -> void:
 	_refresh_name_label()
 	_refresh_touch_joystick()
 	_connect_joystick_signals()
+	_update_global_player_shader_pos(true)
 
 	if not pickup_area:
 		print("ERROR: $Area3D node not found! Please add an Area3D with a CollisionShape to the player.")
-
-	if is_local:
-		RenderingServer.global_shader_parameter_set("player_pos", global_position)
 
 func _refresh_name_label() -> void:
 	if not name_label:
@@ -271,7 +272,7 @@ func _physics_process(delta: float) -> void:
 			network_heartbeat_timer = 0.0
 
 	_update_local_chicken_visual(delta)
-	RenderingServer.global_shader_parameter_set("player_pos", global_position)
+	_update_global_player_shader_pos()
 
 # --- PICKUP LOGIC (USING AREA3D) ---
 func _try_pickup():
@@ -297,8 +298,8 @@ func _try_pickup():
 
 	# Fallback: when the chicken is held by someone else, its frozen RigidBody3D
 	# may not register in Area3D overlaps.  Do a direct distance check instead.
-	if best_target == null and root and root.has_method("get_chicken_node"):
-		var chicken: RigidBody3D = root.get_chicken_node()
+	if best_target == null:
+		var chicken: RigidBody3D = _get_cached_chicken_node()
 		if chicken != null and chicken.is_in_group("pickup_items"):
 			var dist = global_position.distance_to(chicken.global_position)
 			if dist <= STEAL_RADIUS:
@@ -334,10 +335,7 @@ func _is_local_holding_chicken() -> bool:
 func _update_local_chicken_visual(delta: float) -> void:
 	if not is_local or not _is_local_holding_chicken():
 		return
-	if not root or not root.has_method("get_chicken_node"):
-		return
-
-	var chicken: RigidBody3D = root.get_chicken_node()
+	var chicken: RigidBody3D = _get_cached_chicken_node()
 	if chicken == null:
 		return
 
@@ -365,9 +363,12 @@ func _handle_camera_gamepad(delta: float) -> void:
 func _update_camera(delta: float) -> void:
 	var target_pos: Vector3 = global_transform.origin + Vector3(0, 1.5, 0)
 	cam_rot_x = clamp(cam_rot_x, min_pitch, max_pitch)
+	var holding_chicken := _is_local_holding_chicken()
+	var movement_allowed := _is_movement_allowed()
+	var on_bus := _is_on_bus()
 
 	var vehicle_zoom_cap: float = max_zoom
-	if _is_on_bus():
+	if on_bus:
 		vehicle_zoom_cap = max_zoom * 2.5
 
 	var ground_zoom: float = lerp(min_zoom, vehicle_zoom_cap, 0.5)
@@ -376,11 +377,11 @@ func _update_camera(delta: float) -> void:
 		state_zoom = min_zoom
 	elif camera_is_airborne:
 		state_zoom = max_zoom
-	elif _is_on_bus() and not _is_movement_allowed():
+	elif on_bus and not movement_allowed:
 		state_zoom = vehicle_zoom_cap
 	elif camera_is_moving:
 		state_zoom = ground_zoom
-	elif not _is_movement_allowed() and root and root.has_method("is_waiting_for_players") and root.is_waiting_for_players():
+	elif not movement_allowed and root and root.has_method("is_waiting_for_players") and root.is_waiting_for_players():
 		state_zoom = max_zoom
 	var target_distance: float = min_zoom if (anim_fall != null and anim_fall.is_playing()) else clamp(state_zoom + camera_distance_bias, min_zoom, vehicle_zoom_cap)
 	camera_distance_current = lerp(camera_distance_current, target_distance, delta * camera_smoothness)
@@ -399,12 +400,13 @@ func _update_camera(delta: float) -> void:
 	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
 	_camera_ray_query.from = target_pos
 	_camera_ray_query.to = desired_pos
-	var exclude_nodes := [self]
-	if _is_local_holding_chicken() and root and root.has_method("get_chicken_node"):
-		var chicken_node: RigidBody3D = root.get_chicken_node()
+	_camera_ray_exclude.clear()
+	_camera_ray_exclude.append(self)
+	if holding_chicken:
+		var chicken_node: RigidBody3D = _get_cached_chicken_node()
 		if chicken_node:
-			exclude_nodes.append(chicken_node)
-	_camera_ray_query.exclude = exclude_nodes
+			_camera_ray_exclude.append(chicken_node)
+	_camera_ray_query.exclude = _camera_ray_exclude
 	var hit: Dictionary = space_state.intersect_ray(_camera_ray_query)
 
 	if hit and hit.has("position"):
@@ -412,7 +414,7 @@ func _update_camera(delta: float) -> void:
 
 	camera.global_position = camera.global_position.lerp(desired_pos, delta * camera_smoothness)
 	camera.look_at(target_pos, Vector3.UP)
-	var target_fov := 125.0 if _is_local_holding_chicken() else 95.0
+	var target_fov := 125.0 if holding_chicken else 95.0
 	camera.fov = lerp(camera.fov, target_fov, delta * camera_smoothness)
 	
 	# --- SCREEN OFFSET CALCULATION ---
@@ -489,6 +491,14 @@ func _send_state_to_server(force_send := false) -> void:
 		_last_payload_signature = signature
 		root.ws.send(MsgPack.pack(payload))
 
+func _update_global_player_shader_pos(force: bool = false) -> void:
+	if not is_local:
+		return
+	if not force and global_position.distance_squared_to(_cached_shader_player_pos) < 0.0001:
+		return
+	_cached_shader_player_pos = global_position
+	RenderingServer.global_shader_parameter_set("player_pos", global_position)
+
 func set_animation_state(new_state: String):
 	if is_local: return
 	if new_state == current_animation: return
@@ -559,6 +569,16 @@ func _is_movement_allowed() -> bool:
 	if root and root.has_method("is_match_running"):
 		return root.is_match_running()
 	return true
+
+func _get_cached_chicken_node() -> RigidBody3D:
+	if _cached_chicken_node != null and is_instance_valid(_cached_chicken_node):
+		return _cached_chicken_node
+	if root and root.has_method("get_chicken_node"):
+		var chicken = root.get_chicken_node()
+		if chicken is RigidBody3D:
+			_cached_chicken_node = chicken
+			return _cached_chicken_node
+	return null
 
 func _is_on_bus() -> bool:
 	var parent_node: Node = get_parent()

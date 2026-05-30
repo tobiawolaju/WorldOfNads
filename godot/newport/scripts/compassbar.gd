@@ -38,6 +38,7 @@ var _bar_bottom_y: float = 0.0
 var _label_y: float = 0.0
 var _pointer_tip_y: float = 0.0
 var _pointer_base_y: float = 0.0
+var _last_metrics_signature: String = ""
 
 
 func _ready() -> void:
@@ -137,6 +138,19 @@ func _rebuild_cached_metrics() -> void:
 	_control_size = size
 	if _control_size.x <= 0.0 or _control_size.y <= 0.0:
 		return
+	var metrics_signature := "%s|%s|%s|%s|%s|%s|%s|%s" % [
+		str(_control_size.x),
+		str(_control_size.y),
+		str(px_per_degree),
+		str(bar_height),
+		str(fade_width),
+		str(pointer_width),
+		str(pointer_height),
+		str(label_font_size)
+	]
+	if metrics_signature == _last_metrics_signature:
+		return
+	_last_metrics_signature = metrics_signature
 
 	_half_visible_degrees = (_control_size.x * 0.5) / maxf(px_per_degree, 0.001)
 	_label_width = maxf(48.0, label_font_size * 3.5)

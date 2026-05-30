@@ -21,11 +21,11 @@ signal camera_dragged(relative: Vector2)
 @export var jump_press_duration: float = 0.2
 
 
-var radiusJoyStick
-var radiusJoyBase
-var maxRadius
-var return_to_center = true
-var keys_pressed = {
+var radiusJoyStick: float = 0.0
+var radiusJoyBase: float = 0.0
+var maxRadius: float = 0.0
+var return_to_center: bool = true
+var keys_pressed: Dictionary = {
 	"move_forward": false,
 	"move_back": false,
 	"move_left": false,
@@ -33,24 +33,26 @@ var keys_pressed = {
 	"jump": false
 }
 
-var last_tap_time = 0.0
-var double_tap_interval = 0.3
-var last_tap_position = Vector2.ZERO
-var screen_orientation = "portrait"
+var last_tap_time: float = 0.0
+var double_tap_interval: float = 0.3
+var last_tap_position: Vector2 = Vector2.ZERO
+var screen_orientation: String = "portrait"
 
 # --- MULTI-TOUCH TRACKING ---
-var active_joystick_index := -1
-var active_camera_index := -1
-var touchInsideJoystick = false
-var is_auto_locked := false
-var north_drag_distance_accumulated := 0.0
-var lock_candidate_started_at := -1.0
-var last_drag_was_north := false
-var auto_lock_touch_index := -1
-var active_camera_last_position := Vector2.ZERO
-var active_camera_start_position := Vector2.ZERO
-var active_camera_swipe_jump_triggered := false
-var jump_release_token := 0
+var active_joystick_index: int = -1
+var active_camera_index: int = -1
+var touchInsideJoystick: bool = false
+var is_auto_locked: bool = false
+var north_drag_distance_accumulated: float = 0.0
+var lock_candidate_started_at: float = -1.0
+var last_drag_was_north: bool = false
+var auto_lock_touch_index: int = -1
+var active_camera_last_position: Vector2 = Vector2.ZERO
+var active_camera_start_position: Vector2 = Vector2.ZERO
+var active_camera_swipe_jump_triggered: bool = false
+var jump_release_token: int = 0
+@onready var touch_joystick_node: Node = get_node_or_null("../../TouchJoyStick")
+@onready var joy_base_node: Node = get_node_or_null("../JoyBase")
 
 func _ready():
 	add_to_group("touch_joystick")
@@ -58,14 +60,14 @@ func _ready():
 	screen_orientation = "portrait" if viewport_size.y > viewport_size.x else "landscape"
 
 	radiusJoyStick = global_scale.x * texture.get_size().x / 2
-	radiusJoyBase = get_node("../JoyBase").global_scale.x * $"../JoyBase".texture.get_size().x / 2
+	if joy_base_node != null:
+		radiusJoyBase = joy_base_node.global_scale.x * joy_base_node.texture.get_size().x / 2
 	maxRadius = radiusJoyBase - radiusJoyStick
 	
 	modulate.a = min_opacity
 
 func _input(event):
 	var viewport_size = get_viewport().get_visible_rect().size
-	var touch_joystick = get_node("../../TouchJoyStick")
 
 	if event is InputEventScreenTouch:
 		if event.pressed:
@@ -75,7 +77,7 @@ func _input(event):
 			# While locked: only touches directly on the joystick base are tracked 
 			# for potential unlock or jump. Touches elsewhere become camera orbit.
 			if is_auto_locked:
-				if auto_lock_touch_index == -1 and touch_joystick != null and event.position.distance_to(touch_joystick.global_position) <= radiusJoyBase * 2.5:
+				if auto_lock_touch_index == -1 and touch_joystick_node != null and event.position.distance_to(touch_joystick_node.global_position) <= radiusJoyBase * 2.5:
 					auto_lock_touch_index = event.index
 					if _is_double_tap(event.position):
 						_queue_jump_press()
@@ -95,8 +97,8 @@ func _input(event):
 			if event.index == active_joystick_index or event.index == active_camera_index:
 				return
 			# --- Joystick touch ---
-			if active_joystick_index == -1:
-				_start_joystick_touch(event.position, event.index, touch_joystick)
+			if active_joystick_index == -1 and _is_joystick_area(event.position, viewport_size):
+				_start_joystick_touch(event.position, event.index, touch_joystick_node)
 				get_viewport().set_input_as_handled()
 			# --- Camera touch ---
 			elif active_camera_index == -1:
@@ -115,7 +117,7 @@ func _input(event):
 					_update_visuals()
 				emit_signal("joystick_released")
 				if not is_auto_locked:
-					touch_joystick.visible = false
+					touch_joystick_node.visible = false
 				touchInsideJoystick = false
 				active_joystick_index = -1
 				get_viewport().set_input_as_handled()
@@ -131,27 +133,27 @@ func _input(event):
 		# Only unlock auto-move from the tracked joystick finger, not the camera finger.
 		if is_auto_locked and event.index == auto_lock_touch_index:
 			_unlock_auto_move()
-			_start_joystick_touch(event.position, event.index, touch_joystick)
-			var local_pos_unlock = event.position - touch_joystick.global_position
+			_start_joystick_touch(event.position, event.index, touch_joystick_node)
+			var local_pos_unlock = event.position - touch_joystick_node.global_position
 			if local_pos_unlock.length() > maxRadius:
 				local_pos_unlock = local_pos_unlock.normalized() * maxRadius
 			position = local_pos_unlock
 			_update_north_drag_progress_from_screen_drag(event.relative)
 			emit_signal("joystick_moved", position)
-			touch_joystick.visible = true
+			touch_joystick_node.visible = true
 			_update_input_from_joystick(position)
 			_update_visuals()
 			get_viewport().set_input_as_handled()
 			return
 
 		if event.index == active_joystick_index:
-			var local_pos = event.position - touch_joystick.global_position
+			var local_pos = event.position - touch_joystick_node.global_position
 			if local_pos.length() > maxRadius:
 				local_pos = local_pos.normalized() * maxRadius
 			position = local_pos
 			_update_north_drag_progress_from_screen_drag(event.relative)
 			emit_signal("joystick_moved", position)
-			touch_joystick.visible = true
+			touch_joystick_node.visible = true
 			_update_input_from_joystick(position)
 			_update_visuals()
 			get_viewport().set_input_as_handled()
@@ -199,12 +201,12 @@ func _update_visuals():
 	modulate.a = lerp(min_opacity, max_opacity, strength)
 
 # --- QUADRANT CHECKS ---
-func _is_joystick_area(_pos: Vector2, _viewport_size: Vector2) -> bool:
-	# Joystick can be activated from anywhere on screen.
-	return true
+func _is_joystick_area(pos: Vector2, viewport_size: Vector2) -> bool:
+	# Only allow the joystick to start on the left half of the screen.
+	return pos.x <= viewport_size.x * 0.5
 
 func _is_camera_area(pos: Vector2, viewport_size: Vector2) -> bool:
-	# Everything outside the joystick rectangle zone
+	# Everything outside the joystick area is reserved for camera touch input.
 	return not _is_joystick_area(pos, viewport_size)
 
 func is_joystick_area_screen(pos: Vector2, viewport_size: Vector2) -> bool:

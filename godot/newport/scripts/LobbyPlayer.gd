@@ -5,14 +5,14 @@ const JUMP_VELOCITY: float = 4.5
 const SPEED: float = 4.5
 
 # --- GAMEPAD SETTINGS ---
-var gamepad_index := 0
-const DEADZONE := 0.12
+var gamepad_index: int = 0
+const DEADZONE: float = 0.12
 
 # --- AFK SETTINGS ---
 @export_group("AFK Settings")
-@export var afk_radius := 5.0      
-@export var afk_speed := 2.0       
-@export var afk_wait_time := 2.0   
+@export var afk_radius: float = 5.0
+@export var afk_speed: float = 2.0
+@export var afk_wait_time: float = 2.0
 
 # --- CAMERA SETTINGS ---
 @export_group("Camera Settings")
@@ -22,13 +22,13 @@ const DEADZONE := 0.12
 @export var max_pitch: float = deg_to_rad(60.0)
 @export var min_zoom: float = 2.0
 @export var max_zoom: float = 10.0
-@export var altitude_zoom_factor: float = 5
+@export var altitude_zoom_factor: float = 5.0
 
 # --- DYNAMIC CAMERA SETTINGS (NEW) ---
 @export_group("Dynamic Camera")
 @export var enable_dynamic_framing: bool = true
-@export var drift_intensity: float = 0.5     # How much it floats when idle
-@export var look_ahead_factor: float = 1.0   # How much it shifts when running
+@export var drift_intensity: float = 0.5 # How much it floats when idle
+@export var look_ahead_factor: float = 1.0 # How much it shifts when running
 
 @onready var camera: Camera3D = get_node("../Camera3D")
 @onready var name_label: Label3D = $Label3D
@@ -44,16 +44,16 @@ var cam_rot_y: float = 0.0
 var current_animation: String = "idle"
 var camera_distance_current: float = 0.0
 var camera_distance_bias: float = 0.0
-var camera_is_airborne := false
-var camera_is_moving := false
+var camera_is_airborne: bool = false
+var camera_is_moving: bool = false
 
 # Internal AFK State
-var afk_center_pos := Vector3.ZERO
-var afk_target_pos := Vector3.ZERO
-var afk_timer := 0.0
+var afk_center_pos: Vector3 = Vector3.ZERO
+var afk_target_pos: Vector3 = Vector3.ZERO
+var afk_timer: float = 0.0
 
 # Dynamic Camera State
-var cam_noise = FastNoiseLite.new()
+var cam_noise: FastNoiseLite = FastNoiseLite.new()
 var cam_noise_time: float = 0.0
 var current_framing_offset: Vector3 = Vector3.ZERO
 var active_touches: int = 0
@@ -61,14 +61,14 @@ var active_touches: int = 0
 var player_id: String = "" :
 	set(new_id):
 		player_id = new_id
-		if name_label:
-			name_label.text = new_id.substr(0, 8)
+		_refresh_name_label()
 
 func _ready() -> void:
 	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
 	camera_distance_current = camera_distance
 	cam_rot_x = min_pitch
 	_play_idle()
+	_refresh_name_label()
 	
 	# Initialize AFK center
 	afk_center_pos = global_position
@@ -77,10 +77,6 @@ func _ready() -> void:
 	# Setup Noise for camera drift
 	cam_noise.seed = randi()
 	cam_noise.frequency = 0.5 # Lower = slower drift
-
-func _process(_delta: float):
-	if name_label:
-		name_label.text = player_id.substr(0, 8)
 
 func _input(event: InputEvent) -> void:
 	if not is_local:
@@ -189,6 +185,10 @@ func _physics_process(delta: float) -> void:
 	_update_camera(delta)
 	_handle_animations(move_direction)
 	_send_state_to_server()
+
+func _refresh_name_label() -> void:
+	if name_label:
+		name_label.text = player_id.substr(0, 8)
 
 # --- AFK LOGIC ---
 func _get_afk_movement_direction(delta: float) -> Vector3:

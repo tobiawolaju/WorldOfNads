@@ -2,8 +2,8 @@
 extends Node3D
 
 # --- SERVER URLS ---
-const LIVE_URL = "wss://worldofnads.onrender.com"
-const LOCAL_URL = "ws://localhost:8080"
+const LIVE_URL: String = "wss://worldofnads.onrender.com"
+const LOCAL_URL: String = "ws://localhost:8080"
 
 @export var player_scene: PackedScene 
 @export var myplayerswpanpoint: Marker3D
@@ -12,47 +12,47 @@ const LOCAL_URL = "ws://localhost:8080"
 @export var camera_block_path: NodePath = NodePath("CAMERABlock")
 
 # --- NETWORK & STATE VARIABLES ---
-var ws := WebSocketPeer.new()
-var connected := false
-var player_id := ""
-var players := {}
-var is_local: bool
-var root: Node
-const CHICKEN_HOLD_DISTANCE := 0.9
-const CHICKEN_HOLD_HEIGHT := 1.0
-const POS_SCALE := 100.0
-const ROT_SCALE := 1000.0
-const ANIM_ID_TO_NAME := {
+var ws: WebSocketPeer = WebSocketPeer.new()
+var connected: bool = false
+var player_id: String = ""
+var players: Dictionary = {}
+var is_local: bool = false
+var root: Node = null
+const CHICKEN_HOLD_DISTANCE: float = 0.9
+const CHICKEN_HOLD_HEIGHT: float = 1.0
+const POS_SCALE: float = 100.0
+const ROT_SCALE: float = 1000.0
+const ANIM_ID_TO_NAME: Dictionary = {
 	0: "idle",
 	1: "running"
 }
-const REMOTE_INTERP_BACKTIME_MS := 120.0
-const REMOTE_MAX_EXTRAPOLATE_MS := 0.0
+const REMOTE_INTERP_BACKTIME_MS: float = 120.0
+const REMOTE_MAX_EXTRAPOLATE_MS: float = 0.0
 
 # --- CHICKEN AUTHORITY STATE ---
 var chicken_node: RigidBody3D = null
-var chicken_is_held := false
-var chicken_holder_id := ""
+var chicken_is_held: bool = false
+var chicken_holder_id: String = ""
 var events_bridge: Node = null
-var _last_chicken_is_held := false
-var _last_chicken_holder_id := ""
-var local_username := ""
-var local_display_name := "player"
-var player_display_names := {}
-var remote_snapshots := {}
+var _last_chicken_is_held: bool = false
+var _last_chicken_holder_id: String = ""
+var local_username: String = ""
+var local_display_name: String = "player"
+var player_display_names: Dictionary = {}
+var remote_snapshots: Dictionary = {}
 var countdown_label: Label = null
 var world_environment: WorldEnvironment = null
 var camera_block: Node3D = null
-var _world_env_duplicated := false
-var match_duration_seconds := 180.0
-var match_time_left := 180.0
-var match_is_running := false
-var fog_start_color: Color =  Color8(202, 189, 240)
+var _world_env_duplicated: bool = false
+var match_duration_seconds: float = 180.0
+var match_time_left: float = 180.0
+var match_is_running: bool = false
+var fog_start_color: Color = Color8(202, 189, 240)
 var fog_end_color: Color = Color8(255, 100, 215)
 
 # --- FALLBACK LOGIC ---
-var is_connecting_to_live = true
-var connection_attempted = false
+var is_connecting_to_live: bool = true
+var connection_attempted: bool = false
 @onready var fallback_timer: Timer = $FallbackTimer
 
 func _ready():
