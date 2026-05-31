@@ -10,7 +10,9 @@ import {
   fetchMatchesFromFirebase,
   getUsernameFromPrivy,
   getProfilePictureFromPrivy,
+  fetchUserProfile,
   saveUserToFirebase,
+  updateUserEquippedSkin,
   updateUserProjects,
   fetchUserRewards,
   recordSponsorDailyUniquePlayer
@@ -131,6 +133,24 @@ export default function Dashboard() {
         console.error("Failed to save user", error);
       });
     }
+  }, [authenticated, user]);
+
+  useEffect(() => {
+    if (!authenticated || !user) return;
+
+    const loadSavedSkin = async () => {
+      try {
+        const username = getUsernameFromPrivy(user);
+        const profile = await fetchUserProfile(username);
+        const savedSkinId = profile?.equippedSkinId;
+        const savedSkin = dummyStore.find((item) => item.id === savedSkinId) || dummyStore[0];
+        setEquippedSkin(savedSkin);
+      } catch (error) {
+        console.error("Failed to load saved skin", error);
+      }
+    };
+
+    loadSavedSkin();
   }, [authenticated, user]);
 
   // Fetch actual MON balance
@@ -564,6 +584,9 @@ export default function Dashboard() {
             const isOwned = dummyOwnedItems.includes(selectedStore);
             if (isOwned) {
               setEquippedSkin(item);
+              updateUserEquippedSkin(getUsernameFromPrivy(user), item.id).catch((error: any) => {
+                console.error("Failed to save equipped skin", error);
+              });
               setSelectedStore(null);
             } else {
               // Mint Function Blank for now

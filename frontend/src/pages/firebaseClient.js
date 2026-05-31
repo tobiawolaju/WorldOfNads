@@ -87,7 +87,8 @@ export async function saveUserToFirebase(user) {
     twitterUsername: twitter?.username || null,
     ethAddress: ethAcc?.address || null, // Capture specifically for Monad payouts
     solAddress: solAcc?.address || null,  // Capture for Solana compatibility
-    roles: normalizedRoles
+    roles: normalizedRoles,
+    equippedSkinId: snapshot.exists() ? snapshot.val()?.equippedSkinId || "s-default" : "s-default"
   };
 
   if (snapshot.exists()) {
@@ -106,6 +107,7 @@ export async function saveUserToFirebase(user) {
     firstVerifiedAt: twitter?.firstVerifiedAt || ethAcc?.latestVerifiedAt || new Date().toISOString(),
     won: 0,
     projects: [],
+    equippedSkinId: "s-default",
     ...updates
   });
 
@@ -126,6 +128,24 @@ export async function updateUserProjects(username, matchSponsorName) {
 
   await update(userRef, {
     projects: [...currentProjects, matchSponsorName]
+  });
+}
+
+export async function fetchUserProfile(username) {
+  if (!username) return null;
+
+  const snapshot = await get(ref(db, `users/${username}`));
+  if (!snapshot.exists()) return null;
+
+  return snapshot.val();
+}
+
+export async function updateUserEquippedSkin(username, equippedSkinId) {
+  if (!username || !equippedSkinId) return;
+
+  await update(ref(db, `users/${username}`), {
+    equippedSkinId,
+    lastLogin: new Date().toISOString()
   });
 }
 
