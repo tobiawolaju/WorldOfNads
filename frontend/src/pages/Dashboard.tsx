@@ -59,7 +59,7 @@ type RewardItem = {
 };
 
 type SkinConfig = {
-  attachmentShape?: "box" | "cone" | "sphere" | "cylinder";
+  attachmentShape?: "box" | "cone" | "sphere" | "cylinder" | "torus";
   color?: string;
   cheekColor?: string;
   attachmentColor?: string;

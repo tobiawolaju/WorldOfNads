@@ -21,7 +21,7 @@ interface Wallet {
 }
 
 interface SkinConfig {
-  attachmentShape?: "box" | "cone" | "sphere" | "cylinder";
+  attachmentShape?: "box" | "cone" | "sphere" | "cylinder" | "torus";
   color?: string;
   cheekColor?: string;
   attachmentColor?: string;
@@ -374,7 +374,7 @@ const NadModel: React.FC<NadModelProps> = ({
         mesh.material = material;
       };
 
-      const setupAttachment = (obj: THREE.Object3D) => {
+      const setupAttachment = (obj: THREE.Object3D, shapeType?: string) => {
         obj.name = "bone-attachment";
         // Apply materials to all meshes in the model
         obj.traverse((child) => {
@@ -383,8 +383,18 @@ const NadModel: React.FC<NadModelProps> = ({
           }
         });
 
-        obj.scale.setScalar(0.0085);
-        obj.position.set(0, -2.10, -0.05);
+        if (shapeType === "torus") {
+          obj.scale.setScalar(0.012);
+          obj.position.set(0, -1.72, -0.02);
+          obj.rotation.set(Math.PI / 2, 0, 0);
+        } else if (shapeType === "cylinder") {
+          obj.scale.setScalar(0.0135);
+          obj.position.set(0, -1.78, 0.0);
+          obj.rotation.set(0, 0, Math.PI / 2);
+        } else {
+          obj.scale.setScalar(0.0085);
+          obj.position.set(0, -2.10, -0.05);
+        }
         headBone.add(obj);
         currentAttachment = obj;
       };
@@ -393,7 +403,7 @@ const NadModel: React.FC<NadModelProps> = ({
         const loader = new FBXLoader();
         loader.load(shape, (fbx) => {
           if (isCleanup) return;
-          setupAttachment(fbx);
+          setupAttachment(fbx, shape);
         });
       } else {
         let geometry: THREE.BufferGeometry;
@@ -407,13 +417,16 @@ const NadModel: React.FC<NadModelProps> = ({
           case "cylinder":
             geometry = new THREE.CylinderGeometry(50, 50, 100, 32);
             break;
+          case "torus":
+            geometry = new THREE.TorusGeometry(55, 18, 24, 48);
+            break;
           case "box":
           default:
             geometry = new THREE.BoxGeometry(100, 100, 100);
             break;
         }
         const mesh = new THREE.Mesh(geometry);
-        setupAttachment(mesh);
+        setupAttachment(mesh, shape);
       }
 
       return () => {

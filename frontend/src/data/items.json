@@ -13,38 +13,34 @@
   },
   {
     "id": "s0",
-    "name": "Ghost Nad",
+    "name": "Buggy",
     "price": "0 MON",
     "image": "/logo.jpg",
     "category": "skins",
-    "description": "Ghost skin. Pure white with black eyes.",
+    "description": "Green skin with white eyes.",
     "skinConfig": { 
-      "color": "#ffffff", 
-      "cheekColor": "#ffffff", 
-      "eyeColor": "#000000",
-      "shader": "ghost",
-      "shaderTargets": ["body", "cheek", "eye", "attachment"]
+      "color": "#00b84f", 
+      "cheekColor": "#00b84f", 
+      "eyeColor": "#ffffff"
     }
   },
   {
     "id": "s1",
-    "name": "Gold Nad",
+    "name": "Aurum",
     "price": "20 MON",
     "image": "/logo.jpg",
     "category": "skins",
     "description": "Gold skin. Metallic and reflective.",
     "skinConfig": { 
-      "attachmentShape": "/storeitems/model1.fbx", 
       "color": "#ffd700", 
       "cheekColor": "#ffd700", 
-      "attachmentColor": "#ffd700",
       "shader": "gold",
       "shaderTargets": ["body", "cheek", "attachment"]
     }
   },
   {
     "id": "s2",
-    "name": "Void Nad",
+    "name": "Abyss",
     "price": "30 MON",
     "image": "/logo.jpg",
     "category": "skins",
@@ -59,13 +55,13 @@
   },
   {
     "id": "s3",
-    "name": "Red Nad",
+    "name": "Hellion",
     "price": "35 MON",
     "image": "/logo.jpg",
     "category": "skins",
     "description": "Red skin.",
     "skinConfig": { 
-      "attachmentShape": "/storeitems/model1.fbx", 
+      "attachmentShape": "cylinder", 
       "color": "#ff0000", 
       "cheekColor": "#ff0000", 
       "attachmentColor": "#ff0000"
@@ -73,39 +69,35 @@
   },
   {
     "id": "s4",
-    "name": "Angel Nad",
+    "name": "Seraphim",
     "price": "40 MON",
     "image": "/logo.jpg",
     "category": "skins",
     "description": "Angel skin. Glowing eyes and golden attachment.",
     "skinConfig": { 
-      "attachmentShape": "/storeitems/model1.fbx", 
-      "color": "#ffffff", 
-      "cheekColor": "#ffffff", 
+      "attachmentShape": "torus", 
+      "color": "#5e96ff", 
+      "cheekColor": "#5e96ff", 
       "eyeColor": "#ffffff",
-      "attachmentColor": "#ffd700",
-      "shader": "angel",
-      "shaderTargets": ["eye", "attachment"]
+      "attachmentColor": "#ffd700"
     }
   },
   {
     "id": "s5",
-    "name": "Mouch Nad",
+    "name": "Mouch",
     "price": "40 MON",
     "image": "/logo.jpg",
     "category": "skins",
     "badge": "new",
     "description": "Purple skin.",
     "skinConfig": { 
-      "attachmentShape": "/storeitems/model1.fbx", 
-      "color": "#8000ff", 
-      "cheekColor": "#8f33ff", 
-      "attachmentColor": "#8000ff"
+      "color": "#ba53ff", 
+      "cheekColor": "#ba53ff"
     }
   },
   {
     "id": "s6",
-    "name": "John Nad",
+    "name": "John Deo",
     "price": "45 MON",
     "image": "/logo.jpg",
     "category": "skins",
