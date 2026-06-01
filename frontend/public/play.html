@@ -99,7 +99,13 @@
         const shell = document.getElementById("playShell");
         const params = new URLSearchParams(window.location.search);
         const username = params.get("username") || "";
-        const gameUrl = "/godot/index.html" + (username ? `?username=${encodeURIComponent(username)}` : "");
+        const skin = params.get("skin") || "s-default";
+        const match = params.get("match") || "";
+        const gameParams = new URLSearchParams();
+        if (username) gameParams.set("username", username);
+        if (skin) gameParams.set("skin", skin);
+        if (match) gameParams.set("match", match);
+        const gameUrl = `/godot/index.html?${gameParams.toString()}`;
 
         let revealTimer = null;
 
@@ -109,6 +115,10 @@
           status.hidden = true;
           try {
             frame.contentWindow?.postMessage({ type: "set_username", value: username }, "*");
+            frame.contentWindow?.postMessage({ type: "set_skin", value: skin }, "*");
+            if (match) {
+              frame.contentWindow?.postMessage({ type: "set_match", value: match }, "*");
+            }
           } catch (error) {
             console.warn("Could not send username to game frame:", error);
           }

@@ -245,7 +245,12 @@ export default function Dashboard() {
       navigationTimeoutRef.current = setTimeout(() => {
         clearPlayTimers();
         setPlayButtonState("idle");
-        navigate("/play");
+        const currentSkinId = displayedSkin?.id || equippedSkin?.id || "s-default";
+        const playParams = new URLSearchParams({
+          match: selectedMatch,
+          skin: currentSkinId
+        });
+        navigate(`/play?${playParams.toString()}`);
       }, 4000);
 
       void (async () => {
@@ -254,6 +259,7 @@ export default function Dashboard() {
 
         try {
           const username = getUsernameFromPrivy(user);
+          const skinId = displayedSkin?.id || equippedSkin?.id || "s-default";
           await Promise.allSettled([
             updateUserProjects(username, match.sponsor),
             recordSponsorDailyUniquePlayer({ sponsor: match.sponsor, username })
@@ -262,7 +268,7 @@ export default function Dashboard() {
             userId: user.id,
             matchId: match.matchId,
             sponsorId: match.sponsor,
-            metadata: { username }
+            metadata: { username, skinId }
           });
         } catch (error) {
           console.error("Failed to start play session", error);

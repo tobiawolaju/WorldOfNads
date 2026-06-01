@@ -4,6 +4,17 @@ extends Node3D
 # --- SERVER URLS ---
 const LIVE_URL: String = "wss://worldofnads.onrender.com"
 const LOCAL_URL: String = "ws://localhost:8080"
+const DEFAULT_SKIN_NAME: String = "defaultnad"
+const SKIN_SCENE_PATHS: Dictionary = {
+	"defaultnad": "res://newport/scenes/skin1.tscn",
+	"Hellion": "res://newport/scenes/skin2.tscn",
+	"Seraphim": "res://newport/scenes/skin3.tscn",
+	"Abbss": "res://newport/scenes/skin4.tscn",
+	"buggy": "res://newport/scenes/skin5.tscn",
+	"john deo": "res://newport/scenes/skin6.tscn",
+	"Aurum": "res://newport/scenes/skin7.tscn",
+	"mouch": "res://newport/scenes/skin8.tscn"
+}
 
 @export var player_scene: PackedScene 
 @export var myplayerswpanpoint: Marker3D
@@ -37,8 +48,10 @@ var events_bridge: Node = null
 var _last_chicken_is_held: bool = false
 var _last_chicken_holder_id: String = ""
 var local_username: String = ""
+var local_skin_name: String = DEFAULT_SKIN_NAME
 var local_display_name: String = "player"
 var player_display_names: Dictionary = {}
+var player_skin_names: Dictionary = {}
 var remote_snapshots: Dictionary = {}
 var countdown_label: Label = null
 var world_environment: WorldEnvironment = null
@@ -57,6 +70,7 @@ var connection_attempted: bool = false
 
 func _ready():
 	_resolve_local_username()
+	_resolve_local_skin_name()
 	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
 	_attempt_connection()
 	_cache_chicken_node()
@@ -131,12 +145,15 @@ func _receive_messages():
 			"connect":
 				player_id = data["id"]
 				local_display_name = _resolve_server_username(data, player_id)
+				local_skin_name = _resolve_server_skin(data, player_id, local_skin_name)
 				player_display_names[player_id] = local_display_name
+				player_skin_names[player_id] = local_skin_name
 				print("My player ID:", player_id, "username:", local_display_name)
+				print("My player skin:", local_skin_name)
 				_resolve_ui_nodes()
 				if camera_block != null:
 					camera_block.visible = false
-				_spawn_player(player_id, true)
+				_spawn_player(player_id, true, local_skin_name)
 				_set_local_username(local_display_name)
 				_set_local_player_id(player_id)
 				_emit_player_event(
@@ -201,7 +218,9 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 			continue
 		received_ids[id] = true
 		var resolved_name = _resolve_server_username(p_state, id)
+		var resolved_skin = _resolve_server_skin(p_state, id, player_skin_names.get(id, DEFAULT_SKIN_NAME))
 		player_display_names[id] = resolved_name
+		player_skin_names[id] = resolved_skin
 
 		if id == player_id:
 			if players.has(id):
@@ -219,7 +238,7 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 
 		# Spawn if new
 		if not players.has(id):
-			_spawn_player(id, false)
+			_spawn_player(id, false, resolved_skin)
 			players[id].global_position = server_pos  # FIX: spawn at correct position
 			remote_snapshots[id] = {
 				"prev_pos": server_pos,
@@ -360,8 +379,8 @@ func _sync_vehicle_player(player_node: Node3D, p_state):
 
 
 # --- SPAWN ---
-func _spawn_player(id: String, is_local := false):
-	var player = player_scene.instantiate()
+func _spawn_player(id: String, is_local := false, skin_name: String = DEFAULT_SKIN_NAME):
+	var player = _instantiate_player_scene_for_skin(skin_name)
 	player.name = "Player_%s" % id
 	add_child(player)
 
@@ -379,6 +398,15 @@ func _spawn_player(id: String, is_local := false):
 		print("👤 Remote player spawned:", id)
 
 	players[id] = player
+
+func _instantiate_player_scene_for_skin(skin_name: String) -> Node3D:
+	var scene := _get_skin_scene(skin_name)
+	if scene != null:
+		return scene.instantiate()
+	if player_scene != null:
+		return player_scene.instantiate()
+	push_error("No player scene available for skin '%s'." % skin_name)
+	return Node3D.new()
 
 
 # --- REMOVE ---
@@ -543,6 +571,34 @@ func _resolve_local_username() -> void:
 	if typeof(raw_username) != TYPE_STRING:
 		return
 	local_username = str(raw_username).strip_edges()
+
+func _resolve_local_skin_name() -> void:
+	if not OS.has_feature("web"):
+		return
+	var raw_skin = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('skin') || ''")
+	if typeof(raw_skin) != TYPE_STRING:
+		return
+	var skin_name := str(raw_skin).strip_edges()
+	if skin_name != "":
+		local_skin_name = skin_name
+
+func _get_skin_scene(skin_name: String) -> PackedScene:
+	var scene_path := str(SKIN_SCENE_PATHS.get(skin_name, ""))
+	if scene_path == "":
+		return null
+	return load(scene_path) as PackedScene
+
+func _resolve_server_skin(data: Dictionary, fallback_id: String, fallback_skin: String = DEFAULT_SKIN_NAME) -> String:
+	for key in ["skin", "skinName", "skin_name", "skinId", "skin_id", "s"]:
+		var candidate := str(data.get(key, "")).strip_edges()
+		if candidate != "":
+			return candidate
+	var cached := str(player_skin_names.get(fallback_id, "")).strip_edges()
+	if cached != "":
+		return cached
+	if fallback_skin != "":
+		return fallback_skin
+	return DEFAULT_SKIN_NAME
 
 func _build_ws_url_with_username(base_url: String) -> String:
 	if local_username == "":

@@ -1,5 +1,26 @@
 extends CharacterBody3D
 
+
+# Skin mapping lives in the spawners:
+# defaultnad = skin1.tscn
+# Hellion = skin2.tscn
+# Seraphim = skin3.tscn
+# Abbss = skin4.tscn
+# buggy = skin5.tscn
+# john deo = skin6.tscn
+# Aurum = skin7.tscn
+# mouch = skin8.tscn
+
+
+
+
+
+
+
+
+
+
+
 # --- CONSTANTS ---
 const GRAVITY: float = 9.8
 const JUMP_VELOCITY: float = 4.5

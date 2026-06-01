@@ -29,8 +29,17 @@ const Play: React.FC = () => {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const nextUrl = `/play.html?username=${encodeURIComponent(username)}`;
-    if (window.location.pathname !== "/play.html" || window.location.search !== `?username=${encodeURIComponent(username)}`) {
+    const params = new URLSearchParams(window.location.search);
+    const skin = params.get("skin") || "s-default";
+    const match = params.get("match") || "";
+    const nextParams = new URLSearchParams({
+      username,
+      skin,
+      ...(match ? { match } : {})
+    });
+    const nextUrl = `/play.html?${nextParams.toString()}`;
+
+    if (window.location.pathname !== "/play.html" || window.location.search !== `?${nextParams.toString()}`) {
       window.location.replace(nextUrl);
     }
   }, [username]);
