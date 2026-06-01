@@ -41,17 +41,21 @@
         top: 1rem;
         right: 1rem;
         z-index: 20;
-        width: 3rem;
-        height: 3rem;
+        min-height: 2.75rem;
+        padding: 0.7rem 1rem;
         border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        background: rgba(0, 0, 0, 0.4);
-        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.5);
+        color: #111;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        gap: 0.5rem;
         backdrop-filter: blur(10px);
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
       }
 
       .fullscreen-btn[hidden] {
@@ -80,8 +84,9 @@
   <body>
     <div class="play-shell" id="playShell">
       <div class="status" id="status">Loading game shell...</div>
-      <button type="button" class="fullscreen-btn" id="fullscreenBtn" aria-label="Enter full screen" hidden>
-        <span aria-hidden="true" style="font-size: 1.5rem; line-height: 1;">⛶</span>
+      <button type="button" class="fullscreen-btn" id="fullscreenBtn" aria-label="Click for fullscreen" hidden>
+        <span aria-hidden="true" style="font-size: 1.1rem; line-height: 1;">⛶</span>
+        <span>Click for fullscreen</span>
       </button>
       <iframe id="gameFrame" class="game-frame" title="World of Nads"></iframe>
     </div>
@@ -96,6 +101,8 @@
         const username = params.get("username") || "";
         const gameUrl = "/godot/index.html" + (username ? `?username=${encodeURIComponent(username)}` : "");
 
+        let revealTimer = null;
+
         frame.src = gameUrl;
 
         frame.addEventListener("load", () => {
@@ -108,7 +115,22 @@
         });
 
         const updateFullscreenButton = () => {
-          fullscreenBtn.hidden = !document.fullscreenEnabled;
+          if (revealTimer) {
+            clearTimeout(revealTimer);
+            revealTimer = null;
+          }
+
+          if (document.fullscreenElement) {
+            fullscreenBtn.hidden = true;
+            fullscreenBtn.setAttribute("aria-label", "Exit full screen");
+            return;
+          }
+
+          fullscreenBtn.setAttribute("aria-label", "Click for fullscreen");
+          revealTimer = setTimeout(() => {
+            fullscreenBtn.hidden = !document.fullscreenEnabled;
+            revealTimer = null;
+          }, 300);
         };
 
         updateFullscreenButton();
