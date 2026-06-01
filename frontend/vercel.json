@@ -1,14 +1,7 @@
 {
   "headers": [
     {
-      "source": "/play",
-      "headers": [
-        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
-      ]
-    },
-    {
-      "source": "/play/(.*)",
+      "source": "/play.html",
       "headers": [
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
         { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
@@ -24,7 +17,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!godot|assets|api|favicon.ico).*)",
+      "source": "/((?!godot|assets|api|favicon.ico|play.html).*)",
       "destination": "/"
     }
   ]

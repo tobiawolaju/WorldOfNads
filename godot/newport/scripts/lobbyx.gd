@@ -14,7 +14,7 @@ var npcs := []
 
 
 func _ready():
-	resolution.set_scale(0.7) 
+	resolution.set_scale(1.0) 
 	_spawn_local_player()
 	_assign_camera()
 
