@@ -1,6 +1,6 @@
 extends Node
 
-const PLAYER_SCENE: PackedScene = preload("res://newport/scenes/Player.tscn")
+#const PLAYER_SCENE: PackedScene = preload("res://newport/scenes/Player.tscn")
 const GAMEPLAY_SCENE: PackedScene = preload("res://newport/scenes/gameplay.tscn")
 const LOBBY_SCENE: PackedScene = preload("res://newport/scenes/lobby.tscn")
 const HOME_SCENE: PackedScene = preload("res://newport/scenes/home.tscn")
