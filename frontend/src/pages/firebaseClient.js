@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getDatabase, get, ref, set, update, remove } from "firebase/database";
+import { forceWebSockets, getDatabase, get, ref, set, update, remove } from "firebase/database";
 import { trackUserJoined, trackUserRegistered } from "../lib/analyticsClient";
 
 const firebaseConfig = {
@@ -22,6 +22,7 @@ function buildUrl(path) {
 }
 
 export const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+forceWebSockets();
 export const db = getDatabase(firebaseApp);
 
 export function getUsernameFromPrivy(user) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Slide1.css";
 
 type Props = {
@@ -12,7 +12,6 @@ const SETS: [string, string, string][] = [
 ];
 
 const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
-  const [index, setIndex] = useState(0);
   const [stageClass, setStageClass] = useState("");
 
   const [images, setImages] = useState({
@@ -23,44 +22,68 @@ const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
 
   const [nextCenter, setNextCenter] = useState(SETS[0][1]);
   const [isMorphing, setIsMorphing] = useState(false);
+  const indexRef = useRef(0);
+  const cycleRunningRef = useRef(false);
+  const timeoutRefs = useRef<number[]>([]);
+
+  const clearTimers = () => {
+    timeoutRefs.current.forEach((timeoutId) => clearTimeout(timeoutId));
+    timeoutRefs.current = [];
+  };
 
   useEffect(() => {
-    const id = setInterval(cycle, interval);
-    return () => clearInterval(id);
-  }, [index, interval]);
+    const cycle = () => {
+      if (cycleRunningRef.current) return;
+      cycleRunningRef.current = true;
 
-  const cycle = () => {
-    setStageClass("ps-closing");
+      setStageClass("ps-closing");
 
-    setTimeout(() => {
-      const newIndex = (index + 1) % SETS.length;
-      const [top, center, bottom] = SETS[newIndex];
+      const closeTimeout = window.setTimeout(() => {
+        const newIndex = (indexRef.current + 1) % SETS.length;
+        const [top, center, bottom] = SETS[newIndex];
 
-      setIndex(newIndex);
-      setNextCenter(center);
+        indexRef.current = newIndex;
+        setNextCenter(center);
 
-      setImages((prev) => ({
-        ...prev,
-        top,
-        bottom
-      }));
+        setImages((prev) => ({
+          ...prev,
+          top,
+          bottom
+        }));
 
-      setIsMorphing(true);
+        setIsMorphing(true);
 
-      setTimeout(() => {
-        setImages({ top, center, bottom });
-        setIsMorphing(false);
-      }, 400);
+        const morphTimeout = window.setTimeout(() => {
+          setImages({ top, center, bottom });
+          setIsMorphing(false);
+        }, 400);
 
-      setTimeout(() => {
-        setStageClass("ps-opening");
+        timeoutRefs.current.push(morphTimeout);
 
-        setTimeout(() => {
-          setStageClass("");
-        }, 1200);
-      }, 200);
-    }, 1200);
-  };
+        const openingTimeout = window.setTimeout(() => {
+          setStageClass("ps-opening");
+
+          const resetTimeout = window.setTimeout(() => {
+            setStageClass("");
+            cycleRunningRef.current = false;
+          }, 1200);
+
+          timeoutRefs.current.push(resetTimeout);
+        }, 200);
+
+        timeoutRefs.current.push(openingTimeout);
+      }, 1200);
+
+      timeoutRefs.current.push(closeTimeout);
+    };
+
+    const id = window.setInterval(cycle, interval);
+    return () => {
+      clearInterval(id);
+      clearTimers();
+      cycleRunningRef.current = false;
+    };
+  }, [interval]);
 
   return (
     <div className="ps-root">

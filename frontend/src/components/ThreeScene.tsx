@@ -148,6 +148,7 @@ const NadModel: React.FC<NadModelProps> = ({
   const fbx = useFBX("/nad.fbx");
   const model = useMemo(() => SkeletonUtils.clone(fbx), [fbx]);
   const mixer = useMemo(() => new THREE.AnimationMixer(model), [model]);
+  const animatedMaterialsRef = useRef<THREE.Material[]>([]);
 
   useEffect(() => {
     const box = new THREE.Box3().setFromObject(model);
@@ -170,6 +171,8 @@ const NadModel: React.FC<NadModelProps> = ({
 
   // Handle character color change
   useEffect(() => {
+    animatedMaterialsRef.current = [];
+
     const baseColorHex = equippedSkin?.skinConfig?.color || "#ff2496";
     const baseColor = new THREE.Color(baseColorHex);
 
@@ -256,6 +259,7 @@ const NadModel: React.FC<NadModelProps> = ({
               }
               newMat.userData.shader = shader;
             };
+            animatedMaterialsRef.current.push(newMat);
           }
         }
 
@@ -369,6 +373,7 @@ const NadModel: React.FC<NadModelProps> = ({
               }
               material.userData.shader = shader;
             };
+            animatedMaterialsRef.current.push(material);
           }
         }
         mesh.material = material;
@@ -476,17 +481,14 @@ const NadModel: React.FC<NadModelProps> = ({
     state.invalidate();
 
     const clockTime = state.clock.getElapsedTime();
-    model.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.material) {
-        const mat = child.material as THREE.Material;
-        if (mat.userData?.shader) {
-          if (!mat.userData.shader.uniforms.uTime) {
-            mat.userData.shader.uniforms.uTime = { value: 0 };
-          }
-          mat.userData.shader.uniforms.uTime.value = clockTime;
-        }
+    for (const mat of animatedMaterialsRef.current) {
+      const shader = mat.userData?.shader;
+      if (!shader) continue;
+      if (!shader.uniforms.uTime) {
+        shader.uniforms.uTime = { value: 0 };
       }
-    });
+      shader.uniforms.uTime.value = clockTime;
+    }
   });
 
   return (
@@ -502,22 +504,31 @@ const NadModel: React.FC<NadModelProps> = ({
 // --- Camera Animation Logic ---
 const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; targetY: number; cameraYOffset: number }> = ({ isInteracting: propIsInteracting, baseDistance, targetY, cameraYOffset }) => {
   const { camera, controls, gl } = useThree();
-  const [phase, setPhase] = useState<'intro' | 'pendulum'>('intro');
-  const [introStartTime] = useState(Date.now());
-  const [pendulumState, setPendulumState] = useState({
+  const phaseRef = useRef<'intro' | 'pendulum'>('intro');
+  const introStartTimeRef = useRef(Date.now());
+  const pendulumStateRef = useRef({
     basePosition: new THREE.Vector3(0, 2, baseDistance),
     startTime: 0
   });
+  const propIsInteractingRef = useRef(propIsInteracting);
+  const wasInteractingRef = useRef(propIsInteracting);
+  const wheelInteractingRef = useRef(false);
+  const wheelTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [isWheelInteracting, setIsWheelInteracting] = useState(false);
-  const wheelTimeout = useRef<any>(null);
+  useEffect(() => {
+    propIsInteractingRef.current = propIsInteracting;
+  }, [propIsInteracting]);
+
+  useEffect(() => {
+    pendulumStateRef.current.basePosition = new THREE.Vector3(0, 2, baseDistance);
+  }, [baseDistance]);
 
   useEffect(() => {
     const handleWheel = () => {
-      setIsWheelInteracting(true);
+      wheelInteractingRef.current = true;
       if (wheelTimeout.current) clearTimeout(wheelTimeout.current);
       wheelTimeout.current = setTimeout(() => {
-        setIsWheelInteracting(false);
+        wheelInteractingRef.current = false;
       }, 250);
     };
 
@@ -529,37 +540,29 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
     };
   }, [gl.domElement]);
 
-  const isInteracting = propIsInteracting || isWheelInteracting;
-
-  // Track if we were interacting in the previous frame
-  const wasInteracting = useRef(isInteracting);
-
   useFrame(() => {
+    const isInteracting = propIsInteractingRef.current || wheelInteractingRef.current;
+
     if (isInteracting) {
-      // While interacting, continuously capture the raw camera position
-      setPendulumState({
-        basePosition: camera.position.clone(),
-        startTime: Date.now()
-      });
-      setPhase('pendulum');
-      wasInteracting.current = true;
+      pendulumStateRef.current.basePosition = camera.position.clone();
+      pendulumStateRef.current.startTime = Date.now();
+      phaseRef.current = 'pendulum';
+      wasInteractingRef.current = true;
       return;
     }
 
     // On user interaction release, do a final state capture for absolute precision
-    if (wasInteracting.current && !isInteracting) {
-      setPendulumState({
-        basePosition: camera.position.clone(),
-        startTime: Date.now()
-      });
-      wasInteracting.current = false;
+    if (wasInteractingRef.current && !isInteracting) {
+      pendulumStateRef.current.basePosition = camera.position.clone();
+      pendulumStateRef.current.startTime = Date.now();
+      wasInteractingRef.current = false;
     }
 
     const now = Date.now();
 
-    if (phase === 'intro') {
+    if (phaseRef.current === 'intro') {
       const duration = 5000;
-      const elapsed = now - introStartTime;
+      const elapsed = now - introStartTimeRef.current;
       const progress = Math.min(elapsed / duration, 1);
 
       // 360 Spin logic
@@ -588,19 +591,17 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
       camera.lookAt(0, targetY, 0);
 
       if (progress >= 1) {
-        setPhase('pendulum');
-        setPendulumState({
-          basePosition: camera.position.clone(),
-          startTime: now
-        });
+        phaseRef.current = 'pendulum';
+        pendulumStateRef.current.basePosition = camera.position.clone();
+        pendulumStateRef.current.startTime = now;
       }
-    } else if (phase === 'pendulum') {
-      const elapsed = (now - pendulumState.startTime) / 1000;
+    } else if (phaseRef.current === 'pendulum') {
+      const elapsed = (now - pendulumStateRef.current.startTime) / 1000;
       // Oscillate +/- 18 degrees
       const oscillation = Math.sin(elapsed * 0.4) * (18 * Math.PI / 180);
 
       const axis = new THREE.Vector3(0, 1, 0);
-      const newPos = pendulumState.basePosition.clone();
+      const newPos = pendulumStateRef.current.basePosition.clone();
       newPos.applyAxisAngle(axis, oscillation);
 
       camera.position.copy(newPos);
@@ -677,10 +678,10 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
 
   return (
     <Canvas
-      dpr={[1, 1.5]}
+      dpr={[1, 1.35]}
       camera={{ position: [0, 0, cameraZ] }}
       frameloop="demand"
-      gl={{ alpha: true, preserveDrawingBuffer: true, powerPreference: "high-performance", antialias: true }}
+      gl={{ alpha: true, powerPreference: "high-performance", antialias: true }}
       style={{ background: "none", pointerEvents: "auto" }}
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
     >
@@ -699,7 +700,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
         scale={6}
         blur={1.5}
         far={4}
-        resolution={128}
+        resolution={96}
         color="#000000"
         position={[0, -2.01, 0]}
       />

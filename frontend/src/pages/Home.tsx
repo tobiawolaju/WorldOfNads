@@ -7,6 +7,26 @@ import Slide1 from "../components/Slide1";
 import Slide2 from "../components/Slide2";
 import Footer from "../components/Footer";
 
+const WaveText = React.memo(({ text }: { text: string }) => {
+  const words = text.split(" ");
+
+  return (
+    <span className="wave-text" aria-label={text}>
+      {words.map((word, index) => (
+        <span
+          key={`${word}-${index}`}
+          className="wave-word"
+          style={{ "--wave-index": index } as React.CSSProperties}
+          aria-hidden="true"
+        >
+          {word}
+          {index < words.length - 1 ? "\u00A0" : ""}
+        </span>
+      ))}
+    </span>
+  );
+});
+
 const Home: React.FC = () => {
   const { login, authenticated, ready } = usePrivy();
   const navigate = useNavigate();
@@ -16,6 +36,13 @@ const Home: React.FC = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const heroBgRef = useRef<HTMLImageElement>(null);
   const [showFooterButtons, setShowFooterButtons] = useState(false);
+  const heroFrameRef = useRef<number | null>(null);
+  const heroVisibleRef = useRef(false);
+  const heroPausedByVisibilityRef = useRef(false);
+  const statsFrameRef = useRef<number | null>(null);
+  const statsVisibleRef = useRef(false);
+  const statsInteractingRef = useRef(false);
+  const statsDocumentVisibleRef = useRef(!document.hidden);
 
   const handlePlay = (): void => {
     if (!ready) return;
@@ -36,13 +63,40 @@ const Home: React.FC = () => {
     let targetY = 0;
     let currentX = 0;
     let currentY = 0;
-    let rafId = 0;
+    const stop = () => {
+      if (heroFrameRef.current != null) {
+        cancelAnimationFrame(heroFrameRef.current);
+        heroFrameRef.current = null;
+      }
+    };
 
     const animate = () => {
+      if (!heroVisibleRef.current || document.hidden) {
+        stop();
+        return;
+      }
+
       currentX += (targetX - currentX) * 0.12;
       currentY += (targetY - currentY) * 0.12;
       heroBg.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
-      rafId = requestAnimationFrame(animate);
+
+      const isSettled =
+        Math.abs(targetX - currentX) < 0.05 &&
+        Math.abs(targetY - currentY) < 0.05 &&
+        targetX === 0 &&
+        targetY === 0;
+
+      if (isSettled) {
+        stop();
+        return;
+      }
+
+      heroFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    const start = () => {
+      if (heroFrameRef.current != null || !heroVisibleRef.current || document.hidden) return;
+      heroFrameRef.current = requestAnimationFrame(animate);
     };
 
     const onMouseMove = (e: MouseEvent) => {
@@ -50,6 +104,7 @@ const Home: React.FC = () => {
       const yPos = (e.clientY / window.innerHeight - 0.5) * 20;
       targetX = xPos;
       targetY = yPos;
+      start();
     };
 
     const onMouseLeave = () => {
@@ -57,14 +112,42 @@ const Home: React.FC = () => {
       targetY = 0;
     };
 
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        heroVisibleRef.current = Boolean(entry?.isIntersecting);
+        if (heroVisibleRef.current) {
+          start();
+        } else {
+          stop();
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        heroPausedByVisibilityRef.current = heroFrameRef.current != null;
+        stop();
+        return;
+      }
+
+      if (heroPausedByVisibilityRef.current) {
+        heroPausedByVisibilityRef.current = false;
+        start();
+      }
+    };
+
+    visibilityObserver.observe(hero);
     hero.addEventListener("mousemove", onMouseMove);
     hero.addEventListener("mouseleave", onMouseLeave);
-    rafId = requestAnimationFrame(animate);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
-      cancelAnimationFrame(rafId);
+      visibilityObserver.disconnect();
+      stop();
       hero.removeEventListener("mousemove", onMouseMove);
       hero.removeEventListener("mouseleave", onMouseLeave);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, []);
 
@@ -109,33 +192,54 @@ const Home: React.FC = () => {
     const container = statsContainerRef.current;
     if (!container) return;
 
-    let animId: number;
-    let isUserInteracting = false;
-    let isInView = false;
+    const stop = () => {
+      if (statsFrameRef.current != null) {
+        cancelAnimationFrame(statsFrameRef.current);
+        statsFrameRef.current = null;
+      }
+    };
+
+    const start = () => {
+      if (statsFrameRef.current != null || !statsVisibleRef.current || !statsDocumentVisibleRef.current) return;
+      statsFrameRef.current = requestAnimationFrame(step);
+    };
+
     let isDown = false;
     let startX: number;
     let scrollLeftPos: number;
 
-    const onTouchStart = () => { isUserInteracting = true; };
-    const onTouchEnd = () => { isUserInteracting = false; };
-    const onMouseEnter = () => { isUserInteracting = true; };
+    const onTouchStart = () => {
+      statsInteractingRef.current = true;
+      stop();
+    };
+    const onTouchEnd = () => {
+      statsInteractingRef.current = false;
+      start();
+    };
+    const onMouseEnter = () => {
+      statsInteractingRef.current = true;
+      stop();
+    };
 
     const onMouseDown = (e: MouseEvent) => {
-      isUserInteracting = true;
+      statsInteractingRef.current = true;
       isDown = true;
       startX = e.pageX - container.offsetLeft;
       scrollLeftPos = container.scrollLeft;
       container.style.cursor = 'grabbing';
+      stop();
     };
     const onMouseLeave = () => {
-      isUserInteracting = false;
+      statsInteractingRef.current = false;
       isDown = false;
       container.style.cursor = 'grab';
+      start();
     };
     const onMouseUp = () => {
-      isUserInteracting = false;
+      statsInteractingRef.current = false;
       isDown = false;
       container.style.cursor = 'grab';
+      start();
     };
     const onMouseMove = (e: MouseEvent) => {
       if (!isDown) return;
@@ -155,39 +259,61 @@ const Home: React.FC = () => {
 
     let wheelTimeout: ReturnType<typeof setTimeout>;
     const onWheel = () => {
-      isUserInteracting = true;
+      statsInteractingRef.current = true;
+      stop();
       clearTimeout(wheelTimeout);
-      wheelTimeout = setTimeout(() => { isUserInteracting = false; }, 1000);
+      wheelTimeout = setTimeout(() => {
+        statsInteractingRef.current = false;
+        start();
+      }, 1000);
     };
     container.addEventListener('wheel', onWheel, { passive: true });
 
     const visibilityObserver = new IntersectionObserver(
       ([entry]) => {
-        isInView = Boolean(entry?.isIntersecting);
+        statsVisibleRef.current = Boolean(entry?.isIntersecting);
+        if (statsVisibleRef.current) {
+          start();
+        } else {
+          stop();
+        }
       },
       { threshold: 0.1 }
     );
     visibilityObserver.observe(container);
 
-    const step = () => {
-      if (isInView && !isUserInteracting) {
-        container.scrollLeft += 1;
+    const onDocumentVisibilityChange = () => {
+      statsDocumentVisibleRef.current = !document.hidden;
+      if (document.hidden) {
+        stop();
+      } else {
+        start();
       }
-
-      // Infinite loop check
-      if (container.scrollLeft >= container.scrollWidth / 2) {
-        container.scrollLeft -= container.scrollWidth / 2;
-      } else if (container.scrollLeft <= 0) {
-        container.scrollLeft += container.scrollWidth / 2;
-      }
-
-      animId = requestAnimationFrame(step);
     };
 
-    animId = requestAnimationFrame(step);
+    document.addEventListener("visibilitychange", onDocumentVisibilityChange);
+
+    const step = () => {
+      statsFrameRef.current = null;
+
+      if (statsVisibleRef.current && !statsInteractingRef.current && statsDocumentVisibleRef.current) {
+        container.scrollLeft += 1;
+
+        // Infinite loop check
+        if (container.scrollLeft >= container.scrollWidth / 2) {
+          container.scrollLeft -= container.scrollWidth / 2;
+        } else if (container.scrollLeft <= 0) {
+          container.scrollLeft += container.scrollWidth / 2;
+        }
+      }
+
+      start();
+    };
+
+    start();
 
     return () => {
-      cancelAnimationFrame(animId);
+      stop();
       container.removeEventListener('mousedown', onMouseDown);
       container.removeEventListener('mouseleave', onMouseLeave);
       container.removeEventListener('mouseup', onMouseUp);
@@ -197,6 +323,7 @@ const Home: React.FC = () => {
       container.removeEventListener('mouseenter', onMouseEnter);
       container.removeEventListener('wheel', onWheel);
       visibilityObserver.disconnect();
+      document.removeEventListener("visibilitychange", onDocumentVisibilityChange);
       clearTimeout(wheelTimeout);
     };
   }, []);
@@ -216,25 +343,6 @@ const Home: React.FC = () => {
       link: "https://x.com/i/status/2043666277927956534",
     },
   ];
-
-  const renderWaveText = (text: string) => {
-    const words = text.split(" ");
-    return (
-      <span className="wave-text" aria-label={text}>
-        {words.map((word, index) => (
-          <span
-            key={`${word}-${index}`}
-            className="wave-word"
-            style={{ "--wave-index": index } as React.CSSProperties}
-            aria-hidden="true"
-          >
-            {word}
-            {index < words.length - 1 ? "\u00A0" : ""}
-          </span>
-        ))}
-      </span>
-    );
-  };
 
   return (
     <div className="home-wrapper">
@@ -264,7 +372,7 @@ const Home: React.FC = () => {
             <div className="func-content">
               <h2 className="func-headline">Play</h2>
               <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}>
-                {renderWaveText("Drop into the arena. Outplay everyone. Earn your place. Every match is a fight for position. Every win moves you closer to recognition.")}
+                <WaveText text="Drop into the arena. Outplay everyone. Earn your place. Every match is a fight for position. Every win moves you closer to recognition." />
               </p>
             </div>
             <div className="func-image">
@@ -278,7 +386,7 @@ const Home: React.FC = () => {
           <div className="functional-slide reverse">
             <div className="func-content">
               <h2 className="func-headline">Hosts</h2>
-              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}> {renderWaveText("Control the arena. Shape the battlefield. Get seen where competition happens. Sponsors don’t just fund matches — they influence the game.")}</p>
+              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}> <WaveText text="Control the arena. Shape the battlefield. Get seen where competition happens. Sponsors don’t just fund matches — they influence the game." /></p>
             </div>
             <div className="func-image">
               <Slide2 />
@@ -289,9 +397,9 @@ const Home: React.FC = () => {
           <div className="functional-slide">
             <div className="func-content">
               <h2 className="func-headline">Built for Competition</h2>
-              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}>{renderWaveText("No bots. No shortcuts. No second chances. Every match is real. Every win is earned. Only skill decides who rises.")}</p>
+              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}><WaveText text="No bots. No shortcuts. No second chances. Every match is real. Every win is earned. Only skill decides who rises." /></p>
               <h2 className="section-title">How it works</h2>
-              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}>{renderWaveText("The arena resets every month. Players compete. Only the top rise. The best become recognized Nads.")}</p>
+              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}><WaveText text="The arena resets every month. Players compete. Only the top rise. The best become recognized Nads." /></p>
 
 
             </div>
