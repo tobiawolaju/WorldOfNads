@@ -22,6 +22,26 @@ const SKIN_SCENE_PATHS := {
 	"Aurum": "res://newport/scenes/skin7.tscn",
 	"mouch": "res://newport/scenes/skin8.tscn"
 }
+const SKIN_NAME_ALIASES := {
+	"s-default": "defaultnad",
+	"s0": "buggy",
+	"s1": "Aurum",
+	"s2": "Abbss",
+	"s3": "Hellion",
+	"s4": "Seraphim",
+	"s5": "mouch",
+	"s6": "john deo",
+	"defaultnad": "defaultnad",
+	"buggy": "buggy",
+	"aurum": "Aurum",
+	"abbss": "Abbss",
+	"abyss": "Abbss",
+	"hellion": "Hellion",
+	"seraphim": "Seraphim",
+	"mouch": "mouch",
+	"john deo": "john deo",
+	"johndeo": "john deo"
+}
 
 
 
@@ -71,11 +91,20 @@ func _resolve_local_skin_name() -> String:
 		if typeof(raw_skin) == TYPE_STRING:
 			var skin_name := str(raw_skin).strip_edges()
 			if skin_name != "":
-				return skin_name
+				return _normalize_skin_name(skin_name)
 	return DEFAULT_SKIN_NAME
 
 func _get_skin_scene(skin_name: String) -> PackedScene:
-	var scene_path = SKIN_SCENE_PATHS.get(skin_name, "")
+	var resolved_name := _normalize_skin_name(skin_name)
+	var scene_path = SKIN_SCENE_PATHS.get(resolved_name, "")
 	if scene_path == "":
 		return null
 	return load(scene_path) as PackedScene
+
+func _normalize_skin_name(raw_skin: String) -> String:
+	var key := str(raw_skin).strip_edges().to_lower()
+	while key.find("  ") != -1:
+		key = key.replace("  ", " ")
+	if SKIN_NAME_ALIASES.has(key):
+		return str(SKIN_NAME_ALIASES[key])
+	return key if key != "" else DEFAULT_SKIN_NAME

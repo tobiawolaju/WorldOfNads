@@ -93,13 +93,44 @@
 
     <script>
       (function () {
+        const DEFAULT_GAME_SKIN_NAME = "defaultnad";
+        const GAME_SKIN_NAME_BY_KEY = {
+          "s-default": DEFAULT_GAME_SKIN_NAME,
+          s0: "buggy",
+          s1: "Aurum",
+          s2: "Abbss",
+          s3: "Hellion",
+          s4: "Seraphim",
+          s5: "mouch",
+          s6: "john deo",
+          defaultnad: DEFAULT_GAME_SKIN_NAME,
+          buggy: "buggy",
+          aurum: "Aurum",
+          abbss: "Abbss",
+          abyss: "Abbss",
+          hellion: "Hellion",
+          seraphim: "Seraphim",
+          mouch: "mouch",
+          "john deo": "john deo",
+          johndeo: "john deo"
+        };
+        const normalizeSkinKey = (rawSkin) =>
+          String(rawSkin || "")
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, " ");
+        const resolveGameSkinName = (rawSkin) => {
+          const key = normalizeSkinKey(rawSkin);
+          return GAME_SKIN_NAME_BY_KEY[key] || DEFAULT_GAME_SKIN_NAME;
+        };
+
         const status = document.getElementById("status");
         const frame = document.getElementById("gameFrame");
         const fullscreenBtn = document.getElementById("fullscreenBtn");
         const shell = document.getElementById("playShell");
         const params = new URLSearchParams(window.location.search);
         const username = params.get("username") || "";
-        const skin = params.get("skin") || "s-default";
+        const skin = resolveGameSkinName(params.get("skin") || params.get("skinName") || "s-default");
         const match = params.get("match") || "";
         const gameParams = new URLSearchParams();
         if (username) gameParams.set("username", username);

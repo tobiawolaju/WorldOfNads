@@ -18,6 +18,7 @@ import {
   recordSponsorDailyUniquePlayer
 } from "./firebaseClient";
 import { trackMatchJoined } from "../lib/analyticsClient";
+import { resolveGameSkinName } from "../lib/skinMapping";
 import { staticMatches } from "./staticMatches.js";
 import storeItemsData from "../data/items.json";
 
@@ -246,9 +247,10 @@ export default function Dashboard() {
         clearPlayTimers();
         setPlayButtonState("idle");
         const currentSkinId = displayedSkin?.id || equippedSkin?.id || "s-default";
+        const currentSkinName = resolveGameSkinName(currentSkinId);
         const playParams = new URLSearchParams({
           match: selectedMatch,
-          skin: currentSkinId
+          skin: currentSkinName
         });
         navigate(`/play?${playParams.toString()}`);
       }, 4000);
@@ -260,6 +262,7 @@ export default function Dashboard() {
         try {
           const username = getUsernameFromPrivy(user);
           const skinId = displayedSkin?.id || equippedSkin?.id || "s-default";
+          const skinName = resolveGameSkinName(skinId);
           await Promise.allSettled([
             updateUserProjects(username, match.sponsor),
             recordSponsorDailyUniquePlayer({ sponsor: match.sponsor, username })
@@ -268,7 +271,7 @@ export default function Dashboard() {
             userId: user.id,
             matchId: match.matchId,
             sponsorId: match.sponsor,
-            metadata: { username, skinId }
+            metadata: { username, skinId, skinName }
           });
         } catch (error) {
           console.error("Failed to start play session", error);

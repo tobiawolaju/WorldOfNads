@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
+import { resolveGameSkinName } from "../lib/skinMapping";
 
 function getUsernameFromPrivy(user: any): string {
   if (!user?.linkedAccounts) return "Anon";
@@ -30,7 +31,7 @@ const Play: React.FC = () => {
     if (typeof window === "undefined") return;
 
     const params = new URLSearchParams(window.location.search);
-    const skin = params.get("skin") || "s-default";
+    const skin = resolveGameSkinName(params.get("skin") || params.get("skinId") || "s-default");
     const match = params.get("match") || "";
     const nextParams = new URLSearchParams({
       username,
