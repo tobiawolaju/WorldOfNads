@@ -87,6 +87,7 @@ type StoreItem = {
 const dummyStore: StoreItem[] = storeItemsData as StoreItem[];
 
 const dummyOwnedItems: string[] = ["s-default", "s0", "s1", "s3", "s4"]; // IDs matching dummyStore
+const getStoreImageUrl = (item: StoreItem) => item.image || `/skins_png/${item.id}.png`;
 
 export default function Dashboard() {
   const { ready, authenticated, user, logout } = usePrivy();
@@ -539,7 +540,7 @@ export default function Dashboard() {
                       className={`store-card ${selectedStore === item.id ? "selected" : ""}`}
                       onClick={() => setSelectedStore(item.id)}
                     >
-                      <div className="store-card-image" style={{ backgroundImage: `url(${item.image})` }}>
+                      <div className="store-card-image" style={{ backgroundImage: `url(${getStoreImageUrl(item)})` }}>
                         {!dummyOwnedItems.includes(item.id) && (
                           <span className="item-badge badge-store">new</span>
                         )}
