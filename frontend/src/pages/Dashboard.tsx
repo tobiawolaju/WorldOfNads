@@ -415,7 +415,7 @@ export default function Dashboard() {
       <FullScreenLoader visible={showLoader} />
       {!showLoader && authenticated && user && (
         <div className="dashboard-wrapper">
-      <div className="left-3d-section">
+        <div className="left-3d-section">
         <ThreeScene
           social={socialData}
           wallets={wallets}
@@ -423,6 +423,7 @@ export default function Dashboard() {
           username={getUsernameFromPrivy(user)}
           onLogout={logout}
           equippedSkin={displayedSkin}
+          isStoreOpen={tab === "store"}
         />
       </div>
 

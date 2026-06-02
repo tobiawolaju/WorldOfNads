@@ -45,6 +45,7 @@ interface ThreeSceneProps {
   username: string;
   onLogout: () => void;
   equippedSkin?: StoreItem | null;
+  isStoreOpen?: boolean;
 }
 
 // --- Shader Definition for Water Bubble Effect ---
@@ -502,13 +503,26 @@ const NadModel: React.FC<NadModelProps> = ({
 };
 
 // --- Camera Animation Logic ---
-const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; targetY: number; cameraYOffset: number }> = ({ isInteracting: propIsInteracting, baseDistance, targetY, cameraYOffset }) => {
+const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; targetY: number; cameraYOffset: number; isStoreOpen: boolean }> = ({ isInteracting: propIsInteracting, baseDistance, targetY, cameraYOffset, isStoreOpen }) => {
   const { camera, controls, gl } = useThree();
   const phaseRef = useRef<'intro' | 'pendulum'>('intro');
   const introStartTimeRef = useRef(Date.now());
   const pendulumStateRef = useRef({
     basePosition: new THREE.Vector3(0, 2, baseDistance),
     startTime: 0
+  });
+  const storeLockRef = useRef<{
+    active: boolean;
+    position: THREE.Vector3;
+    target: THREE.Vector3;
+    zoom: number;
+    enableZoom: boolean;
+  }>({
+    active: false,
+    position: new THREE.Vector3(),
+    target: new THREE.Vector3(),
+    zoom: 1,
+    enableZoom: true
   });
   const propIsInteractingRef = useRef(propIsInteracting);
   const wasInteractingRef = useRef(propIsInteracting);
@@ -522,6 +536,44 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
   useEffect(() => {
     pendulumStateRef.current.basePosition = new THREE.Vector3(0, 2, baseDistance);
   }, [baseDistance]);
+
+  useEffect(() => {
+    if (!controls) return;
+
+    if (isStoreOpen) {
+      if (!storeLockRef.current.active) {
+        storeLockRef.current.position.copy(camera.position);
+        storeLockRef.current.target.copy(controls.target);
+        storeLockRef.current.zoom = camera.zoom;
+        storeLockRef.current.enableZoom = controls.enableZoom;
+        storeLockRef.current.active = true;
+      }
+
+      const direction = camera.position.clone().sub(controls.target);
+      if (direction.lengthSq() === 0) {
+        direction.set(0, 0, 1);
+      }
+      direction.normalize();
+
+      const lockedPosition = controls.target.clone().add(direction.multiplyScalar(2.647));
+      camera.position.copy(lockedPosition);
+      camera.zoom = 1;
+      camera.lookAt(controls.target);
+      controls.enableZoom = false;
+      controls.update();
+      return;
+    }
+
+    if (storeLockRef.current.active) {
+      camera.position.copy(storeLockRef.current.position);
+      camera.zoom = storeLockRef.current.zoom;
+      controls.target.copy(storeLockRef.current.target);
+      controls.enableZoom = storeLockRef.current.enableZoom;
+      camera.lookAt(storeLockRef.current.target);
+      controls.update();
+      storeLockRef.current.active = false;
+    }
+  }, [camera, controls, isStoreOpen]);
 
   useEffect(() => {
     const handleWheel = () => {
@@ -541,6 +593,11 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
   }, [gl.domElement]);
 
   useFrame(() => {
+    if (isStoreOpen) {
+      if (controls) (controls as any).update();
+      return;
+    }
+
     const isInteracting = propIsInteractingRef.current || wheelInteractingRef.current;
 
     if (isInteracting) {
@@ -682,6 +739,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
   username,
   onLogout,
   equippedSkin,
+  isStoreOpen = false,
 }) => {
   const [cameraZ, setCameraZ] = useState(22);
   const [targetY, setTargetY] = useState(0);
@@ -802,7 +860,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       />
 
       <CameraInteractionLogger controlsRef={controlsRef} baseDistance={cameraZ} />
-      <CameraAnimator isInteracting={isInteracting} baseDistance={cameraZ} targetY={targetY} cameraYOffset={cameraYOffset} />
+      <CameraAnimator isInteracting={isInteracting} baseDistance={cameraZ} targetY={targetY} cameraYOffset={cameraYOffset} isStoreOpen={isStoreOpen} />
     </Canvas>
   );
 };
