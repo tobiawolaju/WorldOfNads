@@ -503,8 +503,15 @@ const NadModel: React.FC<NadModelProps> = ({
 };
 
 // --- Camera Animation Logic ---
-const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; targetY: number; cameraYOffset: number; isStoreOpen: boolean }> = ({ isInteracting: propIsInteracting, baseDistance, targetY, cameraYOffset, isStoreOpen }) => {
-  const { camera, controls, gl } = useThree();
+const CameraAnimator: React.FC<{
+  isInteracting: boolean;
+  baseDistance: number;
+  targetY: number;
+  cameraYOffset: number;
+  isStoreOpen: boolean;
+  controlsRef: React.RefObject<any>;
+}> = ({ isInteracting: propIsInteracting, baseDistance, targetY, cameraYOffset, isStoreOpen, controlsRef }) => {
+  const { camera, gl } = useThree();
   const phaseRef = useRef<'intro' | 'pendulum'>('intro');
   const introStartTimeRef = useRef(Date.now());
   const pendulumStateRef = useRef({
@@ -517,12 +524,14 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
     target: THREE.Vector3;
     zoom: number;
     enableZoom: boolean;
+    enabled: boolean;
   }>({
     active: false,
     position: new THREE.Vector3(),
     target: new THREE.Vector3(),
     zoom: 1,
-    enableZoom: true
+    enableZoom: true,
+    enabled: true
   });
   const propIsInteractingRef = useRef(propIsInteracting);
   const wasInteractingRef = useRef(propIsInteracting);
@@ -538,6 +547,7 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
   }, [baseDistance]);
 
   useEffect(() => {
+    const controls = controlsRef.current;
     if (!controls) return;
 
     if (isStoreOpen) {
@@ -546,6 +556,7 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
         storeLockRef.current.target.copy(controls.target);
         storeLockRef.current.zoom = camera.zoom;
         storeLockRef.current.enableZoom = controls.enableZoom;
+        storeLockRef.current.enabled = controls.enabled;
         storeLockRef.current.active = true;
       }
 
@@ -558,8 +569,10 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
       const lockedPosition = controls.target.clone().add(direction.multiplyScalar(2.647));
       camera.position.copy(lockedPosition);
       camera.zoom = 1;
+      camera.updateProjectionMatrix();
       camera.lookAt(controls.target);
       controls.enableZoom = false;
+      controls.enabled = true;
       controls.update();
       return;
     }
@@ -567,13 +580,15 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
     if (storeLockRef.current.active) {
       camera.position.copy(storeLockRef.current.position);
       camera.zoom = storeLockRef.current.zoom;
+      camera.updateProjectionMatrix();
       controls.target.copy(storeLockRef.current.target);
       controls.enableZoom = storeLockRef.current.enableZoom;
+      controls.enabled = storeLockRef.current.enabled;
       camera.lookAt(storeLockRef.current.target);
       controls.update();
       storeLockRef.current.active = false;
     }
-  }, [camera, controls, isStoreOpen]);
+  }, [camera, controlsRef, isStoreOpen]);
 
   useEffect(() => {
     const handleWheel = () => {
@@ -593,8 +608,49 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
   }, [gl.domElement]);
 
   useFrame(() => {
+    const controls = controlsRef.current;
+    if (controls) {
+      if (isStoreOpen) {
+        if (!storeLockRef.current.active) {
+          storeLockRef.current.position.copy(camera.position);
+          storeLockRef.current.target.copy(controls.target);
+          storeLockRef.current.zoom = camera.zoom;
+          storeLockRef.current.enableZoom = controls.enableZoom;
+          storeLockRef.current.enabled = controls.enabled;
+          storeLockRef.current.active = true;
+        }
+
+        const direction = camera.position.clone().sub(controls.target);
+        if (direction.lengthSq() === 0) {
+          direction.set(0, 0, 1);
+        }
+        direction.normalize();
+
+        const lockedPosition = controls.target.clone().add(direction.multiplyScalar(2.647));
+        camera.position.copy(lockedPosition);
+        camera.zoom = 1;
+        camera.updateProjectionMatrix();
+        camera.lookAt(controls.target);
+        controls.enableZoom = false;
+        controls.enabled = true;
+        controls.update();
+        return;
+      }
+
+      if (storeLockRef.current.active) {
+        camera.position.copy(storeLockRef.current.position);
+        camera.zoom = storeLockRef.current.zoom;
+        camera.updateProjectionMatrix();
+        controls.target.copy(storeLockRef.current.target);
+        controls.enableZoom = storeLockRef.current.enableZoom;
+        controls.enabled = storeLockRef.current.enabled;
+        camera.lookAt(storeLockRef.current.target);
+        controls.update();
+        storeLockRef.current.active = false;
+      }
+    }
+
     if (isStoreOpen) {
-      if (controls) (controls as any).update();
       return;
     }
 
@@ -860,7 +916,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       />
 
       <CameraInteractionLogger controlsRef={controlsRef} baseDistance={cameraZ} />
-      <CameraAnimator isInteracting={isInteracting} baseDistance={cameraZ} targetY={targetY} cameraYOffset={cameraYOffset} isStoreOpen={isStoreOpen} />
+      <CameraAnimator isInteracting={isInteracting} baseDistance={cameraZ} targetY={targetY} cameraYOffset={cameraYOffset} isStoreOpen={isStoreOpen} controlsRef={controlsRef} />
     </Canvas>
   );
 };
