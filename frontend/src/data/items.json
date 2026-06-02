@@ -3,11 +3,11 @@
     "id": "s-default",
     "name": "Default Nad",
     "price": "0 MON",
-    "image": "/logo.jpg",
+    "image": "/skins_png/skin1.png",
     "category": "skins",
     "description": "Default pink skin.",
-    "skinConfig": { 
-      "color": "#ff2496", 
+    "skinConfig": {
+      "color": "#ff2496",
       "cheekColor": "#ff40bf"
     }
   },
@@ -15,12 +15,12 @@
     "id": "s0",
     "name": "Buggy",
     "price": "0 MON",
-    "image": "/logo.jpg",
+    "image": "/skins_png/skin5.png",
     "category": "skins",
     "description": "Green skin with white eyes.",
-    "skinConfig": { 
-      "color": "#00b84f", 
-      "cheekColor": "#00b84f", 
+    "skinConfig": {
+      "color": "#00b84f",
+      "cheekColor": "#00b84f",
       "eyeColor": "#ffffff"
     }
   },
@@ -28,42 +28,51 @@
     "id": "s1",
     "name": "Aurum",
     "price": "20 MON",
-    "image": "/logo.jpg",
+    "image": "/skins_png/skin7.png",
     "category": "skins",
     "description": "Gold skin. Metallic and reflective.",
-    "skinConfig": { 
-      "color": "#ffd700", 
-      "cheekColor": "#ffd700", 
+    "skinConfig": {
+      "color": "#ffd700",
+      "cheekColor": "#ffd700",
       "shader": "gold",
-      "shaderTargets": ["body", "cheek", "attachment"]
+      "shaderTargets": [
+        "body",
+        "cheek",
+        "attachment"
+      ]
     }
   },
   {
     "id": "s2",
     "name": "Abyss",
     "price": "30 MON",
-    "image": "/logo.jpg",
+    "image": "/skins_png/skin4.png",
     "category": "skins",
     "badge": "new",
     "description": "Void skin. Unshaded material.",
-    "skinConfig": { 
-      "color": "#000000", 
+    "skinConfig": {
+      "color": "#000000",
       "cheekColor": "#000000",
       "shader": "void",
-      "shaderTargets": ["body", "cheek", "eye", "attachment"]
+      "shaderTargets": [
+        "body",
+        "cheek",
+        "eye",
+        "attachment"
+      ]
     }
   },
   {
     "id": "s3",
     "name": "Hellion",
     "price": "35 MON",
-    "image": "/logo.jpg",
+    "image": "/skins_png/skin2.png",
     "category": "skins",
     "description": "Red skin.",
-    "skinConfig": { 
-      "attachmentShape": "cylinder", 
-      "color": "#ff0000", 
-      "cheekColor": "#ff0000", 
+    "skinConfig": {
+      "attachmentShape": "cylinder",
+      "color": "#ff0000",
+      "cheekColor": "#ff0000",
       "attachmentColor": "#ff0000"
     }
   },
@@ -71,13 +80,13 @@
     "id": "s4",
     "name": "Seraphim",
     "price": "40 MON",
-    "image": "/logo.jpg",
+    "image": "/skins_png/skin3.png",
     "category": "skins",
     "description": "Angel skin. Glowing eyes and golden attachment.",
-    "skinConfig": { 
-      "attachmentShape": "torus", 
-      "color": "#5e96ff", 
-      "cheekColor": "#5e96ff", 
+    "skinConfig": {
+      "attachmentShape": "torus",
+      "color": "#5e96ff",
+      "cheekColor": "#5e96ff",
       "eyeColor": "#ffffff",
       "attachmentColor": "#ffd700"
     }
@@ -86,12 +95,12 @@
     "id": "s5",
     "name": "Mouch",
     "price": "40 MON",
-    "image": "/logo.jpg",
+    "image": "/skins_png/skin8.png",
     "category": "skins",
     "badge": "new",
     "description": "Purple skin.",
-    "skinConfig": { 
-      "color": "#ba53ff", 
+    "skinConfig": {
+      "color": "#ba53ff",
       "cheekColor": "#ba53ff"
     }
   },
@@ -99,14 +108,14 @@
     "id": "s6",
     "name": "John Deo",
     "price": "45 MON",
-    "image": "/logo.jpg",
+    "image": "/skins_png/skin6.png",
     "category": "skins",
     "badge": "new",
     "description": "John Nad.",
-    "skinConfig": { 
-      "attachmentShape": "/storeitems/model1.fbx", 
-      "color": "#ff2496", 
-      "cheekColor": "#ff40bf", 
+    "skinConfig": {
+      "attachmentShape": "/storeitems/model1.fbx",
+      "color": "#ff2496",
+      "cheekColor": "#ff40bf",
       "attachmentColor": "#c68642"
     }
   }
