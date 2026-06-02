@@ -988,12 +988,12 @@
   }
 
   .store-card {
-    background: #7055fe;
-    border-color: #7055fe;
+    background: #00000020;
+    border-color: #00000020;
   }
 
   .store-card:hover {
-    background: #7055fe;
+    background: #00000020;
   }
 
   .store-card.selected {
