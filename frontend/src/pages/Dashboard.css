@@ -988,16 +988,16 @@
   }
 
   .store-card {
-    background: #7362CA;
-    border-color: #7362CA;
+    background: #7055fe;
+    border-color: #7055fe;
   }
 
   .store-card:hover {
-    background: #7362CA;
+    background: #7055fe;
   }
 
   .store-card.selected {
-    border-color: #000000;
+    border-color: #ffffff;
   }
 
   .store-card-image {
@@ -1007,10 +1007,10 @@
   .store-card-info {
     background: linear-gradient(
       to top,
-      rgba(115, 98, 202, 0.96) 0%,
-      rgba(115, 98, 202, 0.88) 42%,
-      rgba(115, 98, 202, 0.55) 70%,
-      rgba(115, 98, 202, 0) 100%
+      rgba(112, 85, 254, 0.96) 0%,
+      rgba(112, 85, 254, 0.88) 42%,
+      rgba(112, 85, 254, 0.55) 70%,
+      rgba(112, 85, 254, 0) 100%
     );
   }
 
