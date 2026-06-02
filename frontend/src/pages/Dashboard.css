@@ -962,13 +962,32 @@
     background: linear-gradient(to left, #6553c7 0%, rgba(101, 83, 199, 0) 100%);
   }
 
+  .store-card {
+    background: #7362CA;
+    border-color: #7362CA;
+  }
+
+  .store-card:hover {
+    background: #7362CA;
+  }
+
+  .store-card.selected {
+    border-color: #ffffff;
+  }
+
   .store-card-info {
     background: linear-gradient(
       to top,
-      rgba(101, 83, 199, 0.96) 0%,
-      rgba(101, 83, 199, 0.88) 42%,
-      rgba(101, 83, 199, 0.55) 70%,
-      rgba(101, 83, 199, 0) 100%
+      rgba(115, 98, 202, 0.96) 0%,
+      rgba(115, 98, 202, 0.88) 42%,
+      rgba(115, 98, 202, 0.55) 70%,
+      rgba(115, 98, 202, 0) 100%
     );
+  }
+
+  .store-card-info h3,
+  .store-card-info p {
+    color: #ffffff;
+    text-shadow: none;
   }
 }
