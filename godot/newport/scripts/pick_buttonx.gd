@@ -14,5 +14,6 @@ func _on_pressed():
 
 func _input(event):
 	if event is InputEventScreenTouch and event.pressed:
-		if get_global_rect().has_point(event.position):
+		var local_pos := get_global_transform_with_canvas().affine_inverse() * event.position
+		if Rect2(Vector2.ZERO, size).has_point(local_pos):
 			_on_pressed()
