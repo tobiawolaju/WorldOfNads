@@ -614,6 +614,66 @@ const CameraAnimator: React.FC<{ isInteracting: boolean; baseDistance: number; t
   return null;
 };
 
+const CameraInteractionLogger: React.FC<{ controlsRef: React.RefObject<any>; baseDistance: number }> = ({ controlsRef, baseDistance }) => {
+  const { camera } = useThree();
+  const isInteractingRef = useRef(false);
+  const wheelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!controls?.addEventListener) return;
+
+    const logCameraState = () => {
+      if (!isInteractingRef.current) return;
+
+      const distance = camera.position.distanceTo(controls.target);
+      const cameraZoom = camera.zoom ?? 1;
+      const relativeZoom = baseDistance > 0 ? baseDistance / distance : 0;
+
+      console.log("[ThreeScene] camera state", {
+        distance: Number(distance.toFixed(3)),
+        cameraZoom: Number(cameraZoom.toFixed(3)),
+        relativeZoom: Number(relativeZoom.toFixed(3)),
+      });
+    };
+
+    const handleStart = () => {
+      isInteractingRef.current = true;
+      logCameraState();
+    };
+
+    const handleEnd = () => {
+      isInteractingRef.current = false;
+    };
+
+    const handleWheel = () => {
+      isInteractingRef.current = true;
+      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+      wheelTimeoutRef.current = setTimeout(() => {
+        isInteractingRef.current = false;
+      }, 250);
+      logCameraState();
+    };
+
+    const domElement = controls.domElement as HTMLElement | undefined;
+
+    controls.addEventListener("start", handleStart);
+    controls.addEventListener("change", logCameraState);
+    controls.addEventListener("end", handleEnd);
+    domElement?.addEventListener("wheel", handleWheel, { passive: true });
+
+    return () => {
+      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+      controls.removeEventListener("start", handleStart);
+      controls.removeEventListener("change", logCameraState);
+      controls.removeEventListener("end", handleEnd);
+      domElement?.removeEventListener("wheel", handleWheel);
+    };
+  }, [baseDistance, camera, controlsRef]);
+
+  return null;
+};
+
 // --- Main Scene Component ---
 export const ThreeScene: React.FC<ThreeSceneProps> = ({
   social,
@@ -741,6 +801,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
         }}
       />
 
+      <CameraInteractionLogger controlsRef={controlsRef} baseDistance={cameraZ} />
       <CameraAnimator isInteracting={isInteracting} baseDistance={cameraZ} targetY={targetY} cameraYOffset={cameraYOffset} />
     </Canvas>
   );
