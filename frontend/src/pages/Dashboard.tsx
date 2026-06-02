@@ -537,7 +537,7 @@ export default function Dashboard() {
                   .map((item) => (
                     <div
                       key={item.id}
-                      className={`store-card ${selectedStore === item.id ? "selected" : ""}`}
+                      className={`store-card ${dummyOwnedItems.includes(item.id) ? "owned" : "unowned"} ${selectedStore === item.id ? "selected" : ""}`}
                       onClick={() => setSelectedStore(item.id)}
                     >
                       <div className="store-card-image" style={{ backgroundImage: `url(${getStoreImageUrl(item)})` }}>

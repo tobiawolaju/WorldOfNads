@@ -832,14 +832,39 @@
   z-index: 11;
 }
 
+.store-card.unowned {
+  opacity: 0.62;
+}
+
+.store-card.unowned::after {
+  content: "LOCKED";
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #ffffff;
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
 .store-card-image {
   height: 100%;
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
-  background-color: #ffffff;
+  background-color: transparent;
   transform: skewX(5deg);
   /* Un-skew content while keeping the full image visible */
+}
+
+.store-card.unowned .store-card-image {
+  filter: grayscale(1);
 }
 
 .store-card-info {
@@ -972,7 +997,11 @@
   }
 
   .store-card.selected {
-    border-color: #ffffff;
+    border-color: #000000;
+  }
+
+  .store-card-image {
+    background-color: transparent;
   }
 
   .store-card-info {
@@ -989,5 +1018,9 @@
   .store-card-info p {
     color: #ffffff;
     text-shadow: none;
+  }
+
+  .store-card.unowned .store-card-image {
+    filter: grayscale(1);
   }
 }
