@@ -36,6 +36,7 @@ contracts/.env
 *.local
 
 backend/serviceAccount.json
+clean-rewrite/
 
 # ────────────────
 # Editor files
@@ -54,6 +55,7 @@ backend/serviceAccount.json
 # Misc
 # ────────────────
 *.tsbuildinfo
+*.tmp
 
 # ────────────────
 # Godot
