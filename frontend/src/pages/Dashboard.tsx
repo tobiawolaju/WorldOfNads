@@ -110,6 +110,7 @@ export default function Dashboard() {
   const [playButtonState, setPlayButtonState] = useState<"idle" | "counting">("idle");
   const [elapsedTime, setElapsedTime] = useState(0);
   const [nowMs, setNowMs] = useState(Date.now());
+  const [showLoader, setShowLoader] = useState(true);
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const isManuallyScrolling = useRef<boolean>(false);
@@ -232,6 +233,10 @@ export default function Dashboard() {
     loadRewards();
   }, [authenticated, user]);
 
+  useEffect(() => {
+    setShowLoader(!ready);
+  }, [ready]);
+
   const handlePlayClick = () => {
     if (!selectedMatch || !user) return;
 
@@ -291,9 +296,6 @@ export default function Dashboard() {
       hour12: false
     }).format(new Date(timestamp * 1000));
   };
-
-  if (!ready) return <FullScreenLoader />;
-  if (!authenticated || !user) return null;
 
   // --- Multi-Provider Social Extraction ---
   const socialProviders = [
@@ -408,7 +410,10 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="dashboard-wrapper">
+    <>
+      <FullScreenLoader visible={showLoader} />
+      {!showLoader && authenticated && user && (
+        <div className="dashboard-wrapper">
       <div className="left-3d-section">
         <ThreeScene
           social={socialData}
@@ -611,6 +616,8 @@ export default function Dashboard() {
           </span>
         </button>
       )}
-    </div>
+        </div>
+      )}
+    </>
   );
 }

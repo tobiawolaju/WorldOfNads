@@ -33,6 +33,7 @@ const RequireRole: React.FC<{ role: string; children: React.ReactElement }> = ({
   const { ready, authenticated, user } = usePrivy();
   const [checking, setChecking] = useState(true);
   const [allowed, setAllowed] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
 
   useEffect(() => {
     const verify = async () => {
@@ -57,10 +58,16 @@ const RequireRole: React.FC<{ role: string; children: React.ReactElement }> = ({
     verify();
   }, [ready, authenticated, user, role]);
 
-  if (!ready || checking) return <FullScreenLoader />;
-  if (!authenticated || !user || !allowed) return <Navigate to="/" replace />;
+  useEffect(() => {
+    setShowLoader(!ready || checking);
+  }, [ready, checking]);
 
-  return children;
+  return (
+    <>
+      <FullScreenLoader visible={showLoader} />
+      {!showLoader && (!authenticated || !user || !allowed ? <Navigate to="/" replace /> : children)}
+    </>
+  );
 };
 
 const AppContent: React.FC = () => {
@@ -68,6 +75,7 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const sessionTrackedRef = useRef(false);
   const lastUserIdRef = useRef<string | null>(null);
+  const [showLoader, setShowLoader] = useState(true);
 
 
   useEffect(() => {
@@ -183,9 +191,9 @@ const AppContent: React.FC = () => {
     return () => window.removeEventListener("beforeunload", handleUnload);
   }, [ready, authenticated, user]);
 
-  if (!ready) {
-    return <FullScreenLoader />;
-  }
+  useEffect(() => {
+    setShowLoader(!ready);
+  }, [ready]);
 
   // Hide navbar on immersive/special landing routes
   const hideNavbar = location.pathname === "/play";
@@ -195,63 +203,66 @@ const AppContent: React.FC = () => {
     <>
       <BackgroundPattern />
       <RainbowBeam />
-      <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-        {!hideNavbar && <TopNavbar hideContents={hideTopNavbarContents} />}
+      <FullScreenLoader visible={showLoader} />
+      {!showLoader && (
+        <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+          {!hideNavbar && <TopNavbar hideContents={hideTopNavbarContents} />}
 
-        <main style={{ flex: 1 }}>
-          <Suspense fallback={<FullScreenLoader />}>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={authenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
-              <Route path="/nad-arena" element={<NadArena />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/hosts" element={<Partners />} />
-              <Route path="/milestone" element={<Milestone />} />
-              <Route path="/partners" element={<Navigate to="/hosts" replace />} />
-              <Route path="/careers" element={<Careers />} />
-              <Route path="/waitlist" element={<Waitlist />} />
-              <Route
-                path="/admin/analytics"
-                element={
-                  <RequireRole role="admin">
-                    <AdminAnalytics />
-                  </RequireRole>
-                }
-              />
-              <Route
-                path="/admin/users"
-                element={
-                  <RequireRole role="admin">
-                    <AdminUsers />
-                  </RequireRole>
-                }
-              />
+          <main style={{ flex: 1 }}>
+            <Suspense fallback={<FullScreenLoader visible />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={authenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
+                <Route path="/nad-arena" element={<NadArena />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/hosts" element={<Partners />} />
+                <Route path="/milestone" element={<Milestone />} />
+                <Route path="/partners" element={<Navigate to="/hosts" replace />} />
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/waitlist" element={<Waitlist />} />
+                <Route
+                  path="/admin/analytics"
+                  element={
+                    <RequireRole role="admin">
+                      <AdminAnalytics />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <RequireRole role="admin">
+                      <AdminUsers />
+                    </RequireRole>
+                  }
+                />
 
-              {/* Protected Routes */}
-              <Route
-                path="/dashboard"
-                element={authenticated ? <Dashboard /> : <Navigate to="/" replace />}
-              />
-              <Route
-                path="/play"
-                element={authenticated ? <Play /> : <Navigate to="/" replace />}
-              />
-              <Route
-                path="/sponsor"
-                element={
-                  <RequireRole role="sponsor">
-                    <SpounsorDashbaord />
-                  </RequireRole>
-                }
-              />
+                {/* Protected Routes */}
+                <Route
+                  path="/dashboard"
+                  element={authenticated ? <Dashboard /> : <Navigate to="/" replace />}
+                />
+                <Route
+                  path="/play"
+                  element={authenticated ? <Play /> : <Navigate to="/" replace />}
+                />
+                <Route
+                  path="/sponsor"
+                  element={
+                    <RequireRole role="sponsor">
+                      <SpounsorDashbaord />
+                    </RequireRole>
+                  }
+                />
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </main>
-      </div>
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </main>
+        </div>
+      )}
     </>
   );
 };

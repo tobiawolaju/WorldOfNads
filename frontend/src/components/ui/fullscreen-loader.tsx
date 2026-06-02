@@ -1,6 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
-export const FullScreenLoader = () => {
+type FullScreenLoaderProps = {
+  visible?: boolean;
+};
+
+export const FullScreenLoader = ({ visible = true }: FullScreenLoaderProps) => {
+  const [shouldRender, setShouldRender] = useState(visible);
+
+  useEffect(() => {
+    if (visible) {
+      setShouldRender(true);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShouldRender(false);
+    }, 280);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [visible]);
+
+  if (!shouldRender) return null;
+
   return (
     <>
       <style>
@@ -27,6 +48,15 @@ export const FullScreenLoader = () => {
             justify-content: center;
             align-items: center;
             z-index: 9999;
+            opacity: 0;
+            transform: scale(0.99);
+            transition: opacity 280ms ease, transform 280ms ease;
+            pointer-events: auto;
+          }
+
+          .loader-overlay[data-visible="true"] {
+            opacity: 1;
+            transform: scale(1);
           }
 
           @keyframes fadeInOut {
@@ -52,7 +82,7 @@ export const FullScreenLoader = () => {
         `}
       </style>
 
-      <div className="loader-overlay">
+      <div className="loader-overlay" data-visible={visible ? "true" : "false"}>
         <img 
           src="/logo.jpg" 
           alt="Loading..." 
