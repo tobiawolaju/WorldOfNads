@@ -43,19 +43,26 @@
         z-index: 20;
         min-height: 2.75rem;
         padding: 0.7rem 1rem;
-        border-radius: 999px;
+        border-radius: 8px;
         border: 1px solid rgba(255, 255, 255, 0.35);
         background: rgba(255, 255, 255, 0.5);
-        color: #111;
+        color: #fff;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         gap: 0.5rem;
-        backdrop-filter: blur(10px);
+        backdrop-filter: none;
         font-size: 0.92rem;
         font-weight: 700;
         letter-spacing: 0.01em;
+        text-shadow: none;
+        box-shadow: none;
+      }
+
+      .fullscreen-btn span {
+        color: #fff;
+        text-shadow: none;
       }
 
       .fullscreen-btn[hidden] {
