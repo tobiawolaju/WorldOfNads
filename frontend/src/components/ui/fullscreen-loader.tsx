@@ -5,13 +5,24 @@ export const FullScreenLoader = () => {
     <>
       <style>
         {`
+          :root {
+            --loader-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+          }
+
+          @media (prefers-color-scheme: dark) {
+            :root {
+              --loader-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+            }
+          }
+
           .loader-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100vh;
-            background-color: #ffffff;
+            background-color: var(--background);
+            color: var(--foreground);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -29,6 +40,7 @@ export const FullScreenLoader = () => {
             object-fit: contain;
             width: 20vw;
             height: auto;
+            filter: drop-shadow(var(--loader-shadow));
           }
 
           @media (min-width: 768px) {
