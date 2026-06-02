@@ -834,10 +834,12 @@
 
 .store-card-image {
   height: 100%;
-  background-size: cover;
+  background-size: contain;
   background-position: center;
-  transform: skewX(5deg) scale(1.2);
-  /* Un-skew content and fill gaps */
+  background-repeat: no-repeat;
+  background-color: #ffffff;
+  transform: skewX(5deg);
+  /* Un-skew content while keeping the full image visible */
 }
 
 .store-card-info {
@@ -948,6 +950,7 @@
 .store-card-image {
   position: relative;
   /* Base for badge positioning */
+  overflow: hidden;
 }
 
 @media (prefers-color-scheme: dark) {
