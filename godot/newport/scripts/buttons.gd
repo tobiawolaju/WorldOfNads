@@ -33,16 +33,55 @@ func _reposition() -> void:
 func _bind_button(button: Button, action_name: StringName) -> void:
 	if button == null:
 		return
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	if not button.pressed.is_connected(_on_button_pressed.bind(action_name)):
 		button.pressed.connect(_on_button_pressed.bind(action_name))
+	if not button.button_down.is_connected(_on_button_down.bind(action_name)):
+		button.button_down.connect(_on_button_down.bind(action_name))
+	if not button.button_up.is_connected(_on_button_up.bind(action_name)):
+		button.button_up.connect(_on_button_up.bind(action_name))
 
 func _on_button_pressed(action_name: StringName) -> void:
-	var press_event := InputEventAction.new()
-	press_event.action = action_name
-	press_event.pressed = true
-	Input.parse_input_event(press_event)
+	if DisplayServer.is_touchscreen_available():
+		return
+	_emit_action(action_name, true)
+	_emit_action(action_name, false)
 
-	var release_event := InputEventAction.new()
-	release_event.action = action_name
-	release_event.pressed = false
-	Input.parse_input_event(release_event)
+func _on_button_down(action_name: StringName) -> void:
+	if not DisplayServer.is_touchscreen_available():
+		return
+	if action_name == &"pickup":
+		_trigger_local_action(action_name)
+		return
+	_emit_action(action_name, true)
+	_trigger_local_action(action_name)
+
+func _on_button_up(action_name: StringName) -> void:
+	if not DisplayServer.is_touchscreen_available():
+		return
+	if action_name == &"pickup":
+		return
+	_emit_action(action_name, false)
+
+func _emit_action(action_name: StringName, pressed: bool) -> void:
+	if pressed:
+		Input.action_press(action_name)
+	else:
+		Input.action_release(action_name)
+
+	var action_event := InputEventAction.new()
+	action_event.action = action_name
+	action_event.pressed = pressed
+	Input.parse_input_event(action_event)
+
+func _trigger_local_action(action_name: StringName) -> void:
+	var local_player := get_tree().get_first_node_in_group("local_player")
+	if local_player == null:
+		return
+
+	if action_name == &"jump" and local_player.has_method("request_jump"):
+		local_player.call("request_jump")
+	elif action_name == &"slide" and local_player.has_method("request_slide"):
+		local_player.call("request_slide")
+	elif action_name == &"pickup" and local_player.has_method("request_pickup"):
+		local_player.call("request_pickup")

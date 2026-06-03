@@ -408,6 +408,8 @@ func _spawn_player(id: String, is_local := false, skin_name: String = DEFAULT_SK
 	player.display_name = _get_player_display_name(id)
 	player.is_local = is_local
 	player.root = self
+	if is_local:
+		player.add_to_group("local_player")
 
 	if is_local and myplayerswpanpoint:
 		player.global_position = myplayerswpanpoint.global_position

@@ -358,15 +358,13 @@ func _is_touch_over_ui(screen_pos: Vector2) -> bool:
 	return _control_tree_contains_point(buttons_holder, screen_pos)
 
 func _control_tree_contains_point(root: Control, screen_pos: Vector2) -> bool:
-	var local_pos := root.get_global_transform_with_canvas().affine_inverse() * screen_pos
-	if Rect2(Vector2.ZERO, root.size).has_point(local_pos):
+	if root.get_global_rect().has_point(screen_pos):
 		return true
 	for child in root.get_children():
 		var child_control := child as Control
 		if child_control == null or not child_control.is_visible_in_tree():
 			continue
-		var child_local_pos := child_control.get_global_transform_with_canvas().affine_inverse() * screen_pos
-		if Rect2(Vector2.ZERO, child_control.size).has_point(child_local_pos):
+		if child_control.get_global_rect().has_point(screen_pos):
 			return true
 		if _control_tree_contains_point(child_control, screen_pos):
 			return true

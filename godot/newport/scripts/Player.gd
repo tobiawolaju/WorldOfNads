@@ -101,6 +101,7 @@ var _was_on_floor: bool = true
 var _slide_timer: float = 0.0
 var _is_sliding: bool = false
 var _slide_direction: Vector3 = Vector3.ZERO
+var _jump_requested: bool = false
 
 var touch_joystick: Node = null
 var network_tick_timer: float = 0.0
@@ -162,6 +163,20 @@ func _refresh_name_label() -> void:
 	if resolved_name == "":
 		resolved_name = player_id.substr(0, 8)
 	name_label.text = resolved_name
+
+func request_jump() -> void:
+	_jump_requested = true
+
+func request_slide() -> void:
+	_slide_requested = true
+
+func request_pickup() -> void:
+	if not _is_movement_allowed():
+		return
+	if _is_local_holding_chicken():
+		_drop_object()
+	else:
+		_try_pickup()
 
 func _input(event: InputEvent) -> void:
 	if not is_local:
@@ -232,7 +247,9 @@ func _physics_process(delta: float) -> void:
 		velocity_y -= GRAVITY * gravity_scale * delta
 	else:
 		velocity_y = 0
-		if movement_allowed and (Input.is_action_just_pressed("jump") or Input.is_joy_button_pressed(gamepad_index, JOY_BUTTON_A)):
+		var jump_requested_now := _jump_requested or Input.is_action_just_pressed("jump") or Input.is_joy_button_pressed(gamepad_index, JOY_BUTTON_A)
+		_jump_requested = false
+		if movement_allowed and jump_requested_now:
 			velocity_y = JUMP_VELOCITY
 
 	# Movement direction relative to Camera
