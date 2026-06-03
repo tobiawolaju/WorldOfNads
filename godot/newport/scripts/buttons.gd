@@ -7,6 +7,8 @@ const BOTTOM_MARGIN := 157.5
 @export var jump_button: Button
 @export var slide_button: Button
 
+var _touch_claims: Dictionary = {}
+
 func _ready() -> void:
 	# This node is inside a Container; move the parent holder (if present),
 	# otherwise move self.
@@ -34,12 +36,11 @@ func _bind_button(button: Button, action_name: StringName) -> void:
 	if button == null:
 		return
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.focus_mode = Control.FOCUS_NONE
 	if not button.pressed.is_connected(_on_button_pressed.bind(action_name)):
 		button.pressed.connect(_on_button_pressed.bind(action_name))
-	if not button.button_down.is_connected(_on_button_down.bind(action_name)):
-		button.button_down.connect(_on_button_down.bind(action_name))
-	if not button.button_up.is_connected(_on_button_up.bind(action_name)):
-		button.button_up.connect(_on_button_up.bind(action_name))
+	if not button.gui_input.is_connected(_on_button_gui_input.bind(button, action_name)):
+		button.gui_input.connect(_on_button_gui_input.bind(button, action_name))
 
 func _on_button_pressed(action_name: StringName) -> void:
 	if DisplayServer.is_touchscreen_available():
@@ -47,21 +48,38 @@ func _on_button_pressed(action_name: StringName) -> void:
 	_emit_action(action_name, true)
 	_emit_action(action_name, false)
 
-func _on_button_down(action_name: StringName) -> void:
+func _on_button_gui_input(event: InputEvent, button: Button, action_name: StringName) -> void:
 	if not DisplayServer.is_touchscreen_available():
 		return
-	if action_name == &"pickup":
-		_trigger_local_action(action_name)
-		return
-	_emit_action(action_name, true)
-	_trigger_local_action(action_name)
 
-func _on_button_up(action_name: StringName) -> void:
-	if not DisplayServer.is_touchscreen_available():
-		return
-	if action_name == &"pickup":
-		return
-	_emit_action(action_name, false)
+	if event is InputEventScreenTouch:
+		var touch_event := event as InputEventScreenTouch
+		if touch_event.pressed:
+			_touch_claims[action_name] = touch_event.index
+			if action_name == &"pickup":
+				_trigger_local_action(action_name)
+			else:
+				_emit_action(action_name, true)
+				_trigger_local_action(action_name)
+			button.accept_event()
+		else:
+			if _touch_claims.get(action_name, -1) != touch_event.index:
+				return
+			_touch_claims.erase(action_name)
+			if action_name != &"pickup":
+				_emit_action(action_name, false)
+			button.accept_event()
+	elif event is InputEventScreenDrag:
+		var drag_event := event as InputEventScreenDrag
+		if _touch_claims.get(action_name, -1) != drag_event.index:
+			return
+		if not button.get_global_rect().has_point(drag_event.position):
+			_touch_claims.erase(action_name)
+			if action_name != &"pickup":
+				_emit_action(action_name, false)
+			button.accept_event()
+			return
+		button.accept_event()
 
 func _emit_action(action_name: StringName, pressed: bool) -> void:
 	if pressed:
