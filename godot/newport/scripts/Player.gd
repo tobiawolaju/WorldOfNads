@@ -165,12 +165,23 @@ func _refresh_name_label() -> void:
 	name_label.text = resolved_name
 
 func request_jump() -> void:
-	_jump_requested = true
+	if not _is_movement_allowed():
+		return
+	if is_on_floor():
+		velocity_y = JUMP_VELOCITY
+		_jump_requested = false
+	else:
+		_jump_requested = true
 
 func request_slide() -> void:
 	_slide_requested = true
 
 func request_pickup() -> void:
+	if not _is_movement_allowed():
+		return
+	call_deferred("_perform_pickup_request")
+
+func _perform_pickup_request() -> void:
 	if not _is_movement_allowed():
 		return
 	if _is_local_holding_chicken():
