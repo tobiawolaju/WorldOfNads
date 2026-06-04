@@ -594,9 +594,9 @@ export default function Dashboard() {
       )}
 
       {tab === "store" && selectedStore && (
-        <>
+        <div className="footer-buttons is-visible">
           <button
-            className="play-fixed active"
+            className="play-btn-fixed"
             onClick={() => {
               if (!currentStoreItem) return;
               if (isSelectedStoreOwned) {
@@ -609,19 +609,13 @@ export default function Dashboard() {
                 // Mint Function Blank for now
               }
             }}
-            style={{
-              opacity: 1,
-              pointerEvents: "auto"
-            }}
           >
-            <span>
-              {isSelectedStoreOwned ? "EQUIP" : "MINT"}
-            </span>
+            {isSelectedStoreOwned ? "EQUIP" : "MINT"}
           </button>
           {isSelectedStoreOwned && (
             <button
               type="button"
-              className="fire-btn-fixed"
+              className="discord-btn-fixed"
               onClick={() => {
                 if (!currentStoreItem) return;
                 setEquippedSkin(currentStoreItem);
@@ -633,10 +627,10 @@ export default function Dashboard() {
               aria-label={`Equip ${currentStoreItem.name}`}
               title={`Equip ${currentStoreItem.name}`}
             >
-              <FaFire size={24} />
+              <FaFire size={28} />
             </button>
           )}
-        </>
+        </div>
       )}
         </div>
       )}

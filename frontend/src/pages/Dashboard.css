@@ -171,44 +171,90 @@
   border: 8px solid rgba(255, 255, 255, 0.407);
 }
 
-/* --- FIXED FIRE BUTTON (BOTTOM RIGHT) --- */
-.fire-btn-fixed {
+/* 6️⃣ Fixed Buttons */
+.footer-buttons {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 60px;
+  bottom: 30px;
+  display: flex;
+  flex-direction: row;
+  z-index: 950;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.footer-buttons.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  .footer-buttons.is-visible {
+    transform: translateY(0) scale(var(--rev-scale, 1.25));
+    transform-origin: bottom right;
+  }
+}
+
+@media (min-width: 768px) {
+  .footer-buttons {
+    right: 30px;
+    left: auto;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 767px) {
+  .footer-buttons {
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    right: auto;
+    justify-content: center;
+  }
+
+  .footer-buttons.is-visible {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.discord-btn-fixed,
+.play-btn-fixed {
+  width: 130px;
   height: 56px;
   border: none;
   border-radius: 50px;
-  margin: 10px;
-  padding: 5px;
+  margin: 0 10px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  z-index: 20;
-  color: #ffffff;
-  background-color: #907cff;
+  font-size: 22px;
+  text-decoration: none;
+  font-family: 'Font1', var(--font-inter), sans-serif;
+  font-weight: bold;
+  transition: all 0.3s ease;
   box-shadow: 0 10px 25px rgba(144, 124, 255, 0.2);
-  transition: 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
-  .fire-btn-fixed {
-    transform: scale(var(--rev-scale, 1.25));
-    transform-origin: bottom right;
-  }
+.discord-btn-fixed {
+  background-color: #907cff;
+  color: #ffffff;
+  width: 60px;
+  padding: 5px;
 }
 
-.fire-btn-fixed:hover {
+.play-btn-fixed {
+  background-color: #ffd700;
+  color: #000000;
+  position: relative;
+  overflow: hidden;
+}
+
+.discord-btn-fixed:hover,
+.play-btn-fixed:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 35px rgba(144, 124, 255, 0.3);
-}
-
-@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
-  .store-footer-buttons {
-    transform-origin: bottom right;
-  }
 }
 
 /* --- FIXED BUY BUTTON (BOTTOM RIGHT) --- */
