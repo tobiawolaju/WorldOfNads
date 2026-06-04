@@ -171,13 +171,6 @@
   border: 8px solid rgba(255, 255, 255, 0.407);
 }
 
-@media (min-width: 768px) {
-  .store-equip-fixed {
-    bottom: 30px;
-    right: 30px;
-  }
-}
-
 /* --- FIXED FIRE BUTTON (BOTTOM RIGHT) --- */
 .fire-btn-fixed {
   position: fixed;

@@ -596,7 +596,7 @@ export default function Dashboard() {
       {tab === "store" && selectedStore && (
         <>
           <button
-            className="play-fixed store-equip-fixed active"
+            className="play-fixed active"
             onClick={() => {
               if (!currentStoreItem) return;
               if (isSelectedStoreOwned) {
