@@ -119,6 +119,12 @@
     bottom: 20px;
     width: 60vw;
   }
+
+  .fire-btn-fixed {
+    right: 20px;
+    left: auto;
+    bottom: 86px;
+  }
 }
 
 /* --- FIXED PLAY BUTTON (BOTTOM RIGHT) --- */
@@ -164,6 +170,46 @@
 /* Active hover effects */
 .play-fixed.active:hover {
   border: 8px solid rgba(255, 255, 255, 0.407);
+}
+
+/* --- FIXED FIRE BUTTON (BOTTOM RIGHT) --- */
+.fire-btn-fixed {
+  position: fixed;
+  bottom: 20px;
+  right: 150px;
+  width: 60px;
+  height: 56px;
+  border: none;
+  border-radius: 50px;
+  margin: 10px;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  color: #ffffff;
+  background:
+    linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.08) 35%,
+      rgba(255, 255, 255, 0) 100%
+    ),
+    linear-gradient(180deg, #ff7a18 0%, #ff3d00 100%);
+  box-shadow: 0 10px 25px rgba(255, 79, 0, 0.25);
+  transition: 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  .fire-btn-fixed {
+    transform: scale(var(--rev-scale, 1.25));
+    transform-origin: bottom right;
+  }
+}
+
+.fire-btn-fixed:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(255, 79, 0, 0.35);
 }
 
 /* --- FIXED BUY BUTTON (BOTTOM RIGHT) --- */

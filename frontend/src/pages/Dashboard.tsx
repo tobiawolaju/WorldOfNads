@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
+import { FaFire } from "react-icons/fa";
 import { FullScreenLoader } from "../components/ui/fullscreen-loader";
 import { ThreeScene } from "../components/ThreeScene";
 import "./Dashboard.css";
@@ -103,7 +104,8 @@ export default function Dashboard() {
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
 
-  const currentStoreItem = dummyStore.find(i => i.id === selectedStore);
+  const currentStoreItem = selectedStore ? dummyStore.find((i) => i.id === selectedStore) || null : null;
+  const isSelectedStoreOwned = Boolean(currentStoreItem && dummyOwnedItems.includes(currentStoreItem.id));
   const displayedSkin = (tab === "store" && currentStoreItem) ? currentStoreItem : equippedSkin;
 
   const [matches, setMatches] = useState<Match[]>(staticMatches as Match[]);
@@ -592,31 +594,49 @@ export default function Dashboard() {
       )}
 
       {tab === "store" && selectedStore && (
-        <button
-          className="play-fixed active"
-          onClick={() => {
-            const item = dummyStore.find(i => i.id === selectedStore);
-            if (!item) return;
-            const isOwned = dummyOwnedItems.includes(selectedStore);
-            if (isOwned) {
-              setEquippedSkin(item);
-              updateUserEquippedSkin(getUsernameFromPrivy(user), item.id).catch((error: any) => {
-                console.error("Failed to save equipped skin", error);
-              });
-              setSelectedStore(null);
-            } else {
-              // Mint Function Blank for now
-            }
-          }}
-          style={{
-            opacity: 1,
-            pointerEvents: "auto"
-          }}
-        >
-          <span>
-            {dummyOwnedItems.includes(selectedStore) ? "EQUIP" : "MINT"}
-          </span>
-        </button>
+        <>
+          {isSelectedStoreOwned && (
+            <button
+              type="button"
+              className="fire-btn-fixed"
+              onClick={() => {
+                if (!currentStoreItem) return;
+                setEquippedSkin(currentStoreItem);
+                updateUserEquippedSkin(getUsernameFromPrivy(user), currentStoreItem.id).catch((error: any) => {
+                  console.error("Failed to save equipped skin", error);
+                });
+                setSelectedStore(null);
+              }}
+              aria-label={`Equip ${currentStoreItem.name}`}
+              title={`Equip ${currentStoreItem.name}`}
+            >
+              <FaFire size={24} />
+            </button>
+          )}
+          <button
+            className="play-fixed active"
+            onClick={() => {
+              if (!currentStoreItem) return;
+              if (isSelectedStoreOwned) {
+                setEquippedSkin(currentStoreItem);
+                updateUserEquippedSkin(getUsernameFromPrivy(user), currentStoreItem.id).catch((error: any) => {
+                  console.error("Failed to save equipped skin", error);
+                });
+                setSelectedStore(null);
+              } else {
+                // Mint Function Blank for now
+              }
+            }}
+            style={{
+              opacity: 1,
+              pointerEvents: "auto"
+            }}
+          >
+            <span>
+              {isSelectedStoreOwned ? "EQUIP" : "MINT"}
+            </span>
+          </button>
+        </>
       )}
         </div>
       )}
