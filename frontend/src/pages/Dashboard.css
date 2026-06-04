@@ -131,7 +131,7 @@
 .play-fixed {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  right: 90px;
   background: #ffd700;
   color: #000000;
   cursor: pointer;
@@ -176,7 +176,7 @@
 .fire-btn-fixed {
   position: fixed;
   bottom: 20px;
-  right: 150px;
+  right: 20px;
   width: 60px;
   height: 56px;
   border: none;
@@ -189,14 +189,8 @@
   cursor: pointer;
   z-index: 20;
   color: #ffffff;
-  background:
-    linear-gradient(to bottom,
-      rgba(255, 255, 255, 0.22) 0%,
-      rgba(255, 255, 255, 0.08) 35%,
-      rgba(255, 255, 255, 0) 100%
-    ),
-    linear-gradient(180deg, #ff7a18 0%, #ff3d00 100%);
-  box-shadow: 0 10px 25px rgba(255, 79, 0, 0.25);
+  background-color: #907cff;
+  box-shadow: 0 10px 25px rgba(144, 124, 255, 0.2);
   transition: 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 
@@ -209,7 +203,7 @@
 
 .fire-btn-fixed:hover {
   transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(255, 79, 0, 0.35);
+  box-shadow: 0 15px 35px rgba(144, 124, 255, 0.3);
 }
 
 /* --- FIXED BUY BUTTON (BOTTOM RIGHT) --- */

@@ -595,24 +595,6 @@ export default function Dashboard() {
 
       {tab === "store" && selectedStore && (
         <>
-          {isSelectedStoreOwned && (
-            <button
-              type="button"
-              className="fire-btn-fixed"
-              onClick={() => {
-                if (!currentStoreItem) return;
-                setEquippedSkin(currentStoreItem);
-                updateUserEquippedSkin(getUsernameFromPrivy(user), currentStoreItem.id).catch((error: any) => {
-                  console.error("Failed to save equipped skin", error);
-                });
-                setSelectedStore(null);
-              }}
-              aria-label={`Equip ${currentStoreItem.name}`}
-              title={`Equip ${currentStoreItem.name}`}
-            >
-              <FaFire size={24} />
-            </button>
-          )}
           <button
             className="play-fixed active"
             onClick={() => {
@@ -636,6 +618,24 @@ export default function Dashboard() {
               {isSelectedStoreOwned ? "EQUIP" : "MINT"}
             </span>
           </button>
+          {isSelectedStoreOwned && (
+            <button
+              type="button"
+              className="fire-btn-fixed"
+              onClick={() => {
+                if (!currentStoreItem) return;
+                setEquippedSkin(currentStoreItem);
+                updateUserEquippedSkin(getUsernameFromPrivy(user), currentStoreItem.id).catch((error: any) => {
+                  console.error("Failed to save equipped skin", error);
+                });
+                setSelectedStore(null);
+              }}
+              aria-label={`Equip ${currentStoreItem.name}`}
+              title={`Equip ${currentStoreItem.name}`}
+            >
+              <FaFire size={24} />
+            </button>
+          )}
         </>
       )}
         </div>
