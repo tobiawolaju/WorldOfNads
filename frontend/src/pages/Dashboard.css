@@ -128,10 +128,51 @@
 }
 
 /* --- FIXED PLAY BUTTON (BOTTOM RIGHT) --- */
+.store-footer-buttons {
+  position: fixed;
+  bottom: 30px;
+  display: flex;
+  flex-direction: row;
+  z-index: 20;
+}
+
+.store-footer-buttons .play-fixed,
+.store-footer-buttons .fire-btn-fixed {
+  position: relative;
+  bottom: auto;
+  right: auto;
+  left: auto;
+}
+
+.store-footer-buttons .play-fixed {
+  margin: 0 10px 0 0;
+}
+
+.store-footer-buttons .fire-btn-fixed {
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .store-footer-buttons {
+    right: 30px;
+    left: auto;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 767px) {
+  .store-footer-buttons {
+    left: 50%;
+    right: auto;
+    justify-content: center;
+    transform: translateX(-50%);
+  }
+}
+
 .play-fixed {
   position: fixed;
   bottom: 20px;
-  right: 90px;
+  right: 20px;
   background: #ffd700;
   color: #000000;
   cursor: pointer;
@@ -204,6 +245,12 @@
 .fire-btn-fixed:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 35px rgba(144, 124, 255, 0.3);
+}
+
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  .store-footer-buttons {
+    transform-origin: bottom right;
+  }
 }
 
 /* --- FIXED BUY BUTTON (BOTTOM RIGHT) --- */

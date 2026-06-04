@@ -594,7 +594,7 @@ export default function Dashboard() {
       )}
 
       {tab === "store" && selectedStore && (
-        <>
+        <div className="store-footer-buttons">
           <button
             className="play-fixed active"
             onClick={() => {
@@ -636,7 +636,7 @@ export default function Dashboard() {
               <FaFire size={24} />
             </button>
           )}
-        </>
+        </div>
       )}
         </div>
       )}
