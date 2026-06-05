@@ -347,6 +347,8 @@ export default function Dashboard() {
     ? nowMs >= selectedMatchData.startTime * 1000
     : true;
   const canPlay = (isLive || (normalizedSelectedStatus === "upcoming" && isStartTimeReached)) && isStartTimeReached;
+  const getFallbackMatch = () =>
+    orderedMatches.find((match) => normalizeMatchStatus(match.status) === filter) || orderedMatches[0] || null;
 
   const updateSelectedCard = () => {
     if (isManuallyScrolling.current) return;
@@ -374,6 +376,20 @@ export default function Dashboard() {
       }
     }
   };
+
+  useEffect(() => {
+    if (tab !== "events") return;
+    if (selectedMatch && matches.some((match) => match.matchId === selectedMatch)) return;
+
+    const fallbackMatch = getFallbackMatch();
+    if (!fallbackMatch) return;
+
+    const fallbackStatus = normalizeMatchStatus(fallbackMatch.status);
+    if (fallbackStatus !== filter) {
+      setFilter(fallbackStatus);
+    }
+    setSelectedMatch(fallbackMatch.matchId);
+  }, [tab, selectedMatch, matches, orderedMatches, filter]);
 
   useEffect(() => {
     const el = carouselRef.current;

@@ -35,7 +35,7 @@ resolution="*res://newport/scripts/resolution.gd"
 
 window/size/viewport_width=854
 window/size/viewport_height=480
-window/stretch/mode="viewport"
+window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/vsync/vsync_mode=0
 
