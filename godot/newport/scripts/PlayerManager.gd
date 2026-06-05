@@ -635,7 +635,10 @@ func _build_ws_url_with_username(base_url: String) -> String:
 	if local_username == "":
 		return base_url
 	var joiner = "&" if base_url.find("?") != -1 else "?"
-	return "%s%susername=%s" % [base_url, joiner, local_username.uri_encode()]
+	var skin_param := ""
+	if local_skin_name != "":
+		skin_param = "&skin=%s" % local_skin_name.uri_encode()
+	return "%s%susername=%s%s" % [base_url, joiner, local_username.uri_encode(), skin_param]
 
 func _resolve_server_username(data: Dictionary, fallback_id: String) -> String:
 	var candidate := str(data.get("u", data.get("username", ""))).strip_edges()

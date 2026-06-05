@@ -46,7 +46,7 @@ const SKIN_NAME_ALIASES := {
 
 
 func _ready():
-	resolution.set_scale(1.0) 
+	resolution.apply_dynamic_scale()
 	_spawn_local_player()
 	_assign_camera()
 

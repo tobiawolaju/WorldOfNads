@@ -16,6 +16,7 @@ const HOLD_HEIGHT = 1.0;
 const POS_SCALE = 100;
 const DEFAULT_BOT_SKINS = [
   "defaultnad",
+  "defaultnad",
   "buggy",
   "Aurum",
   "Abbss",

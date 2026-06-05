@@ -1,29 +1,9 @@
 extends CharacterBody3D
 
 
-# Skin mapping lives in the spawners:
-# defaultnad = skin1.tscn
-# Hellion = skin2.tscn
-# Seraphim = skin3.tscn
-# Abbss = skin4.tscn
-# buggy = skin5.tscn
-# john deo = skin6.tscn
-# Aurum = skin7.tscn
-# mouch = skin8.tscn
-
-
-
-
-
-
-
-
-
-
-
 # --- CONSTANTS ---
-const GRAVITY: float = 9.8
-const JUMP_VELOCITY: float = 4.5
+const GRAVITY: float = 19.6 
+const JUMP_VELOCITY: float = 9
 const SPEED: float = 4.5
 const DEADZONE: float = 0.12
 const PICKUP_REQUEST_COOLDOWN_MS: int = 150
@@ -31,8 +11,8 @@ const STEAL_RADIUS: float = 2.5
 const POS_SCALE: float = 100.0
 const ROT_SCALE: float = 1000.0
 const DEFAULT_MAX_JUMP_HEIGHT: float = (JUMP_VELOCITY * JUMP_VELOCITY) / (2.0 * GRAVITY)
-const SLIDE_DURATION: float = 0.55
-const SLIDE_SPEED_MULTIPLIER: float = 1.5
+const SLIDE_DURATION: float = 0.8
+const SLIDE_SPEED_MULTIPLIER: float = 1.7
 const ANIM_NAME_TO_ID: Dictionary = {
 	"idle": 0,
 	"running": 1,
@@ -59,7 +39,7 @@ var last_pickup_request_ms: int = 0
 @export var min_zoom: float = 1.5
 @export var max_zoom: float = 2.5
 @export var altitude_zoom_factor: float = 0.0
-@export var touch_orbit_sensitivity: float = 0.024
+@export var touch_orbit_sensitivity: float = 0.032
 @export var joystick_orbit_sensitivity: float = 0.003
 @export var joystick_orbit_clamp: float = 40.0
 @export var joystick_orbit_invert_x: bool = false
@@ -70,7 +50,7 @@ var last_pickup_request_ms: int = 0
 @export var swipe_max_duration_ms: int = 450
 
 # --- NODE REFERENCES ---
-@onready var camera: Camera3D = get_node("../Camera3D")
+@onready var camera: Camera3D = get_node("../../PlayerManager/Camera3D")
 
 # [CHANGED] Replaced RayCast3D with Area3D
 @onready var pickup_area: Area3D = $Area3D
@@ -506,7 +486,8 @@ func _send_state_to_server(force_send := false) -> void:
 			"qy": qy,
 			"qz": qz,
 			"qrot": qrot,
-			"anim_id": anim_id
+			"anim_id": anim_id,
+			"skin": str(root.local_skin_name) if root != null else ""
 		}
 
 		var has_chicken := 0

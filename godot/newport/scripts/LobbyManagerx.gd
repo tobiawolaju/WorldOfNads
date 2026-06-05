@@ -23,7 +23,7 @@ func _wake_server():
 
 func _on_server_ping_completed(result, response_code, headers, body):
 	# Ignore errors, we just want to wake the server
-	for i in range(24, 0, -1):
+	for i in range(15, 0, -1):
 		status_label.text = "Server awake. Loading in %d..." % i
 		await get_tree().create_timer(1.0).timeout
 	status_label.text = "Let's go!"

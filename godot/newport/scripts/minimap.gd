@@ -7,7 +7,11 @@ extends Node
 @export var minimap_container: Control
 @export var player_pointer: TextureRect
 
-@export var player: Node3D
+
+
+@onready var player: Node3D = get_node("../../../../../PlayerManager/Camera3D")
+
+
 
 # === SETTINGS ===
 @export var camera_height: float = 100.0

@@ -1,7 +1,7 @@
 extends VBoxContainer
 
-const RIGHT_MARGIN := 237.5
-const BOTTOM_MARGIN := 157.5
+const RIGHT_MARGIN := 217.5
+const BOTTOM_MARGIN := 57.5
 
 @export var action_button: Button
 @export var jump_button: Button
