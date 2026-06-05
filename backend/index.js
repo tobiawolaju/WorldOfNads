@@ -105,6 +105,44 @@ function sanitizeUsername(value) {
   return value.trim().replace(/\s+/g, ' ').slice(0, 24);
 }
 
+function resolveSkinName(value) {
+  const key = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
+  switch (key) {
+    case 's-default':
+    case 'defaultnad':
+      return 'defaultnad';
+    case 's0':
+    case 'buggy':
+      return 'buggy';
+    case 's1':
+    case 'aurum':
+      return 'Aurum';
+    case 's2':
+    case 'abbss':
+    case 'abyss':
+      return 'Abbss';
+    case 's3':
+    case 'hellion':
+      return 'Hellion';
+    case 's4':
+    case 'seraphim':
+      return 'Seraphim';
+    case 's5':
+    case 'mouch':
+      return 'mouch';
+    case 's6':
+    case 'john deo':
+    case 'johndeo':
+      return 'john deo';
+    default:
+      return 'defaultnad';
+  }
+}
+
 function sanitizeMeta(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {};
@@ -386,7 +424,8 @@ function encodePlayerForNetwork(player) {
     y: quantizePosition(player.y),
     z: quantizePosition(player.z),
     r: quantizeRotation(player.rotationY),
-    a: normalizeAnimId(player)
+    a: normalizeAnimId(player),
+    skin: player.skin || 'defaultnad'
   };
 }
 
@@ -562,10 +601,12 @@ gameWss.on('connection', (ws, req) => {
   const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const requestedUsername = sanitizeUsername(reqUrl.searchParams.get('username') || '');
   const username = requestedUsername !== '' ? requestedUsername : `player-${playerId.slice(0, 8)}`;
+  const requestedSkin = resolveSkinName(reqUrl.searchParams.get('skin') || reqUrl.searchParams.get('skinId') || '');
 
   players[playerId] = {
     id: playerId,
     username,
+    skin: requestedSkin,
     x: 0,
     y: 0,
     z: 0,
@@ -628,6 +669,9 @@ gameWss.on('connection', (ws, req) => {
 
         player.rotationY = nrot;
         player.animation = ANIM_ID_TO_NAME[animId] || 'idle';
+        if (typeof data.skin === 'string') {
+          player.skin = resolveSkinName(data.skin);
+        }
 
         // Holder is allowed to stream chicken pose, but it is distance-validated.
         if (chicken.isHeld && chicken.holderId === playerId && data.chicken && typeof data.chicken === 'object') {

@@ -14,6 +14,64 @@ const TICK_MS = 50;
 const HOLD_DISTANCE = 0.9;
 const HOLD_HEIGHT = 1.0;
 const POS_SCALE = 100;
+const DEFAULT_BOT_SKINS = [
+  "defaultnad",
+  "buggy",
+  "Aurum",
+  "Abbss",
+  "Hellion",
+  "Seraphim",
+  "mouch",
+  "john deo",
+];
+
+function normalizeBotSkinName(rawSkin) {
+  const key = String(rawSkin || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+
+  switch (key) {
+    case "s-default":
+    case "defaultnad":
+      return "defaultnad";
+    case "s0":
+    case "buggy":
+      return "buggy";
+    case "s1":
+    case "aurum":
+      return "Aurum";
+    case "s2":
+    case "abbss":
+    case "abyss":
+      return "Abbss";
+    case "s3":
+    case "hellion":
+      return "Hellion";
+    case "s4":
+    case "seraphim":
+      return "Seraphim";
+    case "s5":
+    case "mouch":
+      return "mouch";
+    case "s6":
+    case "john deo":
+    case "johndeo":
+      return "john deo";
+    default:
+      return "defaultnad";
+  }
+}
+
+function parseBotSkins(value) {
+  const parsed = String(value || "")
+    .split(",")
+    .map((skin) => normalizeBotSkinName(skin))
+    .filter((skin, index, all) => skin && all.indexOf(skin) === index);
+  return parsed.length > 0 ? parsed : DEFAULT_BOT_SKINS;
+}
+
+const BOT_SKINS = parseBotSkins(process.env.BOT_SKINS);
 
 function createSpawn(index) {
   const ring = Math.floor(index / 8);
@@ -32,6 +90,7 @@ class BotClient {
     this.index = index;
     this.allBots = allBots;
     this.username = `bot${index + 1}`;
+    this.skin = BOT_SKINS[index % BOT_SKINS.length];
     this.id = "";
     this.ws = null;
     this.position = createSpawn(index);
@@ -51,7 +110,7 @@ class BotClient {
   }
 
   connect() {
-    const url = `${SERVER_URL}?username=${encodeURIComponent(this.username)}`;
+    const url = `${SERVER_URL}?username=${encodeURIComponent(this.username)}&skin=${encodeURIComponent(this.skin)}`;
     this.ws = new WebSocket(url);
 
     this.ws.on("open", () => {
@@ -276,6 +335,7 @@ class BotClient {
       z: this.position.z,
       rotation_y: this.rotationY,
       anim_id: this.animId,
+      skin: this.skin,
     };
 
     if (iHoldChicken) {
