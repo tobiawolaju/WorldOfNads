@@ -8,3 +8,4 @@
 | `s4`        | `Seraphim`         |
 | `s5`        | `Mouch`            |
 | `s6`        | `John Deo`         |
+| `beNad`     | `beNad`            |

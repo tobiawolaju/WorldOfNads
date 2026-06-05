@@ -48,7 +48,6 @@
     "price": "30 MON",
     "image": "/skins_png/s2.png",
     "category": "skins",
-    "badge": "new",
     "description": "Void skin. Unshaded material.",
     "skinConfig": {
       "color": "#000000",
@@ -97,7 +96,6 @@
     "price": "40 MON",
     "image": "/skins_png/s5.png",
     "category": "skins",
-    "badge": "new",
     "description": "Purple skin.",
     "skinConfig": {
       "color": "#ba53ff",
@@ -110,13 +108,26 @@
     "price": "45 MON",
     "image": "/skins_png/s6.png",
     "category": "skins",
-    "badge": "new",
     "description": "John Nad.",
     "skinConfig": {
       "attachmentShape": "/storeitems/model1.fbx",
       "color": "#ff2496",
       "cheekColor": "#ff40bf",
       "attachmentColor": "#c68642"
+    }
+  },
+  {
+    "id": "beNad",
+    "name": "beNad",
+    "price": "99 MON",
+    "image": "/skins_png/png0.png",
+    "category": "skins",
+    "badge": "new",
+    "description": "A locked legacy skin with a soft default look.",
+    "skinConfig": {
+      "color": "#ffb3d9",
+      "cheekColor": "#ffc7e2",
+      "eyeColor": "#ffffff"
     }
   }
 ]

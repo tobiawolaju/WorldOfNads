@@ -87,7 +87,7 @@ type StoreItem = {
 
 const dummyStore: StoreItem[] = storeItemsData as StoreItem[];
 
-const dummyOwnedItems: string[] = ["s-default", "s0", "s1", "s3", "s4"]; // IDs matching dummyStore
+const dummyOwnedItems: string[] = ["s-default", "s0", "s1", "s2", "s3", "s4", "s5", "s6"]; // All skins except beNad
 const getStoreImageUrl = (item: StoreItem) => item.image || `/skins_png/${item.id}.png`;
 
 export default function Dashboard() {
@@ -99,7 +99,7 @@ export default function Dashboard() {
   const [selectedReward, setSelectedReward] = useState<string | null>(null);
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
   const [equippedSkin, setEquippedSkin] = useState<StoreItem | null>(dummyStore[0]);
-  const newStoreItemCount = 3;
+  const newStoreItemCount = 1;
 
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
