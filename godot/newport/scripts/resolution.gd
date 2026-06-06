@@ -17,7 +17,10 @@ func resolution(scale: float) -> void:
 
 
 func set_resolution(scale: float) -> void:
-	current_scale = clampf(scale, min_scale, max_scale)
+	var clamped_scale := clampf(scale, min_scale, max_scale)
+	if is_equal_approx(clamped_scale, current_scale):
+		return
+	current_scale = clamped_scale
 	_apply_scale(current_scale)
 
 

@@ -26,11 +26,17 @@ const MATCH_DURATION_SECONDS = 180.0;
 const DEFAULT_MIN_PLAYERS_TO_START = 3;
 const ANIM_NAME_TO_ID = Object.freeze({
   idle: 0,
-  running: 1
+  running: 1,
+  runningjump: 2,
+  falling: 3,
+  runningslide: 4
 });
 const ANIM_ID_TO_NAME = Object.freeze({
   0: 'idle',
-  1: 'running'
+  1: 'running',
+  2: 'runningjump',
+  3: 'falling',
+  4: 'runningslide'
 });
 
 const MAX_EVENT_HISTORY = 100;
@@ -645,6 +651,7 @@ gameWss.on('connection', (ws, req) => {
         const hasQuantizedRot = Number.isFinite(Number(data.qrot));
         const nrot = hasQuantizedRot ? dequantizeRotation(Number(data.qrot)) : Number(data.rotation_y);
         const animId = normalizeAnimId(data);
+        const isSliding = Boolean(data.slide) || animId === 4 || (typeof data.animation === 'string' && data.animation.trim().toLowerCase() === 'runningslide');
 
         if (!Number.isFinite(nx) || !Number.isFinite(ny) || !Number.isFinite(nz) || !Number.isFinite(nrot)) {
           return;
@@ -653,7 +660,7 @@ gameWss.on('connection', (ws, req) => {
         const dx = nx - player.x;
         const dy = ny - player.y;
         const dz = nz - player.z;
-        const maxStep = MAX_PLAYER_SPEED * FIXED_DT;
+        const maxStep = MAX_PLAYER_SPEED * FIXED_DT * (isSliding ? 1.75 : 1.0);
         const dist = length3(dx, dy, dz);
 
         if (dist <= maxStep || dist === 0) {

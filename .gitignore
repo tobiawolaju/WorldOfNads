@@ -37,6 +37,7 @@ contracts/.env
 
 backend/serviceAccount.json
 clean-rewrite/
+.deploy-pages/
 
 # ────────────────
 # Editor files

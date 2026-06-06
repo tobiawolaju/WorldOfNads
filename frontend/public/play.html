@@ -143,7 +143,14 @@
         if (username) gameParams.set("username", username);
         if (skin) gameParams.set("skin", skin);
         if (match) gameParams.set("match", match);
-        const gameUrl = `/godot/index.html?${gameParams.toString()}`;
+        const resolveBaseUrl = () => {
+          const queryBase = params.get("godotBaseUrl") || "";
+          const globalBase = typeof window.GODOT_BASE_URL === "string" ? window.GODOT_BASE_URL : "";
+          const rawBase = queryBase || globalBase || "/godot/";
+          return rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
+        };
+
+        const gameUrl = `${resolveBaseUrl()}index.html?${gameParams.toString()}`;
 
         let revealTimer = null;
 

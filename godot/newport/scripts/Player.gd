@@ -75,13 +75,17 @@ var camera_distance_bias: float = 0.0
 var camera_is_airborne: bool = false
 var camera_is_moving: bool = false
 @export var max_jump_height: float = DEFAULT_MAX_JUMP_HEIGHT
+@export var air_control_strength: float = 8.0
+@export var air_momentum_retention: float = 1.0
 var _last_world_y: float = 0.0
 var _airborne_start_y: float = 0.0
 var _was_on_floor: bool = true
 var _slide_timer: float = 0.0
 var _is_sliding: bool = false
 var _slide_direction: Vector3 = Vector3.ZERO
+var _air_horizontal_velocity: Vector3 = Vector3.ZERO
 var _jump_requested: bool = false
+var _last_recovery_ms: int = 0
 
 var touch_joystick: Node = null
 var network_tick_timer: float = 0.0
@@ -213,6 +217,8 @@ func _physics_process(delta: float) -> void:
 	if not is_local:
 		return
 
+	_check_map_recovery()
+
 	var input_dir := Vector2.ZERO
 	var movement_allowed := _is_movement_allowed()
 	var is_falling_anim_playing := current_animation == "falling" or (anim_fall != null and anim_fall.is_playing())
@@ -233,12 +239,13 @@ func _physics_process(delta: float) -> void:
 
 	_apply_touch_orbit()
 
+	var jump_requested_now := false
 	if not is_on_floor():
 		var gravity_scale: float = 0.5 if is_falling_anim_playing else 1.0
 		velocity_y -= GRAVITY * gravity_scale * delta
 	else:
 		velocity_y = 0
-		var jump_requested_now := _jump_requested or Input.is_action_just_pressed("jump") or Input.is_joy_button_pressed(gamepad_index, JOY_BUTTON_A)
+		jump_requested_now = _jump_requested or Input.is_action_just_pressed("jump") or Input.is_joy_button_pressed(gamepad_index, JOY_BUTTON_A)
 		_jump_requested = false
 		if movement_allowed and jump_requested_now:
 			velocity_y = JUMP_VELOCITY
@@ -264,8 +271,21 @@ func _physics_process(delta: float) -> void:
 		else:
 			_slide_requested = false
 
-	velocity.x = move_direction.x * SPEED
-	velocity.z = move_direction.z * SPEED
+	var ground_horizontal_velocity: Vector3 = move_direction * SPEED
+	var takeoff_horizontal_velocity: Vector3 = Vector3(velocity.x, 0.0, velocity.z)
+
+	if is_on_floor():
+		if movement_allowed and jump_requested_now:
+			if takeoff_horizontal_velocity.length() <= DEADZONE:
+				takeoff_horizontal_velocity = ground_horizontal_velocity
+			_air_horizontal_velocity = takeoff_horizontal_velocity * air_momentum_retention
+		else:
+			_air_horizontal_velocity = ground_horizontal_velocity
+	elif move_direction.length() > DEADZONE:
+		_air_horizontal_velocity = _air_horizontal_velocity.move_toward(ground_horizontal_velocity, air_control_strength * delta)
+
+	velocity.x = _air_horizontal_velocity.x
+	velocity.z = _air_horizontal_velocity.z
 	velocity.y = velocity_y
 	if _is_sliding:
 		_slide_timer = maxf(0.0, _slide_timer - delta)
@@ -302,6 +322,38 @@ func _physics_process(delta: float) -> void:
 
 	_update_local_chicken_visual(delta)
 	_update_global_player_shader_pos()
+
+func _check_map_recovery() -> void:
+	if global_position.y >= 0.0:
+		return
+
+	var now_ms := Time.get_ticks_msec()
+	if now_ms - _last_recovery_ms < 750:
+		return
+
+	_last_recovery_ms = now_ms
+	_is_sliding = false
+	_slide_timer = 0.0
+	_slide_direction = Vector3.ZERO
+	_slide_camera_restore_active = false
+	_jump_requested = false
+	_air_horizontal_velocity = Vector3.ZERO
+	velocity = Vector3.ZERO
+	velocity_y = 0.0
+	cam_rot_x = clamp(cam_rot_x, min_pitch, max_pitch)
+	current_animation = "idle"
+	_play_idle()
+
+	if root and root.has_method("get_local_spawn_position"):
+		global_position = root.get_local_spawn_position()
+	else:
+		global_position = Vector3(0, 2, 0)
+
+	_last_world_y = global_position.y
+	_airborne_start_y = global_position.y
+	_was_on_floor = true
+	_update_global_player_shader_pos(true)
+	_send_state_to_server(true)
 
 # --- PICKUP LOGIC (USING AREA3D) ---
 func _try_pickup():
@@ -487,6 +539,7 @@ func _send_state_to_server(force_send := false) -> void:
 			"qz": qz,
 			"qrot": qrot,
 			"anim_id": anim_id,
+			"slide": 1 if _is_sliding else 0,
 			"skin": str(root.local_skin_name) if root != null else ""
 		}
 

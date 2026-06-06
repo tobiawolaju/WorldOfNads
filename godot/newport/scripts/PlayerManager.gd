@@ -55,10 +55,15 @@ const POS_SCALE: float = 100.0
 const ROT_SCALE: float = 1000.0
 const ANIM_ID_TO_NAME: Dictionary = {
 	0: "idle",
-	1: "running"
+	1: "running",
+	2: "runningjump",
+	3: "falling",
+	4: "runningslide"
 }
-const REMOTE_INTERP_BACKTIME_MS: float = 120.0
-const REMOTE_MAX_EXTRAPOLATE_MS: float = 0.0
+const REMOTE_INTERP_BACKTIME_MS: float = 150.0
+const REMOTE_MIN_INTERP_BACKTIME_MS: float = 75.0
+const REMOTE_MAX_INTERP_BACKTIME_MS: float = 220.0
+const REMOTE_MAX_EXTRAPOLATE_MS: float = 80.0
 
 # --- CHICKEN AUTHORITY STATE ---
 var chicken_node: RigidBody3D = null
@@ -421,6 +426,11 @@ func _spawn_player(id: String, is_local := false, skin_name: String = DEFAULT_SK
 
 	players[id] = player
 
+func get_local_spawn_position() -> Vector3:
+	if myplayerswpanpoint:
+		return myplayerswpanpoint.global_position
+	return Vector3(0, 2, 0)
+
 func _instantiate_player_scene_for_skin(skin_name: String) -> Node3D:
 	var scene := _get_skin_scene(skin_name)
 	if scene != null:
@@ -451,6 +461,9 @@ func _push_remote_snapshot(id: String, pos: Vector3, rot_y: float, anim: String,
 			"curr_rot": rot_y,
 			"prev_t": now_ms,
 			"curr_t": now_ms,
+			"interp_delay_ms": REMOTE_INTERP_BACKTIME_MS,
+			"pos_vel": Vector3.ZERO,
+			"rot_vel": 0.0,
 			"anim": anim
 		}
 		return
@@ -461,11 +474,17 @@ func _push_remote_snapshot(id: String, pos: Vector3, rot_y: float, anim: String,
 	snap["curr_rot"] = rot_y
 	snap["prev_t"] = snap["curr_t"]
 	snap["curr_t"] = now_ms
+	var pos_dt := maxf(1.0, snap["curr_t"] - snap["prev_t"])
+	var prev_interp_delay := float(snap.get("interp_delay_ms", REMOTE_INTERP_BACKTIME_MS))
+	var target_interp_delay := clampf(pos_dt * 1.5, REMOTE_MIN_INTERP_BACKTIME_MS, REMOTE_MAX_INTERP_BACKTIME_MS)
+	snap["interp_delay_ms"] = lerpf(prev_interp_delay, target_interp_delay, 0.25)
+	snap["pos_vel"] = (snap["curr_pos"] - snap["prev_pos"]) / (pos_dt / 1000.0)
+	snap["rot_vel"] = angle_difference(snap["curr_rot"], snap["prev_rot"]) / (pos_dt / 1000.0)
 	snap["anim"] = anim
 	remote_snapshots[id] = snap
 
 func _apply_remote_interpolation() -> void:
-	var render_time := float(Time.get_ticks_msec()) - REMOTE_INTERP_BACKTIME_MS
+	var now_ms := float(Time.get_ticks_msec())
 	for id in players.keys():
 		if id == player_id:
 			continue
@@ -475,28 +494,29 @@ func _apply_remote_interpolation() -> void:
 		if node == null:
 			continue
 		var snap: Dictionary = remote_snapshots[id]
+		var render_time := now_ms - float(snap.get("interp_delay_ms", REMOTE_INTERP_BACKTIME_MS))
 		var prev_t := float(snap.get("prev_t", render_time))
 		var curr_t := float(snap.get("curr_t", prev_t))
 		var prev_pos: Vector3 = snap.get("prev_pos", node.global_position)
 		var curr_pos: Vector3 = snap.get("curr_pos", prev_pos)
 		var prev_rot := float(snap.get("prev_rot", node.rotation.y))
 		var curr_rot := float(snap.get("curr_rot", prev_rot))
+		var pos_vel: Vector3 = snap.get("pos_vel", Vector3.ZERO)
+		var rot_vel: float = float(snap.get("rot_vel", 0.0))
 
 		var dt := maxf(1.0, curr_t - prev_t)
 		var t := clampf((render_time - prev_t) / dt, 0.0, 1.0)
 		var out_pos := prev_pos.lerp(curr_pos, t)
 		var out_rot := lerp_angle(prev_rot, curr_rot, t)
 
-		# If we're beyond newest snapshot, apply a tiny extrapolation window.
 		if render_time > curr_t:
 			var late_ms := minf(render_time - curr_t, REMOTE_MAX_EXTRAPOLATE_MS)
 			if late_ms > 0.0:
-				var velocity := (curr_pos - prev_pos) / (dt / 1000.0)
-				out_pos = curr_pos + (velocity * (late_ms / 1000.0))
-				out_rot = curr_rot
+				out_pos = curr_pos + (pos_vel * (late_ms / 1000.0))
+				out_rot = curr_rot + (rot_vel * (late_ms / 1000.0))
 
-		node.global_position = node.global_position.lerp(out_pos, 0.55)
-		node.rotation.y = lerp_angle(node.rotation.y, out_rot, 0.55)
+		node.global_position = out_pos
+		node.rotation.y = out_rot
 		node.set_animation_state(str(snap.get("anim", "idle")))
 
 func _resolve_events_bridge() -> void:
