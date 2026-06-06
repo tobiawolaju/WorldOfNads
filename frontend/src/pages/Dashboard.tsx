@@ -351,24 +351,11 @@ export default function Dashboard() {
   const normalizeMatchStatus = (status: Match["status"] | string) =>
     status === "settled" ? "completed" : status;
 
-  const isPlayableLiveMatch = (match: Match) => {
-    if (normalizeMatchStatus(match.status) !== "live") return false;
-    if (match.ctaMode === "play") return true;
-    if (!match.startTime) return true;
-    return nowMs >= match.startTime * 1000;
-  };
-
   const statusOrder: Array<"upcoming" | "live" | "completed"> = ["upcoming", "live", "completed"];
   const orderedMatches = [...matches].sort((a, b) => {
     const aRank = statusOrder.indexOf(normalizeMatchStatus(a.status) as "upcoming" | "live" | "completed");
     const bRank = statusOrder.indexOf(normalizeMatchStatus(b.status) as "upcoming" | "live" | "completed");
     if (aRank !== bRank) return aRank - bRank;
-    if (normalizeMatchStatus(a.status) === "live" && normalizeMatchStatus(b.status) === "live") {
-      const aPlayable = isPlayableLiveMatch(a);
-      const bPlayable = isPlayableLiveMatch(b);
-      if (aPlayable !== bPlayable) return aPlayable ? -1 : 1;
-      return (b.startTime || 0) - (a.startTime || 0);
-    }
     return (a.startTime || 0) - (b.startTime || 0);
   });
 
@@ -386,11 +373,8 @@ export default function Dashboard() {
       selectedMatchData.ctaMode !== "play"
   );
   const canPlay = isTrainingLobby || ((isLive || (normalizedSelectedStatus === "upcoming" && isStartTimeReached)) && isStartTimeReached);
-  const firstPlayableLiveMatch = orderedMatches.find((match) => isPlayableLiveMatch(match)) || null;
   const getFallbackMatch = () =>
-    (filter === "live"
-      ? firstPlayableLiveMatch || orderedMatches.find((match) => normalizeMatchStatus(match.status) === "live")
-      : orderedMatches.find((match) => normalizeMatchStatus(match.status) === filter)) || orderedMatches[0] || null;
+    orderedMatches.find((match) => normalizeMatchStatus(match.status) === filter) || orderedMatches[0] || null;
 
   const updateSelectedCard = () => {
     if (isManuallyScrolling.current) return;
@@ -419,25 +403,6 @@ export default function Dashboard() {
     }
   };
 
-  const scrollCardIntoView = (matchId: string) => {
-    const carousel = carouselRef.current;
-    if (!carousel) return;
-
-    const targetCard = Array.from(carousel.children).find(
-      (child) => (child as HTMLElement).dataset.id === matchId
-    ) as HTMLElement | undefined;
-
-    if (!targetCard) return;
-
-    const target = targetCard.offsetLeft - carousel.offsetWidth / 2 + targetCard.offsetWidth / 2;
-    isManuallyScrolling.current = true;
-    carousel.scrollTo({ left: target, behavior: "smooth" });
-    setTimeout(() => {
-      isManuallyScrolling.current = false;
-      updateSelectedCard();
-    }, 600);
-  };
-
   useEffect(() => {
     if (tab !== "events") return;
     if (selectedMatch && matches.some((match) => match.matchId === selectedMatch)) return;
@@ -450,9 +415,6 @@ export default function Dashboard() {
       setFilter(fallbackStatus);
     }
     setSelectedMatch(fallbackMatch.matchId);
-    if (fallbackStatus === "live") {
-      scrollCardIntoView(fallbackMatch.matchId);
-    }
   }, [tab, selectedMatch, matches, orderedMatches, filter]);
 
   useEffect(() => {
@@ -469,14 +431,6 @@ export default function Dashboard() {
     return () => el.removeEventListener("scroll", handleScroll);
   }, [orderedMatches.length, filter]);
 
-  useEffect(() => {
-    if (tab !== "events" || filter !== "live") return;
-    if (!firstPlayableLiveMatch) return;
-    if (selectedMatch === firstPlayableLiveMatch.matchId) return;
-    setSelectedMatch(firstPlayableLiveMatch.matchId);
-    scrollCardIntoView(firstPlayableLiveMatch.matchId);
-  }, [tab, filter, firstPlayableLiveMatch, selectedMatch]);
-
   const jumpToStatus = (status: "upcoming" | "live" | "completed") => {
     setFilter(status);
     setSelectedMatch(null);
@@ -489,8 +443,15 @@ export default function Dashboard() {
     ) as HTMLElement | undefined;
 
     if (!targetCard) return;
+
+    const target = targetCard.offsetLeft - carousel.offsetWidth / 2 + targetCard.offsetWidth / 2;
+    isManuallyScrolling.current = true;
+    carousel.scrollTo({ left: target, behavior: "smooth" });
     setSelectedMatch(targetCard.dataset.id || null);
-    scrollCardIntoView(targetCard.dataset.id || "");
+    setTimeout(() => {
+      isManuallyScrolling.current = false;
+      updateSelectedCard();
+    }, 600);
   };
 
   return (
