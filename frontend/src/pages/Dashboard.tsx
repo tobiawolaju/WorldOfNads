@@ -121,6 +121,8 @@ export default function Dashboard() {
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const didAutoScrollToLive = useRef<boolean>(false);
+  const previousTab = useRef<"events" | "rewards" | "store">("events");
 
   const clearPlayTimers = () => {
     if (intervalRef.current) {
@@ -430,6 +432,14 @@ export default function Dashboard() {
     updateSelectedCard();
     return () => el.removeEventListener("scroll", handleScroll);
   }, [orderedMatches.length, filter]);
+
+  useEffect(() => {
+    if (tab === "events" && (!didAutoScrollToLive.current || previousTab.current === "store")) {
+      didAutoScrollToLive.current = true;
+      jumpToStatus("live");
+    }
+    previousTab.current = tab;
+  }, [tab]);
 
   const jumpToStatus = (status: "upcoming" | "live" | "completed") => {
     setFilter(status);
