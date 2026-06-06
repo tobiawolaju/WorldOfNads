@@ -171,6 +171,22 @@
   border: 8px solid rgba(255, 255, 255, 0.407);
 }
 
+.countdown-seconds {
+  font-size: 0.5em;
+  opacity: 0.75;
+  vertical-align: baseline;
+  position: relative;
+  top: 0.08em;
+}
+
+.countdown-seconds-separator {
+  font-size: 0.5em;
+  opacity: 0.75;
+  vertical-align: baseline;
+  position: relative;
+  top: 0.08em;
+}
+
 /* 6️⃣ Fixed Buttons */
 .footer-buttons {
   position: fixed;

@@ -302,13 +302,21 @@ export default function Dashboard() {
   };
 
   const formatCountdown = (timestamp: number | undefined) => {
-    if (!timestamp) return "";
+    if (!timestamp) return null;
     const remainingMs = Math.max(timestamp * 1000 - nowMs, 0);
     const totalSeconds = Math.floor(remainingMs / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    return (
+      <>
+        {hours}:{String(minutes).padStart(2, "0")}:
+        <span className="countdown-seconds-wrap">
+          <span className="countdown-seconds-separator">:</span>
+          <span className="countdown-seconds">{String(seconds).padStart(2, "0")}</span>
+        </span>
+      </>
+    );
   };
 
   // --- Multi-Provider Social Extraction ---
@@ -525,7 +533,7 @@ export default function Dashboard() {
                             Time: {match.ctaMode === "play"
                               ? match.time
                               : match.status === "live" && match.startTime && nowMs < match.startTime * 1000
-                                ? `Countdown ${formatCountdown(match.startTime)}`
+                                ? formatCountdown(match.startTime)
                                 : match.startTime
                                   ? `${formatLocalTime(match.startTime)}`
                                   : match.time}
@@ -540,7 +548,7 @@ export default function Dashboard() {
                           {match.ctaMode === "play"
                             ? match.time
                             : match.status === "live" && match.startTime && nowMs < match.startTime * 1000
-                              ? `Countdown ${formatCountdown(match.startTime)}`
+                              ? formatCountdown(match.startTime)
                               : match.status === "upcoming" && match.startTime
                                 ? `${formatLocalTime(match.startTime)} (Local)`
                                 : match.time}
@@ -634,7 +642,7 @@ export default function Dashboard() {
                 : normalizedSelectedStatus === "upcoming"
                   ? "•°••"
                   : isLiveCountdownActive && selectedMatchData?.startTime
-                    ? `Countdown ${formatCountdown(selectedMatchData.startTime)}`
+                    ? formatCountdown(selectedMatchData.startTime)
                     : "Not Live"}
             </span>
           )}

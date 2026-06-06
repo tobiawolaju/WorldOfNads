@@ -17,7 +17,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 config/name="World of Nads"
 run/main_scene="uid://dg0hj4afkds4y"
 config/features=PackedStringArray("4.6", "Forward Plus")
-run/max_fps=45
+run/max_fps=120
 boot_splash/bg_color=Color(0.43137255, 0.32941177, 1, 1)
 boot_splash/image="uid://rcj3xhh7u10x"
 config/icon="uid://rcj3xhh7u10x"
@@ -33,8 +33,8 @@ resolution="*res://newport/scripts/resolution.gd"
 
 [display]
 
-window/size/viewport_width=854
-window/size/viewport_height=480
+window/size/viewport_width=500
+window/size/viewport_height=500
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/vsync/vsync_mode=0
@@ -123,8 +123,14 @@ renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
 lights_and_shadows/directional_shadow/size=256
 lights_and_shadows/directional_shadow/size.mobile=128
+camera/depth_of_field/depth_of_field_bokeh_shape=0
+camera/depth_of_field/depth_of_field_bokeh_quality=0
+environment/ssao/quality=0
+environment/ssil/quality=0
 anti_aliasing/screen_space_roughness_limiter/enabled=false
 scaling_3d/fsr_sharpness=1.0
+environment/glow/upscale_mode=0
+environment/volumetric_fog/use_filter=0
 textures/basis_universal/rdo_dict_size=256
 2d/snap/snap_2d_transforms_to_pixel=true
 2d/snap/snap_2d_vertices_to_pixel=true
