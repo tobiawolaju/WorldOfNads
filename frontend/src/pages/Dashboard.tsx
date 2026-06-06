@@ -51,6 +51,7 @@ type Match = {
   depositTxHash?: string;
   startTime?: number; // Unix timestamp in seconds
   settleTxHash?: string;
+  ctaMode?: "play" | "countdown";
 };
 
 type RewardItem = {
@@ -300,6 +301,16 @@ export default function Dashboard() {
     }).format(new Date(timestamp * 1000));
   };
 
+  const formatCountdown = (timestamp: number | undefined) => {
+    if (!timestamp) return "";
+    const remainingMs = Math.max(timestamp * 1000 - nowMs, 0);
+    const totalSeconds = Math.floor(remainingMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  };
+
   // --- Multi-Provider Social Extraction ---
   const socialProviders = [
     "twitter_oauth",
@@ -343,10 +354,17 @@ export default function Dashboard() {
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
   const normalizedSelectedStatus = normalizeMatchStatus(selectedMatchData?.status);
   const isLive = normalizedSelectedStatus === "live";
+  const isTrainingLobby = selectedMatchData?.ctaMode === "play";
   const isStartTimeReached = selectedMatchData?.startTime
     ? nowMs >= selectedMatchData.startTime * 1000
     : true;
-  const canPlay = (isLive || (normalizedSelectedStatus === "upcoming" && isStartTimeReached)) && isStartTimeReached;
+  const isLiveCountdownActive = Boolean(
+    isLive &&
+      selectedMatchData?.startTime &&
+      nowMs < selectedMatchData.startTime * 1000 &&
+      selectedMatchData.ctaMode !== "play"
+  );
+  const canPlay = isTrainingLobby || ((isLive || (normalizedSelectedStatus === "upcoming" && isStartTimeReached)) && isStartTimeReached);
   const getFallbackMatch = () =>
     orderedMatches.find((match) => normalizeMatchStatus(match.status) === filter) || orderedMatches[0] || null;
 
@@ -503,7 +521,15 @@ export default function Dashboard() {
                         <div className="match-details-inner">
                           <p className="match-desc">{match.description}</p>
                           <p className="match-info">Prize: {match.prize}</p>
-                          <p className="match-info">Time: {match.startTime ? `${formatLocalTime(match.startTime)}` : match.time}</p>
+                          <p className="match-info">
+                            Time: {match.ctaMode === "play"
+                              ? match.time
+                              : match.status === "live" && match.startTime && nowMs < match.startTime * 1000
+                                ? `Countdown ${formatCountdown(match.startTime)}`
+                                : match.startTime
+                                  ? `${formatLocalTime(match.startTime)}`
+                                  : match.time}
+                          </p>
                         </div>
                       </div>
                     ) : (
@@ -511,9 +537,13 @@ export default function Dashboard() {
                         <h3 className="match-sponsor">{match.sponsor}</h3>
                         <p className="match-reward">{match.prize}</p>
                         <p className="match-time">
-                          {match.status === "upcoming" && match.startTime
-                            ? `${formatLocalTime(match.startTime)} (Local)`
-                            : match.time}
+                          {match.ctaMode === "play"
+                            ? match.time
+                            : match.status === "live" && match.startTime && nowMs < match.startTime * 1000
+                              ? `Countdown ${formatCountdown(match.startTime)}`
+                              : match.status === "upcoming" && match.startTime
+                                ? `${formatLocalTime(match.startTime)} (Local)`
+                                : match.time}
                         </p>
                       </div>
                     )}
@@ -597,12 +627,14 @@ export default function Dashboard() {
             <span>{elapsedTime.toFixed(1)}s Cancel</span>
           ) : (
             <span>
-              {canPlay
+              {isTrainingLobby
                 ? "PLAY"
+                : canPlay
+                  ? "PLAY"
                 : normalizedSelectedStatus === "upcoming"
                   ? "•°••"
-                  : isLive && selectedMatchData?.startTime
-                    ? `Starts at ${formatLocalTime(selectedMatchData.startTime)}`
+                  : isLiveCountdownActive && selectedMatchData?.startTime
+                    ? `Countdown ${formatCountdown(selectedMatchData.startTime)}`
                     : "Not Live"}
             </span>
           )}

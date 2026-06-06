@@ -48,6 +48,22 @@ export const staticMatches = [
   },
   {
     id: 4,
+    matchId: "match-live-training-lobby",
+    sponsor: "Training Lobby",
+    prize: "Practice",
+    prizeAmount: 0,
+    prizeToken: "WONs",
+    status: "live",
+    time: "Open",
+    date: "2026-06-06",
+    startTime: toStartTime("2026-06-06T00:00:00Z"),
+    image: "https://pbs.twimg.com/profile_images/1861739634428174336/26FzLLyr.jpg",
+    description: "Training Lobby is open for warmup runs and should always be playable.",
+    url: "",
+    ctaMode: "play"
+  },
+  {
+    id: 5,
     matchId: "match-upcoming-001",
     sponsor: "Mid July Match",
     prize: "12 WONs",
@@ -62,7 +78,7 @@ export const staticMatches = [
     url: ""
   },
   {
-    id: 5,
+    id: 6,
     matchId: "match-upcoming-002",
     sponsor: "July Ending Match",
     prize: "12 WONs",
@@ -77,7 +93,7 @@ export const staticMatches = [
     url: ""
   },
   {
-    id: 6,
+    id: 7,
     matchId: "match-upcoming-003",
     sponsor: "August First Match",
     prize: "15 WONs",
@@ -92,7 +108,7 @@ export const staticMatches = [
     url: ""
   },
   {
-    id: 7,
+    id: 8,
     matchId: "match-upcoming-004",
     sponsor: "August Sprint 01",
     prize: "15 WONs",
@@ -107,7 +123,7 @@ export const staticMatches = [
     url: ""
   },
   {
-    id: 8,
+    id: 9,
     matchId: "match-upcoming-005",
     sponsor: "August Sprint 02",
     prize: "15 WONs",
@@ -122,7 +138,7 @@ export const staticMatches = [
     url: ""
   },
   {
-    id: 9,
+    id: 10,
     matchId: "match-upcoming-006",
     sponsor: "August Midweek",
     prize: "20 WONs",
@@ -137,7 +153,7 @@ export const staticMatches = [
     url: ""
   },
   {
-    id: 10,
+    id: 11,
     matchId: "match-upcoming-007",
     sponsor: "August Weekend 01",
     prize: "20 WONs",
@@ -152,7 +168,7 @@ export const staticMatches = [
     url: ""
   },
   {
-    id: 11,
+    id: 12,
     matchId: "match-upcoming-008",
     sponsor: "August Weekend 02",
     prize: "20 WONs",
@@ -167,7 +183,7 @@ export const staticMatches = [
     url: ""
   },
   {
-    id: 12,
+    id: 13,
     matchId: "match-upcoming-009",
     sponsor: "Late August Match",
     prize: "25 WONs",
@@ -182,7 +198,7 @@ export const staticMatches = [
     url: ""
   },
   {
-    id: 13,
+    id: 14,
     matchId: "match-upcoming-010",
     sponsor: "August Finale",
     prize: "25 WONs",
@@ -197,7 +213,7 @@ export const staticMatches = [
     url: ""
   },
   {
-    id: 14,
+    id: 15,
     matchId: "match-completed-001",
     sponsor: "Play Test 1",
     prize: "5 WONs",

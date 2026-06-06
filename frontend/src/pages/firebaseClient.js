@@ -224,7 +224,8 @@ export function normalizeMatchRecord(match, fallbackKey = "") {
     startTime: Number(match?.startTime || 0),
     createdByWallet: String(match?.createdByWallet || ""),
     depositTxHash: String(match?.depositTxHash || ""),
-    settleTxHash: String(match?.settleTxHash || "")
+    settleTxHash: String(match?.settleTxHash || ""),
+    ctaMode: String(match?.ctaMode || "")
   };
 }
 
