@@ -61,14 +61,24 @@ function pushCurrentBranch(commitMessage) {
 }
 
 function recreateDeployWorktree() {
-  const worktreeList = run("git", ["worktree", "list", "--porcelain"], { capture: true });
-  if (worktreeList.includes(`worktree ${deployDir}`)) {
+  try {
     run("git", ["worktree", "remove", "--force", deployDir]);
-  } else if (fs.existsSync(deployDir)) {
-    fs.rmSync(deployDir, { recursive: true, force: true });
+  } catch (error) {
+    if (!fs.existsSync(deployDir)) {
+      // Nothing to remove.
+    } else {
+      fs.rmSync(deployDir, { recursive: true, force: true });
+    }
   }
 
-  run("git", ["worktree", "add", "--force", "-B", "gh-pages", deployDir, "HEAD"]);
+  run("git", ["worktree", "prune", "--expire", "now"]);
+
+  try {
+    run("git", ["worktree", "add", "--force", "-B", "gh-pages", deployDir, "HEAD"]);
+  } catch (error) {
+    run("git", ["branch", "-D", "gh-pages"]);
+    run("git", ["worktree", "add", "--force", "-B", "gh-pages", deployDir, "HEAD"]);
+  }
 }
 
 function copyCdnBundle() {
