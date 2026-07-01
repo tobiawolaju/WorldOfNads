@@ -1,0 +1,12 @@
+[package]
+name = "xp-token"
+version = "0.1.0"
+edition.workspace = true
+
+[lib]
+crate-type = ["lib"]
+name = "xp_token"
+
+[dependencies]
+anchor-lang.workspace = true
+anchor-spl.workspace = true

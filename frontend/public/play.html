@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <title>World of Nads</title>
+    <style>
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+
+      body {
+        color: #fff;
+        font-family: Inter, system-ui, sans-serif;
+      }
+
+      .play-shell {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100dvh;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at top, rgba(231, 149, 231, 0.18), transparent 40%),
+          linear-gradient(180deg, #080808 0%, #000 100%);
+      }
+
+      .game-frame {
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+
+      .fullscreen-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        z-index: 20;
+        width: 2.75rem;
+        height: 2.75rem;
+        padding: 0;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.5);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        gap: 0;
+        backdrop-filter: none;
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        text-shadow: none;
+        box-shadow: none;
+      }
+
+      .fullscreen-btn span {
+        color: #fff;
+        text-shadow: none;
+      }
+
+      .fullscreen-btn[hidden] {
+        display: none;
+      }
+
+      .status {
+        position: absolute;
+        left: 1rem;
+        top: 1rem;
+        z-index: 20;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        background: rgba(0, 0, 0, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        font-size: 0.95rem;
+        max-width: min(90vw, 28rem);
+        backdrop-filter: blur(10px);
+      }
+
+      .status[hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="play-shell" id="playShell">
+      <div class="status" id="status">Loading game shell...</div>
+      <button type="button" class="fullscreen-btn" id="fullscreenBtn" aria-label="Click for fullscreen" hidden>
+        <span aria-hidden="true" style="font-size: 1.1rem; line-height: 1;">⛶</span>
+      </button>
+      <iframe id="gameFrame" class="game-frame" title="World of Nads"></iframe>
+    </div>
+
+    <script>
+      (function () {
+        const DEFAULT_GAME_SKIN_NAME = "defaultnad";
+        const GAME_SKIN_NAME_BY_KEY = {
+          "s-default": DEFAULT_GAME_SKIN_NAME,
+          s0: "buggy",
+          s1: "Aurum",
+          s2: "Abbss",
+          s3: "Hellion",
+          s4: "Seraphim",
+          s5: "mouch",
+          s6: "john deo",
+          defaultnad: DEFAULT_GAME_SKIN_NAME,
+          buggy: "buggy",
+          aurum: "Aurum",
+          abbss: "Abbss",
+          abyss: "Abbss",
+          hellion: "Hellion",
+          seraphim: "Seraphim",
+          mouch: "mouch",
+          "john deo": "john deo",
+          johndeo: "john deo"
+        };
+        const normalizeSkinKey = (rawSkin) =>
+          String(rawSkin || "")
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, " ");
+        const resolveGameSkinName = (rawSkin) => {
+          const key = normalizeSkinKey(rawSkin);
+          return GAME_SKIN_NAME_BY_KEY[key] || DEFAULT_GAME_SKIN_NAME;
+        };
+
+        const status = document.getElementById("status");
+        const frame = document.getElementById("gameFrame");
+        const fullscreenBtn = document.getElementById("fullscreenBtn");
+        const shell = document.getElementById("playShell");
+        const params = new URLSearchParams(window.location.search);
+        const username = params.get("username") || "";
+        const skin = resolveGameSkinName(params.get("skin") || params.get("skinName") || "s-default");
+        const match = params.get("match") || "";
+        const gameParams = new URLSearchParams();
+        if (username) gameParams.set("username", username);
+        if (skin) gameParams.set("skin", skin);
+        if (match) gameParams.set("match", match);
+        const resolveBaseUrl = () => {
+          const queryBase = params.get("godotBaseUrl") || "";
+          const globalBase = typeof window.GODOT_BASE_URL === "string" ? window.GODOT_BASE_URL : "";
+          const originBase = `${window.location.origin}/godot/`;
+          const rawBase = queryBase || globalBase || originBase;
+          return rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
+        };
+
+        let revealTimer = null;
+
+        const gameUrl = `${resolveBaseUrl()}index.html?${gameParams.toString()}`;
+        const baseOrigin = new URL(resolveBaseUrl(), window.location.href).origin;
+
+        if (baseOrigin !== window.location.origin) {
+          window.location.replace(gameUrl);
+          return;
+        }
+
+        frame.src = gameUrl;
+
+        frame.addEventListener("load", () => {
+          status.hidden = true;
+          try {
+            frame.contentWindow?.postMessage({ type: "set_username", value: username }, "*");
+            frame.contentWindow?.postMessage({ type: "set_skin", value: skin }, "*");
+            if (match) {
+              frame.contentWindow?.postMessage({ type: "set_match", value: match }, "*");
+            }
+          } catch (error) {
+            console.warn("Could not send username to game frame:", error);
+          }
+        });
+
+        const updateFullscreenButton = () => {
+          if (revealTimer) {
+            clearTimeout(revealTimer);
+            revealTimer = null;
+          }
+
+          if (document.fullscreenElement) {
+            fullscreenBtn.hidden = true;
+            fullscreenBtn.setAttribute("aria-label", "Exit full screen");
+            return;
+          }
+
+          fullscreenBtn.setAttribute("aria-label", "Click for fullscreen");
+          revealTimer = setTimeout(() => {
+            fullscreenBtn.hidden = !document.fullscreenEnabled;
+            revealTimer = null;
+          }, 300);
+        };
+
+        updateFullscreenButton();
+
+        fullscreenBtn.addEventListener("click", async () => {
+          try {
+            if (!document.fullscreenElement && shell.requestFullscreen) {
+              await shell.requestFullscreen({ navigationUI: "hide" });
+            }
+          } catch (error) {
+            console.warn("Fullscreen request failed:", error);
+          }
+        });
+
+        document.addEventListener("fullscreenchange", updateFullscreenButton);
+      }());
+    </script>
+  </body>
+</html>

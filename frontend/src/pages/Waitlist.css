@@ -1,0 +1,280 @@
+@import "./Home.css";
+
+.waitlist-page {
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.waitlist-hero {
+  width: 100%;
+  max-height: 50vh;
+  min-height: 280px;
+  /* Reduced since form moved */
+  padding: 60px 20px 20px;
+  z-index: 50;
+  background: linear-gradient(to bottom, #7056ff 0%, #6f56ffd7 60%, transparent 100%);
+  pointer-events: none;
+}
+
+.waitlist-hero .hero-content {
+  pointer-events: auto;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  /* Explicit gap to prevent overlap */
+  align-items: center;
+}
+
+/* Override Home.css headline to reduce size by 20% and fix spacing */
+.waitlist-hero .hero-headline {
+  font-size: clamp(56px, 9.6vw, 112px);
+  /* 20% reduction from Home.css */
+  margin-bottom: 0px;
+  line-height: 1;
+}
+
+.waitlist-hero .hero-headline::after {
+  content: "Competitive gaming with real rewards.";
+}
+
+.waitlist-hero .hero-subtext {
+  max-width: 720px;
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Background stays fixed */
+.hero-bg-container {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.hero-bg-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8;
+}
+
+.waitlist-scroll-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y proximity;
+  padding-top: 300px;
+  /* Reduced to match smaller hero */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.waitlist-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Specific Pill UI */
+.pill-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 40px auto;
+  padding: 0 10px;
+  transition: opacity 0.5s ease;
+}
+
+.pill-pair {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.pill-label-top {
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pill-capsule {
+  background: #ffffff;
+  padding: 12px 32px;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(247, 20, 255, 0.322);
+}
+
+.pill-label-bottom {
+  font-family: var(--font-inter), sans-serif;
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 600;
+  color: #000000;
+  line-height: 1;
+  margin: 0;
+}
+
+/* Individual colors for variety */
+.pill-pair:nth-child(odd) .pill-capsule {
+  background: #fffc5d;
+}
+
+/* Lime */
+.pill-pair:nth-child(even) .pill-capsule {
+  background: #ff58e3;
+}
+
+/* Cyan */
+.pill-pair.alt-color .pill-capsule {
+  background: #40e2ff;
+}
+
+/* Yellow */
+
+/* Reveal animations */
+.waitlist-section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  scroll-snap-align: center;
+  padding: 100px 20px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.waitlist-section.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Fade out at top */
+.pill-pair.near-top {
+  opacity: 0.1;
+  transform: translateY(-20px) scale(0.95);
+}
+
+.waitlist-section .section-title {
+  font-family: 'Font2', sans-serif;
+  font-size: clamp(32px, 5vw, 64px);
+  margin-bottom: 40px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.waitlist-capture {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.waitlist-capture-form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.waitlist-input {
+  flex: 1;
+  min-width: 0;
+  height: 60px;
+  /* Increased to match pay button feel */
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #ffffff;
+  color: #0f1419;
+  font-size: 16px;
+  font-family: var(--font-inter), sans-serif;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.waitlist-input:focus {
+  border-color: #907cff;
+  box-shadow: 0 6px 16px rgba(144, 124, 255, 0.3);
+}
+
+.waitlist-submit {
+  width: auto;
+  white-space: nowrap;
+  padding: 0 40px;
+  height: 60px;
+  /* Perfectly matching input height */
+  border: none;
+  border-radius: 999px;
+  background: #ffd700;
+  color: #000000;
+  font-family: 'Font1', var(--font-inter), sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 15px rgba(255, 215, 0, 0.3);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.waitlist-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(255, 215, 0, 0.3);
+}
+
+.waitlist-helper {
+  margin-top: 14px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.waitlist-success,
+.waitlist-error {
+  margin-top: 14px;
+  text-align: center;
+  font-weight: 600;
+}
+
+
+
+
+/* Mobile responsive fixes */
+@media (max-width: 768px) {
+  .waitlist-capture-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .waitlist-input {
+    width: 100%;
+    flex: none;
+  }
+
+  .waitlist-submit {
+    width: 100%;
+    flex: none;
+  }
+
+  .pill-group {
+    scale: 0.85;
+    margin: 40px auto;
+  }
+}

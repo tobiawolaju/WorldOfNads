@@ -1,0 +1,251 @@
+[gd_scene format=3 uid="uid://c4brakh2i7k3v"]
+
+[ext_resource type="Script" uid="uid://hwdeobi38c2y" path="res://scripts/screens/GameOverScreen.gd" id="1_oy7qx"]
+[ext_resource type="FontFile" uid="uid://ctxhsu2y7phcf" path="res://newport/assets/fonts/fortnite.otf" id="3_mpnb7"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hg6sm"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(0.1, 0.1, 0.1, 0.3)
+corner_radius_top_left = 100
+corner_radius_top_right = 100
+corner_radius_bottom_right = 100
+corner_radius_bottom_left = 100
+corner_detail = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jpqsb"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(1, 1, 0, 1)
+corner_radius_top_left = 100
+corner_radius_top_right = 100
+corner_radius_bottom_right = 100
+corner_radius_bottom_left = 100
+corner_detail = 6
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jpqsb"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mpnb7"]
+bg_color = Color(0.99607843, 0.84313726, 0, 1)
+border_width_left = 20
+border_width_top = 5
+border_width_right = 20
+border_width_bottom = 5
+border_color = Color(0.99607843, 0.84313726, 0, 1)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[node name="Gameover" type="CanvasLayer" unique_id=1731812888]
+script = ExtResource("1_oy7qx")
+
+[node name="LeftBG" type="ColorRect" parent="." unique_id=987938774]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.31764707)
+
+[node name="ColorBG2" type="ColorRect" parent="." unique_id=737243886]
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -97.47377
+offset_top = -4.2857924
+offset_right = -185.30667
+offset_bottom = 0.032196045
+grow_horizontal = 2
+grow_vertical = 2
+rotation = 0.12217305
+color = Color(0, 0.44705883, 1, 1)
+
+[node name="ColorBG" type="ColorRect" parent="." unique_id=1879387753]
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0.44705883, 1, 1)
+
+[node name="Result" type="VBoxContainer" parent="ColorBG" unique_id=590021672]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -90.0
+offset_top = -71.5
+offset_right = 90.0
+offset_bottom = 71.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BoxContainer" type="BoxContainer" parent="ColorBG/Result" unique_id=1420237234]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Title" type="Label" parent="ColorBG/Result/BoxContainer" unique_id=1629888997]
+modulate = Color(1, 1, 1, 0.7176471)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_mpnb7")
+theme_override_font_sizes/font_size = 30
+text = "Congratulations"
+
+[node name="BoxContainer2" type="BoxContainer" parent="ColorBG/Result" unique_id=1847300115]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Subtitle" type="Label" parent="ColorBG/Result/BoxContainer2" unique_id=1669111046]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_mpnb7")
+theme_override_font_sizes/font_size = 60
+text = "You won"
+
+[node name="BoxContainer3" type="BoxContainer" parent="ColorBG/Result" unique_id=88733280]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Details" type="Label" parent="ColorBG/Result/BoxContainer3" unique_id=238541657]
+modulate = Color(1, 1, 1, 0.7176471)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_mpnb7")
+theme_override_font_sizes/font_size = 15
+text = "you outplayed other nads"
+horizontal_alignment = 1
+
+[node name="BoxContainer5" type="BoxContainer" parent="ColorBG/Result" unique_id=1088861413]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Details" type="Label" parent="ColorBG/Result/BoxContainer5" unique_id=2145036944]
+modulate = Color(1, 1, 1, 0.7176471)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_mpnb7")
+theme_override_font_sizes/font_size = 40
+text = "
+"
+horizontal_alignment = 1
+
+[node name="BoxContainer4" type="BoxContainer" parent="ColorBG/Result" unique_id=1840702563]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Control" type="Control" parent="ColorBG/Result/BoxContainer4" unique_id=1159753042]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="ProgressBar" type="ProgressBar" parent="ColorBG/Result/BoxContainer4/Control" unique_id=1627102708]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -77.0
+offset_top = -12.0
+offset_right = 77.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.9490196, 1, 0.9490196, 1)
+theme_override_styles/background = SubResource("StyleBoxFlat_hg6sm")
+theme_override_styles/fill = SubResource("StyleBoxFlat_jpqsb")
+show_percentage = false
+
+[node name="Level" type="Label" parent="ColorBG/Result/BoxContainer4/Control/ProgressBar" unique_id=460864504]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -31.5
+offset_top = 19.0
+offset_right = 31.5
+offset_bottom = 45.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("3_mpnb7")
+theme_override_font_sizes/font_size = 25
+text = "Level 0"
+
+[node name="XP" type="Label" parent="ColorBG/Result/BoxContainer4/Control/ProgressBar" unique_id=460864503]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.5
+offset_top = -38.0
+offset_right = 16.5
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("3_mpnb7")
+theme_override_font_sizes/font_size = 20
+text = "XP 0"
+
+[node name="skiptimmer" type="Button" parent="ColorBG/Result/BoxContainer4/Control" unique_id=2023017773]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -78.0
+offset_top = -12.0
+offset_right = 78.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_jpqsb")
+theme_override_styles/normal_mirrored = SubResource("StyleBoxEmpty_jpqsb")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_jpqsb")
+theme_override_styles/pressed_mirrored = SubResource("StyleBoxEmpty_jpqsb")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_jpqsb")
+theme_override_styles/hover_mirrored = SubResource("StyleBoxEmpty_jpqsb")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_jpqsb")
+theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxEmpty_jpqsb")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_jpqsb")
+theme_override_styles/disabled_mirrored = SubResource("StyleBoxEmpty_jpqsb")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_jpqsb")
+text = "Skip"
+
+[node name="returnhome" type="Label" parent="ColorBG/Result/BoxContainer4/Control" unique_id=654873403]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -77.5
+offset_top = -12.0
+offset_right = 77.5
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0, 0.44705883, 1, 1)
+theme_override_fonts/font = ExtResource("3_mpnb7")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_mpnb7")
+text = "Returning to Lobby >> 8"
+
+[node name="Node2" type="Node" parent="." unique_id=1172678887]

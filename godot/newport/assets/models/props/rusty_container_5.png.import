@@ -1,0 +1,45 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://chpc1kje501i3"
+path.s3tc="res://.godot/imported/rusty_container_5.png-2761332bd89023f61ac3f38dc004cbd4.s3tc.ctex"
+path.etc2="res://.godot/imported/rusty_container_5.png-2761332bd89023f61ac3f38dc004cbd4.etc2.ctex"
+metadata={
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
+}
+generator_parameters={
+"md5": "0242fe85c66b36c1d891d9da809e891c"
+}
+
+[deps]
+
+source_file="res://newport/assets/models/props/rusty_container_5.png"
+dest_files=["res://.godot/imported/rusty_container_5.png-2761332bd89023f61ac3f38dc004cbd4.s3tc.ctex", "res://.godot/imported/rusty_container_5.png-2761332bd89023f61ac3f38dc004cbd4.etc2.ctex"]
+
+[params]
+
+compress/mode=2
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/uastc_level=0
+compress/rdo_quality_loss=0.0
+compress/hdr_compression=1
+compress/normal_map=1
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=1
+roughness/src_normal="res://newport/assets/models/props/rusty_container_5.png"
+process/channel_remap/red=0
+process/channel_remap/green=1
+process/channel_remap/blue=2
+process/channel_remap/alpha=3
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=512
+detect_3d/compress_to=0

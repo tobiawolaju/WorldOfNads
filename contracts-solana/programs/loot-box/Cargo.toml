@@ -1,0 +1,11 @@
+[package]
+name = "loot-box"
+version = "0.1.0"
+edition.workspace = true
+
+[lib]
+crate-type = ["lib"]
+name = "loot_box"
+
+[dependencies]
+anchor-lang.workspace = true

@@ -1,0 +1,12 @@
+[package]
+name = "skins"
+version = "0.1.0"
+edition.workspace = true
+
+[lib]
+crate-type = ["lib"]
+name = "skins"
+
+[dependencies]
+anchor-lang.workspace = true
+anchor-spl.workspace = true

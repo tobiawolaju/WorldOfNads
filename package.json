@@ -1,0 +1,10 @@
+{
+  "name": "world-of-nads-root",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace frontend"
+  }
+}

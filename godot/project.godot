@@ -1,0 +1,168 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
+[application]
+
+config/name="World of Nads"
+run/main_scene="uid://dg0hj4afkds4y"
+config/features=PackedStringArray("4.7")
+run/max_fps=120
+boot_splash/bg_color=Color(0.43137255, 0.32941177, 1, 1)
+boot_splash/image="uid://bag1tuu668h52"
+config/icon="uid://bag1tuu668h52"
+boot_splash/transparent_background=false
+
+[autoload]
+
+TransitionScreen="*uid://cgubj1l8n18oh"
+SceneRegistry="*res://scripts/core/SceneRegistry.gd"
+resolution="*res://scripts/ui/resolution.gd"
+GameManager="*res://scripts/core/GameManager.gd"
+ShaderCache="*res://scripts/core/ShaderCache.gd"
+
+[display]
+
+window/size/viewport_width=500
+window/size/viewport_height=500
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/size/vsync/vsync_mode=0
+
+[input]
+
+move_forward={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194320,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+move_back={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194322,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+move_left={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194319,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+move_right={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194321,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+jump={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":32,"key_label":0,"unicode":32,"location":0,"echo":false,"script":null)
+]
+}
+slide={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":67,"physical_keycode":67,"key_label":0,"unicode":99,"location":0,"echo":false,"script":null)
+]
+}
+camera_left={
+"deadzone": 0.2,
+"events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":-1,"axis":2,"axis_value":-1.0,"script":null)
+]
+}
+camera_right={
+"deadzone": 0.2,
+"events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":-1,"axis":2,"axis_value":1.0,"script":null)
+]
+}
+camera_up={
+"deadzone": 0.2,
+"events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":-1,"axis":3,"axis_value":-1.0,"script":null)
+]
+}
+camera_down={
+"deadzone": 0.2,
+"events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":-1,"axis":3,"axis_value":1.0,"script":null)
+]
+}
+pickup={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":80,"key_label":0,"unicode":112,"location":0,"echo":false,"script":null)
+, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"button_index":1,"pressure":0.0,"pressed":true,"script":null)
+]
+}
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[navigation]
+
+world/map_use_async_iterations=false
+world/region_use_async_iterations=false
+
+[physics]
+
+3d/run_on_separate_thread=true
+common/physics_ticks_per_second=30
+3d/physics_engine="GodotPhysics3D"
+jolt_physics_3d/simulation/velocity_steps=4
+jolt_physics_3d/limits/temporary_memory_buffer_size=16
+3d/sleep_threshold_angular=0.2792526803190927
+common/physics_interpolation=true
+physics_ticks_per_second=30
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+lights_and_shadows/directional_shadow/size=64
+lights_and_shadows/directional_shadow/size.mobile=64
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
+textures/default_filters/anisotropic_filtering_level=0
+camera/depth_of_field/depth_of_field_bokeh_shape=0
+camera/depth_of_field/depth_of_field_bokeh_quality=0
+environment/ssao/quality=0
+environment/ssil/quality=0
+scaling_3d/fsr_sharpness=2.0
+environment/glow/upscale_mode=0
+environment/volumetric_fog/use_filter=0
+textures/basis_universal/rdo_dict_size=256
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true
+lights_and_shadows/positional_shadow/atlas_size=64
+lights_and_shadows/positional_shadow/atlas_size.mobile=64
+anti_aliasing/screen_space_roughness_limiter=false
+environment/glow/enabled=false
+lights_and_shadows/directional_shadow/size.web=64
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality.web=0
+
+[shader_globals]
+
+MainLightDirection={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+SkyColor={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+EquatorColor={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+GroundColor={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+player_pos={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
