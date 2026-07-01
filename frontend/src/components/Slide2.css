@@ -1,0 +1,110 @@
+.slide2 {
+  --slide2-gap: 20px;
+  --slide2-logo-radius: 20px;
+
+
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+
+  padding: 0px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 233, 244, 0.65), transparent 45%),
+    radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.6), transparent 40%),
+    radial-gradient(circle at 50% 85%, rgba(208, 224, 255, 0.55), transparent 45%),
+    linear-gradient(135deg, #e8daff 0%, #d1edff 45%, #f5f9ff 100%);
+  background-blend-mode: screen, overlay, soft-light, normal;
+  overflow: hidden;
+}
+
+
+
+.slide2-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--slide2-gap);
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+}
+
+.slide2-column {
+  position: relative;
+  overflow: hidden;
+  contain: layout paint style;
+  -webkit-mask-image: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 1) 12%,
+      rgba(0, 0, 0, 1) 88%,
+      transparent 100%);
+  mask-image: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 1) 12%,
+      rgba(0, 0, 0, 1) 88%,
+      transparent 100%);
+}
+
+.slide2-column-track {
+  display: flex;
+  flex-direction: column;
+  gap: var(--slide2-gap);
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+.slide2-speed-1 {
+  animation: slide2-scroll-up 22s linear infinite;
+  animation-play-state: running;
+}
+
+.slide2-speed-2 {
+  animation: slide2-scroll-down 22s linear infinite;
+  animation-play-state: running;
+}
+
+.slide2-speed-3 {
+  animation: slide2-scroll-up 22s linear infinite;
+  animation-play-state: running;
+}
+
+.slide2-logo {
+  width: 90%;
+  margin-inline: auto;
+  display: block;
+  border-radius: var(--slide2-logo-radius);
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+}
+
+@keyframes slide2-scroll-up {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes slide2-scroll-down {
+  from {
+    transform: translateY(-50%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .slide2 {
+    padding: 16px;
+  }
+
+  .slide2-placeholder {
+    max-width: min(92vw, 480px);
+  }
+}

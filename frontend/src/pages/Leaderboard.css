@@ -1,0 +1,496 @@
+.leaderboard-container {
+  text-align: center;
+  padding: 20px;
+  font-family: 'Font1', sans-serif;
+  color: #222;
+}
+
+.leaderboard-title {
+  color: rgb(255, 154, 204);
+  text-decoration: underline;
+  text-decoration-color: #27044e;
+  font-size: clamp(3.5rem, 5vw, 4rem);
+  font-weight: bold;
+  margin-bottom: 40px;
+}
+
+.leaderboard-content {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  padding:0px;
+  align-items: flex-start;
+}
+
+/* Left grid */
+.interaction-grid {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.interaction-rect {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 150px; cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  border: 2px solid white;
+  position: relative; /* ensure chart positioning works */
+  overflow: hidden;
+  padding: 0px;
+  padding-bottom: 8px;
+}
+
+
+.interaction-rect:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+.interaction-rect.active {
+  outline: 3px solid #ffffff;
+  z-index: 2;
+  transform: scale(1.05);
+}
+
+.rect-label {
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  background: rgba(243, 243, 243, 0.062);
+  font-size: 1rem;
+  backdrop-filter: blur(3px);
+}
+
+.proj-name {
+  display: block;
+  font-weight: bold;
+  color:#ffffff;
+}
+
+.proj-interactions {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  color:#ffffffa4;
+}
+
+/* Right side leaderboard */
+.user-leaderboard {
+  flex: 0.7;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  padding: 0px;
+}
+
+.user-leaderboard h2 {
+  margin-bottom: 20px;
+  color: #27044e;
+  font-size: 1.8rem;
+  padding: 8px;
+}
+
+.user-leaderboard ul {
+  list-style: none;
+  padding: 8px;
+  margin: 0;
+}
+
+.user-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 1.1rem;
+}
+
+.user-entry .rank {
+  font-weight: bold;
+  color: #a03bb7;
+}
+
+.user-entry .won {
+  color: #444;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .leaderboard-content {
+    flex-direction: column;
+  }
+
+  .interaction-grid {
+    height: auto;
+  }
+
+  .user-leaderboard {
+    width: 100%;
+  }
+}
+
+
+
+.mini-chart {
+  padding: 0px;
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 100%;
+  height: 60px; /* make sure it has actual height */
+  z-index: 2; /* chart above background */
+  pointer-events: none;
+  mix-blend-mode: screen; /* makes white stroke visible on colored bg */
+}
+
+
+
+
+
+
+/* Avatars & logos */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-pfp {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.proj-label-flex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.proj-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+
+
+/* Project and user profile images */
+.proj-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-bottom: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.user-pfp {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Search bar (same as Partners) */
+.search-wrapper {
+  margin-bottom: 40px;
+  max-width: 500px;
+  margin-inline: auto;
+  position: sticky;
+  top:60px;
+  z-index: 500;
+  scale: 0.9;
+}
+
+.partner-search {
+  width: 100%;
+  padding: 12px 18px;
+  font-size: 1rem;
+  border: 1px solid rgba(66, 63, 75, 0.219);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.863);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease;
+  font-family: 'Font1', sans-serif;
+}
+
+.partner-search:focus {
+  outline: none;
+  border-color: #7d5fff;
+  background: white;
+}
+
+
+
+
+.leaderboard-container {
+  text-align: center;
+  padding: 20px;
+  font-family: 'Font1', sans-serif;
+  color: #222;
+}
+
+.leaderboard-title {
+  color: rgb(255, 154, 204);
+  text-decoration: underline;
+  text-decoration-color: #27044e;
+  font-size: clamp(3.5rem, 5vw, 4rem);
+  font-weight: bold;
+  margin-bottom: 40px;
+}
+
+.leaderboard-content {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  padding:0px;
+  align-items: flex-start;
+}
+
+/* Left grid */
+.interaction-grid {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.interaction-rect {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 150px; 
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  border: 2px solid white;
+  position: relative;
+  overflow: hidden;
+  padding: 0px;
+  padding-bottom: 8px;
+}
+
+
+.interaction-rect:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+.interaction-rect.active {
+  outline: 3px solid #ffffff;
+  z-index: 2;
+  transform: scale(1.05);
+}
+
+.rect-label {
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  background: rgba(243, 243, 243, 0.062);
+  font-size: 1rem;
+  backdrop-filter: blur(3px);
+}
+
+.proj-name {
+  display: block;
+  font-weight: bold;
+  color:#ffffff;
+}
+
+.proj-interactions {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  color:#ffffffa4;
+}
+
+/* Right side leaderboard */
+.user-leaderboard {
+  flex: 0.7;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  padding: 0px;
+}
+
+.user-leaderboard h2 {
+  margin-bottom: 20px;
+  color: #27044e;
+  font-size: 1.8rem;
+  padding: 8px;
+}
+
+.user-leaderboard ul {
+  list-style: none;
+  padding: 8px;
+  margin: 0;
+}
+
+.user-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 1.1rem;
+}
+
+.user-entry .rank {
+  font-weight: bold;
+  color: #a03bb7;
+}
+
+.user-entry .won {
+  color: #444;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .leaderboard-content {
+    flex-direction: column;
+  }
+
+  .interaction-grid {
+    height: auto;
+  }
+
+  .user-leaderboard {
+    width: 100%;
+  }
+}
+
+.mini-chart {
+  padding: 0px;
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* Avatars & logos */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.proj-label-flex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.proj-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-bottom: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.user-pfp {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Search bar */
+.search-wrapper {
+  margin-bottom: 40px;
+  max-width: 500px;
+  margin-inline: auto;
+  position: sticky;
+  top:60px;
+  z-index: 500;
+  scale: 0.9;
+}
+
+.partner-search {
+  width: 100%;
+  padding: 12px 18px;
+  font-size: 1rem;
+  border: 1px solid rgba(66, 63, 75, 0.219);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.863);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease;
+  font-family: 'Font1', sans-serif;
+}
+
+.partner-search:focus {
+  outline: none;
+  border-color: #7d5fff;
+  background: white;
+}
+
+/* --- NEW: Pagination Styles --- */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 8px;
+}
+
+.pagination button {
+  background-color: #bba8ff;
+  color: #ffffff;
+  border: none;
+  padding: 8px 12px;
+  margin: 0 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Font1', sans-serif;
+  transition: background-color 0.2s, color 0.2s;
+ border-radius: 50px;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color:  hsl(249, 100%, 74%);
+  color: white;
+  border: 8px solid  hsl(249, 100%, 85%);
+  font-weight: bold;
+  opacity: 0.8;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pagination .page-btn.active {
+  background-color:  hsl(249, 100%, 74%);
+  color: white;
+  border: 8px solid  hsl(249, 100%, 85%);
+  font-weight: bold;
+}

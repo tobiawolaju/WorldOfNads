@@ -1,0 +1,15 @@
+[
+  { "id": "kizzy", "imageUrl": "/partners/kizzy.webp", "alt": "Kizzy" },
+  { "id": "mayan", "imageUrl": "/partners/mayan.webp", "alt": "Mayan" },
+  { "id": "rugrumble", "imageUrl": "/partners/rugrumble.webp", "alt": "Rug Rumble" },
+  { "id": "beanexchange", "imageUrl": "/partners/beanexchange.webp", "alt": "Bean Exchange" },
+  { "id": "grimmys", "imageUrl": "/partners/grimmys.webp", "alt": "Grimmys" },
+  { "id": "dirol", "imageUrl": "/partners/dirol.png", "alt": "Dirol" },
+  { "id": "prismax", "imageUrl": "/partners/prismax.webp", "alt": "Prismax" },
+  { "id": "rarebetsports", "imageUrl": "/partners/rarebetsports.webp", "alt": "RareBetSports" },
+  { "id": "exchange", "imageUrl": "/partners/exchange.webp", "alt": "Exchange" },
+  { "id": "magma", "imageUrl": "/partners/magma.webp", "alt": "Magma" },
+  { "id": "perpl", "imageUrl": "/partners/perpl.webp", "alt": "Perpl" },
+  { "id": "neverland", "imageUrl": "/partners/neverland.webp", "alt": "Neverland" },
+  { "id": "nadfun", "imageUrl": "/partners/nadfun.webp", "alt": "Nadfun" }
+]
