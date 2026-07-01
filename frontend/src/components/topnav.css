@@ -1,0 +1,229 @@
+/* Navbar Container with glassmorphism */
+.topnav {
+  --topnav-blur: 3px;
+  --topnav-fade-height: 8px;
+  padding: 4px 12px;
+  color: #111111;
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: space-between;
+  align-items: center;
+  height: 42px;
+  margin: 0;
+  position: fixed;
+  overflow: visible;
+  isolation: isolate;
+  top: 0px;
+  z-index: 999;
+  background-color: transparent;
+  backdrop-filter: blur(var(--topnav-blur));
+  -webkit-backdrop-filter: blur(var(--topnav-blur));
+  transition: transform 0.25s ease, width 0.25s ease, background-color 0.25s ease;
+}
+
+
+
+.topnav::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: calc(-1 * var(--topnav-fade-height));
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 58%,
+    rgba(255, 255, 255, 0) 84%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  backdrop-filter: blur(var(--topnav-blur));
+  -webkit-backdrop-filter: blur(var(--topnav-blur));
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 68%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 68%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.topnav > * {
+  position: relative;
+  z-index: 1;
+}
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  .topnav {
+    transform: scale(var(--rev-scale, 1.25));
+    transform-origin: top left;
+    width: calc(100% / var(--rev-scale, 1.25));
+  }
+}
+
+/* Navigation Links - Always White */
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-links .link {
+  font-size: 16px;
+  text-decoration: none;
+  color: inherit;
+  opacity: 0.85;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.nav-link-with-badge {
+  position: relative;
+  display: inline-block;
+}
+
+.nav-links .link:hover,
+.nav-links .active-link {
+  color: inherit !important;
+  opacity: 1;
+  font-weight: bold;
+}
+
+/* Hamburger Button - Always White */
+.hamburger-btn {
+  color: inherit;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: none;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -10px;
+  right: -12px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: #000000;
+  background: #ffeb3b;
+  border: 3px solid #ffffff;
+  border-radius: 0;
+  transform: skew(-12deg);
+  box-sizing: border-box;
+}
+
+.notif-badge-text {
+  transform: skew(12deg);
+}
+
+/* Drawer Menu - Dark Mode styled so white links stand out */
+.drawer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 1001;
+  padding: 20px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #111111, #1a1a1a);
+  animation: slideDown 0.3s ease-in-out;
+}
+
+.drawer-links {
+  margin-top: 50px;
+}
+
+.drawer-links .link {
+  display: block;
+  margin: 20px 0;
+  font-size: 24px;
+  text-decoration: none;
+  color: #ffffff;
+  opacity: 0.85;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.drawer-links .link:hover,
+.drawer-links .active-link {
+  color: #ffffff !important;
+  opacity: 1;
+  font-weight: bold;
+}
+
+/* Close Button - Always White */
+.close-btn {
+  color: #ffffff;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+
+@media (prefers-color-scheme: light) {
+  .drawer {
+    background: linear-gradient(180deg, #ffffff, #f4f4f4);
+  }
+
+  .drawer-links .link,
+  .drawer-links .link:hover,
+  .drawer-links .active-link,
+  .close-btn {
+    color: #111111 !important;
+  }
+}
+
+/* Media Query for Mobile */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+
+  .hamburger-btn {
+    color: inherit;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    display: block;
+  }
+
+}
+
+/* Page Overrides - Simplified to guarantee white text */
+.topnav.home-nav .nav-links .link {
+  color: inherit;
+}
+
+.topnav.home-nav .nav-links .link:hover,
+.topnav.home-nav .nav-links .active-link {
+  color: inherit;
+  opacity: 1;
+}
+
+.topnav.home-nav.home-nav-scrolled .nav-links .link,
+.topnav.home-nav.home-nav-scrolled .nav-links .link:hover,
+.topnav.home-nav.home-nav-scrolled .nav-links .active-link {
+  color: inherit;
+  opacity: 1;
+}
+
+/* Theme-aware navbar text colors (mobile + desktop) */
+@media (prefers-color-scheme: dark) {
+  .topnav {
+    color: #ffffff;
+    background-color: transparent;
+  }
+}

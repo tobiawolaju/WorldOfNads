@@ -1,0 +1,160 @@
+.admin-contracts {
+  max-width: 1100px;
+  margin: 0 auto;
+  color: #111;
+  font-family: "Font1", sans-serif;
+}
+
+.admin-contracts__header {
+  margin-bottom: 24px;
+}
+
+.admin-contracts__header h1 {
+  font-size: 1.6rem;
+  margin: 0 0 6px;
+  color: #111;
+}
+
+.admin-contracts__header p {
+  margin: 0;
+  color: #555;
+}
+
+.admin-contracts__error {
+  display: inline-block;
+  margin-top: 10px;
+  color: #b42318 !important;
+  font-weight: 600;
+}
+
+.admin-contracts__success {
+  display: inline-block;
+  margin-top: 10px;
+  color: #15803d !important;
+  font-weight: 600;
+}
+
+.admin-contracts__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.admin-contracts__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid #f0f0f0;
+}
+
+.admin-contracts__item-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-contracts__label {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #111;
+}
+
+.admin-contracts__desc {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.admin-contracts__address {
+  font-size: 0.75rem;
+  color: #777;
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.admin-contracts__balance {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #5b4fff !important;
+  margin: 4px 0;
+}
+
+.admin-contracts__withdraw {
+  margin-top: 8px;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  background: #5b4fff;
+  color: #fff !important;
+  cursor: pointer;
+  transition: background 0.2s;
+  align-self: flex-start;
+}
+
+.admin-contracts__withdraw:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.admin-contracts__withdraw:hover:not(:disabled) {
+  background: #4a3ee6;
+}
+
+@media (max-width: 640px) {
+  .admin-contracts__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-dashboard .admin-contracts {
+    color: #ffffff !important;
+  }
+  .admin-dashboard .admin-contracts__header h1 {
+    color: #ffffff !important;
+  }
+  .admin-dashboard .admin-contracts__header p {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+  .admin-dashboard .admin-contracts__error {
+    color: #ff6b6b !important;
+  }
+  .admin-dashboard .admin-contracts__success {
+    color: #4ade80 !important;
+  }
+  .admin-dashboard .admin-contracts__item {
+    background: #6553c7 !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+    color: #ffffff !important;
+  }
+  .admin-dashboard .admin-contracts__label {
+    color: #ffffff !important;
+  }
+  .admin-dashboard .admin-contracts__desc {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+  .admin-dashboard .admin-contracts__address {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+  .admin-dashboard .admin-contracts__balance {
+    color: #cdadff !important;
+  }
+  .admin-dashboard .admin-contracts__withdraw {
+    background: #cdadff !important;
+    color: #1a1a1a !important;
+  }
+  .admin-dashboard .admin-contracts__withdraw:hover:not(:disabled) {
+    background: #b894f0 !important;
+  }
+  .admin-dashboard .admin-contracts__withdraw:disabled {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
+}

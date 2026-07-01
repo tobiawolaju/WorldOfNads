@@ -1,0 +1,130 @@
+.admin-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 24px 60px;
+  color: #111;
+  font-family: "Font1", sans-serif;
+  background: transparent;
+}
+
+.admin-dashboard__header {
+  margin-bottom: 32px;
+}
+
+.admin-dashboard__header h1 {
+  font-size: 2.4rem;
+  margin: 0 0 8px;
+  color: #111;
+}
+
+.admin-dashboard__header p {
+  margin: 0;
+  color: #555;
+}
+
+.admin-dashboard__tabs {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+  align-items: center;
+  font-family: font2;
+  font-size: 1.8rem;
+  user-select: none;
+  margin-bottom: 40px;
+  margin-top: 32px;
+}
+
+.admin-dashboard__tab {
+  opacity: 0.35;
+  cursor: pointer;
+  transition: 0.5s;
+  scale: 0.8;
+  white-space: nowrap;
+  color: #111 !important;
+}
+
+.admin-dashboard__tab:hover {
+  opacity: 0.6;
+}
+
+.admin-dashboard__tab.active {
+  opacity: 1;
+  scale: 1.2;
+  color: #5b4fff !important;
+}
+
+.admin-dashboard__panel {
+  min-height: 400px;
+}
+
+/* Access code card (shown before gate is unlocked) */
+.admin-dashboard .analytics-auth__card {
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+  max-width: 420px;
+  width: 100%;
+  display: grid;
+  gap: 16px;
+  text-align: left;
+}
+
+.admin-dashboard .analytics-auth__card h1,
+.admin-dashboard .analytics-auth__card p {
+  color: #1a1a1a;
+}
+
+.admin-dashboard .analytics-auth__card input {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #cbd5f5;
+  color: #1a1a1a;
+}
+
+.admin-dashboard .analytics-auth__card button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #1d4ed8;
+  color: #fff !important;
+  font-weight: 600;
+  cursor: pointer;
+  justify-self: start;
+}
+
+.admin-dashboard .analytics-auth__error {
+  color: #dc2626 !important;
+  font-size: 13px;
+}
+
+/* Strip excessive padding from sub-pages rendered inside panel */
+.admin-dashboard__panel .admin-users,
+.admin-dashboard__panel .admin-contracts,
+.admin-dashboard__panel .admin-skins,
+.admin-dashboard__panel .analytics-page,
+.admin-dashboard__panel .analytics-auth {
+  padding: 0;
+  max-width: none;
+}
+
+.admin-dashboard__panel .analytics-auth {
+  min-height: 40vh;
+}
+
+@media (max-width: 640px) {
+  .admin-dashboard {
+    padding: 64px 16px 40px;
+  }
+  .admin-dashboard__header h1 {
+    font-size: 1.6rem;
+  }
+  .admin-dashboard__tabs {
+    font-size: 1.2rem;
+    gap: 18px;
+    margin-top: 20px;
+  }
+  .admin-dashboard__tab.active {
+    scale: 1.1;
+  }
+}

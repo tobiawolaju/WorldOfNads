@@ -1,0 +1,484 @@
+World of Nads: Tag Royale -- A Competitive Multi-Chain Arena Game
+by Tobiloba Awolaju (2026)
+
+Table of Contents
+1. WHAT IS WORLD OF NADS
+2. THE PROBLEM WITH WEB3 GAMING
+3. THE SOLUTION -- PLAY AND OWN
+4. GAMEPLAY -- HOW IT WORKS
+5. CHAIN MECHANICS -- MONAD AND SOLANA
+6. PRODUCT -- WHAT IS BUILT TODAY
+7. TECHNICAL ARCHITECTURE
+8. THE SKIN ECONOMY
+9. BUSINESS MODEL
+10. TOKENOMICS $WON
+11. ROADMAP WONs1
+12. TEAM
+13. RISK FACTORS
+14. CONCLUSION
+________________
+
+1. WHAT IS WORLD OF NADS
+Twenty players drop into an arena. One chicken spawns somewhere on the map. Hold it when the clock hits zero and the prize pool hits your wallet -- settled onchain.
+That is the entire game. Simple enough to understand in ten seconds. Deep enough that no two matches play the same way.
+World of Nads is a browser-based competitive Tag Royale. It runs at 60 frames per second on desktop and mobile Chrome. No download, no app store, no seed phrase required on the free tier. A player in Lagos, London, or Los Angeles opens a link and is in a match within fifteen seconds.
+Underneath is a hybrid architecture: smart contracts handle prize settlement and skin ownership. A WebSocket game server handles real-time physics and player sync -- because no blockchain today can settle individual game ticks at sub-20ms latency. This two-layer design is intentional and transparent. Off-chain handles what blockchains cannot. On-chain handles what centralized servers cannot.
+World of Nads is built for two audiences: Web3 natives who want real ownership and instant payouts, and Web2 gamers who just want something fun to play.
+The game deploys on Monad Testnet today with four live smart contracts. The architecture supports both Monad and Solana -- the two chains with sub-cent gas costs that make per-match micro-viable. Section 5 covers the chain-specific decisions.
+________________
+
+
+2. THE PROBLEM WITH WEB3 GAMING
+Web3 gaming has raised billions of dollars and retained almost nobody.
+The charts tell the same story every time. A new game launches. Token price rises. Players flood in chasing yield. Token price falls. Players leave overnight. The cycle repeats with a different name and a different token and the same outcome.
+This is not bad luck. It is bad architecture. The industry built financial instruments and called them games.
+
+
+Token Dependency: When a game's retention depends on its token price, it has no retention. It has speculation. The moment the financial incentive weakens -- and it always weakens -- the player has no reason to stay. There is no fun to return to because fun was never the point. The game was always a yield farm wearing a character skin.
+
+Pay to Win: Competitive integrity is the foundation of every game worth playing. Remove it and you do not have a game. You have a storefront where the wealthiest wallet wins and calls it skill. No skilled player stays in a game where their effort is overridden by someone else's credit card. No new player joins a game where losing is guaranteed until they spend enough to compete.
+
+The Bot Plague: Web3 projects spend millions on airdrop campaigns designed to acquire real users. The majority of recipients are automated scripts. A bot cannot feel excitement. A bot cannot tell a friend about a game. A bot cannot become a loyal player. It can only drain the prize pool and leave. The industry has accepted this as normal. It is not normal. It is a waste of capital.
+
+Fake Onchain Games: Most games that call themselves onchain are not onchain. The smart contract handles the token. The server handles everything else. The game state lives in a database the developer controls. If the developer disappears tomorrow the game disappears with them. If the server goes down the game goes down. Players are told they own their assets. They own a record of a transaction. The asset itself lives somewhere else and can be changed or destroyed.
+________________
+
+
+3. THE SOLUTION -- PLAY AND OWN
+Those four problems share a single root cause. The industry kept asking how to add blockchain to games instead of asking how to build games that blockchain makes fundamentally better. World of Nads starts from the second question.
+World of Nads is built on four principles:
+
+
+Fun First: The game has to be worth playing without any financial incentive attached. This is not a philosophical position. It is a survival strategy. World of Nads was designed to pass one test before anything else: would a Web2 gamer with no wallet and no interest in crypto play this for twenty minutes and come back tomorrow? The chicken mechanic is chaotic, readable, and immediately competitive. Twenty players, one objective, no complicated ruleset. The tension of holding the chicken while nineteen people chase you does not require understanding blockchain to feel real. It requires reflexes and decisions. That feeling is the product.
+
+Skill Based Equality: Nothing purchasable in World of Nads affects gameplay. A player with the rarest skin competes on exactly the same terms as a player with the default skin. Cosmetics are the only monetisation layer. They change how you look. They do not change how you perform.
+
+Instant Trustless Payouts: When a match ends the prize pool moves. The smart contract settles the match and funds transfer to the winner's wallet. Entry fees lock into the contract on deposit and release on settlement. No human holds the prize money at any point.
+
+Own What You Earn: Every skin in World of Nads is a limited supply onchain asset. When you own a skin you own it the way you own anything onchain -- completely, verifiably, permanently. You can equip it, transfer it, list it for sale, or hold it as supply runs out. You cannot do these things in any Web2 game.
+
+An Honest Note On V1
+World of Nads V1 uses a centralized relay server for real-time game physics and player synchronisation. This is a deliberate architectural choice.
+Real-time multiplayer at 60 frames per second requires sub-20ms latency. No blockchain can settle individual physics ticks at that speed. The relay handles what blockchains cannot -- moment to moment game state. The smart contract handles what centralized servers cannot -- trustless custody and settlement of prize funds.
+WONs2 introduces an open source relay node that anyone can deploy, a contract registry where nodes publish their WebSocket URLs, and a peer verification system. If the team disappears, the community spins up new nodes. The game continues. Section 11 covers the full roadmap.
+________________
+
+
+4. GAMEPLAY -- HOW IT WORKS
+
+The Arena & The Near-Miss Loop: Twenty players drop into an open desert arena from a bus. The map is large enough for strategic positioning and small enough that standing still is never safe. Terrain undulations create natural corridors. Scattered props -- shipping containers, wooden platforms, crates, abandoned structures -- create cover clusters where the most intense possession fights happen.
+A colored zone closes in throughout the match, compressing the playable space until the final thirty seconds force every remaining player into a small circle. The zone always collapses toward the center of the map. Map knowledge is skill expression.
+Matches last 3-5 minutes.
+
+The "Almost Winning" XP System: Retention is built on the WONsXP system. Even if you don't win the prize pool, every second of possession and every match completed earns you XP. XP gates access to high-tier skins and is permanently recorded onchain.
+
+The Chicken: One chicken spawns somewhere on the map at match start. Five possible spawn locations rotate unpredictably. Holding the chicken does three things simultaneously. First, it drains your stamina -- the longer you hold, the slower you become, preventing camping. Second, it earns you XP that streams toward your onchain account as a soulbound token. Third, the player holding the chicken when the timer reaches zero wins the prize pool.
+
+The Loot Box: Separate from the chicken, a loot box drops on the map mid-match with its own value. It can be stolen by any player who reaches it. Every time the loot box changes ownership it costs gas, deducted from the box's value. On Monad that gas cost is approximately $0.001 per transfer. On Solana approximately $0.00025. The box survives hundreds of steals while shrinking visibly. The HUD shows the loot box's current value live, creating a real-time economic decision: fight now and drain the box, or wait and steal at the right moment.
+
+The HUD -- Watching Money Move
+During a match the heads-up display shows:
+Prize Pool: Current value of the chicken. What the match winner receives.
+Your Earnings: XP accumulated from holding time. Ticks up every second. Gates high-tier skins.
+Loot Box: Current value of the loot box. Decreases with each steal.
+Your Wallet: Total XP earned this match so far.
+
+Match Format
+Players per match: 20
+Match duration: 3-5 minutes
+Platform: Browser, no download
+Device support: Mobile and desktop
+Entry: Free tier (playable with mock/sponsor matches) / Paid tier (sponsored real-MON matches)
+Prize settlement: Onchain, triggered by backend after match end
+Skin sync: Equipped skin loads in match, visible to all players
+
+Free To Play Layer
+World of Nads has a free entry tier where players can play without spending real MON. Sponsors fund prize pools for promotion. The free tier exists because Web2 gamers arrive curious and cautious. When they are hooked, conversion to paid matches is a single step. During V1 beta, all prize pools are intentionally limited.
+________________
+
+
+5. CHAIN MECHANICS -- MONAD AND SOLANA
+Most projects that describe themselves as blockchain games use the chain for one thing: token transfers. The game runs on a Web2 server. The blockchain processes payments. World of Nads uses the chain for settlement, skin ownership, match verification, and micro-reward distribution.
+
+Why Low Gas Cost Is A Game Design Variable
+Every blockchain transaction costs gas. On most L1s that cost is high enough that per-action micro-transactions are uneconomical. On Monad and Solana the cost per transaction is fractions of a cent -- $0.001 on Monad, ~$0.00025 on Solana. This makes per-second rewards, per-steal deductions, and instant settlement viable as game mechanics.
+
+Monad: The Current Deployment
+World of Nads is deployed on Monad Testnet with four live smart contracts: WONsMatchEngine (match creation, settlement, ERC-1155 winner/participation NFTs), WONsLootBox (prize pool with MON streaming and steal mechanics), WONsXP (soulbound ERC-20 XP), and WONsSkins (ERC-1155 skin marketplace with XP gating).
+Mechanic 1 -- The Loot Box Value Destruction: A loot box drops mid-match with a value funded by the sponsor. Every steal is tracked. On Monad the gas cost per steal is ~$0.001, deducted from the box value. With a starting value of 20 MON, the box can survive thousands of steals. This creates a real economic decision: fight aggressively and drain the box, or wait and steal at the right moment.
+
+Mechanic 2 -- XP Per Second (Soulbound Rewards): XP is tracked server-side per second of chicken possession and minted as soulbound tokens at match end. On Monad the gas cost to mint XP for all participants is approximately $0.72 per match. This is economically viable. On Ethereum the same operation would cost over $10,000.
+
+Mechanic 3 -- Prize Settlement: Entry fees lock into the match contract on match creation. When the match ends, the backend (trusted authority) calls settleMatch on the contract. The contract verifies the signature, pays the winner, and mints participation NFTs. No human handles the funds at any point.
+
+Solana: The Second Deployment Target
+Solana offers even lower per-transaction fees (~$0.00025) and the largest gaming ecosystem in crypto. The game's architecture is chain-agnostic at the relay and frontend layer. The frontend already has full Solana wallet support via Privy. Porting settlement logic to Solana requires Solana-native smart contracts (Anchor/Sealevel) for match settlement, loot box mechanics, and skin management. The game server and client remain identical; only the on-chain settlement layer changes.
+Solana's high throughput and sub-second finality make it an ideal second chain for World of Nads. The per-steal loot box cost is even lower, and the ecosystem has proven gaming infrastructure (marketplaces, wallets, stablecoins).
+
+The Math Summary
+On Ethereum: Loot box dies after ~7 steals. Micro-reward gas per match: $10,800. Viable as game mechanic: No.
+On Monad: Loot box survives 20,000+ steals. Micro-reward gas per match: $0.72. Steal cost per action: $0.001. Viable: Yes.
+On Solana: Loot box survives 80,000+ steals. Micro-reward gas per match: ~$0.18. Steal cost per action: ~$0.00025. Viable: Yes.
+The difference between $10,800 and $0.72 (or $0.18 on Solana) is not a technical footnote. It is the difference between a mechanic that exists and one that cannot.
+World of Nads is on Monad because Monad makes the game possible. It targets Solana because Solana makes it even cheaper and connects the largest gaming audience in crypto.
+
+5.5 Why Not Simulate Off-Chain?
+A common critique is: "Why not simulate the loot box decay on a centralized server and just settle the final balance at match end?"
+World of Nads uses onchain settlement for three reasons:
+
+1. Verifiable Truth. An off-chain loot box value is a number in a database the developer controls. An onchain loot box is a smart contract. Its value is immutable record.
+
+2. Ecosystem Composability. By settling onchain, the game becomes composable infrastructure. Other smart contracts -- betting protocols, analytics dashboards, reward aggregators -- can interact with match results while the game is live.
+
+3. Continuous Security. Settling only at match end creates a lump-sum risk. If the server crashes in the final ten seconds, the player loses everything. By committing match results and micro-rewards onchain, what you earn is yours regardless of server availability.
+
+The Gas Sustainability Model
+Who pays for onchain transactions in a free-to-play game? The loot box carries its own gas. Every steal deducts gas from the box's pool. XP minting is subsidized by the protocol or sponsor fees in sponsored matches.
+Match costs:
+- XP commits: ~$0.72/match on Monad, ~$0.18/match on Solana (paid from sponsor or protocol)
+- Loot box steals: deducted from loot box pool (self-funding)
+- Match settlement: one transaction
+This ensures the game remains gas-free for the end user while the economy sustains itself.
+________________
+
+
+6. PRODUCT -- WHAT IS BUILT TODAY
+World of Nads is not a concept document. Everything described exists and runs.
+
+WHAT EXISTS RIGHT NOW
+
+The Game: A fully playable 3D browser Tag Royale running at 60fps on desktop and mobile Chrome. No download, no app store, no seed phrase required. The core loop is complete and stable: movement, physics, stamina drain, chicken possession, zone shrinking, match timer, and match settlement all function. The game has been playtested across multiple sessions including mobile devices on cellular connections.
+
+The Map: A single handcrafted desert arena with terrain undulations creating natural corridors, cover clusters (containers, platforms, crates, structures), named landmarks, a colored zone system that shrinks throughout the match, five rotating chicken spawn points, and a clean void boundary.
+
+The Skin System: Eight character skins with unique identities and rarity tiers. Skins are selected from the dashboard and synchronize into gameplay. The system is live. Default skin is free on account creation. Minted skins demonstrate the full onchain minting flow.
+
+The Store: A functioning cosmetic store with skin preview, equip system, owned skin tracking, and purchase flow. Supply remaining is shown for each skin. Sold-out skins transition to secondary market view.
+
+Authentication: Privy integration handles wallet creation and login. Players sign in with Twitter, Google, Discord, or email. No seed phrase. No browser extension. Works on both EVM and Solana wallets.
+
+The Dashboard: Player dashboard showing equipped skin, collection, match history, earnings, leaderboard position, wallet balance, events, and rewards. Admin panel for sponsors to host and schedule matches, view analytics, and monitor contract activity.
+
+Backend Infrastructure: Node.js WebSocket relay server handling real-time game state at 20Hz -- player positions, physics, stamina, chicken possession, match timer. Hosted on Google Cloud Run with auto-scaling.
+
+Smart Contracts -- Monad Testnet: Four deployed contracts: WONsMatchEngine, WONsLootBox, WONsXP, WONsSkins. Match creation, prize pool locking, player entry, winner settlement, and XP minting all functional. Contracts not yet audited. Prize pools intentionally limited during beta.
+
+WHAT IS IN PROGRESS
+FPS optimisation: Target 45fps minimum on mid-range Android. Viewport scaling, WASM SIMD, shadow reduction, visibility culling, batched physics at 30hz.
+Skybox replacement: Eliminating current cloud rendering artifacts.
+Mint contract: Skin minting on Monad testnet live. Full onchain minting at mainnet.
+Loot box steal onchain: The onchain steal() function exists in contractClient but is not yet wired into the live game loop. Currently steals are resolved off-chain by the server.
+Per-second XP streaming: XP is currently minted in a single batch at match end. Per-second commit batching is designed and pending implementation.
+
+WHAT IS PLANNED FOR V1 COMPLETION
+Secondary market: Sold-out skins transition to peer listing and bidding. Smart contract escrow for transfers. 5% protocol fee + 5% creator royalty on every secondary sale.
+100-player public playtest: 20+ confirmed players. 10 Monad community. 10 Web2 gamers. Onchain wallet recording. Dune Analytics dashboard published.
+Smart contract audit: Scheduled after public playtest. Prize pool caps remain until audit complete.
+Solana contract deployment: Porting settlement, loot box, XP, and skin contracts to Solana using Anchor framework.
+
+WHAT IS HONEST ABOUT V1
+The relay server is centralized. One team controls it. If it goes down the game goes down. This is disclosed openly. WONs2 roadmap addresses it.
+The smart contracts are unaudited. Prize pools are capped during beta. No significant financial risk on unaudited contracts.
+The deployment is testnet. Mainnet migration occurs after audit.
+These are not weaknesses hidden in footnotes. They are the honest state of a V1 product built by one person.
+________________
+
+
+7. TECHNICAL ARCHITECTURE
+World of Nads uses a three-layer architecture that assigns each responsibility to the layer best suited to handle it.
+
+LAYER 1: GAME CLIENT (GODOT + WASM)
+The game client runs entirely in a browser using the Godot Engine exported to WebAssembly.
+Rendering: Godot engine, 60fps desktop target, 45fps mobile target
+Export: WebAssembly with WASM SIMD and threaded builds for ~20-30% performance gain over baseline
+Textures: Single color palette atlas, under 500KB, WebP format
+Models: GLB format, under 50KB per model, LOD switching at distance
+Mobile detection: UA string on load, viewport scaling 0.75 on mobile, shadow resolution 512, zero MSAA
+Asset loading: All assets preloaded during server wake countdown, zero mid-match stutter
+Chunk system: The world is divided into proximity-based chunks loaded based on player location. Full detail at 0-30m, LOD 2 meshes at 30-80m, billboard sprites at 80-150m, location data only beyond 150m.
+
+LAYER 2: AUTHORITATIVE GAME SERVER (NODE.JS + WEBSOCKET)
+The relay is a Node.js WebSocket server hosted on Google Cloud Run / Render. It is the single source of truth for live match state.
+Player input arrives: <1ms processing
+State broadcast: Every 50ms (20Hz)
+Physics tick: 20Hz (decoupled from render)
+Chicken possession update: Real-time, server-authoritative
+Stamina calculation: Server-authoritative. Client cannot fake stamina.
+Zone shrink update: Broadcast every second
+Match timer: Server-authoritative. Client display only.
+The server performs deterministic reconciliation -- checking player velocity and chicken proximity to prevent teleporting or speed-hacking. State compression broadcasts only changed data (delta compression) to minimize packet size for mobile browsers on low-bandwidth connections.
+At match end the relay signs the result (winner address, match ID, final timestamp) with a private key. This signed result is submitted to the settlement contract. The contract verifies the signature before releasing funds.
+Cloud Run / Render Scaling: Backend instances scale automatically with player count. Each match instance is isolated. Costs scale with usage.
+- 1-100 concurrent matches: ~$50/month
+- 100-500 concurrent matches: ~$150/month
+- 500-2,000 concurrent matches: ~$400/month
+
+LAYER 3: ON-CHAIN SETTLEMENT (MONAD / SOLANA)
+The settlement layer lives onchain. On Monad today, four contracts handle the complete match lifecycle:
+
+WONsMatchEngine -- Creates and settles sponsored matches. Sponsor calls createSponsoredMatch which locks the prize pool. The backend calls settleMatch with the winner address and participant list. The contract pays the winner (80%), distributes to loot box (20%), and mints ERC-1155 winner/participation NFTs.
+WONsLootBox -- Holds the loot box prize pool. Supports fundPool, streamMON (award MON to chicken holders), batchStream, steal (redirect stream on chicken steal, deducts 0.001 MON gas), settle (distribute remaining to final holder), drainPool.
+WONsXP -- Soulbound ERC-20 XP token. Only the backend (trusted minter) can mint XP. Non-transferable by design. XP gates skin purchases.
+WONsSkins -- ERC-1155 skin marketplace. Create skin (admin), mint skin (player, XP + MON gated), burn skins (common tier only, 2 minimum, triggers rare mint from reserve).
+
+On Solana (planned), equivalent Anchor programs will handle the same logic: a match program, loot box program, XP token (SPL with transfer restrictions), and skin collection (Compressed NFTs or Metaplex).
+
+Bridge Architecture (WONs2)
+The bridge separates real funds from game operations. Not yet deployed -- planned for WONs2.
+Player deposits real MON/SOL into the bridge contract. Testnet tokens credited to in-game balance. All game contract interactions happen on testnet. Real funds held in bridge are protected. Exploit drains testnet tokens, not real funds.
+
+CLIENT ARCHITECTURE
+Frontend Shell: React + TypeScript (Vite) with Privy wallet authentication. Supports both EVM and Solana wallets. Connects to Firebase for match/user data.
+Godot Client: WebAssembly export embedded in the React app. Receives username, skin, and match context. Connects to the WebSocket game server.
+Communication flow: Player opens browser -> React app creates/joins match via Firebase -> Godot client loads -> WebSocket connects to game server -> match plays out -> result submitted onchain -> React app shows result.
+
+DATA STORES
+Firebase RTDB: Player data, match metadata, reward records, wallet addresses. Real-time sync for lobby and match status.
+PostgreSQL: Analytics pipeline -- event tracking, aggregation, admin dashboards.
+In-memory server state: Connected players, chicken holder and position, match timer, recent event history (last 200). This is the authoritative state for active rounds.
+
+WONs2 -- THE DECENTRALISATION ARCHITECTURE
+WONs2 introduces a fully decentralized relay network. The architecture is designed. Implementation is the second funded milestone.
+Anyone clones the open source relay -> relay hashes its own code on startup -> hash compared to canonical hash stored in onchain contract -> mismatch = relay refuses to start -> match = relay connects to peer nodes -> peer consensus on code integrity -> relay registers WebSocket URL in contract -> frontend reads relay list from contract -> player connects to first live relay -> if team disappears, community spins up new relays, game continues.
+The frontend follows the same pattern: IPFS deployment with content hash committed to an onchain contract. Any gateway serving the correct content hash is valid. The smart contract is the only permanent component. Everything else can be replaced, forked, or redeployed.
+________________
+
+
+8. THE SKIN ECONOMY
+Every skin in World of Nads is a limited supply onchain asset. Not a license to display an image. Not a database entry a company controls. An asset recorded onchain that belongs to the wallet that holds it -- completely, verifiably, permanently.
+Skins are gated by XP. You cannot buy a Seraphim with MON alone -- you must have earned enough XP by holding the chicken across matches. XP is soulbound and non-transferable. It cannot be bought or botted. It must be earned in-game. This replaces pay-to-win with play-to-unlock.
+
+Ownership That Means Something
+When you buy a skin in Fortnite you receive permission to display that skin while Fortnite exists, while your account remains in good standing, and while Epic Games chooses to honor that permission. When you own a skin in World of Nads the ownership record lives onchain. No team decision removes it. No server shutdown deletes it. The asset is yours because the chain says so.
+
+The Economic Model
+World of Nads V1 ships with 8 founding skins across four rarity tiers -- Common, Rare, Epic, Legendary. Every skin operates on three rules enforced by the smart contract:
+Supply is fixed at deployment. Once a skin's mint cap is reached it cannot be increased.
+Every transfer costs gas and generates royalties. The smart contract deducts a creator royalty and a protocol fee automatically on every peer-to-peer transaction.
+Skins are designed with cultural tension. Paired opposites, community archetypes, limited-edition collaborations.
+
+The Secondary Market
+When a skin's primary supply is exhausted it transitions to a peer-to-peer listing view. Three mechanisms are available:
+Fixed Price: Seller sets price. Buyer clicks buy. Instant transfer.
+Open Bid: Buyer submits offer. Seller accepts any bid. Funds held in escrow.
+Timed Auction: Countdown timer. Highest bidder at expiry wins. Contract executes automatically.
+Players can also make unsolicited offers on any skin regardless of listing status.
+
+Revenue Split
+Every skin transaction splits automatically through the smart contract.
+Primary sale: 10% protocol fee to treasury, 90% to team wallet.
+Secondary sale: 5% creator royalty to founder wallet (permanent, immutable), 5% protocol fee to treasury, 90% to current holder.
+The creator royalty is hardcoded into the contract at deployment. It pays on every secondary transaction for as long as the contract exists.
+
+The Burn Mechanic
+Two common skins can be burned -- permanently destroyed -- in exchange for one random rare or epic skin from a fixed reserve pool. Burned skins are removed from circulation permanently. Net supply decreases.
+
+An Expanding Roster
+V1 is the foundation. The skin roster grows through partner collaborations (Web3 projects, NFT collections commission skins through the IP licensing registry), seasonal drops (limited-time skins with smallest supply caps, never return after their window closes), and DAO governance (in WONs2, community proposes and votes on new skin series).
+
+What Fortnite Cannot Do
+Fortnite has more players, more skins, more revenue. World of Nads is not competing with Fortnite on scale. It is offering something Fortnite structurally cannot offer: actual ownership of the asset you paid for, in a market that never closes, on a chain that never goes down.
+________________
+
+
+9. BUSINESS MODEL
+World of Nads generates revenue from three independent streams.
+
+The Design Principle
+Every revenue mechanism passes one test: does it make the game better or worse for the player who does not spend money? A player who never spends a single MON beyond their entry fee experiences the full competitive game. They can win matches, top the leaderboard, earn XP, and acquire skins through the burn mechanic. The game does not punish non-spenders.
+
+Stream 1 -- B2C Player Revenue
+Battle Pass: Monthly subscription at $1-$2 giving access to premium match tiers with larger prize pools and exclusive seasonal cosmetics. No gameplay advantage.
+Month 1: 200 subscribers = $200-$400
+Month 2: 500 subscribers = $500-$1,000
+Month 3: 1,000 subscribers = $1,000-$2,000
+Month 4: 2,000 subscribers = $2,000-$4,000
+
+Skin Sales: Primary skin sales generate one-time revenue at launch. Launch week projection (realistic 20% conversion): $7,000-$10,000.
+
+Premium Match Tickets: Beyond the battle pass, high-stakes match tickets at $5-$10 per entry. Protocol takes 10%.
+3 premium matches per day x $200 prize pool x 10% fee = $60/day = $1,800/month.
+
+Stream 2 -- B2B Sponsor Revenue
+Web3 projects spend significant capital on community activation and user acquisition. Most goes to airdrop campaigns that reach bots. World of Nads offers a branded tournament where real players compete for prizes the sponsor funds, with every participant wallet recorded onchain.
+Pricing: Pilot match $200-$500, Standard package $500-$1,000, Premium package $1,000-$3,000.
+4-month pipeline total: $5,900-$13,000.
+
+Stream 3 -- Secondary Market Royalties
+Every peer-to-peer skin transfer pays a 5% creator royalty. Conservative month 2-4 estimates: $40/month growing to $500-$2,000/month by year end.
+
+The Combined Picture
+Month 1: $7,600 (mostly skin sales)
+Month 2: $2,490 (recurring building)
+Month 3: $4,500
+Month 4: $7,800
+4-month cumulative: ~$22,390
+These projections assume 500 DAU by month 1 and 2,000 DAU by month 4. The model does not depend on a single launch spike. It builds recurring revenue that compounds with player growth.
+
+Unit Economics
+Cost to acquire one player: $0 (organic growth, no paid ads)
+Revenue per paying player: $1-$9
+Revenue per sponsor: $200-$3,000
+Protocol fee per match: 10% of prize pool (automatic)
+Creator royalty per secondary trade: 5% (automatic, permanent)
+The model is capital efficient by necessity. Built by one person with no budget.
+________________
+
+
+10. TOKENOMICS -- $WON
+$WON does not exist yet.
+This section describes the planned token structure for WONs2. The token launches after the game proves retention metrics, after smart contracts are audited, and after the player base is large enough to give the token genuine utility. A token launched before product-market fit is a liability.
+
+What $WON Is
+$WON is a utility and governance token. Currency of the World of Nads ecosystem -- used to buy cosmetics, enter premium matches, participate in governance votes, and stake for rewards. Prize pools are settled in USDC/USDT, never in $WON. This separation prevents the death spiral that has killed every token-dependent Web3 game before it.
+
+What $WON Is Not
+$WON is not an investment, a security, or a claim on revenues. Holding $WON gives access to the ecosystem and a voice in governance. No marketing material will ever promise or imply price increase.
+
+Token Parameters
+Token name: $WON
+Total supply: 1,000,000,000 (1 billion)
+Token standard: ERC-20 on Monad / SPL on Solana
+Primary utility: Cosmetics, Battle Pass access, Premium match entry, Governance voting, Staking rewards (WONs2)
+Prize currency: USDC/USDT only. Never $WON.
+
+Token Allocation
+Community Rewards: 40% - 400,000,000 $WON. Distributed to players over 5-10 years based on match activity. No cliff. Daily emission tied to onchain activity.
+Ecosystem and Treasury: 20% - 200,000,000 $WON. Marketing, tournament prize top-ups, listing fees, partnerships. Linear over 4 years.
+Investors: 15% - 150,000,000 $WON. 1 year cliff, then linear over 24-36 months.
+Team and Advisors: 15% - 150,000,000 $WON. 1 year cliff, then linear over 36-48 months.
+Beta Testers and Airdrop: 5% - 50,000,000 $WON. 50% at TGE, 50% over 3 months.
+Liquidity and Market Making: 5% - 50,000,000 $WON. 100% at TGE, locked in liquidity pools for minimum 12 months.
+
+Token Launch Conditions
+$WON launches when: (1) 2,000 DAU sustained for 30 days, (2) Smart contracts fully audited, (3) Legal opinion obtained. If these conditions are not met the token does not launch.
+
+The Dual Asset Model -- Why It Protects Everyone
+Prize pools and winnings are in USDC/USDT -- stable value regardless of crypto market conditions. $WON holders benefit if the game grows. This is the difference between a sustainable game economy and a Ponzi scheme with gameplay attached.
+________________
+
+
+11. ROADMAP -- WONs1
+World of Nads is built in two major versions. WONs1 proves the game works. WONs2 makes it permanent.
+WONs1 is the version that exists today plus the features required to validate the core thesis. Centralized where it needs to be, onchain where it matters.
+STATUS: In progress
+TIMELINE: 4 months
+
+WONs1 DELIVERABLES
+
+MONTH 1 -- FOUNDATION
+FPS optimisation: 45fps minimum on mid-range Android Chrome. Viewport scaling, WASM SIMD, shadow reduction, visibility culling, batched physics at 30hz.
+Skybox replacement: Cloud artifacts eliminated. Clean visual horizon.
+8 skins live in store: All with correct supply caps. Secondary market UI for sold-out skins.
+Smart contracts on Monad testnet: MatchEngine, LootBox, XP, Skins all functional.
+Solana contracts begin: Port settlement logic to Anchor framework.
+20-player public playtest: 10 Monad community. 10 Web2 gamers. Onchain wallet recording. Dune Analytics dashboard.
+Community Manager hired: Part-time. Discord setup. Daily match scheduling.
+Partnership Lead hired: Part-time. First sponsor outreach.
+
+MONTH 2 -- MECHANICS LIVE
+Loot box contract onchain: Steal mechanic wired into live game loop. HUD showing live value.
+Micro-rewards system: Per-second hold tracking with 5-second onchain commit batching.
+Battle pass launched: $1-$2 monthly subscription. Premium match tier access.
+Streamer programme launched: Referral link system with onchain wallet attribution.
+Solana contracts live on testnet: Match, loot box, XP, and skin programs deployed.
+Target metrics: 500 DAU. 2-3 active sponsors. First $1,000 revenue.
+
+MONTH 3 -- RETENTION AND SCALE
+Secondary market live: Fixed price, open bid, timed auction, unsolicited offers.
+Premium match tickets: $5-$10 individual entry. High-stakes prize pools.
+Burn mechanic live: Two commons burned for one rare. Supply permanently decreases.
+Smart contract audit begins: Recognised firm engaged. Prize pool caps maintained.
+First streamer skin minted: 500 supply. Co-designed with streamer.
+Target metrics: 1,000 DAU. 5-7 active sponsors. $4,000-$6,000 monthly revenue.
+
+MONTH 4 -- VALIDATION COMPLETE
+Smart contract audit complete: All findings addressed. Prize pool caps raised.
+$WON token architecture finalised: Legal opinion obtained. TGE conditions monitored.
+WONs2 architecture documented: Open source relay spec, contract registry, IPFS deployment, DAO framework.
+Solana mainnet deployment: Contracts live on Solana mainnet.
+Evidence package assembled: Dune Analytics, sponsor receipts, revenue evidence.
+Target metrics: 2,000 DAU. 20% paying $1+ monthly. $7,000-$10,000 monthly revenue.
+
+WONs2 -- MAKE IT PERMANENT
+WONs2 is the decentralization milestone. Funded separately. Every decision in WONs1 was made with WONs2 in mind.
+Relay decentralisation: Open source relay on GitHub. Code hashing and verification. Peer consensus. WebSocket URL registry in contract.
+Frontend decentralisation: IPFS deployment. Content hash committed to onchain contract. Client verifies CID before loading.
+DAO governance: $WON holders propose and vote. Covers relay hash updates, game parameters, treasury spending, skin approvals.
+IP licensing registry: Partner skin collaborations approved by DAO. Revenue split hardcoded.
+Full decentralisation test: Team deletes original relay and frontend. Game continues via community nodes.
+The transition from WONs1 to WONs2 is invisible to the player. The game does not stop. The economy does not reset. The only thing that changes is who controls the infrastructure.
+________________
+
+
+12. TEAM
+This is not a project starting from scratch. It is a project that has already delivered a fully functional game.
+
+The Founder
+Tobiloba Awolaju -- Founder, Lead Developer, & Architect
+Technical breadth across the full Web3 gaming stack: Godot (WASM), Node.js (WebSockets), Solidity (EVM), and React.
+Optimization specialist: Built a high-performance 3D multiplayer engine optimized for mobile browsers.
+Delivered the entire V1 ecosystem solo -- proving that vision and engineering discipline can outperform large, venture-backed teams at early stages.
+
+The Solo Founder Strategy
+By handling core engineering and design personally, the founder ensures unified vision, zero overhead (100% of resources toward product development), and strategic equity preservation for high-impact hires post-validation.
+
+The Support Network
+Community & Growth Lead (Month 2): Discord ecosystem, daily match coordination, Web2-to-Web3 onboarding.
+Partnership & Lead (Month 2): B2B sponsor revenue, branded tournaments, streamer collaborations.
+
+Technical Expansion (Post-2,000 DAU)
+Senior Game Engineer: Open source relay network and rollback netcode.
+Smart Contract Security Engineer: DAO governance and IP licensing registry.
+
+Target Advisory
+World of Nads is identifying a Senior Advisor from a major game studio or Web3 infrastructure project for economy balancing, global scaling guidance, and strategic partnerships.
+________________
+
+
+13. RISK FACTORS
+Every project that publishes a whitepaper without a risk section is either hiding something or has not thought carefully enough about what could go wrong.
+
+Risk 1 -- Smart Contract Vulnerability: The V1 settlement contracts are unaudited. An undiscovered vulnerability could allow an attacker to drain prize funds.
+Severity: High | Likelihood: Low-Medium
+Mitigation: Prize pool caps enforced during beta. Contracts are intentionally minimal (smaller surface = smaller risk). Audit scheduled for month 3. Bridge architecture (WONs2) separates real funds from game operations.
+
+Risk 2 -- Relay Server Centralisation: The V1 relay server is a single point of failure. If it goes down, matches cannot run.
+Severity: Medium | Likelihood: Low (Cloud Run auto-scaling)
+Mitigation: Multiple instances in parallel. Signed result architecture -- relay signs results, contract verifies signature. WONs2 decentralisation removes this risk entirely.
+
+Risk 3 -- Player Retention Below Target: The 2,000 DAU target assumes the core loop retains players. If retention is lower, revenue targets are not met.
+Severity: High | Likelihood: Medium
+Mitigation: Referral system (referred players retain better). Economic retention layer (skin ownership, XP accumulation, micro-rewards). Milestone structure bounds downside.
+
+Risk 4 -- Regulatory Exposure: Prize pool mechanics may attract scrutiny. Entry fees may be classified as gambling. Token sales may be classified as securities.
+Severity: High if triggered | Likelihood: Low with correct structuring
+Mitigation: Token launches only after legal opinion obtained. Prize pools structured as skill competitions, not gambling. No financial return promises. Delaware C-Corp established.
+
+Risk 5 -- Key Person Dependency: The entire technical stack was built by one person.
+Severity: High in WONs1, decreasing through WONs2 | Likelihood: Low but non-zero
+Mitigation: Smart contracts are immutable -- settlements continue without founder. Two hires in month 2 ensure operations continuity. WONs2 open source makes the relay replaceable.
+
+Risk 6 -- Chain Dependency: World of Nads currently deploys on Monad and targets Solana. Network outage or ecosystem shift would impact game availability.
+Severity: Medium | Likelihood: Low
+Mitigation: The multi-chain architecture provides redundancy. Relay and frontend layers are chain-agnostic. Only settlement contracts are chain-specific. Migration path exists.
+
+Risk 7 -- Sponsor Pipeline Concentration: If B2B sponsor revenue concentrates in a few large sponsors and one cancels, revenue drops.
+Severity: Medium | Likelihood: Medium in early months
+Mitigation: Streamer economy runs in parallel from month 2. Battle pass provides recurring baseline revenue. Organic growth reduces sponsor dependency.
+
+Overall Risk Assessment
+All risks in this table are partially mitigated in WONs1. Full mitigation requires WONs2 decentralization, audit completion, and a team that is no longer one person deep. A project that claims zero risk has not looked hard enough.
+________________
+
+
+14. CONCLUSION
+World of Nads started as one question: what if a blockchain game was designed from the first line of code around what the blockchain actually makes possible -- not what it makes profitable, but what it makes possible that nothing else can?
+The answer is a loot box that shrinks as players fight over it. A chicken that determines a prize pool that moves onchain instantly. A game that exists because Monad and Solana make per-action micro-transactions viable at fractions of a cent.
+That question produced a live game. One person. A fully functional 3D browser Tag Royale with a cosmetic economy, a four-contract settlement layer, eight limited-supply skins, and a growing community -- all accessible through a browser link right now.
+This whitepaper has been honest about everything. The relay server is centralized and the roadmap to fix it is covered by the second milestone. The contracts are unaudited and prize pools are capped until the audit is complete. The team is lean by design. The token does not exist yet and will not exist until the game proves it deserves one.
+World of Nads is ready for the next milestone: scaling to Solana and Monad mainnet, audited contracts, and the player base that proves the model. The architecture is built. The roadmap is clear. The evidence is onchain.
+
+World of Nads -- Version 1.1 (Multi-Chain)
+worldofnads.xyz | @WorldOfNads
+"Fun First. Fair Play. Instant Payouts."

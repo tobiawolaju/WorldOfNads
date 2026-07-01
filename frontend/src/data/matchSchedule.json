@@ -1,0 +1,15 @@
+{
+  "_comment": "Training lobby is always live.",
+  "trainingLobby": {
+    "matchId": "training-lobby",
+    "sponsor": "Nad Island",
+    "prize": "Practice",
+    "prizeAmount": 0,
+    "prizeToken": "MON",
+    "status": "live",
+    "time": "Open",
+    "ctaMode": "play",
+    "description": "Training Lobby — always open, no rewards, practice your skills.",
+    "image": "/logo.jpg"
+  }
+}

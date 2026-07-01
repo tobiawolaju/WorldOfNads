@@ -1,0 +1,180 @@
+/* Glassmorphism Popup Overlay */
+.waitlist-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(5, 7, 12, 0);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Modal Card */
+.waitlist-referral-card {
+  background: #7056ff !important;
+  border: none;
+  /* Pink outer glow, cyan inner */
+  color: #ffffff !important;
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  font-family: var(--font-inter), sans-serif;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+/* Close Button */
+.waitlist-popup-close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  border: none;
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.waitlist-popup-close:hover {
+  color: #ffffff;
+  /* Pink hover */
+  transform: scale(1.1);
+}
+
+/* Titles and Text */
+.waitlist-referral-card h2.waitlist-ref-title {
+  color: #ffffff;
+  font-family: 'Font2', sans-serif;
+  font-size: clamp(28px, 6vw, 42px);
+  margin-bottom: 8px;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+}
+
+.waitlist-referral-card p.waitlist-ref-subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+/* Referral Link Row */
+.waitlist-ref-link-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 30px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.waitlist-ref-link-row input.waitlist-input {
+  flex: 1;
+  height: 48px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  /* Lime green link text */
+  font-weight: 600;
+  font-size: 15px;
+  padding: 0 20px;
+}
+
+.waitlist-ref-link-row input.waitlist-input:focus {
+  outline: none;
+}
+
+.waitlist-copy-button {
+  height: 48px;
+  border-radius: 999px;
+  padding: 0 24px;
+  font-weight: 800;
+  font-family: 'Font1', var(--font-inter), sans-serif;
+  text-transform: uppercase;
+  background: #ffffff !important;
+  /* Cyan button */
+  color: #000000 !important;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  scale: 0.8;
+}
+
+.waitlist-copy-button:hover {
+  scale: 1;
+}
+
+/* Rewards / Tiers */
+.waitlist-ref-rewards {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+
+
+.tier-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tier-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+
+.tier-desc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Discord Section */
+.waitlist-discord-note {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 8px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

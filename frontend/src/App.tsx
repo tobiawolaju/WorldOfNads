@@ -1,0 +1,304 @@
+import React, { useEffect, useRef, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { usePrivy } from "@privy-io/react-auth";
+
+// Layout Components
+import BackgroundPattern from "./components/Background";
+import RainbowBeam from "./components/RainbowBeam";
+import TopNavbar from "./components/TopNavbar";
+
+// UI
+import { FullScreenLoader } from "./components/ui/fullscreen-loader";
+import { ToastContainer } from "react-toastify";
+
+import { lazy, Suspense } from "react";
+
+// Pages (Lazy Loaded)
+const Home = lazy(() => import("./pages/Home"));
+const NadArena = lazy(() => import("./pages/NadArena"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const Community = lazy(() => import("./pages/FAQ"));
+const Partners = lazy(() => import("./pages/Partners"));
+const Milestone = lazy(() => import("./pages/Milestone"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Play = lazy(() => import("./pages/Play"));
+const Careers = lazy(() => import("./pages/Careers"));
+const Waitlist = lazy(() => import("./pages/Waitlist"));
+const SpounsorDashbaord = lazy(() => import("./pages/SpounsorDashbaord"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+import { trackSessionEnded, trackSessionStarted } from "./lib/analyticsClient";
+import { fetchUserRoles, getUsernameFromPrivy } from "./pages/firebaseClient";
+
+const RequireRole: React.FC<{ role: string; children: React.ReactElement }> = ({ role, children }) => {
+  const { ready, authenticated, user } = usePrivy();
+  const [checking, setChecking] = useState(true);
+  const [allowed, setAllowed] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
+
+  useEffect(() => {
+    const verify = async () => {
+      if (!ready) return;
+      if (!authenticated || !user) {
+        setAllowed(false);
+        setChecking(false);
+        return;
+      }
+      try {
+        const username = getUsernameFromPrivy(user);
+        const roles = await fetchUserRoles(username);
+        setAllowed(roles.includes(role));
+      } catch (error) {
+        console.error("Failed to verify role", error);
+        setAllowed(false);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    verify();
+  }, [ready, authenticated, user, role]);
+
+  useEffect(() => {
+    setShowLoader(!ready || checking);
+  }, [ready, checking]);
+
+  return (
+    <>
+      <FullScreenLoader visible={showLoader} />
+      {!showLoader && (!authenticated || !user || !allowed ? <Navigate to="/" replace /> : children)}
+    </>
+  );
+};
+
+const AppContent: React.FC = () => {
+  const { ready, authenticated, user } = usePrivy();
+  const location = useLocation();
+  const sessionTrackedRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
+  const [showLoader, setShowLoader] = useState(true);
+
+
+  useEffect(() => {
+    document.body.classList.toggle("play-immersive", location.pathname === "/play");
+
+    return () => {
+      document.body.classList.remove("play-immersive");
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const viewportMeta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+    if (!viewportMeta) return;
+
+    const defaultViewport =
+      "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover";
+    const originalViewport = viewportMeta.getAttribute("content") || defaultViewport;
+    const mobileDeviceQuery = window.matchMedia("(hover: none) and (pointer: coarse)");
+    const landscapeQuery = window.matchMedia("(orientation: landscape)");
+
+    const applyViewportMode = () => {
+      const shouldUseDesktopMode = mobileDeviceQuery.matches && landscapeQuery.matches;
+      if (!shouldUseDesktopMode) {
+        viewportMeta.setAttribute("content", defaultViewport);
+        document.documentElement.style.setProperty('--rev-scale', '1');
+        return;
+      }
+
+      // Render at 1280px desktop width, then zoom out so it fits the
+      // device screen exactly – no horizontal overscroll.
+      const desktopWidth = 1280;
+      const deviceWidth = Math.max(screen.width, screen.height) - 50;
+      const scale = Math.min(1, deviceWidth / desktopWidth);
+      const revScale = 1 / scale;
+      const desktopViewport =
+        `width=${desktopWidth}, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=no, viewport-fit=cover`;
+
+      viewportMeta.setAttribute("content", desktopViewport);
+      document.documentElement.style.setProperty('--rev-scale', revScale.toString());
+    };
+
+    let resizeTimeout: NodeJS.Timeout;
+    const throttledApply = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(applyViewportMode, 200);
+    };
+
+    applyViewportMode();
+
+    window.addEventListener("resize", throttledApply);
+    landscapeQuery.addEventListener("change", applyViewportMode);
+    mobileDeviceQuery.addEventListener("change", applyViewportMode);
+
+    return () => {
+      clearTimeout(resizeTimeout);
+      window.removeEventListener("resize", throttledApply);
+      landscapeQuery.removeEventListener("change", applyViewportMode);
+      mobileDeviceQuery.removeEventListener("change", applyViewportMode);
+      viewportMeta.setAttribute("content", originalViewport);
+      document.documentElement.style.setProperty('--rev-scale', '1');
+    };
+  }, [location.pathname]);
+
+
+  useEffect(() => {
+    const themeColorMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!themeColorMeta) return;
+
+    const originalThemeColor = themeColorMeta.getAttribute("content") || "#e795e7";
+    const isHomeRoute = location.pathname === "/" || location.pathname === "/home";
+
+    if (isHomeRoute) {
+      themeColorMeta.setAttribute("content", originalThemeColor);
+      return;
+    }
+
+    const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const applyThemeColor = () => {
+      const routeThemeColor = darkModeQuery.matches ? "#6553c7" : "#ffffff";
+      themeColorMeta.setAttribute("content", routeThemeColor);
+    };
+
+    applyThemeColor();
+    darkModeQuery.addEventListener("change", applyThemeColor);
+
+    return () => {
+      darkModeQuery.removeEventListener("change", applyThemeColor);
+      themeColorMeta.setAttribute("content", originalThemeColor);
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (user?.id && lastUserIdRef.current !== user.id) {
+      sessionTrackedRef.current = false;
+      lastUserIdRef.current = user.id;
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!ready || !authenticated || !user) return;
+    if (sessionTrackedRef.current) return;
+    sessionTrackedRef.current = true;
+
+    const username = getUsernameFromPrivy(user);
+    trackSessionStarted({ userId: user.id, metadata: { username } });
+
+    const handleUnload = () => {
+      trackSessionEnded({ userId: user.id, metadata: { username } });
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [ready, authenticated, user]);
+
+  useEffect(() => {
+    setShowLoader(!ready);
+  }, [ready]);
+
+  // Hide navbar on immersive/special landing routes
+  const hideNavbar = location.pathname === "/play";
+  const hideTopNavbarContents = location.pathname === "/waitlist" || location.pathname === "/wait-list";
+
+  return (
+    <>
+      <BackgroundPattern />
+      <RainbowBeam />
+      <FullScreenLoader visible={showLoader} />
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar
+        closeOnClick={false}
+        pauseOnHover
+        draggable={false}
+        closeButton={false}
+        icon={false}
+        className="!bg-transparent !shadow-none"
+        style={{ background: "transparent", boxShadow: "none" }}
+      />
+      {!showLoader && (
+        <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+          {!hideNavbar && <TopNavbar hideContents={hideTopNavbarContents} />}
+
+          <main style={{ flex: 1 }}>
+            <Suspense fallback={<FullScreenLoader visible />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={authenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
+                <Route path="/nad-arena" element={<NadArena />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/hosts" element={<Partners />} />
+                <Route path="/milestone" element={<Milestone />} />
+                <Route path="/partners" element={<Navigate to="/hosts" replace />} />
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/waitlist" element={<Waitlist />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <RequireRole role="admin">
+                      <AdminDashboard />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/admin/dashboard"
+                  element={
+                    <RequireRole role="admin">
+                      <AdminDashboard />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/admin/analytics"
+                  element={<Navigate to="/admin/dashboard" replace />}
+                />
+                <Route
+                  path="/admin/users"
+                  element={<Navigate to="/admin/dashboard" replace />}
+                />
+                <Route
+                  path="/admin/contracts"
+                  element={<Navigate to="/admin/dashboard" replace />}
+                />
+                <Route
+                  path="/admin/skins"
+                  element={<Navigate to="/admin/dashboard" replace />}
+                />
+
+                {/* Protected Routes */}
+                <Route
+                  path="/dashboard"
+                  element={authenticated ? <Dashboard /> : <Navigate to="/" replace />}
+                />
+                <Route
+                  path="/play"
+                  element={authenticated ? <Play /> : <Navigate to="/" replace />}
+                />
+                <Route
+                  path="/sponsor"
+                  element={
+                    <RequireRole role="sponsor">
+                      <SpounsorDashbaord />
+                    </RequireRole>
+                  }
+                />
+
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </main>
+        </div>
+      )}
+    </>
+  );
+};
+
+const App: React.FC = () => (
+  <Router>
+    <AppContent />
+  </Router>
+);
+
+export default App;

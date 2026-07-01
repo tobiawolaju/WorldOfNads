@@ -1,0 +1,245 @@
+.admin-skins {
+  max-width: 1100px;
+  margin: 0 auto;
+  color: #111;
+  font-family: "Font1", sans-serif;
+}
+
+.admin-skins__header {
+  margin-bottom: 24px;
+}
+
+.admin-skins__header h1 {
+  font-size: 1.6rem;
+  margin: 0 0 6px;
+  color: #111;
+}
+
+.admin-skins__header p {
+  margin: 0;
+  color: #555;
+}
+
+.admin-skins__error {
+  display: inline-block;
+  margin-top: 10px;
+  color: #b42318 !important;
+  font-weight: 600;
+}
+
+.admin-skins__success {
+  display: inline-block;
+  margin-top: 10px;
+  color: #15803d !important;
+  font-weight: 600;
+}
+
+.admin-skins__form-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  padding: 24px;
+  margin-bottom: 30px;
+}
+
+.admin-skins__form-card h2 {
+  margin: 0 0 16px;
+  font-size: 1.2rem;
+  color: #111;
+}
+
+.admin-skins__form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.admin-skins__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.admin-skins__form input,
+.admin-skins__form select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: #fafafa;
+  color: #111;
+}
+
+.admin-skins__form input:focus,
+.admin-skins__form select:focus {
+  outline: none;
+  border-color: #5b4fff;
+  background: #fff;
+}
+
+.admin-skins__create-btn {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 8px;
+  padding: 10px 28px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  background: #5b4fff;
+  color: #fff !important;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.admin-skins__create-btn:hover:not(:disabled) {
+  background: #4a3ee6;
+}
+
+.admin-skins__create-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.admin-skins__list h2 {
+  margin: 0 0 16px;
+  font-size: 1.2rem;
+  color: #111;
+}
+
+.admin-skins__table {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.admin-skins__row {
+  display: grid;
+  grid-template-columns: 0.4fr 0.8fr 0.8fr 0.8fr 0.6fr 1.5fr;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.85rem;
+  color: #111;
+}
+
+.admin-skins__row--head {
+  background: #f7f7f7;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #555;
+  text-transform: uppercase;
+}
+
+.admin-skins__row:last-child {
+  border-bottom: none;
+}
+
+.admin-skins__tier {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.admin-skins__uri {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #777;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tier--common { background: #e0e0e0; color: #555 !important; }
+.tier--rare { background: #cce5ff; color: #0044aa !important; }
+.tier--epic { background: #e8d5ff; color: #6622cc !important; }
+.tier--legendary { background: #fff3cc; color: #aa7700 !important; }
+
+@media (max-width: 720px) {
+  .admin-skins__form {
+    grid-template-columns: 1fr;
+  }
+  .admin-skins__table {
+    overflow-x: auto;
+  }
+  .admin-skins__row {
+    min-width: 500px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-dashboard .admin-skins {
+    color: #ffffff !important;
+  }
+  .admin-dashboard .admin-skins__header h1 {
+    color: #ffffff !important;
+  }
+  .admin-dashboard .admin-skins__header p {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+  .admin-dashboard .admin-skins__error {
+    color: #ff6b6b !important;
+  }
+  .admin-dashboard .admin-skins__success {
+    color: #4ade80 !important;
+  }
+  .admin-dashboard .admin-skins__form-card {
+    background: #6553c7 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+  }
+  .admin-dashboard .admin-skins__form-card h2 {
+    color: #ffffff !important;
+  }
+  .admin-dashboard .admin-skins__form label {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+  .admin-dashboard .admin-skins__form input,
+  .admin-dashboard .admin-skins__form select {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+  }
+  .admin-dashboard .admin-skins__form input:focus,
+  .admin-dashboard .admin-skins__form select:focus {
+    border-color: #cdadff !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+  }
+  .admin-dashboard .admin-skins__create-btn {
+    background: #cdadff !important;
+    color: #1a1a1a !important;
+  }
+  .admin-dashboard .admin-skins__create-btn:hover:not(:disabled) {
+    background: #b894f0 !important;
+  }
+  .admin-dashboard .admin-skins__create-btn:disabled {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
+  .admin-dashboard .admin-skins__list h2 {
+    color: #ffffff !important;
+  }
+  .admin-dashboard .admin-skins__table {
+    background: #6553c7 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+  }
+  .admin-dashboard .admin-skins__row {
+    color: #ffffff !important;
+    border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  .admin-dashboard .admin-skins__row--head {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+  }
+  .admin-dashboard .admin-skins__uri {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "id": "cover",
+    "x": 0,
+    "y": 0,
+    "w": 400,
+    "h": 82,
+    "file": "res://newport/assets/images/cover.png"
+  },
+  {
+    "id": "white_circle1",
+    "x": 0,
+    "y": 83,
+    "w": 500,
+    "h": 500,
+    "file": "res://newport/assets/images/white_circle1.png"
+  }
+]

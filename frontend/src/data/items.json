@@ -1,0 +1,89 @@
+[
+  {
+    "id": "s-default",
+    "name": "Default Nad",
+    "price": "0 MON",
+    "image": "/skins_png/s-default.png",
+    "category": "skins",
+    "description": "Default pink skin. Free for everyone.",
+    "onChainId": null,
+    "requiredXP": 0,
+    "maxSupply": null,
+    "tier": "common",
+    "skinConfig": {
+      "color": "#ff2496",
+      "cheekColor": "#ff40bf"
+    }
+  },
+  {
+    "id": "s1",
+    "name": "Sprout",
+    "price": "5 MON",
+    "image": "/skins_png/s1.png",
+    "category": "skins",
+    "description": "Fresh green skin. Common tier.",
+    "onChainId": 1,
+    "requiredXP": 0,
+    "maxSupply": 1000,
+    "tier": "common",
+    "skinConfig": {
+      "color": "#7bc67e",
+      "cheekColor": "#5ea861"
+    }
+  },
+  {
+    "id": "s2",
+    "name": "Cobalt",
+    "price": "10 MON",
+    "image": "/skins_png/s2.png",
+    "category": "skins",
+    "description": "Deep blue metallic skin. Rare tier.",
+    "onChainId": 2,
+    "requiredXP": 100,
+    "maxSupply": 500,
+    "tier": "rare",
+    "skinConfig": {
+      "color": "#3b7dd8",
+      "cheekColor": "#3b7dd8",
+      "shader": "gold",
+      "shaderTargets": ["body", "cheek"]
+    }
+  },
+  {
+    "id": "s3",
+    "name": "Magma",
+    "price": "20 MON",
+    "image": "/skins_png/s3.png",
+    "category": "skins",
+    "description": "Volcanic orange skin with glow. Epic tier.",
+    "onChainId": 3,
+    "requiredXP": 500,
+    "maxSupply": 100,
+    "tier": "epic",
+    "skinConfig": {
+      "attachmentShape": "cone",
+      "color": "#ff6b35",
+      "cheekColor": "#ff6b35",
+      "attachmentColor": "#ff4500"
+    }
+  },
+  {
+    "id": "s4",
+    "name": "Aether",
+    "price": "50 MON",
+    "image": "/skins_png/s4.png",
+    "category": "skins",
+    "description": "Otherworldly violet skin. Legendary tier.",
+    "onChainId": 4,
+    "requiredXP": 2000,
+    "maxSupply": 50,
+    "tier": "legendary",
+    "skinConfig": {
+      "attachmentShape": "torus",
+      "color": "#9b59b6",
+      "cheekColor": "#9b59b6",
+      "eyeColor": "#f1c40f",
+      "attachmentColor": "#f1c40f"
+    }
+  }
+]
