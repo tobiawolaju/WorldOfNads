@@ -1,77 +1,54 @@
-[gd_scene format=3 uid="uid://dg0hj4afkds4y"]
+[gd_scene format=3 uid="uid://duy1hgxhwdptc"]
 
-[ext_resource type="Script" uid="uid://bip5384hhaetv" path="res://scripts/screens/Home.gd" id="1_u4wd2"]
-[ext_resource type="Texture2D" uid="uid://c8ioadi8j4kfp" path="res://assets/images/iarc12.webp" id="2_u4wd2"]
+[ext_resource type="Script" uid="uid://dk6u7tghb4qbq" path="res://scripts/home.gd" id="1_krot7"]
+[ext_resource type="Texture2D" uid="uid://ct6moic2j0bbf" path="res://assets/img/logo.png" id="2_u4wd2"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reixx"]
-content_margin_left = 2.0
-content_margin_top = 2.0
-content_margin_right = 2.0
-content_margin_bottom = 2.0
-bg_color = Color(0.101960786, 0.101960786, 0.101960786, 0)
-corner_detail = 6
-shadow_color = Color(0, 0, 0, 0)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uhids"]
-content_margin_left = 2.0
-content_margin_top = 2.0
-content_margin_right = 2.0
-content_margin_bottom = 2.0
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u4wd2"]
 bg_color = Color(0.43137255, 0.32941177, 1, 1)
-corner_detail = 6
-shadow_color = Color(0, 0, 0, 0)
 
-[node name="Home" type="Node2D" unique_id=1450386627]
-script = ExtResource("1_u4wd2")
+[node name="Home" type="Node2D" unique_id=1819813507]
+script = ExtResource("1_krot7")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=393819514]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1047281477]
 offset_left = -750.0
 offset_top = -750.0
 offset_right = 1250.0
 offset_bottom = 1250.0
-grow_horizontal = 2
-grow_vertical = 2
 color = Color(0, 0, 0, 1)
 
-[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=330130245]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=151486276]
 
-[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer" unique_id=938245306]
+[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer" unique_id=1934962509]
 offset_right = 40.0
 offset_bottom = 40.0
 
-[node name="Node" type="Node" parent="CanvasLayer/BoxContainer" unique_id=1501178365]
+[node name="Node" type="Node" parent="CanvasLayer/BoxContainer" unique_id=303200606]
 
-[node name="ProgressBar" type="ProgressBar" parent="CanvasLayer/BoxContainer/Node" unique_id=2120842526]
+[node name="ProgressBar" type="ProgressBar" parent="CanvasLayer/BoxContainer/Node" unique_id=1073411624]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0.9490196, 1, 0.9490196, 1)
-theme_override_styles/background = SubResource("StyleBoxFlat_reixx")
-theme_override_styles/fill = SubResource("StyleBoxFlat_uhids")
+theme_override_styles/fill = SubResource("StyleBoxFlat_u4wd2")
+value = 50.0
 show_percentage = false
 
-[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node/ProgressBar" unique_id=1970089268]
+[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node/ProgressBar" unique_id=1629808469]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
 grow_horizontal = 2
 grow_vertical = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
 
-[node name="W" type="Sprite2D" parent="CanvasLayer/BoxContainer/Node/ProgressBar/BoxContainer" unique_id=97285622]
-process_priority = 1
-scale = Vector2(0.25, 0.238)
+[node name="W" type="Sprite2D" parent="CanvasLayer/BoxContainer/Node/ProgressBar/BoxContainer" unique_id=108348650]
+position = Vector2(11, 34.00001)
+scale = Vector2(0.38, 0.38)
 texture = ExtResource("2_u4wd2")
-
-[node name="Node" type="Node" parent="." unique_id=765340848]

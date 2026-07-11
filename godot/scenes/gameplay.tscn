@@ -1,60 +1,36 @@
 [gd_scene format=4 uid="uid://b4wta5d5nlcua"]
 
 [ext_resource type="Script" uid="uid://ds7rfadg6n6k8" path="res://scripts/player/PlayerManager.gd" id="1_hpwea"]
-[ext_resource type="Script" uid="uid://guvxewi0bmto" path="res://scripts/environment/StormEye.gd" id="1_w01lk"]
-[ext_resource type="PackedScene" uid="uid://chlxnv73ayyej" path="res://scenes/skin1.tscn" id="2_w01lk"]
-[ext_resource type="Environment" uid="uid://bvyanyetj1pue" path="res://newport/assets/tres/stormeye_environment.tres" id="3_w01lk"]
+[ext_resource type="PackedScene" uid="uid://bq3i1po3drd3s" path="res://scenes/skin.tscn" id="2_w01lk"]
 [ext_resource type="PackedScene" uid="uid://xxadd67lsra2" path="res://scenes/props/enviroment/bus.tscn" id="5_w01lk"]
 [ext_resource type="PackedScene" uid="uid://q85dx3n5lik1" path="res://scenes/waypoint.tscn" id="7_6rekl"]
-[ext_resource type="Environment" uid="uid://diix2er2cevfm" path="res://newport/assets/tres/normal_environment.tres" id="8_jb4qf"]
+[ext_resource type="Script" uid="uid://guvxewi0bmto" path="res://scripts/map/StormEye.gd" id="8_ctvyo"]
+[ext_resource type="Environment" uid="uid://rpidr3omplr6" path="res://assets/resources/day.tres" id="9_qixtg"]
 [ext_resource type="Script" uid="uid://bo6d71r4umug2" path="res://scripts/pickups/PickupItem.gd" id="9_w01lk"]
+[ext_resource type="Environment" uid="uid://b1xdulwsbpnew" path="res://assets/resources/night.tres" id="10_nt65e"]
 [ext_resource type="PackedScene" uid="uid://bjvhk14twbsb6" path="res://scenes/hud.tscn" id="11_hpwea"]
-[ext_resource type="PackedScene" uid="uid://wat74g06616t" path="res://scenes/maps/salmograd.tscn" id="11_w01lk"]
-[ext_resource type="Texture2D" uid="uid://du28gas8yh1se" path="res://assets/images/mboxcore.png" id="12_qixtg"]
+[ext_resource type="PackedScene" uid="uid://23ums28hpn7g" path="res://scenes/maps/busyland.tscn" id="12_nt65e"]
+[ext_resource type="Texture2D" uid="uid://b4q27tedq04t7" path="res://assets/img/mboxcore.png" id="12_qixtg"]
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="13_i18v2"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i70lh"]
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_xq0wg"]
-_surfaces = [{
-"aabb": AABB(-1, -0.5, -1, 2, 1, 2),
-"format": 34896613377,
-"index_count": 96,
-"index_data": PackedByteArray("AAABAAIAAAADAAEABAAAAAIAAwAFAAEABAACAAYAAwAHAAUACAAEAAYABwAJAAUACAAGAAoABwALAAkADAAIAAoACwANAAkADAAKAA4ACwAPAA0AEAAMAA4ADwARAA0AEAAOABIADwATABEAFAAQABIAEwAVABEAFAASABYAEwAXABUAGAAUABYAFwAZABUAGAAWABoAFwAbABkAHAAYABoAGwAdABkAHAAaAB4AGwAfAB0AHwAcAB4AHwAeAB0A"),
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 32,
-"vertex_data": PackedByteArray("/38AAAAAAAD7sP//vgkAAP9///8AAAAA+7AAAL4JAAADTwAAvgkAAIHa//99JQAAA0///74JAACB2gAAfSUAAH0lAAB9JQAAQPb//wNPAAB9Jf//fSUAAED2AAADTwAAvgkAAANPAAD//////38AAL4J//8DTwAA//8AAP9/AAAAAAAA/38AAED2///7sAAAAAD///9/AABA9gAA+7AAAL4JAAD7sAAAgdr//4HaAAC+Cf//+7AAAIHaAACB2gAAfSUAAIHaAAD7sP//QPYAAH0l//+B2gAA+7AAAED2AAADTwAAQPYAAP9//////wAAA0///0D2AAD/fwAA//8AAA==")
-}]
-blend_shape_mode = 0
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_i18v2"]
-resource_name = "hallo_cylinder_Cylinder"
-_surfaces = [{
-"aabb": AABB(-1, -0.5, -1, 2, 1, 2),
-"attribute_data": PackedByteArray("////f//vAAD//wAA/+//f//v/3//3wAA/+8AAP/f/3//3/9//88AAP/fAAD/z/9//8//f/+/AAD/zwAA/7//f/+//3//rwAA/78AAP+v/3//r/9//58AAP+vAAD/n/9//5//f/+PAAD/nwAA/4//f/+P/3//fwAA/48AAP9//3//f/9//28AAP9/AAD/b/9//2//f/9fAAD/bwAA/1//f/9f/3//TwAA/18AAP9P/3//T/9//z8AAP9PAAD/P/9//z//f/8vAAD/PwAA/y//f/8v/3//HwAA/y8AAP8f/3//H/9//w8AAP8fAAD/D/9//w//fwAAAAD/DwAAAAD/fw=="),
-"format": 34896613399,
-"index_count": 96,
-"index_data": PackedByteArray("AAABAAIAAAADAAEABAAFAAYABAAHAAUACAAJAAoACAALAAkADAANAA4ADAAPAA0AEAARABIAEAATABEAFAAVABYAFAAXABUAGAAZABoAGAAbABkAHAAdAB4AHAAfAB0AIAAhACIAIAAjACEAJAAlACYAJAAnACUAKAApACoAKAArACkALAAtAC4ALAAvAC0AMAAxADIAMAAzADEANAA1ADYANAA3ADUAOAA5ADoAOAA7ADkAPAA9AD4APAA/AD0A"),
-"material": SubResource("StandardMaterial3D_i70lh"),
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 64,
-"vertex_data": PackedByteArray("/38AAAAA/vf7sP//vgn+9/9///8AAP73+7AAAL4J/vf7sAAAvgn/54Ha//99Jf/n+7D//74J/+eB2gAAfSX/54HaAAB9Jf/XQPb//wNP/9eB2v//fSX/10D2AAADT//XQPYAAANP/8f//////3//x0D2//8DT//H//8AAP9//8f//wAA/3//t0D2///7sP+3//////9//7dA9gAA+7D/t0D2AAD7sP+ngdr//4Ha/6dA9v//+7D/p4HaAACB2v+ngdoAAIHa/5f7sP//QPb/l4Ha//+B2v+X+7AAAED2/5f7sAAAQPb/h/9///////+H+7D//0D2/4f/fwAA////h/9/AAD///+HA0///0D2/4f/f///////hwNPAABA9v+HA08AAED2/5d9Jf//gdr/lwNP//9A9v+XfSUAAIHa/5d9JQAAgdr/p74J///7sP+nfSX//4Ha/6e+CQAA+7D/p74JAAD7sP+3AAD///9//7e+Cf//+7D/twAAAAD/f/+3AAAAAP9//8e+Cf//A0//xwAA////f//HvgkAAANP/8e+CQAAA0//130l//99Jf/Xvgn//wNP/9d9JQAAfSX/130lAAB9Jf/nA0///74J/+d9Jf//fSX/5wNPAAC+Cf/nA08AAL4J/vf/f///AAD+9wNP//++Cf73/38AAAAA/vf/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/////f////3////9/////f////3////9/////f////3////9/////f////3////9/////f////3////9/////f////3////9/////f////3////9/////f////3////9/////f////3////9/////f////3////9/////f///")
-}]
-blend_shape_mode = 0
-shadow_mesh = SubResource("ArrayMesh_xq0wg")
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_s1cqs"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bhmdk"]
 render_priority = 0
 shader = ExtResource("13_i18v2")
-shader_parameter/_color = Color(0.5176471, 0.20392157, 0.8745098, 1)
+shader_parameter/_color = Color(0.7176471, 0.41568628, 0.8862745, 1)
 shader_parameter/sphere_size = 3.0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_joexv"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_s5y6v"]
+top_radius = 1.0
+bottom_radius = 1.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_407ns"]
+top_radius = 1.0
+bottom_radius = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_w3w6i"]
 transparency = 1
 shading_mode = 0
-albedo_color = Color(0.5568628, 0.39215687, 1, 0.7529412)
+albedo_color = Color(0.7176471, 0.41568628, 0.8862745, 0.8)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5orqu"]
 albedo_color = Color(0.92156863, 0.47058824, 0.9647059, 1)
@@ -113,52 +89,51 @@ albedo_color = Color(1, 1, 0, 1)
 
 [node name="Gameplay" type="Node3D" unique_id=2001810245]
 
-[node name="enviroment" type="Node3D" parent="." unique_id=1834901288 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
-script = ExtResource("1_w01lk")
+[node name="env" type="Node3D" parent="." unique_id=1349158308 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
+script = ExtResource("8_ctvyo")
 world_env = NodePath("WorldEnvironment")
-light_normal = NodePath("WorldEnvironment/DirectionalLight3D1")
-light_storm = NodePath("WorldEnvironment/DirectionalLight3D2")
+light_normal = NodePath("day")
+light_storm = NodePath("night")
 camera = NodePath("../PlayerManager/Camera3D")
-cylinder_wall = NodePath("WorldEnvironment/Cylinder2")
-cylinder_border = NodePath("WorldEnvironment/Cylinder")
-normal_env = ExtResource("8_jb4qf")
-storm_env = ExtResource("3_w01lk")
-cylinder_radius = 20.0
+cylinder_wall = NodePath("Cylinder")
+cylinder_border = NodePath("Cylinder2")
+normal_env = ExtResource("9_qixtg")
+storm_env = ExtResource("10_nt65e")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="enviroment" unique_id=1905805385]
-environment = ExtResource("3_w01lk")
+[node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=711725318]
+environment = ExtResource("10_nt65e")
 
-[node name="DirectionalLight3D1" type="DirectionalLight3D" parent="enviroment/WorldEnvironment" unique_id=820477797]
-transform = Transform3D(0.99322146, -0.11063264, -0.035658758, 0.11623737, 0.9453303, 0.3046958, 0, -0.3067753, 0.951782, 0, 28.150093, 2.8723717)
+[node name="day" type="DirectionalLight3D" parent="env" unique_id=654260087]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
 visible = false
-light_color = Color(1, 0.7611074, 0.5848961, 1)
-light_energy = 2.0
+light_energy = 0.8
+shadow_enabled = true
 
-[node name="DirectionalLight3D2" type="DirectionalLight3D" parent="enviroment/WorldEnvironment" unique_id=1867087762]
-transform = Transform3D(0.99322146, -0.11063264, -0.035658758, 0.11623737, 0.9453303, 0.3046958, 0, -0.3067753, 0.951782, 0, 28.150093, 2.8723717)
-light_color = Color(0.30980393, 0.05882353, 0.4745098, 1)
-light_energy = 8.024
+[node name="night" type="DirectionalLight3D" parent="env" unique_id=366884123]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
+light_color = Color(0, 0, 0, 1)
+light_energy = 0.0
+shadow_enabled = true
+sky_mode = 1
 
-[node name="Cylinder2" type="MeshInstance3D" parent="enviroment/WorldEnvironment" unique_id=691926545]
+[node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=154871314]
+transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
+material_override = SubResource("ShaderMaterial_bhmdk")
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_s5y6v")
+
+[node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1339689695]
 transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
 cast_shadow = 0
-mesh = SubResource("ArrayMesh_i18v2")
-skeleton = NodePath("")
-surface_material_override/0 = SubResource("ShaderMaterial_s1cqs")
-
-[node name="Cylinder" type="MeshInstance3D" parent="enviroment/WorldEnvironment" unique_id=1446494841]
-transform = Transform3D(19.999998, 0, 0, 0, 200, 0, 0, 0, 19.999998, 0, 0, 0)
-cast_shadow = 0
-mesh = SubResource("ArrayMesh_i18v2")
-skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_joexv")
+mesh = SubResource("CylinderMesh_407ns")
+surface_material_override/0 = SubResource("StandardMaterial3D_w3w6i")
 
 [node name="PlayerManager" type="Node3D" parent="." unique_id=226066109 node_paths=PackedStringArray("myplayerswpanpoint")]
 script = ExtResource("1_hpwea")
 player_scene = ExtResource("2_w01lk")
 myplayerswpanpoint = NodePath("../Bus/Marker3D")
 countdown_label_path = NodePath("../Hud/CanvasLayer/BoxContainer/Node2/BoxContainer/Countdown")
-world_environment_path = NodePath("")
+world_environment_path = NodePath("../env/WorldEnvironment")
 camera_block_path = NodePath("Camera3D/CAMERABlock")
 
 [node name="Camera3D" type="Camera3D" parent="PlayerManager" unique_id=411845509]
@@ -178,7 +153,7 @@ one_shot = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 60, 0)
 
 [node name="LootBox" type="RigidBody3D" parent="." unique_id=1252787878]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.785, 2.0053978, -0.189)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.785, 8.495601, -0.189)
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("9_w01lk")
@@ -198,7 +173,7 @@ billboard = 1
 texture = ExtResource("12_qixtg")
 
 [node name="Chicken" type="RigidBody3D" parent="." unique_id=2070947828]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4907084, 2.1424787, -1.223633)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4907084, 6.3389816, -1.223633)
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("9_w01lk")
@@ -210,7 +185,6 @@ shape = SubResource("BoxShape3D_rkx1j")
 [node name="Chicken" type="MeshInstance3D" parent="Chicken" unique_id=905862744]
 transform = Transform3D(3, 0, 0, 0, -2.6226832e-07, -3, 0, 6, -1.3113416e-07, 2.1836665, -0.5585085, 0)
 mesh = SubResource("ArrayMesh_cgvcs")
-skeleton = NodePath("")
 surface_material_override/0 = SubResource("StandardMaterial3D_hpwea")
 
 [node name="WaypointAnchor" type="Marker3D" parent="Chicken/Chicken" unique_id=560054686]
@@ -222,7 +196,7 @@ camera = NodePath("../../../../PlayerManager/Camera3D")
 
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("11_hpwea")]
 
-[node name="Salmograd" parent="." unique_id=621226049 instance=ExtResource("11_w01lk")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.238, 1, -0.016)
+[node name="Busyland" parent="." unique_id=1920523763 instance=ExtResource("12_nt65e")]
 
 [editable path="Bus"]
+[editable path="Hud"]

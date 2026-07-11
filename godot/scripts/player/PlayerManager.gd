@@ -9,15 +9,17 @@ const LIVE_URL: String = "wss://worldofnads.onrender.com"
 const LOCAL_URL: String = "ws://localhost:8080"
 const DEFAULT_SKIN_NAME: String = "defaultnad"
 const SKIN_SCENE_PATHS: Dictionary = {
-	"defaultnad": "res://scenes/skin1.tscn",
-	"Hellion": "res://scenes/skin2.tscn",
-	"Seraphim": "res://scenes/skin3.tscn",
-	"Abbss": "res://scenes/skin4.tscn",
-	"buggy": "res://scenes/skin5.tscn",
-	"john deo": "res://scenes/skin6.tscn",
-	"Aurum": "res://scenes/skin7.tscn",
-	"mouch": "res://scenes/skin8.tscn"
+	"defaultnad": "res://scenes/skin.tscn",
+	"Hellion": "res://scenes/skin.tscn",
+	"Seraphim": "res://scenes/skin.tscn",
+	"Abbss": "res://scenes/skin.tscn",
+	"buggy": "res://scenes/skin.tscn",
+	"john deo": "res://scenes/skin.tscn",
+	"Aurum": "res://scenes/skin.tscn",
+	"mouch": "res://scenes/skin.tscn"
 }
+
+static var _skin_applier: SkinApplier = SkinApplier.new()
 const SKIN_NAME_ALIASES: Dictionary = {
 	"s-default": "defaultnad",
 	"s0": "buggy",
@@ -845,6 +847,7 @@ func _update_remote_player_skin(player: Node3D, skin_name: String):
 	# Add new visuals
 	var source = scene.instantiate()
 	_strip_physics_nodes(source)
+	_skin_applier.apply_skin(source, skin_name)
 	for child in source.get_children():
 		if child.name in _KEPT_NODE_NAMES:
 			child.queue_free()
@@ -862,7 +865,9 @@ func get_local_spawn_position() -> Vector3:
 func _instantiate_player_scene_for_skin(skin_name: String) -> Node3D:
 	var scene := _get_skin_scene(skin_name)
 	if scene != null:
-		return scene.instantiate()
+		var player := scene.instantiate()
+		_skin_applier.apply_skin(player, skin_name)
+		return player
 	if player_scene != null:
 		return player_scene.instantiate()
 	push_error("No player scene available for skin '%s'." % skin_name)

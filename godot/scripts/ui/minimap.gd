@@ -24,7 +24,7 @@ var _last_real_minimap_ms: float = 0.0
 
 # === SETTINGS ===
 @export var rotate_pointer: bool = true
-@export var update_interval: float = 0.01 # Very fast updates for smooth following
+@export var update_interval: float = 0.03 # Updates at ~33 FPS for smooth following
 @export var zoom_level: float = 7.0
 
 var _update_timer: float = 0.0
@@ -213,7 +213,9 @@ func _refresh_targets() -> void:
 			lootbox_target = player_manager.call("get_lootbox_node")
 
 	if _storm_eye_node == null or not is_instance_valid(_storm_eye_node):
-		_storm_eye_node = get_tree().root.find_child("enviroment", true, false)
+		_storm_eye_node = get_tree().root.find_child("env", true, false)
+		if _storm_eye_node == null:
+			_storm_eye_node = get_tree().root.find_child("enviroment", true, false)
 
 func _find_player_manager() -> Node:
 	var tree := get_tree()

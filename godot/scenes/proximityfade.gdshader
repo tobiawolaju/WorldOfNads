@@ -1,7 +1,7 @@
 shader_type spatial;
 render_mode cull_front;
 
-uniform vec4 _color : source_color = vec4(0.3, 0.8, 1.0, 1.0);
+uniform vec4 _color : source_color = vec4(1,0,0,1);
 uniform float sphere_size = 3.0;
 global uniform vec3 player_pos;
 
