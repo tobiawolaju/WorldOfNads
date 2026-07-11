@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://q85dx3n5lik1"]
 
-[ext_resource type="Script" uid="uid://dvip1ol15xua1" path="res://scripts/waypoint/Waypoint.gd" id="1_hy65e"]
-[ext_resource type="FontFile" uid="uid://ctxhsu2y7phcf" path="res://newport/assets/fonts/fortnite.otf" id="2_hy65e"]
-[ext_resource type="Texture2D" uid="uid://ueo3a7kil5nd" path="res://newport/assets/images/point.webp" id="2_kvbum"]
+[ext_resource type="Script" uid="uid://cxhx02vpfwbk1" path="res://scripts/map/Waypoint.gd" id="1_hy65e"]
+[ext_resource type="FontFile" path="res://assets/fonts/fortnite.otf" id="2_hy65e"]
+[ext_resource type="Texture2D" path="res://assets/img/point.webp" id="2_kvbum"]
+
 
 [node name="Waypoint" type="Control" unique_id=1984879985]
 layout_mode = 3

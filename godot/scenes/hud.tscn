@@ -1,15 +1,15 @@
 [gd_scene format=3 uid="uid://bjvhk14twbsb6"]
 
-[ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/core/Events.gd" id="1_mphia"]
-[ext_resource type="Texture2D" uid="uid://bfpsl0yatg535" path="res://newport/assets/images/white_circle1.png" id="2_white_circle"]
-[ext_resource type="FontFile" uid="uid://ctxhsu2y7phcf" path="res://newport/assets/fonts/fortnite.otf" id="3_apjy4"]
-[ext_resource type="Script" uid="uid://smygpuu7lbkh" path="res://scripts/ui/compassbar.gd" id="4_5n1hp"]
-[ext_resource type="Script" uid="uid://b5tvb8chtonxg" path="res://scripts/ui/minimap.gd" id="5_eld54"]
-[ext_resource type="Texture2D" uid="uid://ueo3a7kil5nd" path="res://newport/assets/images/point.webp" id="6_3swnk"]
-[ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/ui/joystick.gd" id="9_5357l"]
-[ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/ui/buttons.gd" id="10_iypfu"]
-[ext_resource type="Texture2D" uid="uid://dbfbk6qf1bxep" path="res://newport/assets/images/ui_atlas.png" id="10_ui_atlas"]
-[ext_resource type="Script" uid="uid://cty6onrl4lub0" path="res://scripts/ui/fps_label.gd" id="11_fps_label"]
+[ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/Events.gd" id="1_mphia"]
+[ext_resource type="Script" uid="uid://b5tvb8chtonxg" path="res://scripts/ui/minimap.gd" id="2_mphia"]
+[ext_resource type="Texture2D" uid="uid://bfpsl0yatg535" path="res://assets/img/white_circle1.png" id="2_white_circle"]
+[ext_resource type="FontFile" uid="uid://ctxhsu2y7phcf" path="res://assets/fonts/fortnite.otf" id="3_apjy4"]
+[ext_resource type="Texture2D" uid="uid://ueo3a7kil5nd" path="res://assets/img/point.webp" id="6_3swnk"]
+[ext_resource type="Script" uid="uid://smygpuu7lbkh" path="res://scripts/ui/compassbar.gd" id="7_mphia"]
+[ext_resource type="Script" uid="uid://cty6onrl4lub0" path="res://scripts/ui/fps_label.gd" id="8_mphia"]
+[ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/ui/joystick.gd" id="9_mphia"]
+[ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/ui/buttons.gd" id="10_mphia"]
+[ext_resource type="Texture2D" uid="uid://dbfbk6qf1bxep" path="res://assets/img/ui_atlas.png" id="10_ui_atlas"]
 
 [sub_resource type="Shader" id="Shader_storm"]
 code = "shader_type canvas_item;
@@ -101,7 +101,7 @@ grow_horizontal = 0
 pivot_offset = Vector2(60, 60)
 size_flags_horizontal = 4
 size_flags_vertical = 4
-script = ExtResource("5_eld54")
+script = ExtResource("2_mphia")
 background_texture = NodePath("MinimapBackground")
 minimap_container = NodePath(".")
 player_pointer = NodePath("Pointer")
@@ -267,7 +267,7 @@ offset_bottom = 36.0
 grow_horizontal = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
-script = ExtResource("4_5n1hp")
+script = ExtResource("7_mphia")
 background_color = Color(0.050980393, 0.050980393, 0.050980393, 0)
 fade_color = Color(0, 0, 0, 0)
 north_label_color = Color(1, 1, 1, 1)
@@ -304,7 +304,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5411765)
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 2
-script = ExtResource("11_fps_label")
+script = ExtResource("8_mphia")
 
 [node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]
 
@@ -341,7 +341,7 @@ texture = SubResource("AtlasTexture_white_circle1")
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=661345483 node_paths=PackedStringArray("joy_lock")]
 scale = Vector2(0.5, 0.5)
 texture = SubResource("AtlasTexture_white_circle1")
-script = ExtResource("9_5357l")
+script = ExtResource("9_mphia")
 auto_lock_hold_seconds = 0.2
 auto_lock_forward_min_strength = 0.1
 auto_lock_north_distance_multiplier = 1.9
@@ -368,7 +368,7 @@ size_flags_vertical = 4
 
 [node name="VBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer/buttons_holder" unique_id=1325327020 node_paths=PackedStringArray("action_button", "jump_button", "slide_button")]
 layout_mode = 2
-script = ExtResource("10_iypfu")
+script = ExtResource("10_mphia")
 action_button = NodePath("Action")
 jump_button = NodePath("HBoxContainer/Jump")
 slide_button = NodePath("HBoxContainer/Slide")

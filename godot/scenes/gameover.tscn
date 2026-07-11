@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c4brakh2i7k3v"]
 
 [ext_resource type="Script" uid="uid://hwdeobi38c2y" path="res://scripts/screens/GameOverScreen.gd" id="1_oy7qx"]
-[ext_resource type="FontFile" uid="uid://ctxhsu2y7phcf" path="res://newport/assets/fonts/fortnite.otf" id="3_mpnb7"]
+[ext_resource type="FontFile" uid="uid://ctxhsu2y7phcf" path="res://assets/fonts/fortnite.otf" id="3_mpnb7"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hg6sm"]
 content_margin_left = 2.0
