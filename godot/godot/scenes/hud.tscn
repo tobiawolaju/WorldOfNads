@@ -1,0 +1,486 @@
+[gd_scene format=3 uid="uid://bjvhk14twbsb6"]
+
+[ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/core/Events.gd" id="1_mphia"]
+[ext_resource type="Texture2D" uid="uid://bfpsl0yatg535" path="res://newport/assets/images/white_circle1.png" id="2_white_circle"]
+[ext_resource type="FontFile" uid="uid://ctxhsu2y7phcf" path="res://newport/assets/fonts/fortnite.otf" id="3_apjy4"]
+[ext_resource type="Script" uid="uid://smygpuu7lbkh" path="res://scripts/ui/compassbar.gd" id="4_5n1hp"]
+[ext_resource type="Script" uid="uid://b5tvb8chtonxg" path="res://scripts/ui/minimap.gd" id="5_eld54"]
+[ext_resource type="Texture2D" uid="uid://ueo3a7kil5nd" path="res://newport/assets/images/point.webp" id="6_3swnk"]
+[ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/ui/joystick.gd" id="9_5357l"]
+[ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/ui/buttons.gd" id="10_iypfu"]
+[ext_resource type="Texture2D" uid="uid://dbfbk6qf1bxep" path="res://newport/assets/images/ui_atlas.png" id="10_ui_atlas"]
+[ext_resource type="Script" uid="uid://cty6onrl4lub0" path="res://scripts/ui/fps_label.gd" id="11_fps_label"]
+
+[sub_resource type="Shader" id="Shader_storm"]
+code = "shader_type canvas_item;
+uniform vec2 storm_center = vec2(0.5);
+uniform float storm_radius = 0.25;
+
+void fragment() {
+	float dist = distance(UV, storm_center);
+	if (dist < storm_radius) {
+		COLOR = vec4(0.0);
+	} else {
+		COLOR = vec4(0.0, 0.0, 1.0, 0.5);
+	}
+}"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_storm"]
+shader = SubResource("Shader_storm")
+shader_parameter/storm_center = Vector2(0.5, 0.5)
+shader_parameter/storm_radius = 0.25
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cover"]
+atlas = ExtResource("10_ui_atlas")
+region = Rect2(0, 0, 400, 82)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_p3vpr"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_white_circle1"]
+atlas = ExtResource("10_ui_atlas")
+region = Rect2(0, 83, 128, 128)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ymhbd"]
+bg_color = Color(1, 1, 1, 0.29803923)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(1, 1, 1, 0.29803923)
+border_blend = true
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jji8u"]
+bg_color = Color(1, 1, 1, 0.29803923)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(1, 1, 1, 0)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[node name="Hud" type="Control" unique_id=861416889]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 1.0
+offset_top = 3.0
+offset_right = 1.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mphia")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=701090656]
+
+[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer" unique_id=569957497]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=802481236]
+
+[node name="Minimap" type="Control" parent="CanvasLayer/BoxContainer/Node2" unique_id=43787215 node_paths=PackedStringArray("background_texture", "minimap_container", "player_pointer", "chicken_pointer", "lootbox_pointer", "storm_overlay")]
+custom_minimum_size = Vector2(60, 60)
+clip_contents = true
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -150.0
+offset_top = 32.0
+offset_right = -30.0
+offset_bottom = 152.0
+grow_horizontal = 0
+pivot_offset = Vector2(60, 60)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+script = ExtResource("5_eld54")
+background_texture = NodePath("MinimapBackground")
+minimap_container = NodePath(".")
+player_pointer = NodePath("Pointer")
+chicken_pointer = NodePath("ChickenPointer")
+lootbox_pointer = NodePath("LootBoxPointer")
+storm_overlay = NodePath("StormOverlay")
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=123456789]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.615686, 0.243137, 1, 1)
+
+[node name="MinimapBackground" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1650011523]
+custom_minimum_size = Vector2(120, 120)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="StormOverlay" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1030006368]
+z_index = 5
+material = SubResource("ShaderMaterial_storm")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_white_circle")
+expand_mode = 1
+
+[node name="Pointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1253168890]
+modulate = Color(1, 0, 1, 1)
+z_index = 10
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 0
+offset_left = 50.0
+offset_top = 49.0
+offset_right = 70.0
+offset_bottom = 69.0
+texture = ExtResource("6_3swnk")
+expand_mode = 1
+stretch_mode = 4
+flip_v = true
+
+[node name="ChickenPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1952187711]
+modulate = Color(1, 0.921569, 0.254902, 1)
+z_index = 11
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 0
+offset_left = 51.0
+offset_top = 51.0
+offset_right = 69.0
+offset_bottom = 69.0
+texture = ExtResource("6_3swnk")
+expand_mode = 1
+stretch_mode = 4
+flip_v = true
+
+[node name="LootBoxPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=146359137]
+modulate = Color(0.5176471, 0.20392157, 0.8745098, 1)
+z_index = 11
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 0
+offset_left = 51.0
+offset_top = 51.0
+offset_right = 69.0
+offset_bottom = 69.0
+texture = ExtResource("6_3swnk")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2" unique_id=248207393]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -161.0
+offset_top = 37.0
+offset_right = 164.0
+offset_bottom = 111.0
+grow_horizontal = 2
+texture = SubResource("AtlasTexture_cover")
+expand_mode = 1
+
+[node name="BoxContainer" type="VBoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=2145997434]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.5
+offset_top = 60.0
+offset_right = 100.5
+offset_bottom = 88.0
+grow_horizontal = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Countdown" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer" unique_id=1849541613]
+layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.44313726)
+theme_override_fonts/font = ExtResource("3_apjy4")
+theme_override_font_sizes/font_size = 25
+text = "Searching for Server"
+horizontal_alignment = 1
+uppercase = true
+
+[node name="BoxContainer2" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1306771986]
+offset_left = 22.0
+offset_top = 87.0
+offset_right = 99.0
+offset_bottom = 104.0
+size_flags_horizontal = 0
+size_flags_vertical = 4
+
+[node name="username" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer2" unique_id=229289726]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.26106378, 0.6644564, 0.85876876, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.47058824)
+theme_override_constants/shadow_outline_size = 0
+theme_override_font_sizes/font_size = 12
+text = "username"
+
+[node name="BoxContainer3" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1509763072]
+offset_left = 21.0
+offset_top = 104.0
+offset_right = 245.0
+offset_bottom = 122.0
+size_flags_horizontal = 0
+size_flags_vertical = 4
+
+[node name="status2" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=2089582472]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 1, 0.1882353, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.541)
+theme_override_font_sizes/font_size = 13
+text = "BeNad:"
+
+[node name="status" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=1931454316]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.541)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxTexture_p3vpr")
+text = "you are holding the chicken"
+
+[node name="CompassBar" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2" unique_id=1476260550]
+modulate = Color(1, 1, 1, 0.6509804)
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -172.0
+offset_top = 18.0
+offset_right = 177.0
+offset_bottom = 36.0
+grow_horizontal = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+script = ExtResource("4_5n1hp")
+background_color = Color(0.050980393, 0.050980393, 0.050980393, 0)
+fade_color = Color(0, 0, 0, 0)
+north_label_color = Color(1, 1, 1, 1)
+pointer_color = Color(1, 1, 1, 1)
+
+[node name="subtitle" type="Label" parent="CanvasLayer/BoxContainer/Node2" unique_id=1792981601]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -62.0
+offset_top = -39.0
+offset_right = 59.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 18
+text = "Grab de chicken and don't  let go"
+
+[node name="FPSLabel" type="Label" parent="CanvasLayer" unique_id=2147483647]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -96.0
+offset_top = 10.0
+offset_right = -16.0
+offset_bottom = 30.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5411765)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 2
+script = ExtResource("11_fps_label")
+
+[node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]
+
+[node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=203270884]
+position = Vector2(-53, -74)
+
+[node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=121289564]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -75.0
+offset_top = -75.0
+offset_right = 75.0
+offset_bottom = 75.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0)
+metadata/_edit_use_anchors_ = true
+
+[node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=420255833]
+self_modulate = Color(18.892, 18.892, 18.892, 0.122)
+scale = Vector2(0.8, 0.8)
+texture = SubResource("AtlasTexture_white_circle1")
+
+[node name="JoyLock" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=1534232310]
+position = Vector2(0, -90)
+
+[node name="JoyLock" type="Sprite2D" parent="Joystick/TouchJoyStick/JoyLock" unique_id=1518767299]
+scale = Vector2(0.4, 0.4)
+texture = SubResource("AtlasTexture_white_circle1")
+
+[node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=661345483 node_paths=PackedStringArray("joy_lock")]
+scale = Vector2(0.5, 0.5)
+texture = SubResource("AtlasTexture_white_circle1")
+script = ExtResource("9_5357l")
+auto_lock_hold_seconds = 0.2
+auto_lock_forward_min_strength = 0.1
+auto_lock_north_distance_multiplier = 1.9
+joy_lock = NodePath("../JoyLock")
+
+[node name="Node3" type="Node" parent="." unique_id=1974703911]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="Node3" unique_id=279152189]
+
+[node name="buttons_holder" type="VBoxContainer" parent="Node3/CanvasLayer" unique_id=1960719911]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -192.59491
+offset_top = -168.0
+offset_right = -68.59491
+offset_bottom = -44.0
+grow_horizontal = 0
+grow_vertical = 0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="VBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer/buttons_holder" unique_id=1325327020 node_paths=PackedStringArray("action_button", "jump_button", "slide_button")]
+layout_mode = 2
+script = ExtResource("10_iypfu")
+action_button = NodePath("Action")
+jump_button = NodePath("HBoxContainer/Jump")
+slide_button = NodePath("HBoxContainer/Slide")
+
+[node name="Action" type="Button" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer" unique_id=572465082]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/focus = SubResource("StyleBoxFlat_ymhbd")
+autowrap_trim_flags = 0
+icon_alignment = 1
+expand_icon = true
+
+[node name="HBoxContainer" type="VBoxContainer" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer" unique_id=1406219590]
+layout_mode = 2
+alignment = 1
+
+[node name="Jump" type="Button" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" unique_id=258331812]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/focus = SubResource("StyleBoxFlat_ymhbd")
+autowrap_trim_flags = 0
+icon_alignment = 1
+expand_icon = true
+
+[node name="Slide" type="Button" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" unique_id=849126213]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/focus = SubResource("StyleBoxFlat_ymhbd")
+autowrap_trim_flags = 0
+icon_alignment = 1
+expand_icon = true
+
+[node name="XPstream" type="Label" parent="." unique_id=2087879689]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -100.0
+offset_top = 226.0
+offset_right = -43.0
+offset_bottom = 250.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.3019608, 0.3019608, 0.3019608, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = -5
+theme_override_constants/shadow_offset_y = 5
+theme_override_constants/outline_size = 8
+theme_override_constants/shadow_outline_size = 10
+theme_override_fonts/font = ExtResource("3_apjy4")
+theme_override_font_sizes/font_size = 24
+text = "Your Xp stream"
+
+[node name="MONstream" type="Label" parent="." unique_id=366851244]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -120.0
+offset_top = 198.0
+offset_right = -31.0
+offset_bottom = 222.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.3019608, 0.3019608, 0.3019608, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = -5
+theme_override_constants/shadow_offset_y = 5
+theme_override_constants/outline_size = 8
+theme_override_constants/shadow_outline_size = 10
+theme_override_fonts/font = ExtResource("3_apjy4")
+theme_override_font_sizes/font_size = 24
+text = "Your MON stream"
+
+[node name="PrizePool" type="Label" parent="." unique_id=1341296255]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -140.0
+offset_top = 170.0
+offset_right = -32.0
+offset_bottom = 194.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.3019608, 0.3019608, 0.3019608, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = -5
+theme_override_constants/shadow_offset_y = 5
+theme_override_constants/outline_size = 8
+theme_override_constants/shadow_outline_size = 10
+theme_override_fonts/font = ExtResource("3_apjy4")
+theme_override_font_sizes/font_size = 24
+text = "Total MON pool"
