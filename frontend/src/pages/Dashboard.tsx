@@ -411,6 +411,15 @@ export default function Dashboard() {
         setPlayButtonState("idle");
         const currentSkinId = displayedSkin?.id || equippedSkin?.id || "s-default";
         const currentSkinName = resolveGameSkinName(currentSkinId);
+        const skinData = displayedSkin?.skinConfig || equippedSkin?.skinConfig || null;
+        if (skinData) {
+          try {
+            sessionStorage.setItem("wons_skin", JSON.stringify({
+              id: currentSkinName,
+              skinConfig: skinData
+            }));
+          } catch (_e) {}
+        }
         const playParams = new URLSearchParams({
           match: selectedMatch,
           skin: currentSkinName
