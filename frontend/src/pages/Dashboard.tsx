@@ -253,7 +253,7 @@ export default function Dashboard() {
     };
 
     loadSavedSkin();
-  }, [authenticated, user]);
+  }, [authenticated, user, storeItems]);
 
   // Load on-chain XP balance and owned skins
   useEffect(() => {
