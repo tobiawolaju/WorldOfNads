@@ -51,6 +51,7 @@ export interface SkinData {
 }
 
 export function hexToRgbaArray(hex: string): number[] {
-  const c = new (globalThis as any).THREE?.Color(hex) || { r: 1, g: 1, b: 1 };
+  const THREE = (globalThis as any).THREE;
+  const c = THREE ? new THREE.Color(hex) : { r: 1, g: 1, b: 1 };
   return [c.r, c.g, c.b, 1];
 }
