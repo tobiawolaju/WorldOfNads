@@ -51,7 +51,8 @@ func _on_skin_data_fetched(result: int, response_code: int, _headers: PackedStri
 		if skins_array is Array:
 			SkinApplier.seed_from_api(skins_array)
 			print("SkinApplier (lobby): Cached %d skins from API." % skins_array.size())
-
+	if local_player:
+		_skin_applier.apply_skin(local_player, _resolve_local_skin_name())
 
 func _spawn_local_player():
 	var skin_name := _resolve_local_skin_name()
