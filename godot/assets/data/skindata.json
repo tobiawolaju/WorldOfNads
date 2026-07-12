@@ -35,130 +35,76 @@
 			"color": [1.0, 0.61165553, 0.43272215, 1]
 		}
 	},
-	"Hellion": {
+	"s1": {
 		"palette": {
-			"body": [0.85, 0.05, 0.05, 1],
-			"body_alt": [0.7, 0.02, 0.02, 1],
-			"cheek": [0.55, 0.0, 0.0, 1],
-			"eye": [0.2, 0.2, 0.2, 1],
-			"skin": [0.95, 0.65, 0.45, 1]
+			"body": [0.482, 0.776, 0.494, 1],
+			"body_alt": [0.369, 0.659, 0.380, 1],
+			"cheek": [0.369, 0.659, 0.380, 1],
+			"eye": [1.0, 1.0, 1.0, 1],
+			"skin": [0.851, 0.702, 0.451, 1]
 		},
-		"outline_color": [0.9, 0.0, 0.0, 1],
-		"crown_color": [0.9, 0.0, 0.0, 1],
+		"outline_color": [0.482, 0.776, 0.494, 1],
+		"crown_color": [0.482, 0.776, 0.494, 1],
 		"face_texture": "res://assets/img/skins/face1.png",
-		"shader": "ghost",
-		"shader_targets": ["body"],
+		"shader": "default",
+		"shader_targets": ["body", "cheek", "eye"],
 		"attachment": {
 			"shape": "box",
-			"color": [0.95, 0.65, 0.45, 1]
+			"color": [0.851, 0.702, 0.451, 1]
 		}
 	},
-	"Seraphim": {
+	"s2": {
 		"palette": {
-			"body": [1.0, 1.0, 1.0, 1],
-			"body_alt": [0.95, 0.9, 0.7, 1],
-			"cheek": [0.85, 0.8, 0.6, 1],
+			"body": [0.231, 0.490, 0.847, 1],
+			"body_alt": [0.231, 0.490, 0.847, 1],
+			"cheek": [0.231, 0.490, 0.847, 1],
 			"eye": [1.0, 1.0, 1.0, 1],
-			"skin": [1.0, 0.75, 0.5, 1]
+			"skin": [0.541, 0.706, 0.973, 1]
 		},
-		"outline_color": [0.95, 0.85, 0.4, 1],
-		"crown_color": [0.95, 0.85, 0.4, 1],
+		"outline_color": [0.231, 0.490, 0.847, 1],
+		"crown_color": [0.231, 0.490, 0.847, 1],
 		"face_texture": "res://assets/img/skins/face1.png",
-		"shader": "angel",
-		"shader_targets": ["body", "cheek", "eye"],
+		"shader": "gold",
+		"shader_targets": ["body", "cheek"],
 		"attachment": {
-			"shape": "torus",
-			"color": [0.95, 0.85, 0.4, 1]
+			"shape": "box",
+			"color": [0.541, 0.706, 0.973, 1]
 		}
 	},
-	"Abbss": {
+	"s3": {
 		"palette": {
-			"body": [0.35, 0.0, 0.4, 1],
-			"body_alt": [0.2, 0.0, 0.35, 1],
-			"cheek": [0.15, 0.0, 0.25, 1],
-			"eye": [0.1, 0.1, 0.15, 1],
-			"skin": [0.8, 0.7, 0.9, 1]
+			"body": [1.0, 0.420, 0.208, 1],
+			"body_alt": [1.0, 0.420, 0.208, 1],
+			"cheek": [1.0, 0.420, 0.208, 1],
+			"eye": [1.0, 1.0, 1.0, 1],
+			"skin": [1.0, 0.612, 0.431, 1]
 		},
-		"outline_color": [0.5, 0.0, 0.6, 1],
-		"crown_color": [0.5, 0.0, 0.6, 1],
-		"face_texture": "res://assets/img/skins/face1.png",
-		"shader": "void",
-		"shader_targets": ["body", "cheek", "eye"],
-		"attachment": {
-			"shape": "sphere",
-			"color": [0.8, 0.7, 0.9, 1]
-		}
-	},
-	"buggy": {
-		"palette": {
-			"body": [0.2, 0.7, 0.15, 1],
-			"body_alt": [0.15, 0.55, 0.1, 1],
-			"cheek": [0.1, 0.4, 0.05, 1],
-			"eye": [0.35, 0.55, 0.2, 1],
-			"skin": [0.85, 0.7, 0.45, 1]
-		},
-		"outline_color": [0.1, 0.6, 0.0, 1],
-		"crown_color": [0.1, 0.6, 0.0, 1],
+		"outline_color": [1.0, 0.271, 0.0, 1],
+		"crown_color": [1.0, 0.271, 0.0, 1],
 		"face_texture": "res://assets/img/skins/face1.png",
 		"shader": "default",
 		"shader_targets": ["body", "cheek", "eye"],
 		"attachment": {
 			"shape": "cone",
-			"color": [0.85, 0.7, 0.45, 1]
+			"color": [1.0, 0.612, 0.431, 1]
 		}
 	},
-	"john deo": {
+	"s4": {
 		"palette": {
-			"body": [0.15, 0.4, 0.85, 1],
-			"body_alt": [0.1, 0.3, 0.7, 1],
-			"cheek": [0.05, 0.2, 0.55, 1],
-			"eye": [1.0, 1.0, 1.0, 1],
-			"skin": [0.9, 0.75, 0.55, 1]
+			"body": [0.608, 0.349, 0.714, 1],
+			"body_alt": [0.608, 0.349, 0.714, 1],
+			"cheek": [0.608, 0.349, 0.714, 1],
+			"eye": [0.945, 0.769, 0.059, 1],
+			"skin": [0.765, 0.573, 0.827, 1]
 		},
-		"outline_color": [0.1, 0.3, 0.8, 1],
-		"crown_color": [0.1, 0.3, 0.8, 1],
+		"outline_color": [0.945, 0.769, 0.059, 1],
+		"crown_color": [0.945, 0.769, 0.059, 1],
 		"face_texture": "res://assets/img/skins/face1.png",
-		"shader": "gold",
-		"shader_targets": ["body", "cheek"],
-		"attachment": {
-			"shape": "cylinder",
-			"color": [0.9, 0.75, 0.55, 1]
-		}
-	},
-	"Aurum": {
-		"palette": {
-			"body": [0.9, 0.75, 0.1, 1],
-			"body_alt": [0.8, 0.6, 0.05, 1],
-			"cheek": [0.7, 0.5, 0.0, 1],
-			"eye": [1.0, 1.0, 0.9, 1],
-			"skin": [1.0, 0.85, 0.55, 1]
-		},
-		"outline_color": [0.85, 0.7, 0.0, 1],
-		"crown_color": [0.85, 0.7, 0.0, 1],
-		"face_texture": "res://assets/img/skins/face1.png",
-		"shader": "gold",
+		"shader": "angel",
 		"shader_targets": ["body", "cheek", "eye"],
 		"attachment": {
 			"shape": "torus",
-			"color": [1.0, 0.85, 0.55, 1]
-		}
-	},
-	"mouch": {
-		"palette": {
-			"body": [0.85, 0.45, 0.1, 1],
-			"body_alt": [0.7, 0.35, 0.05, 1],
-			"cheek": [0.55, 0.25, 0.0, 1],
-			"eye": [0.9, 0.8, 0.65, 1],
-			"skin": [0.95, 0.7, 0.5, 1]
-		},
-		"outline_color": [0.8, 0.35, 0.0, 1],
-		"crown_color": [0.8, 0.35, 0.0, 1],
-		"face_texture": "res://assets/img/skins/face1.png",
-		"shader": "shadow",
-		"shader_targets": ["body", "cheek"],
-		"attachment": {
-			"shape": "box",
-			"color": [0.95, 0.7, 0.5, 1]
+			"color": [0.945, 0.769, 0.059, 1]
 		}
 	}
 }

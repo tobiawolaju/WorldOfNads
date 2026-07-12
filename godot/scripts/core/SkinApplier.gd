@@ -2,24 +2,106 @@ extends RefCounted
 class_name SkinApplier
 
 const SKIN_DATA_PATH := "res://assets/data/skindata.json"
-const DEFAULT_SKIN := "defaultnad"
+const DEFAULT_SKIN := "s-default"
+const API_BASE := "https://worldofnads.onrender.com"
 
-var _cache: Dictionary = {}
+static var _file_cache: Dictionary = {}
+static var _api_cache: Dictionary = {}
+static var _file_loaded := false
 
 func _init() -> void:
-	_load_data()
+	if not _file_loaded:
+		_load_file_data()
 
-func _load_data() -> void:
+func _load_file_data() -> void:
 	var file := FileAccess.open(SKIN_DATA_PATH, FileAccess.READ)
 	if file == null:
 		push_error("SkinApplier: Could not open %s" % SKIN_DATA_PATH)
+		_file_loaded = true
 		return
 	var parsed = JSON.parse_string(file.get_as_text())
-	_cache = parsed as Dictionary if parsed is Dictionary else {}
+	_file_cache = parsed as Dictionary if parsed is Dictionary else {}
+	_file_loaded = true
+
+static func seed_from_api(json_array: Array) -> void:
+	for entry in json_array:
+		if entry is Dictionary:
+			var key: String = str(entry.get("id", ""))
+			if key == "":
+				key = str(entry.get("name", "")).to_lower().replace(" ", "-")
+			if key == "":
+				continue
+			var skin_config: Dictionary = entry.get("skinConfig", entry.get("skin_config", {}))
+			if skin_config.is_empty():
+				continue
+			var converted := _convert_api_entry(skin_config)
+			_api_cache[key] = converted
+
+static func seed_single_from_api(skin_id: String, entry: Dictionary) -> void:
+	var skin_config: Dictionary = entry.get("skinConfig", entry.get("skin_config", {}))
+	if not skin_config.is_empty():
+		_api_cache[skin_id] = _convert_api_entry(skin_config)
+
+static func _convert_api_entry(skin_config: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for key in ["palette", "outline_color", "crown_color", "face_texture", "shader", "shader_targets", "attachment"]:
+		if skin_config.has(key):
+			result[key] = skin_config[key]
+	if result.is_empty():
+		return {}
+	if result.has("palette") and result["palette"] is Dictionary:
+		var converted_palette: Dictionary = {}
+		for pkey in result["palette"]:
+			var raw = result["palette"][pkey]
+			converted_palette[pkey] = _hex2rgba(raw) if typeof(raw) == TYPE_STRING else raw
+		result["palette"] = converted_palette
+	for key in ["outline_color", "crown_color"]:
+		if result.has(key):
+			var raw = result[key]
+			result[key] = _hex2rgba(raw) if typeof(raw) == TYPE_STRING else raw
+	if result.has("attachment") and result["attachment"] is Dictionary:
+		var att = result["attachment"]
+		if att.has("color") and typeof(att["color"]) == TYPE_STRING:
+			att["color"] = _hex2rgba(att["color"])
+	return result
+
+static func _hex2rgba(hex: Variant) -> Array:
+	if typeof(hex) != TYPE_STRING:
+		return _hex2rgba("#ffffff")
+	var s: String = str(hex).strip_edges().trim_prefix("#")
+	if s.length() < 6:
+		return [1.0, 1.0, 1.0, 1.0]
+	var r := float("0x%s" % s.substr(0, 2)) / 255.0
+	var g := float("0x%s" % s.substr(2, 2)) / 255.0
+	var b := float("0x%s" % s.substr(4, 2)) / 255.0
+	var a := 1.0
+	if s.length() >= 8:
+		a = float("0x%s" % s.substr(6, 2)) / 255.0
+	return [r, g, b, a]
+
+static func build_skin_id_mapping() -> Dictionary:
+	var mapping: Dictionary = {}
+	for key in _api_cache:
+		mapping[key.to_lower()] = key
+	for key in _file_cache:
+		var k = key.to_lower()
+		if not mapping.has(k):
+			mapping[k] = key
+	return mapping
 
 func get_skin_data(skin_name: String) -> Dictionary:
-	var d = _cache.get(skin_name, _cache.get(DEFAULT_SKIN, {}))
-	return (d as Dictionary).duplicate(true) if d is Dictionary else {}
+	var key := str(skin_name).strip_edges().to_lower()
+	if _api_cache.has(key):
+		var d = _api_cache[key]
+		return d.duplicate(true) if d is Dictionary else {}
+	if _file_cache.has(key):
+		var d = _file_cache[key]
+		return d.duplicate(true) if d is Dictionary else {}
+	if _api_cache.has(DEFAULT_SKIN):
+		var d = _api_cache[DEFAULT_SKIN]
+		return d.duplicate(true) if d is Dictionary else {}
+	var d = _file_cache.get(DEFAULT_SKIN, {})
+	return d.duplicate(true) if d is Dictionary else {}
 
 func apply_skin(player: Node3D, skin_name: String) -> void:
 	var data := get_skin_data(skin_name)
@@ -197,6 +279,8 @@ func _assign_crown_material(mi: MeshInstance3D, color: Color) -> void:
 	mi.material_override = mat
 
 static func _c(v: Variant) -> Color:
+	if typeof(v) == TYPE_STRING:
+		return _c(_hex2rgba(v))
 	var arr: Array = v if v is Array else [1, 1, 1, 1]
 	var a: float = arr[3] if arr.size() > 3 else 1.0
 	return Color(arr[0], arr[1], arr[2], a)

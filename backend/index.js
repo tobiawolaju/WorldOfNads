@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
-import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile } from './firebaseClient.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins } from './firebaseClient.js';
 import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, calcMonPerSec } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 
@@ -312,41 +312,10 @@ function sanitizeUsername(value) {
 }
 
 function resolveSkinName(value) {
-  const key = String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ');
-
-  switch (key) {
-    case 's-default':
-    case 'defaultnad':
-      return 'defaultnad';
-    case 's0':
-    case 'buggy':
-      return 'buggy';
-    case 's1':
-    case 'aurum':
-      return 'Aurum';
-    case 's2':
-    case 'abbss':
-    case 'abyss':
-      return 'Abbss';
-    case 's3':
-    case 'hellion':
-      return 'Hellion';
-    case 's4':
-    case 'seraphim':
-      return 'Seraphim';
-    case 's5':
-    case 'mouch':
-      return 'mouch';
-    case 's6':
-    case 'john deo':
-    case 'johndeo':
-      return 'john deo';
-    default:
-      return 'defaultnad';
-  }
+  const key = String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  if (key === 's-default' || key === 'defaultnad') return 'defaultnad';
+  if (key === 's-default-unshaded' || key === 'defaultnad_unshaded') return 'defaultnad_unshaded';
+  return key || 'defaultnad';
 }
 
 function sanitizeMeta(value) {
@@ -473,6 +442,28 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // ─── SKIN METADATA API ───
+  if (req.method === 'GET' && reqUrl.pathname === '/api/skins') {
+    const skins = await getAllSkins();
+    sendJson(res, 200, { ok: true, skins });
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname.startsWith('/api/skins/')) {
+    const skinId = reqUrl.pathname.slice('/api/skins/'.length);
+    if (!skinId) {
+      sendJson(res, 400, { ok: false, error: 'Skin ID required' });
+      return;
+    }
+    const skin = await getSkin(skinId);
+    if (!skin) {
+      sendJson(res, 404, { ok: false, error: 'Skin not found' });
+      return;
+    }
+    sendJson(res, 200, { ok: true, skin });
+    return;
+  }
+
   if (req.method === 'POST' && reqUrl.pathname === '/admin/verify-access') {
     try {
       const payload = await readJsonBody(req);
@@ -570,18 +561,47 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      const { maxSupply, mintPrice, requiredXP, tier, uri } = payload;
-      if (maxSupply == null || mintPrice == null) {
-        sendJson(res, 400, { ok: false, error: 'maxSupply and mintPrice are required' });
+      const { onChainId, name, tier, price, maxSupply, requiredXP, image, skinConfig } = payload;
+      if (!name || !skinConfig) {
+        sendJson(res, 400, { ok: false, error: 'name and skinConfig are required' });
         return;
       }
 
-      const result = await createSkinOnchain(maxSupply, mintPrice, requiredXP || 0, tier || 0, uri || '');
-      if (result.success) {
-        sendJson(res, 200, { ok: true, txHash: result.txHash });
-      } else {
-        sendJson(res, 500, { ok: false, error: result.error });
+      // 1. Create on-chain if maxSupply provided
+      let chainResult = null;
+      if (maxSupply != null) {
+        const priceStr = String(price || '0').replace(/[^0-9.]/g, '');
+        const tierIndex = ['common','rare','epic','legendary'].indexOf((tier || 'common').toLowerCase());
+        const baseUrl = process.env.RENDER_EXTERNAL_URL || `https://worldofnads.onrender.com`;
+        const uri = `${baseUrl}/api/skins/${onChainId || 'new'}`;
+        chainResult = await createSkinOnchain(
+          maxSupply,
+          priceStr,
+          requiredXP || 0,
+          tierIndex >= 0 ? tierIndex : 0,
+          uri
+        );
+        if (!chainResult.success) {
+          sendJson(res, 500, { ok: false, error: chainResult.error });
+          return;
+        }
       }
+
+      // 2. Save metadata to Firebase
+      const skinId = onChainId || `s-${Date.now()}`;
+      await saveSkin(skinId, {
+        name,
+        tier: tier || 'common',
+        price: price || '0 MON',
+        maxSupply: maxSupply || null,
+        requiredXP: requiredXP || 0,
+        image: image || '',
+        onChainId: chainResult ? (chainResult.skinId || onChainId) : null,
+        skinConfig
+      });
+
+      const resultId = chainResult ? chainResult.skinId || onChainId : skinId;
+      sendJson(res, 200, { ok: true, skinId: resultId, txHash: chainResult?.txHash || null });
     } catch (error) {
       console.error('[Admin] Create skin failed:', error);
       sendJson(res, 500, { ok: false, error: 'Internal server error' });

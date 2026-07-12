@@ -16,27 +16,12 @@ var _stress_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 const DEFAULT_SKIN_NAME := "defaultnad"
 const SKIN_SCENE: PackedScene = preload("res://scenes/skin.tscn")
+const API_BASE: String = "https://worldofnads.onrender.com"
 const SKIN_NAME_ALIASES := {
 	"s-default": "defaultnad",
 	"s-default-unshaded": "defaultnad_unshaded",
-	"s0": "buggy",
-	"s1": "Aurum",
-	"s2": "Abbss",
-	"s3": "Hellion",
-	"s4": "Seraphim",
-	"s5": "mouch",
-	"s6": "john deo",
 	"defaultnad": "defaultnad",
 	"defaultnad_unshaded": "defaultnad_unshaded",
-	"buggy": "buggy",
-	"aurum": "Aurum",
-	"abbss": "Abbss",
-	"abyss": "Abbss",
-	"hellion": "Hellion",
-	"seraphim": "Seraphim",
-	"mouch": "mouch",
-	"john deo": "john deo",
-	"johndeo": "john deo"
 }
 
 static var _skin_applier: SkinApplier = SkinApplier.new()
@@ -44,12 +29,30 @@ static var _skin_applier: SkinApplier = SkinApplier.new()
 
 
 func _ready():
-	#GameManager.set_speed(1)
-	#resolution.set_resolution(resolution.default_scale)
 	_stress_rng.randomize()
+	_fetch_skin_data()
 	_spawn_local_player()
 	_spawn_lobby_stress_agents()
 	_assign_camera()
+
+func _fetch_skin_data() -> void:
+	var http := HTTPRequest.new()
+	add_child(http)
+	http.request_completed.connect(_on_skin_data_fetched.bind(http))
+	http.request("%s/api/skins" % API_BASE)
+
+func _on_skin_data_fetched(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest) -> void:
+	if http != null and is_instance_valid(http):
+		http.queue_free()
+	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		print("SkinApplier (lobby): API fetch failed (%d %d), using bundled fallback." % [result, response_code])
+		return
+	var parsed = JSON.parse_string(body.get_string_from_utf8())
+	if parsed is Dictionary and parsed.get("ok") == true:
+		var skins_array = parsed.get("skins")
+		if skins_array is Array:
+			SkinApplier.seed_from_api(skins_array)
+			print("SkinApplier (lobby): Cached %d skins from API." % skins_array.size())
 
 
 func _spawn_local_player():

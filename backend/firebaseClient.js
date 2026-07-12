@@ -117,3 +117,36 @@ export async function updatePlayerXP(username, xp) {
         lastUpdated: new Date().toISOString()
     });
 }
+
+// ─── SKIN METADATA ───
+
+const SKIN_SCHEMA_VERSION = 1;
+
+export async function saveSkin(skinId, skinData) {
+    const skinRef = ref(db, `skins/${skinId}`);
+    await update(skinRef, {
+        ...skinData,
+        schemaVersion: SKIN_SCHEMA_VERSION,
+        updatedAt: new Date().toISOString()
+    });
+    console.log(`[Firebase] Skin saved: ${skinId}`);
+}
+
+export async function getSkin(skinId) {
+    const skinRef = ref(db, `skins/${skinId}`);
+    const snapshot = await get(skinRef);
+    if (snapshot.exists()) {
+        return snapshot.val();
+    }
+    return null;
+}
+
+export async function getAllSkins() {
+    const skinsRef = ref(db, 'skins');
+    const snapshot = await get(skinsRef);
+    if (snapshot.exists()) {
+        const data = snapshot.val();
+        return Object.entries(data).map(([id, val]) => ({ id, ...val }));
+    }
+    return [];
+}

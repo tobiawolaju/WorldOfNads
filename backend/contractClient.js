@@ -286,10 +286,19 @@ export async function createSkinOnchain(maxSupply, mintPrice, requiredXP, tier, 
             BigInt(requiredXP),
             tier,
             uri || `https://worldofnads.com/api/skins/${Date.now()}`,
-            { gasLimit: 500000 }
+            { gasLimit: 650000 }
         );
         const receipt = await tx.wait();
-        return { success: true, txHash: tx.hash, blockNumber: receipt.blockNumber };
+        let skinId = null;
+        if (receipt.logs && receipt.logs.length > 0) {
+            try {
+                const parsed = skins.interface.parseLog(receipt.logs[0]);
+                if (parsed && parsed.name === 'SkinCreated') {
+                    skinId = Number(parsed.args.skinId);
+                }
+            } catch { /* event parse failed, ignore */ }
+        }
+        return { success: true, txHash: tx.hash, blockNumber: receipt.blockNumber, skinId };
     } catch (error) {
         console.error(`[Onchain] createSkin failed:`, error.message);
         return { success: false, error: error.message };
