@@ -143,6 +143,7 @@ func _ready():
 	add_to_group("player_manager")
 	_resolve_local_username()
 	_resolve_local_skin_name()
+	_pre_seed_from_session_storage()
 	_fetch_skin_data()
 	_init_player_pool()
 	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
@@ -1188,6 +1189,19 @@ func _resolve_local_skin_name() -> void:
 	var skin_name := str(raw_skin).strip_edges()
 	if skin_name != "":
 		local_skin_name = _normalize_skin_name(skin_name)
+
+func _pre_seed_from_session_storage() -> void:
+	if not OS.has_feature("web"):
+		return
+	var raw = JavaScriptBridge.eval("(function(){var d=sessionStorage.getItem('wons_skin');sessionStorage.removeItem('wons_skin');return d||''})()")
+	if typeof(raw) != TYPE_STRING or raw.is_empty():
+		return
+	var parsed = JSON.parse_string(raw)
+	if parsed is Dictionary:
+		var skin_id = parsed.get("id", "")
+		if skin_id != "":
+			SkinApplier.seed_single_from_api(skin_id, {"skinConfig": parsed.get("skinConfig", {})})
+			print("SkinApplier: Pre-seeded from sessionStorage: %s" % skin_id)
 
 func _get_skin_scene(_skin_name: String) -> PackedScene:
 	return load(SKIN_SCENE_PATH) as PackedScene
