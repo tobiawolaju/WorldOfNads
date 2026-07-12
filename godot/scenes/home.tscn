@@ -14,7 +14,7 @@ offset_left = -689.0
 offset_top = -694.0
 offset_right = 1311.0
 offset_bottom = 1306.0
-color = Color(0, 0, 0, 1)
+color = Color(0.43137255, 0.32941177, 1, 1)
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=151486276]
 
