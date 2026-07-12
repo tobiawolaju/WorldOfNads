@@ -159,7 +159,7 @@ export default function Dashboard() {
   const currentStoreItem = selectedStore ? dummyStore.find((i) => i.id === selectedStore) || null : null;
   const isSelectedStoreOwned = Boolean(
     currentStoreItem &&
-    (currentStoreItem.id === "s-default" || // default always owned
+    (currentStoreItem.id === "s-default" || currentStoreItem.id === "s-default-unshaded" || // defaults always owned
       (currentStoreItem.onChainId && ownedSkinIds.includes(currentStoreItem.onChainId)))
   );
   const selectedItemXP = currentStoreItem?.requiredXP || 0;
@@ -787,7 +787,7 @@ export default function Dashboard() {
                 {dummyStore
                   .filter((item) => storeFilter === "all" || item.tier === storeFilter)
                   .map((item) => {
-                    const isOwned = item.id === "s-default" || (item.onChainId && ownedSkinIds.includes(item.onChainId));
+                    const isOwned = item.id === "s-default" || item.id === "s-default-unshaded" || (item.onChainId && ownedSkinIds.includes(item.onChainId));
                     const itemSupply = item.onChainId ? supplyData[item.onChainId] : null;
                     return (
                     <div
