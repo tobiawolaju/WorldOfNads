@@ -1,89 +1,152 @@
 [
-  {
-    "id": "s-default",
-    "name": "Default Nad",
-    "price": "0 MON",
-    "image": "/skins_png/s-default.png",
-    "category": "skins",
-    "description": "Default pink skin. Free for everyone.",
-    "onChainId": null,
-    "requiredXP": 0,
-    "maxSupply": null,
-    "tier": "common",
-    "skinConfig": {
-      "color": "#ff2496",
-      "cheekColor": "#ff40bf"
-    }
-  },
-  {
-    "id": "s1",
-    "name": "Sprout",
-    "price": "5 MON",
-    "image": "/skins_png/s1.png",
-    "category": "skins",
-    "description": "Fresh green skin. Common tier.",
-    "onChainId": 1,
-    "requiredXP": 0,
-    "maxSupply": 1000,
-    "tier": "common",
-    "skinConfig": {
-      "color": "#7bc67e",
-      "cheekColor": "#5ea861"
-    }
-  },
-  {
-    "id": "s2",
-    "name": "Cobalt",
-    "price": "10 MON",
-    "image": "/skins_png/s2.png",
-    "category": "skins",
-    "description": "Deep blue metallic skin. Rare tier.",
-    "onChainId": 2,
-    "requiredXP": 100,
-    "maxSupply": 500,
-    "tier": "rare",
-    "skinConfig": {
-      "color": "#3b7dd8",
-      "cheekColor": "#3b7dd8",
-      "shader": "gold",
-      "shaderTargets": ["body", "cheek"]
-    }
-  },
-  {
-    "id": "s3",
-    "name": "Magma",
-    "price": "20 MON",
-    "image": "/skins_png/s3.png",
-    "category": "skins",
-    "description": "Volcanic orange skin with glow. Epic tier.",
-    "onChainId": 3,
-    "requiredXP": 500,
-    "maxSupply": 100,
-    "tier": "epic",
-    "skinConfig": {
-      "attachmentShape": "cone",
-      "color": "#ff6b35",
-      "cheekColor": "#ff6b35",
-      "attachmentColor": "#ff4500"
-    }
-  },
-  {
-    "id": "s4",
-    "name": "Aether",
-    "price": "50 MON",
-    "image": "/skins_png/s4.png",
-    "category": "skins",
-    "description": "Otherworldly violet skin. Legendary tier.",
-    "onChainId": 4,
-    "requiredXP": 2000,
-    "maxSupply": 50,
-    "tier": "legendary",
-    "skinConfig": {
-      "attachmentShape": "torus",
-      "color": "#9b59b6",
-      "cheekColor": "#9b59b6",
-      "eyeColor": "#f1c40f",
-      "attachmentColor": "#f1c40f"
-    }
-  }
+	{
+		"id": "s-default",
+		"name": "Default Nad",
+		"price": "0 MON",
+		"image": "/skins_png/s-default.png",
+		"category": "skins",
+		"description": "Default pink skin. Free for everyone.",
+		"onChainId": null,
+		"requiredXP": 0,
+		"maxSupply": null,
+		"tier": "common",
+		"skinConfig": {
+			"palette": {
+				"body": "#fc2d96",
+				"body_alt": "#fc4b8c",
+				"cheek": "#fc6a9b",
+				"eye": "#e7e7e7",
+				"skin": "#ff9c6e"
+			},
+			"outline_color": "#fc00d9",
+			"crown_color": "#fc00d9",
+			"face_texture": "",
+			"shader": "default",
+			"shader_targets": ["body", "cheek", "eye"],
+			"attachment": {
+				"shape": "box",
+				"color": "#ff9c6e"
+			}
+		}
+	},
+	{
+		"id": "s1",
+		"name": "Sprout",
+		"price": "5 MON",
+		"image": "/skins_png/s1.png",
+		"category": "skins",
+		"description": "Fresh green skin. Common tier.",
+		"onChainId": 1,
+		"requiredXP": 0,
+		"maxSupply": 1000,
+		"tier": "common",
+		"skinConfig": {
+			"palette": {
+				"body": "#7bc67e",
+				"body_alt": "#5ea861",
+				"cheek": "#5ea861",
+				"eye": "#ffffff",
+				"skin": "#d9b373"
+			},
+			"outline_color": "#7bc67e",
+			"crown_color": "#7bc67e",
+			"face_texture": "",
+			"shader": "default",
+			"shader_targets": ["body", "cheek", "eye"],
+			"attachment": {
+				"shape": "box",
+				"color": "#d9b373"
+			}
+		}
+	},
+	{
+		"id": "s2",
+		"name": "Cobalt",
+		"price": "10 MON",
+		"image": "/skins_png/s2.png",
+		"category": "skins",
+		"description": "Deep blue metallic skin. Rare tier.",
+		"onChainId": 2,
+		"requiredXP": 100,
+		"maxSupply": 500,
+		"tier": "rare",
+		"skinConfig": {
+			"palette": {
+				"body": "#3b7dd8",
+				"body_alt": "#3b7dd8",
+				"cheek": "#3b7dd8",
+				"eye": "#ffffff",
+				"skin": "#8ab4f8"
+			},
+			"outline_color": "#3b7dd8",
+			"crown_color": "#3b7dd8",
+			"face_texture": "",
+			"shader": "gold",
+			"shader_targets": ["body", "cheek"],
+			"attachment": {
+				"shape": "box",
+				"color": "#8ab4f8"
+			}
+		}
+	},
+	{
+		"id": "s3",
+		"name": "Magma",
+		"price": "20 MON",
+		"image": "/skins_png/s3.png",
+		"category": "skins",
+		"description": "Volcanic orange skin with glow. Epic tier.",
+		"onChainId": 3,
+		"requiredXP": 500,
+		"maxSupply": 100,
+		"tier": "epic",
+		"skinConfig": {
+			"palette": {
+				"body": "#ff6b35",
+				"body_alt": "#ff6b35",
+				"cheek": "#ff6b35",
+				"eye": "#ffffff",
+				"skin": "#ff9c6e"
+			},
+			"outline_color": "#ff4500",
+			"crown_color": "#ff4500",
+			"face_texture": "",
+			"shader": "default",
+			"shader_targets": ["body", "cheek", "eye"],
+			"attachment": {
+				"shape": "cone",
+				"color": "#ff4500"
+			}
+		}
+	},
+	{
+		"id": "s4",
+		"name": "Aether",
+		"price": "50 MON",
+		"image": "/skins_png/s4.png",
+		"category": "skins",
+		"description": "Otherworldly violet skin. Legendary tier.",
+		"onChainId": 4,
+		"requiredXP": 2000,
+		"maxSupply": 50,
+		"tier": "legendary",
+		"skinConfig": {
+			"palette": {
+				"body": "#9b59b6",
+				"body_alt": "#9b59b6",
+				"cheek": "#9b59b6",
+				"eye": "#f1c40f",
+				"skin": "#c39bd3"
+			},
+			"outline_color": "#f1c40f",
+			"crown_color": "#f1c40f",
+			"face_texture": "",
+			"shader": "angel",
+			"shader_targets": ["body", "cheek", "eye"],
+			"attachment": {
+				"shape": "torus",
+				"color": "#f1c40f"
+			}
+		}
+	}
 ]
