@@ -174,14 +174,15 @@ func _on_skin_data_fetched(result: int, response_code: int, _headers: PackedStri
 
 func _reapply_skins() -> void:
 	for id in players.keys():
-		var player := players[id] as Node3D
-		if player == null:
+		var p = players.get(id)
+		if p == null or not (p is Node3D):
 			continue
-		var skin_name := player_skin_names.get(id, DEFAULT_SKIN_NAME)
+		var node: Node3D = p
+		var skin_name = player_skin_names.get(id, DEFAULT_SKIN_NAME)
 		if id == player_id:
-			_skin_applier.apply_skin(player, skin_name)
+			_skin_applier.apply_skin(node, skin_name)
 		else:
-			_update_remote_player_skin(player, skin_name)
+			_update_remote_player_skin(node, skin_name)
 
 func _attempt_connection():
 	var base_url = LIVE_URL if is_connecting_to_live else LOCAL_URL
