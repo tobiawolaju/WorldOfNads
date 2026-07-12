@@ -8,40 +8,14 @@ static var instance: PlayerManager
 const LIVE_URL: String = "wss://worldofnads.onrender.com"
 const LOCAL_URL: String = "ws://localhost:8080"
 const DEFAULT_SKIN_NAME: String = "defaultnad"
-const SKIN_SCENE_PATHS: Dictionary = {
-	"defaultnad": "res://scenes/skin.tscn",
-	"defaultnad_unshaded": "res://scenes/skin.tscn",
-	"Hellion": "res://scenes/skin.tscn",
-	"Seraphim": "res://scenes/skin.tscn",
-	"Abbss": "res://scenes/skin.tscn",
-	"buggy": "res://scenes/skin.tscn",
-	"john deo": "res://scenes/skin.tscn",
-	"Aurum": "res://scenes/skin.tscn",
-	"mouch": "res://scenes/skin.tscn"
-}
+const SKIN_SCENE_PATH: String = "res://scenes/skin.tscn"
 
 static var _skin_applier: SkinApplier = SkinApplier.new()
 const SKIN_NAME_ALIASES: Dictionary = {
 	"s-default": "defaultnad",
 	"s-default-unshaded": "defaultnad_unshaded",
-	"s0": "buggy",
-	"s1": "Aurum",
-	"s2": "Abbss",
-	"s3": "Hellion",
-	"s4": "Seraphim",
-	"s5": "mouch",
-	"s6": "john deo",
 	"defaultnad": "defaultnad",
 	"defaultnad_unshaded": "defaultnad_unshaded",
-	"buggy": "buggy",
-	"aurum": "Aurum",
-	"abbss": "Abbss",
-	"abyss": "Abbss",
-	"hellion": "Hellion",
-	"seraphim": "Seraphim",
-	"mouch": "mouch",
-	"john deo": "john deo",
-	"johndeo": "john deo"
 }
 
 @export var player_scene: PackedScene 
@@ -164,18 +138,40 @@ var connection_attempted: bool = false
 var _ui_update_timer: float = 0.0
 const UI_UPDATE_INTERVAL: float = 0.2
 
+const API_BASE: String = "https://worldofnads.onrender.com"
+
 func _ready():
 	instance = self
 	add_to_group("player_manager")
 	_resolve_local_username()
 	_resolve_local_skin_name()
-	_init_player_pool() # Initialize pool for remote players
+	_fetch_skin_data()
+	_init_player_pool()
 	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
 	_attempt_connection()
 	_cache_chicken_node()
 	_resolve_events_bridge()
 	_resolve_ui_nodes()
 	_update_match_ui()
+
+func _fetch_skin_data() -> void:
+	var http := HTTPRequest.new()
+	add_child(http)
+	http.request_completed.connect(_on_skin_data_fetched.bind(http))
+	http.request("%s/api/skins" % API_BASE)
+
+func _on_skin_data_fetched(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest) -> void:
+	if http != null and is_instance_valid(http):
+		http.queue_free()
+	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		print("SkinApplier: API fetch failed (%d %d), using bundled fallback." % [result, response_code])
+		return
+	var parsed = JSON.parse_string(body.get_string_from_utf8())
+	if parsed is Dictionary and parsed.get("ok") == true:
+		var skins_array = parsed.get("skins")
+		if skins_array is Array:
+			SkinApplier.seed_from_api(skins_array)
+			print("SkinApplier: Cached %d skins from API." % skins_array.size())
 
 func _attempt_connection():
 	var base_url = LIVE_URL if is_connecting_to_live else LOCAL_URL
@@ -1182,18 +1178,8 @@ func _resolve_local_skin_name() -> void:
 	if skin_name != "":
 		local_skin_name = _normalize_skin_name(skin_name)
 
-func _get_skin_scene(skin_name: String) -> PackedScene:
-	var resolved_name := _normalize_skin_name(skin_name)
-	var scene_path := str(SKIN_SCENE_PATHS.get(resolved_name, ""))
-	if scene_path == "":
-		return null
-	var scene := load(scene_path) as PackedScene
-	if scene != null:
-		return scene
-	var default_path := str(SKIN_SCENE_PATHS.get(DEFAULT_SKIN_NAME, ""))
-	if default_path == "":
-		return null
-	return load(default_path) as PackedScene
+func _get_skin_scene(_skin_name: String) -> PackedScene:
+	return load(SKIN_SCENE_PATH) as PackedScene
 
 func _resolve_server_skin(data: Dictionary, fallback_id: String, fallback_skin: String = DEFAULT_SKIN_NAME) -> String:
 	for key in ["skin", "skinName", "skin_name", "skinId", "skin_id", "s"]:

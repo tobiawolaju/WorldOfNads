@@ -105,7 +105,8 @@ const XP_ABI = [
   "function balanceOf(address account) external view returns (uint256)"
 ];
 
-const dummyStore: StoreItem[] = storeItemsData as StoreItem[];
+const LAUNCHER_API = import.meta.env.VITE_ANALYTICS_API_URL || "https://worldofnads.onrender.com";
+const LOCAL_ITEMS = storeItemsData as StoreItem[];
 
 const getStoreImageUrl = (item: StoreItem) => item.image || `/skins_png/${item.id}.png`;
 
@@ -120,6 +121,41 @@ function getXPForLevel(level: number): number {
 }
 
 export default function Dashboard() {
+  const [storeItems, setStoreItems] = useState<StoreItem[]>(LOCAL_ITEMS);
+  useEffect(() => {
+    let mounted = true;
+    const fetchSkins = async () => {
+      try {
+        const res = await fetch(`${LAUNCHER_API}/api/skins`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.ok || !Array.isArray(data.skins) || !mounted) return;
+        const apiItems: StoreItem[] = data.skins.map((s: any): StoreItem => ({
+          id: String(s.id || ''),
+          name: s.name || 'Unknown',
+          price: s.price || '0 MON',
+          image: s.image || `/skins_png/${s.id || ''}.png`,
+          category: 'skins',
+          description: s.description || `${s.name || 'Skin'} from the catalog.`,
+          onChainId: s.onChainId ?? null,
+          requiredXP: s.requiredXP || 0,
+          maxSupply: s.maxSupply || null,
+          tier: s.tier || 'common',
+          skinConfig: s.skinConfig,
+        })).filter(item => item.id !== '');
+        if (!mounted) return;
+        setStoreItems(prev => {
+          const map = new Map(prev.map(item => [item.id, item]));
+          for (const apiItem of apiItems) {
+            map.set(apiItem.id, apiItem);
+          }
+          return Array.from(map.values());
+        });
+      } catch { /* API unavailable, keep local fallback */ }
+    };
+    fetchSkins();
+    return () => { mounted = false; };
+  }, []);
   const { ready, authenticated, user, logout } = usePrivy();
   const { wallets } = useWallets();
   const navigate = useNavigate();
@@ -128,7 +164,7 @@ export default function Dashboard() {
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [selectedReward, setSelectedReward] = useState<string | null>(null);
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
-  const [equippedSkin, setEquippedSkin] = useState<StoreItem | null>(dummyStore[0]);
+  const [equippedSkin, setEquippedSkin] = useState<StoreItem | null>(LOCAL_ITEMS[0]);
   const [xp, setXp] = useState<number>(0);
   const [xpBalance, setXpBalance] = useState<number>(0);
   const [ownedSkinIds, setOwnedSkinIds] = useState<number[]>([]);
@@ -156,7 +192,7 @@ export default function Dashboard() {
   const [storeFilter, setStoreFilter] = useState<"all" | "common" | "rare" | "epic" | "legendary">("all");
   const [supplyData, setSupplyData] = useState<Record<number, { minted: number; maxSupply: number }>>({});
 
-  const currentStoreItem = selectedStore ? dummyStore.find((i) => i.id === selectedStore) || null : null;
+  const currentStoreItem = selectedStore ? storeItems.find((i) => i.id === selectedStore) || null : null;
   const isSelectedStoreOwned = Boolean(
     currentStoreItem &&
     (currentStoreItem.id === "s-default" || currentStoreItem.id === "s-default-unshaded" || // defaults always owned
@@ -209,7 +245,7 @@ export default function Dashboard() {
         const username = getUsernameFromPrivy(user);
         const profile = await fetchUserProfile(username);
         const savedSkinId = profile?.equippedSkinId;
-        const savedSkin = dummyStore.find((item) => item.id === savedSkinId) || dummyStore[0];
+        const savedSkin = storeItems.find((item) => item.id === savedSkinId) || LOCAL_ITEMS[0];
         setEquippedSkin(savedSkin);
       } catch (error) {
         console.error("Failed to load user profile", error);
@@ -252,7 +288,7 @@ export default function Dashboard() {
             const skinsContract = new ethers.Contract(skinsContractAddress, SKINS_ABI, provider);
             const owned: number[] = [];
             const supplies: Record<number, { minted: number; maxSupply: number }> = {};
-            for (const item of dummyStore) {
+            for (const item of storeItems) {
               if (item.onChainId) {
                 const [balance, skinData] = await Promise.all([
                   skinsContract.balanceOf(address, item.onChainId),
@@ -784,7 +820,7 @@ export default function Dashboard() {
 
             {tab === "store" && (
               <div className="store-grid">
-                {dummyStore
+                {storeItems
                   .filter((item) => storeFilter === "all" || item.tier === storeFilter)
                   .map((item) => {
                     const isOwned = item.id === "s-default" || item.id === "s-default-unshaded" || (item.onChainId && ownedSkinIds.includes(item.onChainId));
