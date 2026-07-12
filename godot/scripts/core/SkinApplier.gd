@@ -5,7 +5,7 @@ const DEFAULT_SKIN := "s-default"
 
 static var _api_cache: Dictionary = {}
 
-const FALLBACK: Dictionary = {
+const FALLBACK_SHADED: Dictionary = {
 	"palette": {
 		"body": [0.988, 0.176, 0.588, 1],
 		"body_alt": [0.988, 0.294, 0.549, 1],
@@ -17,6 +17,22 @@ const FALLBACK: Dictionary = {
 	"crown_color": [0.988, 0.0, 0.851, 1],
 	"face_texture": "",
 	"shader": "default",
+	"shader_targets": ["body", "cheek", "eye"],
+	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] }
+}
+
+const FALLBACK_UNSHADED: Dictionary = {
+	"palette": {
+		"body": [0.988, 0.176, 0.588, 1],
+		"body_alt": [0.988, 0.294, 0.549, 1],
+		"cheek": [0.988, 0.416, 0.608, 1],
+		"eye": [0.906, 0.906, 0.906, 1],
+		"skin": [1.0, 0.612, 0.431, 1]
+	},
+	"outline_color": [0.988, 0.0, 0.851, 1],
+	"crown_color": [0.988, 0.0, 0.851, 1],
+	"face_texture": "",
+	"shader": "unshaded",
 	"shader_targets": ["body", "cheek", "eye"],
 	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] }
 }
@@ -80,9 +96,12 @@ func get_skin_data(skin_name: String) -> Dictionary:
 	var key := str(skin_name).strip_edges().to_lower()
 	if _api_cache.has(key):
 		return _api_cache[key].duplicate(true)
-	if key == DEFAULT_SKIN:
-		return FALLBACK.duplicate(true)
-	return _api_cache.get(DEFAULT_SKIN, FALLBACK).duplicate(true)
+	match key:
+		DEFAULT_SKIN:
+			return FALLBACK_SHADED.duplicate(true)
+		"s-default-unshaded":
+			return FALLBACK_UNSHADED.duplicate(true)
+	return FALLBACK_SHADED.duplicate(true)
 
 func apply_skin(player: Node3D, skin_name: String) -> void:
 	var data := get_skin_data(skin_name)
