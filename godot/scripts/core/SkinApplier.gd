@@ -132,6 +132,18 @@ func _assign_body_material(mi: MeshInstance3D, color: Color, outline_color: Colo
 				mi.material_override = base_mat
 				return
 
+			"unshaded":
+				var mat := ShaderMaterial.new()
+				mat.shader = skin_unshaded
+				mat.set_shader_parameter("albedo", color)
+				var outline_mat := ShaderMaterial.new()
+				outline_mat.shader = outline_shader
+				outline_mat.set_shader_parameter("color", outline_color)
+				outline_mat.set_shader_parameter("size", 1.04)
+				mat.next_pass = outline_mat
+				mi.material_override = mat
+				return
+
 			"shadow":
 				var mat := ShaderMaterial.new()
 				mat.shader = skin_unshaded

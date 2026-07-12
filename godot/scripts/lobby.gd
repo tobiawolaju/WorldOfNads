@@ -18,6 +18,7 @@ const DEFAULT_SKIN_NAME := "defaultnad"
 const SKIN_SCENE: PackedScene = preload("res://scenes/skin.tscn")
 const SKIN_NAME_ALIASES := {
 	"s-default": "defaultnad",
+	"s-default-unshaded": "defaultnad_unshaded",
 	"s0": "buggy",
 	"s1": "Aurum",
 	"s2": "Abbss",
@@ -26,6 +27,7 @@ const SKIN_NAME_ALIASES := {
 	"s5": "mouch",
 	"s6": "john deo",
 	"defaultnad": "defaultnad",
+	"defaultnad_unshaded": "defaultnad_unshaded",
 	"buggy": "buggy",
 	"aurum": "Aurum",
 	"abbss": "Abbss",
