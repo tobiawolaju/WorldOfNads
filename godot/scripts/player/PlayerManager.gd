@@ -10,6 +10,7 @@ const LOCAL_URL: String = "ws://localhost:8080"
 const DEFAULT_SKIN_NAME: String = "defaultnad"
 const SKIN_SCENE_PATHS: Dictionary = {
 	"defaultnad": "res://scenes/skin.tscn",
+	"defaultnad_unshaded": "res://scenes/skin.tscn",
 	"Hellion": "res://scenes/skin.tscn",
 	"Seraphim": "res://scenes/skin.tscn",
 	"Abbss": "res://scenes/skin.tscn",
@@ -22,6 +23,7 @@ const SKIN_SCENE_PATHS: Dictionary = {
 static var _skin_applier: SkinApplier = SkinApplier.new()
 const SKIN_NAME_ALIASES: Dictionary = {
 	"s-default": "defaultnad",
+	"s-default-unshaded": "defaultnad_unshaded",
 	"s0": "buggy",
 	"s1": "Aurum",
 	"s2": "Abbss",
@@ -30,6 +32,7 @@ const SKIN_NAME_ALIASES: Dictionary = {
 	"s5": "mouch",
 	"s6": "john deo",
 	"defaultnad": "defaultnad",
+	"defaultnad_unshaded": "defaultnad_unshaded",
 	"buggy": "buggy",
 	"aurum": "Aurum",
 	"abbss": "Abbss",

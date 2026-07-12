@@ -17,6 +17,7 @@ var _stress_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 const DEFAULT_SKIN_NAME := "defaultnad"
 const SKIN_SCENE_PATHS := {
 	"defaultnad": "res://scenes/skin1.tscn",
+	"defaultnad_unshaded": "res://scenes/skin1.tscn",
 	"Hellion": "res://scenes/skin2.tscn",
 	"Seraphim": "res://scenes/skin3.tscn",
 	"Abbss": "res://scenes/skin4.tscn",
@@ -27,6 +28,7 @@ const SKIN_SCENE_PATHS := {
 }
 const SKIN_NAME_ALIASES := {
 	"s-default": "defaultnad",
+	"s-default-unshaded": "defaultnad_unshaded",
 	"s0": "buggy",
 	"s1": "Aurum",
 	"s2": "Abbss",
@@ -35,6 +37,7 @@ const SKIN_NAME_ALIASES := {
 	"s5": "mouch",
 	"s6": "john deo",
 	"defaultnad": "defaultnad",
+	"defaultnad_unshaded": "defaultnad_unshaded",
 	"buggy": "buggy",
 	"aurum": "Aurum",
 	"abbss": "Abbss",

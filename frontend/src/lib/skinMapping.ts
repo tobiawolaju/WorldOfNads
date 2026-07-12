@@ -2,11 +2,13 @@ const DEFAULT_GAME_SKIN_NAME = "defaultnad";
 
 const GAME_SKIN_NAME_BY_KEY: Record<string, string> = {
   "s-default": DEFAULT_GAME_SKIN_NAME,
+  "s-default-unshaded": "defaultnad_unshaded",
   s1: "sprout",
   s2: "cobalt",
   s3: "magma",
   s4: "aether",
   defaultnad: DEFAULT_GAME_SKIN_NAME,
+  defaultnad_unshaded: "defaultnad_unshaded",
   sprout: "sprout",
   cobalt: "cobalt",
   magma: "magma",

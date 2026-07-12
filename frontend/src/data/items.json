@@ -30,6 +30,36 @@
 		}
 	},
 	{
+		"id": "s-default-unshaded",
+		"name": "Default Nad (Flat)",
+		"price": "0 MON",
+		"image": "/skins_png/s-default.png",
+		"category": "skins",
+		"description": "Default pink skin. Unshaded flat variant.",
+		"onChainId": null,
+		"requiredXP": 0,
+		"maxSupply": null,
+		"tier": "common",
+		"skinConfig": {
+			"palette": {
+				"body": "#fc2d96",
+				"body_alt": "#fc4b8c",
+				"cheek": "#fc6a9b",
+				"eye": "#e7e7e7",
+				"skin": "#ff9c6e"
+			},
+			"outline_color": "#fc00d9",
+			"crown_color": "#fc00d9",
+			"face_texture": "",
+			"shader": "unshaded",
+			"shader_targets": ["body", "cheek", "eye"],
+			"attachment": {
+				"shape": "box",
+				"color": "#ff9c6e"
+			}
+		}
+	},
+	{
 		"id": "s1",
 		"name": "Sprout",
 		"price": "5 MON",
