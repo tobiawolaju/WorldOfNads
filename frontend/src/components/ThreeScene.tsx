@@ -7,13 +7,32 @@ import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 
 // --- Prop Types ---
+interface Palette {
+  body?: string;
+  body_alt?: string;
+  cheek?: string;
+  eye?: string;
+  skin?: string;
+}
+
+interface AttachmentConfig {
+  shape?: "box" | "cone" | "sphere" | "cylinder" | "torus";
+  color?: string;
+}
+
 interface SkinConfig {
-  attachmentShape?: "box" | "cone" | "sphere" | "cylinder" | "torus";
+  palette?: Palette;
+  outline_color?: string;
+  crown_color?: string;
+  face_texture?: string;
+  shader?: "ghost" | "gold" | "shadow" | "angel" | "default" | "void";
+  shaderTargets?: ("body" | "cheek" | "eye" | "attachment")[];
+  attachment?: AttachmentConfig;
+  // Legacy/direct fields for backward compat
   color?: string;
   cheekColor?: string;
   attachmentColor?: string;
-  shader?: "ghost" | "gold" | "shadow" | "angel" | "default" | "void";
-  shaderTargets?: ("body" | "cheek" | "eye" | "attachment")[];
+  attachmentShape?: "box" | "cone" | "sphere" | "cylinder" | "torus";
   eyeColor?: string;
   rawFragmentShader?: string;
   rawVertexShader?: string;
@@ -190,16 +209,20 @@ const NadModel: React.FC<NadModelProps> = ({
   useEffect(() => {
     animatedMaterialsRef.current = [];
 
-    const baseColorHex = equippedSkin?.skinConfig?.color || "#ff2496";
+    const pal = equippedSkin?.skinConfig?.palette || {};
+    const baseColorHex = pal.body || equippedSkin?.skinConfig?.color || "#ff2496";
     const baseColor = new THREE.Color(baseColorHex);
 
-    // Use explicit cheekColor if provided, otherwise lerp to white (subtler)
-    const cheekColor = equippedSkin?.skinConfig?.cheekColor
-      ? new THREE.Color(equippedSkin.skinConfig.cheekColor)
+    const cheekColorHex = pal.cheek || equippedSkin?.skinConfig?.cheekColor;
+    const cheekColor = cheekColorHex
+      ? new THREE.Color(cheekColorHex)
       : baseColor.clone().lerp(new THREE.Color("#ffffff"), 0.15);
 
-    const eyeColorHex = equippedSkin?.skinConfig?.eyeColor || "#ffffff";
+    const eyeColorHex = pal.eye || equippedSkin?.skinConfig?.eyeColor || "#ffffff";
     const eyeColor = new THREE.Color(eyeColorHex);
+
+    const skinColorHex = pal.skin || "#ffffff";
+    const skinColor = new THREE.Color(skinColorHex);
 
     const toonGradient = createToonGradientTexture(4);
 
@@ -213,9 +236,9 @@ const NadModel: React.FC<NadModelProps> = ({
         }
 
         const name = child.name;
-        const isHeadOrBody = /^Cube$|Cube[._]?00[123]$/.test(name);
-        const isCheek = /Cube[._]?00[45]$/.test(name);
-        const isEye = /Cube[._]?00[67]$/.test(name);
+        const isHeadOrBody = /^(body_|Cube$|Cube[._]?00[123]$)/.test(name);
+        const isCheek = /^(cheek_|Cube[._]?00[45]$)/.test(name);
+        const isEye = /^(eye_|Cube[._]?00[67]$)/.test(name);
 
         const shaderType = equippedSkin?.skinConfig?.shader || "default";
         const targets = equippedSkin?.skinConfig?.shaderTargets || ["body", "cheek", "eye", "attachment"];
@@ -366,9 +389,12 @@ const NadModel: React.FC<NadModelProps> = ({
         }
       }
 
-      if (!equippedSkin?.skinConfig?.attachmentShape) return;
+      const attachmentCfg = equippedSkin?.skinConfig?.attachment || {};
+      const legacyShape = equippedSkin?.skinConfig?.attachmentShape;
+      const attachmentShape = attachmentCfg.shape || legacyShape;
+      if (!attachmentShape) return;
 
-      const shape = equippedSkin.skinConfig.attachmentShape;
+      const shape = attachmentShape;
       const isModel = shape.endsWith(".fbx");
 
       let currentAttachment: THREE.Object3D | null = null;
@@ -381,9 +407,11 @@ const NadModel: React.FC<NadModelProps> = ({
 
         let material: THREE.Material;
 
+        const pal = skinConfig.palette || {};
+        const attColor = skinConfig.attachment?.color || skinConfig.attachmentColor || pal.skin || skinConfig.color || "red";
         if (shouldApplyShader && shaderType !== "default") {
           if (shaderType === "ghost") {
-            material = new THREE.MeshStandardMaterial({ color: skinConfig.attachmentColor || skinConfig.color || "red" });
+            material = new THREE.MeshStandardMaterial({ color: attColor });
             material.transparent = true;
             material.opacity = 0.6;
             material.depthWrite = true;
@@ -392,7 +420,7 @@ const NadModel: React.FC<NadModelProps> = ({
             }
           } else if (shaderType === "gold") {
             material = new THREE.MeshStandardMaterial({
-              color: skinConfig.attachmentColor || skinConfig.color || "#ffd700",
+              color: attColor,
               metalness: 1.0,
               roughness: 0.1
             });
@@ -404,15 +432,16 @@ const NadModel: React.FC<NadModelProps> = ({
             });
           } else if (shaderType === "angel") {
             material = new THREE.MeshStandardMaterial({
-              color: skinConfig.attachmentColor || "#ffd700",
+              color: attColor,
               metalness: 1.0,
               roughness: 0.1
             });
           } else {
-            material = new THREE.MeshStandardMaterial({ color: skinConfig.attachmentColor || skinConfig.color || "red" });
+            material = new THREE.MeshStandardMaterial({ color: attColor });
           }
         } else {
-          const attachmentColor = new THREE.Color(skinConfig.attachmentColor || skinConfig.color || "#ff2496");
+          const pal = skinConfig.palette || {};
+          const attachmentColor = new THREE.Color(skinConfig.attachment?.color || skinConfig.attachmentColor || pal.skin || skinConfig.color || "#ff2496");
           material = new THREE.MeshToonMaterial({
             color: attachmentColor,
             gradientMap: createToonGradientTexture(4),
