@@ -423,7 +423,7 @@ text = "Username"
 font_size = 35
 
 [node name="Skeleton3D" type="Skeleton3D" parent="." unique_id=1602416575]
-transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
+transform = Transform3D(0.25, 0, 0, 0, 0.27, 0, 0, 0, 0.25, 0, 0, 0)
 bones/0/name = "mixamorig_Hips"
 bones/0/parent = -1
 bones/0/rest = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0.003580153, 0.0039015785, 0.3297186)
