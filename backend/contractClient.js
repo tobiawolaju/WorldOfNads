@@ -305,6 +305,17 @@ export async function createSkinOnchain(maxSupply, mintPrice, requiredXP, tier, 
     }
 }
 
+export async function getNextSkinId() {
+    try {
+        const skins = getSkins();
+        const nextId = await skins.nextSkinId();
+        return { success: true, nextId: Number(nextId) };
+    } catch (error) {
+        console.error(`[Onchain] getNextSkinId failed:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
 export async function getSkinBalance(address, skinId) {
     try {
         const skins = getSkins();

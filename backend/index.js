@@ -3,7 +3,7 @@ import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
 import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins } from './firebaseClient.js';
-import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, calcMonPerSec } from './contractClient.js';
+import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 
 const PORT = process.env.PORT || 8080;
@@ -567,13 +567,34 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      // 1. Create on-chain if maxSupply provided
+      // 1. Predict next on-chain ID and save to Firebase FIRST
+      let predictedOnChainId = null;
+      if (maxSupply != null) {
+        const idResult = await getNextSkinId();
+        if (idResult.success) {
+          predictedOnChainId = idResult.nextId;
+        }
+      }
+      const skinId = onChainId || String(predictedOnChainId || `s-${Date.now()}`);
+      const baseUrl = process.env.RENDER_EXTERNAL_URL || `https://worldofnads.onrender.com`;
+
+      await saveSkin(skinId, {
+        name,
+        tier: tier || 'common',
+        price: price || '0 MON',
+        maxSupply: maxSupply || null,
+        requiredXP: requiredXP || 0,
+        image: image || '',
+        onChainId: predictedOnChainId || null,
+        skinConfig
+      });
+
+      // 2. Create on-chain with correct URI pointing to Firebase
       let chainResult = null;
       if (maxSupply != null) {
         const priceStr = String(price || '0').replace(/[^0-9.]/g, '');
         const tierIndex = ['common','rare','epic','legendary'].indexOf((tier || 'common').toLowerCase());
-        const baseUrl = process.env.RENDER_EXTERNAL_URL || `https://worldofnads.onrender.com`;
-        const uri = `${baseUrl}/api/skins/${onChainId || 'new'}`;
+        const uri = `${baseUrl}/api/skins/${skinId}`;
         chainResult = await createSkinOnchain(
           maxSupply,
           priceStr,
@@ -582,26 +603,19 @@ const server = createServer(async (req, res) => {
           uri
         );
         if (!chainResult.success) {
-          sendJson(res, 500, { ok: false, error: chainResult.error });
-          return;
+          // On-chain failed — update Firebase to reflect no on-chain ID
+          chainResult = { success: false, skinId: skinId, error: chainResult.error };
         }
       }
 
-      // 2. Save metadata to Firebase
-      const skinId = onChainId || `s-${Date.now()}`;
-      await saveSkin(skinId, {
-        name,
-        tier: tier || 'common',
-        price: price || '0 MON',
-        maxSupply: maxSupply || null,
-        requiredXP: requiredXP || 0,
-        image: image || '',
-        onChainId: chainResult ? (chainResult.skinId || onChainId) : null,
-        skinConfig
+      const resultId = chainResult?.skinId || skinId;
+      const ok = !chainResult || chainResult.success !== false;
+      sendJson(res, ok ? 200 : 500, {
+        ok,
+        skinId: resultId,
+        txHash: chainResult?.txHash || null,
+        ...(chainResult && !chainResult.success ? { error: chainResult.error } : {})
       });
-
-      const resultId = chainResult ? chainResult.skinId || onChainId : skinId;
-      sendJson(res, 200, { ok: true, skinId: resultId, txHash: chainResult?.txHash || null });
     } catch (error) {
       console.error('[Admin] Create skin failed:', error);
       sendJson(res, 500, { ok: false, error: 'Internal server error' });
