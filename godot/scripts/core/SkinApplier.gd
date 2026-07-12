@@ -1,27 +1,25 @@
 extends RefCounted
 class_name SkinApplier
 
-const SKIN_DATA_PATH := "res://assets/data/skindata.json"
 const DEFAULT_SKIN := "s-default"
-const API_BASE := "https://worldofnads.onrender.com"
 
-static var _file_cache: Dictionary = {}
 static var _api_cache: Dictionary = {}
-static var _file_loaded := false
 
-func _init() -> void:
-	if not _file_loaded:
-		_load_file_data()
-
-func _load_file_data() -> void:
-	var file := FileAccess.open(SKIN_DATA_PATH, FileAccess.READ)
-	if file == null:
-		push_error("SkinApplier: Could not open %s" % SKIN_DATA_PATH)
-		_file_loaded = true
-		return
-	var parsed = JSON.parse_string(file.get_as_text())
-	_file_cache = parsed as Dictionary if parsed is Dictionary else {}
-	_file_loaded = true
+const FALLBACK: Dictionary = {
+	"palette": {
+		"body": [0.988, 0.176, 0.588, 1],
+		"body_alt": [0.988, 0.294, 0.549, 1],
+		"cheek": [0.988, 0.416, 0.608, 1],
+		"eye": [0.906, 0.906, 0.906, 1],
+		"skin": [1.0, 0.612, 0.431, 1]
+	},
+	"outline_color": [0.988, 0.0, 0.851, 1],
+	"crown_color": [0.988, 0.0, 0.851, 1],
+	"face_texture": "",
+	"shader": "default",
+	"shader_targets": ["body", "cheek", "eye"],
+	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] }
+}
 
 static func seed_from_api(json_array: Array) -> void:
 	for entry in json_array:
@@ -34,8 +32,7 @@ static func seed_from_api(json_array: Array) -> void:
 			var skin_config: Dictionary = entry.get("skinConfig", entry.get("skin_config", {}))
 			if skin_config.is_empty():
 				continue
-			var converted := _convert_api_entry(skin_config)
-			_api_cache[key] = converted
+			_api_cache[key] = _convert_api_entry(skin_config)
 
 static func seed_single_from_api(skin_id: String, entry: Dictionary) -> void:
 	var skin_config: Dictionary = entry.get("skinConfig", entry.get("skin_config", {}))
@@ -67,7 +64,7 @@ static func _convert_api_entry(skin_config: Dictionary) -> Dictionary:
 
 static func _hex2rgba(hex: Variant) -> Array:
 	if typeof(hex) != TYPE_STRING:
-		return _hex2rgba("#ffffff")
+		return [1.0, 1.0, 1.0, 1.0]
 	var s: String = str(hex).strip_edges().trim_prefix("#")
 	if s.length() < 6:
 		return [1.0, 1.0, 1.0, 1.0]
@@ -79,29 +76,13 @@ static func _hex2rgba(hex: Variant) -> Array:
 		a = float("0x%s" % s.substr(6, 2)) / 255.0
 	return [r, g, b, a]
 
-static func build_skin_id_mapping() -> Dictionary:
-	var mapping: Dictionary = {}
-	for key in _api_cache:
-		mapping[key.to_lower()] = key
-	for key in _file_cache:
-		var k = key.to_lower()
-		if not mapping.has(k):
-			mapping[k] = key
-	return mapping
-
 func get_skin_data(skin_name: String) -> Dictionary:
 	var key := str(skin_name).strip_edges().to_lower()
 	if _api_cache.has(key):
-		var d = _api_cache[key]
-		return d.duplicate(true) if d is Dictionary else {}
-	if _file_cache.has(key):
-		var d = _file_cache[key]
-		return d.duplicate(true) if d is Dictionary else {}
-	if _api_cache.has(DEFAULT_SKIN):
-		var d = _api_cache[DEFAULT_SKIN]
-		return d.duplicate(true) if d is Dictionary else {}
-	var d = _file_cache.get(DEFAULT_SKIN, {})
-	return d.duplicate(true) if d is Dictionary else {}
+		return _api_cache[key].duplicate(true)
+	if key == DEFAULT_SKIN:
+		return FALLBACK.duplicate(true)
+	return _api_cache.get(DEFAULT_SKIN, FALLBACK).duplicate(true)
 
 func apply_skin(player: Node3D, skin_name: String) -> void:
 	var data := get_skin_data(skin_name)

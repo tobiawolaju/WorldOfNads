@@ -7,15 +7,13 @@ static var instance: PlayerManager
 # --- SERVER URLS ---
 const LIVE_URL: String = "wss://worldofnads.onrender.com"
 const LOCAL_URL: String = "ws://localhost:8080"
-const DEFAULT_SKIN_NAME: String = "defaultnad"
+const DEFAULT_SKIN_NAME: String = "s-default"
 const SKIN_SCENE_PATH: String = "res://scenes/skin.tscn"
 
 static var _skin_applier: SkinApplier = SkinApplier.new()
 const SKIN_NAME_ALIASES: Dictionary = {
-	"s-default": "defaultnad",
-	"s-default-unshaded": "defaultnad_unshaded",
-	"defaultnad": "defaultnad",
-	"defaultnad_unshaded": "defaultnad_unshaded",
+	"s-default": "s-default",
+	"s-default-unshaded": "s-default-unshaded",
 }
 
 @export var player_scene: PackedScene 

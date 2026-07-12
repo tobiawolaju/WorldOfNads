@@ -14,14 +14,12 @@ var local_player
 var npcs := []
 var _stress_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
-const DEFAULT_SKIN_NAME := "defaultnad"
+const DEFAULT_SKIN_NAME := "s-default"
 const SKIN_SCENE: PackedScene = preload("res://scenes/skin.tscn")
 const API_BASE: String = "https://worldofnads.onrender.com"
 const SKIN_NAME_ALIASES := {
-	"s-default": "defaultnad",
-	"s-default-unshaded": "defaultnad_unshaded",
-	"defaultnad": "defaultnad",
-	"defaultnad_unshaded": "defaultnad_unshaded",
+	"s-default": "s-default",
+	"s-default-unshaded": "s-default-unshaded",
 }
 
 static var _skin_applier: SkinApplier = SkinApplier.new()

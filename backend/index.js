@@ -313,9 +313,7 @@ function sanitizeUsername(value) {
 
 function resolveSkinName(value) {
   const key = String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
-  if (key === 's-default' || key === 'defaultnad') return 'defaultnad';
-  if (key === 's-default-unshaded' || key === 'defaultnad_unshaded') return 'defaultnad_unshaded';
-  return key || 'defaultnad';
+  return key || 's-default';
 }
 
 function sanitizeMeta(value) {
