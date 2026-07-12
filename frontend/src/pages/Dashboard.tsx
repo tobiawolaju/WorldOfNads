@@ -311,7 +311,7 @@ export default function Dashboard() {
     };
 
     loadOnchainData();
-  }, [authenticated, user]);
+  }, [authenticated, user, storeItems]);
 
   // Fetch actual MON balance
   useEffect(() => {
