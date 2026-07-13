@@ -459,10 +459,8 @@ const server = createServer(async (req, res) => {
   }
 
   // TEMP: one-time route to clear stale player skin from Firebase
-  if (req.method === 'POST' && reqUrl.pathname === '/api/admin/clear-player-skin') {
-    let body = '';
-    for await (const chunk of req) body += chunk;
-    const { username } = JSON.parse(body || '{}');
+  if (req.method === 'GET' && reqUrl.pathname === '/api/admin/clear-player-skin') {
+    const username = (reqUrl.searchParams.get('username') || '').trim();
     if (!username) { sendJson(res, 400, { ok: false, error: 'username required' }); return; }
     await clearPlayerSkin(username);
     console.log(`[ADMIN] Cleared skin for ${username}`);
