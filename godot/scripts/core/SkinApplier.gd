@@ -38,6 +38,7 @@ const FALLBACK_UNSHADED: Dictionary = {
 }
 
 static func seed_from_api(json_array: Array) -> void:
+	print("[HEX_TEST] test conversion: _hex2rgba('#ff8c00') = %s" % JSON.stringify(_hex2rgba("#ff8c00")))
 	for entry in json_array:
 		if entry is Dictionary:
 			var key: String = str(entry.get("id", ""))
@@ -48,6 +49,9 @@ static func seed_from_api(json_array: Array) -> void:
 			var skin_config: Dictionary = entry.get("skinConfig", entry.get("skin_config", {}))
 			if skin_config.is_empty():
 				continue
+			if skin_config.has("palette") and skin_config["palette"] is Dictionary:
+				var raw_body = str(skin_config["palette"].get("body", ""))
+				print("[SEED] skin='%s' raw palette['body']='%s' length=%d" % [key, raw_body, len(raw_body)])
 			_api_cache[key] = _convert_api_entry(skin_config)
 
 static func seed_single_from_api(skin_id: String, entry: Dictionary) -> void:
@@ -80,13 +84,23 @@ static func _convert_api_entry(skin_config: Dictionary) -> Dictionary:
 
 static func _hex2rgba(hex: Variant) -> Array:
 	if typeof(hex) != TYPE_STRING:
+		print("[HEX] not a string, type=%d" % typeof(hex))
 		return [1.0, 1.0, 1.0, 1.0]
 	var s: String = str(hex).strip_edges().trim_prefix("#")
 	if s.length() < 6:
+		print("[HEX] short hex '%s' len=%d" % [s, s.length()])
 		return [1.0, 1.0, 1.0, 1.0]
-	var r := float("0x%s" % s.substr(0, 2)) / 255.0
-	var g := float("0x%s" % s.substr(2, 2)) / 255.0
-	var b := float("0x%s" % s.substr(4, 2)) / 255.0
+	var hex_r := "0x%s" % s.substr(0, 2)
+	var hex_g := "0x%s" % s.substr(2, 2)
+	var hex_b := "0x%s" % s.substr(4, 2)
+	var r_val := float(hex_r)
+	var g_val := float(hex_g)
+	var b_val := float(hex_b)
+	var r := r_val / 255.0
+	var g := g_val / 255.0
+	var b := b_val / 255.0
+	if r_val == 0.0 and g_val == 0.0 and b_val == 0.0:
+		print("[HEX] WARNING: all-zero from input='%s' strip='%s' parts=[%s, %s, %s]" % [str(hex), s, hex_r, hex_g, hex_b])
 	var a := 1.0
 	if s.length() >= 8:
 		a = float("0x%s" % s.substr(6, 2)) / 255.0
@@ -94,18 +108,33 @@ static func _hex2rgba(hex: Variant) -> Array:
 
 static func get_skin_data(skin_name: String) -> Dictionary:
 	var key := str(skin_name).strip_edges().to_lower()
-	if _api_cache.has(key):
-		print("[SKIN_DEBUG] get_skin_data('%s') -> CACHE HIT" % key)
-		return _api_cache[key].duplicate(true)
+	# Default skins ALWAYS use hardcoded fallback — never read from cache
 	match key:
 		DEFAULT_SKIN:
-			print("[SKIN_DEBUG] get_skin_data('%s') -> FALLBACK_SHADED (default)" % key)
 			return FALLBACK_SHADED.duplicate(true)
 		"s-default-unshaded":
-			print("[SKIN_DEBUG] get_skin_data('%s') -> FALLBACK_UNSHADED (default)" % key)
 			return FALLBACK_UNSHADED.duplicate(true)
-	print("[SKIN_DEBUG] get_skin_data('%s') -> FALLBACK_SHADED (unknown skin)" % key)
+	if _api_cache.has(key):
+		var cached = _api_cache[key].duplicate(true)
+		# Validate: if palette has all-zero colors, cache is corrupt — use fallback
+		if _is_all_black(cached):
+			print("[SKIN_DEBUG] get_skin_data('%s') -> CACHE CORRUPT (all black), fallback" % key)
+			return FALLBACK_SHADED.duplicate(true)
+		print("[SKIN_DEBUG] get_skin_data('%s') -> CACHE HIT" % key)
+		return cached
+	print("[SKIN_DEBUG] get_skin_data('%s') -> CACHE MISS, fallback" % key)
 	return FALLBACK_SHADED.duplicate(true)
+
+static func _is_all_black(data: Dictionary) -> bool:
+	var pal = data.get("palette", {})
+	if pal.is_empty():
+		return false
+	for key in pal:
+		var arr = pal.get(key)
+		if arr is Array and arr.size() >= 3:
+			if arr[0] != 0.0 or arr[1] != 0.0 or arr[2] != 0.0:
+				return false
+	return true
 
 func apply_skin(player: Node3D, skin_name: String) -> void:
 	var data := get_skin_data(skin_name)

@@ -1223,6 +1223,9 @@ func _pre_seed_from_session_storage() -> void:
 	var raw = JavaScriptBridge.eval("(function(){var d=sessionStorage.getItem('wons_skin_cache');sessionStorage.removeItem('wons_skin_cache');return d||''})()")
 	if typeof(raw) != TYPE_STRING or raw.is_empty():
 		return
+	print("[SESSION] raw first 120 chars: %s" % str(raw).left(120))
+	if str(raw).length() > 0:
+		print("[SESSION] first hex test in raw: %s" % str(raw).find("#1a1a3e"))
 	var parsed = JSON.parse_string(raw)
 	if parsed is Array:
 		SkinApplier.seed_from_api(parsed)
