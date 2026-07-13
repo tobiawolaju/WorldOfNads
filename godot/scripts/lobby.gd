@@ -28,6 +28,7 @@ static var _skin_applier: SkinApplier = SkinApplier.new()
 
 func _ready():
 	_stress_rng.randomize()
+	_pre_seed_from_session_storage()
 	_fetch_skin_data()
 	_spawn_local_player()
 	_spawn_lobby_stress_agents()
@@ -135,6 +136,17 @@ func _spawn_lobby_stress_agents() -> void:
 				jump_max,
 				wobble
 			)
+
+func _pre_seed_from_session_storage() -> void:
+	if not OS.has_feature("web"):
+		return
+	var raw = JavaScriptBridge.eval("(function(){var d=sessionStorage.getItem('wons_skin_cache');sessionStorage.removeItem('wons_skin_cache');return d||''})()")
+	if typeof(raw) != TYPE_STRING or raw.is_empty():
+		return
+	var parsed = JSON.parse_string(raw)
+	if parsed is Array:
+		SkinApplier.seed_from_api(parsed)
+		print("SkinApplier (lobby): Pre-seeded %d skins from sessionStorage." % parsed.size())
 
 func _resolve_local_skin_name() -> String:
 	if OS.has_feature("web"):

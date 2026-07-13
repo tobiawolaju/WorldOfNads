@@ -28,11 +28,12 @@ var _navigated_to_gameover := false
 @onready var xp_stream_label: Label = get_node_or_null("XPstream")
 @onready var mon_stream_label: Label = get_node_or_null("MONstream")
 @onready var prize_pool_label: Label = get_node_or_null("PrizePool")
-@onready var _debug_label: Label = get_node_or_null("CanvasLayer/debug")
-@onready var _debug2_label: Label = get_node_or_null("CanvasLayer/debug2")
+@onready var _debug_label: Label
+@onready var _debug2_label: Label
 
 func _ready() -> void:
 	add_to_group("events_bridge")
+	_setup_debug_labels()
 	_try_set_username_from_web_query()
 	tried_live = true
 	var err = ws.connect_to_url(LIVE_EVENTS_URL)
@@ -262,6 +263,45 @@ func set_debug_text(text: String) -> void:
 func set_debug2_text(text: String) -> void:
 	if _debug2_label != null:
 		_debug2_label.text = text
+
+func _setup_debug_labels() -> void:
+	var canvas := get_node_or_null("CanvasLayer")
+	if canvas == null:
+		return
+	_debug_label = _ensure_debug_label(canvas, "debug", Color(0, 1, 0.5, 1))
+	_debug_label.offset_top = 60
+	_debug2_label = _ensure_debug_label(canvas, "debug2", Color(0.5, 1, 1, 1))
+	_debug2_label.offset_top = 140
+
+func _ensure_debug_label(parent: Node, name: String, color: Color) -> Label:
+	var label := parent.get_node_or_null(name) as Label
+	if label == null:
+		label = Label.new()
+		label.name = name
+		parent.add_child(label)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.anchor_left = 0.0
+	label.anchor_right = 1.0
+	label.offset_left = 4.0
+	label.offset_right = -4.0
+	label.mouse_filter = Control.MOUSE_FILTER_STOP
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
+	label.add_theme_constant_override("shadow_outline_size", 1)
+	label.add_theme_font_size_override("font_size", 11)
+	if not label.gui_input.is_connected(_on_debug_click):
+		label.gui_input.connect(_on_debug_click.bind(label))
+	return label
+
+func _on_debug_click(event: InputEvent, label: Label) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		var text := label.text
+		if text.is_empty():
+			return
+		if OS.has_feature("web"):
+			JavaScriptBridge.eval("navigator.clipboard.writeText('%s')" % text.replace("'", "\\'"))
+		else:
+			DisplayServer.clipboard_set(text)
 
 func _try_set_username_from_web_query() -> void:
 	if not OS.has_feature("web"):
