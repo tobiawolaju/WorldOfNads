@@ -135,6 +135,7 @@ var _slow_update_timer: float = 0.0
 const SLOW_UPDATE_INTERVAL: float = 0.1 # 10 FPS for non-critical updates
 var _landing_bob_timer: float = 0.0
 var _landing_bob_strength: float = 0.0
+var _spawn_flash_done: bool = false
 var _squash_stretch_y: float = 1.0
 var _squash_stretch_velocity: float = 0.0
 var _squash_stretch_target: float = 1.0
@@ -242,7 +243,6 @@ func _ready() -> void:
 	_refresh_touch_joystick()
 	_connect_joystick_signals()
 	_update_global_player_shader_pos(true)
-
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
 	var state_names := ["idle", "running", "runningjump", "falling", "runningslide"]
@@ -1243,3 +1243,19 @@ func remove_storm_debuffs() -> void:
 func disable_character_shadows() -> void:
 	for child in find_children("*", "MeshInstance3D", true):
 		child.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+func _spawn_flash() -> void:
+	var overlay := ColorRect.new()
+	overlay.color = Color(1, 1, 1, 1)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var viewport := get_viewport()
+	if viewport == null:
+		return
+	overlay.size = viewport.get_visible_rect().size
+	var canvas := CanvasLayer.new()
+	canvas.layer = 100
+	canvas.add_child(overlay)
+	viewport.get_camera_3d().add_child(canvas)
+	var tween := create_tween()
+	tween.tween_property(overlay, "color:a", 0.0, 0.35)
+	tween.tween_callback(canvas.queue_free)

@@ -866,6 +866,7 @@ func _spawn_player(id: String, p_is_local := false, skin_name: String = DEFAULT_
 	if p_is_local and myplayerswpanpoint:
 		player.global_position = myplayerswpanpoint.global_position
 		print("🧍 Local player spawned at spawn point:", id)
+		player._spawn_flash()
 	else:
 		# Temporary safe height until first state update
 		player.global_position = Vector3(0, 2, 0)
