@@ -92,7 +92,7 @@ static func _hex2rgba(hex: Variant) -> Array:
 		a = float("0x%s" % s.substr(6, 2)) / 255.0
 	return [r, g, b, a]
 
-func get_skin_data(skin_name: String) -> Dictionary:
+static func get_skin_data(skin_name: String) -> Dictionary:
 	var key := str(skin_name).strip_edges().to_lower()
 	if _api_cache.has(key):
 		print("[SKIN_DEBUG] get_skin_data('%s') -> CACHE HIT" % key)
