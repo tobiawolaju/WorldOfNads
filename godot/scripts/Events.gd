@@ -256,6 +256,21 @@ func _split_message_actor_and_text(message: String) -> Dictionary:
 
 	return {"actor": "system", "message": safe_message}
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F:
+			_copy_label(_debug_label)
+		elif event.keycode == KEY_G:
+			_copy_label(_debug2_label)
+
+func _copy_label(label: Label) -> void:
+	if label == null or label.text.is_empty():
+		return
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("navigator.clipboard.writeText('%s')" % label.text.replace("'", "\\'"))
+	else:
+		DisplayServer.clipboard_set(label.text)
+
 func set_debug_text(text: String) -> void:
 	if _debug_label != null:
 		_debug_label.text = text
