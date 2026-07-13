@@ -1108,10 +1108,9 @@ gameWss.on('connection', (ws, req) => {
     }
   }
 
-  // Resolve skin: URL param takes precedence over Firebase stored skin
-  getPlayerSkin(username).then(async (firebaseSkin) => {
-    const resolvedSkin = requestedSkin || firebaseSkin || 's-default';
-    const profile = await getPlayerProfile(username);
+  const resolvedSkin = requestedSkin || 's-default';
+
+  getPlayerProfile(username).then(async (profile) => {
     const xp = profile?.xp || 0;
     const walletAddress = await getPlayerWallet(username);
 
@@ -1147,13 +1146,11 @@ gameWss.on('connection', (ws, req) => {
     }
   }).catch((err) => {
     console.error(`[Firebase] Failed to fetch profile for ${username}:`, err);
-    // Fallback if Firebase fails
-    const fallbackSkin = requestedSkin;
     players[playerId] = {
       id: playerId,
       username,
       walletAddress: null,
-      skin: fallbackSkin,
+      skin: resolvedSkin,
       x: 0,
       y: 0,
       z: 0,
@@ -1171,7 +1168,7 @@ gameWss.on('connection', (ws, req) => {
     };
     updatePlayerCellIndex(playerId, players[playerId]);
     ws.playerId = playerId;
-    ws.send(mpEncode({ type: 'connect', id: playerId, username, skin: fallbackSkin, xp: 0 }));
+    ws.send(mpEncode({ type: 'connect', id: playerId, username, skin: resolvedSkin, xp: 0 }));
   });
 
   ws.on('message', (message) => {

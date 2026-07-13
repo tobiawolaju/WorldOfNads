@@ -51,7 +51,6 @@ const Play: React.FC = () => {
 
     const redirectToGame = async () => {
       const params = new URLSearchParams(window.location.search);
-      const skin = resolveGameSkinName(params.get("skin") || params.get("skinId") || "s-default");
       const match = params.get("match") || "";
 
       try {
@@ -61,6 +60,18 @@ const Play: React.FC = () => {
           sessionStorage.setItem("wons_skin_cache", JSON.stringify(skinData.skins));
         }
       } catch {}
+
+      let skin = resolveGameSkinName(params.get("skin") || params.get("skinId") || "");
+      if (!skin || skin === "s-default") {
+        try {
+          const playerSkinRes = await fetch(`${BACKEND_URL}/api/player-skin?username=${encodeURIComponent(username)}`);
+          const playerSkinData = await playerSkinRes.json();
+          if (playerSkinData.ok && playerSkinData.skin && playerSkinData.skin !== "s-default") {
+            skin = playerSkinData.skin;
+          }
+        } catch {}
+      }
+      if (!skin) skin = "s-default";
 
       let urlUsername = username;
       const token = await requestAuthToken(username);
