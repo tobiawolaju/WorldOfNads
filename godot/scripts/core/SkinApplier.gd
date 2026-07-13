@@ -90,20 +90,17 @@ static func _hex2rgba(hex: Variant) -> Array:
 	if s.length() < 6:
 		print("[HEX] short hex '%s' len=%d" % [s, s.length()])
 		return [1.0, 1.0, 1.0, 1.0]
-	var hex_r := "0x%s" % s.substr(0, 2)
-	var hex_g := "0x%s" % s.substr(2, 2)
-	var hex_b := "0x%s" % s.substr(4, 2)
-	var r_val := float(hex_r)
-	var g_val := float(hex_g)
-	var b_val := float(hex_b)
-	var r := r_val / 255.0
-	var g := g_val / 255.0
-	var b := b_val / 255.0
-	if r_val == 0.0 and g_val == 0.0 and b_val == 0.0:
-		print("[HEX] WARNING: all-zero from input='%s' strip='%s' parts=[%s, %s, %s]" % [str(hex), s, hex_r, hex_g, hex_b])
+	var r_val := s.substr(0, 2).hex_to_int()
+	var g_val := s.substr(2, 2).hex_to_int()
+	var b_val := s.substr(4, 2).hex_to_int()
+	var r := float(r_val) / 255.0
+	var g := float(g_val) / 255.0
+	var b := float(b_val) / 255.0
+	if r_val == 0 and g_val == 0 and b_val == 0:
+		print("[HEX] WARNING: all-zero from input='%s' strip='%s' parts=[%s,%s,%s]" % [str(hex), s, s.substr(0,2), s.substr(2,2), s.substr(4,2)])
 	var a := 1.0
 	if s.length() >= 8:
-		a = float("0x%s" % s.substr(6, 2)) / 255.0
+		a = float(s.substr(6, 2).hex_to_int()) / 255.0
 	return [r, g, b, a]
 
 static func get_skin_data(skin_name: String) -> Dictionary:
