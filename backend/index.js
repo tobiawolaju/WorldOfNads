@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
-import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin, clearPlayerSkin } from './firebaseClient.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin } from './firebaseClient.js';
 import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 
@@ -455,16 +455,6 @@ const server = createServer(async (req, res) => {
     }
     const skin = await getPlayerSkin(username);
     sendJson(res, 200, { ok: true, username, skin: skin || 's-default' });
-    return;
-  }
-
-  // TEMP: one-time route to clear stale player skin from Firebase
-  if (req.method === 'GET' && reqUrl.pathname === '/api/admin/clear-player-skin') {
-    const username = (reqUrl.searchParams.get('username') || '').trim();
-    if (!username) { sendJson(res, 400, { ok: false, error: 'username required' }); return; }
-    await clearPlayerSkin(username);
-    console.log(`[ADMIN] Cleared skin for ${username}`);
-    sendJson(res, 200, { ok: true });
     return;
   }
 
