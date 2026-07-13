@@ -94,7 +94,7 @@ shadow_mesh = SubResource("ArrayMesh_w2ath")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_i4a5y"]
 render_priority = 0
 shader = ExtResource("8_1gkhc")
-shader_parameter/albedo = Color(0.8039216, 0.87058824, 0, 1)
+shader_parameter/albedo = Color(0.4392157, 0.2627451, 0, 1)
 shader_parameter/texture_albedo = ExtResource("8_4p7e7")
 shader_parameter/texture_normal = ExtResource("9_yxqc0")
 shader_parameter/roughness = 1.0
