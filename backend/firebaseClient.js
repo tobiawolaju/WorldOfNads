@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, get, update, set } from "firebase/database";
+import { getDatabase, ref, get, update } from "firebase/database";
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -120,10 +120,7 @@ export async function getPlayerSkin(username) {
     return null; // null means "not stored in Firebase yet, fallback to URL param"
 }
 
-export async function clearPlayerSkin(username) {
-    if (!username) return;
-    await set(ref(db, `users/${username}/skin`), null);
-}
+
 
 export async function updatePlayerXP(username, xp) {
     if (!username) return;
