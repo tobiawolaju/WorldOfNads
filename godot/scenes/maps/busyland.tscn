@@ -1,7 +1,7 @@
 [gd_scene format=4 uid="uid://23ums28hpn7g"]
 
 [ext_resource type="Shader" uid="uid://duvvsy3gjg0hm" path="res://assets/shaders/terrain.gdshader" id="1_okn4i"]
-[ext_resource type="Texture2D" uid="uid://d4hugdluup1ur" path="res://assets/img/map/grass.png" id="2_dnanb"]
+[ext_resource type="Texture2D" uid="uid://ccyjf81h7n4db" path="res://assets/img/map/grass - Copy.png" id="2_ad13m"]
 [ext_resource type="Script" uid="uid://bf5qy7x8yw215" path="res://scripts/map/terrain.gd" id="2_vt26w"]
 [ext_resource type="Texture2D" uid="uid://c7d73vmini8ss" path="res://assets/img/map/grasspatch.jpg" id="3_1gkhc"]
 [ext_resource type="Texture2D" uid="uid://cir23owfwjr35" path="res://assets/img/map/low.png" id="4_4p7e7"]
@@ -16,7 +16,7 @@
 render_priority = 0
 shader = ExtResource("1_okn4i")
 shader_parameter/low_albedo = ExtResource("4_4p7e7")
-shader_parameter/grass_albedo = ExtResource("2_dnanb")
+shader_parameter/grass_albedo = ExtResource("2_ad13m")
 shader_parameter/rock_albedo = ExtResource("5_yxqc0")
 shader_parameter/snow_albedo = ExtResource("6_ad13m")
 shader_parameter/grass_patch_mask = ExtResource("3_1gkhc")
@@ -94,7 +94,7 @@ shadow_mesh = SubResource("ArrayMesh_w2ath")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_i4a5y"]
 render_priority = 0
 shader = ExtResource("8_1gkhc")
-shader_parameter/albedo = Color(0.29803923, 0.28235295, 0.011764706, 1)
+shader_parameter/albedo = Color(0.76125085, 0.94610447, 0.43498278, 1)
 shader_parameter/texture_albedo = ExtResource("8_4p7e7")
 shader_parameter/texture_normal = ExtResource("9_yxqc0")
 shader_parameter/roughness = 1.0
