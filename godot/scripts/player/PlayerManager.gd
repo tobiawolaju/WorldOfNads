@@ -67,6 +67,7 @@ const REMOTE_LOD_INTERVAL: float = 0.15 # Check distance 6 times per second
 var local_username: String = ""
 var local_skin_name: String = DEFAULT_SKIN_NAME
 var local_display_name: String = "player"
+var _skin_cycle_index: int = -1
 var player_display_names: Dictionary = {}
 var player_skin_names: Dictionary = {}
 var remote_snapshots: Dictionary = {}
@@ -170,6 +171,20 @@ func _update_debug2_cache() -> void:
 	_show_json_on("set_debug2_text", cache)
 	print("[SKIN_CACHE] full json length=%d" % JSON.stringify(cache, "", false).length())
 
+func _cycle_skin() -> void:
+	var keys := SkinApplier._api_cache.keys()
+	if keys.is_empty():
+		print("[CYCLE] No cached skins to cycle")
+		return
+	_skin_cycle_index = (_skin_cycle_index + 1) % keys.size()
+	var chosen := str(keys[_skin_cycle_index])
+	print("[CYCLE] Applying skin #%d: '%s'" % [_skin_cycle_index, chosen])
+	local_skin_name = chosen
+	_update_debug_skin()
+	var p = players.get(player_id)
+	if p != null:
+		_skin_applier.apply_skin(p, chosen)
+
 func _fetch_skin_data() -> void:
 	var http := HTTPRequest.new()
 	add_child(http)
@@ -251,6 +266,10 @@ const RECONNECT_COUNTDOWN_STEPS: int = 3
 var _waiting_for_connect: bool = false
 
 func _process(_delta: float):
+	# T key: cycle through cached skins (debug)
+	if Input.is_key_just_pressed(KEY_T):
+		_cycle_skin()
+
 	var now_ms := float(Time.get_ticks_msec())
 	if _last_real_delta_ms == 0.0:
 		_last_real_delta_ms = now_ms

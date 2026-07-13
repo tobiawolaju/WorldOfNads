@@ -23,8 +23,22 @@ const SKIN_NAME_ALIASES := {
 }
 
 static var _skin_applier: SkinApplier = SkinApplier.new()
+var _skin_cycle_index: int = -1
 
+func _process(_delta: float):
+	if Input.is_key_just_pressed(KEY_T):
+		_cycle_skin()
 
+func _cycle_skin() -> void:
+	var keys := SkinApplier._api_cache.keys()
+	if keys.is_empty():
+		print("[CYCLE] No cached skins to cycle")
+		return
+	_skin_cycle_index = (_skin_cycle_index + 1) % keys.size()
+	var chosen := str(keys[_skin_cycle_index])
+	print("[CYCLE] Applying skin #%d: '%s'" % [_skin_cycle_index, chosen])
+	if local_player:
+		_skin_applier.apply_skin(local_player, chosen)
 
 func _ready():
 	_stress_rng.randomize()

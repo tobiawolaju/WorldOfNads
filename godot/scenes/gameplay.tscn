@@ -101,16 +101,16 @@ normal_env = ExtResource("9_qixtg")
 storm_env = ExtResource("10_nt65e")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=711725318]
-environment = ExtResource("10_nt65e")
+environment = ExtResource("9_qixtg")
 
 [node name="day" type="DirectionalLight3D" parent="env" unique_id=654260087]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
-visible = false
-light_energy = 0.8
+light_energy = 0.288
 shadow_enabled = true
 
 [node name="night" type="DirectionalLight3D" parent="env" unique_id=366884123]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
+visible = false
 light_color = Color(0, 0, 0, 1)
 light_energy = 0.0
 shadow_enabled = true
