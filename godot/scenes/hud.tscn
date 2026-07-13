@@ -2,14 +2,14 @@
 
 [ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/Events.gd" id="1_mphia"]
 [ext_resource type="Script" uid="uid://b5tvb8chtonxg" path="res://scripts/ui/minimap.gd" id="2_mphia"]
-[ext_resource type="Texture2D" uid="uid://bfpsl0yatg535" path="res://assets/img/white_circle1.png" id="2_white_circle"]
-[ext_resource type="FontFile" uid="uid://ctxhsu2y7phcf" path="res://assets/fonts/fortnite.otf" id="3_apjy4"]
-[ext_resource type="Texture2D" uid="uid://ueo3a7kil5nd" path="res://assets/img/point.webp" id="6_3swnk"]
+[ext_resource type="Texture2D" uid="uid://mthb8icx6x1m" path="res://assets/img/white_circle1.png" id="2_white_circle"]
+[ext_resource type="FontFile" uid="uid://bqvrqx4a4joiu" path="res://assets/fonts/fortnite.otf" id="3_apjy4"]
+[ext_resource type="Texture2D" uid="uid://hdhbnox5e2d0" path="res://assets/img/point.webp" id="6_3swnk"]
 [ext_resource type="Script" uid="uid://smygpuu7lbkh" path="res://scripts/ui/compassbar.gd" id="7_mphia"]
 [ext_resource type="Script" uid="uid://cty6onrl4lub0" path="res://scripts/ui/fps_label.gd" id="8_mphia"]
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/ui/joystick.gd" id="9_mphia"]
 [ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/ui/buttons.gd" id="10_mphia"]
-[ext_resource type="Texture2D" uid="uid://dbfbk6qf1bxep" path="res://assets/img/ui_atlas.png" id="10_ui_atlas"]
+[ext_resource type="Texture2D" uid="uid://b7qle767pmjpp" path="res://assets/img/ui_atlas.png" id="10_ui_atlas"]
 
 [sub_resource type="Shader" id="Shader_storm"]
 code = "shader_type canvas_item;
@@ -305,6 +305,24 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5411765)
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 2
 script = ExtResource("8_mphia")
+
+[node name="debug" type="Label" parent="CanvasLayer" unique_id=1172499753]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "\\
+jsonjsonjson
+jsonjsonjson
+jsonjson
+jsonjson
+jsonjson
+jsonjson
+jsonjson
+jsonjson
+jsonjson
+jsonjson
+jsonjson
+jsonjson
+"
 
 [node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]
 
