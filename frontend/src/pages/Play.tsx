@@ -54,6 +54,14 @@ const Play: React.FC = () => {
       const skin = resolveGameSkinName(params.get("skin") || params.get("skinId") || "s-default");
       const match = params.get("match") || "";
 
+      try {
+        const skinRes = await fetch(`${BACKEND_URL}/api/skins`);
+        const skinData = await skinRes.json();
+        if (skinData.ok && Array.isArray(skinData.skins)) {
+          sessionStorage.setItem("wons_skin_cache", JSON.stringify(skinData.skins));
+        }
+      } catch {}
+
       let urlUsername = username;
       const token = await requestAuthToken(username);
       if (token) {

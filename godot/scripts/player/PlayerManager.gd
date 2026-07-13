@@ -1193,15 +1193,13 @@ func _resolve_local_skin_name() -> void:
 func _pre_seed_from_session_storage() -> void:
 	if not OS.has_feature("web"):
 		return
-	var raw = JavaScriptBridge.eval("(function(){var d=sessionStorage.getItem('wons_skin');sessionStorage.removeItem('wons_skin');return d||''})()")
+	var raw = JavaScriptBridge.eval("(function(){var d=sessionStorage.getItem('wons_skin_cache');sessionStorage.removeItem('wons_skin_cache');return d||''})()")
 	if typeof(raw) != TYPE_STRING or raw.is_empty():
 		return
 	var parsed = JSON.parse_string(raw)
-	if parsed is Dictionary:
-		var skin_id = parsed.get("id", "")
-		if skin_id != "":
-			SkinApplier.seed_single_from_api(skin_id, {"skinConfig": parsed.get("skinConfig", {})})
-			print("SkinApplier: Pre-seeded from sessionStorage: %s" % skin_id)
+	if parsed is Array:
+		SkinApplier.seed_from_api(parsed)
+		print("SkinApplier: Pre-seeded %d skins from sessionStorage." % parsed.size())
 
 func _get_skin_scene(_skin_name: String) -> PackedScene:
 	return load(SKIN_SCENE_PATH) as PackedScene
