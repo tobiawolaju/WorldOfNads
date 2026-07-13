@@ -25,8 +25,8 @@ const SKIN_NAME_ALIASES := {
 static var _skin_applier: SkinApplier = SkinApplier.new()
 var _skin_cycle_index: int = -1
 
-func _process(_delta: float):
-	if Input.is_key_just_pressed(KEY_T):
+func _input(event: InputEvent):
+	if event is InputEventKey and event.keycode == KEY_T and event.pressed and not event.echo:
 		_cycle_skin()
 
 func _cycle_skin() -> void:
