@@ -144,6 +144,7 @@ func _ready():
 	_resolve_local_username()
 	_resolve_local_skin_name()
 	_pre_seed_from_session_storage()
+	_log_debug("_ready: local_skin_name='%s'" % local_skin_name)
 	_fetch_skin_data()
 	_init_player_pool()
 	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
@@ -153,18 +154,27 @@ func _ready():
 	_resolve_ui_nodes()
 	_update_match_ui()
 
+func _log_debug(msg: String) -> void:
+	print("[SKIN_DEBUG] %s" % msg)
+	var events_node = get_tree().get_first_node_in_group("events_bridge")
+	if events_node != null and events_node.has_method("set_debug_text"):
+		events_node.set_debug_text("[SKIN] %s" % msg)
+
 func _fetch_skin_data() -> void:
 	var http := HTTPRequest.new()
 	add_child(http)
 	http.request_completed.connect(_on_skin_data_fetched.bind(http))
 	http.request("%s/api/skins" % API_BASE)
+	_log_debug("_fetch_skin_data: HTTP request sent to %s/api/skins" % API_BASE)
 
 func _on_skin_data_fetched(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest) -> void:
 	if http != null and is_instance_valid(http):
 		http.queue_free()
 	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
 		print("SkinApplier: API fetch failed (%d %d), using bundled fallback." % [result, response_code])
+		_log_debug("HTTP fetch: FAILED result=%d code=%d" % [result, response_code])
 		return
+	_log_debug("HTTP fetch: SUCCESS code=%d" % response_code)
 	var parsed = JSON.parse_string(body.get_string_from_utf8())
 	if parsed is Dictionary and parsed.get("ok") == true:
 		var skins_array = parsed.get("skins")
@@ -174,6 +184,7 @@ func _on_skin_data_fetched(result: int, response_code: int, _headers: PackedStri
 			_reapply_skins()
 
 func _reapply_skins() -> void:
+	var count := 0
 	for id in players.keys():
 		var p = players.get(id)
 		if p == null or not (p is Node3D):
@@ -184,6 +195,9 @@ func _reapply_skins() -> void:
 			_skin_applier.apply_skin(node, skin_name)
 		else:
 			_update_remote_player_skin(node, skin_name)
+		count += 1
+	if count > 0:
+		_log_debug("_reapply_skins: reapplied skin to %d player(s)" % count)
 
 func _attempt_connection():
 	var base_url = LIVE_URL if is_connecting_to_live else LOCAL_URL
@@ -801,6 +815,8 @@ func _sync_vehicle_player(player_node: Node3D, p_state):
 
 # --- SPAWN ---
 func _spawn_player(id: String, p_is_local := false, skin_name: String = DEFAULT_SKIN_NAME):
+	var in_cache := SkinApplier._api_cache.has(skin_name)
+	_log_debug("_spawn_player: id=%s local=%s skin='%s' in_cache=%s" % [id, p_is_local, skin_name, in_cache])
 	var player: Node3D
 	if p_is_local:
 		player = _instantiate_player_scene_for_skin(skin_name)
@@ -1200,6 +1216,9 @@ func _pre_seed_from_session_storage() -> void:
 	if parsed is Array:
 		SkinApplier.seed_from_api(parsed)
 		print("SkinApplier: Pre-seeded %d skins from sessionStorage." % parsed.size())
+		_log_debug("_pre_seed: %d skins cached from sessionStorage" % parsed.size())
+	else:
+		_log_debug("_pre_seed: sessionStorage had data but not an Array")
 
 func _get_skin_scene(_skin_name: String) -> PackedScene:
 	return load(SKIN_SCENE_PATH) as PackedScene

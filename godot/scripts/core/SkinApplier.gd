@@ -95,12 +95,16 @@ static func _hex2rgba(hex: Variant) -> Array:
 func get_skin_data(skin_name: String) -> Dictionary:
 	var key := str(skin_name).strip_edges().to_lower()
 	if _api_cache.has(key):
+		print("[SKIN_DEBUG] get_skin_data('%s') -> CACHE HIT" % key)
 		return _api_cache[key].duplicate(true)
 	match key:
 		DEFAULT_SKIN:
+			print("[SKIN_DEBUG] get_skin_data('%s') -> FALLBACK_SHADED (default)" % key)
 			return FALLBACK_SHADED.duplicate(true)
 		"s-default-unshaded":
+			print("[SKIN_DEBUG] get_skin_data('%s') -> FALLBACK_UNSHADED (default)" % key)
 			return FALLBACK_UNSHADED.duplicate(true)
+	print("[SKIN_DEBUG] get_skin_data('%s') -> FALLBACK_SHADED (unknown skin)" % key)
 	return FALLBACK_SHADED.duplicate(true)
 
 func apply_skin(player: Node3D, skin_name: String) -> void:
