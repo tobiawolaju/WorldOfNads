@@ -161,6 +161,10 @@ func apply_skin(player: Node3D, skin_name: String) -> void:
 			meshes.append(c as MeshInstance3D)
 
 	for mi in meshes:
+		if mi.material_override != null:
+			mi.material_override = null
+
+	for mi in meshes:
 		var name := mi.name
 
 		if name.begins_with("body"):
@@ -250,7 +254,7 @@ func _assign_body_material(mi: MeshInstance3D, color: Color, outline_color: Colo
 				mat.set_shader_parameter("albedo", color)
 				var outline_mat := ShaderMaterial.new()
 				outline_mat.shader = outline_shader
-				outline_mat.set_shader_parameter("color", outline_color)
+				outline_mat.set_shader_parameter("color", Color(0, 0, 0, 1))
 				outline_mat.set_shader_parameter("size", 1.04)
 				mat.next_pass = outline_mat
 				mi.material_override = mat
