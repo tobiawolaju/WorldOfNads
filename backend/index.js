@@ -2,9 +2,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
-import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin } from './firebaseClient.js';
-import { ref, set } from 'firebase/database';
-import { db } from './firebaseClient.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin, clearPlayerSkin } from './firebaseClient.js';
 import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 
@@ -466,7 +464,7 @@ const server = createServer(async (req, res) => {
     for await (const chunk of req) body += chunk;
     const { username } = JSON.parse(body || '{}');
     if (!username) { sendJson(res, 400, { ok: false, error: 'username required' }); return; }
-    await set(ref(db, `users/${username}/skin`), null);
+    await clearPlayerSkin(username);
     console.log(`[ADMIN] Cleared skin for ${username}`);
     sendJson(res, 200, { ok: true });
     return;
