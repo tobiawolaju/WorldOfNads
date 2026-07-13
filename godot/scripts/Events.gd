@@ -299,24 +299,12 @@ func _ensure_debug_label(parent: Node, name: String, color: Color) -> Label:
 	label.anchor_right = 1.0
 	label.offset_left = 4.0
 	label.offset_right = -4.0
-	label.mouse_filter = Control.MOUSE_FILTER_STOP
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
 	label.add_theme_constant_override("shadow_outline_size", 1)
 	label.add_theme_font_size_override("font_size", 11)
-	if not label.gui_input.is_connected(_on_debug_click):
-		label.gui_input.connect(_on_debug_click.bind(label))
 	return label
-
-func _on_debug_click(event: InputEvent, label: Label) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		var text := label.text
-		if text.is_empty():
-			return
-		if OS.has_feature("web"):
-			JavaScriptBridge.eval("navigator.clipboard.writeText('%s')" % text.replace("'", "\\'"))
-		else:
-			DisplayServer.clipboard_set(text)
 
 func _try_set_username_from_web_query() -> void:
 	if not OS.has_feature("web"):
