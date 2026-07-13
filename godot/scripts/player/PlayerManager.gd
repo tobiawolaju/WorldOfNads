@@ -265,11 +265,11 @@ const RECONNECT_GRACE_TIME: float = 0.5
 const RECONNECT_COUNTDOWN_STEPS: int = 3
 var _waiting_for_connect: bool = false
 
-func _process(_delta: float):
-	# T key: cycle through cached skins (debug)
-	if Input.is_key_just_pressed(KEY_T):
+func _input(event: InputEvent):
+	if event is InputEventKey and event.keycode == KEY_T and event.pressed and not event.echo:
 		_cycle_skin()
 
+func _process(_delta: float):
 	var now_ms := float(Time.get_ticks_msec())
 	if _last_real_delta_ms == 0.0:
 		_last_real_delta_ms = now_ms
