@@ -3,6 +3,8 @@ import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
 import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin } from './firebaseClient.js';
+import { ref, set } from 'firebase/database';
+import { db } from './firebaseClient.js';
 import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 
@@ -455,6 +457,18 @@ const server = createServer(async (req, res) => {
     }
     const skin = await getPlayerSkin(username);
     sendJson(res, 200, { ok: true, username, skin: skin || 's-default' });
+    return;
+  }
+
+  // TEMP: one-time route to clear stale player skin from Firebase
+  if (req.method === 'POST' && reqUrl.pathname === '/api/admin/clear-player-skin') {
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    const { username } = JSON.parse(body || '{}');
+    if (!username) { sendJson(res, 400, { ok: false, error: 'username required' }); return; }
+    await set(ref(db, `users/${username}/skin`), null);
+    console.log(`[ADMIN] Cleared skin for ${username}`);
+    sendJson(res, 200, { ok: true });
     return;
   }
 
@@ -1108,9 +1122,9 @@ gameWss.on('connection', (ws, req) => {
     }
   }
 
-  // Resolve actual skin from Firebase (overrides URL param if stored)
+  // Resolve skin: URL param takes precedence over Firebase stored skin
   getPlayerSkin(username).then(async (firebaseSkin) => {
-    const resolvedSkin = firebaseSkin || requestedSkin;
+    const resolvedSkin = requestedSkin || firebaseSkin || 's-default';
     const profile = await getPlayerProfile(username);
     const xp = profile?.xp || 0;
     const walletAddress = await getPlayerWallet(username);
