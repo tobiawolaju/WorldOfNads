@@ -109,6 +109,17 @@ export async function getPlayerProfile(username) {
     return null;
 }
 
+export async function getPlayerSkin(username) {
+    if (!username) return 's-default';
+    const userRef = ref(db, `users/${username}/skin`);
+    const snapshot = await get(userRef);
+    if (snapshot.exists()) {
+        const val = snapshot.val();
+        if (typeof val === 'string' && val.trim()) return val.trim();
+    }
+    return null; // null means "not stored in Firebase yet, fallback to URL param"
+}
+
 export async function updatePlayerXP(username, xp) {
     if (!username) return;
     const userRef = ref(db, `users/${username}`);

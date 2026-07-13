@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
-import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins } from './firebaseClient.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin } from './firebaseClient.js';
 import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 
@@ -444,6 +444,17 @@ const server = createServer(async (req, res) => {
   if (req.method === 'GET' && reqUrl.pathname === '/api/skins') {
     const skins = await getAllSkins();
     sendJson(res, 200, { ok: true, skins });
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/api/player-skin') {
+    const username = (reqUrl.searchParams.get('username') || '').trim();
+    if (!username) {
+      sendJson(res, 400, { ok: false, error: 'username required' });
+      return;
+    }
+    const skin = await getPlayerSkin(username);
+    sendJson(res, 200, { ok: true, username, skin: skin || 's-default' });
     return;
   }
 
@@ -1097,8 +1108,10 @@ gameWss.on('connection', (ws, req) => {
     }
   }
 
-  // Fetch persistent player profile from Firebase
-  getPlayerProfile(username).then(async (profile) => {
+  // Resolve actual skin from Firebase (overrides URL param if stored)
+  getPlayerSkin(username).then(async (firebaseSkin) => {
+    const resolvedSkin = firebaseSkin || requestedSkin;
+    const profile = await getPlayerProfile(username);
     const xp = profile?.xp || 0;
     const walletAddress = await getPlayerWallet(username);
 
@@ -1106,7 +1119,7 @@ gameWss.on('connection', (ws, req) => {
       id: playerId,
       username,
       walletAddress,
-      skin: requestedSkin,
+      skin: resolvedSkin,
       x: 0,
       y: 0,
       z: 0,
@@ -1124,9 +1137,9 @@ gameWss.on('connection', (ws, req) => {
     };
     updatePlayerCellIndex(playerId, players[playerId]);
 
-    console.log(`🎮 Player connected: ${playerId} (${username}) with ${xp} XP`);
+    console.log(`🎮 Player connected: ${playerId} (${username}) skin=${resolvedSkin} xp=${xp}`);
     ws.playerId = playerId;
-    ws.send(mpEncode({ type: 'connect', id: playerId, username, xp }));
+    ws.send(mpEncode({ type: 'connect', id: playerId, username, skin: resolvedSkin, xp }));
     getRecipientNetworkState(playerId);
     if (!matchRunning && getPlayerCount() >= currentMinPlayersToStart) {
       matchRunning = true;
@@ -1135,11 +1148,12 @@ gameWss.on('connection', (ws, req) => {
   }).catch((err) => {
     console.error(`[Firebase] Failed to fetch profile for ${username}:`, err);
     // Fallback if Firebase fails
+    const fallbackSkin = requestedSkin;
     players[playerId] = {
       id: playerId,
       username,
       walletAddress: null,
-      skin: requestedSkin,
+      skin: fallbackSkin,
       x: 0,
       y: 0,
       z: 0,
@@ -1157,7 +1171,7 @@ gameWss.on('connection', (ws, req) => {
     };
     updatePlayerCellIndex(playerId, players[playerId]);
     ws.playerId = playerId;
-    ws.send(mpEncode({ type: 'connect', id: playerId, username, xp: 0 }));
+    ws.send(mpEncode({ type: 'connect', id: playerId, username, skin: fallbackSkin, xp: 0 }));
   });
 
   ws.on('message', (message) => {

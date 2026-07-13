@@ -309,19 +309,13 @@ script = ExtResource("8_mphia")
 [node name="debug" type="Label" parent="CanvasLayer" unique_id=1172499753]
 offset_right = 40.0
 offset_bottom = 23.0
-text = "\\
-jsonjsonjson
-jsonjsonjson
-jsonjson
-jsonjson
-jsonjson
-jsonjson
-jsonjson
-jsonjson
-jsonjson
-jsonjson
-jsonjson
-jsonjson
+text = "loading
+"
+
+[node name="debug2" type="Label" parent="CanvasLayer" unique_id=1253793999]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "loading
 "
 
 [node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]

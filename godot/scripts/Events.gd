@@ -29,6 +29,7 @@ var _navigated_to_gameover := false
 @onready var mon_stream_label: Label = get_node_or_null("MONstream")
 @onready var prize_pool_label: Label = get_node_or_null("PrizePool")
 @onready var _debug_label: Label = get_node_or_null("CanvasLayer/debug")
+@onready var _debug2_label: Label = get_node_or_null("CanvasLayer/debug2")
 
 func _ready() -> void:
 	add_to_group("events_bridge")
@@ -257,6 +258,10 @@ func _split_message_actor_and_text(message: String) -> Dictionary:
 func set_debug_text(text: String) -> void:
 	if _debug_label != null:
 		_debug_label.text = text
+
+func set_debug2_text(text: String) -> void:
+	if _debug2_label != null:
+		_debug2_label.text = text
 
 func _try_set_username_from_web_query() -> void:
 	if not OS.has_feature("web"):
