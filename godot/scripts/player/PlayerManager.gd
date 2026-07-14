@@ -609,13 +609,18 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 			continue
 		received_ids[id] = true
 		var resolved_name = _resolve_server_username(p_state, id)
+		var previous_skin := str(player_skin_names.get(id, "")).strip_edges()
 		var resolved_skin = _resolve_server_skin(p_state, id, player_skin_names.get(id, DEFAULT_SKIN_NAME))
+		var skin_changed := previous_skin != "" and previous_skin != resolved_skin
 		player_display_names[id] = resolved_name
 		player_skin_names[id] = resolved_skin
 
 		if id == player_id:
+			local_skin_name = resolved_skin
 			if players.has(id):
 				players[id].display_name = resolved_name
+				if skin_changed:
+					_skin_applier.apply_skin(players[id], resolved_skin)
 			continue
 
 		var server_pos = Vector3(
@@ -645,6 +650,8 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 
 		var node = players[id]
 		node.display_name = resolved_name
+		if skin_changed:
+			_update_remote_player_skin(node, resolved_skin)
 
 		# 🚗 Vehicle sync
 		if p_state.has("vehicle") and p_state["vehicle"] != null:

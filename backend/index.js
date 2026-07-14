@@ -1108,11 +1108,13 @@ gameWss.on('connection', (ws, req) => {
     }
   }
 
-  const resolvedSkin = requestedSkin || 's-default';
+  const requestedOrDefaultSkin = requestedSkin || 's-default';
 
   getPlayerProfile(username).then(async (profile) => {
     const xp = profile?.xp || 0;
     const walletAddress = await getPlayerWallet(username);
+    const firebaseSkin = resolveSkinName(profile?.skin || profile?.equippedSkinId || profile?.selectedSkin || profile?.selectedSkinId || profile?.skinName || profile?.skinId || await getPlayerSkin(username) || '');
+    const resolvedSkin = firebaseSkin || requestedOrDefaultSkin;
 
     players[playerId] = {
       id: playerId,
@@ -1146,6 +1148,7 @@ gameWss.on('connection', (ws, req) => {
     }
   }).catch((err) => {
     console.error(`[Firebase] Failed to fetch profile for ${username}:`, err);
+    const resolvedSkin = requestedOrDefaultSkin;
     players[playerId] = {
       id: playerId,
       username,
