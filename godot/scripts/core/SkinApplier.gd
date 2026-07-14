@@ -41,7 +41,7 @@ static func seed_from_api(json_array: Array) -> void:
 	print("[HEX_TEST] test conversion: _hex2rgba('#ff8c00') = %s" % JSON.stringify(_hex2rgba("#ff8c00")))
 	for entry in json_array:
 		if entry is Dictionary:
-			var key: String = str(entry.get("id", ""))
+			var key: String = str(entry.get("id", "")).to_lower()
 			if key == "":
 				key = str(entry.get("name", "")).to_lower().replace(" ", "-")
 			if key == "":
@@ -57,7 +57,7 @@ static func seed_from_api(json_array: Array) -> void:
 static func seed_single_from_api(skin_id: String, entry: Dictionary) -> void:
 	var skin_config: Dictionary = entry.get("skinConfig", entry.get("skin_config", {}))
 	if not skin_config.is_empty():
-		_api_cache[skin_id] = _convert_api_entry(skin_config)
+		_api_cache[skin_id.to_lower()] = _convert_api_entry(skin_config)
 
 static func _convert_api_entry(skin_config: Dictionary) -> Dictionary:
 	var result: Dictionary = {}

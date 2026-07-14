@@ -100,35 +100,9 @@
 
     <script>
       (function () {
-        const DEFAULT_GAME_SKIN_NAME = "defaultnad";
-        const GAME_SKIN_NAME_BY_KEY = {
-          "s-default": DEFAULT_GAME_SKIN_NAME,
-          s0: "buggy",
-          s1: "Aurum",
-          s2: "Abbss",
-          s3: "Hellion",
-          s4: "Seraphim",
-          s5: "mouch",
-          s6: "john deo",
-          defaultnad: DEFAULT_GAME_SKIN_NAME,
-          buggy: "buggy",
-          aurum: "Aurum",
-          abbss: "Abbss",
-          abyss: "Abbss",
-          hellion: "Hellion",
-          seraphim: "Seraphim",
-          mouch: "mouch",
-          "john deo": "john deo",
-          johndeo: "john deo"
-        };
-        const normalizeSkinKey = (rawSkin) =>
-          String(rawSkin || "")
-            .trim()
-            .toLowerCase()
-            .replace(/\s+/g, " ");
         const resolveGameSkinName = (rawSkin) => {
-          const key = normalizeSkinKey(rawSkin);
-          return GAME_SKIN_NAME_BY_KEY[key] || DEFAULT_GAME_SKIN_NAME;
+          const key = String(rawSkin || "").trim().toLowerCase().replace(/\s+/g, " ");
+          return key || "s-default";
         };
 
         const status = document.getElementById("status");
