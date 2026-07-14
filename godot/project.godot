@@ -16,7 +16,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 run/low_processor_mode=true
 boot_splash/bg_color=Color(0.43137255, 0.32941177, 1, 1)
 boot_splash/image="uid://ct6moic2j0bbf"
-config/icon="res://icon.svg"
+config/icon="uid://ct6moic2j0bbf"
 
 [autoload]
 

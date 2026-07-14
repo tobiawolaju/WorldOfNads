@@ -1240,7 +1240,7 @@ func _resolve_local_skin_name() -> void:
 func _pre_seed_from_session_storage() -> void:
 	if not OS.has_feature("web"):
 		return
-	var raw = JavaScriptBridge.eval("(function(){var d=sessionStorage.getItem('wons_skin_cache');sessionStorage.removeItem('wons_skin_cache');return d||''})()")
+	var raw = JavaScriptBridge.eval("sessionStorage.getItem('wons_skin_cache') || ''")
 	if typeof(raw) != TYPE_STRING or raw.is_empty():
 		return
 	print("[SESSION] raw first 120 chars: %s" % str(raw).left(120))
