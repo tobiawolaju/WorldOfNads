@@ -82,6 +82,8 @@ status_label = NodePath("../Hud/CanvasLayer/BoxContainer/Node2/BoxContainer/Coun
 
 [node name="Camera3D" type="Camera3D" parent="Player" unique_id=548567096]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.016422, 10.749125)
+doppler_tracking = 1
+far = 100.0
 
 [node name="spawnpoint" type="Node3D" parent="Player" unique_id=765824796]
 
