@@ -137,6 +137,7 @@ camera_block_path = NodePath("Camera3D/CAMERABlock")
 
 [node name="Camera3D" type="Camera3D" parent="PlayerManager" unique_id=411845509]
 transform = Transform3D(1, 0, 0, 0, 0.99625385, -0.08647761, 0, 0.08647761, 0.99625385, 0, 31.696651, 11.382333)
+doppler_tracking = 1
 fov = 55.0
 far = 100.0
 
