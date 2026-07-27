@@ -6,7 +6,7 @@ uniform float roughness_val : hint_range(0.0, 1.0) = 0.5;
 uniform float metalness_val : hint_range(0.0, 1.0) = 0.0;
 
 void fragment() {
-	vec3 light = normalize(LIGHT_DIRECTION);
+	vec3 light = normalize(BACKLIGHT);
 	float NdotL = max(0.0, dot(NORMAL, light));
 	float diff = NdotL * 0.8 + 0.2;
 	ALBEDO = albedo.rgb * diff;
