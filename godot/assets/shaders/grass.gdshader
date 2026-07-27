@@ -6,8 +6,7 @@ depth_draw_opaque,
 cull_disabled,
 diffuse_burley,
 specular_schlick_ggx,
-depth_prepass_alpha,
-unshaded;
+depth_prepass_alpha;
 
 
 //

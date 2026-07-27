@@ -1,0 +1,27 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://bqxskpuq4irq5"]
+
+[ext_resource type="Shader" uid="uid://duvvsy3gjg0hm" path="res://assets/shaders/terrain.gdshader" id="1_t62o4"]
+[ext_resource type="Texture2D" uid="uid://dra68b33d7qk4" path="res://assets/img/map/ground.jpg" id="2_i8uv6"]
+[ext_resource type="Texture2D" uid="uid://c7d73vmini8ss" path="res://assets/img/map/grasspatch.jpg" id="3_1pyr2"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_t62o4")
+shader_parameter/low_albedo = ExtResource("2_i8uv6")
+shader_parameter/grass_albedo = ExtResource("2_i8uv6")
+shader_parameter/rock_albedo = ExtResource("2_i8uv6")
+shader_parameter/snow_albedo = ExtResource("2_i8uv6")
+shader_parameter/grass_patch_mask = ExtResource("3_1pyr2")
+shader_parameter/grass_start = -1.5
+shader_parameter/rock_start = 0.0
+shader_parameter/snow_start = 1.5
+shader_parameter/transition = 0.0
+shader_parameter/texture_scale = 10.0
+shader_parameter/blend_sharpness = 100.0
+shader_parameter/breakup_scale = 18.0
+shader_parameter/breakup_strength = 2.5
+shader_parameter/grass_patch_height_percent = 0.25
+shader_parameter/grass_patch_strength = 1.0
+shader_parameter/grass_patch_scale = 80.0
+shader_parameter/cliff_start = 0.35
+shader_parameter/cliff_hardness = 8.0

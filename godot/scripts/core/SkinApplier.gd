@@ -7,15 +7,15 @@ static var _api_cache: Dictionary = {}
 
 const FALLBACK_SHADED: Dictionary = {
 	"palette": {
-		"body": [0.988, 0.176, 0.588, 1],
-		"body_alt": [0.988, 0.294, 0.549, 1],
-		"cheek": [0.988, 0.416, 0.608, 1],
-		"eye": [0.906, 0.906, 0.906, 1],
-		"skin": [1.0, 0.612, 0.431, 1]
+		"body": [0.988, 0.176, 0.288, 1],
+		"body_alt": [0.988, 0.176, 0.288, 1],
+		"cheek":  [0.988, 0.294, 0.549, 1],
+		"eye": [1.0, 1.0, 1.0, 1],
+		"skin": [0.0, 0.0, 0.0, 1.0]
 	},
-	"outline_color": [0.988, 0.0, 0.851, 1],
-	"crown_color": [0.988, 0.0, 0.851, 1],
-	"face_texture": "",
+	"outline_color": [0.988, 0.176, 0.288, 1],
+	"crown_color": [1.0, 1.0, 0.0, 1],
+	"face_texture": "res://assets/img/skins/face1.png",
 	"shader": "default",
 	"shader_targets": ["body", "cheek", "eye"],
 	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] }
@@ -23,15 +23,15 @@ const FALLBACK_SHADED: Dictionary = {
 
 const FALLBACK_UNSHADED: Dictionary = {
 	"palette": {
-		"body": [0.988, 0.176, 0.588, 1],
-		"body_alt": [0.988, 0.294, 0.549, 1],
-		"cheek": [0.988, 0.416, 0.608, 1],
-		"eye": [0.906, 0.906, 0.906, 1],
-		"skin": [1.0, 0.612, 0.431, 1]
+		"body": [0.988, 0.176, 0.288, 1],
+		"body_alt": [0.988, 0.176, 0.288, 1],
+		"cheek":[0.988, 0.294, 0.549, 1],
+		"eye": [1.0, 1.0, 1.0, 1],
+		"skin":  [0.0, 0.0, 0.0, 1.0]
 	},
 	"outline_color": [0.988, 0.0, 0.851, 1],
-	"crown_color": [0.988, 0.0, 0.851, 1],
-	"face_texture": "",
+	"crown_color": [1.0, 1.0, 0.0, 1],
+	"face_texture":  "res://assets/img/skins/face1.png",
 	"shader": "unshaded",
 	"shader_targets": ["body", "cheek", "eye"],
 	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] }

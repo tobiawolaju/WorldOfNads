@@ -3,8 +3,6 @@
 [ext_resource type="Script" uid="uid://u7ahffc1obf8" path="res://scripts/player.gd" id="1_nna72"]
 [ext_resource type="AnimationLibrary" uid="uid://cyoeh8u10140w" path="res://resources/PlayerAnimations.tres" id="2_wrixk"]
 [ext_resource type="Shader" uid="uid://dqg85vp5she" path="res://assets/shaders/outline.gdshader" id="3_wrixk"]
-[ext_resource type="Shader" uid="uid://npfkl5kbrtpy" path="res://assets/shaders/face.gdshader" id="4_8qxwi"]
-[ext_resource type="Texture2D" uid="uid://dmkd26ryr27li" path="res://assets/img/skins/face1.png" id="4_f0bnh"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hqo6i"]
 radius = 0.23692703
@@ -16,12 +14,11 @@ radius = 2.0
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_jrfn5"]
 render_priority = 0
 shader = ExtResource("3_wrixk")
-shader_parameter/color = Color(0, 0, 0, 1)
+shader_parameter/color = Color(0.6431373, 0.18431373, 0.3882353, 1)
 shader_parameter/size = 1.03999999910592
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yxqc0"]
 next_pass = SubResource("ShaderMaterial_jrfn5")
-shading_mode = 0
 albedo_color = Color(0.9999996, 0.24226898, 0.5077209, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8ga8q"]
@@ -376,11 +373,13 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ywufw"]
-render_priority = 0
-shader = ExtResource("4_8qxwi")
-shader_parameter/face_tex = ExtResource("4_f0bnh")
-shader_parameter/thickness = 0.145
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_wrixk"]
+load_path = "res://.godot/imported/face1.png-2ee4a7f33164ad104860ac15ebe40650.s3tc.ctex"
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wnw1f"]
+transparency = 1
+albedo_texture = SubResource("CompressedTexture2D_wrixk")
+grow = true
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_l0bqs"]
 size = Vector2(1.5, 1.5)
@@ -393,16 +392,15 @@ albedo_color = Color(1, 1, 0, 1)
 [sub_resource type="TorusMesh" id="TorusMesh_l0bqs"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bstww"]
-shading_mode = 0
-albedo_color = Color(1, 0.61165553, 0.43272215, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_l0bqs"]
-size = Vector3(1, 1, 0.5)
+[sub_resource type="BoxMesh" id="BoxMesh_8qxwi"]
 
 [node name="CharacterBody3D" type="CharacterBody3D" unique_id=1520854348]
 script = ExtResource("1_nna72")
-min_zoom = 1.4
-max_zoom = 1.5
+camera_screen_offset = Vector2(-0.15, 0.5)
+camera_smoothness = 10.0
+min_zoom = 2.6
+max_zoom = 2.7
 swipe_up_threshold = 20.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=42515026]
@@ -426,6 +424,7 @@ shape = SubResource("SphereShape3D_hqo6i")
 transform = Transform3D(-3.059797e-08, 0, 0.7, 0, 0.7, 0, -0.7, 0, -3.059797e-08, -0.061, 1.019, 0)
 visibility_range_end = 50.0
 billboard = 1
+no_depth_test = true
 outline_modulate = Color(0, 0, 0, 0)
 text = "Username"
 font_size = 35
@@ -753,18 +752,17 @@ bone_name = "mixamorig_Head"
 bone_idx = 5
 
 [node name="face" type="MeshInstance3D" parent="Skeleton3D/BoneAttachment3D2" unique_id=1901944278]
-transform = Transform3D(0.9971416, 0.036168173, -0.06633376, -0.063817196, -0.06678081, -0.99572515, -0.040443446, 0.99711066, -0.06428189, 0.045, 0.398, 0.914)
-visible = false
-material_override = SubResource("ShaderMaterial_ywufw")
+transform = Transform3D(0.99714166, 0.036168173, -0.06633377, -0.063817196, -0.0667808, -0.9957252, -0.04044345, 0.9971106, -0.06428188, 0.045308083, 0.39935184, 0.92470884)
+material_override = SubResource("StandardMaterial3D_wnw1f")
 mesh = SubResource("PlaneMesh_l0bqs")
 
 [node name="crown" type="MeshInstance3D" parent="Skeleton3D/BoneAttachment3D2" unique_id=1209889466]
 transform = Transform3D(0.7999998, 1.3271347e-08, 3.7252903e-09, 1.071021e-08, 0.8, 1.0430813e-07, -6.519258e-09, -1.937151e-07, 0.7999998, -0.015522182, 1.0680386, -0.01038371)
-visible = false
 material_override = SubResource("StandardMaterial3D_jrfn5")
 mesh = SubResource("TorusMesh_l0bqs")
 
 [node name="attachment" type="MeshInstance3D" parent="Skeleton3D/BoneAttachment3D2" unique_id=1636922863]
-transform = Transform3D(0.9994693, 0.0039632274, -0.03227628, -0.016934901, 0.91076475, -0.4125764, 0.027760854, 0.41290486, 0.9103502, 0.01155483, -0.36095595, -1.0569154)
+transform = Transform3D(0.9994693, 0.003963218, -0.032276303, -0.016934905, 0.9107649, -0.41257638, 0.02776084, 0.41290468, 0.9103502, 0.0041157007, -0.26960194, -1.2342505)
+visible = false
 material_override = SubResource("StandardMaterial3D_bstww")
-mesh = SubResource("BoxMesh_l0bqs")
+mesh = SubResource("BoxMesh_8qxwi")
