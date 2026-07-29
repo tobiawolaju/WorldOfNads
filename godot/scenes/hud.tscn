@@ -288,8 +288,8 @@ grow_vertical = 0
 theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 10
-theme_override_font_sizes/font_size = 18
-text = "Grab de chicken and don't  let go"
+theme_override_font_sizes/font_size = 24
+text = "⭐Grab de chicken and don't  let go✨"
 
 [node name="FPSLabel" type="Label" parent="CanvasLayer" unique_id=2147483647]
 anchors_preset = 1
@@ -361,9 +361,9 @@ texture = SubResource("AtlasTexture_white_circle1")
 scale = Vector2(0.5, 0.5)
 texture = SubResource("AtlasTexture_white_circle1")
 script = ExtResource("9_mphia")
-auto_lock_hold_seconds = 0.2
+auto_lock_hold_seconds = 0.0
 auto_lock_forward_min_strength = 0.1
-auto_lock_north_distance_multiplier = 1.9
+auto_lock_north_distance_multiplier = 3.0
 joy_lock = NodePath("../JoyLock")
 
 [node name="Node3" type="Node" parent="." unique_id=1974703911]
