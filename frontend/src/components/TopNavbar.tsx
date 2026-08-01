@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { getProfilePictureFromPrivy, getUsernameFromPrivy } from '../pages/firebaseClient';
-
+import './topnav.css';
 
 type TopNavbarProps = {
   hideContents?: boolean;
