@@ -49,11 +49,10 @@ normal_env = ExtResource("4_ncsg4")
 storm_env = ExtResource("5_07nfq")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=580568222]
-environment = ExtResource("4_ncsg4")
+environment = ExtResource("5_07nfq")
 
 [node name="day" type="DirectionalLight3D" parent="env" unique_id=312017769]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
-visible = false
 light_energy = 0.8
 shadow_enabled = true
 
@@ -71,6 +70,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_yad6j")
 
 [node name="night" type="DirectionalLight3D" parent="env" unique_id=1492364894]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
+visible = false
 light_color = Color(0.85490197, 0, 0.78431374, 1)
 light_energy = 0.2
 shadow_enabled = true
