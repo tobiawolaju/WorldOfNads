@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { getProfilePictureFromPrivy, getUsernameFromPrivy } from '../pages/firebaseClient';
-import './topnav.css';
+
 
 type TopNavbarProps = {
   hideContents?: boolean;
@@ -78,14 +78,14 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
       <div className="logo-section" style={{ display: 'flex', alignItems: 'center' }}>
         {isDashboard && ready && authenticated && user ? (
           <div style={{ display: 'flex', alignItems: 'center', transform: 'scale(0.8)', transformOrigin: 'left center' }}>
-            <img src={getProfilePictureFromPrivy(user) || '/logo.png'} alt="avatar" style={{ width: '40px', height: '40px', objectFit: 'cover' }} />
+            <img src={getProfilePictureFromPrivy(user) || '/loadinglogo.png'} alt="avatar" style={{ width: '40px', height: '40px', objectFit: 'cover' }} />
             <p style={{ fontSize: 'larger', margin: '10px', fontFamily: "'Font1', sans-serif", fontWeight: 'bold' }}>
               {getUsernameFromPrivy(user) || 'Player'}
             </p>
           </div>
         ) : (
           <>
-            <img src="/logo.png" alt="logo" style={{ width: '40px', zIndex: 999 }} />
+            <img src="/loadinglogo.png" alt="logo" style={{ width: '40px', zIndex: 999 }} />
             {!hideContents && currentText && (
               <p style={{ fontSize: 'larger', margin: '10px', fontFamily: "'Font1', sans-serif", fontWeight: 'bold' }}>
                 {currentText}
