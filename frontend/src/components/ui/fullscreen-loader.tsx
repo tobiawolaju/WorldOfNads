@@ -83,9 +83,9 @@ export const FullScreenLoader = ({ visible = true }: FullScreenLoaderProps) => {
       </style>
 
       <div className="loader-overlay" data-visible={visible ? "true" : "false"}>
-        <img 
-          src="/logo.jpg" 
-          alt="Loading..." 
+        <img
+          src="/loadinglogo.png"
+          alt="Loading..."
           className="loader-logo"
         />
       </div>
