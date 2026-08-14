@@ -13,7 +13,6 @@ config_version=5
 config/name="wons"
 run/main_scene="uid://duy1hgxhwdptc"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-run/low_processor_mode=false
 boot_splash/bg_color=Color(0.43137255, 0.32941177, 1, 1)
 boot_splash/image="uid://ct6moic2j0bbf"
 config/icon="uid://ct6moic2j0bbf"
