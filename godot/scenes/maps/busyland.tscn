@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://23ums28hpn7g"]
 
-[ext_resource type="Material" uid="uid://bqxskpuq4irq5" path="res://assets/resources/desert_ground_env.tres" id="1_rx80s"]
+[ext_resource type="Material" uid="uid://rkdt3vmnhrt5" path="res://assets/resources/normal_ground_env.tres" id="1_rx80s"]
 [ext_resource type="Script" uid="uid://bf5qy7x8yw215" path="res://scripts/map/terrain.gd" id="2_vt26w"]
 [ext_resource type="Material" uid="uid://cjq16h3fnb3fb" path="res://assets/resources/desert_grass_env.tres" id="5_dnanb"]
 [ext_resource type="Texture2D" uid="uid://cp58rvgp2x8jv" path="res://assets/models/lowpoly_grass_0.png" id="8_4p7e7"]
@@ -104,7 +104,7 @@ transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0
 visible = false
 mesh = SubResource("ArrayMesh_y1r05")
 
-[node name="MultiMeshInstance3D" type="MultiMeshInstance3D" parent="." unique_id=1804344319]
+[node name="grasses" type="MultiMeshInstance3D" parent="." unique_id=1804344319]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.16381213, 0)
 material_override = ExtResource("5_dnanb")
 cast_shadow = 0

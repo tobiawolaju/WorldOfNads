@@ -29,10 +29,6 @@ const SQUASH_STRETCH_SPEED: float = 12.0
 
 const AUTO_ORBIT_SPEED: float = 2.5
 
-# --- STORM DEBUFF MULTIPLIERS (set by stormeye.gd) ---
-var storm_gravity_multiplier: float = 1.0
-var storm_jump_multiplier: float = 1.0
-var storm_speed_multiplier: float = 1.0
 const AUTO_ORBIT_DEADZONE: float = 0.25
 
 const LANDING_BOB_DURATION: float = 0.14
@@ -425,12 +421,12 @@ func _physics_process(delta: float) -> void:
 	var jump_requested_now := false
 	if not is_on_floor():
 		var gravity_scale: float = 0.5 if is_falling_anim_playing else 1.0
-		velocity_y -= GRAVITY * gravity_scale * storm_gravity_multiplier * delta
+		velocity_y -= GRAVITY * gravity_scale * delta
 	else:
 		jump_requested_now = _jump_requested or Input.is_action_just_pressed("jump") or Input.is_joy_button_pressed(gamepad_index, JOY_BUTTON_A)
 		_jump_requested = false
 		if movement_allowed and jump_requested_now:
-			velocity_y = JUMP_VELOCITY * storm_jump_multiplier
+			velocity_y = JUMP_VELOCITY
 			if not _double_jump_available:
 				_ground_jump_count += 1
 				if _ground_jump_count >= 2:
@@ -476,7 +472,7 @@ func _physics_process(delta: float) -> void:
 			var apex_time := JUMP_VELOCITY / GRAVITY
 			var progress := clampf(_double_jump_air_time / apex_time, 0.0, 1.0)
 			var smooth := progress * progress * (3.0 - 2.0 * progress)
-			velocity_y = JUMP_VELOCITY * storm_jump_multiplier * lerpf(DOUBLE_JUMP_MIN_MULTIPLIER, 1.0, smooth)
+			velocity_y = JUMP_VELOCITY * lerpf(DOUBLE_JUMP_MIN_MULTIPLIER, 1.0, smooth)
 			_double_jump_used = true
 			_double_jump_available = false
 			_jump_buffer_timer = 0.0
@@ -486,7 +482,7 @@ func _physics_process(delta: float) -> void:
 	if is_on_floor():
 		var buffered_jump := movement_allowed and (_jump_buffer_timer > 0.0) and (jump_requested_now or _coyote_timer > 0.0)
 		if buffered_jump:
-			velocity_y = JUMP_VELOCITY * storm_jump_multiplier
+			velocity_y = JUMP_VELOCITY
 			_jump_buffer_timer = 0.0
 			if not _double_jump_available and not jump_requested_now:
 				_ground_jump_count += 1
@@ -496,7 +492,7 @@ func _physics_process(delta: float) -> void:
 
 	# --- MOMENTUM CALCULATION ---
 	if movement_allowed:
-		var target_vel = move_direction * SPEED * storm_speed_multiplier
+		var target_vel = move_direction * SPEED
 		
 		# [MOMENTUM UPDATE] If we are in the air, use max speed instantly (no acceleration)
 		if is_on_floor():
@@ -518,7 +514,7 @@ func _physics_process(delta: float) -> void:
 
 	if _is_sliding:
 		_slide_timer = maxf(0.0, _slide_timer - delta)
-		var slide_speed := SPEED * storm_speed_multiplier * SLIDE_SPEED_MULTIPLIER
+		var slide_speed := SPEED * SLIDE_SPEED_MULTIPLIER
 		velocity.x = _slide_direction.x * slide_speed
 		velocity.z = _slide_direction.z * slide_speed
 		_apply_slide_camera_restore(delta)
@@ -1229,16 +1225,6 @@ func _apply_slide_camera_restore(delta: float) -> void:
 	cam_rot_x = clampf(lerpf(cam_rot_x, _touch_slide_start_cam_rot_x, restore_weight), min_pitch, max_pitch)
 	if absf(angle_difference(cam_rot_y, _touch_slide_start_cam_rot_y)) < 0.001 and absf(cam_rot_x - _touch_slide_start_cam_rot_x) < 0.001:
 		_slide_camera_restore_active = false
-
-func apply_storm_debuffs(grav_mult: float, jump_mult: float, speed_mult: float) -> void:
-	storm_gravity_multiplier = grav_mult
-	storm_jump_multiplier = jump_mult
-	storm_speed_multiplier = speed_mult
-
-func remove_storm_debuffs() -> void:
-	storm_gravity_multiplier = 1.0
-	storm_jump_multiplier = 1.0
-	storm_speed_multiplier = 1.0
 
 func disable_character_shadows() -> void:
 	for child in find_children("*", "MeshInstance3D", true):

@@ -107,13 +107,13 @@ environment = ExtResource("10_nt65e")
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
 visible = false
 light_energy = 0.288
-shadow_enabled = true
+shadow_enabled = false
 
 [node name="night" type="DirectionalLight3D" parent="env" unique_id=366884123]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
 light_color = Color(0.85490197, 0, 0.78431374, 1)
 light_energy = 0.2
-shadow_enabled = true
+shadow_enabled = false
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=154871314]

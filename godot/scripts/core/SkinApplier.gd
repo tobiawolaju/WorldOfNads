@@ -117,7 +117,6 @@ static func get_skin_data(skin_name: String) -> Dictionary:
 		if _is_all_black(cached):
 			print("[SKIN_DEBUG] get_skin_data('%s') -> CACHE CORRUPT (all black), fallback" % key)
 			return FALLBACK_SHADED.duplicate(true)
-		print("[SKIN_DEBUG] get_skin_data('%s') -> CACHE HIT" % key)
 		return cached
 	print("[SKIN_DEBUG] get_skin_data('%s') -> CACHE MISS, fallback" % key)
 	return FALLBACK_SHADED.duplicate(true)
@@ -133,16 +132,37 @@ static func _is_all_black(data: Dictionary) -> bool:
 				return false
 	return true
 
+const OUTLINE_SHADER := preload("res://assets/shaders/outline.gdshader")
+const FACE_SHADER := preload("res://assets/shaders/face.gdshader")
+const SKIN_UNSHADED_SHADER := preload("res://assets/shaders/skin_unshaded.gdshader")
+
+static var _skin_material_sets: Dictionary = {}
+
 func apply_skin(player: Node3D, skin_name: String) -> void:
 	var data := get_skin_data(skin_name)
 	if data.is_empty():
 		return
 
-	var outline_shader := preload("res://assets/shaders/outline.gdshader")
-	var face_shader := preload("res://assets/shaders/face.gdshader")
-	var skin_shaded := preload("res://assets/shaders/skin_shaded.gdshader")
-	var skin_unshaded := preload("res://assets/shaders/skin_unshaded.gdshader")
+	var material_set := _get_material_set(skin_name, data)
 
+	var meshes: Array[MeshInstance3D] = []
+	for c in player.find_children("*", "MeshInstance3D", true):
+		if c is MeshInstance3D:
+			meshes.append(c as MeshInstance3D)
+
+	for mi in meshes:
+		var mat: Material = _material_for_name(material_set, mi.name)
+		if mat != null:
+			mi.material_override = mat
+
+static func _get_material_set(skin_name: String, data: Dictionary) -> Dictionary:
+	if _skin_material_sets.has(skin_name):
+		return _skin_material_sets[skin_name]
+	var material_set := _build_material_set(data)
+	_skin_material_sets[skin_name] = material_set
+	return material_set
+
+static func _build_material_set(data: Dictionary) -> Dictionary:
 	var palette: Dictionary = data.get("palette", {})
 	var outline_color := _c(data.get("outline_color", [1, 0, 1, 1]))
 	var crown_color := _c(data.get("crown_color", [1, 0, 1, 1]))
@@ -155,162 +175,135 @@ func apply_skin(player: Node3D, skin_name: String) -> void:
 	if face_path != "":
 		face_tex = load(face_path) as Texture2D
 
-	var meshes: Array[MeshInstance3D] = []
-	for c in player.find_children("*", "MeshInstance3D", true):
-		if c is MeshInstance3D:
-			meshes.append(c as MeshInstance3D)
+	return {
+		"body": _body_material(_c(palette.get("body", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "body"),
+		"body_01": _body_material(_c(palette.get("body_alt", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "body"),
+		"cheek": _body_material(_c(palette.get("cheek", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "cheek"),
+		"eye": _body_material(_c(palette.get("eye", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "eye"),
+		"crown": _crown_material(crown_color),
+		"face": _face_material(face_tex),
+		"attachment": _attachment_material(_c(attachment_data.get("color", [1, 1, 1, 1]))),
+	}
 
-	for mi in meshes:
-		if mi.material_override != null:
-			mi.material_override = null
+static func _material_for_name(material_set: Dictionary, name: String) -> Material:
+	if name.begins_with("body"):
+		return material_set.get("body_01" if name == "body_01" else "body")
+	if name.begins_with("cheek"):
+		return material_set.get("cheek")
+	if name.begins_with("eye"):
+		return material_set.get("eye")
+	if name.begins_with("crown"):
+		return material_set.get("crown")
+	if name == "face":
+		return material_set.get("face")
+	if name == "attachment":
+		return material_set.get("attachment")
+	return null
 
-	for mi in meshes:
-		var name := mi.name
-
-		if name.begins_with("body"):
-			var col := _c(palette.get("body", [1, 1, 1, 1]))
-			if name == "body_01":
-				col = _c(palette.get("body_alt", [1, 1, 1, 1]))
-			_assign_body_material(mi, col, outline_color, shader_type, shader_targets, "body", skin_shaded, skin_unshaded, outline_shader)
-
-		elif name.begins_with("cheek"):
-			var col := _c(palette.get("cheek", [1, 1, 1, 1]))
-			_assign_body_material(mi, col, outline_color, shader_type, shader_targets, "cheek", skin_shaded, skin_unshaded, outline_shader)
-
-		elif name.begins_with("eye"):
-			var col := _c(palette.get("eye", [1, 1, 1, 1]))
-			_assign_body_material(mi, col, outline_color, shader_type, shader_targets, "eye", skin_shaded, skin_unshaded, outline_shader)
-
-		elif name.begins_with("crown"):
-			_assign_crown_material(mi, crown_color)
-
-		elif name == "face":
-			var mat := ShaderMaterial.new()
-			mat.shader = face_shader
-			if face_tex:
-				mat.set_shader_parameter("face_tex", face_tex)
-			mat.set_shader_parameter("thickness", 0.145)
-			mi.material_override = mat
-
-		elif name == "attachment":
-			var col := _c(attachment_data.get("color", [1, 1, 1, 1]))
-			var mat := StandardMaterial3D.new()
-			mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-			mat.albedo_color = col
-			mat.roughness = 0.5
-			mi.material_override = mat
-
-		else:
-			var col := _c(palette.get("skin", [1, 1, 1, 1]))
-			var body_mat := StandardMaterial3D.new()
-			body_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-			body_mat.albedo_color = col
-			body_mat.roughness = 0.5
-			var outline_mat := ShaderMaterial.new()
-			outline_mat.shader = outline_shader
-			outline_mat.set_shader_parameter("color", outline_color)
-			outline_mat.set_shader_parameter("size", 1.04)
-			body_mat.next_pass = outline_mat
-			mi.material_override = body_mat
-
-func _assign_body_material(mi: MeshInstance3D, color: Color, outline_color: Color, shader_type: String, shader_targets: Array, target: String, skin_shaded: Shader, skin_unshaded: Shader, outline_shader: Shader) -> void:
+static func _body_material(color: Color, outline_color: Color, shader_type: String, shader_targets: Array, target: String) -> Material:
 	var apply_target := target in shader_targets
 
-	var body_mat: Material
 	if apply_target and shader_type != "default":
 		match shader_type:
 			"ghost":
-				body_mat = StandardMaterial3D.new()
-				body_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-				body_mat.albedo_color = color
-				body_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-				body_mat.alpha_scissor_threshold = 0.0
-				body_mat.alpha_hash_scale = 1.0
-				var alpha := 0.6
-				body_mat.albedo_color.a = alpha
-				mi.material_override = body_mat
-				return
+				var ghost_mat := StandardMaterial3D.new()
+				ghost_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				ghost_mat.albedo_color = color
+				ghost_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+				ghost_mat.alpha_scissor_threshold = 0.0
+				ghost_mat.alpha_hash_scale = 1.0
+				ghost_mat.albedo_color.a = 0.6
+				return ghost_mat
 
 			"gold":
-				var mat := ShaderMaterial.new()
-				mat.shader = skin_unshaded
-				mat.set_shader_parameter("albedo", color)
-				var outline_mat := ShaderMaterial.new()
-				outline_mat.shader = outline_shader
-				outline_mat.set_shader_parameter("color", outline_color)
-				outline_mat.set_shader_parameter("size", 1.04)
-				var base_mat := StandardMaterial3D.new()
-				base_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-				base_mat.albedo_color = color
-				base_mat.metallic = 0.8
-				base_mat.roughness = 0.2
-				base_mat.next_pass = outline_mat
-				mi.material_override = base_mat
-				return
+				var gold_mat := ShaderMaterial.new()
+				gold_mat.shader = SKIN_UNSHADED_SHADER
+				gold_mat.set_shader_parameter("albedo", color)
+				var gold_outline := ShaderMaterial.new()
+				gold_outline.shader = OUTLINE_SHADER
+				gold_outline.set_shader_parameter("color", outline_color)
+				gold_outline.set_shader_parameter("size", 1.04)
+				var gold_base := StandardMaterial3D.new()
+				gold_base.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				gold_base.albedo_color = color
+				gold_base.metallic = 0.8
+				gold_base.roughness = 0.2
+				gold_base.next_pass = gold_outline
+				return gold_base
 
 			"unshaded":
-				var mat := ShaderMaterial.new()
-				mat.shader = skin_unshaded
-				mat.set_shader_parameter("albedo", color)
-				var outline_mat := ShaderMaterial.new()
-				outline_mat.shader = outline_shader
-				outline_mat.set_shader_parameter("color", Color(0, 0, 0, 1))
-				outline_mat.set_shader_parameter("size", 1.04)
-				mat.next_pass = outline_mat
-				mi.material_override = mat
-				return
+				var unshaded_mat := ShaderMaterial.new()
+				unshaded_mat.shader = SKIN_UNSHADED_SHADER
+				unshaded_mat.set_shader_parameter("albedo", color)
+				var unshaded_outline := ShaderMaterial.new()
+				unshaded_outline.shader = OUTLINE_SHADER
+				unshaded_outline.set_shader_parameter("color", Color(0, 0, 0, 1))
+				unshaded_outline.set_shader_parameter("size", 1.04)
+				unshaded_mat.next_pass = unshaded_outline
+				return unshaded_mat
 
 			"shadow":
-				var mat := ShaderMaterial.new()
-				mat.shader = skin_unshaded
-				mat.set_shader_parameter("albedo", Color(0, 0, 0, 1))
-				mi.material_override = mat
-				return
+				var shadow_mat := ShaderMaterial.new()
+				shadow_mat.shader = SKIN_UNSHADED_SHADER
+				shadow_mat.set_shader_parameter("albedo", Color(0, 0, 0, 1))
+				return shadow_mat
 
 			"void":
-				var mat := ShaderMaterial.new()
-				mat.shader = skin_unshaded
-				mat.set_shader_parameter("albedo", Color(0, 0, 0, 0))
-				mi.material_override = mat
-				return
+				var void_mat := ShaderMaterial.new()
+				void_mat.shader = SKIN_UNSHADED_SHADER
+				void_mat.set_shader_parameter("albedo", Color(0, 0, 0, 0))
+				return void_mat
 
 			"angel":
-				var base_mat := StandardMaterial3D.new()
-				base_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-				base_mat.albedo_color = color
-				base_mat.roughness = 0.3
+				var angel_mat := StandardMaterial3D.new()
+				angel_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+				angel_mat.albedo_color = color
+				angel_mat.roughness = 0.3
 				if target == "eye":
-					base_mat.emission_enabled = true
-					base_mat.emission = color
-					base_mat.emission_energy_multiplier = 2.0
-				var outline_mat := ShaderMaterial.new()
-				outline_mat.shader = outline_shader
-				outline_mat.set_shader_parameter("color", outline_color)
-				outline_mat.set_shader_parameter("size", 1.04)
-				base_mat.next_pass = outline_mat
-				mi.material_override = base_mat
-				return
+					angel_mat.emission_enabled = true
+					angel_mat.emission = color
+					angel_mat.emission_energy_multiplier = 2.0
+				var angel_outline := ShaderMaterial.new()
+				angel_outline.shader = OUTLINE_SHADER
+				angel_outline.set_shader_parameter("color", outline_color)
+				angel_outline.set_shader_parameter("size", 1.04)
+				angel_mat.next_pass = angel_outline
+				return angel_mat
 
-	var body_mat2 := StandardMaterial3D.new()
-	body_mat2.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-	body_mat2.albedo_color = color
-	body_mat2.roughness = 0.5
+	var body_mat := StandardMaterial3D.new()
+	body_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	body_mat.albedo_color = color
+	body_mat.roughness = 0.5
 
-	var outline_mat2 := ShaderMaterial.new()
-	outline_mat2.shader = outline_shader
-	outline_mat2.set_shader_parameter("color", outline_color)
-	outline_mat2.set_shader_parameter("size", 1.04)
-	body_mat2.next_pass = outline_mat2
+	var outline_mat := ShaderMaterial.new()
+	outline_mat.shader = OUTLINE_SHADER
+	outline_mat.set_shader_parameter("color", outline_color)
+	outline_mat.set_shader_parameter("size", 1.04)
+	body_mat.next_pass = outline_mat
+	return body_mat
 
-	mi.material_override = body_mat2
-
-func _assign_crown_material(mi: MeshInstance3D, color: Color) -> void:
+static func _crown_material(color: Color) -> Material:
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = color
 	mat.metallic = 0.8
 	mat.roughness = 0.2
-	mi.material_override = mat
+	return mat
+
+static func _face_material(face_tex: Texture2D) -> Material:
+	var mat := ShaderMaterial.new()
+	mat.shader = FACE_SHADER
+	if face_tex:
+		mat.set_shader_parameter("face_tex", face_tex)
+	mat.set_shader_parameter("thickness", 0.145)
+	return mat
+
+static func _attachment_material(color: Color) -> Material:
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	mat.albedo_color = color
+	mat.roughness = 0.5
+	return mat
 
 static func _c(v: Variant) -> Color:
 	if typeof(v) == TYPE_STRING:

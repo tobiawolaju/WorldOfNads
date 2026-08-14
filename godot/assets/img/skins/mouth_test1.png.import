@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ct6moic2j0bbf"
-path.s3tc="res://.godot/imported/logo.png-64ac49e787ccc0d84d565eea7a0669c4.s3tc.ctex"
+uid="uid://dekbb3ewhm11g"
+path.s3tc="res://.godot/imported/mouth_test1.png-94bcfb3ebb1db8468cc79e7a2a034dc6.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/img/logo.png"
-dest_files=["res://.godot/imported/logo.png-64ac49e787ccc0d84d565eea7a0669c4.s3tc.ctex"]
+source_file="res://assets/img/skins/mouth_test1.png"
+dest_files=["res://.godot/imported/mouth_test1.png-94bcfb3ebb1db8468cc79e7a2a034dc6.s3tc.ctex"]
 
 [params]
 

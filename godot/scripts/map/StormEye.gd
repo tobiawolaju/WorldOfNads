@@ -21,11 +21,6 @@ extends Node3D
 
 @export var check_interval: float = 0.1
 
-@export_category("Storm Debuffs")
-@export var storm_gravity_mult: float = 0.25
-@export var storm_jump_mult: float = 0.15
-@export var storm_speed_mult: float = 0.5
-
 var is_player_outside: bool = false
 var _check_accumulator: float = 0.0
 var _last_real_storm_ms: float = 0.0
@@ -84,26 +79,14 @@ func update_mesh_scales() -> void:
 	if cylinder_border:
 		cylinder_border.scale = Vector3(cylinder_radius, cylinder_border.scale.y, cylinder_radius)
 
-func _apply_player_debuffs() -> void:
-	var player = get_tree().get_first_node_in_group("local_player")
-	if player and player.has_method("apply_storm_debuffs"):
-		player.apply_storm_debuffs(storm_gravity_mult, storm_jump_mult, storm_speed_mult)
-
-func _remove_player_debuffs() -> void:
-	var player = get_tree().get_first_node_in_group("local_player")
-	if player and player.has_method("remove_storm_debuffs"):
-		player.remove_storm_debuffs()
-
 func enter_storm() -> void:
 	is_player_outside = true
 	world_env.environment = storm_env
 	light_normal.visible = false
 	light_storm.visible = true
-	_apply_player_debuffs()
 
 func enter_safe_zone() -> void:
 	is_player_outside = false
 	world_env.environment = normal_env
 	light_normal.visible = true
 	light_storm.visible = false
-	_remove_player_debuffs()

@@ -16,7 +16,6 @@ ambient_light_sky_contribution = 0.2
 ambient_light_energy = 0.0
 glow_intensity = 1.98
 glow_bloom = 0.5
-fog_enabled = true
 fog_mode = 1
 fog_light_color = Color(0.32941177, 0.21568628, 1, 1)
 fog_density = 1.0

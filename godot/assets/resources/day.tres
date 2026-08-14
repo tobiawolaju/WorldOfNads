@@ -14,7 +14,6 @@ sky = SubResource("Sky_q60fs")
 sky_rotation = Vector3(-0.12217305, 0, 1.5707964)
 glow_intensity = 0.4
 glow_bloom = 1.0
-fog_enabled = true
 fog_mode = 1
 fog_light_color = Color(1, 0.21568628, 1, 1)
 fog_density = 1.0
