@@ -136,6 +136,7 @@ var connection_attempted: bool = false
 
 var _ui_update_timer: float = 0.0
 const UI_UPDATE_INTERVAL: float = 0.2
+var _last_countdown_text: String = ""
 
 const API_BASE: String = "https://worldofnads.onrender.com"
 
@@ -1163,13 +1164,17 @@ func is_waiting_for_players() -> bool:
 func _update_match_ui() -> void:
 	_resolve_ui_nodes()
 	if countdown_label != null:
+		var new_text: String
 		if match_is_running:
 			var whole_seconds := maxi(0, int(ceil(match_time_left)))
 			var minutes = int(whole_seconds / 60.0)
 			var seconds = whole_seconds % 60
-			countdown_label.text = "%02d:%02d" % [minutes, seconds]
+			new_text = "%02d:%02d" % [minutes, seconds]
 		else:
-			countdown_label.text = "Waiting for players"
+			new_text = "Waiting for players"
+		if new_text != _last_countdown_text:
+			_last_countdown_text = new_text
+			countdown_label.text = new_text
 
 	# Keep camera blocker hidden after joining the server.
 	if camera_block != null and player_id != "":

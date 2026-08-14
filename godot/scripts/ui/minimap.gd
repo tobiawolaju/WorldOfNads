@@ -106,10 +106,6 @@ func _process(_delta: float) -> void:
 	if _is_fullscreen:
 		_handle_fullscreen_input()
 
-	_refresh_targets()
-	if !local_player:
-		return
-
 	# Auto-correct delta for game speed to keep minimap updates in real-time
 	var now_ms := float(Time.get_ticks_msec())
 	if _last_real_minimap_ms == 0.0:
@@ -122,6 +118,10 @@ func _process(_delta: float) -> void:
 	if update_interval > 0.0 and _update_timer < update_interval:
 		return
 	_update_timer = 0.0
+
+	_refresh_targets()
+	if !local_player:
+		return
 
 	if minimum_fps_to_enable > 0.0:
 		var fps := Engine.get_frames_per_second()
