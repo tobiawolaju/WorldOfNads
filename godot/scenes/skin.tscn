@@ -547,6 +547,7 @@ albedo_color = Color(1, 1, 0, 1)
 [node name="CharacterBody3D" type="CharacterBody3D" unique_id=1520854348]
 script = ExtResource("1_nna72")
 camera_screen_offset = Vector2(-0.15, 0.5)
+min_pitch = -0.5
 min_zoom = 1.2
 max_zoom = 1.2
 touch_orbit_sensitivity = 0.1
@@ -570,7 +571,7 @@ collision_mask = 2
 shape = SubResource("SphereShape3D_hqo6i")
 
 [node name="Label3D" type="Label3D" parent="." unique_id=574948636]
-transform = Transform3D(-3.059797e-08, 0, 0.7, 0, 0.7, 0, -0.7, 0, -3.059797e-08, -0.061, 1.019, 0)
+transform = Transform3D(-3.059797e-08, 0, 0.7, 0, 0.7, 0, -0.7, 0, -3.059797e-08, 0, 0.85, 0)
 visibility_range_end = 50.0
 billboard = 1
 no_depth_test = true
@@ -915,6 +916,7 @@ mesh = SubResource("PlaneMesh_l0bqs")
 
 [node name="crown" type="MeshInstance3D" parent="Skeleton3D/BoneAttachment3D2" unique_id=1209889466]
 transform = Transform3D(0.7999998, 1.3271347e-08, 3.7252903e-09, 1.071021e-08, 0.8, 1.0430813e-07, -6.519258e-09, -1.937151e-07, 0.7999998, -0.015522182, 1.0680386, -0.01038371)
+visible = false
 material_override = SubResource("StandardMaterial3D_jrfn5")
 mesh = SubResource("TorusMesh_l0bqs")
 
