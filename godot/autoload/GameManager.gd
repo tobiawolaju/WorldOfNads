@@ -19,7 +19,7 @@ func _ready() -> void:
 	# On web (Android Chrome etc.) render 3D at a fraction of the window
 	# resolution; the browser upscales. Massive fill-rate win on low-end GPUs.
 	if OS.has_feature("web"):
-		return#get_viewport().scaling_3d_scale = 0.6
+		get_viewport().scaling_3d_scale = 0.7
 
 ## Sets the game speed (time scale).
 ## 1.0 = Normal speed

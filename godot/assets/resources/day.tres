@@ -16,6 +16,6 @@ glow_intensity = 0.4
 glow_bloom = 1.0
 fog_mode = 1
 fog_light_color = Color(1, 0.21568628, 1, 1)
-fog_density = 1.0
+fog_density = 0.4
 fog_sky_affect = 0.75
 fog_depth_begin = 0.0

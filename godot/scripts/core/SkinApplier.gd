@@ -192,6 +192,8 @@ static func _material_for_name(material_set: Dictionary, name: String) -> Materi
 		return material_set.get("cheek")
 	if name.begins_with("eye"):
 		return material_set.get("eye")
+	if name == "crown_L" or name == "crown_R":
+		return material_set.get("cheek")
 	if name.begins_with("crown"):
 		return material_set.get("crown")
 	if name == "face":
