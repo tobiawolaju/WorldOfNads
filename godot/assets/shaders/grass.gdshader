@@ -1,12 +1,10 @@
 shader_type spatial;
 
 
-render_mode blend_mix,
-depth_draw_opaque,
+render_mode depth_draw_opaque,
 cull_disabled,
 diffuse_burley,
-specular_schlick_ggx,
-depth_prepass_alpha;
+specular_schlick_ggx;
 
 
 //
@@ -243,15 +241,6 @@ void fragment() {
 	vec4 albedo_tex =
 		texture(texture_albedo, base_uv);
 
-	vec4 metallic_tex =
-		texture(texture_metallic, base_uv);
-
-	vec4 roughness_tex =
-		texture(texture_roughness, base_uv);
-
-	vec3 normal_tex =
-		texture(texture_normal, base_uv).rgb;
-
 	//
 	// ==================================================
 	// FINAL MATERIAL
@@ -263,16 +252,11 @@ void fragment() {
 
 	ALBEDO = albedo.rgb;
 
-	METALLIC =
-		metallic_tex.r * metallic;
+	METALLIC = metallic;
 
-	ROUGHNESS =
-		roughness_tex.r * roughness;
+	ROUGHNESS = roughness;
 
 	SPECULAR = specular;
-
-	NORMAL_MAP = normal_tex;
-	NORMAL_MAP_DEPTH = normal_scale;
 
 	//
 	// ==================================================
@@ -286,4 +270,8 @@ void fragment() {
 		albedo_tex.a *
 		albedo.a *
 		height_mask;
+
+	if (ALPHA < alpha_cutoff) {
+		discard;
+	}
 }

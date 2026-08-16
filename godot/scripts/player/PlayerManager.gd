@@ -64,6 +64,7 @@ var _last_lootbox_is_held: bool = false
 var _last_lootbox_holder_id: String = ""
 var _remote_lod_timer: float = 0.0
 const REMOTE_LOD_INTERVAL: float = 0.15 # Check distance 6 times per second
+var _storm_env_node: Node = null
 var local_username: String = ""
 var local_skin_name: String = DEFAULT_SKIN_NAME
 var local_display_name: String = "player"
@@ -1058,6 +1059,8 @@ func _apply_remote_interpolation() -> void:
 		do_lod_check = true
 
 	var now_ms := float(Time.get_ticks_msec())
+	if players.size() <= 1:
+		return
 	var local_player_node: Node3D = _get_local_player_node()
 	var local_pos := local_player_node.global_position if local_player_node else Vector3.ZERO
 
@@ -1070,10 +1073,9 @@ func _apply_remote_interpolation() -> void:
 		if node == null:
 			continue
 
-		var dist_sq := local_pos.distance_squared_to(node.global_position)
-		
 		# Aggressive Cull: Hide players very far away
 		if do_lod_check:
+			var dist_sq := local_pos.distance_squared_to(node.global_position)
 			var is_near := dist_sq < 2500.0 # 50 meters
 			node.visible = is_near
 			if not is_near:
@@ -1183,9 +1185,10 @@ func _update_match_ui() -> void:
 
 
 func _apply_storm_radius(radius: float) -> void:
-	var env := get_tree().root.find_child("enviroment", true, false)
-	if env and env.has_method("set_storm_radius"):
-		env.set_storm_radius(radius)
+	if _storm_env_node == null or not is_instance_valid(_storm_env_node):
+		_storm_env_node = get_tree().root.find_child("enviroment", true, false)
+	if _storm_env_node and _storm_env_node.has_method("set_storm_radius"):
+		_storm_env_node.set_storm_radius(radius)
 
 func _set_local_username(name_text: String) -> void:
 	if events_bridge != null and is_instance_valid(events_bridge) and events_bridge.has_method("set_local_username"):

@@ -10,6 +10,7 @@ const PORTRAIT_RATIO := 1.4
 
 var _touch_indices: Dictionary = {}
 var _animating_buttons: Dictionary = {}
+var _cached_local_player: Node = null
 
 func _ready() -> void:
 	get_viewport().size_changed.connect(_reposition)
@@ -137,14 +138,19 @@ func _fire_action(action_name: StringName, pressed: bool) -> void:
 	Input.parse_input_event(event)
 
 func _process(_delta: float) -> void:
-	var local_player = get_tree().get_first_node_in_group("local_player")
+	if action_button == null:
+		return
+	if _cached_local_player == null or not is_instance_valid(_cached_local_player):
+		_cached_local_player = get_tree().get_first_node_in_group("local_player")
 
-	if local_player != null and action_button != null:
-		if local_player.has_method("get_pickup_cooldown") \
-		and local_player.get_pickup_cooldown() > 0.0:
-			action_button.modulate.a = 0.5
-		else:
-			action_button.modulate.a = 1.0
+	var target_alpha := 0.5
+	if _cached_local_player != null \
+	and _cached_local_player.has_method("get_pickup_cooldown") \
+	and _cached_local_player.get_pickup_cooldown() <= 0.0:
+		target_alpha = 1.0
+
+	if action_button.modulate.a != target_alpha:
+		action_button.modulate.a = target_alpha
 
 func _reposition() -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
