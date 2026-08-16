@@ -40,14 +40,13 @@ region = Rect2(0, 0, 400, 82)
 atlas = ExtResource("10_ui_atlas")
 region = Rect2(0, 83, 128, 128)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ymhbd"]
-bg_color = Color(1, 1, 1, 0.47058824)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mphia"]
+bg_color = Color(1, 1, 1, 1)
 border_width_left = 5
 border_width_top = 5
 border_width_right = 5
 border_width_bottom = 5
-border_color = Color(1, 1, 1, 0.47058824)
-border_blend = true
+border_color = Color(1, 1, 1, 0)
 corner_radius_top_left = 50
 corner_radius_top_right = 50
 corner_radius_bottom_right = 50
@@ -60,6 +59,19 @@ border_width_top = 8
 border_width_right = 8
 border_width_bottom = 8
 border_color = Color(1, 1, 1, 0)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ymhbd"]
+bg_color = Color(1, 1, 1, 0.47058824)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(1, 1, 1, 0.47058824)
+border_blend = true
 corner_radius_top_left = 50
 corner_radius_top_right = 50
 corner_radius_bottom_right = 50
@@ -398,7 +410,7 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/icon_max_width = 35
 theme_override_font_sizes/font_size = 25
-theme_override_styles/normal = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/normal = SubResource("StyleBoxFlat_mphia")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_jji8u")
 theme_override_styles/hover = SubResource("StyleBoxFlat_ymhbd")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_ymhbd")

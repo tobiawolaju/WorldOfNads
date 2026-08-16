@@ -99,6 +99,7 @@ cylinder_wall = NodePath("Cylinder")
 cylinder_border = NodePath("Cylinder2")
 normal_env = ExtResource("9_qixtg")
 storm_env = ExtResource("10_nt65e")
+cylinder_radius = 30.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=711725318]
 environment = ExtResource("10_nt65e")
@@ -107,23 +108,21 @@ environment = ExtResource("10_nt65e")
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
 visible = false
 light_energy = 0.288
-shadow_enabled = false
 
 [node name="night" type="DirectionalLight3D" parent="env" unique_id=366884123]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
 light_color = Color(0.85490197, 0, 0.78431374, 1)
 light_energy = 0.2
-shadow_enabled = false
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=154871314]
-transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
+transform = Transform3D(30, 0, 0, 0, 200, 0, 0, 0, 30, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_bhmdk")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_s5y6v")
 
 [node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1339689695]
-transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
+transform = Transform3D(30, 0, 0, 0, 200, 0, 0, 0, 30, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_407ns")
 surface_material_override/0 = SubResource("StandardMaterial3D_w3w6i")
@@ -131,10 +130,10 @@ surface_material_override/0 = SubResource("StandardMaterial3D_w3w6i")
 [node name="PlayerManager" type="Node3D" parent="." unique_id=226066109 node_paths=PackedStringArray("myplayerswpanpoint")]
 script = ExtResource("1_hpwea")
 player_scene = ExtResource("2_w01lk")
-myplayerswpanpoint = NodePath("../Bus/Marker3D")
 countdown_label_path = NodePath("../Hud/CanvasLayer/BoxContainer/Node2/BoxContainer/Countdown")
 world_environment_path = NodePath("../env/WorldEnvironment")
 camera_block_path = NodePath("Camera3D/CAMERABlock")
+myplayerswpanpoint = NodePath("../Bus/Marker3D")
 
 [node name="Camera3D" type="Camera3D" parent="PlayerManager" unique_id=411845509]
 transform = Transform3D(1, 0, 0, 0, 0.99625385, -0.08647761, 0, 0.08647761, 0.99625385, 0, 31.696651, 11.382333)
