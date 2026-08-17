@@ -38,7 +38,7 @@ var _bar_bottom_y: float = 0.0
 var _label_y: float = 0.0
 var _pointer_tip_y: float = 0.0
 var _pointer_base_y: float = 0.0
-var _last_metrics_signature: String = ""
+var _last_metrics_signature: float = -1.0
 
 
 func _ready() -> void:
@@ -56,7 +56,10 @@ func _process(_delta: float) -> void:
 		return
 
 	var new_angle: float = _get_camera_heading_degrees()
-	if absf(angle_difference(deg_to_rad(_last_drawn_angle), deg_to_rad(new_angle))) > deg_to_rad(2.0):
+	var angle_diff: float = absf(new_angle - _last_drawn_angle)
+	if angle_diff > 180.0:
+		angle_diff = 360.0 - angle_diff
+	if angle_diff > 2.0:
 		_current_angle = new_angle
 		_last_drawn_angle = new_angle
 		queue_redraw()
@@ -138,19 +141,10 @@ func _rebuild_cached_metrics() -> void:
 	_control_size = size
 	if _control_size.x <= 0.0 or _control_size.y <= 0.0:
 		return
-	var metrics_signature := "%s|%s|%s|%s|%s|%s|%s|%s" % [
-		str(_control_size.x),
-		str(_control_size.y),
-		str(px_per_degree),
-		str(bar_height),
-		str(fade_width),
-		str(pointer_width),
-		str(pointer_height),
-		str(label_font_size)
-	]
-	if metrics_signature == _last_metrics_signature:
+	var metrics_sig: float = _control_size.x * 1000.0 + _control_size.y + px_per_degree * 0.001 + fade_width * 0.0001
+	if metrics_sig == _last_metrics_signature:
 		return
-	_last_metrics_signature = metrics_signature
+	_last_metrics_signature = metrics_sig
 
 	_half_visible_degrees = (_control_size.x * 0.5) / maxf(px_per_degree, 0.001)
 	_label_width = maxf(48.0, label_font_size * 3.5)

@@ -30,6 +30,8 @@ const SQUASH_STRETCH_SPEED: float = 12.0
 const AUTO_ORBIT_SPEED: float = 2.5
 
 const AUTO_ORBIT_DEADZONE: float = 0.25
+const AUTO_ORBIT_THRESHOLD_RAD: float = 0.43633  # deg_to_rad(25.0)
+const AUTO_ORBIT_SHARPNESS_RAD: float = 1.57080  # deg_to_rad(90.0)
 
 const STAMINA_MAX: float = 100.0
 const STAMINA_DRAIN_RATE: float = STAMINA_MAX / 7.0
@@ -420,8 +422,8 @@ func _physics_process(delta: float) -> void:
 	
 	if movement_allowed and input_dir.length_squared() > 0.05 and touch_orbit_pending == Vector2.ZERO and joystick_orbit_pending == Vector2.ZERO:
 		var move_angle := atan2(input_dir.x, input_dir.y)
-		if abs(move_angle) > deg_to_rad(25.0):
-			var turn_sharpness := clampf(abs(move_angle) / deg_to_rad(90.0), 0.0, 1.0)
+		if abs(move_angle) > AUTO_ORBIT_THRESHOLD_RAD:
+			var turn_sharpness := clampf(abs(move_angle) / AUTO_ORBIT_SHARPNESS_RAD, 0.0, 1.0)
 			cam_rot_y += -sign(move_angle) * turn_sharpness * AUTO_ORBIT_SPEED * delta
 
 	_apply_touch_orbit()
@@ -461,7 +463,7 @@ func _physics_process(delta: float) -> void:
 	var slide_requested_now := Input.is_action_just_pressed("slide") or _slide_requested
 	if slide_requested_now:
 		var slide_from_touch: bool = _slide_requested
-		if movement_allowed and is_on_floor() and move_direction.length() > 0.1 and not _is_sliding:
+		if movement_allowed and is_on_floor() and move_direction.length_squared() > 0.01 and not _is_sliding:
 			_slide_requested = false
 			_start_slide(move_direction, slide_from_touch)
 		else:
@@ -543,7 +545,7 @@ func _physics_process(delta: float) -> void:
 		if is_on_floor():
 			var accel_to_use = ACCELERATION
 			var friction_to_use = FRICTION
-			var weight = accel_to_use if move_direction.length() > 0 else friction_to_use
+			var weight = accel_to_use if move_direction.length_squared() > 0.0 else friction_to_use
 			velocity.x = move_toward(velocity.x, target_vel.x, weight * delta)
 			velocity.z = move_toward(velocity.z, target_vel.z, weight * delta)
 		else:
@@ -601,11 +603,11 @@ func _physics_process(delta: float) -> void:
 	mesh.scale.y = _base_scale.y * _squash_stretch_y
 
 	camera_is_airborne = not is_on_floor()
-	camera_is_moving = Vector2(velocity.x, velocity.z).length() > 0.1
+	camera_is_moving = velocity.x * velocity.x + velocity.z * velocity.z > 0.01
 	_camera_base_target_prev = _camera_base_target_curr
 	_camera_base_target_curr = global_transform.origin + Vector3(0, 1.5, 0)
 
-	if move_direction.length() > 0.05:
+	if move_direction.length_squared() > 0.0025:
 		var target_yaw := atan2(move_direction.x, move_direction.z)
 		var yaw_result := _spring_angle(mesh.rotation.y, _mesh_yaw_velocity, target_yaw, 20.0, delta)
 		mesh.rotation.y = yaw_result[0]
@@ -614,7 +616,7 @@ func _physics_process(delta: float) -> void:
 	_handle_animations(move_direction)
 	_handle_camera_gamepad(delta)
 
-	var net_active: bool = (move_direction.length() > 0.05) or _is_local_holding_chicken() or (current_animation == "running")
+	var net_active: bool = (move_direction.length_squared() > 0.0025) or _is_local_holding_chicken() or (current_animation == "running")
 	if current_animation == "runningjump" or current_animation == "falling" or current_animation == "runningslide":
 		net_active = true
 
@@ -714,11 +716,11 @@ func _update_demo_agent(delta: float) -> void:
 	mesh.scale.y = _base_scale.y * _squash_stretch_y
 
 	camera_is_airborne = not is_on_floor()
-	camera_is_moving = Vector2(velocity.x, velocity.z).length() > 0.1
+	camera_is_moving = velocity.x * velocity.x + velocity.z * velocity.z > 0.01
 	_camera_base_target_prev = _camera_base_target_curr
 	_camera_base_target_curr = global_transform.origin + Vector3(0, 1.5, 0)
 
-	if move_direction.length() > 0.05:
+	if move_direction.length_squared() > 0.0025:
 		var target_yaw := atan2(move_direction.x, move_direction.z)
 		var yaw_result := _spring_angle(mesh.rotation.y, _mesh_yaw_velocity, target_yaw, 14.0, delta)
 		mesh.rotation.y = yaw_result[0]
@@ -1060,7 +1062,8 @@ func _update_camera_visual(delta: float) -> void:
 	var desired_pos := target_pos + camera_direction * _camera_collision_distance
 	if _landing_bob_timer > 0.0:
 		var landing_progress: float = 1.0 - (_landing_bob_timer / LANDING_BOB_DURATION)
-		var landing_offset: float = _landing_bob_strength * 0.18 * pow(1.0 - landing_progress, 2.0)
+		var landing_t := 1.0 - landing_progress
+		var landing_offset: float = _landing_bob_strength * 0.18 * landing_t * landing_t
 		desired_pos.y -= landing_offset
 	var position_result := _spring_vec3(camera.global_position, _camera_position_velocity, desired_pos, pos_smoothness, delta)
 	camera.global_position = position_result[0]
@@ -1164,8 +1167,8 @@ func _handle_animations(_move_dir: Vector3) -> void:
 		_was_on_floor = true
 		_airborne_start_y = current_y
 		_last_world_y = current_y
-		var horizontal_speed = Vector2(velocity.x, velocity.z).length()
-		if horizontal_speed > 0.5:
+		var horizontal_speed_sq = velocity.x * velocity.x + velocity.z * velocity.z
+		if horizontal_speed_sq > 0.25:
 			current_animation = "running"
 			_play_anim("running")
 		else:
