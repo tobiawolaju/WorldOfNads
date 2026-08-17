@@ -31,6 +31,12 @@ const AUTO_ORBIT_SPEED: float = 2.5
 
 const AUTO_ORBIT_DEADZONE: float = 0.25
 
+const STAMINA_MAX: float = 100.0
+const STAMINA_DRAIN_RATE: float = STAMINA_MAX / 7.0
+const STAMINA_REGEN_DELAY: float = 1.0
+const STAMINA_REGEN_RATE: float = STAMINA_MAX / 8.0
+const STAMINA_HELD_PENALTY: float = 5.0
+
 const LANDING_BOB_DURATION: float = 0.14
 const ANIM_NAME_TO_ID: Dictionary = {
 	"idle": 0,
@@ -117,6 +123,10 @@ var _coyote_timer: float = 0.0
 var _double_jump_available: bool = false
 var _double_jump_used: bool = false
 var _double_jump_air_time: float = 0.0
+var stamina: float = STAMINA_MAX
+var _stamina_regen_timer: float = 0.0
+var _stamina_held_empty: bool = false
+var _stamina_empty_timer: float = 0.0
 var _prev_joy_a_pressed: bool = false
 var _ground_jump_count: int = 0
 
@@ -491,10 +501,44 @@ func _physics_process(delta: float) -> void:
 					_double_jump_available = true
 					_ground_jump_count = 0
 
+	# --- STAMINA ---
+	var is_moving_input := move_direction.length_squared() > 0.05
+
+	# Break the held-penalty if player released input
+	if _stamina_held_empty and not is_moving_input:
+		_stamina_held_empty = false
+
+	# Drain (skip if held-penalized — movement already zeroed)
+	if is_moving_input and stamina > 0.0 and not _stamina_held_empty:
+		stamina = maxf(0.0, stamina - STAMINA_DRAIN_RATE * delta)
+		_stamina_regen_timer = STAMINA_REGEN_DELAY
+
+	# Just hit zero — check if input still held
+	if stamina <= 0.0 and is_moving_input:
+		_stamina_held_empty = true
+		_stamina_empty_timer = STAMINA_HELD_PENALTY
+
+	# Held-penalty countdown (ignores movement for 5 sec)
+	if _stamina_held_empty:
+		_stamina_empty_timer = maxf(0.0, _stamina_empty_timer - delta)
+		if _stamina_empty_timer <= 0.0:
+			_stamina_held_empty = false
+
+	# Regen when not draining
+	if not is_moving_input or _stamina_held_empty:
+		_stamina_regen_timer = maxf(0.0, _stamina_regen_timer - delta)
+		if _stamina_regen_timer <= 0.0:
+			stamina = minf(STAMINA_MAX, stamina + STAMINA_REGEN_RATE * delta)
+
+	# Zero movement when empty or held-penalized
+	if stamina <= 0.0 or _stamina_held_empty:
+		move_direction = Vector3.ZERO
+		input_dir = Vector2.ZERO
+
 	# --- MOMENTUM CALCULATION ---
 	if movement_allowed:
 		var target_vel = move_direction * SPEED
-		
+
 		# [MOMENTUM UPDATE] If we are in the air, use max speed instantly (no acceleration)
 		if is_on_floor():
 			var accel_to_use = ACCELERATION

@@ -137,6 +137,7 @@ const FACE_SHADER := preload("res://assets/shaders/face.gdshader")
 const SKIN_UNSHADED_SHADER := preload("res://assets/shaders/skin_unshaded.gdshader")
 
 static var _skin_material_sets: Dictionary = {}
+const MAX_MATERIAL_CACHE: int = 30
 
 func apply_skin(player: Node3D, skin_name: String) -> void:
 	var data := get_skin_data(skin_name)
@@ -158,6 +159,8 @@ func apply_skin(player: Node3D, skin_name: String) -> void:
 static func _get_material_set(skin_name: String, data: Dictionary) -> Dictionary:
 	if _skin_material_sets.has(skin_name):
 		return _skin_material_sets[skin_name]
+	if _skin_material_sets.size() >= MAX_MATERIAL_CACHE:
+		_skin_material_sets.clear()
 	var material_set := _build_material_set(data)
 	_skin_material_sets[skin_name] = material_set
 	return material_set

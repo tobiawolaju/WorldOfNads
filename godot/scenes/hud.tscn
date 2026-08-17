@@ -5,6 +5,8 @@
 [ext_resource type="Texture2D" uid="uid://mthb8icx6x1m" path="res://assets/img/white_circle1.png" id="2_white_circle"]
 [ext_resource type="FontFile" uid="uid://bqvrqx4a4joiu" path="res://assets/fonts/fortnite.otf" id="3_apjy4"]
 [ext_resource type="Texture2D" uid="uid://hdhbnox5e2d0" path="res://assets/img/point.webp" id="6_3swnk"]
+[ext_resource type="Script" uid="uid://txqqdi5bw3hx" path="res://scripts/ui/jump_bar.gd" id="6_jump_bar"]
+[ext_resource type="Script" uid="uid://7xw4k7bx7fmy" path="res://scripts/ui/stamina_bar.gd" id="6_stamina_bar"]
 [ext_resource type="Script" uid="uid://smygpuu7lbkh" path="res://scripts/ui/compassbar.gd" id="7_mphia"]
 [ext_resource type="Script" uid="uid://cty6onrl4lub0" path="res://scripts/ui/fps_label.gd" id="8_mphia"]
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/ui/joystick.gd" id="9_mphia"]
@@ -76,6 +78,17 @@ corner_radius_top_left = 50
 corner_radius_top_right = 50
 corner_radius_bottom_right = 50
 corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0m4u7"]
+bg_color = Color(0, 0, 0, 0.34117648)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l0bqs"]
+bg_color = Color(0.67058825, 1, 0, 1)
+border_color = Color(0, 0.77254903, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_apjy4"]
+bg_color = Color(0.60784316, 0.36078432, 1, 1)
+border_color = Color(0, 0.77254903, 0, 1)
 
 [node name="Hud" type="Control" unique_id=861416889]
 layout_mode = 3
@@ -515,3 +528,41 @@ theme_override_constants/shadow_outline_size = 10
 theme_override_fonts/font = ExtResource("3_apjy4")
 theme_override_font_sizes/font_size = 24
 text = "Total MON pool"
+
+[node name="StaminaBar" type="ProgressBar" parent="." unique_id=285514625]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -87.0
+offset_top = -72.0
+offset_right = 89.0
+offset_bottom = -60.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/background = SubResource("StyleBoxFlat_0m4u7")
+theme_override_styles/fill = SubResource("StyleBoxFlat_l0bqs")
+value = 100.0
+show_percentage = false
+script = ExtResource("6_stamina_bar")
+
+[node name="JumpBar" type="ProgressBar" parent="." unique_id=896147534]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -87.0
+offset_top = -88.0
+offset_right = 89.0
+offset_bottom = -75.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/background = SubResource("StyleBoxFlat_0m4u7")
+theme_override_styles/fill = SubResource("StyleBoxFlat_apjy4")
+value = 30.0
+show_percentage = false
+script = ExtResource("6_jump_bar")

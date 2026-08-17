@@ -213,7 +213,7 @@ func _on_skin_data_fetched(result: int, response_code: int, _headers: PackedStri
 
 func _reapply_skins() -> void:
 	var count := 0
-	for id in players.keys():
+	for id in players:
 		var p = players.get(id)
 		if p == null or not (p is Node3D):
 			continue
@@ -638,17 +638,29 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 		if not players.has(id):
 			_spawn_player(id, false, resolved_skin)
 			players[id].global_position = server_pos  # FIX: spawn at correct position
-		remote_snapshots[id] = {
-			"prev_pos": server_pos,
-			"curr_pos": server_pos,
-			"prev_rot": server_rot_y,
-			"curr_rot": server_rot_y,
-			"prev_vel": Vector3.ZERO,
-			"curr_vel": Vector3.ZERO,
-			"prev_t": now_ms,
-			"curr_t": now_ms,
-			"anim": server_anim
-		}
+		var snap = remote_snapshots.get(id)
+		if snap == null:
+			remote_snapshots[id] = {
+				"prev_pos": server_pos,
+				"curr_pos": server_pos,
+				"prev_rot": server_rot_y,
+				"curr_rot": server_rot_y,
+				"prev_vel": Vector3.ZERO,
+				"curr_vel": Vector3.ZERO,
+				"prev_t": now_ms,
+				"curr_t": now_ms,
+				"anim": server_anim
+			}
+		else:
+			snap["prev_pos"] = snap["curr_pos"]
+			snap["curr_pos"] = server_pos
+			snap["prev_rot"] = snap["curr_rot"]
+			snap["curr_rot"] = server_rot_y
+			snap["prev_vel"] = snap.get("curr_vel", Vector3.ZERO)
+			snap["curr_vel"] = (server_pos - snap["prev_pos"]) / maxf(1.0, (now_ms - snap.get("prev_t", now_ms)) / 1000.0)
+			snap["prev_t"] = snap["curr_t"]
+			snap["curr_t"] = now_ms
+			snap["anim"] = server_anim
 
 		var node = players[id]
 		node.display_name = resolved_name
@@ -990,7 +1002,7 @@ func _remove_player(id: String):
 
 func _cleanup_stale_remote_players(now_ms: float) -> void:
 	var stale := PackedStringArray()
-	for id in players.keys():
+	for id in players:
 		if id == player_id:
 			continue
 		var snap = remote_snapshots.get(id)
@@ -1064,7 +1076,7 @@ func _apply_remote_interpolation() -> void:
 	var local_player_node: Node3D = _get_local_player_node()
 	var local_pos := local_player_node.global_position if local_player_node else Vector3.ZERO
 
-	for id in players.keys():
+	for id in players:
 		if id == player_id:
 			continue
 		if not remote_snapshots.has(id):
