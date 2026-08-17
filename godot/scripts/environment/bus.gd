@@ -7,9 +7,11 @@ extends Node3D
 @export var rotation_offset_degrees: float = -90.0
 
 var _angle: float = 0.0
+var _rotation_offset_rad: float = 0.0
 
 func _ready() -> void:
 	add_to_group("bus")
+	_rotation_offset_rad = deg_to_rad(rotation_offset_degrees)
 	_update_bus_transform(0.0)
 
 func _process(delta: float) -> void:
@@ -20,4 +22,4 @@ func _update_bus_transform(angle: float) -> void:
 	var x = cos(angle) * radius
 	var z = sin(angle) * radius
 	global_position = center + Vector3(x, 0, z)
-	global_rotation.y = -angle + deg_to_rad(rotation_offset_degrees)
+	global_rotation.y = -angle + _rotation_offset_rad

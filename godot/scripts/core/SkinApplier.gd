@@ -38,7 +38,6 @@ const FALLBACK_UNSHADED: Dictionary = {
 }
 
 static func seed_from_api(json_array: Array) -> void:
-	print("[HEX_TEST] test conversion: _hex2rgba('#ff8c00') = %s" % JSON.stringify(_hex2rgba("#ff8c00")))
 	for entry in json_array:
 		if entry is Dictionary:
 			var key: String = str(entry.get("id", "")).to_lower()
@@ -49,9 +48,6 @@ static func seed_from_api(json_array: Array) -> void:
 			var skin_config: Dictionary = entry.get("skinConfig", entry.get("skin_config", {}))
 			if skin_config.is_empty():
 				continue
-			if skin_config.has("palette") and skin_config["palette"] is Dictionary:
-				var raw_body = str(skin_config["palette"].get("body", ""))
-				print("[SEED] skin='%s' raw palette['body']='%s' length=%d" % [key, raw_body, len(raw_body)])
 			_api_cache[key] = _convert_api_entry(skin_config)
 
 static func seed_single_from_api(skin_id: String, entry: Dictionary) -> void:
@@ -84,11 +80,9 @@ static func _convert_api_entry(skin_config: Dictionary) -> Dictionary:
 
 static func _hex2rgba(hex: Variant) -> Array:
 	if typeof(hex) != TYPE_STRING:
-		print("[HEX] not a string, type=%d" % typeof(hex))
 		return [1.0, 1.0, 1.0, 1.0]
 	var s: String = str(hex).strip_edges().trim_prefix("#")
 	if s.length() < 6:
-		print("[HEX] short hex '%s' len=%d" % [s, s.length()])
 		return [1.0, 1.0, 1.0, 1.0]
 	var r_val := s.substr(0, 2).hex_to_int()
 	var g_val := s.substr(2, 2).hex_to_int()
@@ -96,8 +90,6 @@ static func _hex2rgba(hex: Variant) -> Array:
 	var r := float(r_val) / 255.0
 	var g := float(g_val) / 255.0
 	var b := float(b_val) / 255.0
-	if r_val == 0 and g_val == 0 and b_val == 0:
-		print("[HEX] WARNING: all-zero from input='%s' strip='%s' parts=[%s,%s,%s]" % [str(hex), s, s.substr(0,2), s.substr(2,2), s.substr(4,2)])
 	var a := 1.0
 	if s.length() >= 8:
 		a = float(s.substr(6, 2).hex_to_int()) / 255.0
@@ -105,21 +97,17 @@ static func _hex2rgba(hex: Variant) -> Array:
 
 static func get_skin_data(skin_name: String) -> Dictionary:
 	var key := str(skin_name).strip_edges().to_lower()
-	# Default skins ALWAYS use hardcoded fallback — never read from cache
 	match key:
 		DEFAULT_SKIN:
-			return FALLBACK_SHADED.duplicate(true)
+			return FALLBACK_SHADED
 		"s-default-unshaded":
-			return FALLBACK_UNSHADED.duplicate(true)
+			return FALLBACK_UNSHADED
 	if _api_cache.has(key):
-		var cached = _api_cache[key].duplicate(true)
-		# Validate: if palette has all-zero colors, cache is corrupt — use fallback
+		var cached = _api_cache[key]
 		if _is_all_black(cached):
-			print("[SKIN_DEBUG] get_skin_data('%s') -> CACHE CORRUPT (all black), fallback" % key)
-			return FALLBACK_SHADED.duplicate(true)
+			return FALLBACK_SHADED
 		return cached
-	print("[SKIN_DEBUG] get_skin_data('%s') -> CACHE MISS, fallback" % key)
-	return FALLBACK_SHADED.duplicate(true)
+	return FALLBACK_SHADED
 
 static func _is_all_black(data: Dictionary) -> bool:
 	var pal = data.get("palette", {})

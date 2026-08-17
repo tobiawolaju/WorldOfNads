@@ -166,17 +166,14 @@ func _show_json_on(label_method: String, json_data) -> void:
 func _update_debug_skin() -> void:
 	var data = SkinApplier.get_skin_data(local_skin_name)
 	_show_json_on("set_debug_text", data)
-	print("[SKIN_DEBUG] skin='%s' data=%s" % [local_skin_name, JSON.stringify(data, "", false)])
 
 func _update_debug2_cache() -> void:
 	var cache = SkinApplier._api_cache.duplicate(true)
 	_show_json_on("set_debug2_text", cache)
-	print("[SKIN_CACHE] full json length=%d" % JSON.stringify(cache, "", false).length())
 
 func _cycle_skin() -> void:
 	var keys := SkinApplier._api_cache.keys()
 	if keys.is_empty():
-		print("[CYCLE] No cached skins to cycle")
 		return
 	_skin_cycle_index = (_skin_cycle_index + 1) % keys.size()
 	var chosen := str(keys[_skin_cycle_index])
@@ -192,21 +189,17 @@ func _fetch_skin_data() -> void:
 	add_child(http)
 	http.request_completed.connect(_on_skin_data_fetched.bind(http))
 	http.request("%s/api/skins" % API_BASE)
-	print("[SKIN_CACHE] HTTP /api/skins requested")
 
 func _on_skin_data_fetched(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest) -> void:
 	if http != null and is_instance_valid(http):
 		http.queue_free()
 	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
-		print("SkinApplier: API fetch failed (%d %d), using bundled fallback." % [result, response_code])
 		return
-	print("[SKIN_CACHE] HTTP /api/skins SUCCESS code=%d" % response_code)
 	var parsed = JSON.parse_string(body.get_string_from_utf8())
 	if parsed is Dictionary and parsed.get("ok") == true:
 		var skins_array = parsed.get("skins")
 		if skins_array is Array:
 			SkinApplier.seed_from_api(skins_array)
-			print("SkinApplier: Cached %d skins from API." % skins_array.size())
 			_update_debug2_cache()
 			_update_debug_skin()
 			_reapply_skins()
@@ -247,6 +240,9 @@ var _msg_process_timer: float = 0.0
 const MSG_PROCESS_INTERVAL: float = 0.033
 var _cleanup_timer: float = 0.0
 const CLEANUP_INTERVAL: float = 5.0
+var _received_ids_cache: Dictionary = {}
+var _cached_skin_scene: PackedScene = null
+var _cached_local_player: Node3D = null
 
 # --- RECONNECTION ---
 var _reconnecting: bool = false
@@ -434,7 +430,7 @@ func _on_reconnect_success():
 
 func _clear_players_for_reconnect():
 	var old_id := player_id
-	for id in players.keys():
+	for id in players:
 		var p = players[id]
 		if p.is_local:
 			_last_server_position = p.global_position
@@ -445,6 +441,7 @@ func _clear_players_for_reconnect():
 	player_display_names.clear()
 	player_skin_names.clear()
 	remote_snapshots.clear()
+	_cached_local_player = null
 	player_id = ""
 	events_bridge = null
 	_resolve_events_bridge()
@@ -600,7 +597,8 @@ func _remove_disconnected_players(removed_ids: Array) -> void:
 func _update_world_state(players_state, is_full := true, quantized := false):
 	if _waiting_for_connect:
 		return
-	var received_ids := {}
+	_received_ids_cache.clear()
+	var received_ids := _received_ids_cache
 	var now_ms := float(Time.get_ticks_msec())
 
 	for p_state in players_state:
@@ -678,7 +676,7 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 
 	# Remove disconnected players only on full snapshots.
 	if is_full:
-		for id in players.keys():
+		for id in players:
 			if id != player_id and not received_ids.has(id):
 				_remove_player(id)
 
@@ -997,7 +995,9 @@ func _remove_player(id: String):
 		else:
 			_return_player_to_pool(p)
 		players.erase(id)
-	player_display_names.erase(id)
+		player_display_names.erase(id)
+		if id == player_id:
+			_cached_local_player = null
 	remote_snapshots.erase(id)
 
 func _cleanup_stale_remote_players(now_ms: float) -> void:
@@ -1122,12 +1122,16 @@ func _apply_remote_interpolation() -> void:
 				node.set_animation_state(anim_state)
 
 func _get_local_player_node() -> Node3D:
+	if _cached_local_player != null and is_instance_valid(_cached_local_player):
+		return _cached_local_player
 	if player_id == "":
 		return null
 	if players.has(player_id):
 		var player_node: Node3D = players[player_id]
 		if player_node is Node3D:
+			_cached_local_player = player_node
 			return player_node
+	_cached_local_player = null
 	return null
 
 func _resolve_events_bridge() -> void:
@@ -1271,18 +1275,16 @@ func _pre_seed_from_session_storage() -> void:
 	var raw = JavaScriptBridge.eval("sessionStorage.getItem('wons_skin_cache') || ''")
 	if typeof(raw) != TYPE_STRING or raw.is_empty():
 		return
-	print("[SESSION] raw first 120 chars: %s" % str(raw).left(120))
-	if str(raw).length() > 0:
-		print("[SESSION] first hex test in raw: %s" % str(raw).find("#1a1a3e"))
 	var parsed = JSON.parse_string(raw)
 	if parsed is Array:
 		SkinApplier.seed_from_api(parsed)
-		print("SkinApplier: Pre-seeded %d skins from sessionStorage." % parsed.size())
 		_update_debug2_cache()
 		_update_debug_skin()
 
 func _get_skin_scene(_skin_name: String) -> PackedScene:
-	return load(SKIN_SCENE_PATH) as PackedScene
+	if _cached_skin_scene == null:
+		_cached_skin_scene = load(SKIN_SCENE_PATH) as PackedScene
+	return _cached_skin_scene
 
 func _resolve_server_skin(data: Dictionary, fallback_id: String, fallback_skin: String = DEFAULT_SKIN_NAME) -> String:
 	for key in ["skin", "skinName", "skin_name", "skinId", "skin_id", "s"]:

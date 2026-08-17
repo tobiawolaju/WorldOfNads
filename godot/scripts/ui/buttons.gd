@@ -50,7 +50,7 @@ func _input(event: InputEvent) -> void:
 					return
 
 		else:
-			for action_name in _touch_indices.keys():
+			for action_name in _touch_indices:
 				if _touch_indices.get(action_name) == touch.index:
 					var button = _get_button(action_name)
 
@@ -68,7 +68,7 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
 
-		for action_name in _touch_indices.keys():
+		for action_name in _touch_indices:
 			if _touch_indices.get(action_name) == drag.index:
 
 				var button = _get_button(action_name)
