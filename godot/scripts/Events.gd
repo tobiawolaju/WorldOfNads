@@ -64,7 +64,7 @@ func set_local_username(id: String, force: bool = false) -> void:
 	if username_label == null:
 		return
 	if _username_locked and not force:
-		return
+		return 
 
 	var safe_id := id.strip_edges()
 	if safe_id == "":
