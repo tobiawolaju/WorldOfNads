@@ -47,7 +47,7 @@ cylinder_wall = NodePath("Cylinder")
 cylinder_border = NodePath("Cylinder2")
 normal_env = ExtResource("4_ncsg4")
 storm_env = ExtResource("5_07nfq")
-cylinder_radius = 30.0
+cylinder_radius = 15.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=580568222]
 environment = ExtResource("4_ncsg4")
@@ -66,13 +66,13 @@ shadow_enabled = true
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=874651139]
-transform = Transform3D(30, 0, 0, 0, 200, 0, 0, 0, 30, 0, 0, 0)
+transform = Transform3D(15, 0, 0, 0, 200, 0, 0, 0, 15, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_ncsg4")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_07nfq")
 
 [node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1546332868]
-transform = Transform3D(30, 0, 0, 0, 200, 0, 0, 0, 30, 0, 0, 0)
+transform = Transform3D(15, 0, 0, 0, 200, 0, 0, 0, 15, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_oipnb")
 surface_material_override/0 = SubResource("StandardMaterial3D_yad6j")

@@ -1073,9 +1073,10 @@ func _apply_remote_interpolation() -> void:
 		if node == null:
 			continue
 
+		var dist_sq := local_pos.distance_squared_to(node.global_position)
+
 		# Aggressive Cull: Hide players very far away
 		if do_lod_check:
-			var dist_sq := local_pos.distance_squared_to(node.global_position)
 			var is_near := dist_sq < 2500.0 # 50 meters
 			node.visible = is_near
 			if not is_near:

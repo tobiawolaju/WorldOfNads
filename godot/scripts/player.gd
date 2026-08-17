@@ -58,6 +58,7 @@ var last_pickup_request_ms: int = 0
 @export var min_zoom: float = 1.8
 @export var max_zoom: float = 2.2
 @export var altitude_zoom_factor: float = 0.0
+@export var bus_zoom: float = 3.0
 @export var fov: float = 55.0
 @export var touch_orbit_sensitivity: float = 0.032
 @export var joystick_orbit_sensitivity: float = 0.003
@@ -528,6 +529,7 @@ func _physics_process(delta: float) -> void:
 		_double_jump_available = false
 		_double_jump_used = false
 		_double_jump_air_time = 0.0
+		max_zoom = min_zoom
 	_apply_bus_riding()
 
 	# Squash & stretch on jump/land
@@ -907,6 +909,7 @@ func _apply_bus_riding() -> void:
 			_is_riding_bus = false
 	elif on_bus:
 		_is_riding_bus = true
+		max_zoom = bus_zoom
 		global_position += bus_delta
 
 func _spring_angle(current: float, vel: float, target: float, sharpness: float, delta: float) -> Array:
@@ -945,6 +948,8 @@ func _update_camera_collision_logic(delta: float) -> void:
 	elif not movement_allowed and root and root.has_method("is_waiting_for_players") and root.is_waiting_for_players():
 		state_zoom = max_zoom
 	var target_distance: float = min_zoom if current_animation == "falling" else clamp(state_zoom + camera_distance_bias, min_zoom, vehicle_zoom_cap)
+	if _is_riding_bus:
+		target_distance = bus_zoom
 	var distance_result := _spring_float(camera_distance_current, _camera_distance_velocity, target_distance, camera_smoothness, delta * 2.0)
 	camera_distance_current = distance_result[0]
 	_camera_distance_velocity = distance_result[1]
