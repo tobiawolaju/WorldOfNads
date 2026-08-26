@@ -83,13 +83,14 @@ static func _pack_array(arr: Array, out: PackedByteArray) -> void:
 		_pack_value(item, out)
 
 static func _pack_map(map: Dictionary, out: PackedByteArray) -> void:
-	var n := map.size()
+	var keys := map.keys()
+	var n := keys.size()
 	if n <= 15:
 		out.append(0x80 | n)
 	else:
 		out.append(0xDE)
 		_append_u16(out, n)
-	for key in map.keys():
+	for key in keys:
 		_pack_value(key, out)
 		_pack_value(map[key], out)
 
@@ -173,9 +174,8 @@ static func _read_u64(data: PackedByteArray, offset_ref: Array) -> int:
 
 static func _read_string(data: PackedByteArray, offset_ref: Array, n: int) -> String:
 	var start: int = int(offset_ref[0])
-	var b := data.slice(start, start + n)
 	offset_ref[0] += n
-	return b.get_string_from_utf8()
+	return data.slice(start, start + n).get_string_from_utf8()
 
 static func _read_array(data: PackedByteArray, offset_ref: Array, n: int) -> Array:
 	var out := []

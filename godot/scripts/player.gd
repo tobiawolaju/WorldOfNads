@@ -2,9 +2,9 @@ extends CharacterBody3D
 
 
 # -- CONSTANTS ---
-const GRAVITY: float = 19.6 
-const JUMP_VELOCITY: float = 9
-const SPEED: float = 3.0
+const GRAVITY: float = 18
+const JUMP_VELOCITY: float = 6
+const SPEED: float = 2.00
 const DEADZONE: float = 0.12
 const PICKUP_REQUEST_COOLDOWN_MS: int = 150
 const STEAL_RADIUS: float = 2.5
@@ -17,6 +17,9 @@ const JUMP_BUFFER_TIME: float = 0.12
 const COYOTE_TIME: float = 0.10
 const DOUBLE_JUMP_MIN_MULTIPLIER: float = 0.3
 
+const LAUGH_CLIP_START: float = 0.5
+const LAUGH_CLIP_DURATION: float = 0.4
+
 # --- MOMENTUM CONSTANTS ---
 const ACCELERATION: float = 25.0  # How fast you reach max speed (Ground)
 const FRICTION: float = 22.0      # How fast you stop (Ground)
@@ -26,6 +29,12 @@ const AIR_RESISTANCE: float = 6.0 # (Now bypassed for instant air movement)
 const SQUASH_SCALE: float = 0.5
 const STRETCH_SCALE: float = 1.5
 const SQUASH_STRETCH_SPEED: float = 12.0
+
+# --- RUN BOUNCE ---
+const RUN_BOUNCE_HEIGHT: float = 0.12
+const RUN_BOUNCE_SPEED: float = 18.0
+const RUN_BOUNCE_SQUASH: float = 0.08
+const RUN_BOUNCE_WOBBLE: float = 0.06
 
 const AUTO_ORBIT_SPEED: float = 2.5
 
@@ -148,6 +157,7 @@ var _spawn_flash_done: bool = false
 var _squash_stretch_y: float = 1.0
 var _squash_stretch_velocity: float = 0.0
 var _squash_stretch_target: float = 1.0
+var _run_bounce_time: float = 0.0
 var _was_airborne: bool = false
 var _jump_peak_reached: bool = false
 var _base_scale: Vector3
@@ -171,6 +181,8 @@ var _demo_wobble_phase: float = 0.0
 var _demo_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _demo_last_safe_position: Vector3 = Vector3.ZERO
 var _demo_offground_timer: float = 0.0
+var jump_sfx: AudioStreamPlayer2D
+var _jump_laugh_tween: Tween = null
 
 const DEMO_RECOVERY_FALL_DISTANCE: float = 8.0
 const DEMO_RECOVERY_OFFGROUND_TIME: float = 1.25
@@ -252,6 +264,11 @@ func _ready() -> void:
 	_refresh_touch_joystick()
 	_connect_joystick_signals()
 	_update_global_player_shader_pos(true)
+	jump_sfx = AudioStreamPlayer2D.new()
+	jump_sfx.stream = preload("res://assets/sounds/audio_fx.mp3")
+	jump_sfx.name = "JumpSFX"
+	add_child(jump_sfx)
+
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
 	var state_names := ["idle", "running", "runningjump", "falling", "runningslide"]
@@ -337,6 +354,15 @@ func request_jump() -> void:
 
 func request_slide() -> void:
 	_slide_requested = true
+
+func _play_jump_laugh() -> void:
+	if _jump_laugh_tween and _jump_laugh_tween.is_valid():
+		_jump_laugh_tween.kill()
+	jump_sfx.stop()
+	jump_sfx.play(LAUGH_CLIP_START)
+	_jump_laugh_tween = create_tween()
+	_jump_laugh_tween.tween_interval(LAUGH_CLIP_DURATION)
+	_jump_laugh_tween.tween_callback(jump_sfx.stop)
 
 func request_pickup() -> void:
 	if not _is_movement_allowed():
@@ -440,6 +466,7 @@ func _physics_process(delta: float) -> void:
 		_jump_requested = false
 		if movement_allowed and jump_requested_now:
 			velocity_y = JUMP_VELOCITY
+			_play_jump_laugh()
 			if not _double_jump_available:
 				_ground_jump_count += 1
 				if _ground_jump_count >= 2:
@@ -486,6 +513,7 @@ func _physics_process(delta: float) -> void:
 			var progress := clampf(_double_jump_air_time / apex_time, 0.0, 1.0)
 			var smooth := progress * progress * (3.0 - 2.0 * progress)
 			velocity_y = JUMP_VELOCITY * lerpf(DOUBLE_JUMP_MIN_MULTIPLIER, 1.0, smooth)
+			_play_jump_laugh()
 			_double_jump_used = true
 			_double_jump_available = false
 			_jump_buffer_timer = 0.0
@@ -496,6 +524,7 @@ func _physics_process(delta: float) -> void:
 		var buffered_jump := movement_allowed and (_jump_buffer_timer > 0.0) and (jump_requested_now or _coyote_timer > 0.0)
 		if buffered_jump:
 			velocity_y = JUMP_VELOCITY
+			_play_jump_laugh()
 			_jump_buffer_timer = 0.0
 			if not _double_jump_available and not jump_requested_now:
 				_ground_jump_count += 1
@@ -511,12 +540,13 @@ func _physics_process(delta: float) -> void:
 		_stamina_held_empty = false
 
 	# Drain (skip if held-penalized — movement already zeroed)
-	if is_moving_input and stamina > 0.0 and not _stamina_held_empty:
+	var is_holding := _is_local_holding_chicken() or _is_local_holding_lootbox()
+	if is_moving_input and is_holding and stamina > 0.0 and not _stamina_held_empty:
 		stamina = maxf(0.0, stamina - STAMINA_DRAIN_RATE * delta)
 		_stamina_regen_timer = STAMINA_REGEN_DELAY
 
 	# Just hit zero — check if input still held
-	if stamina <= 0.0 and is_moving_input:
+	if stamina <= 0.0 and is_moving_input and is_holding:
 		_stamina_held_empty = true
 		_stamina_empty_timer = STAMINA_HELD_PENALTY
 
@@ -600,7 +630,27 @@ func _physics_process(delta: float) -> void:
 	var ss_result := _spring_float(_squash_stretch_y, _squash_stretch_velocity, _squash_stretch_target, SQUASH_STRETCH_SPEED, delta)
 	_squash_stretch_y = ss_result[0]
 	_squash_stretch_velocity = ss_result[1]
-	mesh.scale.y = _base_scale.y * _squash_stretch_y
+
+	# --- RUN BOUNCE ---
+	var is_running := current_animation == "running" and is_on_floor() and not _is_sliding
+	if is_running:
+		_run_bounce_time += delta * RUN_BOUNCE_SPEED
+		var bounce_sin := sin(_run_bounce_time)
+		var bounce_y := absf(bounce_sin) * RUN_BOUNCE_HEIGHT
+		var step_squash := 1.0 - RUN_BOUNCE_SQUASH * absf(bounce_sin)
+		var step_wobble := RUN_BOUNCE_WOBBLE * sin(_run_bounce_time * 2.0)
+		mesh.scale.y = _base_scale.y * _squash_stretch_y * step_squash
+		mesh.scale.x = _base_scale.x * (1.0 + RUN_BOUNCE_SQUASH * 0.5 * absf(bounce_sin))
+		mesh.scale.z = _base_scale.z * (1.0 + RUN_BOUNCE_SQUASH * 0.5 * absf(bounce_sin))
+		mesh.position.y = bounce_y
+		mesh.rotation.z = step_wobble
+	else:
+		_run_bounce_time = 0.0
+		mesh.scale.y = _base_scale.y * _squash_stretch_y
+		mesh.scale.x = _base_scale.x
+		mesh.scale.z = _base_scale.z
+		mesh.position.y = lerp(mesh.position.y, 0.0, delta * 15.0)
+		mesh.rotation.z = lerp(mesh.rotation.z, 0.0, delta * 15.0)
 
 	camera_is_airborne = not is_on_floor()
 	camera_is_moving = velocity.x * velocity.x + velocity.z * velocity.z > 0.01
@@ -713,7 +763,27 @@ func _update_demo_agent(delta: float) -> void:
 	var ss_demo := _spring_float(_squash_stretch_y, _squash_stretch_velocity, _squash_stretch_target, SQUASH_STRETCH_SPEED, delta)
 	_squash_stretch_y = ss_demo[0]
 	_squash_stretch_velocity = ss_demo[1]
-	mesh.scale.y = _base_scale.y * _squash_stretch_y
+
+	# --- RUN BOUNCE (DEMO) ---
+	var is_running_demo := current_animation == "running" and is_on_floor() and not _is_sliding
+	if is_running_demo:
+		_run_bounce_time += delta * RUN_BOUNCE_SPEED
+		var bounce_sin_d := sin(_run_bounce_time)
+		var bounce_y_d := absf(bounce_sin_d) * RUN_BOUNCE_HEIGHT
+		var step_squash_d := 1.0 - RUN_BOUNCE_SQUASH * absf(bounce_sin_d)
+		var step_wobble_d := RUN_BOUNCE_WOBBLE * sin(_run_bounce_time * 2.0)
+		mesh.scale.y = _base_scale.y * _squash_stretch_y * step_squash_d
+		mesh.scale.x = _base_scale.x * (1.0 + RUN_BOUNCE_SQUASH * 0.5 * absf(bounce_sin_d))
+		mesh.scale.z = _base_scale.z * (1.0 + RUN_BOUNCE_SQUASH * 0.5 * absf(bounce_sin_d))
+		mesh.position.y = bounce_y_d
+		mesh.rotation.z = step_wobble_d
+	else:
+		_run_bounce_time = 0.0
+		mesh.scale.y = _base_scale.y * _squash_stretch_y
+		mesh.scale.x = _base_scale.x
+		mesh.scale.z = _base_scale.z
+		mesh.position.y = lerp(mesh.position.y, 0.0, delta * 15.0)
+		mesh.rotation.z = lerp(mesh.rotation.z, 0.0, delta * 15.0)
 
 	camera_is_airborne = not is_on_floor()
 	camera_is_moving = velocity.x * velocity.x + velocity.z * velocity.z > 0.01
@@ -1283,17 +1353,24 @@ func disable_character_shadows() -> void:
 		child.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 func _spawn_flash() -> void:
-	var overlay := ColorRect.new()
-	overlay.color = Color(1, 1, 1, 1)
-	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var viewport := get_viewport()
 	if viewport == null:
 		return
+	var cam = viewport.get_camera_3d()
+	if cam == null:
+		return
+	var old_canvas = cam.get_node_or_null("_spawn_flash_canvas")
+	if old_canvas:
+		old_canvas.queue_free()
+	var overlay := ColorRect.new()
+	overlay.color = Color(1, 1, 1, 1)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.size = viewport.get_visible_rect().size
 	var canvas := CanvasLayer.new()
+	canvas.name = "_spawn_flash_canvas"
 	canvas.layer = 100
 	canvas.add_child(overlay)
-	viewport.get_camera_3d().add_child(canvas)
+	cam.add_child(canvas)
 	var tween := create_tween()
 	tween.tween_property(overlay, "color:a", 0.0, 0.35)
 	tween.tween_callback(canvas.queue_free)
