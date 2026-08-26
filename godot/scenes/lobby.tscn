@@ -24,10 +24,15 @@ bottom_radius = 1.0
 top_radius = 1.0
 bottom_radius = 1.0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yad6j"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_07nfq"]
 transparency = 1
 shading_mode = 0
-albedo_color = Color(0.801801, 0.6757443, 0.9567693, 1)
+albedo_color = Color(0.8392157, 0.50980395, 0.9372549, 1)
+proximity_fade_enabled = true
+proximity_fade_distance = 15.0
+stencil_flags = 2
+stencil_color = Color(1, 1, 1, 1)
+stencil_outline_thickness = 0.034
 
 [node name="Lobby" type="Node3D" unique_id=932350279 node_paths=PackedStringArray("spawn_point")]
 script = ExtResource("1_07nfq")
@@ -75,7 +80,7 @@ mesh = SubResource("CylinderMesh_07nfq")
 transform = Transform3D(15, 0, 0, 0, 200, 0, 0, 0, 15, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_oipnb")
-surface_material_override/0 = SubResource("StandardMaterial3D_yad6j")
+surface_material_override/0 = SubResource("StandardMaterial3D_07nfq")
 
 [node name="Player" type="Node3D" parent="." unique_id=129729236 node_paths=PackedStringArray("status_label")]
 script = ExtResource("7_yad6j")

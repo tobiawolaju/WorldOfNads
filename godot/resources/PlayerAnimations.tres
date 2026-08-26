@@ -627,6 +627,7 @@ tracks/28/keys = PackedFloat32Array(0, 1, -0.91908336, 0.26326284, -0.050130762,
 [sub_resource type="Animation" id="Animation_o0atj"]
 resource_name = "runningjump"
 length = 0.9166667
+loop_mode = 1
 tracks/0/type = "position_3d"
 tracks/0/imported = true
 tracks/0/enabled = true

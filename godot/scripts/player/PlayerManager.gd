@@ -238,6 +238,7 @@ func _attempt_connection():
 var _last_real_delta_ms: float = 0.0
 var _msg_process_timer: float = 0.0
 const MSG_PROCESS_INTERVAL: float = 0.033
+const MAX_PACKETS_PER_FRAME: int = 30
 var _cleanup_timer: float = 0.0
 const CLEANUP_INTERVAL: float = 5.0
 var _received_ids_cache: Dictionary = {}
@@ -496,7 +497,9 @@ func _set_subtitle_visible(is_visible: bool):
 	_subtitle_label.visible = is_visible
 
 func _receive_messages():
-	while ws.get_available_packet_count() > 0:
+	var packets_processed := 0
+	while ws.get_available_packet_count() > 0 and packets_processed < MAX_PACKETS_PER_FRAME:
+		packets_processed += 1
 		var raw_packet = ws.get_packet()
 		if raw_packet.is_empty():
 			continue
@@ -996,6 +999,7 @@ func _remove_player(id: String):
 			_return_player_to_pool(p)
 		players.erase(id)
 		player_display_names.erase(id)
+		player_skin_names.erase(id)
 		if id == player_id:
 			_cached_local_player = null
 	remote_snapshots.erase(id)

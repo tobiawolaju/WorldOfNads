@@ -12,6 +12,7 @@
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/ui/joystick.gd" id="9_mphia"]
 [ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/ui/buttons.gd" id="10_mphia"]
 [ext_resource type="Texture2D" uid="uid://b7qle767pmjpp" path="res://assets/img/ui_atlas.png" id="10_ui_atlas"]
+[ext_resource type="Texture2D" uid="uid://blb4gd2pmif22" path="res://assets/img/jump.png" id="12_5n1hp"]
 
 [sub_resource type="Shader" id="Shader_storm"]
 code = "shader_type canvas_item;
@@ -83,12 +84,13 @@ corner_radius_bottom_left = 50
 bg_color = Color(0, 0, 0, 0.34117648)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l0bqs"]
-bg_color = Color(0.67058825, 1, 0, 1)
-border_color = Color(0, 0.77254903, 0, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_apjy4"]
 bg_color = Color(0.60784316, 0.36078432, 1, 1)
 border_color = Color(0, 0.77254903, 0, 1)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_8f1mq"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tllmm"]
+texture = ExtResource("12_5n1hp")
 
 [node name="Hud" type="Control" unique_id=861416889]
 layout_mode = 3
@@ -468,65 +470,50 @@ expand_icon = true
 
 [node name="XPstream" type="Label" parent="." unique_id=2087879689]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -100.0
-offset_top = 226.0
-offset_right = -43.0
-offset_bottom = 250.0
-grow_horizontal = 0
-theme_override_colors/font_color = Color(0.3019608, 0.3019608, 0.3019608, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+offset_left = 8.0
+offset_top = 53.0
+offset_right = 107.0
+offset_bottom = 72.0
+theme_override_colors/font_color = Color(0.38039216, 0.2784314, 0.9411765, 1)
+theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
-theme_override_constants/outline_size = 8
-theme_override_constants/shadow_outline_size = 10
+theme_override_constants/outline_size = 0
+theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 18
 text = "Your Xp stream"
 
 [node name="MONstream" type="Label" parent="." unique_id=366851244]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -120.0
-offset_top = 198.0
-offset_right = -31.0
-offset_bottom = 222.0
-grow_horizontal = 0
-theme_override_colors/font_color = Color(0.3019608, 0.3019608, 0.3019608, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+offset_left = 7.0
+offset_top = 27.0
+offset_right = 118.0
+offset_bottom = 48.0
+theme_override_colors/font_color = Color(0.38039216, 0.2784314, 0.9411765, 1)
+theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
-theme_override_constants/outline_size = 8
-theme_override_constants/shadow_outline_size = 10
+theme_override_constants/outline_size = 0
+theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 18
 text = "Your MON stream"
 
 [node name="PrizePool" type="Label" parent="." unique_id=1341296255]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -140.0
-offset_top = 170.0
-offset_right = -32.0
-offset_bottom = 194.0
-grow_horizontal = 0
-theme_override_colors/font_color = Color(0.3019608, 0.3019608, 0.3019608, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+offset_left = 9.0
+offset_top = 4.0
+offset_right = 105.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.38039216, 0.2784314, 0.9411765, 1)
+theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
-theme_override_constants/outline_size = 8
-theme_override_constants/shadow_outline_size = 10
+theme_override_constants/outline_size = 0
+theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 18
 text = "Total MON pool"
 
 [node name="StaminaBar" type="ProgressBar" parent="." unique_id=285514625]
@@ -549,6 +536,7 @@ show_percentage = false
 script = ExtResource("6_stamina_bar")
 
 [node name="JumpBar" type="ProgressBar" parent="." unique_id=896147534]
+modulate = Color(0.60784316, 0.36078432, 1, 1)
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -556,13 +544,33 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -87.0
-offset_top = -88.0
-offset_right = 89.0
+offset_top = -95.0
+offset_right = -65.0
 offset_bottom = -75.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_styles/background = SubResource("StyleBoxFlat_0m4u7")
-theme_override_styles/fill = SubResource("StyleBoxFlat_apjy4")
-value = 30.0
+theme_override_styles/background = SubResource("StyleBoxEmpty_8f1mq")
+theme_override_styles/fill = SubResource("StyleBoxTexture_tllmm")
+value = 100.0
+show_percentage = false
+script = ExtResource("6_jump_bar")
+
+[node name="JumpBar2" type="ProgressBar" parent="." unique_id=1989268868]
+modulate = Color(0.60784316, 0.36078432, 1, 1)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -70.0
+offset_top = -95.0
+offset_right = -48.0
+offset_bottom = -75.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/background = SubResource("StyleBoxEmpty_8f1mq")
+theme_override_styles/fill = SubResource("StyleBoxTexture_tllmm")
+value = 100.0
 show_percentage = false
 script = ExtResource("6_jump_bar")
