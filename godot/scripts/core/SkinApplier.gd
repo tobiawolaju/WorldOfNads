@@ -15,7 +15,6 @@ const FALLBACK_SHADED: Dictionary = {
 	},
 	"outline_color": [0.988, 0.176, 0.288, 1],
 	"crown_color": [1.0, 1.0, 0.0, 1],
-	"face_texture": "res://assets/img/skins/face1.png",
 	"shader": "default",
 	"shader_targets": ["body", "cheek", "eye"],
 	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] }
@@ -31,7 +30,6 @@ const FALLBACK_UNSHADED: Dictionary = {
 	},
 	"outline_color": [0.988, 0.0, 0.851, 1],
 	"crown_color": [1.0, 1.0, 0.0, 1],
-	"face_texture":  "res://assets/img/skins/face1.png",
 	"shader": "unshaded",
 	"shader_targets": ["body", "cheek", "eye"],
 	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] }
@@ -57,7 +55,7 @@ static func seed_single_from_api(skin_id: String, entry: Dictionary) -> void:
 
 static func _convert_api_entry(skin_config: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for key in ["palette", "outline_color", "crown_color", "face_texture", "shader", "shader_targets", "attachment"]:
+	for key in ["palette", "outline_color", "crown_color", "shader", "shader_targets", "attachment"]:
 		if skin_config.has(key):
 			result[key] = skin_config[key]
 	if result.is_empty():
@@ -121,7 +119,6 @@ static func _is_all_black(data: Dictionary) -> bool:
 	return true
 
 const OUTLINE_SHADER := preload("res://assets/shaders/outline.gdshader")
-const FACE_SHADER := preload("res://assets/shaders/face.gdshader")
 const SKIN_UNSHADED_SHADER := preload("res://assets/shaders/skin_unshaded.gdshader")
 
 static var _skin_material_sets: Dictionary = {}
@@ -161,18 +158,12 @@ static func _build_material_set(data: Dictionary) -> Dictionary:
 	var shader_targets: Array = data.get("shader_targets", ["body", "cheek", "eye"])
 	var attachment_data: Dictionary = data.get("attachment", {})
 
-	var face_tex: Texture2D = null
-	var face_path := str(data.get("face_texture", ""))
-	if face_path != "":
-		face_tex = load(face_path) as Texture2D
-
 	return {
 		"body": _body_material(_c(palette.get("body", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "body"),
 		"body_01": _body_material(_c(palette.get("body_alt", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "body"),
 		"cheek": _body_material(_c(palette.get("cheek", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "cheek"),
 		"eye": _body_material(_c(palette.get("eye", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "eye"),
 		"crown": _crown_material(crown_color),
-		"face": _face_material(face_tex),
 		"attachment": _attachment_material(_c(attachment_data.get("color", [1, 1, 1, 1]))),
 	}
 
@@ -187,8 +178,6 @@ static func _material_for_name(material_set: Dictionary, name: String) -> Materi
 		return material_set.get("cheek")
 	if name.begins_with("crown"):
 		return material_set.get("crown")
-	if name == "face":
-		return material_set.get("face")
 	if name == "attachment":
 		return material_set.get("attachment")
 	return null
@@ -281,14 +270,6 @@ static func _crown_material(color: Color) -> Material:
 	mat.albedo_color = color
 	mat.metallic = 0.8
 	mat.roughness = 0.2
-	return mat
-
-static func _face_material(face_tex: Texture2D) -> Material:
-	var mat := ShaderMaterial.new()
-	mat.shader = FACE_SHADER
-	if face_tex:
-		mat.set_shader_parameter("face_tex", face_tex)
-	mat.set_shader_parameter("thickness", 0.145)
 	return mat
 
 static func _attachment_material(color: Color) -> Material:

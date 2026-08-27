@@ -775,8 +775,8 @@ data = PackedVector3Array(0.5184, 1.3181, 3.7338998, 0.47379997, 1.3191999, 3.75
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l0bqs"]
 transparency = 1
-albedo_color = Color(1, 1, 1, 0.84313726)
-rim_enabled = true
+shading_mode = 0
+albedo_color = Color(0.73333335, 0.56078434, 0.9372549, 0.5764706)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ponfv"]
 resource_name = "DEFAULT"

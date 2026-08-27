@@ -517,17 +517,6 @@ bind/37/name = &"mixamorig_RightToe_End_end"
 bind/37/bone = -1
 bind/37/pose = Transform3D(-0.07750059, 9.909384, -1.340933, 8.824419, 0.69852716, 4.651964, 4.7034597, -1.1472449, -8.749923, -0.000365574, 0.22768839, 0.6193852)
 
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_wrixk"]
-load_path = "res://.godot/imported/face1.png-2ee4a7f33164ad104860ac15ebe40650.s3tc.ctex"
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wnw1f"]
-transparency = 1
-albedo_texture = SubResource("CompressedTexture2D_wrixk")
-grow = true
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_l0bqs"]
-size = Vector2(1.5, 1.5)
-
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fryti"]
 render_priority = 0
 shader = ExtResource("3_wrixk")
@@ -903,7 +892,7 @@ skin = SubResource("Skin_3xuuo")
 skeleton = NodePath("..")
 surface_material_override/0 = SubResource("StandardMaterial3D_ywufw")
 
-[node name="mouth" type="MeshInstance3D" parent="Skeleton3D" unique_id=57707868]
+[node name="face" type="MeshInstance3D" parent="Skeleton3D" unique_id=57707868]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.024718266, 0)
 material_override = SubResource("StandardMaterial3D_q62xx")
 mesh = SubResource("ArrayMesh_ms301")
@@ -916,11 +905,6 @@ visible = false
 bone_name = "mixamorig_Head"
 bone_idx = 5
 
-[node name="face" type="MeshInstance3D" parent="Skeleton3D/BoneAttachment3D2" unique_id=1901944278]
-transform = Transform3D(0.99714166, 0.036168173, -0.06633377, -0.063817196, -0.0667808, -0.9957252, -0.04044345, 0.9971106, -0.06428188, 0.045308083, 0.39935184, 0.92470884)
-material_override = SubResource("StandardMaterial3D_wnw1f")
-mesh = SubResource("PlaneMesh_l0bqs")
-
 [node name="crown" type="MeshInstance3D" parent="Skeleton3D/BoneAttachment3D2" unique_id=1209889466]
 transform = Transform3D(0.7999998, 1.3271347e-08, 3.7252903e-09, 1.071021e-08, 0.8, 1.0430813e-07, -6.519258e-09, -1.937151e-07, 0.7999998, -0.015522182, 1.0680386, -0.01038371)
 material_override = SubResource("StandardMaterial3D_jrfn5")
@@ -928,6 +912,7 @@ mesh = SubResource("TorusMesh_l0bqs")
 
 [node name="BoneAttachment3D" type="BoneAttachment3D" parent="Skeleton3D" unique_id=2019479601]
 transform = Transform3D(0.40903088, 0.90819573, 0.08873597, 0.7079533, -0.3771866, 0.5971041, 0.5757573, -0.18141294, -0.7972413, -0.7224945, -0.019644499, 0.47958422)
+visible = false
 bone_name = "mixamorig_RightHandIndex1"
 bone_idx = 21
 
@@ -938,6 +923,7 @@ mesh = SubResource("CylinderMesh_l0bqs")
 
 [node name="BoneAttachment3D3" type="BoneAttachment3D" parent="Skeleton3D" unique_id=412316305]
 transform = Transform3D(0.98777616, 0.0015613958, 0.15587088, 0.076063946, 0.8679895, -0.49072307, -0.13606043, 0.49658072, 0.8572606, 0.013007843, 0.6197852, 0.13061863)
+visible = false
 bone_name = "mixamorig_Spine2"
 bone_idx = 3
 
