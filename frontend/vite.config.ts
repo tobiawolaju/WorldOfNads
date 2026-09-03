@@ -17,6 +17,17 @@ export default defineConfig({
   ],
   build: {
     outDir: "build",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "three-vendor": ["three", "@react-three/fiber", "@react-three/drei"],
+          "privy-vendor": ["@privy-io/react-auth"],
+          "ethers-vendor": ["ethers", "viem"],
+          "solana-vendor": ["@solana/web3.js", "@solana/wallet-adapter-react", "@solana/kit"],
+          "ui-vendor": ["react-router-dom", "react-toastify", "recharts", "chart.js", "gsap"],
+        },
+      },
+    },
   },
   server: {
     hmr: {

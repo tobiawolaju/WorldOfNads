@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
@@ -349,7 +349,7 @@ export default function Dashboard() {
   useEffect(() => {
     const ticker = setInterval(() => {
       setNowMs(Date.now());
-    }, 5000);
+    }, 1000);
     return () => clearInterval(ticker);
   }, []);
 
@@ -395,7 +395,7 @@ export default function Dashboard() {
     setShowLoader(!ready);
   }, [ready]);
 
-  const handlePlayClick = () => {
+  const handlePlayClick = useCallback(() => {
     if (!selectedMatch || !user) return;
 
     if (playButtonState === "idle") {
@@ -445,7 +445,7 @@ export default function Dashboard() {
       clearPlayTimers();
       setPlayButtonState("idle");
     }
-  };
+  }, [selectedMatch, user, playButtonState, displayedSkin, equippedSkin, matches, navigate]);
 
   const formatLocalTime = (timestamp: number | undefined) => {
     if (!timestamp) return "";
@@ -530,12 +530,14 @@ export default function Dashboard() {
     status === "settled" ? "completed" : status;
 
   const statusOrder: Array<"upcoming" | "live" | "completed"> = ["upcoming", "live", "completed"];
-  const orderedMatches = [...matches].sort((a, b) => {
-    const aRank = statusOrder.indexOf(normalizeMatchStatus(a.status) as "upcoming" | "live" | "completed");
-    const bRank = statusOrder.indexOf(normalizeMatchStatus(b.status) as "upcoming" | "live" | "completed");
-    if (aRank !== bRank) return aRank - bRank;
-    return (a.startTime || 0) - (b.startTime || 0);
-  });
+  const orderedMatches = useMemo(() => {
+    return [...matches].sort((a, b) => {
+      const aRank = statusOrder.indexOf(normalizeMatchStatus(a.status) as "upcoming" | "live" | "completed");
+      const bRank = statusOrder.indexOf(normalizeMatchStatus(b.status) as "upcoming" | "live" | "completed");
+      if (aRank !== bRank) return aRank - bRank;
+      return (a.startTime || 0) - (b.startTime || 0);
+    });
+  }, [matches]);
 
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
   const normalizedSelectedStatus = normalizeMatchStatus(selectedMatchData?.status);
@@ -551,10 +553,12 @@ export default function Dashboard() {
       selectedMatchData.ctaMode !== "play"
   );
   const canPlay = isTrainingLobby || ((isLive || (normalizedSelectedStatus === "upcoming" && isStartTimeReached)) && isStartTimeReached);
-  const getFallbackMatch = () =>
-    orderedMatches.find((match) => normalizeMatchStatus(match.status) === filter) || orderedMatches[0] || null;
+  const getFallbackMatch = useCallback(() =>
+    orderedMatches.find((match) => normalizeMatchStatus(match.status) === filter) || orderedMatches[0] || null,
+    [orderedMatches, filter]
+  );
 
-  const updateSelectedCard = () => {
+  const updateSelectedCard = useCallback(() => {
     if (isManuallyScrolling.current) return;
     const carousel = carouselRef.current;
     if (!carousel) return;
@@ -579,7 +583,7 @@ export default function Dashboard() {
         setFilter(closestStatus);
       }
     }
-  };
+  }, [filter]);
 
   useEffect(() => {
     if (tab !== "events") return;
@@ -616,7 +620,7 @@ export default function Dashboard() {
     previousTab.current = tab;
   }, [tab]);
 
-  const jumpToStatus = (status: "upcoming" | "live" | "completed") => {
+  const jumpToStatus = useCallback((status: "upcoming" | "live" | "completed") => {
     setFilter(status);
     setSelectedMatch(null);
 
@@ -639,7 +643,7 @@ export default function Dashboard() {
     }, 600);
 
     return true;
-  };
+  }, [updateSelectedCard]);
 
   useEffect(() => {
     if (tab !== "events" || showLoader || !pendingAutoScrollToLive.current) return;
