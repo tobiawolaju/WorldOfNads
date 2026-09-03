@@ -19,12 +19,26 @@ export default defineConfig({
     outDir: "build",
     rollupOptions: {
       output: {
-        manualChunks: {
-          "three-vendor": ["three", "@react-three/fiber", "@react-three/drei"],
-          "privy-vendor": ["@privy-io/react-auth"],
-          "ethers-vendor": ["ethers", "viem"],
-          "solana-vendor": ["@solana/web3.js", "@solana/wallet-adapter-react", "@solana/kit"],
-          "ui-vendor": ["react-router-dom", "react-toastify", "recharts", "chart.js", "gsap"],
+        manualChunks(id) {
+          if (id.includes("node_modules/three/") || id.includes("node_modules/@react-three")) {
+            return "three-vendor";
+          }
+          if (id.includes("node_modules/@privy-io") || id.includes("node_modules/@privy-")) {
+            return "privy-vendor";
+          }
+          if (id.includes("node_modules/ethers/") || id.includes("node_modules/viem/")) {
+            return "ethers-vendor";
+          }
+          if (id.includes("node_modules/@solana/") || id.includes("node_modules/bs58/")) {
+            return "solana-vendor";
+          }
+          if (id.includes("node_modules/recharts") || id.includes("node_modules/chart.js") || id.includes("node_modules/d3-")) {
+            return "charts-vendor";
+          }
+          if (id.includes("node_modules/gsap/")) {
+            return "gsap-vendor";
+          }
+          return undefined;
         },
       },
     },
