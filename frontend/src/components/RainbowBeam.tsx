@@ -9,24 +9,32 @@ interface ElementCache {
 const RainbowBeam: React.FC = () => {
   const barRef = useRef<HTMLDivElement>(null);
   const posY = useRef<number>(-200);
-  const elementsRef = useRef<Element[]>([]);
   const cachedPositions = useRef<ElementCache[]>([]);
   const lastScanTime = useRef<number>(0);
-  
+  const isVisibleRef = useRef(true);
+  const animationFrameIdRef = useRef<number>(0);
+
   const beamHeight = 80;
   const speed = 3.5;
 
   useEffect(() => {
-    let animationFrameId: number;
+    const container = document.querySelector(".rainbow-beam-container");
+    if (!container) return;
+
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        isVisibleRef.current = Boolean(entry?.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+    visibilityObserver.observe(container);
 
     const updateElements = () => {
       const nodeList = document.querySelectorAll(
         "h1, h2, h3, h4, h5, h6, p, a, button, .tab, .filter"
       );
-      elementsRef.current = Array.from(nodeList);
-      
       const scrollY = window.scrollY;
-      cachedPositions.current = elementsRef.current.map(el => {
+      cachedPositions.current = Array.from(nodeList).map(el => {
         const rect = el.getBoundingClientRect();
         return {
           top: rect.top + scrollY,
@@ -38,9 +46,19 @@ const RainbowBeam: React.FC = () => {
 
     updateElements();
 
+    let lastFrameTime = 0;
+    const frameInterval = 1000 / 60;
+
     const animate = (time: number) => {
-      // Recalibrate DOM element positions every 2 seconds to handle dynamic sizing
-      if (time - lastScanTime.current > 2000) {
+      animationFrameIdRef.current = requestAnimationFrame(animate);
+
+      if (!isVisibleRef.current) return;
+
+      const delta = time - lastFrameTime;
+      if (delta < frameInterval) return;
+      lastFrameTime = time - (delta % frameInterval);
+
+      if (time - lastScanTime.current > 3000) {
         updateElements();
         lastScanTime.current = time;
       }
@@ -51,20 +69,20 @@ const RainbowBeam: React.FC = () => {
       }
 
       if (barRef.current) {
-        // GPU-accelerated transform avoiding inline "style.top" DOM recalculations
         barRef.current.style.transform = `translate(-50%, ${posY.current}px)`;
       }
 
       const beamCenter = posY.current + beamHeight / 2;
       const currentScrollY = window.scrollY;
 
-      cachedPositions.current.forEach((item) => {
+      for (let i = 0; i < cachedPositions.current.length; i++) {
+        const item = cachedPositions.current[i];
         const rectTop = item.top - currentScrollY;
         const rectBottom = rectTop + item.height;
-        
+
         if (rectBottom < -100 || rectTop > window.innerHeight + 100) {
           item.el.classList.remove("rainbow-active-text");
-          return;
+          continue;
         }
 
         const elCenter = rectTop + item.height / 2;
@@ -75,17 +93,16 @@ const RainbowBeam: React.FC = () => {
         } else {
           item.el.classList.remove("rainbow-active-text");
         }
-      });
-
-      animationFrameId = requestAnimationFrame(animate);
+      }
     };
 
-    animationFrameId = requestAnimationFrame(animate);
+    animationFrameIdRef.current = requestAnimationFrame(animate);
 
     window.addEventListener("resize", updateElements);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(animationFrameIdRef.current);
+      visibilityObserver.disconnect();
       window.removeEventListener("resize", updateElements);
       cachedPositions.current.forEach(item => item.el.classList.remove("rainbow-active-text"));
     };

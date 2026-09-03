@@ -573,9 +573,6 @@ const NadModel: React.FC<NadModelProps> = ({
   useFrame((state, delta) => {
     mixer.update(delta);
 
-    // Invalidate the frame to ensure animations continue rendering in "demand" modo
-    state.invalidate();
-
     const clockTime = state.clock.getElapsedTime();
     for (const mat of animatedMaterialsRef.current) {
       const shader = mat.userData?.shader;
@@ -831,23 +828,8 @@ const CameraInteractionLogger: React.FC<{ controlsRef: React.RefObject<any>; bas
     const controls = controlsRef.current;
     if (!controls?.addEventListener) return;
 
-    const logCameraState = () => {
-      if (!isInteractingRef.current) return;
-
-      const distance = camera.position.distanceTo(controls.target);
-      const cameraZoom = camera.zoom ?? 1;
-      const relativeZoom = baseDistance > 0 ? baseDistance / distance : 0;
-
-      console.log("[ThreeScene] camera state", {
-        distance: Number(distance.toFixed(3)),
-        cameraZoom: Number(cameraZoom.toFixed(3)),
-        relativeZoom: Number(relativeZoom.toFixed(3)),
-      });
-    };
-
     const handleStart = () => {
       isInteractingRef.current = true;
-      logCameraState();
     };
 
     const handleEnd = () => {
@@ -860,20 +842,17 @@ const CameraInteractionLogger: React.FC<{ controlsRef: React.RefObject<any>; bas
       wheelTimeoutRef.current = setTimeout(() => {
         isInteractingRef.current = false;
       }, 250);
-      logCameraState();
     };
 
     const domElement = controls.domElement as HTMLElement | undefined;
 
     controls.addEventListener("start", handleStart);
-    controls.addEventListener("change", logCameraState);
     controls.addEventListener("end", handleEnd);
     domElement?.addEventListener("wheel", handleWheel, { passive: true });
 
     return () => {
       if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
       controls.removeEventListener("start", handleStart);
-      controls.removeEventListener("change", logCameraState);
       controls.removeEventListener("end", handleEnd);
       domElement?.removeEventListener("wheel", handleWheel);
     };
@@ -964,7 +943,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
         scale={6}
         blur={1.5}
         far={4}
-        resolution={96}
+        resolution={64}
         color="#000000"
         position={[0, -2.01, 0]}
       />
