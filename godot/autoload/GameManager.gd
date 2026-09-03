@@ -20,6 +20,7 @@ func _ready() -> void:
 	# resolution; the browser upscales. Massive fill-rate win on low-end GPUs.
 	if OS.has_feature("web"):
 		get_viewport().scaling_3d_scale = 0.7
+	get_viewport().scaling_3d_scale = 1.0
 
 ## Sets the game speed (time scale).
 ## 1.0 = Normal speed

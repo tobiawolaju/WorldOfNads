@@ -28,6 +28,11 @@ window/size/viewport_width=500
 window/size/viewport_height=500
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/vsync/vsync_mode=0
+
+[editor]
+
+movie_writer/disable_vsync=true
 
 [input]
 
@@ -73,6 +78,7 @@ pointing/emulate_touch_from_mouse=true
 
 [physics]
 
+common/physics_ticks_per_second=120
 3d/physics_engine="Jolt Physics"
 
 [rendering]
