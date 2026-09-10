@@ -33,9 +33,8 @@ async function fetchPrivyUser(privyId) {
 function extractPfp(privyUser) {
   const linkedAccounts = privyUser?.linked_accounts || privyUser?.linkedAccounts || [];
   for (const acc of linkedAccounts) {
-    if (acc.profile_picture_url || acc.profilePictureUrl) {
-      return acc.profile_picture_url || acc.profilePictureUrl;
-    }
+    const pfp = acc.profile_picture_url || acc.profilePictureUrl || acc.image || acc.avatar || acc.picture || null;
+    if (pfp) return pfp;
   }
   return null;
 }
@@ -80,6 +79,7 @@ export async function refreshAllUserPfps() {
   let updated = 0;
   let skipped = 0;
   let errors = 0;
+  let loggedDebug = false;
 
   for (let i = 0; i < needsRefreshEntries.length; i += BATCH_SIZE) {
     const batch = needsRefreshEntries.slice(i, i + BATCH_SIZE);
@@ -90,6 +90,13 @@ export async function refreshAllUserPfps() {
           const privyUser = await fetchPrivyUser(userData.privyId);
           const newPfp = extractPfp(privyUser);
           const currentPfp = userData.profilePictureUrl || '';
+
+          // Debug: log first user's raw response to inspect field names
+          if (i === 0 && !loggedDebug) {
+            loggedDebug = true;
+            const accounts = privyUser?.linked_accounts || privyUser?.linkedAccounts || [];
+            console.log(`[PfpRefresh] DEBUG raw linked_accounts for ${username}:`, JSON.stringify(accounts.map(a => ({ type: a.type, keys: Object.keys(a), pfp: a.profile_picture_url || a.profilePictureUrl || a.image || a.avatar || null })), null, 2));
+          }
 
           if (newPfp && newPfp !== currentPfp) {
             await update(ref(db, `users/${username}`), {
