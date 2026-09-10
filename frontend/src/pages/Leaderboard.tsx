@@ -34,7 +34,9 @@ type SponsorDailyData = {
 };
 
 const TREND_DAYS = 7;
-const DEFAULT_LOGO = "/logo.jpg";
+function getAvatarUrl(username: string): string {
+  return `https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${encodeURIComponent(username)}&backgroundColor=transparent`;
+}
 
 const Leaderboard: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -63,7 +65,7 @@ const Leaderboard: React.FC = () => {
           username: String(user.username || "Anon"),
           won: Number(user.won || 0),
           projects: Array.isArray(user.projects) ? user.projects : [],
-          pfp: String(user.pfp || user.profilePictureUrl || DEFAULT_LOGO)
+          pfp: user.pfp || user.profilePictureUrl || ""
         }));
 
         const projectStats = buildProjects(matches as MatchRecord[], sponsorDaily as SponsorDailyData);
@@ -99,7 +101,7 @@ const Leaderboard: React.FC = () => {
       .map((username) => {
         const match = allUsers.find((user) => user.username === username);
         if (match) return match;
-        return { username, won: 0, projects: [], pfp: DEFAULT_LOGO };
+        return { username, won: 0, projects: [], pfp: "" };
       });
   }, [allUsers, selectedProject, sponsorUsers]);
 
@@ -219,7 +221,7 @@ const Leaderboard: React.FC = () => {
                 <li key={`${user.username}-${i}`} className="user-entry">
                   <span className="rank">#{indexOfFirstUser + i + 1}</span>
                   <div className="user-info">
-                    <img src={user.pfp} alt={user.username} className="user-pfp" />
+                    <img src={user.pfp || getAvatarUrl(user.username)} alt={user.username} className="user-pfp" />
                     <span className="username">{user.username}</span>
                   </div>
                   <span className="won">{user.won} WON</span>
@@ -271,7 +273,7 @@ function buildProjects(matches: MatchRecord[], sponsorDaily: SponsorDailyData): 
         name,
         interactions: 0,
         trend: Array.from({ length: TREND_DAYS }, () => 0),
-        logo: DEFAULT_LOGO
+        logo: "/logo.jpg"
       });
     }
     return map.get(name)!;
@@ -288,7 +290,7 @@ function buildProjects(matches: MatchRecord[], sponsorDaily: SponsorDailyData): 
     const sponsor = (match.sponsor || "Unknown Sponsor").trim();
     if (!sponsor) return;
     const project = ensureProject(sponsor);
-    if (match.image && match.image !== DEFAULT_LOGO) {
+    if (match.image && match.image !== "/logo.jpg") {
       project.logo = match.image;
     }
   });
