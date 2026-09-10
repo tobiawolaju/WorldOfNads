@@ -38,6 +38,10 @@ function getAvatarUrl(username: string): string {
   return `https://api.dicebear.com/9.x/identicon/svg?seed=${encodeURIComponent(username)}&backgroundColor=ffffff`;
 }
 
+function getProjectLogoFallback(projectName: string): string {
+  return `https://api.dicebear.com/9.x/identicon/svg?seed=project-${encodeURIComponent(projectName)}&backgroundColor=ffffff`;
+}
+
 const Leaderboard: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -197,7 +201,16 @@ const Leaderboard: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                   <div className="rect-label">
-                    <img src={proj.logo} alt={proj.name} className="proj-logo" />
+                    <img
+                      src={proj.logo}
+                      alt={proj.name}
+                      className="proj-logo"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = getProjectLogoFallback(proj.name);
+                      }}
+                    />
                     <span className="proj-name">{proj.name}</span>
                     <span className="proj-interactions">{proj.interactions} interactions</span>
                   </div>
