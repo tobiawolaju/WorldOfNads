@@ -17,39 +17,32 @@ const Footer = () => {
 
   return (
     <footer className="footer-container">
-      <div className="footer-left">
-        <img src="/iarc12.webp" alt="IARC 12+ rating" className="footer-rating-image" />
-      </div>
+      <nav className="footer-nav" aria-label="Footer navigation">
+        {navItems.map((item) => (
+          <NavLink key={item.to} to={item.to} className="footer-link">
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
 
-      <div className="footer-right">
-        <div className="footer-section">
-          <h3 className="footer-title">Social</h3>
-          <a href="https://x.com/worldofnads" target="_blank" rel="noopener noreferrer" className="footer-social-link">
-            <FaXTwitter size={18} />
-            <span>WorldofNad</span>
-          </a>
-        </div>
-
-        <div className="footer-section">
-          <h3 className="footer-title">Navigation</h3>
-          <nav className="footer-nav" aria-label="Footer navigation">
-            {navItems.map((item) => (
-              <NavLink key={item.to} to={item.to} className="footer-link">
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
+      <div className="footer-bottom">
+        <a
+          href="https://x.com/worldofnads"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="footer-social-link"
+        >
+          <FaXTwitter size={16} />
+          <span>@worldofnads</span>
+        </a>
 
         {authenticated && (
-          <div className="footer-section">
-            <span 
-              onClick={logout}
-              className="text-inline-danger" style={{ cursor: "pointer", fontWeight: "bold", userSelect: "none" }}
-            >
-              Log Out
-            </span>
-          </div>
+          <span
+            onClick={logout}
+            className="footer-logout"
+          >
+            Log Out
+          </span>
         )}
       </div>
     </footer>
