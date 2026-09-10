@@ -35,7 +35,7 @@ type SponsorDailyData = {
 
 const TREND_DAYS = 7;
 function getAvatarUrl(username: string): string {
-  return `https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${encodeURIComponent(username)}&backgroundColor=transparent`;
+  return `https://api.dicebear.com/9.x/identicon/svg?seed=${encodeURIComponent(username)}&backgroundColor=transparent`;
 }
 
 const Leaderboard: React.FC = () => {
