@@ -61,12 +61,16 @@ const Leaderboard: React.FC = () => {
           fetchSponsorDailyPlayers(TREND_DAYS)
         ]);
 
-        const normalizedUsers: User[] = (users || []).map((user: any) => ({
-          username: String(user.username || "Anon"),
-          won: Number(user.won || 0),
-          projects: Array.isArray(user.projects) ? user.projects : [],
-          pfp: user.pfp || user.profilePictureUrl || ""
-        }));
+        const normalizedUsers: User[] = (users || []).map((user: any) => {
+          const rawPfp = user.pfp || user.profilePictureUrl || "";
+          const pfp = rawPfp && rawPfp !== "/logo.jpg" ? rawPfp : "";
+          return {
+            username: String(user.username || "Anon"),
+            won: Number(user.won || 0),
+            projects: Array.isArray(user.projects) ? user.projects : [],
+            pfp
+          };
+        });
 
         const projectStats = buildProjects(matches as MatchRecord[], sponsorDaily as SponsorDailyData);
         const sponsorUsersLookup = buildSponsorUsersLookup(sponsorDaily as SponsorDailyData);
