@@ -3,7 +3,7 @@ import { ref, get, update } from 'firebase/database';
 
 const PRIVY_APP_ID = process.env.PRIVY_APP_ID;
 const PRIVY_APP_SECRET = process.env.PRIVY_APP_SECRET;
-const PRIVY_API_BASE = 'https://api.privy.io/v1';
+const PRIVY_API_BASE = 'https://auth.privy.io/api/v1';
 
 const BATCH_SIZE = 10;
 const DELAY_BETWEEN_BATCHES_MS = 1000;
@@ -18,6 +18,7 @@ async function fetchPrivyUser(privyId) {
   const res = await fetch(`${PRIVY_API_BASE}/users/${privyId}`, {
     headers: {
       'Authorization': getAuthHeader(),
+      'privy-app-id': PRIVY_APP_ID,
       'Content-Type': 'application/json',
     },
   });
