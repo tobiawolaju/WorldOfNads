@@ -5,6 +5,7 @@ import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
 import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin } from './firebaseClient.js';
 import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
+import { refreshAllUserPfps } from './refreshUserPfps.js';
 
 const PORT = process.env.PORT || 8080;
 const BROADCAST_RATE = 20;
@@ -627,6 +628,26 @@ const server = createServer(async (req, res) => {
       });
     } catch (error) {
       console.error('[Admin] Create skin failed:', error);
+      sendJson(res, 500, { ok: false, error: 'Internal server error' });
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/admin/refresh-pfps') {
+    try {
+      const payload = await readJsonBody(req);
+      const code = typeof payload?.code === 'string' ? payload.code.trim() : '';
+      const expected = process.env.ADMIN_ACCESS_CODE || 'WONS';
+
+      if (!code || code !== expected) {
+        sendJson(res, 403, { ok: false, error: 'Invalid access code' });
+        return;
+      }
+
+      const result = await refreshAllUserPfps();
+      sendJson(res, 200, { ok: true, ...result });
+    } catch (error) {
+      console.error('[Admin] PFP refresh failed:', error);
       sendJson(res, 500, { ok: false, error: 'Internal server error' });
     }
     return;
@@ -1875,6 +1896,18 @@ initAnalyticsDb()
         console.error("[Match] Failed to refresh match limits:", error);
       }
     }, 15000);
+
+    // Refresh user profile pictures from Privy every 6 hours
+    const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+    refreshAllUserPfps().catch((err) => {
+      console.error('[PfpRefresh] Initial refresh failed:', err.message);
+    });
+    setInterval(() => {
+      refreshAllUserPfps().catch((err) => {
+        console.error('[PfpRefresh] Scheduled refresh failed:', err.message);
+      });
+    }, SIX_HOURS_MS);
+
     server.listen(PORT, '0.0.0.0', () => {
       console.log(`✅ Server is live on port ${PORT}`);
     });
