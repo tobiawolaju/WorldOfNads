@@ -12,6 +12,7 @@ type Host = {
   playersReached: string;
   joined: string;
   liveMatches: number;
+  siteUrl: string;
 };
 
 const Partners: React.FC = () => {
@@ -20,81 +21,28 @@ const Partners: React.FC = () => {
 
   const partners: Host[] = [
     {
-      name: "KizzyBean",
-      logo: "/partners/kizzy.webp",
-      handle: "@kizzybean",
-      bio: "Funding competitive matches across WONs.",
-      matchesHosted: "1,240",
-      totalPaidOut: "$3,800",
-      playersReached: "9,200",
-      joined: "Jan 2026",
-      liveMatches: 12,
+      name: "Chog.fun",
+      logo: "https://pbs.twimg.com/profile_images/2066836431557832705/eGhU_mNe_400x400.jpg",
+      handle: "@chogfun",
+      bio: "Build with Chog. Launch with Chog. Chog World Order.",
+      matchesHosted: "0",
+      totalPaidOut: "$0",
+      playersReached: "0",
+      joined: "2026",
+      liveMatches: 0,
+      siteUrl: "https://chog.fun/",
     },
     {
-      name: "Mayan Circuit",
-      logo: "/partners/mayan.webp",
-      handle: "@mayancircuit",
-      bio: "Running weekly spotlight brackets for rising players.",
-      matchesHosted: "980",
-      totalPaidOut: "$2,950",
-      playersReached: "7,450",
-      joined: "Feb 2026",
-      liveMatches: 9,
-    },
-    {
-      name: "Rug Arena",
-      logo: "/partners/rugrumble.webp",
-      handle: "@rugarena",
-      bio: "Back-to-back community tournaments with instant payouts.",
-      matchesHosted: "1,520",
-      totalPaidOut: "$4,420",
-      playersReached: "11,300",
-      joined: "Dec 2025",
-      liveMatches: 15,
-    },
-    {
-      name: "Bean Exchange",
-      logo: "/partners/beanexchange.webp",
-      handle: "@beanexchange",
-      bio: "Powering creator-hosted match days on WONs.",
-      matchesHosted: "760",
-      totalPaidOut: "$2,100",
-      playersReached: "5,980",
-      joined: "Mar 2026",
-      liveMatches: 6,
-    },
-    {
-      name: "Grimmys League",
-      logo: "/partners/grimmys.webp",
-      handle: "@grimmysleague",
-      bio: "Hosting high-stakes finals with top leaderboard players.",
-      matchesHosted: "640",
-      totalPaidOut: "$1,880",
-      playersReached: "4,720",
-      joined: "Nov 2025",
-      liveMatches: 5,
-    },
-    {
-      name: "Perpl Plays",
-      logo: "/partners/perpl.webp",
-      handle: "@perplplays",
-      bio: "Creator showmatches bringing new players into competition.",
-      matchesHosted: "890",
-      totalPaidOut: "$2,640",
-      playersReached: "6,860",
-      joined: "Jan 2026",
-      liveMatches: 8,
-    },
-    {
-      name: "Neverland Cups",
-      logo: "/partners/neverland.webp",
-      handle: "@neverlandcups",
-      bio: "Building seasonal ladders and sponsor-backed prize pools.",
-      matchesHosted: "1,130",
-      totalPaidOut: "$3,200",
-      playersReached: "8,540",
-      joined: "Feb 2026",
-      liveMatches: 11,
+      name: "World of Nads",
+      logo: "https://pbs.twimg.com/profile_images/2098026275784785926/ZrpbNv7J_400x400.jpg",
+      handle: "@WorldOfNads",
+      bio: "Capture the chicken Royal game set in the world of NADs! In early development.",
+      matchesHosted: "0",
+      totalPaidOut: "$0",
+      playersReached: "0",
+      joined: "2026",
+      liveMatches: 0,
+      siteUrl: "https://worldofnads.xyz",
     },
   ];
 
@@ -144,7 +92,7 @@ const Partners: React.FC = () => {
                       <p><strong>Joined:</strong> {partner.joined}</p>
                     </div>
                     <div className="host-actions">
-                      <a href="#" className="host-action-link">View Merch</a>
+                      <a href={partner.siteUrl} target="_blank" rel="noopener noreferrer" className="host-action-link">Visit Site</a>
                       <a href="#" className="host-action-link">View Live Matches ({partner.liveMatches})</a>
                     </div>
                   </div>
