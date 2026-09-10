@@ -7,6 +7,7 @@ const PRIVY_API_BASE = 'https://api.privy.io/v1';
 
 const BATCH_SIZE = 10;
 const DELAY_BETWEEN_BATCHES_MS = 1000;
+const REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours — skip users refreshed recently
 
 function getAuthHeader() {
   const token = Buffer.from(`${PRIVY_APP_ID}:${PRIVY_APP_SECRET}`).toString('base64');
@@ -42,10 +43,17 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function needsRefresh(userData) {
+  const lastRefresh = userData?.lastPfpRefresh;
+  if (!lastRefresh) return true;
+  const elapsed = Date.now() - new Date(lastRefresh).getTime();
+  return elapsed > REFRESH_INTERVAL_MS;
+}
+
 export async function refreshAllUserPfps() {
   if (!PRIVY_APP_ID || !PRIVY_APP_SECRET) {
     console.warn('[PfpRefresh] Missing PRIVY_APP_SECRET, skipping.');
-    return { updated: 0, skipped: 0, errors: 0 };
+    return { updated: 0, skipped: 0, errors: 0, total: 0 };
   }
 
   console.log('[PfpRefresh] Starting PFP refresh cycle...');
@@ -54,20 +62,26 @@ export async function refreshAllUserPfps() {
 
   if (!snapshot.exists()) {
     console.log('[PfpRefresh] No users found.');
-    return { updated: 0, skipped: 0, errors: 0 };
+    return { updated: 0, skipped: 0, errors: 0, total: 0 };
   }
 
   const users = snapshot.val();
-  const entries = Object.entries(users).filter(([, data]) => data?.privyId);
+  const allEntries = Object.entries(users).filter(([, data]) => data?.privyId);
+  const needsRefreshEntries = allEntries.filter(([, data]) => needsRefresh(data));
 
-  console.log(`[PfpRefresh] Found ${entries.length} users with privyId.`);
+  console.log(`[PfpRefresh] ${allEntries.length} users total, ${needsRefreshEntries.length} need refresh (>24h since last).`);
+
+  if (needsRefreshEntries.length === 0) {
+    console.log('[PfpRefresh] All users recently refreshed, skipping.');
+    return { updated: 0, skipped: 0, errors: 0, total: allEntries.length };
+  }
 
   let updated = 0;
   let skipped = 0;
   let errors = 0;
 
-  for (let i = 0; i < entries.length; i += BATCH_SIZE) {
-    const batch = entries.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < needsRefreshEntries.length; i += BATCH_SIZE) {
+    const batch = needsRefreshEntries.slice(i, i + BATCH_SIZE);
 
     const results = await Promise.allSettled(
       batch.map(async ([username, userData]) => {
@@ -79,11 +93,16 @@ export async function refreshAllUserPfps() {
           if (newPfp && newPfp !== currentPfp) {
             await update(ref(db, `users/${username}`), {
               profilePictureUrl: newPfp,
+              lastPfpRefresh: new Date().toISOString(),
             });
             console.log(`[PfpRefresh] Updated ${username}: ${currentPfp.slice(0, 40)} → ${newPfp.slice(0, 40)}`);
             return 'updated';
           }
 
+          // PFP unchanged — just update the timestamp so we don't re-check for 24h
+          await update(ref(db, `users/${username}`), {
+            lastPfpRefresh: new Date().toISOString(),
+          });
           return 'skipped';
         } catch (err) {
           console.error(`[PfpRefresh] Failed for ${username}:`, err.message);
@@ -99,11 +118,11 @@ export async function refreshAllUserPfps() {
       else errors++;
     }
 
-    if (i + BATCH_SIZE < entries.length) {
+    if (i + BATCH_SIZE < needsRefreshEntries.length) {
       await sleep(DELAY_BETWEEN_BATCHES_MS);
     }
   }
 
   console.log(`[PfpRefresh] Done. Updated: ${updated}, Skipped: ${skipped}, Errors: ${errors}`);
-  return { updated, skipped, errors };
+  return { updated, skipped, errors, total: allEntries.length };
 }
