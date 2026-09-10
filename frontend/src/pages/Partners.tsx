@@ -16,7 +16,7 @@ type Host = {
 
 const Partners: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const hasHosts = false;
+  const hasHosts = true;
 
   const partners: Host[] = [
     {
