@@ -644,7 +644,8 @@ const server = createServer(async (req, res) => {
         return;
       }
 
-      const result = await refreshAllUserPfps();
+      const force = payload?.force === true;
+      const result = await refreshAllUserPfps(force);
       sendJson(res, 200, { ok: true, ...result });
     } catch (error) {
       console.error('[Admin] PFP refresh failed:', error);
@@ -1898,8 +1899,9 @@ initAnalyticsDb()
     }, 15000);
 
     // Refresh user profile pictures from Privy every 6 hours
+    // First run is forced to clean up stale timestamps from previous failed runs
     const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
-    refreshAllUserPfps().catch((err) => {
+    refreshAllUserPfps(true).catch((err) => {
       console.error('[PfpRefresh] Initial refresh failed:', err.message);
     });
     setInterval(() => {

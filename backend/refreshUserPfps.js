@@ -50,7 +50,7 @@ function needsRefresh(userData) {
   return elapsed > REFRESH_INTERVAL_MS;
 }
 
-export async function refreshAllUserPfps() {
+export async function refreshAllUserPfps(force = false) {
   if (!PRIVY_APP_ID || !PRIVY_APP_SECRET) {
     console.warn('[PfpRefresh] Missing PRIVY_APP_SECRET, skipping.');
     return { updated: 0, skipped: 0, errors: 0, total: 0 };
@@ -67,9 +67,11 @@ export async function refreshAllUserPfps() {
 
   const users = snapshot.val();
   const allEntries = Object.entries(users).filter(([, data]) => data?.privyId);
-  const needsRefreshEntries = allEntries.filter(([, data]) => needsRefresh(data));
+  const needsRefreshEntries = force
+    ? allEntries
+    : allEntries.filter(([, data]) => needsRefresh(data));
 
-  console.log(`[PfpRefresh] ${allEntries.length} users total, ${needsRefreshEntries.length} need refresh (>24h since last).`);
+  console.log(`[PfpRefresh] ${allEntries.length} users total, ${needsRefreshEntries.length} need refresh${force ? ' (forced)' : ' (>24h since last)'}.`);
 
   if (needsRefreshEntries.length === 0) {
     console.log('[PfpRefresh] All users recently refreshed, skipping.');
