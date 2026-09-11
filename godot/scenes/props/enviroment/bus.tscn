@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://bok6pqa5jkw3a" path="res://scripts/environment/bus.gd" id="1_xtfkx"]
 [ext_resource type="Texture2D" uid="uid://defespl54abgc" path="res://assets/img/VanTex.png" id="2_alnap"]
-[ext_resource type="Texture2D" uid="uid://cue03s30l685a" path="res://assets/models/props/trump_baby_balloon_from_the_uk_protest_2.png" id="3_0ur64"]
-[ext_resource type="Texture2D" uid="uid://bda1iwpnwp1lq" path="res://assets/models/props/trump_baby_balloon_from_the_uk_protest_3.png" id="4_8cuq2"]
+[ext_resource type="Texture2D" uid="uid://cue03s30l685a" path="res://assets/models/textures/trump_baby_balloon_from_the_uk_protest_2.png" id="3_0ur64"]
+[ext_resource type="Texture2D" uid="uid://bda1iwpnwp1lq" path="res://assets/models/textures/trump_baby_balloon_from_the_uk_protest_3.png" id="4_8cuq2"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ur64"]
 albedo_color = Color(1, 0.22745098, 1, 1)

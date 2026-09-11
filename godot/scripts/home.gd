@@ -22,7 +22,7 @@ func _ready() -> void:
 	Game.transition_layer.change_scene("res://scenes/lobby.tscn")
 
 func _capture_minimap() -> void:
-	var map_scene = load("res://scenes/maps/busyland.tscn")
+	var map_scene = load("res://scenes/maps/vanland.tscn")
 	if not map_scene:
 		return
 	var map = map_scene.instantiate()

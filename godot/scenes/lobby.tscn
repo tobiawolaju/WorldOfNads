@@ -2,13 +2,13 @@
 
 [ext_resource type="Script" uid="uid://g4sej37mjguw" path="res://scripts/lobby.gd" id="1_07nfq"]
 [ext_resource type="PackedScene" uid="uid://bjvhk14twbsb6" path="res://scenes/hud.tscn" id="1_o1atq"]
-[ext_resource type="PackedScene" uid="uid://23ums28hpn7g" path="res://scenes/maps/busyland.tscn" id="2_5gu6x"]
 [ext_resource type="PackedScene" uid="uid://bq3i1po3drd3s" path="res://scenes/skin.tscn" id="2_oipnb"]
 [ext_resource type="Script" uid="uid://guvxewi0bmto" path="res://scripts/map/StormEye.gd" id="3_ncsg4"]
 [ext_resource type="Environment" uid="uid://rpidr3omplr6" path="res://assets/resources/day.tres" id="4_ncsg4"]
 [ext_resource type="Environment" uid="uid://b1xdulwsbpnew" path="res://assets/resources/night.tres" id="5_07nfq"]
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="5_omrgh"]
 [ext_resource type="Script" uid="uid://dyx5kfl7l30wf" path="res://scripts/lobbymanager.gd" id="7_yad6j"]
+[ext_resource type="PackedScene" uid="uid://dobb4yuv0li3a" path="res://scenes/maps/vanland.tscn" id="9_07nfq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
 render_priority = 0
@@ -52,7 +52,7 @@ cylinder_wall = NodePath("Cylinder")
 cylinder_border = NodePath("Cylinder2")
 normal_env = ExtResource("4_ncsg4")
 storm_env = ExtResource("5_07nfq")
-cylinder_radius = 15.0
+cylinder_radius = 20.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=580568222]
 environment = ExtResource("4_ncsg4")
@@ -71,13 +71,13 @@ shadow_enabled = true
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=874651139]
-transform = Transform3D(15, 0, 0, 0, 200, 0, 0, 0, 15, 0, 0, 0)
+transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_ncsg4")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_07nfq")
 
 [node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1546332868]
-transform = Transform3D(15, 0, 0, 0, 200, 0, 0, 0, 15, 0, 0, 0)
+transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_oipnb")
 surface_material_override/0 = SubResource("StandardMaterial3D_07nfq")
@@ -97,6 +97,6 @@ far = 100.0
 
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("1_o1atq")]
 
-[node name="Busyland" parent="." unique_id=1920523763 instance=ExtResource("2_5gu6x")]
+[node name="Busyland" parent="." unique_id=1920523763 instance=ExtResource("9_07nfq")]
 
 [editable path="Hud"]

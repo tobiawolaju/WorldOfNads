@@ -4,7 +4,7 @@
 [ext_resource type="AnimationLibrary" uid="uid://cyoeh8u10140w" path="res://resources/PlayerAnimations.tres" id="2_wrixk"]
 [ext_resource type="Shader" uid="uid://dqg85vp5she" path="res://assets/shaders/outline.gdshader" id="3_wrixk"]
 [ext_resource type="Texture2D" uid="uid://dekbb3ewhm11g" path="res://assets/img/skins/mouth_test1.png" id="4_f0bnh"]
-[ext_resource type="Texture2D" uid="uid://mpx1bh7bopfs" path="res://assets/models/props/wood_is_from_angry_birds_isle_of_pigs_0.png" id="5_8qxwi"]
+[ext_resource type="Texture2D" path="res://assets/wood_is_from_angry_birds_isle_of_pigs_0.png" id="5_8qxwi"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hqo6i"]
 radius = 0.23692703

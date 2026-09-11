@@ -9,7 +9,7 @@
 [ext_resource type="Script" uid="uid://bo6d71r4umug2" path="res://scripts/pickups/PickupItem.gd" id="9_w01lk"]
 [ext_resource type="Environment" uid="uid://b1xdulwsbpnew" path="res://assets/resources/night.tres" id="10_nt65e"]
 [ext_resource type="PackedScene" uid="uid://bjvhk14twbsb6" path="res://scenes/hud.tscn" id="11_hpwea"]
-[ext_resource type="PackedScene" uid="uid://23ums28hpn7g" path="res://scenes/maps/busyland.tscn" id="12_nt65e"]
+[ext_resource type="PackedScene" uid="uid://dobb4yuv0li3a" path="res://scenes/maps/vanland.tscn" id="12_nt65e"]
 [ext_resource type="Texture2D" uid="uid://b4q27tedq04t7" path="res://assets/img/mboxcore.png" id="12_qixtg"]
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="13_i18v2"]
 
@@ -104,7 +104,7 @@ cylinder_wall = NodePath("Cylinder")
 cylinder_border = NodePath("Cylinder2")
 normal_env = ExtResource("9_qixtg")
 storm_env = ExtResource("10_nt65e")
-cylinder_radius = 15.0
+cylinder_radius = 20.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=711725318]
 environment = ExtResource("10_nt65e")
@@ -123,13 +123,13 @@ shadow_enabled = true
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=154871314]
-transform = Transform3D(15, 0, 0, 0, 200, 0, 0, 0, 15, 0, 0, 0)
+transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_bhmdk")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_s5y6v")
 
 [node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1339689695]
-transform = Transform3D(15, 0, 0, 0, 200, 0, 0, 0, 15, 0, 0, 0)
+transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_407ns")
 surface_material_override/0 = SubResource("StandardMaterial3D_qixtg")
