@@ -8,7 +8,7 @@
 [ext_resource type="Environment" uid="uid://b1xdulwsbpnew" path="res://assets/resources/night.tres" id="5_07nfq"]
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="5_omrgh"]
 [ext_resource type="Script" uid="uid://dyx5kfl7l30wf" path="res://scripts/lobbymanager.gd" id="7_yad6j"]
-[ext_resource type="PackedScene" uid="uid://dobb4yuv0li3a" path="res://scenes/maps/vanland.tscn" id="9_07nfq"]
+[ext_resource type="PackedScene" uid="uid://dobb4yuv0li3a" path="res://scenes/maps/busyland.tscn" id="9_07nfq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
 render_priority = 0

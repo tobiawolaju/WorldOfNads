@@ -9,7 +9,7 @@
 [ext_resource type="Script" uid="uid://bo6d71r4umug2" path="res://scripts/pickups/PickupItem.gd" id="9_w01lk"]
 [ext_resource type="Environment" uid="uid://b1xdulwsbpnew" path="res://assets/resources/night.tres" id="10_nt65e"]
 [ext_resource type="PackedScene" uid="uid://bjvhk14twbsb6" path="res://scenes/hud.tscn" id="11_hpwea"]
-[ext_resource type="PackedScene" uid="uid://dobb4yuv0li3a" path="res://scenes/maps/vanland.tscn" id="12_nt65e"]
+[ext_resource type="PackedScene" uid="uid://dobb4yuv0li3a" path="res://scenes/maps/busyland.tscn" id="12_nt65e"]
 [ext_resource type="Texture2D" uid="uid://b4q27tedq04t7" path="res://assets/img/mboxcore.png" id="12_qixtg"]
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="13_i18v2"]
 
