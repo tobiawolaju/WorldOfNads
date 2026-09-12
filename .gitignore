@@ -95,3 +95,10 @@ contracts/coverage/
 contracts/bundle/
 contracts/dist/
 
+
+# Godot web export binaries (reproducible; kept out of git)
+frontend/public/godot/*.pck
+frontend/public/godot/*.wasm
+cdn/godot/
+*.pck
+*.wasm
