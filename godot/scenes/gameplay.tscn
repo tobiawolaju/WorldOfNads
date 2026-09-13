@@ -90,7 +90,6 @@ shadow_mesh = SubResource("ArrayMesh_hpwea")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hpwea"]
 shading_mode = 0
-albedo_color = Color(1, 1, 0, 1)
 
 [node name="Gameplay" type="Node3D" unique_id=2001810245]
 
@@ -112,14 +111,17 @@ environment = ExtResource("10_nt65e")
 [node name="day" type="DirectionalLight3D" parent="env" unique_id=654260087]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
 visible = false
+light_color = Color(1, 0.68235296, 0.9529412, 1)
 light_energy = 0.5
 shadow_enabled = true
+directional_shadow_mode = 0
 
 [node name="night" type="DirectionalLight3D" parent="env" unique_id=366884123]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
 light_color = Color(0.85490197, 0, 0.78431374, 1)
 light_energy = 0.2
 shadow_enabled = true
+directional_shadow_mode = 0
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=154871314]
@@ -159,6 +161,15 @@ one_shot = true
 [node name="Bus" parent="." unique_id=1811375150 instance=ExtResource("5_w01lk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 60, 0)
 
+[node name="bus" parent="Bus" index="1" unique_id=1872449115]
+cast_shadow = 0
+
+[node name="Parachute" parent="Bus" index="2" unique_id=1765568791]
+cast_shadow = 0
+
+[node name="Object_2" parent="Bus" index="4" unique_id=1403144337]
+cast_shadow = 0
+
 [node name="LootBox" type="RigidBody3D" parent="." unique_id=1252787878]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.785, 8.495601, -0.189)
 collision_layer = 2
@@ -172,6 +183,7 @@ shape = SubResource("BoxShape3D_rkx1j")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="LootBox" unique_id=1840421709]
 material_override = SubResource("StandardMaterial3D_nt65e")
+cast_shadow = 0
 mesh = SubResource("BoxMesh_bhmdk")
 
 [node name="Sprite3D" type="Sprite3D" parent="LootBox/MeshInstance3D" unique_id=1133136103]
@@ -191,6 +203,7 @@ shape = SubResource("BoxShape3D_rkx1j")
 
 [node name="Chicken" type="MeshInstance3D" parent="Chicken" unique_id=905862744]
 transform = Transform3D(1, 0, 0, 0, -8.742278e-08, -1, 0, 2, -4.371139e-08, 0.6, 0, 0.2)
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_cgvcs")
 surface_material_override/0 = SubResource("StandardMaterial3D_hpwea")
 
