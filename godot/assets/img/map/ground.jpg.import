@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dra68b33d7qk4"
 path.s3tc="res://.godot/imported/ground.jpg-e94c5e668e105dfbd21ec7a30840b0bb.s3tc.ctex"
+path.etc2="res://.godot/imported/ground.jpg-e94c5e668e105dfbd21ec7a30840b0bb.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/img/map/ground.jpg"
-dest_files=["res://.godot/imported/ground.jpg-e94c5e668e105dfbd21ec7a30840b0bb.s3tc.ctex"]
+dest_files=["res://.godot/imported/ground.jpg-e94c5e668e105dfbd21ec7a30840b0bb.s3tc.ctex", "res://.godot/imported/ground.jpg-e94c5e668e105dfbd21ec7a30840b0bb.etc2.ctex"]
 
 [params]
 

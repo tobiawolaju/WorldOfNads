@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bda1iwpnwp1lq"
 path.s3tc="res://.godot/imported/trump_baby_balloon_from_the_uk_protest_3.png-79b74145d18e64a188498457e4c5e050.s3tc.ctex"
+path.etc2="res://.godot/imported/trump_baby_balloon_from_the_uk_protest_3.png-79b74145d18e64a188498457e4c5e050.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/textures/trump_baby_balloon_from_the_uk_protest_3.png"
-dest_files=["res://.godot/imported/trump_baby_balloon_from_the_uk_protest_3.png-79b74145d18e64a188498457e4c5e050.s3tc.ctex"]
+dest_files=["res://.godot/imported/trump_baby_balloon_from_the_uk_protest_3.png-79b74145d18e64a188498457e4c5e050.s3tc.ctex", "res://.godot/imported/trump_baby_balloon_from_the_uk_protest_3.png-79b74145d18e64a188498457e4c5e050.etc2.ctex"]
 
 [params]
 

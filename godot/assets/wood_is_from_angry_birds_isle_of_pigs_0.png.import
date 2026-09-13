@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://q257yusec2d7"
 path.s3tc="res://.godot/imported/wood_is_from_angry_birds_isle_of_pigs_0.png-9a21a87e7b9041f65b4a68ef266e48cb.s3tc.ctex"
+path.etc2="res://.godot/imported/wood_is_from_angry_birds_isle_of_pigs_0.png-9a21a87e7b9041f65b4a68ef266e48cb.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/wood_is_from_angry_birds_isle_of_pigs_0.png"
-dest_files=["res://.godot/imported/wood_is_from_angry_birds_isle_of_pigs_0.png-9a21a87e7b9041f65b4a68ef266e48cb.s3tc.ctex"]
+dest_files=["res://.godot/imported/wood_is_from_angry_birds_isle_of_pigs_0.png-9a21a87e7b9041f65b4a68ef266e48cb.s3tc.ctex", "res://.godot/imported/wood_is_from_angry_birds_isle_of_pigs_0.png-9a21a87e7b9041f65b4a68ef266e48cb.etc2.ctex"]
 
 [params]
 

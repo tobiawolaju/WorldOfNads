@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dsxh7ntjr6iyj"
 path.s3tc="res://.godot/imported/daysky_test.png-3aa09acbb2d2badce33a2bae37798172.s3tc.ctex"
+path.etc2="res://.godot/imported/daysky_test.png-3aa09acbb2d2badce33a2bae37798172.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/img/map/daysky_test.png"
-dest_files=["res://.godot/imported/daysky_test.png-3aa09acbb2d2badce33a2bae37798172.s3tc.ctex"]
+dest_files=["res://.godot/imported/daysky_test.png-3aa09acbb2d2badce33a2bae37798172.s3tc.ctex", "res://.godot/imported/daysky_test.png-3aa09acbb2d2badce33a2bae37798172.etc2.ctex"]
 
 [params]
 
