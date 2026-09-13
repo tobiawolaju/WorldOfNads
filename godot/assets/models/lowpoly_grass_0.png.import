@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cp58rvgp2x8jv"
 path.s3tc="res://.godot/imported/lowpoly_grass_0.png-f012f0112f992f47602ff0ad6bfa008d.s3tc.ctex"
+path.etc2="res://.godot/imported/lowpoly_grass_0.png-f012f0112f992f47602ff0ad6bfa008d.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/models/lowpoly_grass_0.png"
-dest_files=["res://.godot/imported/lowpoly_grass_0.png-f012f0112f992f47602ff0ad6bfa008d.s3tc.ctex"]
+dest_files=["res://.godot/imported/lowpoly_grass_0.png-f012f0112f992f47602ff0ad6bfa008d.s3tc.ctex", "res://.godot/imported/lowpoly_grass_0.png-f012f0112f992f47602ff0ad6bfa008d.etc2.ctex"]
 
 [params]
 

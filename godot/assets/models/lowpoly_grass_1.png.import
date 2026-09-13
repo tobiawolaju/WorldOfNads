@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bohdlvuyxhr1r"
 path.s3tc="res://.godot/imported/lowpoly_grass_1.png-27887c3841200dec8490b9df678e159e.s3tc.ctex"
+path.etc2="res://.godot/imported/lowpoly_grass_1.png-27887c3841200dec8490b9df678e159e.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/lowpoly_grass_1.png"
-dest_files=["res://.godot/imported/lowpoly_grass_1.png-27887c3841200dec8490b9df678e159e.s3tc.ctex"]
+dest_files=["res://.godot/imported/lowpoly_grass_1.png-27887c3841200dec8490b9df678e159e.s3tc.ctex", "res://.godot/imported/lowpoly_grass_1.png-27887c3841200dec8490b9df678e159e.etc2.ctex"]
 
 [params]
 

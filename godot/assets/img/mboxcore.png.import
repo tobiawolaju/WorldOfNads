@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://b4q27tedq04t7"
 path.s3tc="res://.godot/imported/mboxcore.png-5e71aa2e9ff21a8089dc20ace44432ff.s3tc.ctex"
+path.etc2="res://.godot/imported/mboxcore.png-5e71aa2e9ff21a8089dc20ace44432ff.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/img/mboxcore.png"
-dest_files=["res://.godot/imported/mboxcore.png-5e71aa2e9ff21a8089dc20ace44432ff.s3tc.ctex"]
+dest_files=["res://.godot/imported/mboxcore.png-5e71aa2e9ff21a8089dc20ace44432ff.s3tc.ctex", "res://.godot/imported/mboxcore.png-5e71aa2e9ff21a8089dc20ace44432ff.etc2.ctex"]
 
 [params]
 

@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dn4jy58lw73w1"
 path.s3tc="res://.godot/imported/nightsky_test.png-ea00ac1e69a70f8c63d025b361fecef3.s3tc.ctex"
+path.etc2="res://.godot/imported/nightsky_test.png-ea00ac1e69a70f8c63d025b361fecef3.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/img/map/nightsky_test.png"
-dest_files=["res://.godot/imported/nightsky_test.png-ea00ac1e69a70f8c63d025b361fecef3.s3tc.ctex"]
+dest_files=["res://.godot/imported/nightsky_test.png-ea00ac1e69a70f8c63d025b361fecef3.s3tc.ctex", "res://.godot/imported/nightsky_test.png-ea00ac1e69a70f8c63d025b361fecef3.etc2.ctex"]
 
 [params]
 
