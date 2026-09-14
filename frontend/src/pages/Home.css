@@ -502,7 +502,7 @@
   width: 130px;
   height: 56px;
   border: none;
-  border-radius: 50px;
+  border-radius: 0;
   margin: 0 10px;
   cursor: pointer;
   display: flex;

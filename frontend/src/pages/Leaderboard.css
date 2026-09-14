@@ -489,11 +489,11 @@
   border: none;
   padding: 8px 12px;
   margin: 0 4px;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   font-family: 'Font1', sans-serif;
   transition: background-color 0.2s, color 0.2s;
- border-radius: 50px;
+ border-radius: 0;
 }
 
 .pagination button:hover:not(:disabled) {

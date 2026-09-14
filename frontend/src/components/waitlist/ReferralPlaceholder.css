@@ -101,7 +101,7 @@
 
 .waitlist-copy-button {
   height: 48px;
-  border-radius: 999px;
+  border-radius: 0;
   padding: 0 24px;
   font-weight: 800;
   font-family: 'Font1', var(--font-inter), sans-serif;

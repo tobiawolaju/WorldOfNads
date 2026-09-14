@@ -57,7 +57,7 @@
 .date-range button,
 .export-actions button {
   padding: 10px 16px;
-  border-radius: 8px;
+  border-radius: 0;
   border: none;
   background: #1d4ed8;
   color: #fff !important;
