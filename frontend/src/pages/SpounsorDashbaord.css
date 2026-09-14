@@ -29,7 +29,7 @@
 
 .sponsor-dashboard__cta {
   border: none;
-  border-radius: 999px;
+  border-radius: 0;
   background-color: #7c3aed;
   color: #fff;
   padding: 14px 28px;
@@ -101,7 +101,7 @@
   color: #ff453a;
   border: 1px solid rgba(255, 69, 58, 0.2);
   padding: 6px 14px;
-  border-radius: 99px;
+  border-radius: 0;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -182,7 +182,7 @@
   background: transparent;
   color: #333;
   padding: 12px 24px;
-  border-radius: 999px;
+  border-radius: 0;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -197,7 +197,7 @@
   background: rgba(124, 58, 237, 0.08);
   color: #5b21b6;
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 0;
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;

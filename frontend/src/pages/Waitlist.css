@@ -219,7 +219,7 @@
   height: 60px;
   /* Perfectly matching input height */
   border: none;
-  border-radius: 999px;
+  border-radius: 0;
   background: #ffd700;
   color: #000000;
   font-family: 'Font1', var(--font-inter), sans-serif;

@@ -363,7 +363,7 @@
   width: 130px;
   height: 56px;
   border: none;
-  border-radius: 50px;
+  border-radius: 0;
   margin: 0 10px;
   cursor: pointer;
   display: flex;
@@ -415,7 +415,7 @@
   font-family: font1;
   font-weight: bold;
   font-size: 20px;
-  border-radius: var(--radius-full);
+  border-radius: 0;
   height: 50px;
   margin: 10px;
   width: auto;
@@ -522,7 +522,7 @@
 .filter {
   font-size: 0.8rem;
   padding: 2px 5px;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   opacity: 0.5;
   transition: 0.25s;
@@ -532,7 +532,7 @@
   opacity: 1;
   background: #00000020;
   color: rgba(0, 0, 0, 0.463);
-  border-radius: var(--radius-full);
+  border-radius: 0;
 }
 
 /* Wrapper stays fixed and holds the fade */

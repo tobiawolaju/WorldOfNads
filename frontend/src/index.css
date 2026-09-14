@@ -359,7 +359,7 @@ body.play-immersive {
     color: var(--inline-cta-text);
     background-color: var(--primary);
     border: 1px solid transparent;
-    border-radius: var(--radius-sm);
+    border-radius: 0;
     cursor: pointer;
     transition: all 200ms ease-in-out;
 }

@@ -27,6 +27,36 @@ const WaveText = React.memo(({ text }: { text: string }) => {
   );
 });
 
+const LatestTweet = () => {
+  useEffect(() => {
+    const w = window as any;
+    if (w.twttr && w.twttr.widgets) {
+      w.twttr.widgets.load();
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = "https://platform.x.com/widgets.js";
+    s.async = true;
+    s.charset = "utf-8";
+    document.body.appendChild(s);
+  }, []);
+
+  return (
+    <article className="tweet-card tweet-widget">
+      <a
+        className="twitter-timeline"
+        data-theme="dark"
+        data-dnt="true"
+        data-chrome="noheader nofooter noborders"
+        data-tweet-limit="1"
+        href="https://x.com/WorldOfNads?ref_src=twsrc%5Etfw"
+      >
+        Posts by World of Nads (@WorldOfNads)
+      </a>
+    </article>
+  );
+};
+
 const Home: React.FC = () => {
   const { login, authenticated, ready } = usePrivy();
   const navigate = useNavigate();
@@ -328,22 +358,6 @@ const Home: React.FC = () => {
     };
   }, []);
 
-  const tweets = [
-    {
-      month: "Apr 2026",
-      bodyLines: [
-        "We're opening early access to a new competitive gaming platform today.",
-        "Test matches are already running with early players.",
-        "If you want in, join here:",
-        "👉 WAITLIST_LINK",
-        "Discord access + beta matches unlocked after sign up.",
-      ],
-      waitlistLink: "https://worldofnads.xyz/waitlist",
-      discordLink: "https://discord.gg/z4SUdrKayb",
-      link: "https://x.com/i/status/2043666277927956534",
-    },
-  ];
-
   return (
     <div className="home-wrapper">
       {/* Noise Overlay */}
@@ -437,52 +451,8 @@ const Home: React.FC = () => {
       {/* SECTION 4: EVENTS GRID */}
       <section className="events-grid-section reveal">
         <h2 className="section-title">What’s happening</h2>
-        <div className="events-grid">
-          {tweets.map((tweet) => (
-            <article className="tweet-card" key={tweet.month}>
-              <div className="tweet-header">
-                <img src="/logo.jpg" alt="Avatar" className="tweet-avatar" />
-                <div className="tweet-user">
-                  <span className="tweet-name">World of Nads</span>
-                  <span className="tweet-handle">@WorldOfNads · {tweet.month}</span>
-                </div>
-              </div>
-              <p className="tweet-body">
-                {tweet.bodyLines.map((line) => (
-                  <React.Fragment key={line}>
-                    {line === "👉 WAITLIST_LINK" ? (
-                      <>
-                        👉{" "}
-                        <a
-                          href={tweet.waitlistLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="tweet-inline-link"
-                        >
-                          worldofnads.xyz/waitlist
-                        </a>
-                      </>
-                    ) : (
-                      line
-                    )}
-                    <br />
-                    <br />
-                  </React.Fragment>
-                ))}
-                Join →{" "}
-                <a
-                  href={tweet.discordLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="tweet-inline-link"
-                >
-                  discord.gg/z4SUdrKayb
-                </a>
-                .
-              </p>
-              <a href={tweet.link} className="tweet-link" target="_blank" rel="noopener noreferrer">View Post</a>
-            </article>
-          ))}
+<div className="events-grid">
+          <LatestTweet />
         </div>
       </section>
 

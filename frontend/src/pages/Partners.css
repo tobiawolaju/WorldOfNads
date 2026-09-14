@@ -295,7 +295,7 @@
   background: rgba(106, 56, 255, 0.1);
   border: 1px solid rgba(106, 56, 255, 0.2);
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 0;
   transition: all 0.2s ease;
 }
 

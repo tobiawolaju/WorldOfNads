@@ -228,7 +228,7 @@
     text-decoration: none;
 background: hsl(249, 100%, 74%);
     color: #ffffff;
-    border-radius: 50px;
+    border-radius: 0;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 
 }
