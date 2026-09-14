@@ -1,5 +1,5 @@
-import { db } from './firebaseClient.sheets.js';
-import { ref, push, get, query, orderByChild, startAt, endAt } from './rtdbSheets.js';
+import { db } from './firebaseClient.js';
+import { ref, push, get, query, orderByChild, startAt, endAt } from 'firebase/database';
 
 const MAX_METADATA_KEYS = 64;
 const MAX_METADATA_STRING = 200;

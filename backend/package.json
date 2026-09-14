@@ -6,7 +6,7 @@
   "author": "",
   "type": "module",
   "main": "index.js",
-  "scripts": {
+"scripts": {
     "start": "node index.js",
     "bots": "node bot.js",
     "bots:zigzag": "node zig-zag-bot.js",

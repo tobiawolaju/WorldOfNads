@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
-import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin } from './firebaseClient.sheets.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin } from './firebaseClient.js';
 import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 import { refreshAllUserPfps } from './refreshUserPfps.js';

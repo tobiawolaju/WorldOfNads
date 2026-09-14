@@ -27,7 +27,7 @@ const Waitlist = lazy(() => import("./pages/Waitlist"));
 const SpounsorDashbaord = lazy(() => import("./pages/SpounsorDashbaord"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 import { trackSessionEnded, trackSessionStarted } from "./lib/analyticsClient";
-import { fetchUserRoles, getUsernameFromPrivy } from "./pages/firebaseClient.sheets";
+import { fetchUserRoles, getUsernameFromPrivy } from "./pages/firebaseClient";
 
 const RequireRole: React.FC<{ role: string; children: React.ReactElement }> = ({ role, children }) => {
   const { ready, authenticated, user } = usePrivy();

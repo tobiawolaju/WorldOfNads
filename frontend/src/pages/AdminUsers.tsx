@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./AdminUsers.css";
-import { fetchUsersFromFirebase, updateUserRoles } from "./firebaseClient.sheets";
+import { fetchUsersFromFirebase, updateUserRoles } from "./firebaseClient";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
 
 interface UserRow {
