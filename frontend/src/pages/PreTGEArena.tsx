@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./PreTGEArena.css";
 // @ts-ignore
-import { fetchMatchesFromFirebase } from "./firebaseClient.sheets";
+import { fetchMatchesFromFirebase } from "./firebaseClient";
 import Footer from "../components/Footer";
 
 type MatchRecord = {

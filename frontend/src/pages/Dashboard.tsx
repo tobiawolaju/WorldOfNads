@@ -17,7 +17,7 @@ import {
   updateUserProjects,
   fetchUserRewards,
   recordSponsorDailyUniquePlayer
-} from "./firebaseClient.sheets";
+} from "./firebaseClient";
 import { trackMatchJoined } from "../lib/analyticsClient";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
 import { resolveGameSkinName } from "../lib/skinMapping";
