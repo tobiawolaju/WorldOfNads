@@ -1,5 +1,5 @@
-import { db } from './firebaseClient.js';
-import { ref, get, update } from 'firebase/database';
+import { db } from './firebaseClient.sheets.js';
+import { ref, get, update } from './rtdbSheets.js';
 
 const PRIVY_APP_ID = process.env.PRIVY_APP_ID;
 const PRIVY_APP_SECRET = process.env.PRIVY_APP_SECRET;

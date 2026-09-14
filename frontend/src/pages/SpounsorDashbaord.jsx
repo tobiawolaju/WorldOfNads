@@ -9,7 +9,7 @@ import {
   updateUserProjects,
   deleteMatchFromFirebase,
   saveMatchToFirebase
-} from "./firebaseClient";
+} from "./firebaseClient.sheets";
 import {
   createSponsorMatchOnchain,
   cancelSponsorMatchOnchain
