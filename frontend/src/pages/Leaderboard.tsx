@@ -7,7 +7,7 @@ import {
   fetchMatchesFromFirebase,
   fetchUsersFromFirebase,
   fetchSponsorDailyPlayers
-} from "./firebaseClient";
+} from "./firebaseClient.sheets";
 
 type Project = {
   name: string;
