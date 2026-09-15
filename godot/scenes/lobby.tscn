@@ -8,7 +8,7 @@
 [ext_resource type="Environment" uid="uid://b1xdulwsbpnew" path="res://assets/resources/night.tres" id="5_07nfq"]
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="5_omrgh"]
 [ext_resource type="Script" uid="uid://dyx5kfl7l30wf" path="res://scripts/lobbymanager.gd" id="7_yad6j"]
-[ext_resource type="PackedScene" uid="uid://dobb4yuv0li3a" path="res://scenes/maps/busyland.tscn" id="9_07nfq"]
+[ext_resource type="PackedScene" uid="uid://bj27lnrpsa1wt" path="res://scenes/busyland.tscn" id="9_07nfq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
 render_priority = 0
@@ -52,13 +52,13 @@ cylinder_wall = NodePath("Cylinder")
 cylinder_border = NodePath("Cylinder2")
 normal_env = ExtResource("4_ncsg4")
 storm_env = ExtResource("5_07nfq")
-cylinder_radius = 20.0
+cylinder_radius = 18.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=580568222]
 environment = ExtResource("4_ncsg4")
 
 [node name="day" type="DirectionalLight3D" parent="env" unique_id=312017769]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
+transform = Transform3D(0.898036, -0.32504374, -0.29644218, 0.4252201, 0.8141052, 0.3955009, 0.112780035, -0.48122716, 0.86931074, 0, 3.8649163, 0)
 light_color = Color(1, 0.68235296, 0.9529412, 1)
 light_energy = 0.5
 shadow_enabled = true
@@ -74,13 +74,13 @@ directional_shadow_mode = 0
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=874651139]
-transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
+transform = Transform3D(18, 0, 0, 0, 200, 0, 0, 0, 18, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_ncsg4")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_07nfq")
 
 [node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1546332868]
-transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
+transform = Transform3D(18, 0, 0, 0, 200, 0, 0, 0, 18, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_oipnb")
 surface_material_override/0 = SubResource("StandardMaterial3D_07nfq")
@@ -95,11 +95,12 @@ doppler_tracking = 1
 far = 100.0
 
 [node name="spawnpoint" type="Node3D" parent="Player" unique_id=765824796]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 
 [node name="Timer" type="Timer" parent="Player" unique_id=1278349154]
 
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("1_o1atq")]
 
-[node name="Busyland" parent="." unique_id=1920523763 instance=ExtResource("9_07nfq")]
+[node name="Level" parent="." unique_id=837639509 instance=ExtResource("9_07nfq")]
 
 [editable path="Hud"]

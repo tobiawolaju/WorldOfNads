@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode cull_front;
+render_mode cull_front ;
 
 uniform vec4 _color : source_color = vec4(1,0,0,1);
 uniform float sphere_size = 3.0;

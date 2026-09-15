@@ -4,7 +4,7 @@ extends CharacterBody3D
 # -- CONSTANTS ---
 const GRAVITY: float = 18
 const JUMP_VELOCITY: float = 6
-const SPEED: float = 2.00
+const SPEED: float = 6.00
 const DEADZONE: float = 0.12
 const PICKUP_REQUEST_COOLDOWN_MS: int = 150
 const STEAL_RADIUS: float = 2.5
@@ -16,9 +16,6 @@ const SLIDE_SPEED_MULTIPLIER: float = 1.7
 const JUMP_BUFFER_TIME: float = 0.12
 const COYOTE_TIME: float = 0.10
 const DOUBLE_JUMP_MIN_MULTIPLIER: float = 0.3
-
-const LAUGH_CLIP_START: float = 0.5
-const LAUGH_CLIP_DURATION: float = 0.4
 
 # --- MOMENTUM CONSTANTS ---
 const ACCELERATION: float = 25.0  # How fast you reach max speed (Ground)
@@ -181,8 +178,6 @@ var _demo_wobble_phase: float = 0.0
 var _demo_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _demo_last_safe_position: Vector3 = Vector3.ZERO
 var _demo_offground_timer: float = 0.0
-var jump_sfx: AudioStreamPlayer2D
-var _jump_laugh_tween: Tween = null
 
 const DEMO_RECOVERY_FALL_DISTANCE: float = 8.0
 const DEMO_RECOVERY_OFFGROUND_TIME: float = 1.25
@@ -264,10 +259,6 @@ func _ready() -> void:
 	_refresh_touch_joystick()
 	_connect_joystick_signals()
 	_update_global_player_shader_pos(true)
-	jump_sfx = AudioStreamPlayer2D.new()
-	jump_sfx.stream = preload("res://assets/sounds/audio_fx.mp3")
-	jump_sfx.name = "JumpSFX"
-	add_child(jump_sfx)
 
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
@@ -354,15 +345,6 @@ func request_jump() -> void:
 
 func request_slide() -> void:
 	_slide_requested = true
-
-func _play_jump_laugh() -> void:
-	if _jump_laugh_tween and _jump_laugh_tween.is_valid():
-		_jump_laugh_tween.kill()
-	jump_sfx.stop()
-	jump_sfx.play(LAUGH_CLIP_START)
-	_jump_laugh_tween = create_tween()
-	_jump_laugh_tween.tween_interval(LAUGH_CLIP_DURATION)
-	_jump_laugh_tween.tween_callback(jump_sfx.stop)
 
 func request_pickup() -> void:
 	if not _is_movement_allowed():
@@ -466,7 +448,6 @@ func _physics_process(delta: float) -> void:
 		_jump_requested = false
 		if movement_allowed and jump_requested_now:
 			velocity_y = JUMP_VELOCITY
-			_play_jump_laugh()
 			if not _double_jump_available:
 				_ground_jump_count += 1
 				if _ground_jump_count >= 2:
@@ -513,7 +494,6 @@ func _physics_process(delta: float) -> void:
 			var progress := clampf(_double_jump_air_time / apex_time, 0.0, 1.0)
 			var smooth := progress * progress * (3.0 - 2.0 * progress)
 			velocity_y = JUMP_VELOCITY * lerpf(DOUBLE_JUMP_MIN_MULTIPLIER, 1.0, smooth)
-			_play_jump_laugh()
 			_double_jump_used = true
 			_double_jump_available = false
 			_jump_buffer_timer = 0.0
@@ -524,7 +504,6 @@ func _physics_process(delta: float) -> void:
 		var buffered_jump := movement_allowed and (_jump_buffer_timer > 0.0) and (jump_requested_now or _coyote_timer > 0.0)
 		if buffered_jump:
 			velocity_y = JUMP_VELOCITY
-			_play_jump_laugh()
 			_jump_buffer_timer = 0.0
 			if not _double_jump_available and not jump_requested_now:
 				_ground_jump_count += 1
