@@ -578,9 +578,3 @@ theme_override_styles/fill = SubResource("StyleBoxTexture_tllmm")
 value = 100.0
 show_percentage = false
 script = ExtResource("6_jump_bar")
-
-[node name="Label" type="Label" parent="." unique_id=172746128]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 23.0
-text = "player na"
