@@ -13,16 +13,6 @@ height = 0.805861
 [sub_resource type="SphereShape3D" id="SphereShape3D_hqo6i"]
 radius = 2.0
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_jrfn5"]
-render_priority = 0
-shader = ExtResource("3_wrixk")
-shader_parameter/color = Color(0.6431373, 0.18431373, 0.3882353, 1)
-shader_parameter/size = 1.03999999910592
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yxqc0"]
-next_pass = SubResource("ShaderMaterial_jrfn5")
-albedo_color = Color(0.9999996, 0.24226898, 0.5077209, 1)
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8ga8q"]
 resource_name = "Material.013"
 cull_mode = 2
@@ -845,13 +835,11 @@ bones/37/rotation = Quaternion(2.5052577e-07, -2.423767e-07, 4.5401976e-09, 1)
 bones/37/scale = Vector3(1, 1, 1)
 
 [node name="body_00" type="MeshInstance3D" parent="Skeleton3D" unique_id=251191984]
-material_override = SubResource("StandardMaterial3D_yxqc0")
 mesh = SubResource("ArrayMesh_83pdg")
 skin = SubResource("Skin_3xuuo")
 skeleton = NodePath("..")
 
 [node name="body_01" type="MeshInstance3D" parent="Skeleton3D" unique_id=1010131992]
-material_override = SubResource("StandardMaterial3D_yxqc0")
 mesh = SubResource("ArrayMesh_p0poq")
 skin = SubResource("Skin_3xuuo")
 skeleton = NodePath("..")
@@ -931,5 +919,3 @@ bone_idx = 3
 transform = Transform3D(1.0000007, 0, 0, 0, -4.3711385e-08, 0.99999964, 0, -0.99999994, -4.3711374e-08, 0, -0.185, -0.9)
 material_override = SubResource("StandardMaterial3D_480i3")
 mesh = SubResource("CylinderMesh_l0bqs")
-
-[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=51902513]

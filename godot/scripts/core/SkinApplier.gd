@@ -256,12 +256,6 @@ static func _body_material(color: Color, outline_color: Color, shader_type: Stri
 	body_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 	body_mat.albedo_color = color
 	body_mat.roughness = 0.5
-
-	var outline_mat := ShaderMaterial.new()
-	outline_mat.shader = OUTLINE_SHADER
-	outline_mat.set_shader_parameter("color", outline_color)
-	outline_mat.set_shader_parameter("size", 1.04)
-	body_mat.next_pass = outline_mat
 	return body_mat
 
 static func _crown_material(color: Color) -> Material:

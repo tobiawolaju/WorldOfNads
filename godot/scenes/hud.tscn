@@ -244,32 +244,42 @@ horizontal_alignment = 1
 uppercase = true
 
 [node name="BoxContainer2" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1306771986]
-offset_left = 22.0
-offset_top = 87.0
-offset_right = 99.0
-offset_bottom = 104.0
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -105.0
+offset_top = 158.0
+offset_right = -28.0
+offset_bottom = 175.145
+grow_horizontal = 0
 size_flags_horizontal = 0
 size_flags_vertical = 4
+alignment = 2
 
 [node name="username" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer2" unique_id=229289726]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.26106378, 0.6644564, 0.85876876, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.47058824)
 theme_override_constants/shadow_outline_size = 0
 theme_override_font_sizes/font_size = 12
 text = "username"
 
 [node name="BoxContainer3" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1509763072]
-offset_left = 21.0
-offset_top = 104.0
-offset_right = 245.0
-offset_bottom = 122.0
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -251.0
+offset_top = 180.0
+offset_right = -27.0
+offset_bottom = 198.0
+grow_horizontal = 0
 size_flags_horizontal = 0
 size_flags_vertical = 4
+alignment = 2
 
 [node name="status2" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=2089582472]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 1, 0.1882353, 1)
+theme_override_colors/font_color = Color(0.28235295, 1, 0.13725491, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.541)
 theme_override_font_sizes/font_size = 13
 text = "BeNad:"
@@ -314,8 +324,8 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 10
-theme_override_font_sizes/font_size = 24
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 18
 text = "⭐Grab de chicken and don't  let go✨"
 
 [node name="FPSLabel" type="Label" parent="CanvasLayer" unique_id=2147483647]
@@ -469,12 +479,10 @@ icon_alignment = 1
 expand_icon = true
 
 [node name="XPstream" type="Label" parent="." unique_id=2087879689]
+visible = false
 layout_mode = 1
-offset_left = 8.0
-offset_top = 53.0
-offset_right = 107.0
-offset_bottom = 72.0
-theme_override_colors/font_color = Color(0.38039216, 0.2784314, 0.9411765, 1)
+offset_right = 99.0
+offset_bottom = 19.0
 theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
@@ -485,12 +493,10 @@ theme_override_font_sizes/font_size = 18
 text = "Your Xp stream"
 
 [node name="MONstream" type="Label" parent="." unique_id=366851244]
+visible = false
 layout_mode = 1
-offset_left = 7.0
-offset_top = 27.0
-offset_right = 118.0
-offset_bottom = 48.0
-theme_override_colors/font_color = Color(0.38039216, 0.2784314, 0.9411765, 1)
+offset_right = 111.0
+offset_bottom = 21.0
 theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
@@ -501,12 +507,10 @@ theme_override_font_sizes/font_size = 18
 text = "Your MON stream"
 
 [node name="PrizePool" type="Label" parent="." unique_id=1341296255]
+visible = false
 layout_mode = 1
-offset_left = 9.0
-offset_top = 4.0
-offset_right = 105.0
-offset_bottom = 24.0
-theme_override_colors/font_color = Color(0.38039216, 0.2784314, 0.9411765, 1)
+offset_right = 96.0
+offset_bottom = 20.0
 theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
@@ -574,3 +578,9 @@ theme_override_styles/fill = SubResource("StyleBoxTexture_tllmm")
 value = 100.0
 show_percentage = false
 script = ExtResource("6_jump_bar")
+
+[node name="Label" type="Label" parent="." unique_id=172746128]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "player na"
