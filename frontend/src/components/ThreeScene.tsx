@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
-import { OrbitControls, useFBX, Environment, ContactShadows } from "@react-three/drei";
+import { OrbitControls, useFBX, Environment } from "@react-three/drei";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
@@ -938,15 +938,6 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       <pointLight position={[0, 10, -10]} intensity={3.5} />
 
       <Environment preset="city" />
-      <ContactShadows
-        opacity={0.35}
-        scale={6}
-        blur={1.5}
-        far={4}
-        resolution={64}
-        color="#000000"
-        position={[0, -2.01, 0]}
-      />
 
       <Suspense fallback={null}>
         <NadModel scale={0.5} position={[0, -2, 0]} equippedSkin={equippedSkin} />
