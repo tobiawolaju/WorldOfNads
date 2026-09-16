@@ -17,7 +17,7 @@ func _wake_server():
 	req.request("https://worldofnads.onrender.com") 
 func _on_server_ping_completed(_result, _response_code, _headers, _body):
 	# Ignore errors, we just want to wake the server
-	for i in range(15, 0, -1):
+	for i in range(1500, 0, -1):
 		status_label.text = "Server awake. Loading in %d..." % i
 		await get_tree().create_timer(1.0).timeout  
 	status_label.text = "Let's go!"
