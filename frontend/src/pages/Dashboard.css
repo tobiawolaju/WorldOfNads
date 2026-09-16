@@ -10,17 +10,22 @@
 
 /* Lobby background image behind the 3D scene - width fills the scene,
    height follows the image's native aspect ratio, vertically centered,
-   sharp at top and faded at the bottom (PUBG/Fortnite style) */
-.left-3d-section::before {
-  content: "";
+   with a 1:3:1 opacity gradient (top fades in, middle full, bottom fades out) */
+.lobby-bg {
   position: absolute;
   inset: 0;
-  background-image: url(/lobbybg.jpeg);
-  background-size: 100% auto;
-  background-position: center;
-  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 0;
   pointer-events: none;
+  overflow: hidden;
+}
+
+.lobby-bg img {
+  width: 100%;
+  height: auto;
+  display: block;
   -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 1) 80%, rgba(0, 0, 0, 0) 100%);
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 1) 80%, rgba(0, 0, 0, 0) 100%);
 }
