@@ -61,7 +61,6 @@ environment = ExtResource("4_ncsg4")
 transform = Transform3D(0.898036, -0.32504374, -0.29644218, 0.4252201, 0.8141052, 0.3955009, 0.112780035, -0.48122716, 0.86931074, 0, 3.8649163, 0)
 light_color = Color(1, 0.68235296, 0.9529412, 1)
 light_energy = 0.5
-shadow_enabled = true
 directional_shadow_mode = 0
 
 [node name="night" type="DirectionalLight3D" parent="env" unique_id=1492364894]

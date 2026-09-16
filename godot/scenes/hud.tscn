@@ -326,7 +326,7 @@ theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 18
-text = "⭐Grab de chicken and don't  let go✨"
+text = "Stand your Ground for 60s"
 
 [node name="FPSLabel" type="Label" parent="CanvasLayer" unique_id=2147483647]
 anchors_preset = 1
