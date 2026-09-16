@@ -8,17 +8,16 @@
   overflow: hidden;
 }
 
-/* Lobby background image - sharp at top, faded at bottom (PUBG/Fortnite style) */
-.dashboard-wrapper::before {
+/* Lobby background image behind the 3D scene - width fills the scene,
+   height follows the image's native aspect ratio, vertically centered,
+   sharp at top and faded at the bottom (PUBG/Fortnite style) */
+.left-3d-section::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background-image: url(/lobbybg.jpeg);
-  background-size: cover;
-  background-position: center top;
+  background-size: 100% auto;
+  background-position: center;
   background-repeat: no-repeat;
   z-index: 0;
   pointer-events: none;
