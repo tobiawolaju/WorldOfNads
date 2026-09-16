@@ -347,11 +347,12 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    if (tab !== "events") return;
     const ticker = setInterval(() => {
       setNowMs(Date.now());
     }, 1000);
     return () => clearInterval(ticker);
-  }, []);
+  }, [tab]);
 
   useEffect(() => {
     const mergeMatches = (liveMatches: Match[]) => {
