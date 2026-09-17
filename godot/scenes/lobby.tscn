@@ -52,14 +52,14 @@ cylinder_wall = NodePath("Cylinder")
 cylinder_border = NodePath("Cylinder2")
 normal_env = ExtResource("4_ncsg4")
 storm_env = ExtResource("5_07nfq")
-cylinder_radius = 18.0
+cylinder_radius = 40.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=580568222]
 environment = ExtResource("4_ncsg4")
 
 [node name="day" type="DirectionalLight3D" parent="env" unique_id=978818535]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
-light_color = Color(1, 0.68235296, 0.9529412, 1)
+transform = Transform3D(0.7071068, 1.280277e-08, -0.7071068, 0.18301272, -0.96592593, 0.18301271, -0.68301266, -0.25881904, -0.68301266, 0, 3.8649163, 0)
+light_color = Color(1, 0.95164806, 0.9569796, 1)
 light_energy = 0.5
 shadow_enabled = true
 directional_shadow_mode = 0
@@ -74,13 +74,13 @@ directional_shadow_mode = 0
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=874651139]
-transform = Transform3D(18, 0, 0, 0, 200, 0, 0, 0, 18, 0, 0, 0)
+transform = Transform3D(40, 0, 0, 0, 200, 0, 0, 0, 40, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_ncsg4")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_07nfq")
 
 [node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1546332868]
-transform = Transform3D(18, 0, 0, 0, 200, 0, 0, 0, 18, 0, 0, 0)
+transform = Transform3D(40, 0, 0, 0, 200, 0, 0, 0, 40, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_oipnb")
 surface_material_override/0 = SubResource("StandardMaterial3D_07nfq")
