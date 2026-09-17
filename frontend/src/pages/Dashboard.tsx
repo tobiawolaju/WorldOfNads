@@ -398,16 +398,18 @@ export default function Dashboard() {
   }, [ready]);
 
   useEffect(() => {
-    const audio = new Audio("/lobbysong.mp3");
-    audio.loop = true;
-    audio.volume = 0.4;
-    lobbyAudioRef.current = audio;
+    let audio: HTMLAudioElement | null = null;
 
     const tryPlay = () => {
+      if (!audio) {
+        audio = new Audio("/lobbysong.mp3");
+        audio.loop = true;
+        audio.volume = 0.4;
+        lobbyAudioRef.current = audio;
+      }
       audio.play().catch(() => {});
     };
 
-    tryPlay();
     window.addEventListener("pointerdown", tryPlay);
     window.addEventListener("keydown", tryPlay);
     window.addEventListener("touchstart", tryPlay, { passive: true });
@@ -416,8 +418,11 @@ export default function Dashboard() {
       window.removeEventListener("pointerdown", tryPlay);
       window.removeEventListener("keydown", tryPlay);
       window.removeEventListener("touchstart", tryPlay);
-      audio.pause();
-      audio.src = "";
+      if (audio) {
+        audio.pause();
+        audio.src = "";
+      }
+      lobbyAudioRef.current = null;
     };
   }, []);
 
