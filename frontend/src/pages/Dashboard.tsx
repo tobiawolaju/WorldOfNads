@@ -210,6 +210,7 @@ export default function Dashboard() {
   const [nowMs, setNowMs] = useState(Date.now());
   const [showLoader, setShowLoader] = useState(true);
 
+  const lobbyAudioRef = useRef<HTMLAudioElement | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const isManuallyScrolling = useRef<boolean>(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -394,6 +395,25 @@ export default function Dashboard() {
 
   useEffect(() => {
     setShowLoader(!ready);
+  }, [ready]);
+
+  useEffect(() => {
+    const audioEl = lobbyAudioRef.current;
+    if (!audioEl) return;
+    audioEl.volume = 0.4;
+
+    const tryPlay = () => {
+      audioEl.play().catch(() => {});
+    };
+
+    tryPlay();
+    window.addEventListener("pointerdown", tryPlay, { once: true });
+    window.addEventListener("keydown", tryPlay, { once: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", tryPlay);
+      window.removeEventListener("keydown", tryPlay);
+    };
   }, [ready]);
 
   const handlePlayClick = useCallback(() => {
@@ -661,6 +681,7 @@ export default function Dashboard() {
       {!showLoader && authenticated && user && (
         <div className="dashboard-wrapper">
         <div className={`left-3d-section ${equipFlash ? "shake" : ""}`}>
+        <audio ref={lobbyAudioRef} src="/lobbysong.mp3" loop preload="auto" />
         <div className="lobby-bg"><img src="/lobbybg.jpeg" alt="" /></div>
         <ThreeScene
           equippedSkin={displayedSkin}
