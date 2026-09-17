@@ -2,7 +2,7 @@ shader_type spatial;
 render_mode cull_back;
 
 uniform vec4 albedo : source_color = vec4(1.0, 0.18, 0.54, 1.0);
-uniform float roughness_val : hint_range(0.0, 1.0) = 0.5;
+uniform float roughness_val : hint_range(0.0, 1.0) = 1.0;
 uniform float metalness_val : hint_range(0.0, 1.0) = 0.0;
 
 void fragment() {
