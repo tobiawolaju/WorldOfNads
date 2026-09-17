@@ -27,7 +27,6 @@ const Waitlist = lazy(() => import("./pages/Waitlist"));
 const SpounsorDashbaord = lazy(() => import("./pages/SpounsorDashbaord"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 import { trackSessionEnded, trackSessionStarted } from "./lib/analyticsClient";
-import { fetchUserRoles, getUsernameFromPrivy } from "./pages/firebaseClient";
 
 const RequireRole: React.FC<{ role: string; children: React.ReactElement }> = ({ role, children }) => {
   const { ready, authenticated, user } = usePrivy();
@@ -44,6 +43,7 @@ const RequireRole: React.FC<{ role: string; children: React.ReactElement }> = ({
         return;
       }
       try {
+        const { fetchUserRoles, getUsernameFromPrivy } = await import("./pages/firebaseClient");
         const username = getUsernameFromPrivy(user);
         const roles = await fetchUserRoles(username);
         setAllowed(roles.includes(role));
@@ -180,15 +180,22 @@ const AppContent: React.FC = () => {
     if (sessionTrackedRef.current) return;
     sessionTrackedRef.current = true;
 
-    const username = getUsernameFromPrivy(user);
-    trackSessionStarted({ userId: user.id, metadata: { username } });
+    let unlisten: (() => void) | undefined;
 
-    const handleUnload = () => {
-      trackSessionEnded({ userId: user.id, metadata: { username } });
-    };
+    void (async () => {
+      const { getUsernameFromPrivy } = await import("./pages/firebaseClient");
+      const username = getUsernameFromPrivy(user);
+      trackSessionStarted({ userId: user.id, metadata: { username } });
 
-    window.addEventListener("beforeunload", handleUnload);
-    return () => window.removeEventListener("beforeunload", handleUnload);
+      const handleUnload = () => {
+        trackSessionEnded({ userId: user.id, metadata: { username } });
+      };
+
+      window.addEventListener("beforeunload", handleUnload);
+      unlisten = () => window.removeEventListener("beforeunload", handleUnload);
+    })();
+
+    return () => unlisten?.();
   }, [ready, authenticated, user]);
 
   useEffect(() => {

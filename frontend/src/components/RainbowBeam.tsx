@@ -12,6 +12,7 @@ const RainbowBeam: React.FC = () => {
   const cachedPositions = useRef<ElementCache[]>([]);
   const lastScanTime = useRef<number>(0);
   const isVisibleRef = useRef(true);
+  const isHiddenRef = useRef(false);
   const animationFrameIdRef = useRef<number>(0);
 
   const beamHeight = 80;
@@ -24,10 +25,24 @@ const RainbowBeam: React.FC = () => {
     const visibilityObserver = new IntersectionObserver(
       ([entry]) => {
         isVisibleRef.current = Boolean(entry?.isIntersecting);
+        if (isVisibleRef.current && !isHiddenRef.current) {
+          startIfEligible();
+        }
       },
       { threshold: 0 }
     );
     visibilityObserver.observe(container);
+
+    const handleVisibilityChange = () => {
+      isHiddenRef.current = document.hidden;
+      if (document.hidden) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = 0;
+      } else {
+        startIfEligible();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     const updateElements = () => {
       const nodeList = document.querySelectorAll(
@@ -50,9 +65,11 @@ const RainbowBeam: React.FC = () => {
     const frameInterval = 1000 / 60;
 
     const animate = (time: number) => {
+      if (!isVisibleRef.current || isHiddenRef.current) {
+        animationFrameIdRef.current = 0;
+        return;
+      }
       animationFrameIdRef.current = requestAnimationFrame(animate);
-
-      if (!isVisibleRef.current) return;
 
       const delta = time - lastFrameTime;
       if (delta < frameInterval) return;
@@ -96,13 +113,22 @@ const RainbowBeam: React.FC = () => {
       }
     };
 
-    animationFrameIdRef.current = requestAnimationFrame(animate);
+    const startIfEligible = () => {
+      if (!isVisibleRef.current || isHiddenRef.current) return;
+      if (animationFrameIdRef.current) return;
+      lastFrameTime = 0;
+      animationFrameIdRef.current = requestAnimationFrame(animate);
+    };
+
+    startIfEligible();
 
     window.addEventListener("resize", updateElements);
 
     return () => {
       cancelAnimationFrame(animationFrameIdRef.current);
+      animationFrameIdRef.current = 0;
       visibilityObserver.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("resize", updateElements);
       cachedPositions.current.forEach(item => item.el.classList.remove("rainbow-active-text"));
     };

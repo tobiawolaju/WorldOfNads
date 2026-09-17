@@ -604,8 +604,9 @@ const CameraAnimator: React.FC<{
   controlsRef: React.RefObject<any>;
 }> = ({ isInteracting: propIsInteracting, baseDistance, targetY, cameraYOffset, isStoreOpen, controlsRef }) => {
   const { camera, gl } = useThree();
-  const phaseRef = useRef<'intro' | 'pendulum'>('intro');
+  const phaseRef = useRef<'intro' | 'pendulum' | 'idle'>('intro');
   const introStartTimeRef = useRef(Date.now());
+  const lastActivityRef = useRef(Date.now());
   const pendulumStateRef = useRef({
     basePosition: new THREE.Vector3(0, 2, baseDistance),
     startTime: 0
@@ -751,6 +752,7 @@ const CameraAnimator: React.FC<{
       pendulumStateRef.current.startTime = Date.now();
       phaseRef.current = 'pendulum';
       wasInteractingRef.current = true;
+      lastActivityRef.current = Date.now();
       return;
     }
 
@@ -759,9 +761,21 @@ const CameraAnimator: React.FC<{
       pendulumStateRef.current.basePosition = camera.position.clone();
       pendulumStateRef.current.startTime = Date.now();
       wasInteractingRef.current = false;
+      lastActivityRef.current = Date.now();
     }
 
     const now = Date.now();
+
+    // Stop the render loop entirely after the camera sits still for a while.
+    // Once idle, no camera mutation happens and frameloop="demand" ends all
+    // WebGL work; any user interaction restarts the pendulum below.
+    if (phaseRef.current === 'pendulum' && now - lastActivityRef.current > 15000) {
+      phaseRef.current = 'idle';
+    }
+
+    if (phaseRef.current === 'idle') {
+      return;
+    }
 
     if (phaseRef.current === 'intro') {
       const duration = 5000;
