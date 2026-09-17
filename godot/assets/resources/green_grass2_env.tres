@@ -1,0 +1,21 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://ivjj2jmt1bvv"]
+
+[ext_resource type="Shader" uid="uid://cra5cti8f2j5j" path="res://assets/shaders/grass.gdshader" id="1_fl3ev"]
+[ext_resource type="Texture2D" uid="uid://cp58rvgp2x8jv" path="res://assets/models/lowpoly_grass_0.png" id="2_la6qd"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_fl3ev")
+shader_parameter/albedo = Color(0.9882353, 1, 0, 1)
+shader_parameter/texture_albedo = ExtResource("2_la6qd")
+shader_parameter/roughness = 1.0
+shader_parameter/metallic = 0.0
+shader_parameter/specular = 0.50000002375
+shader_parameter/normal_scale = 1.0
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/grass_start_height = -0.7
+shader_parameter/grass_end_height = 1.0
+shader_parameter/fade_size = 0.5
+shader_parameter/alpha_cutoff = 0.1
+shader_parameter/mesh_rotation_degrees = Vector3(-90, 0, 0)

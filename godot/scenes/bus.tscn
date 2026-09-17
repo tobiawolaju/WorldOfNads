@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dfh73flh3qptd"]
+
+[ext_resource type="Script" uid="uid://bok6pqa5jkw3a" path="res://scripts/environment/bus.gd" id="1_stnsb"]
+
+[node name="Bus" type="Node3D" unique_id=1811375150]
+script = ExtResource("1_stnsb")
