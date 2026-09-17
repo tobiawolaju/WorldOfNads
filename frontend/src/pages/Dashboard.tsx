@@ -398,23 +398,28 @@ export default function Dashboard() {
   }, [ready]);
 
   useEffect(() => {
-    const audioEl = lobbyAudioRef.current;
-    if (!audioEl) return;
-    audioEl.volume = 0.4;
+    const audio = new Audio("/lobbysong.mp3");
+    audio.loop = true;
+    audio.volume = 0.4;
+    lobbyAudioRef.current = audio;
 
     const tryPlay = () => {
-      audioEl.play().catch(() => {});
+      audio.play().catch(() => {});
     };
 
     tryPlay();
-    window.addEventListener("pointerdown", tryPlay, { once: true });
-    window.addEventListener("keydown", tryPlay, { once: true });
+    window.addEventListener("pointerdown", tryPlay);
+    window.addEventListener("keydown", tryPlay);
+    window.addEventListener("touchstart", tryPlay, { passive: true });
 
     return () => {
       window.removeEventListener("pointerdown", tryPlay);
       window.removeEventListener("keydown", tryPlay);
+      window.removeEventListener("touchstart", tryPlay);
+      audio.pause();
+      audio.src = "";
     };
-  }, [ready]);
+  }, []);
 
   const handlePlayClick = useCallback(() => {
     if (!selectedMatch || !user) return;
@@ -681,7 +686,6 @@ export default function Dashboard() {
       {!showLoader && authenticated && user && (
         <div className="dashboard-wrapper">
         <div className={`left-3d-section ${equipFlash ? "shake" : ""}`}>
-        <audio ref={lobbyAudioRef} src="/lobbysong.mp3" loop preload="auto" />
         <div className="lobby-bg"><img src="/lobbybg.jpeg" alt="" /></div>
         <ThreeScene
           equippedSkin={displayedSkin}
