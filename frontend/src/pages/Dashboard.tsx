@@ -911,7 +911,7 @@ export default function Dashboard() {
               {isTrainingLobby || (!isInCountdown && normalizedSelectedStatus !== "completed")
                 ? "PLAY"
                 : isInCountdown
-                  ? <>Starts in: {formatCountdown(selectedMatchData.startTime)}</>
+                  ? <><span className="countdown-label">Starts in: </span>{formatCountdown(selectedMatchData.startTime)}</>
                   : "Not Live"}
             </span>
           )}
