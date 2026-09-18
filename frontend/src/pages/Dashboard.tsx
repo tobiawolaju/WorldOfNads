@@ -700,7 +700,7 @@ export default function Dashboard() {
       {!showLoader && authenticated && user && (
         <div className="dashboard-wrapper">
         <div className={`left-3d-section ${equipFlash ? "shake" : ""}`}>
-        <div className="lobby-bg"><img src="/lobbybg.jpeg" alt="" /></div>
+        {tab !== "store" && <div className="lobby-bg"><img src="/lobbybg.jpeg" alt="" /></div>}
         <ThreeScene
           equippedSkin={displayedSkin}
           isStoreOpen={tab === "store"}
