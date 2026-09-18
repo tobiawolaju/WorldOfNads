@@ -202,6 +202,16 @@ const AppContent: React.FC = () => {
     setShowLoader(!ready);
   }, [ready]);
 
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      void import("./pages/Dashboard");
+      void import("./pages/Play");
+      void import("./pages/NadArena");
+      void import("./pages/Leaderboard");
+    }, 2500);
+    return () => window.clearTimeout(t);
+  }, []);
+
   // Hide navbar on immersive/special landing routes
   const hideNavbar = location.pathname === "/play";
   const hideTopNavbarContents = location.pathname === "/waitlist" || location.pathname === "/wait-list";
