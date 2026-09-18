@@ -71,6 +71,11 @@ const RequireRole: React.FC<{ role: string; children: React.ReactElement }> = ({
   );
 };
 
+// Snapshot of the device landscape width used for mobile desktop-mode.
+// Cached at module scope so fullscreen toggles / resize events can't re-derive
+// a different scale and blow up text/button sizes.
+let cachedLandscapeWidth: number | null = null;
+
 const AppContent: React.FC = () => {
   const { ready, authenticated, user } = usePrivy();
   const location = useLocation();
@@ -100,6 +105,7 @@ const AppContent: React.FC = () => {
     const applyViewportMode = () => {
       const shouldUseDesktopMode = mobileDeviceQuery.matches && landscapeQuery.matches;
       if (!shouldUseDesktopMode) {
+        cachedLandscapeWidth = null;
         viewportMeta.setAttribute("content", defaultViewport);
         document.documentElement.style.setProperty('--rev-scale', '1');
         return;
@@ -108,8 +114,10 @@ const AppContent: React.FC = () => {
       // Render at 1280px desktop width, then zoom out so it fits the
       // device screen exactly – no horizontal overscroll.
       const desktopWidth = 1280;
-      const deviceWidth = Math.max(screen.width, screen.height) - 50;
-      const scale = Math.min(1, deviceWidth / desktopWidth);
+      if (cachedLandscapeWidth === null) {
+        cachedLandscapeWidth = Math.max(screen.width, screen.height) - 50;
+      }
+      const scale = Math.min(1, cachedLandscapeWidth / desktopWidth);
       const revScale = 1 / scale;
       const desktopViewport =
         `width=${desktopWidth}, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=no, viewport-fit=cover`;
@@ -124,9 +132,17 @@ const AppContent: React.FC = () => {
       resizeTimeout = setTimeout(applyViewportMode, 200);
     };
 
+    // Re-apply the same (cached) scale when entering/exiting fullscreen instead
+    // of re-deriving it from screen dimensions that change in fullscreen mode.
+    const handleFullscreenChange = () => {
+      clearTimeout(resizeTimeout);
+      applyViewportMode();
+    };
+
     applyViewportMode();
 
     window.addEventListener("resize", throttledApply);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
     landscapeQuery.addEventListener("change", applyViewportMode);
     mobileDeviceQuery.addEventListener("change", applyViewportMode);
 
