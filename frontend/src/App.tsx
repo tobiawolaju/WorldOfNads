@@ -134,21 +134,34 @@ const AppContent: React.FC = () => {
 
     // Re-apply the same (cached) scale when entering/exiting fullscreen instead
     // of re-deriving it from screen dimensions that change in fullscreen mode.
+    // Chrome re-reads the viewport meta multiple times across the fullscreen
+    // transition, so re-apply it a few times afterwards to keep the layout
+    // identical before and after fullscreen.
+    const fullscreenTimers: number[] = [];
     const handleFullscreenChange = () => {
       clearTimeout(resizeTimeout);
+      fullscreenTimers.forEach((t) => clearTimeout(t));
+      fullscreenTimers.length = 0;
       applyViewportMode();
+      [50, 150, 400].forEach((ms) => {
+        fullscreenTimers.push(window.setTimeout(applyViewportMode, ms));
+      });
     };
 
     applyViewportMode();
 
     window.addEventListener("resize", throttledApply);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
     landscapeQuery.addEventListener("change", applyViewportMode);
     mobileDeviceQuery.addEventListener("change", applyViewportMode);
 
     return () => {
       clearTimeout(resizeTimeout);
+      fullscreenTimers.forEach((t) => clearTimeout(t));
       window.removeEventListener("resize", throttledApply);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
       landscapeQuery.removeEventListener("change", applyViewportMode);
       mobileDeviceQuery.removeEventListener("change", applyViewportMode);
       viewportMeta.setAttribute("content", originalViewport);
