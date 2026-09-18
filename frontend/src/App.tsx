@@ -6,7 +6,6 @@ import { usePrivy } from "@privy-io/react-auth";
 import BackgroundPattern from "./components/Background";
 import RainbowBeam from "./components/RainbowBeam";
 import TopNavbar from "./components/TopNavbar";
-import FullscreenToggle from "./components/FullscreenToggle";
 
 // UI
 import { FullScreenLoader } from "./components/ui/fullscreen-loader";
@@ -250,7 +249,6 @@ const AppContent: React.FC = () => {
     <>
       <BackgroundPattern />
       <RainbowBeam />
-      <FullscreenToggle />
       <FullScreenLoader visible={showLoader} />
       <ToastContainer
         position="top-center"
