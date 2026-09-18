@@ -1,0 +1,29 @@
+.fullscreen-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.5);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  gap: 0;
+  backdrop-filter: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-shadow: none;
+  box-shadow: none;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.fullscreen-toggle:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
