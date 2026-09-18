@@ -366,7 +366,7 @@ const Home: React.FC = () => {
       {/* SECTION 1: HERO */}
       <section className="hero-section" ref={heroRef}>
         <div className="hero-bg-container">
-          <img ref={heroBgRef} src="/wons.gif" alt="World of Nads Gameplay" className="hero-bg-video" />
+          <img ref={heroBgRef} src="/wons.gif" alt="World of Nads Gameplay" className="hero-bg-video" fetchPriority="high" />
           <div className="hero-overlay" />
         </div>
 

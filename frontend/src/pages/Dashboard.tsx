@@ -110,6 +110,16 @@ const LOCAL_ITEMS = storeItemsData as StoreItem[];
 
 const getStoreImageUrl = (item: StoreItem) => item.image || `/skins_png/${item.id}.png`;
 
+function prefetchLinks(urls: string[]) {
+  for (const href of urls) {
+    const link = document.createElement("link");
+    link.rel = "prefetch";
+    link.as = "fetch";
+    link.href = href;
+    document.head.appendChild(link);
+  }
+}
+
 function getLevelFromXP(xp: number): number {
   if (xp <= 0) return 1;
   return Math.floor(Math.sqrt(xp / 100)) + 1;
@@ -430,6 +440,7 @@ export default function Dashboard() {
     if (!selectedMatch || !user) return;
 
     if (playButtonState === "idle") {
+      prefetchLinks(["/godot/index.wasm", "/godot/index.pck"]);
       setPlayButtonState("counting");
       setElapsedTime(0);
       clearPlayTimers();
