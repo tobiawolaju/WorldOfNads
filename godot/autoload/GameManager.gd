@@ -14,7 +14,7 @@ func _ready() -> void:
 	# Force a responsive frame loop for the live 3D game (low_processor_mode is
 	# a battery-saver meant for static UI and throttles the frame rate hard).
 	#Engine.low_processor_mode = false
-	Engine.max_fps = 30
+	Engine.max_fps = 120
 	
 	# On web (Android Chrome etc.) render 3D at a fraction of the window
 	# resolution; the browser upscales. Massive fill-rate win on low-end GPUs.
