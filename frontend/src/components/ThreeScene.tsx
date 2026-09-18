@@ -606,9 +606,8 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
       const mobile = window.innerWidth < 768;
       // Z=10 provides a consistent zoom level for both mobile and desktop
       setCameraZ(mobile ? 9 : 10);
-      // Moving target up by +0.25 (half the head-to-shadow distance)
-      // Original: 0.5, New: 0.75
-      setTargetY(mobile ? 0.7 : 0.75);
+      // Raise the camera target so the nad/chickens sit lower on screen
+      setTargetY(mobile ? 1.4 : 1.5);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -619,7 +618,6 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
 
   const chickenCount = 6;
   const radius = 6;
-  const yOffset = -6.8;
   const seed = 12345;
   const rand = (s: number) => () => {
     s = (s * 1664525 + 1013904223) % 4294967296;
@@ -636,7 +634,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
         key: i,
         position: [
           radius * Math.sin(phi) * Math.cos(theta),
-          radius * Math.sin(phi) * Math.sin(theta) + yOffset,
+          radius * Math.sin(phi) * Math.sin(theta),
           radius * Math.cos(phi),
         ] as [number, number, number],
         rotation: [
@@ -670,7 +668,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
       <Environment preset="city" />
 
       <Suspense fallback={null}>
-        <NadModel scale={0.5} position={[0, -8.8, 0]} equippedSkin={equippedSkin} />
+        <NadModel scale={0.5} position={[0, -2, 0]} equippedSkin={equippedSkin} />
 
 
 
