@@ -7,16 +7,12 @@ export const FullscreenToggle: React.FC = () => {
 
   useEffect(() => {
     const update = () => {
-      setEnabled(Boolean(document.fullscreenEnabled || document.webkitFullscreenEnabled));
-      setActive(Boolean(document.fullscreenElement || document.webkitFullscreenElement));
+      setEnabled(Boolean(document.fullscreenEnabled));
+      setActive(Boolean(document.fullscreenElement));
     };
     update();
     document.addEventListener("fullscreenchange", update);
-    document.addEventListener("webkitfullscreenchange", update);
-    return () => {
-      document.removeEventListener("fullscreenchange", update);
-      document.removeEventListener("webkitfullscreenchange", update);
-    };
+    return () => document.removeEventListener("fullscreenchange", update);
   }, []);
 
   if (!enabled) return null;
@@ -31,12 +27,7 @@ export const FullscreenToggle: React.FC = () => {
         if (document.fullscreenElement) {
           void document.exitFullscreen();
         } else {
-          // Fullscreen the app container instead of <html>: Chrome scales the
-          // page to device-width when <html> goes fullscreen, which makes every
-          // button/card ~2x bigger on mobile. #root keeps its layout width, so
-          // the rendered content stays pixel-identical.
-          const target = document.getElementById("root") || document.body || document.documentElement;
-          void (target.requestFullscreen?.() ?? Promise.reject(new Error("no fullscreen")));
+          void document.documentElement.requestFullscreen();
         }
       }}
     >
