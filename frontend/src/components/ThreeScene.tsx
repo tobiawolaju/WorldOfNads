@@ -598,8 +598,25 @@ const NadModel: React.FC<NadModelProps> = ({
 export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
   equippedSkin,
 }) => {
-  const [cameraZ, setCameraZ] = useState(22);
-  const [targetY, setTargetY] = useState(0);
+  const controlsRef = useRef<any>(null);
+
+  const [cameraZ, setCameraZ] = useState(() =>
+    window.innerWidth < 768 ? 9 : 10
+  );
+  const [targetY, setTargetY] = useState(() =>
+    window.innerWidth < 768 ? 1.4 : 1.5
+  );
+
+  // Force the orbit target on the controls so a fresh load always frames
+  // the scene the same way (props-only application can get skipped with
+  // frameloop="demand").
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (controls) {
+      controls.target.set(0, targetY, 0);
+      controls.update();
+    }
+  }, [targetY]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -609,12 +626,9 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
       // Raise the camera target so the nad/chickens sit lower on screen
       setTargetY(mobile ? 1.4 : 1.5);
     };
-    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const controlsRef = useRef<any>(null);
 
   const chickenCount = 6;
   const radius = 6;
