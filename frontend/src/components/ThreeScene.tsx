@@ -619,6 +619,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
 
   const chickenCount = 6;
   const radius = 6;
+  const yOffset = -0.4;
   const seed = 12345;
   const rand = (s: number) => () => {
     s = (s * 1664525 + 1013904223) % 4294967296;
@@ -635,7 +636,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
         key: i,
         position: [
           radius * Math.sin(phi) * Math.cos(theta),
-          radius * Math.sin(phi) * Math.sin(theta),
+          radius * Math.sin(phi) * Math.sin(theta) + yOffset,
           radius * Math.cos(phi),
         ] as [number, number, number],
         rotation: [
@@ -669,7 +670,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
       <Environment preset="city" />
 
       <Suspense fallback={null}>
-        <NadModel scale={0.5} position={[0, -2, 0]} equippedSkin={equippedSkin} />
+        <NadModel scale={0.5} position={[0, -2.4, 0]} equippedSkin={equippedSkin} />
 
 
 
