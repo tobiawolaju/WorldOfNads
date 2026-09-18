@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+/* Disable text selection / highlight across the whole site (Ctrl+A, long-press),
+   while keeping selection usable inside form fields */
+* {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
 @theme {
     --color-background: #ffffff;
     --color-foreground: #171717;

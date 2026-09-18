@@ -186,7 +186,7 @@
 .tab-content-scroll {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: hidden;
   padding-bottom: 100px;
   scrollbar-width: none;
@@ -656,13 +656,25 @@
 
 @media (orientation: landscape) {
   .match-card {
-    flex: 0 0 220px;
-    width: 220px;
-    min-width: 220px;
-    max-width: 220px;
-    height: 330px;
-    min-height: 330px;
-    max-height: 330px;
+    flex: 0 0 330px;
+    width: 330px;
+    min-width: 330px;
+    max-width: 330px;
+    height: 220px;
+    min-height: 220px;
+    max-height: 220px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .match-card {
+    flex: 0 0 330px;
+    width: 330px;
+    min-width: 330px;
+    max-width: 330px;
+    height: 220px;
+    min-height: 220px;
+    max-height: 220px;
   }
 }
 
