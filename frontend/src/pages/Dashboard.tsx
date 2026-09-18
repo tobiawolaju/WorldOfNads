@@ -489,15 +489,6 @@ export default function Dashboard() {
     }
   }, [selectedMatch, user, playButtonState, displayedSkin, equippedSkin, matches, navigate]);
 
-  const formatLocalTime = (timestamp: number | undefined) => {
-    if (!timestamp) return "";
-    return new Intl.DateTimeFormat("default", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false
-    }).format(new Date(timestamp * 1000));
-  };
-
   const formatCountdown = (timestamp: number | undefined) => {
     if (!timestamp) return null;
     const remainingMs = Math.max(timestamp * 1000 - nowMs, 0);
@@ -505,13 +496,20 @@ export default function Dashboard() {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
+    if (hours > 0) {
+      return (
+        <>
+          {hours}:{String(minutes).padStart(2, "0")}:
+          <span className="countdown-seconds-wrap">
+            <span className="countdown-seconds-separator">:</span>
+            <span className="countdown-seconds">{String(seconds).padStart(2, "0")}</span>
+          </span>
+        </>
+      );
+    }
     return (
       <>
-        {hours}:{String(minutes).padStart(2, "0")}:
-        <span className="countdown-seconds-wrap">
-          <span className="countdown-seconds-separator">:</span>
-          <span className="countdown-seconds">{String(seconds).padStart(2, "0")}</span>
-        </span>
+        {minutes}:{String(seconds).padStart(2, "0")}
       </>
     );
   };
@@ -585,15 +583,15 @@ export default function Dashboard() {
   const normalizedSelectedStatus = normalizeMatchStatus(selectedMatchData?.status);
   const isLive = normalizedSelectedStatus === "live";
   const isTrainingLobby = selectedMatchData?.ctaMode === "play";
+  const countdownRemainingMs = selectedMatchData?.startTime
+    ? selectedMatchData.startTime * 1000 - nowMs
+    : 0;
+  const isInCountdown = Boolean(
+    !isTrainingLobby && selectedMatchData?.startTime && countdownRemainingMs > 0
+  );
   const isStartTimeReached = selectedMatchData?.startTime
     ? nowMs >= selectedMatchData.startTime * 1000
     : true;
-  const isLiveCountdownActive = Boolean(
-    isLive &&
-      selectedMatchData?.startTime &&
-      nowMs < selectedMatchData.startTime * 1000 &&
-      selectedMatchData.ctaMode !== "play"
-  );
   const canPlay = isTrainingLobby || ((isLive || (normalizedSelectedStatus === "upcoming" && isStartTimeReached)) && isStartTimeReached);
   const getFallbackMatch = useCallback(() =>
     orderedMatches.find((match) => normalizeMatchStatus(match.status) === filter) || orderedMatches[0] || null,
@@ -799,36 +797,18 @@ export default function Dashboard() {
                   >
                     {selectedMatch === match.matchId ? (
                       <div className={`match-card-overlay selected-overlay status-${normalizeMatchStatus(match.status)}`}>
+                        <p className="match-reward">{match.prize}</p>
                         <div className="match-card-content">
                           <div className="match-details-inner">
                             <p className="match-desc">{match.description}</p>
-                            <p className="match-info">Prize: {match.prize}</p>
-                            <p className="match-info">
-                              Time: {match.ctaMode === "play"
-                                ? match.time
-                                : match.status === "live" && match.startTime && nowMs < match.startTime * 1000
-                                  ? formatCountdown(match.startTime)
-                                  : match.startTime
-                                    ? `${formatLocalTime(match.startTime)}`
-                                    : match.time}
-                            </p>
                           </div>
                         </div>
                       </div>
                     ) : (
                       <div className="match-card-overlay">
+                        <p className="match-reward">{match.prize}</p>
                         <div className="match-card-content">
                           <h3 className="match-sponsor">{match.sponsor}</h3>
-                          <p className="match-reward">{match.prize}</p>
-                          <p className="match-time">
-                            {match.ctaMode === "play"
-                              ? match.time
-                              : match.status === "live" && match.startTime && nowMs < match.startTime * 1000
-                                ? formatCountdown(match.startTime)
-                                : match.status === "upcoming" && match.startTime
-                                  ? `${formatLocalTime(match.startTime)} (Local)`
-                                  : match.time}
-                          </p>
                         </div>
                       </div>
                     )}
@@ -928,15 +908,11 @@ export default function Dashboard() {
             <span>{elapsedTime.toFixed(1)}s Cancel</span>
           ) : (
             <span>
-              {isTrainingLobby
+              {isTrainingLobby || (!isInCountdown && normalizedSelectedStatus !== "completed")
                 ? "PLAY"
-                : canPlay
-                  ? "PLAY"
-                : normalizedSelectedStatus === "upcoming"
-                  ? "•°••"
-                  : isLiveCountdownActive && selectedMatchData?.startTime
-                    ? formatCountdown(selectedMatchData.startTime)
-                    : "Not Live"}
+                : isInCountdown
+                  ? <>Starts in: {formatCountdown(selectedMatchData.startTime)}</>
+                  : "Not Live"}
             </span>
           )}
         </button>
