@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { OrbitControls, useFBX, Environment } from "@react-three/drei";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
@@ -594,294 +594,12 @@ const NadModel: React.FC<NadModelProps> = ({
   );
 };
 
-// --- Camera Animation Logic ---
-const CameraAnimator: React.FC<{
-  isInteracting: boolean;
-  baseDistance: number;
-  targetY: number;
-  cameraYOffset: number;
-  isStoreOpen: boolean;
-  controlsRef: React.RefObject<any>;
-}> = ({ isInteracting: propIsInteracting, baseDistance, targetY, cameraYOffset, isStoreOpen, controlsRef }) => {
-  const { camera, gl } = useThree();
-  const phaseRef = useRef<'intro' | 'pendulum' | 'idle'>('intro');
-  const introStartTimeRef = useRef(Date.now());
-  const lastActivityRef = useRef(Date.now());
-  const pendulumStateRef = useRef({
-    basePosition: new THREE.Vector3(0, 2, baseDistance),
-    startTime: 0
-  });
-  const storeLockRef = useRef<{
-    active: boolean;
-    position: THREE.Vector3;
-    target: THREE.Vector3;
-    zoom: number;
-    enableZoom: boolean;
-    enabled: boolean;
-  }>({
-    active: false,
-    position: new THREE.Vector3(),
-    target: new THREE.Vector3(),
-    zoom: 1,
-    enableZoom: true,
-    enabled: true
-  });
-  const propIsInteractingRef = useRef(propIsInteracting);
-  const wasInteractingRef = useRef(propIsInteracting);
-  const wheelInteractingRef = useRef(false);
-  const wheelTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    propIsInteractingRef.current = propIsInteracting;
-  }, [propIsInteracting]);
-
-  useEffect(() => {
-    pendulumStateRef.current.basePosition = new THREE.Vector3(0, 2, baseDistance);
-  }, [baseDistance]);
-
-  useEffect(() => {
-    const controls = controlsRef.current;
-    if (!controls) return;
-
-    if (isStoreOpen) {
-      if (!storeLockRef.current.active) {
-        storeLockRef.current.position.copy(camera.position);
-        storeLockRef.current.target.copy(controls.target);
-        storeLockRef.current.zoom = camera.zoom;
-        storeLockRef.current.enableZoom = controls.enableZoom;
-        storeLockRef.current.enabled = controls.enabled;
-        storeLockRef.current.active = true;
-      }
-
-      const direction = camera.position.clone().sub(controls.target);
-      if (direction.lengthSq() === 0) {
-        direction.set(0, 0, 1);
-      }
-      direction.normalize();
-
-      const lockedPosition = controls.target.clone().add(direction.multiplyScalar(2.647));
-      camera.position.copy(lockedPosition);
-      camera.zoom = 1;
-      camera.updateProjectionMatrix();
-      camera.lookAt(controls.target);
-      controls.enableZoom = false;
-      controls.enabled = true;
-      controls.update();
-      return;
-    }
-
-    if (storeLockRef.current.active) {
-      camera.position.copy(storeLockRef.current.position);
-      camera.zoom = storeLockRef.current.zoom;
-      camera.updateProjectionMatrix();
-      controls.target.copy(storeLockRef.current.target);
-      controls.enableZoom = storeLockRef.current.enableZoom;
-      controls.enabled = storeLockRef.current.enabled;
-      camera.lookAt(storeLockRef.current.target);
-      controls.update();
-      storeLockRef.current.active = false;
-    }
-  }, [camera, controlsRef, isStoreOpen]);
-
-  useEffect(() => {
-    const handleWheel = () => {
-      wheelInteractingRef.current = true;
-      if (wheelTimeout.current) clearTimeout(wheelTimeout.current);
-      wheelTimeout.current = setTimeout(() => {
-        wheelInteractingRef.current = false;
-      }, 250);
-    };
-
-    const domElement = gl.domElement;
-    domElement.addEventListener('wheel', handleWheel, { passive: true });
-    return () => {
-      domElement.removeEventListener('wheel', handleWheel);
-      if (wheelTimeout.current) clearTimeout(wheelTimeout.current);
-    };
-  }, [gl.domElement]);
-
-  useFrame(() => {
-    const controls = controlsRef.current;
-    if (!controls) return;
-
-    if (isStoreOpen) {
-      if (storeLockRef.current.active) {
-        return;
-      }
-
-      storeLockRef.current.position.copy(camera.position);
-      storeLockRef.current.target.copy(controls.target);
-      storeLockRef.current.zoom = camera.zoom;
-      storeLockRef.current.enableZoom = controls.enableZoom;
-      storeLockRef.current.enabled = controls.enabled;
-      storeLockRef.current.active = true;
-
-      const direction = camera.position.clone().sub(controls.target);
-      if (direction.lengthSq() === 0) {
-        direction.set(0, 0, 1);
-      }
-      direction.normalize();
-
-      const lockedPosition = controls.target.clone().add(direction.multiplyScalar(2.647));
-      camera.position.copy(lockedPosition);
-      camera.zoom = 1;
-      camera.updateProjectionMatrix();
-      camera.lookAt(controls.target);
-      controls.enableZoom = false;
-      controls.enabled = true;
-      controls.update();
-      return;
-    }
-
-    if (storeLockRef.current.active) {
-      camera.position.copy(storeLockRef.current.position);
-      camera.zoom = storeLockRef.current.zoom;
-      camera.updateProjectionMatrix();
-      controls.target.copy(storeLockRef.current.target);
-      controls.enableZoom = storeLockRef.current.enableZoom;
-      controls.enabled = storeLockRef.current.enabled;
-      camera.lookAt(storeLockRef.current.target);
-      controls.update();
-      storeLockRef.current.active = false;
-    }
-
-    const isInteracting = propIsInteractingRef.current || wheelInteractingRef.current;
-
-    if (isInteracting) {
-      pendulumStateRef.current.basePosition = camera.position.clone();
-      pendulumStateRef.current.startTime = Date.now();
-      phaseRef.current = 'pendulum';
-      wasInteractingRef.current = true;
-      lastActivityRef.current = Date.now();
-      return;
-    }
-
-    // On user interaction release, do a final state capture for absolute precision
-    if (wasInteractingRef.current && !isInteracting) {
-      pendulumStateRef.current.basePosition = camera.position.clone();
-      pendulumStateRef.current.startTime = Date.now();
-      wasInteractingRef.current = false;
-      lastActivityRef.current = Date.now();
-    }
-
-    const now = Date.now();
-
-    // Stop the render loop entirely after the camera sits still for a while.
-    // Once idle, no camera mutation happens and frameloop="demand" ends all
-    // WebGL work; any user interaction restarts the pendulum below.
-    if (phaseRef.current === 'pendulum' && now - lastActivityRef.current > 15000) {
-      phaseRef.current = 'idle';
-    }
-
-    if (phaseRef.current === 'idle') {
-      return;
-    }
-
-    if (phaseRef.current === 'intro') {
-      const duration = 5000;
-      const elapsed = now - introStartTimeRef.current;
-      const progress = Math.min(elapsed / duration, 1);
-
-      // 360 Spin logic
-      const angle = progress * Math.PI * 2;
-
-      // Starts at the old end zoom (60% of baseDistance) 
-      const startDistance = baseDistance * 0.6;
-      // Ends even closer to the center (40% of baseDistance)
-      const endDistance = baseDistance * 0.4;
-
-      // Smoothly interpolate between start and end distance
-      const currentBaseDist = startDistance - (startDistance - endDistance) * progress;
-
-      // Add a pull-back effect during the middle of the 360 spin
-      const pullBackEffect = Math.sin(progress * Math.PI) * (baseDistance * 1.2);
-
-      const distance = currentBaseDist + pullBackEffect;
-
-      camera.position.x = Math.sin(angle) * distance;
-      camera.position.z = Math.cos(angle) * distance;
-
-      // Calculate a ratio (1.0 at origin distance, ~0.3 at closest zoom)
-      const heightRatio = distance / baseDistance;
-      // Slopes from ~1.8 (high) down to ~ -0.3 (low front view)
-      camera.position.y = (heightRatio * 3) - 1.2 + cameraYOffset;
-      camera.lookAt(0, targetY, 0);
-
-      if (progress >= 1) {
-        phaseRef.current = 'pendulum';
-        pendulumStateRef.current.basePosition = camera.position.clone();
-        pendulumStateRef.current.startTime = now;
-      }
-    } else if (phaseRef.current === 'pendulum') {
-      const elapsed = (now - pendulumStateRef.current.startTime) / 1000;
-      // Oscillate +/- 18 degrees
-      const oscillation = Math.sin(elapsed * 0.4) * (18 * Math.PI / 180);
-
-      const axis = new THREE.Vector3(0, 1, 0);
-      const newPos = pendulumStateRef.current.basePosition.clone();
-      newPos.applyAxisAngle(axis, oscillation);
-
-      camera.position.copy(newPos);
-      camera.lookAt(0, targetY, 0);
-    }
-
-    if (controls) (controls as any).update();
-  });
-
-  return null;
-};
-
-const CameraInteractionLogger: React.FC<{ controlsRef: React.RefObject<any>; baseDistance: number }> = ({ controlsRef, baseDistance }) => {
-  const { camera } = useThree();
-  const isInteractingRef = useRef(false);
-  const wheelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    const controls = controlsRef.current;
-    if (!controls?.addEventListener) return;
-
-    const handleStart = () => {
-      isInteractingRef.current = true;
-    };
-
-    const handleEnd = () => {
-      isInteractingRef.current = false;
-    };
-
-    const handleWheel = () => {
-      isInteractingRef.current = true;
-      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
-      wheelTimeoutRef.current = setTimeout(() => {
-        isInteractingRef.current = false;
-      }, 250);
-    };
-
-    const domElement = controls.domElement as HTMLElement | undefined;
-
-    controls.addEventListener("start", handleStart);
-    controls.addEventListener("end", handleEnd);
-    domElement?.addEventListener("wheel", handleWheel, { passive: true });
-
-    return () => {
-      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
-      controls.removeEventListener("start", handleStart);
-      controls.removeEventListener("end", handleEnd);
-      domElement?.removeEventListener("wheel", handleWheel);
-    };
-  }, [baseDistance, camera, controlsRef]);
-
-  return null;
-};
-
 // --- Main Scene Component ---
 export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
   equippedSkin,
-  isStoreOpen = false,
 }) => {
   const [cameraZ, setCameraZ] = useState(22);
   const [targetY, setTargetY] = useState(0);
-  const [cameraYOffset, setCameraYOffset] = useState(0);
-  const [isInteracting, setIsInteracting] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -891,7 +609,6 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
       // Moving target up by +0.25 (half the head-to-shadow distance)
       // Original: 0.5, New: 0.75
       setTargetY(mobile ? 0.7 : 0.75);
-      setCameraYOffset(mobile ? 0.65 : 0.75);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -967,17 +684,12 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
         enableZoom={true}
         enablePan={false}
         enableRotate={true}
-        onStart={() => setIsInteracting(true)}
-        onEnd={() => setIsInteracting(false)}
         mouseButtons={{
           LEFT: THREE.MOUSE.ROTATE,
           MIDDLE: null as any,
           RIGHT: null as any,
         }}
       />
-
-      <CameraInteractionLogger controlsRef={controlsRef} baseDistance={cameraZ} />
-      <CameraAnimator isInteracting={isInteracting} baseDistance={cameraZ} targetY={targetY} cameraYOffset={cameraYOffset} isStoreOpen={isStoreOpen} controlsRef={controlsRef} />
     </Canvas>
   );
 });
