@@ -39,7 +39,6 @@ script = ExtResource("1_07nfq")
 local_player_scene = ExtResource("2_oipnb")
 camera_node = NodePath("Player/Camera3D")
 spawn_point = NodePath("Player/spawnpoint")
-spawn_lobby_stress_agents = true
 lobby_stress_agent_count = 10
 
 [node name="env" type="Node3D" parent="." unique_id=933934101 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
@@ -59,8 +58,7 @@ environment = ExtResource("4_ncsg4")
 
 [node name="day" type="DirectionalLight3D" parent="env" unique_id=978818535]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
-light_color = Color(1, 0.68235296, 0.9529412, 1)
-light_energy = 0.5
+light_color = Color(0.9019608, 0.54509807, 0.972549, 1)
 shadow_enabled = true
 directional_shadow_mode = 0
 
@@ -95,7 +93,7 @@ doppler_tracking = 1
 far = 100.0
 
 [node name="spawnpoint" type="Node3D" parent="Player" unique_id=765824796]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.032, 10.215, -1)
 
 [node name="Timer" type="Timer" parent="Player" unique_id=1278349154]
 
