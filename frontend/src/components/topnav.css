@@ -78,7 +78,7 @@
   width: 32px;
   height: 32px;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 0;
 }
 
 .user-badge__name {
@@ -95,11 +95,25 @@
 
 .user-badge__meta {
   margin: 0;
-  font-size: 11px;
+  padding: 0;
+  border: none;
+  background: none;
   font-family: monospace;
+  font-size: 11px;
   opacity: 0.8;
   color: inherit;
   white-space: nowrap;
+  cursor: pointer;
+  line-height: 1.15;
+  text-align: left;
+}
+
+.user-badge__meta:hover {
+  opacity: 1;
+}
+
+.user-badge__meta:disabled {
+  cursor: default;
 }
 
 /* Navigation Links - Always White */

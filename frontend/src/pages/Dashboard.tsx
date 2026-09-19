@@ -170,7 +170,6 @@ export default function Dashboard() {
   const { wallets } = useWallets();
   const navigate = useNavigate();
 
-  const [earned, setEarned] = useState<number>(0);
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [selectedReward, setSelectedReward] = useState<string | null>(null);
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
@@ -182,7 +181,6 @@ export default function Dashboard() {
   const [mintError, setMintError] = useState<string | null>(null);
   const [equipFlash, setEquipFlash] = useState(false);
   const newStoreItemCount = 1;
-  const [copied, setCopied] = useState(false);
   const [roles, setRoles] = useState<string[]>([]);
 
   const { level, xpInLevel, levelRequirement } = useMemo(() => {
@@ -323,33 +321,6 @@ export default function Dashboard() {
 
     loadOnchainData();
   }, [authenticated, user, storeItems]);
-
-  // Fetch actual MON balance
-  useEffect(() => {
-    if (!authenticated || !user) return;
-
-    const fetchBalance = async () => {
-      try {
-        const ethWallet = user.linkedAccounts?.find(
-          (acc) => acc.type === "wallet" && acc.chainType === "ethereum"
-        );
-        if (ethWallet && "address" in ethWallet && ethWallet.address) {
-        const provider = new ethers.JsonRpcProvider("https://testnet-rpc.monad.xyz");
-          const balance = await provider.getBalance(ethWallet.address);
-          const formatted = ethers.formatEther(balance);
-          // Trim to 4 decimal places for display
-          setEarned(parseFloat(formatted));
-        }
-      } catch (error: any) {
-        console.error("Failed to fetch MON balance:", error);
-      }
-    };
-
-    fetchBalance();
-    // Refresh balance every 30 seconds
-    const interval = setInterval(fetchBalance, 30000);
-    return () => clearInterval(interval);
-  }, [authenticated, user]);
 
   useEffect(() => {
     return () => {
@@ -551,16 +522,6 @@ export default function Dashboard() {
     return () => { mounted = false; };
   }, [username]);
 
-  const handleCardClick = () => {
-    if (wallets.length > 0) {
-      const addr = wallets[0].address;
-      navigator.clipboard.writeText(addr);
-      showSuccessToast("Wallet address copied!");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   // Filter for ONLY the Ethereum wallet (Monad)
   const linkedWallets = (user.linkedAccounts?.filter(
     (acc) => acc.type === "wallet" && acc.chainType === "ethereum"
@@ -708,14 +669,6 @@ export default function Dashboard() {
         {equipFlash && <div className="equip-flash" />}
 
         <div className="card-overlay">
-          <div className="card-top-left">
-            <div className="card-balance">{earned.toFixed(4)} MON</div>
-            <div className="card-wallet" onClick={handleCardClick}>
-              {wallets.length > 0
-                ? (copied ? "Copied!" : `${wallets[0].address.slice(0, 6)}...${wallets[0].address.slice(-4)}`)
-                : "No wallet"}
-            </div>
-          </div>
           <div className="card-top-right">
             <div className="card-level">Level {level}</div>
             <div className="xp-bar-track">
