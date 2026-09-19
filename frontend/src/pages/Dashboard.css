@@ -183,6 +183,15 @@
   z-index: 1;
 }
 
+/* In fullscreen Chrome resolves vh against the unzoomed layout viewport while
+   <html> is CSS-zoomed, so full-screen-height sections end up scaled down.
+   Multiply the vh by the reverse scale so they keep filling the screen. */
+html.is-fullscreen .dashboard-wrapper,
+html.is-fullscreen .left-3d-section,
+html.is-fullscreen .right-info-section {
+  height: calc(100vh * var(--rev-scale, 1));
+}
+
 .tab-content-scroll {
   flex: 1;
   min-height: 0;
