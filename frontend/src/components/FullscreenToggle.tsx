@@ -36,6 +36,31 @@ export const FullscreenToggle: React.FC = () => {
     };
   }, []);
 
+  // Re-clamp the dragged position to the current viewport so the button
+  // stays visible after rotating portrait -> landscape.
+  useEffect(() => {
+    const clampPos = () => {
+      setPos((prev) => {
+        if (!prev) return prev;
+        const size = btnRef.current
+          ? btnRef.current.getBoundingClientRect()
+          : { width: 48, height: 48 };
+        const maxX = Math.max(0, window.innerWidth - size.width);
+        const maxY = Math.max(0, window.innerHeight - size.height);
+        const x = Math.min(Math.max(0, prev.x), maxX);
+        const y = Math.min(Math.max(0, prev.y), maxY);
+        if (x === prev.x && y === prev.y) return prev;
+        return { x, y };
+      });
+    };
+    window.addEventListener("resize", clampPos);
+    window.addEventListener("orientationchange", clampPos);
+    return () => {
+      window.removeEventListener("resize", clampPos);
+      window.removeEventListener("orientationchange", clampPos);
+    };
+  }, []);
+
   if (!enabled || active) return null;
 
   const startDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
