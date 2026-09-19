@@ -109,6 +109,7 @@ const AppContent: React.FC = () => {
           (document as any).webkitFullscreenElement
       );
       const html = document.documentElement;
+      html.classList.toggle("is-fullscreen", inFullscreen);
       if (!shouldUseDesktopMode) {
         cachedLandscapeWidth = null;
         (html.style as any).zoom = "";
