@@ -32,7 +32,7 @@
 
 /* ===== DESKTOP LAYOUT ===== */
 .left-3d-section {
-  width: 65vw;
+  width: 65%;
   height: 100vh;
   position: relative;
   z-index: 1;
@@ -171,7 +171,7 @@
 }
 
 .right-info-section {
-  width: 35vw;
+  width: 35%;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -190,6 +190,14 @@ html.is-fullscreen .dashboard-wrapper,
 html.is-fullscreen .left-3d-section,
 html.is-fullscreen .right-info-section {
   height: calc(100vh * var(--rev-scale, 1));
+}
+
+/* The 65/35 split is percentage-based now, so pin the wrapper to the design
+   width (1280 layout px) while CSS-zooming: the sections then lay out at the
+   same logical width as the non-fullscreen landscape view and render
+   pixel-identical once zoom applies. */
+html.is-fullscreen.desktop-mode .dashboard-wrapper {
+  width: 1280px;
 }
 
 .tab-content-scroll {
