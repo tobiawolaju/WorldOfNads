@@ -7,20 +7,21 @@
   height: 3rem;
   border-radius: 0;
   border: none;
-  background: #ff2496;
-  color: #000;
+  background: #ff7ab6;
+  color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: grab;
   touch-action: none;
+  transform: skewX(-8deg);
   -webkit-user-select: none;
   user-select: none;
   transition: background 0.2s ease;
 }
 
 .fullscreen-toggle:hover {
-  background: #ff5bad;
+  background: #ffa9d0;
 }
 
 .fullscreen-toggle:active {
