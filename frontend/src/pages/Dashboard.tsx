@@ -735,8 +735,9 @@ export default function Dashboard() {
       </div>
 
       <div className="right-info-section">
-        <div className="tabs">
-          <div className={tab === "events" ? "tab active" : "tab"} onClick={() => { setTab("events"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
+        <div className="right-info-zoom">
+          <div className="tabs">
+            <div className={tab === "events" ? "tab active" : "tab"} onClick={() => { setTab("events"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
             <span className="tab-with-badge">Events</span>
           </div>
           <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
@@ -891,7 +892,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-
+        </div>
       </div>
 
       {tab === "events" && selectedMatch && (
