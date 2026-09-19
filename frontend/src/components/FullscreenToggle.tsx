@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./FullscreenToggle.css";
 
+const getFullscreenElement = (): Element | null =>
+  (document as any).fullscreenElement || (document as any).webkitFullscreenElement || null;
+
 export const FullscreenToggle: React.FC = () => {
   const [enabled, setEnabled] = useState(false);
   const [active, setActive] = useState(false);
@@ -16,12 +19,21 @@ export const FullscreenToggle: React.FC = () => {
 
   useEffect(() => {
     const update = () => {
-      setEnabled(Boolean(document.fullscreenEnabled));
-      setActive(Boolean(document.fullscreenElement));
+      setEnabled(
+        Boolean(
+          (document as any).fullscreenEnabled ||
+            (document as any).webkitFullscreenEnabled
+        )
+      );
+      setActive(Boolean(getFullscreenElement()));
     };
     update();
     document.addEventListener("fullscreenchange", update);
-    return () => document.removeEventListener("fullscreenchange", update);
+    document.addEventListener("webkitfullscreenchange", update);
+    return () => {
+      document.removeEventListener("fullscreenchange", update);
+      document.removeEventListener("webkitfullscreenchange", update);
+    };
   }, []);
 
   if (!enabled) return null;
@@ -70,10 +82,23 @@ export const FullscreenToggle: React.FC = () => {
       movedRef.current = false;
       return;
     }
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void document.documentElement.requestFullscreen();
+    const current = getFullscreenElement();
+    const exit = (document as any).exitFullscreen || (document as any).webkitExitFullscreen;
+    if (current && exit) {
+      exit.call(document);
+      return;
+    }
+    // Fullscreen the app container (#root) instead of <html>: Chrome scales
+    // the page to device-width when <html> goes fullscreen, which makes every
+    // button/card ~2x bigger on mobile. #root keeps its layout width, so the
+    // rendered content stays pixel-identical.
+    const target = document.getElementById("root") || document.body || document.documentElement;
+    const request = (target as any).requestFullscreen || (target as any).webkitRequestFullscreen;
+    if (request) {
+      const ret = request.call(target);
+      if (ret && typeof ret.catch === "function") {
+        ret.catch(() => {});
+      }
     }
   };
 
