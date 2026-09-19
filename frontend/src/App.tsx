@@ -109,14 +109,9 @@ const AppContent: React.FC = () => {
           (document as any).webkitFullscreenElement
       );
       const html = document.documentElement;
-      // Chrome Android forces the viewport zoom to 1 while in fullscreen and
-      // ignores the meta initial-scale entirely, so the desktop-mode layout
-      // (1280px, zoomed out) overflows and everything looks 2x bigger. In
-      // fullscreen, fall back to the native device-width layout and disable
-      // the reverse-scale on fixed UI so nothing grows past the screen.
-      if (!shouldUseDesktopMode || inFullscreen) {
+      if (!shouldUseDesktopMode) {
         cachedLandscapeWidth = null;
-        html.style.transform = "none";
+        (html.style as any).zoom = "";
         html.style.setProperty("--rev-scale", "1");
         viewportMeta.setAttribute("content", defaultViewport);
         return;
@@ -135,6 +130,13 @@ const AppContent: React.FC = () => {
 
       viewportMeta.setAttribute("content", desktopViewport);
       html.style.setProperty("--rev-scale", revScale.toString());
+      // Chrome Android forces the viewport zoom to 1 while in fullscreen and
+      // ignores the meta initial-scale, which would blow up the 1280px layout
+      // ~1.5x. Reproduce the missing zoom with CSS `zoom` on <html> (Blink
+      // treats it as page zoom, so there is no dead space and the whole page –
+      // cards, tabs, buttons – stays pixel-identical before and after
+      // fullscreen).
+      (html.style as any).zoom = inFullscreen ? scale.toString() : "";
     };
 
     let resizeTimeout: NodeJS.Timeout;
@@ -177,7 +179,7 @@ const AppContent: React.FC = () => {
       mobileDeviceQuery.removeEventListener("change", applyViewportMode);
       viewportMeta.setAttribute("content", originalViewport);
       document.documentElement.style.setProperty('--rev-scale', '1');
-      document.documentElement.style.transform = "none";
+      (document.documentElement.style as any).zoom = "";
     };
   }, [location.pathname]);
 
