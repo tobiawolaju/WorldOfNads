@@ -111,10 +111,16 @@ const AppContent: React.FC = () => {
       const html = document.documentElement;
       html.classList.toggle("is-fullscreen", inFullscreen);
       html.classList.toggle("desktop-mode", shouldUseDesktopMode);
-      if (!shouldUseDesktopMode) {
+      // Fullscreen renders on the native device width so the 3D canvas is
+      // never CSS-zoomed (Chrome mis-renders WebGL canvases under an ancestor
+      // CSS zoom). The compact "zoomed-out" look is reproduced in CSS by
+      // scaling only the right info panel via --fs-zoom.
+      if (!shouldUseDesktopMode || inFullscreen) {
+        const fsScale = Math.min(1, (Math.max(screen.width, screen.height) - 50) / 1280);
         cachedLandscapeWidth = null;
         (html.style as any).zoom = "";
         html.style.setProperty("--rev-scale", "1");
+        html.style.setProperty("--fs-zoom", fsScale.toString());
         viewportMeta.setAttribute("content", defaultViewport);
         return;
       }
@@ -132,13 +138,8 @@ const AppContent: React.FC = () => {
 
       viewportMeta.setAttribute("content", desktopViewport);
       html.style.setProperty("--rev-scale", revScale.toString());
-      // Chrome Android forces the viewport zoom to 1 while in fullscreen and
-      // ignores the meta initial-scale, which would blow up the 1280px layout
-      // ~1.5x. Reproduce the missing zoom with CSS `zoom` on <html> (Blink
-      // treats it as page zoom, so there is no dead space and the whole page –
-      // cards, tabs, buttons – stays pixel-identical before and after
-      // fullscreen).
-      (html.style as any).zoom = inFullscreen ? scale.toString() : "";
+      html.style.setProperty("--fs-zoom", "1");
+      (html.style as any).zoom = "";
     };
 
     let resizeTimeout: NodeJS.Timeout;
@@ -181,6 +182,7 @@ const AppContent: React.FC = () => {
       mobileDeviceQuery.removeEventListener("change", applyViewportMode);
       viewportMeta.setAttribute("content", originalViewport);
       document.documentElement.style.setProperty('--rev-scale', '1');
+      document.documentElement.style.setProperty('--fs-zoom', '1');
       (document.documentElement.style as any).zoom = "";
     };
   }, [location.pathname]);
