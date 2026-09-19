@@ -2,6 +2,7 @@ import { useMemo, useCallback, useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { ethers } from 'ethers';
+import { showSuccessToast } from './ui/custom-toast';
 import { getPrimaryWalletAddress, getProfilePictureFromPrivy, getUsernameFromPrivy } from '../pages/firebaseClient';
 import './topnav.css';
 
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
 const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [monBalance, setMonBalance] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const location = useLocation();
   const { ready, authenticated, user } = usePrivy();
 
@@ -39,6 +41,14 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
   const shortAddress = walletAddress
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
     : "";
+
+  const handleCopyWallet = useCallback(() => {
+    if (!walletAddress) return;
+    navigator.clipboard.writeText(walletAddress);
+    showSuccessToast("Wallet address copied!");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [walletAddress]);
 
   useEffect(() => {
     if (!authenticated || !user) {
@@ -110,9 +120,14 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
               </p>
             </div>
             {(monBalance !== null || shortAddress) && (
-              <p className="user-badge__meta">
-                {monBalance !== null ? `${monBalance} MON` : '—'} {shortAddress && `· ${shortAddress}`}
-              </p>
+              <button
+                className="user-badge__meta"
+                onClick={handleCopyWallet}
+                title={walletAddress || ""}
+                disabled={!walletAddress}
+              >
+                {monBalance !== null ? `${monBalance} MON` : '—'} {shortAddress ? `· ${copied ? 'Copied!' : shortAddress}` : ''}
+              </button>
             )}
           </div>
         ) : (
