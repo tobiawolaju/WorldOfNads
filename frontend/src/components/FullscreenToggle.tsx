@@ -36,7 +36,7 @@ export const FullscreenToggle: React.FC = () => {
     };
   }, []);
 
-  if (!enabled) return null;
+  if (!enabled || active) return null;
 
   const startDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
     const btn = btnRef.current;
