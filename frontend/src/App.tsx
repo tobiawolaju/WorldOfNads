@@ -104,10 +104,21 @@ const AppContent: React.FC = () => {
 
     const applyViewportMode = () => {
       const shouldUseDesktopMode = mobileDeviceQuery.matches && landscapeQuery.matches;
-      if (!shouldUseDesktopMode) {
+      const inFullscreen = Boolean(
+        (document as any).fullscreenElement ||
+          (document as any).webkitFullscreenElement
+      );
+      const html = document.documentElement;
+      // Chrome Android forces the viewport zoom to 1 while in fullscreen and
+      // ignores the meta initial-scale entirely, so the desktop-mode layout
+      // (1280px, zoomed out) overflows and everything looks 2x bigger. In
+      // fullscreen, fall back to the native device-width layout and disable
+      // the reverse-scale on fixed UI so nothing grows past the screen.
+      if (!shouldUseDesktopMode || inFullscreen) {
         cachedLandscapeWidth = null;
+        html.style.transform = "none";
+        html.style.setProperty("--rev-scale", "1");
         viewportMeta.setAttribute("content", defaultViewport);
-        document.documentElement.style.setProperty('--rev-scale', '1');
         return;
       }
 
@@ -123,7 +134,7 @@ const AppContent: React.FC = () => {
         `width=${desktopWidth}, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=no, viewport-fit=cover`;
 
       viewportMeta.setAttribute("content", desktopViewport);
-      document.documentElement.style.setProperty('--rev-scale', revScale.toString());
+      html.style.setProperty("--rev-scale", revScale.toString());
     };
 
     let resizeTimeout: NodeJS.Timeout;
@@ -166,6 +177,7 @@ const AppContent: React.FC = () => {
       mobileDeviceQuery.removeEventListener("change", applyViewportMode);
       viewportMeta.setAttribute("content", originalViewport);
       document.documentElement.style.setProperty('--rev-scale', '1');
+      document.documentElement.style.transform = "none";
     };
   }, [location.pathname]);
 

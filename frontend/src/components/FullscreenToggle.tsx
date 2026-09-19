@@ -88,14 +88,11 @@ export const FullscreenToggle: React.FC = () => {
       exit.call(document);
       return;
     }
-    // Fullscreen the app container (#root) instead of <html>: Chrome scales
-    // the page to device-width when <html> goes fullscreen, which makes every
-    // button/card ~2x bigger on mobile. #root keeps its layout width, so the
-    // rendered content stays pixel-identical.
-    const target = document.getElementById("root") || document.body || document.documentElement;
-    const request = (target as any).requestFullscreen || (target as any).webkitRequestFullscreen;
+    const request =
+      (document.documentElement as any).requestFullscreen ||
+      (document.documentElement as any).webkitRequestFullscreen;
     if (request) {
-      const ret = request.call(target);
+      const ret = request.call(document.documentElement);
       if (ret && typeof ret.catch === "function") {
         ret.catch(() => {});
       }
