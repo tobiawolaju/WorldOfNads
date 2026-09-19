@@ -599,6 +599,9 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
   equippedSkin,
 }) => {
   const controlsRef = useRef<any>(null);
+  const glRef = useRef<THREE.WebGLRenderer | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const invalidateRef = useRef<(() => void) | null>(null);
 
   const [cameraZ, setCameraZ] = useState(() =>
     window.innerWidth < 768 ? 9 : 10
@@ -617,6 +620,44 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
       controls.update();
     }
   }, [targetY]);
+
+  // Chrome fullscreens by changing the layout, and with frameloop="demand"
+  // the canvas can keep its old projection after the transition, which pushes
+  // the whole scene off-center and scales it wrong. Re-derive the camera
+  // aspect from the actual canvas box after entering/exiting fullscreen and
+  // force a re-render (timers mirror App.tsx's fullscreenchange handling).
+  useEffect(() => {
+    const resyncCamera = () => {
+      const gl = glRef.current;
+      const cam = cameraRef.current;
+      const canvas = gl?.domElement;
+      if (!gl || !cam || !canvas) return;
+
+      const apply = () => {
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+        if (!w || !h) return;
+        cam.aspect = w / h;
+        cam.updateProjectionMatrix();
+        controlsRef.current?.update();
+        invalidateRef.current?.();
+      };
+
+      apply();
+      const timers: number[] = [];
+      [120, 400].forEach((ms) => {
+        timers.push(window.setTimeout(apply, ms));
+      });
+      return () => timers.forEach((t) => clearTimeout(t));
+    };
+
+    document.addEventListener("fullscreenchange", resyncCamera);
+    document.addEventListener("webkitfullscreenchange", resyncCamera);
+    return () => {
+      document.removeEventListener("fullscreenchange", resyncCamera);
+      document.removeEventListener("webkitfullscreenchange", resyncCamera);
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -668,7 +709,12 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
       frameloop="demand"
       gl={{ alpha: true, powerPreference: "high-performance", antialias: true }}
       style={{ background: "none", pointerEvents: "auto" }}
-      onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
+      onCreated={({ gl, camera, invalidate }) => {
+        gl.setClearColor(0x000000, 0);
+        glRef.current = gl;
+        cameraRef.current = camera as THREE.PerspectiveCamera;
+        invalidateRef.current = invalidate;
+      }}
     >
       <ambientLight intensity={1.5} />
       {/* Professional Three-Point Lighting Setup */}
