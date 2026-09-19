@@ -430,6 +430,7 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   font-weight: bold;
   transition: all 0.3s ease;
   box-shadow: 0 10px 25px rgba(144, 124, 255, 0.2);
+  transform: skewX(-8deg);
 }
 
 .discord-btn-fixed {
@@ -448,7 +449,7 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
 
 .discord-btn-fixed:hover,
 .play-btn-fixed:hover {
-  transform: translateY(-5px);
+  transform: translateY(-5px) skewX(-8deg);
   box-shadow: 0 15px 35px rgba(144, 124, 255, 0.3);
 }
 
