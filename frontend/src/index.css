@@ -511,7 +511,7 @@ body.play-immersive {
 .rainbow-bar {
     position: absolute;
     left: 50%;
-    transform: translateX(-50%);
+    top: 0;
     width: 150vw;
     height: 80px;
     background: radial-gradient(
@@ -522,6 +522,18 @@ body.play-immersive {
         rgb(225, 0, 255) 100%
     );
     filter: blur(35px);
+    animation: rainbow-beam-scroll var(--beam-duration, 9s) linear infinite;
+    will-change: transform;
+}
+
+@keyframes rainbow-beam-scroll {
+    from {
+        transform: translate(-50%, -80px);
+    }
+
+    to {
+        transform: translate(-50%, calc(100vh + 80px));
+    }
 }
 
 /* Base transitions for smooth interaction */
@@ -577,5 +589,11 @@ img,
 
     to {
         opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rainbow-bar {
+        animation: none !important;
     }
 }

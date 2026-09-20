@@ -1,142 +1,23 @@
-import React, { useEffect, useRef } from "react";
+import React, { useMemo } from "react";
 
-interface ElementCache {
-  top: number;
-  height: number;
-  el: Element;
-}
+const BEAM_SPEED_PX_PER_FRAME = 3.5;
+const FRAMES_PER_SECOND = 60;
+const BEAM_HEIGHT = 80;
 
 const RainbowBeam: React.FC = () => {
-  const barRef = useRef<HTMLDivElement>(null);
-  const posY = useRef<number>(-200);
-  const cachedPositions = useRef<ElementCache[]>([]);
-  const lastScanTime = useRef<number>(0);
-  const isVisibleRef = useRef(true);
-  const isHiddenRef = useRef(false);
-  const animationFrameIdRef = useRef<number>(0);
-
-  const beamHeight = 80;
-  const speed = 3.5;
-
-  useEffect(() => {
-    const container = document.querySelector(".rainbow-beam-container");
-    if (!container) return;
-
-    const visibilityObserver = new IntersectionObserver(
-      ([entry]) => {
-        isVisibleRef.current = Boolean(entry?.isIntersecting);
-        if (isVisibleRef.current && !isHiddenRef.current) {
-          startIfEligible();
-        }
-      },
-      { threshold: 0 }
-    );
-    visibilityObserver.observe(container);
-
-    const handleVisibilityChange = () => {
-      isHiddenRef.current = document.hidden;
-      if (document.hidden) {
-        cancelAnimationFrame(animationFrameIdRef.current);
-        animationFrameIdRef.current = 0;
-      } else {
-        startIfEligible();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    const updateElements = () => {
-      const nodeList = document.querySelectorAll(
-        "h1, h2, h3, h4, h5, h6, p, a, button, .tab, .filter"
-      );
-      const scrollY = window.scrollY;
-      cachedPositions.current = Array.from(nodeList).map(el => {
-        const rect = el.getBoundingClientRect();
-        return {
-          top: rect.top + scrollY,
-          height: rect.height,
-          el
-        };
-      }).filter(item => item.height > 0);
-    };
-
-    updateElements();
-
-    let lastFrameTime = 0;
-    const frameInterval = 1000 / 60;
-
-    const animate = (time: number) => {
-      if (!isVisibleRef.current || isHiddenRef.current) {
-        animationFrameIdRef.current = 0;
-        return;
-      }
-      animationFrameIdRef.current = requestAnimationFrame(animate);
-
-      const delta = time - lastFrameTime;
-      if (delta < frameInterval) return;
-      lastFrameTime = time - (delta % frameInterval);
-
-      if (time - lastScanTime.current > 3000) {
-        updateElements();
-        lastScanTime.current = time;
-      }
-
-      posY.current += speed;
-      if (posY.current > window.innerHeight + beamHeight) {
-        posY.current = -beamHeight;
-      }
-
-      if (barRef.current) {
-        barRef.current.style.transform = `translate(-50%, ${posY.current}px)`;
-      }
-
-      const beamCenter = posY.current + beamHeight / 2;
-      const currentScrollY = window.scrollY;
-
-      for (let i = 0; i < cachedPositions.current.length; i++) {
-        const item = cachedPositions.current[i];
-        const rectTop = item.top - currentScrollY;
-        const rectBottom = rectTop + item.height;
-
-        if (rectBottom < -100 || rectTop > window.innerHeight + 100) {
-          item.el.classList.remove("rainbow-active-text");
-          continue;
-        }
-
-        const elCenter = rectTop + item.height / 2;
-        const distance = Math.abs(beamCenter - elCenter);
-
-        if (distance < beamHeight / 2 + item.height / 2) {
-          item.el.classList.add("rainbow-active-text");
-        } else {
-          item.el.classList.remove("rainbow-active-text");
-        }
-      }
-    };
-
-    const startIfEligible = () => {
-      if (!isVisibleRef.current || isHiddenRef.current) return;
-      if (animationFrameIdRef.current) return;
-      lastFrameTime = 0;
-      animationFrameIdRef.current = requestAnimationFrame(animate);
-    };
-
-    startIfEligible();
-
-    window.addEventListener("resize", updateElements);
-
-    return () => {
-      cancelAnimationFrame(animationFrameIdRef.current);
-      animationFrameIdRef.current = 0;
-      visibilityObserver.disconnect();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("resize", updateElements);
-      cachedPositions.current.forEach(item => item.el.classList.remove("rainbow-active-text"));
-    };
+  const duration = useMemo(() => {
+    if (typeof window === "undefined") return 9;
+    const travel = window.innerHeight + BEAM_HEIGHT * 2;
+    const speed = BEAM_SPEED_PX_PER_FRAME * FRAMES_PER_SECOND;
+    return Math.max(2, travel / speed);
   }, []);
 
   return (
-    <div className="rainbow-beam-container">
-      <div ref={barRef} className="rainbow-bar" style={{ top: 0 }} />
+    <div
+      className="rainbow-beam-container"
+      style={{ "--beam-duration": `${duration}s` } as React.CSSProperties}
+    >
+      <div className="rainbow-bar" />
     </div>
   );
 };

@@ -24,6 +24,8 @@ const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
   const [isMorphing, setIsMorphing] = useState(false);
   const indexRef = useRef(0);
   const cycleRunningRef = useRef(false);
+  const visibleRef = useRef(true);
+  const rootRef = useRef<HTMLDivElement>(null);
   const timeoutRefs = useRef<number[]>([]);
 
   const clearTimers = () => {
@@ -32,8 +34,22 @@ const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
   };
 
   useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visibleRef.current = Boolean(entry?.isIntersecting);
+      },
+      { rootMargin: "120px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const cycle = () => {
-      if (cycleRunningRef.current) return;
+      if (cycleRunningRef.current || !visibleRef.current) return;
       cycleRunningRef.current = true;
 
       setStageClass("ps-closing");
@@ -86,7 +102,7 @@ const Slide1: React.FC<Props> = ({ interval = 3000 }) => {
   }, [interval]);
 
   return (
-    <div className="ps-root">
+    <div className="ps-root" ref={rootRef}>
       <div className="ps-frame">
         <div className={`ps-stage ${stageClass}`}>
 
