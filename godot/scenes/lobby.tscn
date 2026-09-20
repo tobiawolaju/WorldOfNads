@@ -58,7 +58,7 @@ environment = ExtResource("4_ncsg4")
 
 [node name="day" type="DirectionalLight3D" parent="env" unique_id=978818535]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
-light_color = Color(0.9019608, 0.54509807, 0.972549, 1)
+light_energy = 0.1
 shadow_enabled = true
 directional_shadow_mode = 0
 

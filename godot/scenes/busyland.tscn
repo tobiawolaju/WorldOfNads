@@ -6,6 +6,8 @@
 [ext_resource type="Texture2D" uid="uid://cp58rvgp2x8jv" path="res://assets/models/lowpoly_grass_0.png" id="4_i8kgf"]
 [ext_resource type="Texture2D" uid="uid://bohdlvuyxhr1r" path="res://assets/models/lowpoly_grass_1.png" id="5_a6qdq"]
 [ext_resource type="Shader" uid="uid://cra5cti8f2j5j" path="res://assets/shaders/grass.gdshader" id="6_2atol"]
+[ext_resource type="Texture2D" uid="uid://2psdgthxiii3" path="res://assets/img/map/ground1.jpg" id="7_2atol"]
+[ext_resource type="Texture2D" uid="uid://q0n1sm00atqq" path="res://assets/img/map/ground2.jpg" id="8_k3pvx"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4fq1n"]
 resource_name = "Grass_Material.006"
@@ -63,7 +65,7 @@ shader_parameter/normal_scale = 1.0
 shader_parameter/uv1_scale = Vector3(1, 1, 1)
 shader_parameter/uv1_offset = Vector3(0, 0, 0)
 shader_parameter/grass_start_height = -1.0
-shader_parameter/grass_end_height = 2.0
+shader_parameter/grass_end_height = 1.0
 shader_parameter/fade_size = 1.0
 shader_parameter/alpha_cutoff = 0.0
 shader_parameter/mesh_rotation_degrees = Vector3(-90, 0, 0)
@@ -79,8 +81,8 @@ render_priority = 0
 shader = ExtResource("1_mx8sn")
 shader_parameter/low_albedo = ExtResource("2_ppgk2")
 shader_parameter/grass_albedo = ExtResource("2_ppgk2")
-shader_parameter/rock_albedo = ExtResource("2_ppgk2")
-shader_parameter/snow_albedo = ExtResource("2_ppgk2")
+shader_parameter/rock_albedo = ExtResource("7_2atol")
+shader_parameter/snow_albedo = ExtResource("8_k3pvx")
 shader_parameter/grass_patch_mask = ExtResource("3_2r41h")
 shader_parameter/grass_start = 0.0
 shader_parameter/rock_start = 1.0
@@ -149,7 +151,7 @@ material_override = SubResource("ShaderMaterial_e6wls")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_i8kgf")
 
-[node name="Landscape_001" type="MeshInstance3D" parent="Terrain" unique_id=295990206]
+[node name="Landscape" type="MeshInstance3D" parent="Terrain" unique_id=295990206]
 transform = Transform3D(4, 0, 0, 0, 1.6, 0, 0, 0, 4, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_mx8sn")
 mesh = SubResource("ArrayMesh_1nemc")
