@@ -236,7 +236,12 @@
   display: inline-block;
   animation: text-wave 1.6s ease-in-out infinite;
   animation-delay: calc(var(--wave-index) * 0.12s);
-  will-change: transform;
+}
+
+/* Pause the infinite word/scroller animations while the scroll story is offscreen */
+.story-offscreen .wave-word,
+.story-offscreen .slide2-column-track {
+  animation-play-state: paused !important;
 }
 
 @keyframes text-wave {
@@ -598,5 +603,12 @@ p {
 @media (prefers-color-scheme: dark) {
   .func-headline {
     -webkit-text-stroke: 0.5px #ffffff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave-word,
+  .slide2-column-track {
+    animation: none !important;
   }
 }

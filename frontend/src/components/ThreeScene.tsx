@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
-import { OrbitControls, useFBX, Environment } from "@react-three/drei";
+import { OrbitControls, useFBX, Environment, Lightformer } from "@react-three/drei";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
@@ -725,7 +725,12 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
       {/* Rim Light: Provides highlights on the edges (separated from BG) */}
       <pointLight position={[0, 10, -10]} intensity={3.5} />
 
-      <Environment preset="city" />
+      <Environment resolution={64} frames={1}>
+        <Lightformer intensity={4} rotation-x={Math.PI / 2} position={[0, 5, -9]} scale={[10, 10, 1]} />
+        <Lightformer intensity={2.5} rotation-y={Math.PI / 2} position={[-5, 1, -1]} scale={[20, 0.5, 1]} />
+        <Lightformer intensity={2} rotation-y={-Math.PI / 2} position={[10, 1, 0]} scale={[20, 1, 1]} />
+        <Lightformer form="ring" intensity={3} position={[0, 2, 0]} scale={[2, 2, 1]} />
+      </Environment>
 
       <Suspense fallback={null}>
         <NadModel scale={0.5} position={[0, -2, 0]} equippedSkin={equippedSkin} />

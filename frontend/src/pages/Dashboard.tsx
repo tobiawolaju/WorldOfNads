@@ -380,15 +380,31 @@ export default function Dashboard() {
 
   useEffect(() => {
     let audio: HTMLAudioElement | null = null;
+    let started = false;
+
+    const detach = () => {
+      window.removeEventListener("pointerdown", tryPlay);
+      window.removeEventListener("keydown", tryPlay);
+      window.removeEventListener("touchstart", tryPlay);
+    };
 
     const tryPlay = () => {
+      if (started) return;
       if (!audio) {
         audio = new Audio("/lobbysong.mp3");
         audio.loop = true;
         audio.volume = 0.4;
         lobbyAudioRef.current = audio;
       }
-      audio.play().catch(() => {});
+      const promise = audio.play();
+      if (promise) {
+        promise
+          .then(() => {
+            started = true;
+            detach();
+          })
+          .catch(() => {});
+      }
     };
 
     window.addEventListener("pointerdown", tryPlay);
@@ -396,12 +412,12 @@ export default function Dashboard() {
     window.addEventListener("touchstart", tryPlay, { passive: true });
 
     return () => {
-      window.removeEventListener("pointerdown", tryPlay);
-      window.removeEventListener("keydown", tryPlay);
-      window.removeEventListener("touchstart", tryPlay);
+      detach();
       if (audio) {
         audio.pause();
         audio.src = "";
+        audio.load();
+        audio = null;
       }
       lobbyAudioRef.current = null;
     };

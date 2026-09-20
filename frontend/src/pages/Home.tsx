@@ -61,6 +61,7 @@ const Home: React.FC = () => {
   const { login, authenticated, ready } = usePrivy();
   const navigate = useNavigate();
   const statsContainerRef = useRef<HTMLDivElement>(null);
+  const storyRef = useRef<HTMLElement>(null);
 
   // Hero Parallax
   const heroRef = useRef<HTMLDivElement>(null);
@@ -73,6 +74,20 @@ const Home: React.FC = () => {
   const statsVisibleRef = useRef(false);
   const statsInteractingRef = useRef(false);
   const statsDocumentVisibleRef = useRef(!document.hidden);
+
+  useEffect(() => {
+    const el = storyRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        el.classList.toggle("story-offscreen", !entry.isIntersecting);
+      },
+      { rootMargin: "160px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handlePlay = (): void => {
     if (!ready) return;
@@ -378,7 +393,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* SECTION 2: SCROLL STORY */}
-      <section className="scroll-story-container functional-purple">
+      <section className="scroll-story-container functional-purple" ref={storyRef}>
         <div className="story-content-wrapper">
 
           {/* Slide 1: Gameplay */}
