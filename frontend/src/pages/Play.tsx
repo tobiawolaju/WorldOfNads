@@ -98,8 +98,28 @@ const Play: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0a0a1a", color: "#fff" }}>
-        <p>Authenticating...</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+        <style>{`
+          @keyframes fsPulse {
+            0% { opacity: 0.3; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.3; transform: scale(0.95); }
+          }
+          .play-auth-logo {
+            width: 20vw;
+            height: auto;
+            object-fit: contain;
+            animation: fsPulse 2s infinite ease-in-out;
+            filter: drop-shadow(0 16px 40px rgba(0, 0, 0, 0.28));
+          }
+          @media (min-width: 768px) {
+            .play-auth-logo {
+              width: auto;
+              height: 20vh;
+            }
+          }
+        `}</style>
+        <img src="/loadinglogo.png" alt="Loading..." className="play-auth-logo" />
       </div>
     );
   }
