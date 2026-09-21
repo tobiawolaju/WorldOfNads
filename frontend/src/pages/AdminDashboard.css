@@ -113,73 +113,76 @@
   min-height: 40vh;
 }
 
-/* Force white text across the whole admin dashboard in light AND dark mode.
-   Purple surfaces keep every section readable; inputs and errors stay usable. */
-.admin-dashboard h1,
-.admin-dashboard h2,
-.admin-dashboard h3,
-.admin-dashboard h4,
-.admin-dashboard p,
-.admin-dashboard span,
-.admin-dashboard label,
-.admin-dashboard th,
-.admin-dashboard td,
-.admin-dashboard strong,
-.admin-dashboard .admin-dashboard__tab,
-.admin-dashboard .admin-dashboard__tab.active {
-  color: #ffffff !important;
-}
+/* Force white text across the whole admin dashboard in dark mode.
+   Purple surfaces keep every section readable; inputs and errors stay usable.
+   Light mode keeps its original dark-on-light look. */
+@media (prefers-color-scheme: dark) {
+  .admin-dashboard h1,
+  .admin-dashboard h2,
+  .admin-dashboard h3,
+  .admin-dashboard h4,
+  .admin-dashboard p,
+  .admin-dashboard span,
+  .admin-dashboard label,
+  .admin-dashboard th,
+  .admin-dashboard td,
+  .admin-dashboard strong,
+  .admin-dashboard .admin-dashboard__tab,
+  .admin-dashboard .admin-dashboard__tab.active {
+    color: #ffffff !important;
+  }
 
-.admin-dashboard .analytics-auth__error,
-.admin-dashboard .admin-users__error,
-.admin-dashboard .admin-skins__error,
-.admin-dashboard .admin-contracts__error {
-  color: #ff6b6b !important;
-}
+  .admin-dashboard .analytics-auth__error,
+  .admin-dashboard .admin-users__error,
+  .admin-dashboard .admin-skins__error,
+  .admin-dashboard .admin-contracts__error {
+    color: #ff6b6b !important;
+  }
 
-.admin-dashboard input,
-.admin-dashboard select,
-.admin-dashboard textarea {
-  color: #1a1a1a !important;
-}
+  .admin-dashboard input,
+  .admin-dashboard select,
+  .admin-dashboard textarea {
+    color: #1a1a1a !important;
+  }
 
-.admin-dashboard select option {
-  color: #1a1a1a !important;
-}
+  .admin-dashboard select option {
+    color: #1a1a1a !important;
+  }
 
-.admin-dashboard .admin-users__table,
-.admin-dashboard .admin-skins__form-card,
-.admin-dashboard .admin-skins__table,
-.admin-dashboard .admin-contracts__item,
-.admin-dashboard .analytics-card,
-.admin-dashboard .chart-card,
-.admin-dashboard .analytics-table,
-.admin-dashboard .analytics-auth__card {
-  background: #6553c7 !important;
-}
+  .admin-dashboard .admin-users__table,
+  .admin-dashboard .admin-skins__form-card,
+  .admin-dashboard .admin-skins__table,
+  .admin-dashboard .admin-contracts__item,
+  .admin-dashboard .analytics-card,
+  .admin-dashboard .chart-card,
+  .admin-dashboard .analytics-table,
+  .admin-dashboard .analytics-auth__card {
+    background: #6553c7 !important;
+  }
 
-.admin-dashboard .admin-users__table .admin-users__row--head {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
+  .admin-dashboard .admin-users__table .admin-users__row--head {
+    background: rgba(255, 255, 255, 0.1) !important;
+  }
 
-.admin-dashboard input,
-.admin-dashboard select,
-.admin-dashboard textarea {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
-}
+  .admin-dashboard input,
+  .admin-dashboard select,
+  .admin-dashboard textarea {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+  }
 
-.admin-dashboard .date-range label {
-  color: rgba(255, 255, 255, 0.7) !important;
-}
+  .admin-dashboard .date-range label {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
 
-.admin-dashboard .analytics-card h3,
-.admin-dashboard .admin-users__header p,
-.admin-dashboard .admin-skins__header p,
-.admin-dashboard .admin-contracts__header p,
-.admin-dashboard .analytics-header p {
-  color: rgba(255, 255, 255, 0.7) !important;
+  .admin-dashboard .analytics-card h3,
+  .admin-dashboard .admin-users__header p,
+  .admin-dashboard .admin-skins__header p,
+  .admin-dashboard .admin-contracts__header p,
+  .admin-dashboard .analytics-header p {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
 }
 
 @media (max-width: 640px) {
