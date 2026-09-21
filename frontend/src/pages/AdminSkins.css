@@ -94,6 +94,7 @@
   color: #fff !important;
   cursor: pointer;
   transition: background 0.2s;
+  transform: skewX(-8deg);
 }
 
 .admin-skins__create-btn:hover:not(:disabled) {

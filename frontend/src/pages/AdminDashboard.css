@@ -86,11 +86,12 @@
   padding: 10px 16px;
   border-radius: 0;
   border: none;
-  background: #1d4ed8;
-  color: #fff !important;
-  font-weight: 600;
+  background: #ffd700;
+  color: #000 !important;
+  font-weight: 700;
   cursor: pointer;
   justify-self: start;
+  clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
 }
 
 .admin-dashboard .analytics-auth__error {

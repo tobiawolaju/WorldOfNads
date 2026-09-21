@@ -95,6 +95,7 @@
   cursor: pointer;
   transition: background 0.2s;
   align-self: flex-start;
+  transform: skewX(-8deg);
 }
 
 .admin-contracts__withdraw:disabled {

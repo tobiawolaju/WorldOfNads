@@ -282,7 +282,6 @@ export default function AdminAnalytics() {
           </div>
           <div className="export-actions">
             <button onClick={() => handleExport("csv")}>Export CSV</button>
-            <button onClick={() => handleExport("json")}>Export JSON</button>
           </div>
         </div>
       </header>
