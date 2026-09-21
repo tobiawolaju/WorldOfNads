@@ -1,9 +1,9 @@
 import { useMemo, useCallback, useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { ethers } from 'ethers';
 import { showSuccessToast } from './ui/custom-toast';
-import { getPrimaryWalletAddress, getProfilePictureFromPrivy, getUsernameFromPrivy } from '../pages/firebaseClient';
+import { getPrimaryWalletAddress, getProfilePictureFromPrivy, getUsernameFromPrivy, fetchUserRoles } from '../pages/firebaseClient';
 import './topnav.css';
 
 type TopNavbarProps = {
@@ -23,8 +23,11 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [monBalance, setMonBalance] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [roles, setRoles] = useState<string[]>([]);
   const location = useLocation();
-  const { ready, authenticated, user } = usePrivy();
+  const navigate = useNavigate();
+  const { ready, authenticated, user, logout } = usePrivy();
 
   const isHome = location.pathname === '/';
 
@@ -83,6 +86,40 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
     };
   }, [authenticated, user]);
 
+  useEffect(() => {
+    if (!authenticated || !user) {
+      setRoles([]);
+      return;
+    }
+    let cancelled = false;
+    const loadRoles = async () => {
+      try {
+        const username = getUsernameFromPrivy(user);
+        const data = await fetchUserRoles(username);
+        if (!cancelled) setRoles(data || []);
+      } catch {}
+    };
+    loadRoles();
+    return () => { cancelled = true; };
+  }, [authenticated, user]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (e: PointerEvent | MouseEvent | TouchEvent) => {
+      const trigger = document.getElementById("user-menu-trigger");
+      if (trigger && !trigger.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [menuOpen]);
+
+  const handleMenuAction = useCallback((action: () => void) => {
+    setMenuOpen(false);
+    action();
+  }, []);
+
   const renderNavLinks = useCallback((onClick?: () => void) =>
     NAV_ITEMS.map(item => (
       <NavLink
@@ -112,13 +149,20 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
     <nav className={navClass}>
       <div className="logo-section" style={{ display: 'flex', alignItems: 'center' }}>
         {ready && authenticated && user ? (
-          <div className="user-badge">
-            <div className="user-badge__top">
+          <div className="user-badge" id="user-menu-trigger">
+            <button
+              type="button"
+              className="user-badge__top user-badge__trigger"
+              onClick={() => setMenuOpen(prev => !prev)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+            >
               <img src={getProfilePictureFromPrivy(user) || '/loadinglogo.png'} alt="avatar" className="user-badge__avatar" />
               <p className="user-badge__name">
                 {getUsernameFromPrivy(user) || 'Player'}
               </p>
-            </div>
+              <span className="user-badge__caret" aria-hidden="true">▾</span>
+            </button>
             {(monBalance !== null || shortAddress) && (
               <button
                 className="user-badge__meta"
@@ -128,6 +172,38 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
               >
                 {monBalance !== null ? `${monBalance} MON` : '—'} {shortAddress ? `· ${copied ? 'Copied!' : shortAddress}` : ''}
               </button>
+            )}
+            {menuOpen && (
+              <div className="user-menu" role="menu">
+                {roles.includes("admin") && (
+                  <button
+                    type="button"
+                    className="user-menu__item"
+                    role="menuitem"
+                    onClick={() => handleMenuAction(() => navigate("/admin/dashboard"))}
+                  >
+                    Admin
+                  </button>
+                )}
+                {roles.includes("sponsor") && (
+                  <button
+                    type="button"
+                    className="user-menu__item"
+                    role="menuitem"
+                    onClick={() => handleMenuAction(() => navigate("/sponsor"))}
+                  >
+                    Host Match
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="user-menu__item user-menu__item--logout"
+                  role="menuitem"
+                  onClick={() => handleMenuAction(() => logout())}
+                >
+                  Logout
+                </button>
+              </div>
             )}
           </div>
         ) : (
