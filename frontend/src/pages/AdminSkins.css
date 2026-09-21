@@ -37,7 +37,7 @@
 .admin-skins__form-card {
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
   padding: 24px;
   margin-bottom: 30px;
 }
@@ -115,7 +115,7 @@
 .admin-skins__table {
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
   overflow: hidden;
 }
 
@@ -195,7 +195,7 @@
   }
   .admin-dashboard .admin-skins__form-card {
     background: #6553c7 !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15) !important;
   }
   .admin-dashboard .admin-skins__form-card h2 {
     color: #ffffff !important;
@@ -230,7 +230,7 @@
   }
   .admin-dashboard .admin-skins__table {
     background: #6553c7 !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15) !important;
   }
   .admin-dashboard .admin-skins__row {
     color: #ffffff !important;

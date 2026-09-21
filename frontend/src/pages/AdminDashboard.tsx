@@ -57,10 +57,6 @@ const AdminDashboard: React.FC = () => {
   if (!accessGranted) {
     return (
       <div className="admin-dashboard">
-        <div className="admin-dashboard__header">
-          <h1>Admin Dashboard</h1>
-          <p>Enter your access code to continue.</p>
-        </div>
         <div className="analytics-auth__card" style={{ margin: "0 auto" }}>
           <h1>Admin Access</h1>
           <p>Enter your admin access code to manage World of Nads.</p>
@@ -81,11 +77,6 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="admin-dashboard">
-      <div className="admin-dashboard__header">
-        <h1>Admin Dashboard</h1>
-        <p>Manage World of Nads — contracts, users, skins, and analytics.</p>
-      </div>
-
       <div className="admin-dashboard__tabs">
         {TABS.map((tab) => (
           <div
