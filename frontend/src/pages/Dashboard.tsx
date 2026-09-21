@@ -8,7 +8,6 @@ import { ThreeScene } from "../components/ThreeScene";
 import "./Dashboard.css";
 import {
   fetchMatchesFromFirebase,
-  fetchUserRoles,
   getUsernameFromPrivy,
   getProfilePictureFromPrivy,
   fetchUserProfile,
@@ -166,7 +165,7 @@ export default function Dashboard() {
     fetchSkins();
     return () => { mounted = false; };
   }, []);
-  const { ready, authenticated, user, logout } = usePrivy();
+  const { ready, authenticated, user } = usePrivy();
   const { wallets } = useWallets();
   const navigate = useNavigate();
 
@@ -181,7 +180,6 @@ export default function Dashboard() {
   const [mintError, setMintError] = useState<string | null>(null);
   const [equipFlash, setEquipFlash] = useState(false);
   const newStoreItemCount = 1;
-  const [roles, setRoles] = useState<string[]>([]);
 
   const { level, xpInLevel, levelRequirement } = useMemo(() => {
     let currentLvl = 0;
@@ -527,17 +525,6 @@ export default function Dashboard() {
 
   const username = getUsernameFromPrivy(user);
 
-  useEffect(() => {
-    let mounted = true;
-    if (!username) return;
-    fetchUserRoles(username)
-      .then((data) => {
-        if (mounted) setRoles(data || []);
-      })
-      .catch(() => {});
-    return () => { mounted = false; };
-  }, [username]);
-
   // Filter for ONLY the Ethereum wallet (Monad)
   const linkedWallets = (user.linkedAccounts?.filter(
     (acc) => acc.type === "wallet" && acc.chainType === "ethereum"
@@ -690,15 +677,6 @@ export default function Dashboard() {
             <div className="xp-bar-track">
               <div className="xp-bar-fill" style={{ width: `${Math.min((xpInLevel / levelRequirement) * 100, 100)}%` }} />
             </div>
-          </div>
-          <div className="card-bottom">
-            {roles.includes("admin") && (
-              <button onClick={() => navigate("/admin/dashboard")}>Admin</button>
-            )}
-            {roles.includes("sponsor") && (
-              <button onClick={() => navigate("/sponsor")}>Host Match</button>
-            )}
-            <button onClick={() => logout()}>Logout</button>
           </div>
         </div>
       </div>
