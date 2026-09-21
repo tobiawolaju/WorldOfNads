@@ -63,6 +63,7 @@
   color: #fff !important;
   font-weight: 600;
   cursor: pointer;
+  transform: skewX(-8deg);
 }
 
 .export-actions {
@@ -71,7 +72,7 @@
 }
 
 .export-actions button {
-  background: #0f766e;
+  background: #5b4fff;
 }
 
 .analytics-section {
