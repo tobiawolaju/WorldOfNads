@@ -185,6 +185,37 @@
   }
 }
 
+/* Admin buttons: purple in light mode, yellow play-style in dark mode */
+.admin-dashboard .analytics-auth__card button,
+.admin-dashboard .date-range button,
+.admin-dashboard .export-actions button,
+.admin-dashboard .admin-skins__create-btn,
+.admin-dashboard .admin-contracts__withdraw {
+  background: #5b4fff !important;
+  color: #ffffff !important;
+  clip-path: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-dashboard .analytics-auth__card button,
+  .admin-dashboard .date-range button,
+  .admin-dashboard .export-actions button,
+  .admin-dashboard .admin-skins__create-btn,
+  .admin-dashboard .admin-contracts__withdraw {
+    background: #ffd700 !important;
+    color: #000000 !important;
+    clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  }
+
+  /* Users table: keep text white in dark mode */
+  .admin-dashboard .admin-users__table,
+  .admin-dashboard .admin-users__table span,
+  .admin-dashboard .admin-users__table .admin-users__row,
+  .admin-dashboard .admin-users__table .admin-users__empty {
+    color: #ffffff !important;
+  }
+}
+
 @media (max-width: 640px) {
   .admin-dashboard {
     padding: 64px 16px 40px;
