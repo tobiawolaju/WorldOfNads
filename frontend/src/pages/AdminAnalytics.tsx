@@ -144,7 +144,7 @@ function ChartCard({
             label: title,
             data: values,
             borderColor: color,
-            backgroundColor: type === "bar" ? "rgba(47, 133, 90, 0.4)" : "rgba(47, 133, 90, 0.2)",
+            backgroundColor: type === "bar" ? "rgba(255, 122, 182, 0.4)" : "rgba(255, 122, 182, 0.2)",
             fill: type === "line",
             tension: 0.3,
             pointRadius: 2
@@ -333,13 +333,13 @@ export default function AdminAnalytics() {
             title="Daily Active Users"
             labels={chartLabels}
             values={series.series.dailyActiveUsers.map((point) => point.value)}
-            color="#1f7aec"
+            color="#ff7ab6"
           />
           <ChartCard
             title="User Growth"
             labels={chartLabels}
             values={series.series.userGrowth.map((point) => point.value)}
-            color="#2f855a"
+            color="#ff7ab6"
           />
         </div>
       </section>
@@ -403,13 +403,13 @@ export default function AdminAnalytics() {
             title="Matches Created Per Day"
             labels={chartLabels}
             values={series.series.matchesCreated.map((point) => point.value)}
-            color="#ef6c00"
+            color="#ff7ab6"
           />
           <ChartCard
             title="Matches Per User"
             labels={chartLabels}
             values={series.series.matchesPerUser.map((point) => point.value)}
-            color="#8e24aa"
+            color="#ff7ab6"
           />
         </div>
       </section>
@@ -439,7 +439,7 @@ export default function AdminAnalytics() {
             title="Rewards Distributed Per Day"
             labels={chartLabels}
             values={series.series.rewardsDistributed.map((point) => point.value)}
-            color="#d32f2f"
+            color="#ff7ab6"
           />
         </div>
         <div className="analytics-card">
@@ -488,7 +488,7 @@ export default function AdminAnalytics() {
             title="Sponsor Growth"
             labels={chartLabels}
             values={series.series.sponsorGrowth.map((point) => point.value)}
-            color="#00897b"
+            color="#ff7ab6"
           />
         </div>
       </section>
@@ -518,7 +518,7 @@ export default function AdminAnalytics() {
             title="Retention"
             labels={["Day 1", "Day 7", "Day 30"]}
             values={[series.retention.day1, series.retention.day7, series.retention.day30]}
-            color="#5e35b1"
+            color="#ff7ab6"
             type="bar"
           />
         </div>

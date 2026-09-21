@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#6553c7" />
     <title>World of Nads</title>
     <style>
       html, body {
@@ -11,12 +11,13 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background: #000;
+        background: #6553c7;
       }
 
       body {
         color: #fff;
         font-family: Inter, system-ui, sans-serif;
+        background: radial-gradient(circle at top, rgba(231, 149, 231, 0.25), transparent 45%), #6553c7;
       }
 
       .play-shell {
@@ -25,22 +26,83 @@
         width: 100vw;
         height: 100dvh;
         overflow: hidden;
-        background:
-          radial-gradient(circle at top, rgba(231, 149, 231, 0.18), transparent 40%),
-          linear-gradient(180deg, #080808 0%, #000 100%);
+        background: transparent;
+      }
+
+      .pattern-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        opacity: 0.1;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .pattern-tile {
+        position: absolute;
+        width: 70px;
+        height: 70px;
+        background-image: url(/w.png);
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+
+      .rainbow-beam-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        overflow: hidden;
+        opacity: 0.35;
+        pointer-events: none;
+      }
+
+      .rainbow-bar {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 150vw;
+        height: 80px;
+        background: radial-gradient(
+          ellipse at center,
+          rgb(255, 255, 255) 10%,
+          rgb(251, 218, 255) 20%,
+          rgb(241, 134, 255) 85%,
+          rgb(225, 0, 255) 100%
+        );
+        filter: blur(35px);
+        animation: rainbow-beam-scroll var(--beam-duration, 9s) linear infinite;
+        will-change: transform;
+      }
+
+      @keyframes rainbow-beam-scroll {
+        from {
+          transform: translate(-50%, -80px);
+        }
+
+        to {
+          transform: translate(-50%, calc(100vh + 80px));
+        }
       }
 
       .game-frame {
+        position: relative;
         width: 100%;
         height: 100%;
         border: 0;
+        z-index: 10;
       }
 
       .fullscreen-btn {
         position: fixed;
         bottom: 1rem;
         left: 1rem;
-        z-index: 20;
+        z-index: 30;
         width: 3rem;
         height: 3rem;
         padding: 0;
@@ -105,6 +167,10 @@
   </head>
   <body>
     <div class="play-shell" id="playShell">
+      <div class="rainbow-beam-container" aria-hidden="true">
+        <div class="rainbow-bar"></div>
+      </div>
+      <div class="pattern-background" id="patternBg" aria-hidden="true"></div>
       <div class="status" id="status">Loading game shell...</div>
       <button type="button" class="fullscreen-btn" id="fullscreenBtn" aria-label="Click for fullscreen" hidden>
         <svg id="fsExpand" viewBox="0 0 24 24" fill="#fff" aria-hidden="true" style="display: none;">
@@ -123,6 +189,18 @@
           const key = String(rawSkin || "").trim().toLowerCase().replace(/\s+/g, " ");
           return key || "s-default";
         };
+
+        const patternBg = document.getElementById("patternBg");
+        if (patternBg) {
+          for (let i = 0; i < 25; i += 1) {
+            const tile = document.createElement("div");
+            tile.className = "pattern-tile";
+            tile.style.transform = `rotate(${Math.floor(Math.random() * 360)}deg)`;
+            tile.style.left = `${Math.random() * 100}vw`;
+            tile.style.top = `${Math.random() * 100}vh`;
+            patternBg.appendChild(tile);
+          }
+        }
 
         const status = document.getElementById("status");
         const frame = document.getElementById("gameFrame");

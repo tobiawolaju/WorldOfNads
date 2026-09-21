@@ -62,7 +62,7 @@
   background: #ffffff;
   padding: 32px;
   border-radius: 18px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
   max-width: 420px;
   width: 100%;
   display: grid;
