@@ -693,14 +693,16 @@ export default function Dashboard() {
                 <div className="energy-track__fill" style={{ width: `${(energy / MAX_ENERGY) * 100}%` }} />
               </div>
               {Array.from({ length: MAX_ENERGY }).map((_, i) => (
-                <div
+                <img
                   key={i}
+                  src="/energy.png"
+                  alt=""
                   className={`energy-diamond ${i < energy ? "filled" : ""}`}
                   style={{ left: `${(i / (MAX_ENERGY - 1)) * 100}%` }}
                 />
               ))}
             </div>
-            {monBalance !== null && <div className="energy-bar__mon">{monBalance} MON</div>}
+            {monBalance !== null && <div className="energy-bar__mon"><img src="/gem.png" alt="" className="energy-bar__gem" />{monBalance} MON</div>}
           </div>
         </div>
       </div>

@@ -167,18 +167,18 @@
 .energy-diamond {
   position: absolute;
   top: 50%;
-  width: 9px;
-  height: 9px;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background: rgba(255, 255, 255, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  opacity: 0.3;
   z-index: 2;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  transition: opacity 0.3s ease, filter 0.3s ease;
 }
 
 .energy-diamond.filled {
-  background: #0ff;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.8));
 }
 
 .energy-bar__mon {
@@ -186,9 +186,18 @@
   font-size: 11px;
   opacity: 0.8;
   line-height: 1.15;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   margin-top: 2px;
   white-space: nowrap;
+}
+
+.energy-bar__gem {
+  width: 11px;
+  height: 11px;
+  object-fit: contain;
 }
 
 @media (prefers-color-scheme: dark) {
