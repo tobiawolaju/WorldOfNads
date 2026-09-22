@@ -179,6 +179,8 @@ export default function Dashboard() {
   const [isMinting, setIsMinting] = useState(false);
   const [mintError, setMintError] = useState<string | null>(null);
   const [equipFlash, setEquipFlash] = useState(false);
+  const MAX_ENERGY = 5;
+  const [energy, setEnergy] = useState<number>(MAX_ENERGY);
   const newStoreItemCount = 1;
 
   const { level, xpInLevel, levelRequirement } = useMemo(() => {
@@ -676,6 +678,14 @@ export default function Dashboard() {
             <div className="card-level">Level {level}</div>
             <div className="xp-bar-track">
               <div className="xp-bar-fill" style={{ width: `${Math.min((xpInLevel / levelRequirement) * 100, 100)}%` }} />
+            </div>
+          </div>
+          <div className="energy-bar">
+            <span className="energy-bar__label">Energy</span>
+            <div className="energy-bar__pips">
+              {Array.from({ length: MAX_ENERGY }).map((_, i) => (
+                <div key={i} className={`energy-pip ${i < energy ? "filled" : ""}`} />
+              ))}
             </div>
           </div>
         </div>
