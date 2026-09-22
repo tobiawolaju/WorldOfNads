@@ -175,6 +175,7 @@ export default function Dashboard() {
   const [equippedSkin, setEquippedSkin] = useState<StoreItem | null>(LOCAL_ITEMS[0]);
   const [xp, setXp] = useState<number>(0);
   const [xpBalance, setXpBalance] = useState<number>(0);
+  const [monBalance, setMonBalance] = useState<string | null>(null);
   const [ownedSkinIds, setOwnedSkinIds] = useState<number[]>([]);
   const [isMinting, setIsMinting] = useState(false);
   const [mintError, setMintError] = useState<string | null>(null);
@@ -277,6 +278,15 @@ export default function Dashboard() {
 
         const provider = new ethers.JsonRpcProvider("https://testnet-rpc.monad.xyz");
         const address = ethWallet.address;
+
+        // Load MON balance
+        try {
+          const balance = await provider.getBalance(address);
+          const formatted = Number(ethers.formatEther(balance)).toFixed(4);
+          setMonBalance(formatted);
+        } catch {
+          setMonBalance(null);
+        }
 
         // Load XP balance
         const xpContractAddress = import.meta.env.VITE_XP_TOKEN_ADDRESS;
@@ -690,6 +700,7 @@ export default function Dashboard() {
                 />
               ))}
             </div>
+            {monBalance !== null && <div className="energy-bar__mon">{monBalance} MON</div>}
           </div>
         </div>
       </div>

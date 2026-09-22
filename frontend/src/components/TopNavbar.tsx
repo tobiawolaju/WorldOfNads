@@ -1,7 +1,6 @@
 import { useMemo, useCallback, useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
-import { ethers } from 'ethers';
 import { showSuccessToast } from './ui/custom-toast';
 import { getPrimaryWalletAddress, getProfilePictureFromPrivy, getUsernameFromPrivy, fetchUserRoles } from '../pages/firebaseClient';
 import './topnav.css';
@@ -21,7 +20,6 @@ const NAV_ITEMS = [
 
 const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
-  const [monBalance, setMonBalance] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [roles, setRoles] = useState<string[]>([]);
@@ -52,39 +50,6 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [walletAddress]);
-
-  useEffect(() => {
-    if (!authenticated || !user) {
-      setMonBalance(null);
-      return;
-    }
-
-    let cancelled = false;
-
-    const fetchBalance = async () => {
-      try {
-        const address = getPrimaryWalletAddress(user);
-        if (!address) {
-          if (!cancelled) setMonBalance(null);
-          return;
-        }
-        const provider = new ethers.JsonRpcProvider("https://testnet-rpc.monad.xyz");
-        const balance = await provider.getBalance(address);
-        const formatted = Number(ethers.formatEther(balance)).toFixed(4);
-        if (!cancelled) setMonBalance(formatted);
-      } catch (error) {
-        console.error("Failed to fetch MON balance:", error);
-        if (!cancelled) setMonBalance(null);
-      }
-    };
-
-    fetchBalance();
-    const interval = setInterval(fetchBalance, 30000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [authenticated, user]);
 
   useEffect(() => {
     if (!authenticated || !user) {
@@ -163,14 +128,14 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
               </p>
               <span className="user-badge__caret" aria-hidden="true">▾</span>
             </button>
-            {(monBalance !== null || shortAddress) && (
+            {shortAddress && (
               <button
                 className="user-badge__meta"
                 onClick={handleCopyWallet}
                 title={walletAddress || ""}
                 disabled={!walletAddress}
               >
-                {monBalance !== null ? `${monBalance} MON` : '—'} {shortAddress ? `· ${copied ? 'Copied!' : shortAddress}` : ''}
+                {copied ? 'Copied!' : shortAddress}
               </button>
             )}
             {menuOpen && (
