@@ -685,7 +685,7 @@ export default function Dashboard() {
 
         <div className="card-overlay">
           <div className="card-top-right">
-            <div className="card-level">LV {level}</div>
+            <div className="card-level">Level {level}</div>
           </div>
           <div className="energy-bar">
             <div className="energy-track">
