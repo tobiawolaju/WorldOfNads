@@ -156,39 +156,51 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 14px;
+  padding: 10px 16px;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 10px;
   pointer-events: auto;
 }
 
-.energy-bar__label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.energy-bar__pips {
+.energy-track {
   display: flex;
-  gap: 6px;
+  align-items: center;
 }
 
-.energy-pip {
-  width: 24px;
-  height: 12px;
+.energy-cell {
+  display: flex;
+  align-items: center;
+}
+
+.energy-link {
+  width: 44px;
+  height: 6px;
+  margin: 0 6px;
   border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.energy-link__fill {
+  height: 100%;
+  background: #ffd700;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.energy-diamond {
+  width: 14px;
+  height: 14px;
+  transform: rotate(45deg);
   background: rgba(255, 255, 255, 0.15);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
   transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
-.energy-pip.filled {
+.energy-diamond.filled {
   background: #ffd700;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
