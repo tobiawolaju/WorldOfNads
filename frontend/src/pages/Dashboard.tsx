@@ -682,19 +682,16 @@ export default function Dashboard() {
           </div>
           <div className="energy-bar">
             <div className="energy-track">
-              {Array.from({ length: MAX_ENERGY }).map((_, i) => {
-                const frac = Math.max(0, Math.min(1, energy - i));
-                return (
-                  <div key={i} className="energy-cell">
-                    {i > 0 && (
-                      <div className="energy-link">
-                        <div className="energy-link__fill" style={{ width: `${frac * 100}%` }} />
-                      </div>
-                    )}
-                    <div className={`energy-diamond ${i < energy ? "filled" : ""}`} />
-                  </div>
-                );
-              })}
+              <div className="energy-track__linear">
+                <div className="energy-track__fill" style={{ width: `${(energy / MAX_ENERGY) * 100}%` }} />
+              </div>
+              {Array.from({ length: MAX_ENERGY }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`energy-diamond ${i < energy ? "filled" : ""}`}
+                  style={{ left: `${(i / (MAX_ENERGY - 1)) * 100}%` }}
+                />
+              ))}
             </div>
           </div>
         </div>
