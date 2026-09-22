@@ -181,6 +181,16 @@
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
+.energy-bar__mon {
+  font-family: monospace;
+  font-size: 11px;
+  opacity: 0.8;
+  line-height: 1.15;
+  text-align: center;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
 @media (prefers-color-scheme: dark) {
   .energy-bar {
     background: transparent;
