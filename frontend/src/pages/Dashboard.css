@@ -155,15 +155,13 @@
   left: 50%;
   transform: translateX(-50%);
   padding: 14px 18px;
-  background: rgba(0, 0, 0, 0.45);
-  border-radius: 10px;
   pointer-events: auto;
 }
 
 .energy-track {
   position: relative;
   width: 230px;
-  height: 16px;
+  height: 24px;
 }
 
 .energy-track__linear {
@@ -188,8 +186,8 @@
 .energy-diamond {
   position: absolute;
   top: 50%;
-  width: 13px;
-  height: 13px;
+  width: 26px;
+  height: 26px;
   transform: translate(-50%, -50%) rotate(45deg);
   background: rgba(255, 255, 255, 0.18);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
@@ -204,7 +202,7 @@
 
 @media (prefers-color-scheme: dark) {
   .energy-bar {
-    background: rgba(101, 83, 199, 0.55);
+    background: transparent;
   }
 }
 
