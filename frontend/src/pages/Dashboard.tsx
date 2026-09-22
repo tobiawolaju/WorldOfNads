@@ -183,7 +183,7 @@ export default function Dashboard() {
   const [energy, setEnergy] = useState<number>(4);
   const newStoreItemCount = 1;
 
-  const { level, xpInLevel, levelRequirement } = useMemo(() => {
+  const level = useMemo(() => {
     let currentLvl = 0;
     let tempXp = xp;
     let req = 10 * (currentLvl + 1);
@@ -192,7 +192,7 @@ export default function Dashboard() {
       currentLvl += 1;
       req = 10 * (currentLvl + 1);
     }
-    return { level: currentLvl, xpInLevel: tempXp, levelRequirement: req };
+    return currentLvl;
   }, [xp]);
 
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
@@ -675,9 +675,9 @@ export default function Dashboard() {
 
         <div className="card-overlay">
           <div className="card-top-right">
-            <div className="card-level">Level {level}</div>
-            <div className="xp-bar-track">
-              <div className="xp-bar-fill" style={{ width: `${Math.min((xpInLevel / levelRequirement) * 100, 100)}%` }} />
+            <div className="card-level">
+              <span className="card-level__label">LV</span>
+              <span className="card-level__value">{level}</span>
             </div>
           </div>
           <div className="energy-bar">

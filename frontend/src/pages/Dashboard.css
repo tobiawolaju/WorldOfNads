@@ -124,44 +124,38 @@
 }
 
 .card-level {
-  font-size: 13px;
-  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  font-weight: 700;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
 }
 
-.card-xp {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
+.card-level__label {
+  font-size: 20px;
+  letter-spacing: 2px;
 }
 
-.xp-bar-track {
-  width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
-  margin-top: 6px;
-  overflow: hidden;
-}
-
-.xp-bar-fill {
-  height: 100%;
-  background: #ffd700;
-  border-radius: 2px;
-  transition: width 0.4s ease;
+.card-level__value {
+  font-size: 30px;
+  margin-top: 2px;
 }
 
 .energy-bar {
   position: absolute;
-  bottom: 26px;
+  bottom: 22px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 14px 18px;
+  padding: 7px 9px;
   pointer-events: auto;
 }
 
 .energy-track {
   position: relative;
-  width: 230px;
-  height: 24px;
+  width: 115px;
+  height: 12px;
 }
 
 .energy-track__linear {
@@ -169,25 +163,25 @@
   top: 50%;
   left: 0;
   width: 100%;
-  height: 6px;
+  height: 3px;
   transform: translateY(-50%);
-  border-radius: 3px;
+  border-radius: 1.5px;
   background: rgba(255, 255, 255, 0.12);
   overflow: hidden;
 }
 
 .energy-track__fill {
   height: 100%;
-  background: #ffd700;
-  border-radius: 3px;
+  background: #0ff;
+  border-radius: 1.5px;
   transition: width 0.4s ease;
 }
 
 .energy-diamond {
   position: absolute;
   top: 50%;
-  width: 26px;
-  height: 26px;
+  width: 13px;
+  height: 13px;
   transform: translate(-50%, -50%) rotate(45deg);
   background: rgba(255, 255, 255, 0.18);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
@@ -196,8 +190,8 @@
 }
 
 .energy-diamond.filled {
-  background: #ffd700;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  background: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
