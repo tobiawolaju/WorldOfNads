@@ -180,7 +180,7 @@ export default function Dashboard() {
   const [mintError, setMintError] = useState<string | null>(null);
   const [equipFlash, setEquipFlash] = useState(false);
   const MAX_ENERGY = 5;
-  const [energy, setEnergy] = useState<number>(MAX_ENERGY);
+  const [energy, setEnergy] = useState<number>(4);
   const newStoreItemCount = 1;
 
   const { level, xpInLevel, levelRequirement } = useMemo(() => {
@@ -681,11 +681,20 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="energy-bar">
-            <span className="energy-bar__label">Energy</span>
-            <div className="energy-bar__pips">
-              {Array.from({ length: MAX_ENERGY }).map((_, i) => (
-                <div key={i} className={`energy-pip ${i < energy ? "filled" : ""}`} />
-              ))}
+            <div className="energy-track">
+              {Array.from({ length: MAX_ENERGY }).map((_, i) => {
+                const frac = Math.max(0, Math.min(1, energy - i));
+                return (
+                  <div key={i} className="energy-cell">
+                    {i > 0 && (
+                      <div className="energy-link">
+                        <div className="energy-link__fill" style={{ width: `${frac * 100}%` }} />
+                      </div>
+                    )}
+                    <div className={`energy-diamond ${i < energy ? "filled" : ""}`} />
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
