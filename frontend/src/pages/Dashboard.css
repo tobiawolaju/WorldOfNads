@@ -154,35 +154,31 @@
   bottom: 26px;
   left: 50%;
   transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
+  padding: 14px 18px;
   background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 10px;
   pointer-events: auto;
 }
 
 .energy-track {
-  display: flex;
-  align-items: center;
+  position: relative;
+  width: 230px;
+  height: 16px;
 }
 
-.energy-cell {
-  display: flex;
-  align-items: center;
-}
-
-.energy-link {
-  width: 44px;
+.energy-track__linear {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
   height: 6px;
-  margin: 0 6px;
+  transform: translateY(-50%);
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.12);
   overflow: hidden;
 }
 
-.energy-link__fill {
+.energy-track__fill {
   height: 100%;
   background: #ffd700;
   border-radius: 3px;
@@ -190,11 +186,14 @@
 }
 
 .energy-diamond {
-  width: 14px;
-  height: 14px;
-  transform: rotate(45deg);
-  background: rgba(255, 255, 255, 0.15);
+  position: absolute;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: rgba(255, 255, 255, 0.18);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  z-index: 2;
   transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -206,7 +205,6 @@
 @media (prefers-color-scheme: dark) {
   .energy-bar {
     background: rgba(101, 83, 199, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.3);
   }
 }
 
