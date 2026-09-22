@@ -118,35 +118,23 @@
 .card-top-right {
   position: absolute;
   top: 74px;
-  left: 24px;
-  text-align: left;
+  right: 24px;
+  text-align: right;
   pointer-events: auto;
 }
 
 .card-level {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1;
-  font-weight: 700;
-  color: #ffd700;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
-}
-
-.card-level__label {
-  font-size: 20px;
-  letter-spacing: 2px;
-}
-
-.card-level__value {
-  font-size: 30px;
-  margin-top: 2px;
+  font-family: monospace;
+  font-size: 11px;
+  opacity: 0.8;
+  line-height: 1.15;
+  white-space: nowrap;
 }
 
 .energy-bar {
   position: absolute;
-  top: 132px;
-  left: 24px;
+  top: 96px;
+  right: 24px;
   padding: 5px 6px;
   pointer-events: auto;
 }
