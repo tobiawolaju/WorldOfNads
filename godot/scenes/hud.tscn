@@ -401,6 +401,7 @@ script = ExtResource("9_mphia")
 auto_lock_hold_seconds = 0.0
 auto_lock_forward_min_strength = 0.1
 auto_lock_north_distance_multiplier = 5.0
+disable_joystick_lock = true
 joy_lock = NodePath("../JoyLock")
 
 [node name="Node3" type="Node" parent="." unique_id=1974703911]
