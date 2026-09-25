@@ -255,7 +255,7 @@ static func _body_material(color: Color, outline_color: Color, shader_type: Stri
 	var body_mat := StandardMaterial3D.new()
 	body_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 	body_mat.albedo_color = color
-	body_mat.roughness = 0.5
+	body_mat.roughness = 0.85
 	return body_mat
 
 static func _crown_material(color: Color) -> Material:
@@ -270,7 +270,7 @@ static func _attachment_material(color: Color) -> Material:
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 	mat.albedo_color = color
-	mat.roughness = 0.5
+	mat.roughness = 0.85
 	return mat
 
 static func _c(v: Variant) -> Color:
