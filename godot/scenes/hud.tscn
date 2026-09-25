@@ -311,20 +311,16 @@ north_label_color = Color(1, 1, 1, 1)
 pointer_color = Color(1, 1, 1, 1)
 
 [node name="subtitle" type="Label" parent="CanvasLayer/BoxContainer/Node2" unique_id=1792981601]
-anchors_preset = 7
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 1.0
 anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -62.0
-offset_top = -39.0
-offset_right = 59.0
-offset_bottom = -16.0
+offset_left = -115.0
+offset_top = 103.0
+offset_right = 115.0
+offset_bottom = 131.0
 grow_horizontal = 2
-grow_vertical = 0
-theme_override_colors/font_color = Color(1, 1, 0, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 5
+theme_override_colors/font_color = Color(0.48252136, 0.45455968, 0.9817855, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 18
 text = "Stand your Ground for 60s"
 
