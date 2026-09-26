@@ -235,10 +235,25 @@
 }
 
 /* Mobile portrait keeps the base 54px offset; landscape and desktop drop
-   the rail a further 50% down. */
+   the rail down a further 25% from 81px. */
 @media (orientation: landscape), (min-width: 768px) {
   .stat-rail {
-    top: 81px;
+    top: 101.25px;
+  }
+}
+
+/* Mobile portrait scales the pill type down to 0.65 of the base size */
+@media (orientation: portrait) and (max-width: 767px) {
+  .stat-pill {
+    font-size: 5.07px;
+  }
+
+  .stat-pill__label {
+    font-size: 3.9px;
+  }
+
+  .stat-pill__value {
+    font-size: 5.46px;
   }
 }
 
