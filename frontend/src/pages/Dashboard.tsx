@@ -684,25 +684,46 @@ export default function Dashboard() {
         {equipFlash && <div className="equip-flash" />}
 
         <div className="card-overlay">
-          <div className="card-top-right">
-            <div className="card-level">Level {level}</div>
-          </div>
-          <div className="energy-bar">
-            <div className="energy-track">
-              <div className="energy-track__linear">
-                <div className="energy-track__fill" style={{ width: `${(energy / MAX_ENERGY) * 100}%` }} />
-              </div>
-              {Array.from({ length: MAX_ENERGY }).map((_, i) => (
-                <img
-                  key={i}
-                  src="/energy.png"
-                  alt=""
-                  className={`energy-diamond ${i < energy ? "filled" : ""}`}
-                  style={{ left: `${(i / (MAX_ENERGY - 1)) * 100}%` }}
-                />
-              ))}
+          <div className="stat-rail">
+            <div className="stat-rail__level" title={`Level ${level}`}>
+              <span className="stat-rail__level-label">LV</span>
+              <span className="stat-rail__level-value">{level}</span>
             </div>
-            {monBalance !== null && <div className="energy-bar__mon"><img src="/gem.png" alt="" className="energy-bar__gem" />{monBalance} MON</div>}
+
+            <div className="stat-rail__divider" aria-hidden="true" />
+
+            <div
+              className="stat-rail__energy"
+              role="img"
+              aria-label={`Energy ${energy} of ${MAX_ENERGY}`}
+              title={`Energy ${energy} of ${MAX_ENERGY}`}
+            >
+              <div className="energy-pips">
+                {Array.from({ length: MAX_ENERGY }).map((_, i) => (
+                  <img
+                    key={i}
+                    src="/energy.png"
+                    alt=""
+                    className={`energy-pip ${i < energy ? "is-filled" : ""}`}
+                  />
+                ))}
+              </div>
+              <span className="stat-rail__energy-count">
+                {energy}
+                <span className="stat-rail__slash">/</span>
+                {MAX_ENERGY}
+              </span>
+            </div>
+
+            <div className="stat-rail__divider" aria-hidden="true" />
+
+            {monBalance !== null && (
+              <div className="stat-rail__mon" title={`${monBalance} MON`}>
+                <img src="/gem.png" alt="" className="stat-rail__gem" />
+                <span className="stat-rail__mon-value">{monBalance}</span>
+                <span className="stat-rail__mon-label">MON</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
