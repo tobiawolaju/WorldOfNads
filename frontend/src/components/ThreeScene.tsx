@@ -606,13 +606,22 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
   // Raise the camera and the orbit target by the same amount: this pans the
   // framing up so the nad sits lower and its head clears the top edge.
   // Raising only the target would tilt the camera further up at the nad.
-  const CAMERA_LIFT = 0.5;
+  // Mobile portrait keeps the full lift for headroom; landscape and
+  // desktop give back 10% so the legs stay inside the frame.
+  const MOBILE_LIFT = 0.5;
+  const DESKTOP_LIFT = 0.45;
+
+  const getCameraLift = () =>
+    window.innerWidth < 768 && window.innerHeight > window.innerWidth
+      ? MOBILE_LIFT
+      : DESKTOP_LIFT;
 
   const [cameraZ, setCameraZ] = useState(() =>
     window.innerWidth < 768 ? 9 : 10
   );
+  const [cameraLift, setCameraLift] = useState(getCameraLift);
   const [targetY, setTargetY] = useState(() =>
-    (window.innerWidth < 768 ? 1.4 : 1.5) + CAMERA_LIFT
+    (window.innerWidth < 768 ? 1.4 : 1.5) + getCameraLift()
   );
 
   // Force the orbit target on the controls so a fresh load always frames
@@ -669,11 +678,18 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
       const mobile = window.innerWidth < 768;
       // Z=10 provides a consistent zoom level for both mobile and desktop
       setCameraZ(mobile ? 9 : 10);
-      // Raise the camera target so the nad/chickens sit lower on screen
-      setTargetY((mobile ? 1.4 : 1.5) + CAMERA_LIFT);
+      // Raise the camera target so the nad/chickens sit lower on screen,
+      // and keep the camera and target lifted together
+      const lift = getCameraLift();
+      setCameraLift(lift);
+      setTargetY((mobile ? 1.4 : 1.5) + lift);
     };
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
   }, []);
 
   const chickenCount = 6;
@@ -710,7 +726,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
   return (
     <Canvas
       dpr={[1, 1.35]}
-      camera={{ position: [0, CAMERA_LIFT, cameraZ] }}
+      camera={{ position: [0, cameraLift, cameraZ] }}
       frameloop="demand"
       gl={{ alpha: true, powerPreference: "high-performance", antialias: true }}
       style={{ background: "none", pointerEvents: "auto" }}
