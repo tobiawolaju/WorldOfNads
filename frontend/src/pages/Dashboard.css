@@ -124,7 +124,7 @@
   --pill-fg: var(--foreground);
   --pill-level: #5b4fff;
   --pill-energy: #0e7490;
-  --pill-mon: #b45309;
+  --pill-mon: #a21caf;
 
   position: absolute;
   top: 54px;
@@ -145,7 +145,7 @@
     --pill-fg: #ffffff;
     --pill-level: #cdadff;
     --pill-energy: #67e8f9;
-    --pill-mon: #ffd700;
+    --pill-mon: #f0abfc;
   }
 }
 
@@ -163,13 +163,14 @@
   box-sizing: border-box;
   padding: 10px;
   min-height: 46px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--background);
   color: var(--pill-fg);
   font-size: 7.8px;
   line-height: 1;
   white-space: nowrap;
   pointer-events: auto;
+  transform: skewX(-12deg);
 }
 
 .stat-pill--level {
@@ -179,11 +180,13 @@
 .stat-pill--energy { --pill-accent: var(--pill-energy); }
 .stat-pill--mon { --pill-accent: var(--pill-mon); }
 
+/* Children counter the parent's skew so glyphs and icons stay upright */
 .stat-pill__label {
   font-size: 6px;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--pill-accent);
+  transform: skewX(12deg);
 }
 
 .stat-pill__value {
@@ -191,13 +194,18 @@
   font-weight: 800;
   color: var(--pill-fg);
   font-variant-numeric: tabular-nums;
+  transform: skewX(12deg);
 }
 
 .stat-pill__icon {
   width: 16px;
   height: 16px;
   object-fit: contain;
-  filter: drop-shadow(0 0 4px var(--pill-accent));
+  transform: skewX(12deg);
+}
+
+.stat-pill--energy .stat-pill__value {
+  color: var(--pill-energy);
 }
 
 .stat-pill--mon .stat-pill__value {
@@ -208,6 +216,7 @@
   display: flex;
   align-items: center;
   gap: 3px;
+  transform: skewX(12deg);
 }
 
 .stat-pip {
@@ -222,8 +231,15 @@
 
 .stat-pip.is-filled {
   opacity: 1;
-  filter: drop-shadow(0 0 5px var(--pill-accent));
   transform: scale(1);
+}
+
+/* Mobile portrait keeps the base 54px offset; landscape and desktop drop
+   the rail a further 50% down. */
+@media (orientation: landscape), (min-width: 768px) {
+  .stat-rail {
+    top: 81px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

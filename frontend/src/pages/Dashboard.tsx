@@ -708,12 +708,11 @@ export default function Dashboard() {
               <div className="stat-pill stat-pill--mon" title={`${monBalance} MON`}>
                 <img src="/gem.png" alt="" className="stat-pill__icon" />
                 <span className="stat-pill__value">{monBalance}</span>
-                <span className="stat-pill__label">MON</span>
               </div>
             )}
 
             <div className="stat-pill stat-pill--level" title={`Level ${level}`}>
-              <span className="stat-pill__label">LV</span>
+              <span className="stat-pill__label">Level</span>
               <span className="stat-pill__value">{level}</span>
             </div>
           </div>
