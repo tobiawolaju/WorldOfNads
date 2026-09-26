@@ -685,11 +685,6 @@ export default function Dashboard() {
 
         <div className="card-overlay">
           <div className="stat-rail">
-            <div className="stat-pill stat-pill--level" title={`Level ${level}`}>
-              <span className="stat-pill__label">LV</span>
-              <span className="stat-pill__value">{level}</span>
-            </div>
-
             <div
               className="stat-pill stat-pill--energy"
               role="img"
@@ -716,6 +711,11 @@ export default function Dashboard() {
                 <span className="stat-pill__label">MON</span>
               </div>
             )}
+
+            <div className="stat-pill stat-pill--level" title={`Level ${level}`}>
+              <span className="stat-pill__label">LV</span>
+              <span className="stat-pill__value">{level}</span>
+            </div>
           </div>
         </div>
       </div>
