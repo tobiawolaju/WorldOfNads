@@ -145,7 +145,7 @@
     --pill-fg: #ffffff;
     --pill-level: #cdadff;
     --pill-energy: #fde047;
-    --pill-mon: #f0abfc;
+    --pill-mon: #e879f9;
   }
 }
 
@@ -166,7 +166,7 @@
   border-radius: 0;
   background: color-mix(in srgb, var(--background) 50%, transparent);
   color: var(--pill-fg);
-  font-size: 7.8px;
+  font-size: 10.5px;
   line-height: 1;
   white-space: nowrap;
   pointer-events: auto;
@@ -182,7 +182,7 @@
 
 /* Children counter the parent's skew so glyphs and icons stay upright */
 .stat-pill__label {
-  font-size: 6px;
+  font-size: 7.5px;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--pill-accent);
@@ -190,7 +190,7 @@
 }
 
 .stat-pill__value {
-  font-size: 8.4px;
+  font-size: 10.5px;
   font-weight: 800;
   color: var(--pill-fg);
   font-variant-numeric: tabular-nums;
@@ -209,8 +209,8 @@
 }
 
 .stat-pill--mon .stat-pill__value {
-  color: var(--pill-accent);
-  font-size: 9.6px;
+  color: var(--pill-mon);
+  font-size: 11.5px;
 }
 
 .stat-pill--mon .stat-pill__icon {
@@ -219,11 +219,12 @@
 }
 
 .stat-pill--level .stat-pill__label {
-  font-size: 7px;
+  font-size: 8px;
 }
 
 .stat-pill--level .stat-pill__value {
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .stat-pips {
@@ -260,29 +261,29 @@
 /* Mobile portrait scales the pill type down to 0.65 of the base size */
 @media (orientation: portrait) and (max-width: 767px) {
   .stat-pill {
-    font-size: 5.07px;
+    font-size: 6.83px;
   }
 
   .stat-pill__label {
-    font-size: 3.9px;
+    font-size: 4.88px;
   }
 
   .stat-pill__value {
-    font-size: 5.46px;
+    font-size: 6.83px;
   }
 
   /* These repeat the 0.65 scale for the pills that are bumped up in the
      base rules, otherwise the higher specificity would skip the reduction */
   .stat-pill--mon .stat-pill__value {
-    font-size: 6.24px;
+    font-size: 7.48px;
   }
 
   .stat-pill--level .stat-pill__label {
-    font-size: 4.55px;
+    font-size: 5.2px;
   }
 
   .stat-pill--level .stat-pill__value {
-    font-size: 6.5px;
+    font-size: 7.8px;
   }
 }
 
