@@ -20,6 +20,7 @@ signal camera_dragged(relative: Vector2)
 @export var swipe_jump_threshold: float = 250.0
 @export var swipe_jump_horizontal_tolerance: float = 120.0
 @export var jump_press_duration: float = 0.2
+@export var keep_position_on_release: bool = true # leave the knob and base where they were last used instead of hiding them
 
 var radiusJoyStick: float = 0.0
 var radiusJoyBase: float = 0.0
@@ -110,15 +111,17 @@ func _input(event):
 				emit_signal("camera_dragged", Vector2.ZERO)
 		else:
 			if event.index == active_joystick_index:
-				if return_to_center and not is_auto_locked:
-					position = Vector2.ZERO
+				var hold_visual: bool = keep_position_on_release and not is_auto_locked
+				if (return_to_center or hold_visual) and not is_auto_locked:
+					if not hold_visual:
+						position = Vector2.ZERO
 					_release_all_keys()
 					lock_candidate_started_at = -1.0
 					north_drag_distance_accumulated = 0.0
 					last_drag_was_north = false
 				
 				emit_signal("joystick_released")
-				if not is_auto_locked:
+				if not is_auto_locked and not hold_visual:
 					if touch_joystick_node: touch_joystick_node.visible = false
 				touchInsideJoystick = false
 				active_joystick_index = -1
@@ -264,6 +267,7 @@ func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick:
 	last_drag_was_north = false
 	touch_joystick.position = touch_pos
 	global_position = touch_pos
+	position = Vector2.ZERO
 	touch_joystick.visible = true
 	
 	if _is_double_tap(touch_pos):

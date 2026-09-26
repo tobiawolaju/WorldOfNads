@@ -130,6 +130,19 @@ vec4 triplanar(
 
 	vec3 blend = abs(normal);
 
+	if (blend_sharpness >= 4.0) {
+
+		vec2 dominant_uv =
+			  (pos.yz * step(blend.y, blend.x) * step(blend.z, blend.x))
+			+ (pos.xz * step(blend.x, blend.y) * step(blend.z, blend.y))
+			+ (pos.xy * step(blend.x, blend.z) * step(blend.y, blend.z));
+
+		return texture(
+			tex,
+			dominant_uv / texture_scale
+		);
+	}
+
 	blend = pow(
 		blend,
 		vec3(blend_sharpness)
@@ -141,13 +154,9 @@ vec4 triplanar(
 		blend.z
 	);
 
-	vec2 x_uv = pos.yz / texture_scale;
-	vec2 y_uv = pos.xz / texture_scale;
-	vec2 z_uv = pos.xy / texture_scale;
-
-	vec4 x = texture(tex, x_uv);
-	vec4 y = texture(tex, y_uv);
-	vec4 z = texture(tex, z_uv);
+	vec4 x = texture(tex, pos.yz / texture_scale);
+	vec4 y = texture(tex, pos.xz / texture_scale);
+	vec4 z = texture(tex, pos.xy / texture_scale);
 
 	return
 		x * blend.x +
@@ -223,37 +232,9 @@ void fragment() {
 	// =================================
 	//
 
-	vec4 low = triplanar(
-		low_albedo,
-		world_pos,
-		n
-	);
-
-	vec4 grass = triplanar(
-		grass_albedo,
-		world_pos,
-		n
-	);
-
-	vec4 rock = triplanar(
-		rock_albedo,
-		world_pos,
-		n
-	);
-
-	vec4 snow = triplanar(
-		snow_albedo,
-		world_pos,
-		n
-	);
-
-	//
-	// =================================
-	// BASE TERRAIN
-	// =================================
-	//
-
 	vec3 terrain;
+
+	vec3 low_rgb = vec3(0.0);
 
 	//
 	// SNOW
@@ -267,9 +248,21 @@ void fragment() {
 			h
 		);
 
+		vec3 rock_rgb = triplanar(
+			rock_albedo,
+			world_pos,
+			n
+		).rgb;
+
+		vec3 snow_rgb = triplanar(
+			snow_albedo,
+			world_pos,
+			n
+		).rgb;
+
 		terrain = mix(
-			rock.rgb,
-			snow.rgb,
+			rock_rgb,
+			snow_rgb,
 			t
 		);
 	}
@@ -286,9 +279,21 @@ void fragment() {
 			h
 		);
 
+		vec3 grass_rgb = triplanar(
+			grass_albedo,
+			world_pos,
+			n
+		).rgb;
+
+		vec3 rock_rgb = triplanar(
+			rock_albedo,
+			world_pos,
+			n
+		).rgb;
+
 		terrain = mix(
-			grass.rgb,
-			rock.rgb,
+			grass_rgb,
+			rock_rgb,
 			t
 		);
 	}
@@ -305,9 +310,21 @@ void fragment() {
 			h
 		);
 
+		low_rgb = triplanar(
+			low_albedo,
+			world_pos,
+			n
+		).rgb;
+
+		vec3 grass_rgb = triplanar(
+			grass_albedo,
+			world_pos,
+			n
+		).rgb;
+
 		terrain = mix(
-			low.rgb,
-			grass.rgb,
+			low_rgb,
+			grass_rgb,
 			t
 		);
 
@@ -369,11 +386,20 @@ void fragment() {
 		// blend rocky dirt patches
 		//
 
-		terrain = mix(
-			terrain,
-			rock.rgb,
-			patch_mask
-		);
+		if (patch_mask > 0.0) {
+
+			vec3 rock_rgb = triplanar(
+				rock_albedo,
+				world_pos,
+				n
+			).rgb;
+
+			terrain = mix(
+				terrain,
+				rock_rgb,
+				patch_mask
+			);
+		}
 	}
 
 	//
@@ -382,7 +408,13 @@ void fragment() {
 
 	else {
 
-		terrain = low.rgb;
+		low_rgb = triplanar(
+			low_albedo,
+			world_pos,
+			n
+		).rgb;
+
+		terrain = low_rgb;
 	}
 
 	//
@@ -391,11 +423,23 @@ void fragment() {
 	// =================================
 	//
 
-	terrain = mix(
-		terrain,
-		low.rgb,
-		cliff_mask
-	);
+	if (cliff_mask > 0.0) {
+
+		if (h >= grass_start) {
+
+			low_rgb = triplanar(
+				low_albedo,
+				world_pos,
+				n
+			).rgb;
+		}
+
+		terrain = mix(
+			terrain,
+			low_rgb,
+			cliff_mask
+		);
+	}
 
 	//
 	// =================================

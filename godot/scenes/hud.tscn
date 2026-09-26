@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/ui/buttons.gd" id="10_mphia"]
 [ext_resource type="Texture2D" uid="uid://b7qle767pmjpp" path="res://assets/img/ui_atlas.png" id="10_ui_atlas"]
 [ext_resource type="Texture2D" uid="uid://blb4gd2pmif22" path="res://assets/img/jump.png" id="12_5n1hp"]
+[ext_resource type="Script" uid="uid://bdgt65wb25puk" path="res://scripts/ui/textfx.gd" id="13_textfx"]
 
 [sub_resource type="Shader" id="Shader_storm"]
 code = "shader_type canvas_item;
@@ -84,8 +85,12 @@ corner_radius_bottom_left = 50
 bg_color = Color(0, 0, 0, 0.34117648)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l0bqs"]
-bg_color = Color(0.60784316, 0.36078432, 1, 1)
-border_color = Color(0, 0.77254903, 0, 1)
+bg_color = Color(1, 0, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.29403067, 0.00085201056, 0.69408876, 1)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_8f1mq"]
 
@@ -214,10 +219,10 @@ stretch_mode = 4
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -161.0
-offset_top = 37.0
-offset_right = 164.0
-offset_bottom = 111.0
+offset_left = -113.0
+offset_top = 46.0
+offset_right = 113.0
+offset_bottom = 92.0
 grow_horizontal = 2
 texture = SubResource("AtlasTexture_cover")
 expand_mode = 1
@@ -238,7 +243,7 @@ size_flags_vertical = 4
 layout_mode = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.44313726)
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 18
 text = "Searching for Server"
 horizontal_alignment = 1
 uppercase = true
@@ -258,7 +263,7 @@ alignment = 2
 
 [node name="username" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer2" unique_id=229289726]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(1, 0.55955654, 0.9853055, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.47058824)
 theme_override_constants/shadow_outline_size = 0
 theme_override_font_sizes/font_size = 12
@@ -269,9 +274,9 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -251.0
-offset_top = 180.0
+offset_top = 199.0
 offset_right = -27.0
-offset_bottom = 198.0
+offset_bottom = 217.0
 grow_horizontal = 0
 size_flags_horizontal = 0
 size_flags_vertical = 4
@@ -306,22 +311,21 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 script = ExtResource("7_mphia")
 background_color = Color(0.050980393, 0.050980393, 0.050980393, 0)
-fade_color = Color(0, 0, 0, 0)
+fade_color = Color(0.9569033, 1.4535487e-05, 0.62485147, 0.60784316)
 north_label_color = Color(1, 1, 1, 1)
 pointer_color = Color(1, 1, 1, 1)
 
 [node name="subtitle" type="Label" parent="CanvasLayer/BoxContainer/Node2" unique_id=1792981601]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -115.0
-offset_top = 103.0
-offset_right = 115.0
-offset_bottom = 131.0
-grow_horizontal = 2
-theme_override_colors/font_color = Color(0.48252136, 0.45455968, 0.9817855, 1)
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -186.0
+offset_top = 178.0
+offset_right = -29.0
+offset_bottom = 195.0
+grow_horizontal = 0
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 12
 text = "Stand your Ground for 60s"
 
 [node name="FPSLabel" type="Label" parent="CanvasLayer" unique_id=2147483647]
@@ -397,7 +401,6 @@ script = ExtResource("9_mphia")
 auto_lock_hold_seconds = 0.0
 auto_lock_forward_min_strength = 0.1
 auto_lock_north_distance_multiplier = 5.0
-disable_joystick_lock = true
 joy_lock = NodePath("../JoyLock")
 
 [node name="Node3" type="Node" parent="." unique_id=1974703911]
@@ -537,6 +540,7 @@ show_percentage = false
 script = ExtResource("6_stamina_bar")
 
 [node name="JumpBar" type="ProgressBar" parent="." unique_id=896147534]
+visible = false
 modulate = Color(0.60784316, 0.36078432, 1, 1)
 layout_mode = 1
 anchors_preset = 7
@@ -557,6 +561,7 @@ show_percentage = false
 script = ExtResource("6_jump_bar")
 
 [node name="JumpBar2" type="ProgressBar" parent="." unique_id=1989268868]
+visible = false
 modulate = Color(0.60784316, 0.36078432, 1, 1)
 layout_mode = 1
 anchors_preset = 7
@@ -575,3 +580,25 @@ theme_override_styles/fill = SubResource("StyleBoxTexture_tllmm")
 value = 100.0
 show_percentage = false
 script = ExtResource("6_jump_bar")
+
+[node name="TextFX" type="Label" parent="." unique_id=221857681]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -113.92569
+offset_top = -34.753128
+offset_right = 120.07431
+offset_bottom = 65.24689
+grow_horizontal = 2
+grow_vertical = 2
+rotation = -0.19896753
+theme_override_fonts/font = ExtResource("3_apjy4")
+theme_override_font_sizes/font_size = 100
+text = "NADs World
+Order"
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("13_textfx")

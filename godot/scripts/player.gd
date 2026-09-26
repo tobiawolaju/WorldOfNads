@@ -73,6 +73,9 @@ var last_pickup_request_ms: int = 0
 @export var max_zoom: float = 2.2
 @export var altitude_zoom_factor: float = 0.0
 @export var bus_zoom: float = 3.0
+@export var bus_camera_look_target: Vector2 = Vector2(0.0, 0.0) # xz point the camera self-adjusts toward while riding the bus
+@export var bus_camera_recenter_speed: float = 1.4 # higher = pulls back to the look target faster, 0 = disabled
+@export var bus_camera_height_offset: float = 0.5 # lifts the camera while riding the bus
 @export var fov: float = 55.0
 @export var touch_orbit_sensitivity: float = 0.032
 @export var joystick_orbit_sensitivity: float = 0.003
@@ -428,7 +431,7 @@ func _physics_process(delta: float) -> void:
 	if input_strength > 0.0:
 		input_dir = input_dir.normalized() * input_strength
 	
-	if movement_allowed and input_dir.length_squared() > 0.05 and touch_orbit_pending == Vector2.ZERO and joystick_orbit_pending == Vector2.ZERO:
+	if movement_allowed and not _is_riding_bus and input_dir.length_squared() > 0.05 and touch_orbit_pending == Vector2.ZERO and joystick_orbit_pending == Vector2.ZERO:
 		var move_angle := atan2(input_dir.x, input_dir.y)
 		if abs(move_angle) > AUTO_ORBIT_THRESHOLD_RAD:
 			var turn_sharpness := clampf(abs(move_angle) / AUTO_ORBIT_SHARPNESS_RAD, 0.0, 1.0)
@@ -634,7 +637,7 @@ func _physics_process(delta: float) -> void:
 	camera_is_airborne = not is_on_floor()
 	camera_is_moving = velocity.x * velocity.x + velocity.z * velocity.z > 0.01
 	_camera_base_target_prev = _camera_base_target_curr
-	_camera_base_target_curr = global_transform.origin + Vector3(0, 1.5, 0)
+	_camera_base_target_curr = _camera_base_target()
 
 	if move_direction.length_squared() > 0.0025:
 		var target_yaw := atan2(move_direction.x, move_direction.z)
@@ -767,7 +770,7 @@ func _update_demo_agent(delta: float) -> void:
 	camera_is_airborne = not is_on_floor()
 	camera_is_moving = velocity.x * velocity.x + velocity.z * velocity.z > 0.01
 	_camera_base_target_prev = _camera_base_target_curr
-	_camera_base_target_curr = global_transform.origin + Vector3(0, 1.5, 0)
+	_camera_base_target_curr = _camera_base_target()
 
 	if move_direction.length_squared() > 0.0025:
 		var target_yaw := atan2(move_direction.x, move_direction.z)
@@ -1007,6 +1010,19 @@ func _apply_bus_riding() -> void:
 		max_zoom = bus_zoom
 		global_position += bus_delta
 
+func _camera_base_target() -> Vector3:
+	var height: float = 1.5 + (bus_camera_height_offset if _is_riding_bus else 0.0)
+	return global_transform.origin + Vector3(0, height, 0)
+
+func _apply_bus_camera_recenter(delta: float) -> void:
+	if not _is_riding_bus or bus_camera_recenter_speed <= 0.0:
+		return
+	var to_target: Vector2 = bus_camera_look_target - Vector2(global_position.x, global_position.z)
+	if to_target.length_squared() < 0.0001:
+		return
+	var target_yaw: float = atan2(-to_target.x, -to_target.y)
+	cam_rot_y = lerp_angle(cam_rot_y, target_yaw, clampf(delta * bus_camera_recenter_speed, 0.0, 1.0))
+
 func _spring_angle(current: float, vel: float, target: float, sharpness: float, delta: float) -> Array:
 	var wrapped_target := current + angle_difference(current, target)
 	return _spring_float(current, vel, wrapped_target, sharpness, delta)
@@ -1020,6 +1036,7 @@ func _handle_camera_gamepad(delta: float) -> void:
 		cam_rot_x = clamp(cam_rot_x + ry * 0.05 * delta * 60, min_pitch, max_pitch)
 
 func _update_camera_collision_logic(delta: float) -> void:
+	_apply_bus_camera_recenter(delta)
 	_camera_update_skip_frames += 1
 	if _camera_update_skip_frames < 3:
 		return
@@ -1103,7 +1120,6 @@ func _update_camera_visual(delta: float) -> void:
 	_camera_follow_velocity = follow_result[1]
 	var target_pos: Vector3 = _camera_follow_target
 	cam_rot_x = clamp(cam_rot_x, min_pitch, max_pitch)
-	var holding_chicken := _is_local_holding_chicken()
 	var cam_offset: Vector3 = Vector3(_sin_cam_y * _cos_cam_x, _sin_cam_x, _cos_cam_y * _cos_cam_x) 
 	var camera_direction := cam_offset 
 	if camera_direction.length_squared() < 0.0001:
@@ -1121,7 +1137,7 @@ func _update_camera_visual(delta: float) -> void:
 	_camera_look_target = look_result[0]
 	_camera_look_target_velocity = look_result[1]
 	camera.look_at(_camera_look_target, Vector3.UP)
-	var target_fov := 125.0 if holding_chicken else 95.0
+	var target_fov := 95.0
 	var fov_result := _spring_float(camera.fov, _camera_fov_velocity, target_fov, camera_smoothness * 1.1, delta)
 	camera.fov = fov_result[0]
 	_camera_fov_velocity = fov_result[1]

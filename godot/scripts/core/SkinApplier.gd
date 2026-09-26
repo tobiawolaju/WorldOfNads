@@ -7,13 +7,13 @@ static var _api_cache: Dictionary = {}
 
 const FALLBACK_SHADED: Dictionary = {
 	"palette": {
-		"body": [0.988, 0.176, 0.288, 1],
-		"body_alt": [0.988, 0.176, 0.288, 1],
+		"body":  [0.988, 0.176, 0.532, 1],
+		"body_alt": [0.988, 0.176, 0.532, 1],
 		"cheek":  [0.988, 0.294, 0.549, 1],
 		"eye": [1.0, 1.0, 1.0, 1],
 		"skin": [0.0, 0.0, 0.0, 1.0]
 	},
-	"outline_color": [0.988, 0.176, 0.288, 1],
+	"outline_color": [0.988, 0.176, 0.532, 1],
 	"crown_color": [1.0, 1.0, 0.0, 1],
 	"shader": "default",
 	"shader_targets": ["body", "cheek", "eye"],
@@ -22,8 +22,8 @@ const FALLBACK_SHADED: Dictionary = {
 
 const FALLBACK_UNSHADED: Dictionary = {
 	"palette": {
-		"body": [0.988, 0.176, 0.288, 1],
-		"body_alt": [0.988, 0.176, 0.288, 1],
+		"body": [0.988, 0.176, 0.532, 1],
+		"body_alt": [0.988, 0.176, 0.532, 1],
 		"cheek":[0.988, 0.294, 0.549, 1],
 		"eye": [1.0, 1.0, 1.0, 1],
 		"skin":  [0.0, 0.0, 0.0, 1.0]

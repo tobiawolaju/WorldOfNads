@@ -2,7 +2,7 @@ shader_type spatial;
 
 
 render_mode depth_draw_opaque,
-cull_disabled,
+cull_back,
 diffuse_burley,
 specular_schlick_ggx;
 
@@ -28,21 +28,6 @@ uniform sampler2D texture_albedo :
 	filter_linear_mipmap,
 	repeat_enable;
 
-uniform sampler2D texture_metallic :
-	hint_default_white,
-	filter_linear_mipmap,
-	repeat_enable;
-
-uniform sampler2D texture_roughness :
-	hint_roughness_r,
-	filter_linear_mipmap,
-	repeat_enable;
-
-uniform sampler2D texture_normal :
-	hint_roughness_normal,
-	filter_linear_mipmap,
-	repeat_enable;
-
 
 //
 // ======================================================
@@ -58,9 +43,6 @@ uniform float metallic :
 
 uniform float specular :
 	hint_range(0.0, 1.0) = 0.2;
-
-uniform float normal_scale :
-	hint_range(-16.0, 16.0) = 1.0;
 
 
 //
@@ -225,14 +207,6 @@ void fragment() {
 		start_fade * end_fade;
 
 	//
-	// DISCARD INVISIBLE
-	//
-
-	if (height_mask < alpha_cutoff) {
-		discard;
-	}
-
-	//
 	// ==================================================
 	// TEXTURES
 	// ==================================================
@@ -240,6 +214,44 @@ void fragment() {
 
 	vec4 albedo_tex =
 		texture(texture_albedo, base_uv);
+
+	//
+	// ==================================================
+	// COVERAGE
+	// ==================================================
+	//
+
+	float coverage =
+		albedo_tex.a *
+		albedo.a *
+		height_mask;
+
+	//
+	// --- DITHER SHADER OPTIMIZATION ---
+	// Dithering allows us to simulate transparency without using the expensive
+	// transparent render pass, which is a massive win for mobile WebGL.
+	//
+
+	float dither = 0.0;
+	{
+		// 4x4 Bayer Matrix
+		const float bayer[16] = {
+			0.0625, 0.5625, 0.1875, 0.6875,
+			0.8125, 0.3125, 0.9375, 0.4375,
+			0.25, 0.75, 0.125, 0.625,
+			1.0, 0.5, 0.875, 0.375
+		};
+		ivec2 screen_pos = ivec2(FRAGCOORD.xy) % 4;
+		dither = bayer[screen_pos.x + screen_pos.y * 4];
+	}
+
+	//
+	// DISCARD INVISIBLE
+	//
+
+	if (coverage < max(dither, alpha_cutoff)) {
+		discard;
+	}
 
 	//
 	// ==================================================
@@ -257,21 +269,4 @@ void fragment() {
 	ROUGHNESS = roughness;
 
 	SPECULAR = specular;
-
-	//
-	// ==================================================
-	// FINAL ALPHA
-	// ==================================================
-	//
-
-	// PNG alpha controls grass shape
-
-	ALPHA =
-		albedo_tex.a *
-		albedo.a *
-		height_mask;
-
-	if (ALPHA < alpha_cutoff) {
-		discard;
-	}
 }
