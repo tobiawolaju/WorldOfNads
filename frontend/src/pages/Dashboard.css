@@ -115,24 +115,35 @@
   color: #ffd700;
 }
 
-/* --- Player stat rail: level / energy / MON --- */
+/* --- Player stat pills: level / energy / MON ---
+   Each pill carries its own accent (--pill-accent) while sharing one base
+   rule, so all three stay identically sized and pick up the page background
+   via var(--background). Accents are re-declared per colour scheme so they
+   stay legible on both the white and the #6553c7 page background. */
 .stat-rail {
+  --pill-fg: var(--foreground);
+  --pill-level: #5b4fff;
+  --pill-energy: #0e7490;
+  --pill-mon: #b45309;
+
   position: absolute;
   top: 74px;
   right: 24px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 14px;
+  gap: 10px;
   pointer-events: auto;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(18, 18, 18, 0.82), rgba(18, 18, 18, 0.66));
-  border: 1px solid rgba(205, 173, 255, 0.28);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   font-family: 'ABC Favorit', 'Inter', system-ui, sans-serif;
   animation: stat-rail-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-color-scheme: dark) {
+  .stat-rail {
+    --pill-fg: #ffffff;
+    --pill-level: #cdadff;
+    --pill-energy: #67e8f9;
+    --pill-mon: #ffd700;
+  }
 }
 
 @keyframes stat-rail-in {
@@ -140,115 +151,73 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.stat-rail__divider {
-  width: 1px;
-  height: 20px;
-  flex: 0 0 auto;
-  background: linear-gradient(180deg, transparent, rgba(205, 173, 255, 0.35), transparent);
-}
-
-.stat-rail__level {
+/* Shared base: one rule for size and shape so the three pills always match */
+.stat-pill {
   display: flex;
-  align-items: baseline;
-  gap: 5px;
-  padding: 3px 11px 4px 9px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 10px;
+  min-height: 46px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #5b4fff, #cdadff);
-  box-shadow: 0 0 14px rgba(123, 92, 255, 0.45);
+  background: var(--background);
+  border: 1px solid var(--pill-accent);
+  color: var(--pill-fg);
+  font-size: 13px;
+  line-height: 1;
   white-space: nowrap;
 }
 
-.stat-rail__level-label {
+.stat-pill--level { --pill-accent: var(--pill-level); }
+.stat-pill--energy { --pill-accent: var(--pill-energy); }
+.stat-pill--mon { --pill-accent: var(--pill-mon); }
+
+.stat-pill__label {
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  color: rgba(10, 6, 24, 0.62);
+  letter-spacing: 0.12em;
+  color: var(--pill-accent);
 }
 
-.stat-rail__level-value {
-  font-size: 17px;
+.stat-pill__value {
+  font-size: 14px;
   font-weight: 800;
-  line-height: 1;
-  color: #0a0618;
+  color: var(--pill-fg);
   font-variant-numeric: tabular-nums;
 }
 
-.stat-rail__energy {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.energy-pips {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: rgba(0, 255, 255, 0.06);
-  box-shadow: inset 0 0 0 1px rgba(0, 255, 255, 0.18);
-}
-
-.energy-pip {
-  width: 14px;
-  height: 14px;
+.stat-pill__icon {
+  width: 16px;
+  height: 16px;
   object-fit: contain;
-  opacity: 0.22;
-  filter: grayscale(1);
-  transform: scale(0.86);
-  transition: opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease;
+  filter: drop-shadow(0 0 4px var(--pill-accent));
 }
 
-.energy-pip.is-filled {
-  opacity: 1;
-  filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.9));
-  transform: scale(1);
+.stat-pill--mon .stat-pill__value {
+  color: var(--pill-accent);
 }
 
-.stat-rail__energy-count {
-  font-size: 12px;
-  font-weight: 600;
-  color: #e8faff;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.stat-rail__slash {
-  opacity: 0.45;
-  margin: 0 1px;
-}
-
-.stat-rail__mon {
+.stat-pips {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 11px 4px 7px;
-  border-radius: 999px;
-  background: rgba(255, 215, 0, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.22);
-  white-space: nowrap;
+  gap: 3px;
 }
 
-.stat-rail__gem {
+.stat-pip {
   width: 15px;
   height: 15px;
   object-fit: contain;
-  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
+  opacity: 0.2;
+  filter: grayscale(1);
+  transform: scale(0.85);
+  transition: opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease;
 }
 
-.stat-rail__mon-value {
-  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
-  font-size: 13px;
-  font-weight: 700;
-  color: #ffd700;
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-rail__mon-label {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: rgba(255, 215, 0, 0.72);
+.stat-pip.is-filled {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px var(--pill-accent));
+  transform: scale(1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -256,11 +225,10 @@
     animation: none;
   }
 
-  .energy-pip {
+  .stat-pip {
     transition: none;
   }
 }
-
 .card-bottom {
   position: absolute;
   bottom: 30px;

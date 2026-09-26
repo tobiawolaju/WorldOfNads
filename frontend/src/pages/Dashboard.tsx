@@ -685,43 +685,35 @@ export default function Dashboard() {
 
         <div className="card-overlay">
           <div className="stat-rail">
-            <div className="stat-rail__level" title={`Level ${level}`}>
-              <span className="stat-rail__level-label">LV</span>
-              <span className="stat-rail__level-value">{level}</span>
+            <div className="stat-pill stat-pill--level" title={`Level ${level}`}>
+              <span className="stat-pill__label">LV</span>
+              <span className="stat-pill__value">{level}</span>
             </div>
 
-            <div className="stat-rail__divider" aria-hidden="true" />
-
             <div
-              className="stat-rail__energy"
+              className="stat-pill stat-pill--energy"
               role="img"
               aria-label={`Energy ${energy} of ${MAX_ENERGY}`}
               title={`Energy ${energy} of ${MAX_ENERGY}`}
             >
-              <div className="energy-pips">
+              <span className="stat-pips">
                 {Array.from({ length: MAX_ENERGY }).map((_, i) => (
                   <img
                     key={i}
                     src="/energy.png"
                     alt=""
-                    className={`energy-pip ${i < energy ? "is-filled" : ""}`}
+                    className={`stat-pip ${i < energy ? "is-filled" : ""}`}
                   />
                 ))}
-              </div>
-              <span className="stat-rail__energy-count">
-                {energy}
-                <span className="stat-rail__slash">/</span>
-                {MAX_ENERGY}
               </span>
+              <span className="stat-pill__value">{energy}/{MAX_ENERGY}</span>
             </div>
 
-            <div className="stat-rail__divider" aria-hidden="true" />
-
             {monBalance !== null && (
-              <div className="stat-rail__mon" title={`${monBalance} MON`}>
-                <img src="/gem.png" alt="" className="stat-rail__gem" />
-                <span className="stat-rail__mon-value">{monBalance}</span>
-                <span className="stat-rail__mon-label">MON</span>
+              <div className="stat-pill stat-pill--mon" title={`${monBalance} MON`}>
+                <img src="/gem.png" alt="" className="stat-pill__icon" />
+                <span className="stat-pill__value">{monBalance}</span>
+                <span className="stat-pill__label">MON</span>
               </div>
             )}
           </div>
