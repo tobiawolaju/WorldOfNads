@@ -115,111 +115,149 @@
   color: #ffd700;
 }
 
-.card-top-right {
+/* --- Player stat rail: level / energy / MON --- */
+.stat-rail {
   position: absolute;
   top: 74px;
   right: 24px;
-  text-align: right;
-  pointer-events: auto;
-}
-
-.card-level {
-  font-family: monospace;
-  font-size: 11px;
-  opacity: 0.8;
-  line-height: 1.15;
-  white-space: nowrap;
-  background: #cdadff;
-  border-radius: 50px;
-  padding: 8px;
-  margin-bottom: 2px;
-}
-
-.energy-bar {
-  position: absolute;
-  top: 106px;
-  right: 24px;
-  padding: 5px 6px;
-  pointer-events: auto;
-}
-
-.energy-track {
-  position: relative;
-  width: 92px;
-  height: 16px;
-  box-sizing: border-box;
-  background: #cdadff;
-  border-radius: 50px;
-  padding: 8px;
-}
-
-.energy-track__linear {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  transform: translateY(-50%);
-  border-radius: 1px;
-  background: rgba(255, 255, 255, 0.12);
-  overflow: hidden;
-}
-
-.energy-track__fill {
-  height: 100%;
-  background: #0ff;
-  border-radius: 1px;
-  transition: width 0.4s ease;
-}
-
-.energy-diamond {
-  position: absolute;
-  top: 50%;
-  width: 12px;
-  height: 12px;
-  transform: translate(-50%, -50%);
-  object-fit: contain;
-  opacity: 0.35;
-  z-index: 2;
-  transition: opacity 0.3s ease, filter 0.3s ease;
-}
-
-.energy-diamond.filled {
-  opacity: 1;
-  filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.8));
-}
-
-.energy-bar__mon {
-  font-family: monospace;
-  font-size: 11px;
-  opacity: 0.8;
-  line-height: 1.15;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 2px;
+  gap: 12px;
+  padding: 8px 14px;
+  pointer-events: auto;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(18, 18, 18, 0.82), rgba(18, 18, 18, 0.66));
+  border: 1px solid rgba(205, 173, 255, 0.28);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-family: 'ABC Favorit', 'Inter', system-ui, sans-serif;
+  animation: stat-rail-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes stat-rail-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-rail__divider {
+  width: 1px;
+  height: 20px;
+  flex: 0 0 auto;
+  background: linear-gradient(180deg, transparent, rgba(205, 173, 255, 0.35), transparent);
+}
+
+.stat-rail__level {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px 11px 4px 9px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #5b4fff, #cdadff);
+  box-shadow: 0 0 14px rgba(123, 92, 255, 0.45);
   white-space: nowrap;
-  background: #cdadff;
-  border-radius: 50px;
-  padding: 8px;
 }
 
-.energy-bar__gem {
-  width: 11px;
-  height: 11px;
+.stat-rail__level-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(10, 6, 24, 0.62);
+}
+
+.stat-rail__level-value {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  color: #0a0618;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-rail__energy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.energy-pips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(0, 255, 255, 0.18);
+}
+
+.energy-pip {
+  width: 14px;
+  height: 14px;
   object-fit: contain;
+  opacity: 0.22;
+  filter: grayscale(1);
+  transform: scale(0.86);
+  transition: opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  .energy-bar {
-    background: transparent;
+.energy-pip.is-filled {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.9));
+  transform: scale(1);
+}
+
+.stat-rail__energy-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e8faff;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stat-rail__slash {
+  opacity: 0.45;
+  margin: 0 1px;
+}
+
+.stat-rail__mon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px 4px 7px;
+  border-radius: 999px;
+  background: rgba(255, 215, 0, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.22);
+  white-space: nowrap;
+}
+
+.stat-rail__gem {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
+}
+
+.stat-rail__mon-value {
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffd700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-rail__mon-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(255, 215, 0, 0.72);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-rail {
+    animation: none;
   }
 
-  .card-level,
-  .energy-track,
-  .energy-bar__mon {
-    background: #121212;
+  .energy-pip {
+    transition: none;
   }
 }
 
