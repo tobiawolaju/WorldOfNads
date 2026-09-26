@@ -127,13 +127,15 @@
   --pill-mon: #b45309;
 
   position: absolute;
-  top: 108px;
-  left: 50%;
+  top: 54px;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   gap: 10px;
-  transform: translateX(-50%);
-  pointer-events: auto;
+  pointer-events: none;
   font-family: 'ABC Favorit', 'Inter', system-ui, sans-serif;
   animation: stat-rail-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -148,8 +150,8 @@
 }
 
 @keyframes stat-rail-in {
-  from { opacity: 0; transform: translate(-50%, -8px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Shared base: one rule for size and shape so the three pills always match */
@@ -167,9 +169,13 @@
   font-size: 7.8px;
   line-height: 1;
   white-space: nowrap;
+  pointer-events: auto;
 }
 
-.stat-pill--level { --pill-accent: var(--pill-level); }
+.stat-pill--level {
+  --pill-accent: var(--pill-level);
+  margin-left: auto;
+}
 .stat-pill--energy { --pill-accent: var(--pill-energy); }
 .stat-pill--mon { --pill-accent: var(--pill-mon); }
 
