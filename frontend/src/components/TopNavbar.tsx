@@ -10,7 +10,7 @@ type TopNavbarProps = {
 };
 
 const NAV_ITEMS = [
-  { path: '/', label: 'WONs' },
+  { path: '/', label: 'Play' },
   { path: '/nad-arena', label: 'Nad Arena' },
   { path: '/leaderboard', label: 'Leaderboards' },
   { path: '/hosts', label: 'Hosts' },
