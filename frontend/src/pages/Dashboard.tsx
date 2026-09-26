@@ -683,39 +683,41 @@ export default function Dashboard() {
         />
         {equipFlash && <div className="equip-flash" />}
 
-        <div className="card-overlay">
-          <div className="stat-rail">
-            <div
-              className="stat-pill stat-pill--energy"
-              role="img"
-              aria-label={`Energy ${energy} of ${MAX_ENERGY}`}
-              title={`Energy ${energy} of ${MAX_ENERGY}`}
-              >
-                <span className="stat-pips">
-                  {Array.from({ length: MAX_ENERGY }).map((_, i) => (
-                    <img
-                      key={i}
-                      src="/energy.png"
-                      alt=""
-                      className={`stat-pip ${i < energy ? "is-filled" : ""}`}
-                    />
-                  ))}
-                </span>
-              </div>
+        {tab !== "store" && (
+          <div className="card-overlay">
+            <div className="stat-rail">
+              <div
+                className="stat-pill stat-pill--energy"
+                role="img"
+                aria-label={`Energy ${energy} of ${MAX_ENERGY}`}
+                title={`Energy ${energy} of ${MAX_ENERGY}`}
+                >
+                  <span className="stat-pips">
+                    {Array.from({ length: MAX_ENERGY }).map((_, i) => (
+                      <img
+                        key={i}
+                        src="/energy.png"
+                        alt=""
+                        className={`stat-pip ${i < energy ? "is-filled" : ""}`}
+                      />
+                    ))}
+                  </span>
+                </div>
 
-            {monBalance !== null && (
-              <div className="stat-pill stat-pill--mon" title={`${monBalance} MON`}>
-                <img src="/gem.png" alt="" className="stat-pill__icon" />
-                <span className="stat-pill__value">{monBalance}</span>
-              </div>
-            )}
+              {monBalance !== null && (
+                <div className="stat-pill stat-pill--mon" title={`${monBalance} MON`}>
+                  <img src="/gem.png" alt="" className="stat-pill__icon" />
+                  <span className="stat-pill__value">{monBalance}</span>
+                </div>
+              )}
 
-            <div className="stat-pill stat-pill--level" title={`Level ${level}`}>
-              <span className="stat-pill__label">Level</span>
-              <span className="stat-pill__value">{level}</span>
+              <div className="stat-pill stat-pill--level" title={`Level ${level}`}>
+                <span className="stat-pill__label">Level</span>
+                <span className="stat-pill__value">{level}</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="right-info-section">
