@@ -690,19 +690,18 @@ export default function Dashboard() {
               role="img"
               aria-label={`Energy ${energy} of ${MAX_ENERGY}`}
               title={`Energy ${energy} of ${MAX_ENERGY}`}
-            >
-              <span className="stat-pips">
-                {Array.from({ length: MAX_ENERGY }).map((_, i) => (
-                  <img
-                    key={i}
-                    src="/energy.png"
-                    alt=""
-                    className={`stat-pip ${i < energy ? "is-filled" : ""}`}
-                  />
-                ))}
-              </span>
-              <span className="stat-pill__value">{energy}/{MAX_ENERGY}</span>
-            </div>
+              >
+                <span className="stat-pips">
+                  {Array.from({ length: MAX_ENERGY }).map((_, i) => (
+                    <img
+                      key={i}
+                      src="/energy.png"
+                      alt=""
+                      className={`stat-pip ${i < energy ? "is-filled" : ""}`}
+                    />
+                  ))}
+                </span>
+              </div>
 
             {monBalance !== null && (
               <div className="stat-pill stat-pill--mon" title={`${monBalance} MON`}>
