@@ -606,7 +606,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
   // Raise the camera and the orbit target by the same amount: this pans the
   // framing up so the nad sits lower and its head clears the top edge.
   // Raising only the target would tilt the camera further up at the nad.
-  const CAMERA_LIFT = 0.35;
+  const CAMERA_LIFT = 0.5;
 
   const [cameraZ, setCameraZ] = useState(() =>
     window.innerWidth < 768 ? 9 : 10

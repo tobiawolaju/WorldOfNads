@@ -219,11 +219,11 @@
 }
 
 .stat-pill--level .stat-pill__label {
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .stat-pill--level .stat-pill__value {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 900;
 }
 
@@ -279,11 +279,11 @@
   }
 
   .stat-pill--level .stat-pill__label {
-    font-size: 5.2px;
+    font-size: 5.85px;
   }
 
   .stat-pill--level .stat-pill__value {
-    font-size: 7.8px;
+    font-size: 9.1px;
   }
 }
 
