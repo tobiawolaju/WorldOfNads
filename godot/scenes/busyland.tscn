@@ -58,11 +58,9 @@ render_priority = 0
 shader = ExtResource("6_2atol")
 shader_parameter/albedo = Color(0.8889397, 0.24365184, 0, 0.5529412)
 shader_parameter/texture_albedo = ExtResource("4_i8kgf")
-shader_parameter/texture_normal = ExtResource("5_a6qdq")
 shader_parameter/roughness = 1.0
 shader_parameter/metallic = 0.0
 shader_parameter/specular = 0.50000002375
-shader_parameter/normal_scale = 1.0
 shader_parameter/uv1_scale = Vector3(1, 1, 1)
 shader_parameter/uv1_offset = Vector3(0, 0, 0)
 shader_parameter/grass_start_height = -1.0
@@ -158,7 +156,6 @@ multimesh = SubResource("MultiMesh_i8kgf")
 [node name="Landscape" type="MeshInstance3D" parent="Terrain" unique_id=295990206]
 transform = Transform3D(4, 0, 0, 0, 1.6, 0, 0, 0, 4, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_mx8sn")
-cast_shadow = 0
 mesh = SubResource("ArrayMesh_1nemc")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Terrain" unique_id=1040045165]

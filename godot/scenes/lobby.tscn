@@ -13,7 +13,7 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
 render_priority = 0
 shader = ExtResource("5_omrgh")
-shader_parameter/_color = Color(0.7176471, 0.41568628, 0.8862745, 1)
+shader_parameter/_color = Color(0.39607844, 0, 0.80784315, 0.54901963)
 shader_parameter/sphere_size = 3.0
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_07nfq"]
@@ -39,7 +39,6 @@ script = ExtResource("1_07nfq")
 local_player_scene = ExtResource("2_oipnb")
 camera_node = NodePath("Player/Camera3D")
 spawn_point = NodePath("Player/spawnpoint")
-lobby_stress_agent_count = 10
 
 [node name="env" type="Node3D" parent="." unique_id=933934101 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
 script = ExtResource("3_ncsg4")
@@ -57,8 +56,7 @@ cylinder_radius = 18.0
 environment = ExtResource("4_ncsg4")
 
 [node name="day" type="DirectionalLight3D" parent="env" unique_id=978818535]
-transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 34.18702, 0)
-light_energy = 2.0
+transform = Transform3D(0.84941316, -2.3067738e-08, 0.5277283, -0.5277284, -3.7129027e-08, 0.8494131, 0, -0.99999994, -4.3711385e-08, 0, 34.18702, 0)
 directional_shadow_mode = 0
 
 [node name="night" type="DirectionalLight3D" parent="env" unique_id=1492364894]
@@ -88,6 +86,7 @@ status_label = NodePath("../Hud/CanvasLayer/BoxContainer/Node2/BoxContainer/Coun
 [node name="Camera3D" type="Camera3D" parent="Player" unique_id=548567096]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.016422, 10.749125)
 doppler_tracking = 1
+fov = 55.0
 far = 100.0
 
 [node name="spawnpoint" type="Node3D" parent="Player" unique_id=765824796]

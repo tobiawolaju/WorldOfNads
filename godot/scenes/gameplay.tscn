@@ -13,21 +13,21 @@
 [ext_resource type="Texture2D" uid="uid://b4q27tedq04t7" path="res://assets/img/mboxcore.png" id="12_qixtg"]
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="13_i18v2"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_bhmdk"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qixtg"]
 render_priority = 0
 shader = ExtResource("13_i18v2")
-shader_parameter/_color = Color(0.7176471, 0.41568628, 0.8862745, 1)
+shader_parameter/_color = Color(0.39607844, 0, 0.80784315, 0.54901963)
 shader_parameter/sphere_size = 3.0
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_s5y6v"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_nt65e"]
 top_radius = 1.0
 bottom_radius = 1.0
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_407ns"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_bhmdk"]
 top_radius = 1.0
 bottom_radius = 1.0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qixtg"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s5y6v"]
 transparency = 1
 shading_mode = 0
 albedo_color = Color(0.8392157, 0.50980395, 0.9372549, 1)
@@ -93,7 +93,7 @@ shading_mode = 0
 
 [node name="Gameplay" type="Node3D" unique_id=2001810245]
 
-[node name="env" type="Node3D" parent="." unique_id=1349158308 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
+[node name="env" type="Node3D" parent="." unique_id=1986097764 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
 script = ExtResource("8_ctvyo")
 world_env = NodePath("WorldEnvironment")
 light_normal = NodePath("day")
@@ -105,43 +105,40 @@ normal_env = ExtResource("9_qixtg")
 storm_env = ExtResource("10_nt65e")
 cylinder_radius = 18.0
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=711725318]
-environment = ExtResource("10_nt65e")
+[node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=799662076]
+environment = ExtResource("9_qixtg")
 
-[node name="day" type="DirectionalLight3D" parent="env" unique_id=654260087]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
+[node name="day" type="DirectionalLight3D" parent="env" unique_id=14538735]
+transform = Transform3D(0.84941316, -2.3067738e-08, 0.5277283, -0.5277284, -3.7129027e-08, 0.8494131, 0, -0.99999994, -4.3711385e-08, 0, 34.18702, 0)
 visible = false
-light_color = Color(1, 0.68235296, 0.9529412, 1)
-light_energy = 0.5
-shadow_enabled = true
 directional_shadow_mode = 0
 
-[node name="night" type="DirectionalLight3D" parent="env" unique_id=366884123]
+[node name="night" type="DirectionalLight3D" parent="env" unique_id=636189729]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
+visible = false
 light_color = Color(0.85490197, 0, 0.78431374, 1)
 light_energy = 0.2
 shadow_enabled = true
-directional_shadow_mode = 0
 sky_mode = 1
 
-[node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=154871314]
+[node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=232728076]
 transform = Transform3D(18, 0, 0, 0, 200, 0, 0, 0, 18, 0, 0, 0)
-material_override = SubResource("ShaderMaterial_bhmdk")
+material_override = SubResource("ShaderMaterial_qixtg")
 cast_shadow = 0
-mesh = SubResource("CylinderMesh_s5y6v")
+mesh = SubResource("CylinderMesh_nt65e")
 
-[node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1339689695]
+[node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=87302044]
 transform = Transform3D(18, 0, 0, 0, 200, 0, 0, 0, 18, 0, 0, 0)
 cast_shadow = 0
-mesh = SubResource("CylinderMesh_407ns")
-surface_material_override/0 = SubResource("StandardMaterial3D_qixtg")
+mesh = SubResource("CylinderMesh_bhmdk")
+surface_material_override/0 = SubResource("StandardMaterial3D_s5y6v")
 
 [node name="PlayerManager" type="Node3D" parent="." unique_id=226066109 node_paths=PackedStringArray("myplayerswpanpoint")]
 script = ExtResource("1_hpwea")
 player_scene = ExtResource("2_w01lk")
 myplayerswpanpoint = NodePath("../Bus/Marker3D")
 countdown_label_path = NodePath("../Hud/CanvasLayer/BoxContainer/Node2/BoxContainer/Countdown")
-world_environment_path = NodePath("../env/WorldEnvironment")
+world_environment_path = NodePath("")
 camera_block_path = NodePath("Camera3D/CAMERABlock")
 
 [node name="Camera3D" type="Camera3D" parent="PlayerManager" unique_id=411845509]
@@ -215,6 +212,9 @@ text = "Chicken"
 camera = NodePath("../../../../PlayerManager/Camera3D")
 
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("11_hpwea")]
+
+[node name="TextFX" parent="Hud" index="9"]
+fade_out_on_ready = true
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("12_nt65e")]
 
