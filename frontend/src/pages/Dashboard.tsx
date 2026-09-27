@@ -724,7 +724,7 @@ export default function Dashboard() {
         )}
 
         {tab === "store" && currentStoreItem && (
-          <div className="skin-preview" key={currentStoreItem.id}>
+          <div className="skin-preview">
             <p className="skin-preview__name">{currentStoreItem.name}</p>
             <p className="skin-preview__meta">
               {isSelectedStoreOwned ? "Owned" : currentStoreItem.price}
