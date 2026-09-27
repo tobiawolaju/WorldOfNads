@@ -683,15 +683,16 @@ export default function Dashboard() {
         />
         {equipFlash && <div className="equip-flash" />}
 
-        {tab !== "store" && (
+        {(tab !== "store" || monBalance !== null) && (
           <div className="card-overlay">
             <div className="stat-rail">
-              <div
-                className="stat-pill stat-pill--energy"
-                role="img"
-                aria-label={`Energy ${energy} of ${MAX_ENERGY}`}
-                title={`Energy ${energy} of ${MAX_ENERGY}`}
-                >
+              {tab !== "store" && (
+                <div
+                  className="stat-pill stat-pill--energy"
+                  role="img"
+                  aria-label={`Energy ${energy} of ${MAX_ENERGY}`}
+                  title={`Energy ${energy} of ${MAX_ENERGY}`}
+                  >
                   <span className="stat-pips">
                     {Array.from({ length: MAX_ENERGY }).map((_, i) => (
                       <img
@@ -703,6 +704,7 @@ export default function Dashboard() {
                     ))}
                   </span>
                 </div>
+              )}
 
               {monBalance !== null && (
                 <div className="stat-pill stat-pill--mon" title={`${monBalance} MON`}>
@@ -711,11 +713,22 @@ export default function Dashboard() {
                 </div>
               )}
 
-              <div className="stat-pill stat-pill--level" title={`Level ${level}`}>
-                <span className="stat-pill__label">Level</span>
-                <span className="stat-pill__value">{level}</span>
-              </div>
+              {tab !== "store" && (
+                <div className="stat-pill stat-pill--level" title={`Level ${level}`}>
+                  <span className="stat-pill__label">Level</span>
+                  <span className="stat-pill__value">{level}</span>
+                </div>
+              )}
             </div>
+          </div>
+        )}
+
+        {tab === "store" && currentStoreItem && (
+          <div className="skin-preview" key={currentStoreItem.id}>
+            <p className="skin-preview__name">{currentStoreItem.name}</p>
+            <p className="skin-preview__meta">
+              {isSelectedStoreOwned ? "Owned" : currentStoreItem.price}
+            </p>
           </div>
         )}
       </div>
