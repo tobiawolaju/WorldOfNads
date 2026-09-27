@@ -16,8 +16,8 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_qixtg"]
 render_priority = 0
 shader = ExtResource("13_i18v2")
-shader_parameter/_color = Color(0.39607844, 0, 0.80784315, 0.54901963)
-shader_parameter/sphere_size = 3.0
+shader_parameter/_color = Color(0.6509804, 0.32941177, 1, 1)
+shader_parameter/sphere_size = 2.3
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_nt65e"]
 top_radius = 1.0
@@ -213,7 +213,7 @@ camera = NodePath("../../../../PlayerManager/Camera3D")
 
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("11_hpwea")]
 
-[node name="TextFX" parent="Hud" index="9"]
+[node name="TextFX" parent="Hud" index="9" unique_id=221857681]
 fade_out_on_ready = true
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("12_nt65e")]

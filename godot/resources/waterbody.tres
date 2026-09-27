@@ -15,7 +15,9 @@ metadata/_stencil_owned = true
 [resource]
 next_pass = SubResource("StandardMaterial3D_pudo2")
 transparency = 1
-albedo_color = Color(0.98022145, 1.7327071e-05, 0.6496571, 0.68235296)
+albedo_color = Color(0.8117647, 0.5921569, 0.8235294, 0.49411765)
+roughness = 0.0
+clearcoat_roughness = 0.0
 proximity_fade_enabled = true
 proximity_fade_distance = 0.05
 stencil_mode = 1

@@ -13,8 +13,8 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
 render_priority = 0
 shader = ExtResource("5_omrgh")
-shader_parameter/_color = Color(0.39607844, 0, 0.80784315, 0.54901963)
-shader_parameter/sphere_size = 3.0
+shader_parameter/_color = Color(0.6509804, 0.32941177, 1, 1)
+shader_parameter/sphere_size = 2.3
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_07nfq"]
 top_radius = 1.0
