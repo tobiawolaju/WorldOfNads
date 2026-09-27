@@ -87,30 +87,9 @@ select,
         Roboto, sans-serif;
 
     /* Radius */
-    --radius-xs: 4px;
     --radius-sm: 0.375rem;
     --radius-md: 0.75rem;
-    --radius-lg: 1.125rem;
     --radius-full: 9999px;
-
-    /* Elevation: soft and layered, never glowy */
-    --shadow-1: 0 1px 2px rgba(21, 16, 60, 0.05), 0 1px 1px rgba(21, 16, 60, 0.04);
-    --shadow-2: 0 4px 14px rgba(21, 16, 60, 0.08);
-    --shadow-3: 0 12px 32px rgba(21, 16, 60, 0.12);
-
-    /* Surfaces: every card, panel and input pulls from these */
-    --surface: #ffffff;
-    --surface-sunken: #f6f5fc;
-    --surface-raise: #f9fafb;
-    --surface-border: #e6e4f5;
-    --surface-shadow: var(--shadow-2);
-
-    /* Keyboard focus */
-    --focus-ring: #5b4fff;
-
-    /* Motion: snappy, not floaty */
-    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-    --speed: 180ms;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -128,17 +107,6 @@ select,
 
         --overlay-bg: rgba(117, 96, 230, 0.3);
         --inline-func-subtext: #ffffff;
-
-        --shadow-1: 0 1px 2px rgba(20, 12, 60, 0.2);
-        --shadow-2: 0 4px 14px rgba(20, 12, 60, 0.25);
-        --shadow-3: 0 12px 32px rgba(20, 12, 60, 0.32);
-
-        --surface: #6553c7;
-        --surface-sunken: #5b4bb4;
-        --surface-raise: #7361d4;
-        --surface-border: rgba(255, 255, 255, 0.2);
-        --surface-shadow: var(--shadow-2);
-        --focus-ring: #ffffff;
     }
 
     /* ============================================================== */
@@ -163,23 +131,22 @@ select,
     .pagination .page-btn,
     .timeline-content,
     .no-hosts {
-        background-color: var(--surface) !important;
-        background: var(--surface) !important;
+        background-color: #6553c7 !important;
+        background: #6553c7 !important;
         color: #ffffff !important;
-        border-color: var(--surface-border) !important;
-        border-radius: var(--radius-md) !important;
-        box-shadow: var(--surface-shadow) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
     }
 
     /* Specific Input styling for partner-search */
     .partner-search {
-        background: var(--surface) !important;
+        background: #6553c7 !important;
         color: #ffffff !important;
         border-color: rgba(255, 255, 255, 0.3) !important;
     }
     .partner-search:focus {
-        background-color: var(--surface-raise) !important;
-        background: var(--surface-raise) !important;
+        background-color: #7361d4 !important;
+        background: #7361d4 !important;
         border-color: #ffffff !important;
         color: #ffffff !important;
     }
@@ -194,8 +161,8 @@ select,
     .partner-card:hover,
     .team-member-card:hover,
     .timeline-content:hover {
-        background-color: var(--surface-raise) !important;
-        background: var(--surface-raise) !important;
+        background-color: #7361d4 !important;
+        background: #7361d4 !important;
         border-color: transparent !important;
     }
 
@@ -569,8 +536,7 @@ body.play-immersive {
     }
 }
 
-/* Base transitions for smooth interaction — one snappy curve, no lazy fades.
-   filter stays in the list because locked/owned greyscale states rely on it. */
+/* Base transitions for smooth interaction */
 h1,
 h2,
 h3,
@@ -586,11 +552,12 @@ img,
 .tab,
 .filter {
     transition:
-        color var(--speed) var(--ease-out),
-        filter var(--speed) var(--ease-out),
-        box-shadow var(--speed) var(--ease-out),
-        background-color var(--speed) var(--ease-out),
-        border-color var(--speed) var(--ease-out) !important;
+        color 0.4s ease,
+        filter 0.4s ease,
+        text-shadow 0.4s ease,
+        box-shadow 0.4s ease,
+        background-color 0.4s ease,
+        border-color 0.4s ease !important;
 }
 
 /* Intersection Effect Classes */
@@ -629,49 +596,4 @@ img,
     .rainbow-bar {
         animation: none !important;
     }
-}
-
-/* ============================================================== */
-/* 🎨 Global Surface System                                        */
-/* One radius, one hairline, one soft elevation for every card,    */
-/* panel and input on the site. The `body` prefix beats page-level */
-/* rules without needing !important, and the dark-mode block above */
-/* still wins wherever it applies.                                  */
-/* ============================================================== */
-
-body .team-member-card,
-body .careers-item,
-body .faq-item,
-body .user-leaderboard,
-body .partner-card,
-body .tweet-card,
-body .sponsor-card,
-body .milestone-card,
-body .reward-item,
-body .reward-empty,
-body .dashboard-card,
-body .match-card {
-    border-radius: var(--radius-md);
-    border-color: var(--surface-border);
-    box-shadow: var(--surface-shadow);
-}
-
-body .table-container,
-body .leaderboard-table,
-body .partner-search,
-body .no-hosts {
-    border-color: var(--surface-border);
-    box-shadow: var(--surface-shadow);
-}
-
-/* Keyboard focus: outline only, so it never clobbers a button's own shadow */
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-summary:focus-visible,
-[tabindex]:focus-visible {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: 2px;
 }
