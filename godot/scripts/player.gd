@@ -76,7 +76,7 @@ var last_pickup_request_ms: int = 0
 @export var bus_camera_look_target: Vector2 = Vector2(0.0, 0.0) # xz point the camera self-adjusts toward while riding the bus
 @export var bus_camera_recenter_speed: float = 1.4 # higher = pulls back to the look target faster, 0 = disabled
 @export var bus_camera_height_offset: float = 0.5 # lifts the camera while riding the bus
-@export var fov: float = 55.0
+@export var fov: float = 70.0
 @export var touch_orbit_sensitivity: float = 0.032
 @export var joystick_orbit_sensitivity: float = 0.003
 @export var joystick_orbit_clamp: float = 40.0
@@ -1137,7 +1137,7 @@ func _update_camera_visual(delta: float) -> void:
 	_camera_look_target = look_result[0]
 	_camera_look_target_velocity = look_result[1]
 	camera.look_at(_camera_look_target, Vector3.UP)
-	var target_fov := 95.0
+	var target_fov: float = fov
 	var fov_result := _spring_float(camera.fov, _camera_fov_velocity, target_fov, camera_smoothness * 1.1, delta)
 	camera.fov = fov_result[0]
 	_camera_fov_velocity = fov_result[1]
