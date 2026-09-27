@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { resolveGameSkinName } from "../lib/skinMapping";
+import { readGameQuality } from "../lib/gameQuality";
 
 const BACKEND_URL = import.meta.env.VITE_ANALYTICS_API_URL || "https://worldofnads.onrender.com";
 
@@ -82,6 +83,7 @@ const Play: React.FC = () => {
       const nextParams = new URLSearchParams({
         username: urlUsername,
         skin,
+        quality: readGameQuality(),
         ...(match ? { match } : {})
       });
       const nextUrl = `/play.html?${nextParams.toString()}`;
