@@ -4,7 +4,7 @@ extends CharacterBody3D
 # -- CONSTANTS ---
 const GRAVITY: float = 18
 const JUMP_VELOCITY: float = 6
-const SPEED: float = 4.00
+const SPEED: float = 3.00
 const DEADZONE: float = 0.12
 const PICKUP_REQUEST_COOLDOWN_MS: int = 150
 const STEAL_RADIUS: float = 2.5

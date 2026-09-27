@@ -20,7 +20,8 @@ signal camera_dragged(relative: Vector2)
 @export var swipe_jump_threshold: float = 250.0
 @export var swipe_jump_horizontal_tolerance: float = 120.0
 @export var jump_press_duration: float = 0.2
-@export var keep_position_on_release: bool = true # leave the knob and base where they were last used instead of hiding them
+@export var keep_position_on_release: bool = false # leave the knob where it was last used instead of snapping it back to the center
+@export var rest_opacity: float = 0.25 # knob alpha while it sits idle at the center
 
 var radiusJoyStick: float = 0.0
 var radiusJoyBase: float = 0.0
@@ -121,8 +122,6 @@ func _input(event):
 					last_drag_was_north = false
 				
 				emit_signal("joystick_released")
-				if not is_auto_locked and not hold_visual:
-					if touch_joystick_node: touch_joystick_node.visible = false
 				touchInsideJoystick = false
 				active_joystick_index = -1
 				_update_visuals()
@@ -185,7 +184,7 @@ func _process(delta):
 
 	if return_to_center and position == Vector2.ZERO and not is_auto_locked:
 		_release_all_keys()
-		modulate.a = lerp(modulate.a, min_opacity, delta * 10)
+		modulate.a = lerp(modulate.a, rest_opacity, delta * 10)
 	
 	_update_lock_indicator_visuals(delta)
 

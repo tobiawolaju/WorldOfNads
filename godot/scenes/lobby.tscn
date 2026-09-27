@@ -90,7 +90,7 @@ fov = 70.0
 far = 100.0
 
 [node name="spawnpoint" type="Node3D" parent="Player" unique_id=765824796]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.032, 10.215, -1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.210027, 0.8174293, -5.2890306)
 
 [node name="Timer" type="Timer" parent="Player" unique_id=1278349154]
 

@@ -375,7 +375,7 @@ text = "loading
 [node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]
 
 [node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=203270884]
-position = Vector2(-53, -74)
+position = Vector2(105, 386)
 
 [node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=121289564]
 anchors_preset = 8
@@ -683,10 +683,10 @@ anchor_right = 0.5
 offset_left = -143.0
 offset_top = 95.0
 offset_right = 143.0
-offset_bottom = 149.0
+offset_bottom = 166.0
 grow_horizontal = 2
-theme_override_colors/font_outline_color = Color(0.29411766, 0, 0.69411767, 1)
-theme_override_constants/outline_size = 4
+theme_override_colors/font_outline_color = Color(1, 1, 1, 0.16078432)
+theme_override_constants/outline_size = 10
 theme_override_fonts/font = ExtResource("3_apjy4")
 theme_override_font_sizes/font_size = 70
 text = "Rug Belly"
