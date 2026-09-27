@@ -91,11 +91,21 @@
       }
 
       .game-frame {
-        position: relative;
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
         border: 0;
         z-index: 10;
+        transform-origin: top left;
+      }
+
+      /* Low-power mode: the decorative layers sit behind an opaque game
+         canvas, so their blur/animation is pure compositing cost. */
+      .play-shell.perf-low .pattern-background,
+      .play-shell.perf-low .rainbow-beam-container {
+        display: none;
       }
 
       .fullscreen-btn {
@@ -212,10 +222,21 @@
         const username = params.get("username") || "";
         const skin = resolveGameSkinName(params.get("skin") || params.get("skinName") || "s-default");
         const match = params.get("match") || "";
+        const quality = ["low", "high"].includes(params.get("quality")) ? params.get("quality") : "auto";
+        // Mirrors src/lib/gameQuality.ts: the game canvas is rendered smaller
+        // and scaled back up, which also drops the engine's own pixel budget.
+        const isLowEndDevice = () => {
+          const cores = typeof navigator.hardwareConcurrency === "number" ? navigator.hardwareConcurrency : 8;
+          const memory = Number(navigator.deviceMemory) || 8;
+          return cores <= 4 || memory <= 4;
+        };
+        const renderScale =
+          quality === "high" ? 1 : quality === "low" ? 0.65 : isLowEndDevice() ? 0.7 : 1;
         const gameParams = new URLSearchParams();
         if (username) gameParams.set("username", username);
         if (skin) gameParams.set("skin", skin);
         if (match) gameParams.set("match", match);
+        gameParams.set("quality", quality);
         const resolveBaseUrl = () => {
           const queryBase = params.get("godotBaseUrl") || "";
           const globalBase = typeof window.GODOT_BASE_URL === "string" ? window.GODOT_BASE_URL : "";
@@ -234,10 +255,26 @@
           return;
         }
 
+        const applyRenderScale = (scale) => {
+          if (!Number.isFinite(scale) || scale >= 1) {
+            frame.style.width = "100%";
+            frame.style.height = "100%";
+            frame.style.transform = "";
+            return;
+          }
+          frame.style.width = `calc(100% * ${scale})`;
+          frame.style.height = `calc(100% * ${scale})`;
+          frame.style.transform = `scale(${1 / scale})`;
+        };
+
+        applyRenderScale(renderScale);
         frame.src = gameUrl;
 
         frame.addEventListener("load", () => {
           status.hidden = true;
+          if (renderScale < 1) {
+            shell.classList.add("perf-low");
+          }
           try {
             frame.contentWindow?.postMessage({ type: "set_username", value: username }, "*");
             frame.contentWindow?.postMessage({ type: "set_skin", value: skin }, "*");

@@ -3,6 +3,14 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { showSuccessToast } from './ui/custom-toast';
 import { getPrimaryWalletAddress, getProfilePictureFromPrivy, getUsernameFromPrivy, fetchUserRoles } from '../pages/firebaseClient';
+import {
+  QUALITY_LABELS,
+  QUALITY_OPTIONS,
+  readGameQuality,
+  resolveQuality,
+  writeGameQuality,
+  type GameQuality
+} from '../lib/gameQuality';
 import './topnav.css';
 
 type TopNavbarProps = {
@@ -23,6 +31,7 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [roles, setRoles] = useState<string[]>([]);
+  const [quality, setQuality] = useState<GameQuality>(() => readGameQuality());
   const location = useLocation();
   const navigate = useNavigate();
   const { ready, authenticated, user, logout } = usePrivy();
@@ -32,6 +41,14 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
   const currentText = useMemo(
     () => NAV_ITEMS.find(item => item.path === location.pathname)?.label || '',
     [location.pathname]
+  );
+
+  const qualityHint = useMemo(
+    () =>
+      resolveQuality('auto').renderScale < 1
+        ? 'Auto - reduced resolution on this device'
+        : 'Auto - full resolution on this device',
+    []
   );
 
   const walletAddress = useMemo(
@@ -83,6 +100,11 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
   const handleMenuAction = useCallback((action: () => void) => {
     setMenuOpen(false);
     action();
+  }, []);
+
+  const handleQualityChange = useCallback((next: GameQuality) => {
+    setQuality(next);
+    writeGameQuality(next);
   }, []);
 
   const renderNavLinks = useCallback((onClick?: () => void) =>
@@ -160,6 +182,24 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
                     Host Match
                   </button>
                 )}
+                <div className="user-menu__group">
+                  <span className="user-menu__label">Graphics</span>
+                  <div className="user-menu__options">
+                    {QUALITY_OPTIONS.map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={quality === option}
+                        title={option === 'auto' ? qualityHint : undefined}
+                        className={`user-menu__option ${quality === option ? 'is-active' : ''}`}
+                        onClick={() => handleQualityChange(option)}
+                      >
+                        {QUALITY_LABELS[option]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <button
                   type="button"
                   className="user-menu__item user-menu__item--logout"
