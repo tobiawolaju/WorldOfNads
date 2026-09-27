@@ -3,8 +3,8 @@ extends Node
 ## GameManager Autoload
 ## Provides global access to game-wide settings and controls.
 
-const PIXEL_BUDGET_DESKTOP := 200_000
-const PIXEL_BUDGET_MOBILE := 200_000
+const PIXEL_BUDGET_DESKTOP := 180_000
+const PIXEL_BUDGET_MOBILE := 180_000
 const SCALE_STEPS: Array[float] = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35]
 const RESIZE_DEBOUNCE_SEC := 0.3
 
@@ -21,7 +21,7 @@ func _ready() -> void:
 	# Force a responsive frame loop for the live 3D game (low_processor_mode is
 	# a battery-saver meant for static UI and throttles the frame rate hard).
 	#Engine.low_processor_mode = false
-	Engine.max_fps = 30
+	Engine.max_fps = 35
 
 	get_tree().root.size_changed.connect(_on_root_size_changed)
 	_apply_3d_scale(_compute_3d_scale())
