@@ -60,10 +60,6 @@ corner_radius_top_right = 70
 corner_radius_bottom_right = 70
 corner_radius_bottom_left = 70
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_white_circle1"]
-atlas = ExtResource("10_ui_atlas")
-region = Rect2(0, 83, 128, 128)
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lle6q"]
 bg_color = Color(1, 1, 1, 0.9098039)
 corner_radius_top_left = 50
@@ -278,7 +274,7 @@ alignment = 2
 
 [node name="username" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer2" unique_id=229289726]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.55955654, 0.9853055, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
 theme_override_constants/shadow_outline_size = 0
 theme_override_font_sizes/font_size = 12
@@ -299,7 +295,7 @@ alignment = 2
 
 [node name="status2" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=2089582472]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.28235295, 1, 0.13725491, 1)
+theme_override_colors/font_color = Color(0, 1, 0, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
 theme_override_font_sizes/font_size = 13
 text = "BeNad:"
@@ -402,11 +398,32 @@ color = Color(1, 1, 1, 0)
 metadata/_edit_use_anchors_ = true
 
 [node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=420255833]
-self_modulate = Color(18.892157, 18.892157, 18.892157, 0.47058824)
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("9_qkknv")
 
-[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyBase" unique_id=1934554239]
+[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyBase" unique_id=1853570535]
+modulate = Color(1, 1, 1, 0.6313726)
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(130, 130)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -104.0
+offset_top = -104.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
+
+[node name="Button2" type="Button" parent="Joystick/TouchJoyStick/JoyBase" unique_id=1458650178]
+modulate = Color(1, 1, 1, 0.6313726)
 material = SubResource("ShaderMaterial_q62xx")
 custom_minimum_size = Vector2(130, 130)
 anchors_preset = 8
@@ -431,16 +448,56 @@ position = Vector2(0, -90)
 
 [node name="JoyLock" type="Sprite2D" parent="Joystick/TouchJoyStick/JoyLock" unique_id=1518767299]
 scale = Vector2(0.4, 0.4)
-texture = SubResource("AtlasTexture_white_circle1")
+texture = ExtResource("9_qkknv")
+
+[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyLock/JoyLock" unique_id=379869769]
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(130, 130)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -104.0
+offset_top = -104.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
 
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=661345483 node_paths=PackedStringArray("joy_lock")]
 scale = Vector2(0.5, 0.5)
-texture = SubResource("AtlasTexture_white_circle1")
+texture = ExtResource("9_qkknv")
 script = ExtResource("9_mphia")
 auto_lock_hold_seconds = 0.0
 auto_lock_forward_min_strength = 0.1
 auto_lock_north_distance_multiplier = 5.0
 joy_lock = NodePath("../JoyLock")
+
+[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyKnob" unique_id=2054266225]
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(130, 130)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -104.0
+offset_top = -104.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
 
 [node name="Node3" type="Node" parent="." unique_id=1974703911]
 
