@@ -1701,7 +1701,6 @@ mesh = SubResource("ArrayMesh_1nemc")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Terrain" unique_id=1040045165]
 transform = Transform3D(4, 0, 0, 0, 1.6, 0, 0, 0, 4, 0, 0, 0)
-visible = false
 shape = SubResource("ConcavePolygonShape3D_7ct7q")
 
 [node name="Water" type="MeshInstance3D" parent="." unique_id=1393339484]
@@ -1855,6 +1854,7 @@ shape = SubResource("ConcavePolygonShape3D_df1qg")
 
 [node name="Node3D" type="Node3D" parent="." unique_id=801242096]
 transform = Transform3D(0.005, 0, 0, 0, 0.005, 0, 0, 0, 0.005, -11.648626, 1.9952412, 0)
+visible = false
 
 [node name="Wood_Long_2x2x1_Broken_Geo" type="Node3D" parent="Node3D" unique_id=792352845]
 transform = Transform3D(100, 0, 0, 0, 100, -1.6292068e-05, 0, 1.6292068e-05, 100, -1553.7805, 0, -628.17065)
