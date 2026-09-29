@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://u7ahffc1obf8" path="res://scripts/player.gd" id="1_nna72"]
 [ext_resource type="AnimationLibrary" uid="uid://cyoeh8u10140w" path="res://resources/PlayerAnimations.tres" id="2_wrixk"]
-[ext_resource type="Shader" uid="uid://dqg85vp5she" path="res://assets/shaders/outline.gdshader" id="3_wrixk"]
+[ext_resource type="Shader" uid="uid://d20hvemeie05j" path="res://scenes/cencored.gdshader" id="4_8qxwi"]
 [ext_resource type="Texture2D" uid="uid://dekbb3ewhm11g" path="res://assets/img/skins/mouth_test1.png" id="4_f0bnh"]
 [ext_resource type="Texture2D" uid="uid://q257yusec2d7" path="res://assets/wood_is_from_angry_birds_isle_of_pigs_0.png" id="5_8qxwi"]
 
@@ -507,18 +507,14 @@ bind/37/name = &"mixamorig_RightToe_End_end"
 bind/37/bone = -1
 bind/37/pose = Transform3D(-0.07750059, 9.909384, -1.340933, 8.824419, 0.69852716, 4.651964, 4.7034597, -1.1472449, -8.749923, -0.000365574, 0.22768839, 0.6193852)
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_fryti"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_q62xx"]
 render_priority = 0
-shader = ExtResource("3_wrixk")
-shader_parameter/color = Color(0, 0, 0, 1)
-shader_parameter/size = 1.05
+shader = ExtResource("4_8qxwi")
+shader_parameter/pixelation = 0.018000000855
+shader_parameter/opacity = 1.0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jrfn5"]
-next_pass = SubResource("ShaderMaterial_fryti")
-shading_mode = 0
-albedo_color = Color(1, 1, 0, 1)
-
-[sub_resource type="TorusMesh" id="TorusMesh_l0bqs"]
+[sub_resource type="BoxMesh" id="BoxMesh_l0bqs"]
+size = Vector3(1.2887695, 0.7199219, 1.8416992)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_480i3"]
 albedo_texture = ExtResource("5_8qxwi")
@@ -536,14 +532,8 @@ min_pitch = -0.3
 max_pitch = 1.0
 min_zoom = 1.6
 max_zoom = 3.2
-move_zoom_out = 0.5
-max_zoom_ceiling = 6.5
-follow_sharpness = 24.0
-follow_sharpness_retreat = 34.0
-auto_orbit_speed = 1.1
-auto_orbit_threshold_deg = 40.0
 bus_zoom = 6.5
-touch_orbit_sensitivity = 0.1
+joystick_orbit_sensitivity = 0.005
 swipe_up_threshold = 20.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=42515026]
@@ -906,16 +896,15 @@ skin = SubResource("Skin_dxk75")
 skeleton = NodePath("..")
 
 [node name="BoneAttachment3D2" type="BoneAttachment3D" parent="Skeleton3D" unique_id=734140173]
-transform = Transform3D(0.9979716, -0.06365922, -0.0005699098, 0.061656095, 0.96872073, -0.2403734, 0.015853733, 0.23985064, 0.9706806, -0.07449508, 1.1431386, 0.252087)
+transform = Transform3D(0.9979716, -0.06365921, -0.0005699098, 0.061656095, 0.9687207, -0.2403734, 0.015853733, 0.23985063, 0.9706806, -0.16227235, 2.4689183, 0.62151194)
 visible = false
-bone_name = "mixamorig_Head"
-bone_idx = 5
+bone_name = "mixamorig_HeadTop_End"
+bone_idx = 6
 
-[node name="crown" type="MeshInstance3D" parent="Skeleton3D/BoneAttachment3D2" unique_id=1209889466]
-transform = Transform3D(0.7999998, 1.3271347e-08, 3.7252903e-09, 1.071021e-08, 0.8, 1.0430813e-07, -6.519258e-09, -1.937151e-07, 0.7999998, -0.015522182, 1.0680386, -0.01038371)
-material_override = SubResource("StandardMaterial3D_jrfn5")
-cast_shadow = 0
-mesh = SubResource("TorusMesh_l0bqs")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Skeleton3D/BoneAttachment3D2" unique_id=89110959]
+transform = Transform3D(0.99999136, 2.789311e-07, -9.685755e-08, 6.8335794e-07, 0.9999966, 2.3841858e-07, -1.6763806e-07, -2.3841858e-06, 0.9999989, 0.18162142, -2.7292106, -0.3422382)
+material_override = SubResource("ShaderMaterial_q62xx")
+mesh = SubResource("BoxMesh_l0bqs")
 
 [node name="BoneAttachment3D" type="BoneAttachment3D" parent="Skeleton3D" unique_id=2019479601]
 transform = Transform3D(-0.3895733, -0.17230591, 0.90473384, 0.31660944, -0.9475298, -0.044125833, 0.86486506, 0.26925722, 0.42368543, -0.9029471, -0.11326427, -0.309046)

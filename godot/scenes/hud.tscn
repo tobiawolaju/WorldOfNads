@@ -393,7 +393,7 @@ color = Color(1, 1, 1, 0)
 metadata/_edit_use_anchors_ = true
 
 [node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=420255833]
-scale = Vector2(0.8, 0.8)
+scale = Vector2(1.1, 1.1)
 texture = ExtResource("9_qkknv")
 
 [node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyBase" unique_id=1853570535]
@@ -466,7 +466,7 @@ theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
 theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
 
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=661345483 node_paths=PackedStringArray("joy_lock")]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.6, 0.6)
 texture = ExtResource("9_qkknv")
 script = ExtResource("9_mphia")
 auto_lock_hold_seconds = 0.0
@@ -685,10 +685,11 @@ offset_top = 95.0
 offset_right = 143.0
 offset_bottom = 166.0
 grow_horizontal = 2
-theme_override_colors/font_outline_color = Color(1, 1, 1, 0.16078432)
-theme_override_constants/outline_size = 10
+theme_override_colors/font_color = Color(1, 1, 1, 0)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 5
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 70
+theme_override_font_sizes/font_size = 120
 text = "Rug Belly"
 horizontal_alignment = 1
 vertical_alignment = 1
