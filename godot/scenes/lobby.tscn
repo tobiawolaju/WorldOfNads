@@ -34,6 +34,104 @@ stencil_flags = 2
 stencil_color = Color(1, 1, 1, 1)
 stencil_outline_thickness = 0.034
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_07nfq"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oipnb"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yad6j"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m1sns"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dyhay"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q6qq2"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rgcd7"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lqo1b"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0gjkf"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o2i1r"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_iulku"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dfnwm"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0jb4q"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vwf6o"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
 [node name="Lobby" type="Node3D" unique_id=932350279 node_paths=PackedStringArray("spawn_point")]
 script = ExtResource("1_07nfq")
 local_player_scene = ExtResource("2_oipnb")
@@ -95,6 +193,26 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.210027, 0.8174293, -5.2890
 [node name="Timer" type="Timer" parent="Player" unique_id=1278349154]
 
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("1_o1atq")]
+
+[node name="Action" parent="Hud/Node3/CanvasLayer/buttons_holder/VBoxContainer" parent_id_path=PackedInt32Array(861416889, 1325327020) index="0" unique_id=572465082]
+theme_override_styles/normal = SubResource("StyleBoxFlat_07nfq")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_oipnb")
+theme_override_styles/hover = SubResource("StyleBoxFlat_yad6j")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_m1sns")
+theme_override_styles/focus = SubResource("StyleBoxFlat_dyhay")
+
+[node name="Jump" parent="Hud/Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" parent_id_path=PackedInt32Array(861416889, 1406219590) index="0" unique_id=258331812]
+theme_override_styles/normal = SubResource("StyleBoxFlat_q6qq2")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_rgcd7")
+theme_override_styles/hover = SubResource("StyleBoxFlat_lqo1b")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_0gjkf")
+theme_override_styles/focus = SubResource("StyleBoxFlat_o2i1r")
+
+[node name="Slide" parent="Hud/Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" parent_id_path=PackedInt32Array(861416889, 1406219590) index="1" unique_id=849126213]
+theme_override_styles/pressed = SubResource("StyleBoxFlat_iulku")
+theme_override_styles/hover = SubResource("StyleBoxFlat_dfnwm")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_0jb4q")
+theme_override_styles/focus = SubResource("StyleBoxFlat_vwf6o")
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("9_07nfq")]
 

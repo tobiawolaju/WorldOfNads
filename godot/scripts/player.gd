@@ -33,11 +33,9 @@ const RUN_BOUNCE_SPEED: float = 18.0
 const RUN_BOUNCE_SQUASH: float = 0.08
 const RUN_BOUNCE_WOBBLE: float = 0.06
 
-const AUTO_ORBIT_SPEED: float = 2.5
-
 const AUTO_ORBIT_DEADZONE: float = 0.25
-const AUTO_ORBIT_THRESHOLD_RAD: float = 0.43633  # deg_to_rad(25.0)
 const AUTO_ORBIT_SHARPNESS_RAD: float = 1.57080  # deg_to_rad(90.0)
+const RETREAT_ZOOM_SMOOTHNESS: float = 4.0
 
 const STAMINA_MAX: float = 100.0
 const STAMINA_DRAIN_RATE: float = STAMINA_MAX / 7.0
@@ -67,10 +65,16 @@ var last_pickup_request_ms: int = 0
 @export var camera_distance: float = 2.0
 @export var camera_screen_offset: Vector2 = Vector2(0.0,0.25) # x: -1 (left) to 1 (right), y: -1 (bottom) to 1 (top)
 @export var camera_smoothness: float = 18.0
+@export var follow_sharpness: float = 24.0 # how hard the camera locks on (steady-state lag = speed / value)
+@export var follow_sharpness_retreat: float = 34.0 # tighter lock while strafing/backpedaling
+@export var auto_orbit_speed: float = 1.1
+@export var auto_orbit_threshold_deg: float = 40.0 # deadzone before the camera chases the move direction
 @export var min_pitch: float = deg_to_rad(0.0)
 @export var max_pitch: float = deg_to_rad(60.0)
 @export var min_zoom: float = 1.8
 @export var max_zoom: float = 2.2
+@export var move_zoom_out: float = 0.5 # subtle pull-back while running left/right/back (costly: shows more geometry)
+@export var max_zoom_ceiling: float = 6.5 # absolute hard cap for the move_zoom_out boost
 @export var altitude_zoom_factor: float = 0.0
 @export var bus_zoom: float = 3.0
 @export var bus_camera_look_target: Vector2 = Vector2(0.0, 0.0) # xz point the camera self-adjusts toward while riding the bus
@@ -119,6 +123,11 @@ var camera_distance_current: float = 0.0
 var camera_distance_bias: float = 0.0
 var camera_is_airborne: bool = false
 var camera_is_moving: bool = false
+var camera_retreat_axis: float = 0.0 # 1.0 when running left/right/back, 0.0 when running forward
+var _camera_retreat_smooth: float = 0.0
+var _camera_retreat_velocity: float = 0.0
+var _zoom_cap_override: float = -1.0 # < 0 means "use the authored max_zoom"
+var _effective_camera_distance: float = 0.0
 @export var max_jump_height: float = DEFAULT_MAX_JUMP_HEIGHT
 var _last_world_y: float = 0.0
 var _airborne_start_y: float = 0.0
@@ -246,7 +255,7 @@ func _resolve_camera_node() -> Camera3D:
 	return null
 
 func _ready() -> void:
-	camera_distance = clamp(camera_distance, min_zoom, max_zoom)
+	camera_distance = clamp(camera_distance, min_zoom, _zoom_cap_base())
 	camera_distance_current = camera_distance
 	cam_rot_x = min_pitch
 	cam_rot_y = deg_to_rad(90.0)
@@ -389,10 +398,11 @@ func _input(event: InputEvent) -> void:
 
 	# Mouse Wheel Zoom
 	if event is InputEventMouseButton:
+		var zoom_range: float = _zoom_cap_base() - min_zoom
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
-			camera_distance_bias = clamp(camera_distance_bias - 0.5, -(max_zoom - min_zoom), (max_zoom - min_zoom))
+			camera_distance_bias = clamp(camera_distance_bias - 0.5, -zoom_range, zoom_range)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
-			camera_distance_bias = clamp(camera_distance_bias + 0.5, -(max_zoom - min_zoom), (max_zoom - min_zoom))
+			camera_distance_bias = clamp(camera_distance_bias + 0.5, -zoom_range, zoom_range)
 
 	# --- 2. PICKUP CONTROLS ---
 	if _is_movement_allowed() and event.is_action_pressed("pickup"):
@@ -406,6 +416,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_check_map_recovery()
+	_update_camera_zoom(delta)
 	_update_camera_collision_logic(delta)
 	_landing_bob_timer = maxf(0.0, _landing_bob_timer - delta)
 
@@ -432,10 +443,16 @@ func _physics_process(delta: float) -> void:
 		input_dir = input_dir.normalized() * input_strength
 	
 	if movement_allowed and not _is_riding_bus and input_dir.length_squared() > 0.05 and touch_orbit_pending == Vector2.ZERO and joystick_orbit_pending == Vector2.ZERO:
-		var move_angle := atan2(input_dir.x, input_dir.y)
-		if abs(move_angle) > AUTO_ORBIT_THRESHOLD_RAD:
-			var turn_sharpness := clampf(abs(move_angle) / AUTO_ORBIT_SHARPNESS_RAD, 0.0, 1.0)
-			cam_rot_y += -sign(move_angle) * turn_sharpness * AUTO_ORBIT_SPEED * delta
+		# Clamp the orbit demand to the forward hemisphere. A full backward input puts the
+		# target yaw on the atan2 wrap, where sign() flips every frame and the camera
+		# vibrates, so backpedaling deliberately leaves the camera where it is.
+		var orbit_dir := Vector2(input_dir.x, maxf(input_dir.y, 0.0))
+		if orbit_dir.length_squared() > 0.0001:
+			var target_yaw := atan2(-orbit_dir.x, -orbit_dir.y)
+			var yaw_error := angle_difference(cam_rot_y, target_yaw)
+			if absf(yaw_error) > deg_to_rad(auto_orbit_threshold_deg):
+				var turn_sharpness := clampf(absf(yaw_error) / AUTO_ORBIT_SHARPNESS_RAD, 0.0, 1.0)
+				cam_rot_y += signf(yaw_error) * turn_sharpness * auto_orbit_speed * delta
 
 	_apply_touch_orbit()
 
@@ -587,7 +604,7 @@ func _physics_process(delta: float) -> void:
 		_double_jump_available = false
 		_double_jump_used = false
 		_double_jump_air_time = 0.0
-		max_zoom = min_zoom
+		_zoom_cap_override = -1.0
 	_apply_bus_riding()
 
 	# Squash & stretch on jump/land
@@ -636,6 +653,7 @@ func _physics_process(delta: float) -> void:
 
 	camera_is_airborne = not is_on_floor()
 	camera_is_moving = velocity.x * velocity.x + velocity.z * velocity.z > 0.01
+	camera_retreat_axis = maxf(-input_dir.y, absf(input_dir.x)) if movement_allowed else 0.0
 	_camera_base_target_prev = _camera_base_target_curr
 	_camera_base_target_curr = _camera_base_target()
 
@@ -1005,10 +1023,14 @@ func _apply_bus_riding() -> void:
 		global_position += bus_delta
 		if not on_bus: 
 			_is_riding_bus = false
+			_zoom_cap_override = -1.0
 	elif on_bus:
 		_is_riding_bus = true
-		max_zoom = bus_zoom
+		_zoom_cap_override = bus_zoom
 		global_position += bus_delta
+
+func _zoom_cap_base() -> float:
+	return bus_zoom if _zoom_cap_override >= 0.0 else max_zoom
 
 func _camera_base_target() -> Vector3:
 	var height: float = 1.5 + (bus_camera_height_offset if _is_riding_bus else 0.0)
@@ -1035,18 +1057,24 @@ func _handle_camera_gamepad(delta: float) -> void:
 	if abs(ry) > DEADZONE:
 		cam_rot_x = clamp(cam_rot_x + ry * 0.05 * delta * 60, min_pitch, max_pitch)
 
-func _update_camera_collision_logic(delta: float) -> void:
+func _update_camera_zoom(delta: float) -> void:
 	_apply_bus_camera_recenter(delta)
-	_camera_update_skip_frames += 1
-	if _camera_update_skip_frames < 3:
-		return
-	_camera_update_skip_frames = 0
-	var holding_chicken := _is_local_holding_chicken()
 	var above_12 := global_position.y > 12.0
 	var movement_allowed := _is_movement_allowed()
-	var vehicle_zoom_cap: float = max_zoom
+	var base_zoom_cap: float = _zoom_cap_base()
+	var vehicle_zoom_cap: float = base_zoom_cap
 	if above_12:
-		vehicle_zoom_cap = max_zoom * 2.0
+		vehicle_zoom_cap = base_zoom_cap * 2.0
+	# Running left/right/back drifts the player toward the near edge of the frame. A short spring
+	# on the axis keeps the pull-back from stepping, which is what read as screen shake.
+	var raw_retreat: float = 0.0
+	if not above_12 and not _is_riding_bus and current_animation != "falling":
+		raw_retreat = camera_retreat_axis
+	var retreat_result := _spring_float(_camera_retreat_smooth, _camera_retreat_velocity, raw_retreat, RETREAT_ZOOM_SMOOTHNESS, delta)
+	_camera_retreat_smooth = retreat_result[0]
+	_camera_retreat_velocity = retreat_result[1]
+	var retreat_boost: float = _camera_retreat_smooth * move_zoom_out
+	var zoom_ceiling: float = maxf(max_zoom_ceiling, vehicle_zoom_cap + retreat_boost)
 	var ground_zoom: float = lerp(min_zoom, vehicle_zoom_cap, 0.5)
 	var state_zoom: float = min_zoom
 	if above_12:
@@ -1054,29 +1082,37 @@ func _update_camera_collision_logic(delta: float) -> void:
 	elif current_animation == "falling":
 		state_zoom = min_zoom
 	elif camera_is_airborne:
-		state_zoom = max_zoom
+		state_zoom = base_zoom_cap
 	elif camera_is_moving:
-		state_zoom = ground_zoom
+		state_zoom = ground_zoom + retreat_boost
 	elif not movement_allowed and root and root.has_method("is_waiting_for_players") and root.is_waiting_for_players():
-		state_zoom = max_zoom
-	var target_distance: float = min_zoom if current_animation == "falling" else clamp(state_zoom + camera_distance_bias, min_zoom, vehicle_zoom_cap)
+		state_zoom = base_zoom_cap
+	var target_distance: float = min_zoom if current_animation == "falling" else clamp(state_zoom + camera_distance_bias, min_zoom, zoom_ceiling)
 	if _is_riding_bus:
 		target_distance = bus_zoom
-	var distance_result := _spring_float(camera_distance_current, _camera_distance_velocity, target_distance, camera_smoothness, delta * 2.0)
+	var distance_result := _spring_float(camera_distance_current, _camera_distance_velocity, target_distance, camera_smoothness, delta)
 	camera_distance_current = distance_result[0]
 	_camera_distance_velocity = distance_result[1]
-	var altitude_zoom: float = clamp(global_transform.origin.y * altitude_zoom_factor, 0.0, vehicle_zoom_cap - min_zoom)
-	var effective_camera_distance: float = clamp(camera_distance_current + altitude_zoom, min_zoom, vehicle_zoom_cap)
+	var altitude_zoom: float = clamp(global_transform.origin.y * altitude_zoom_factor, 0.0, zoom_ceiling - min_zoom)
+	_effective_camera_distance = clamp(camera_distance_current + altitude_zoom, min_zoom, zoom_ceiling)
 	_sin_cam_y = sin(cam_rot_y)
 	_cos_cam_y = cos(cam_rot_y)
 	_sin_cam_x = sin(cam_rot_x)
 	_cos_cam_x = cos(cam_rot_x)
+
+func _update_camera_collision_logic(delta: float) -> void:
+	_camera_update_skip_frames += 1
+	if _camera_update_skip_frames < 3:
+		return
+	_camera_update_skip_frames = 0
+	var holding_chicken := _is_local_holding_chicken()
+	var above_12 := global_position.y > 12.0
 	var target_pos: Vector3 = _camera_follow_target
-	var cam_offset: Vector3 = Vector3(_sin_cam_y * _cos_cam_x, _sin_cam_x, _cos_cam_y * _cos_cam_x) * effective_camera_distance
+	var cam_offset: Vector3 = Vector3(_sin_cam_y * _cos_cam_x, _sin_cam_x, _cos_cam_y * _cos_cam_x) * _effective_camera_distance
 	var desired_pos: Vector3 = target_pos + cam_offset
 	if above_12:
 		_camera_collision_hold_timer = 0.0
-		_camera_collision_distance = move_toward(_camera_collision_distance, effective_camera_distance, delta * CAMERA_COLLISION_RECOVERY_SPEED * 8.0)
+		_camera_collision_distance = move_toward(_camera_collision_distance, _effective_camera_distance, delta * CAMERA_COLLISION_RECOVERY_SPEED * 8.0)
 	else:
 		var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
 		_camera_ray_query.from = target_pos
@@ -1094,7 +1130,7 @@ func _update_camera_collision_logic(delta: float) -> void:
 			_camera_ray_exclude.resize(1)
 		_camera_ray_query.exclude = _camera_ray_exclude
 		var hit: Dictionary = space_state.intersect_ray(_camera_ray_query)
-		var target_collision_distance := effective_camera_distance
+		var target_collision_distance := _effective_camera_distance
 		if hit and hit.has("position"):
 			var hit_distance := target_pos.distance_to(hit.position)
 			target_collision_distance = maxf(0.05, hit_distance - CAMERA_COLLISION_MARGIN)
@@ -1112,10 +1148,10 @@ func _update_camera_visual(delta: float) -> void:
 	var interp := Engine.get_physics_interpolation_fraction()
 	var raw_target_pos: Vector3 = _camera_base_target_prev.lerp(_camera_base_target_curr, interp)
 	var above_12 := global_position.y > 12.0
-	var follow_sharpness := 80.0 if above_12 else 9.0
+	var follow_omega := 80.0 if above_12 else lerpf(follow_sharpness, follow_sharpness_retreat, _camera_retreat_smooth)
 	var pos_smoothness := camera_smoothness * 5.0 if above_12 else camera_smoothness
 	var look_smoothness := camera_smoothness * 0.85 * 5.0 if above_12 else camera_smoothness * 0.85
-	var follow_result := _spring_vec3(_camera_follow_target, _camera_follow_velocity, raw_target_pos, follow_sharpness, delta)
+	var follow_result := _spring_vec3(_camera_follow_target, _camera_follow_velocity, raw_target_pos, follow_omega, delta)
 	_camera_follow_target = follow_result[0]
 	_camera_follow_velocity = follow_result[1]
 	var target_pos: Vector3 = _camera_follow_target

@@ -530,12 +530,18 @@ height = 0.1
 
 [node name="CharacterBody3D" type="CharacterBody3D" unique_id=1520854348]
 script = ExtResource("1_nna72")
-camera_distance = 1.5
+camera_distance = 1.9
 camera_screen_offset = Vector2(0, 0.7)
 min_pitch = -0.3
 max_pitch = 1.0
-min_zoom = 2.0
-max_zoom = 2.0
+min_zoom = 1.6
+max_zoom = 3.2
+move_zoom_out = 0.5
+max_zoom_ceiling = 6.5
+follow_sharpness = 24.0
+follow_sharpness_retreat = 34.0
+auto_orbit_speed = 1.1
+auto_orbit_threshold_deg = 40.0
 bus_zoom = 6.5
 touch_orbit_sensitivity = 0.1
 swipe_up_threshold = 20.0
