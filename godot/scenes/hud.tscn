@@ -675,21 +675,27 @@ value = 100.0
 show_percentage = false
 script = ExtResource("6_jump_bar")
 
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1541956272]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 1, 0.5372549)
+
 [node name="TextFX" type="Label" parent="." unique_id=221857681]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -143.0
-offset_top = 95.0
-offset_right = 143.0
-offset_bottom = 166.0
-grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0)
+offset_left = 32.0
+offset_top = 33.0
+offset_right = 163.0
+offset_bottom = 73.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
-theme_override_constants/outline_size = 5
+theme_override_constants/outline_size = 2
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 120
+theme_override_font_sizes/font_size = 40
 text = "Rug Belly"
 horizontal_alignment = 1
 vertical_alignment = 1
