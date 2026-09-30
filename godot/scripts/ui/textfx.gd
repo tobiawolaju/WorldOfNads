@@ -1,4 +1,7 @@
-extends Label
+# Extends CanvasItem rather than Label so the effect can be attached to any node that
+# draws, not just text. It only touches visible and modulate.a, which every CanvasItem
+# has. Attach it to a Label for the text case, or to a ColorRect to fade a panel.
+extends CanvasItem
 
 signal text_finished
 
