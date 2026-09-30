@@ -687,6 +687,8 @@ grow_vertical = 2
 color = Color(0.43137255, 0.32941177, 1, 0.5)
 script = ExtResource("13_textfx")
 fade_out_delay = 5.5
+slide_offset = Vector2(0, 0)
+slide_offset_is_screen_fraction = true
 
 [node name="TextFX" type="Label" parent="." unique_id=221857681]
 layout_mode = 1
@@ -710,3 +712,6 @@ text = "Rug Belly"
 horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("13_textfx")
+slide_duration = 1.1
+slide_offset = Vector2(-1, 0)
+slide_offset_is_screen_fraction = true
