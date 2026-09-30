@@ -4,7 +4,7 @@ extends CharacterBody3D
 # -- CONSTANTS ---
 const GRAVITY: float = 18
 const JUMP_VELOCITY: float = 6
-const SPEED: float = 6.00
+const SPEED: float = 4.00
 const DEADZONE: float = 0.12
 const PICKUP_REQUEST_COOLDOWN_MS: int = 150
 const STEAL_RADIUS: float = 2.5
@@ -40,7 +40,12 @@ const AUTO_ORBIT_SHARPNESS_RAD: float = 1.57080  # deg_to_rad(90.0)
 const RETREAT_ZOOM_SMOOTHNESS: float = 4.0
 
 const STAMINA_MAX: float = 100.0
+## Drain per second at full analog input. Actual drain is this scaled by how far the
+## stick or key is pushed, so a light joystick touch costs far less than a full sprint.
 const STAMINA_DRAIN_RATE: float = STAMINA_MAX / 7.0
+## Drain multiplier applied at the very lightest movement. Without a floor, barely
+## nudging the stick would cost almost nothing and let a player creep forever.
+const STAMINA_DRAIN_MIN_MULT: float = 0.25
 const STAMINA_REGEN_DELAY: float = 1.0
 const STAMINA_REGEN_RATE: float = STAMINA_MAX / 8.0
 ## Standing still regenerates at this multiple of the rate you get while still
@@ -49,7 +54,7 @@ const STAMINA_REGEN_IDLE_MULT: float = 2.0
 const STAMINA_HELD_PENALTY: float = 5.0
 ## Running out of stamina throttles movement instead of stopping it, so the player
 ## keeps moving under their own input, just very slowly.
-const STAMINA_EMPTY_SPEED_MULT: float = 0.1
+const STAMINA_EMPTY_SPEED_MULT: float = 0.4
 ## The throttle stays on while the player keeps running, and only lifts once they
 ## stop or refill past this fraction of the bar.
 const STAMINA_RECOVERY_FRACTION: float = 0.25
@@ -585,7 +590,11 @@ func _physics_process(delta: float) -> void:
 	var is_holding := _is_local_holding_chicken() or _is_local_holding_lootbox() or _is_local_holding_pickup()
 	var is_draining := is_moving_input and is_holding and stamina > 0.0 and not _stamina_held_empty and not _stamina_throttled
 	if is_draining:
-		stamina = maxf(0.0, stamina - STAMINA_DRAIN_RATE * delta)
+		# Scale drain by how hard the player is actually pushing, so analog input has a
+		# cost gradient: full tilt drains fastest, a light touch drains at the floor rate.
+		# Keyboard and gamepad digital input reports strength 1.0 and are unaffected.
+		var effort := clampf(input_strength, STAMINA_DRAIN_MIN_MULT, 1.0)
+		stamina = maxf(0.0, stamina - STAMINA_DRAIN_RATE * effort * delta)
 		_stamina_regen_timer = STAMINA_REGEN_DELAY
 
 	# Just hit zero — check if input still held
@@ -1343,7 +1352,7 @@ func set_animation_state(new_state: String):
 	current_animation = new_state
 	_play_anim(new_state)
 
-func _handle_animations(_move_dir: Vector3) -> void:
+func _handle_animations(move_dir: Vector3) -> void:
 	if not is_local: return
 	if not _is_movement_allowed():
 		current_animation = "idle"
@@ -1363,7 +1372,12 @@ func _handle_animations(_move_dir: Vector3) -> void:
 		_airborne_start_y = current_y
 		_last_world_y = current_y
 		var horizontal_speed_sq = velocity.x * velocity.x + velocity.z * velocity.z
-		if horizontal_speed_sq > 0.25:
+		# Test movement intent, not just raw speed. A throttled player moves at a fraction
+		# of SPEED and can fall under the 0.5 m/s this speed test requires, which would drop
+		# them to idle mid-stride while they are clearly driving the character. Input keeps
+		# the run loop alive at any throttle strength; the speed test is kept so residual
+		# momentum still animates after input is released.
+		if move_dir.length_squared() > 0.05 or horizontal_speed_sq > 0.25:
 			current_animation = "running"
 			_play_anim("running")
 		else:

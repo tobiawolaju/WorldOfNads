@@ -16,7 +16,7 @@ const FALLBACK_SHADED: Dictionary = {
 	"outline_color": [0.988, 0.176, 0.532, 1],
 	"crown_color": [1.0, 1.0, 0.0, 1],
 	"shader": "default",
-	"shader_targets": ["body", "cheek", "eye"],
+	"shader_targets": ["body", "cheek"],
 	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] }
 }
 
@@ -31,7 +31,7 @@ const FALLBACK_UNSHADED: Dictionary = {
 	"outline_color": [0.988, 0.0, 0.851, 1],
 	"crown_color": [1.0, 1.0, 0.0, 1],
 	"shader": "unshaded",
-	"shader_targets": ["body", "cheek", "eye"],
+	"shader_targets": ["body", "cheek"],
 	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] }
 }
 
@@ -70,6 +70,13 @@ static func _convert_api_entry(skin_config: Dictionary) -> Dictionary:
 		if result.has(key):
 			var raw = result[key]
 			result[key] = _hex2rgba(raw) if typeof(raw) == TYPE_STRING else raw
+	# Drop "eye" from a server-supplied shader_targets list. The eye meshes own their own
+	# material and must not be recoloured by a skin config, or the dot shader is replaced
+	# by a flat colour and the pupil disappears.
+	if result.has("shader_targets") and result["shader_targets"] is Array:
+		var targets: Array = result["shader_targets"]
+		targets.erase("eye")
+		result["shader_targets"] = targets
 	if result.has("attachment") and result["attachment"] is Dictionary:
 		var att = result["attachment"]
 		if att.has("color") and typeof(att["color"]) == TYPE_STRING:
@@ -137,9 +144,29 @@ func apply_skin(player: Node3D, skin_name: String) -> void:
 			meshes.append(c as MeshInstance3D)
 
 	for mi in meshes:
+		if String(mi.name).begins_with("eye"):
+			_tint_eye(mi, data)
+			continue
 		var mat: Material = _material_for_name(material_set, mi.name)
 		if mat != null:
 			mi.material_override = mat
+
+# Recolours the eyes without replacing their material. The eye shader draws the
+# camera-facing dot, so overwriting material_override here would discard it and leave a
+# flat sphere. Instead the skin's eye colour is pushed into the existing ShaderMaterial as
+# a uniform, which keeps the dot intact.
+static func _tint_eye(mesh: MeshInstance3D, data: Dictionary) -> void:
+	var palette: Dictionary = data.get("palette", {})
+	if palette.is_empty() or not palette.has("eye"):
+		return
+	var color := _c(palette["eye"])
+
+	var shader_mat := mesh.material_override as ShaderMaterial
+	if shader_mat == null and mesh.get_surface_override_material_count() > 0:
+		shader_mat = mesh.get_surface_override_material(0) as ShaderMaterial
+	if shader_mat == null:
+		return
+	shader_mat.set_shader_parameter("eye_color", color)
 
 static func _get_material_set(skin_name: String, data: Dictionary) -> Dictionary:
 	if _skin_material_sets.has(skin_name):
@@ -155,14 +182,15 @@ static func _build_material_set(data: Dictionary) -> Dictionary:
 	var outline_color := _c(data.get("outline_color", [1, 0, 1, 1]))
 	var crown_color := _c(data.get("crown_color", [1, 0, 1, 1]))
 	var shader_type := str(data.get("shader", "default"))
-	var shader_targets: Array = data.get("shader_targets", ["body", "cheek", "eye"])
+	# "eye" is deliberately absent. The eyes keep the material authored on the mesh in
+	# skin.tscn, which is the camera-facing dot shader, so nothing here should claim them.
+	var shader_targets: Array = data.get("shader_targets", ["body", "cheek"])
 	var attachment_data: Dictionary = data.get("attachment", {})
 
 	return {
 		"body": _body_material(_c(palette.get("body", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "body"),
 		"body_01": _body_material(_c(palette.get("body_alt", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "body"),
 		"cheek": _body_material(_c(palette.get("cheek", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "cheek"),
-		"eye": _body_material(_c(palette.get("eye", [1, 1, 1, 1])), outline_color, shader_type, shader_targets, "eye"),
 		"crown": _crown_material(crown_color),
 		"attachment": _attachment_material(_c(attachment_data.get("color", [1, 1, 1, 1]))),
 	}
@@ -172,8 +200,9 @@ static func _material_for_name(material_set: Dictionary, name: String) -> Materi
 		return material_set.get("body_01" if name == "body_01" else "body")
 	if name.begins_with("cheek"):
 		return material_set.get("cheek")
-	if name.begins_with("eye"):
-		return material_set.get("eye")
+	# No eye branch on purpose. Returning null makes apply_skin skip the node, so the eye
+	# meshes keep the material authored on them in skin.tscn, which is the camera-facing
+	# dot shader. Any material returned here would overwrite it with a flat colour.
 	if name == "crown_L" or name == "crown_R":
 		return material_set.get("cheek")
 	if name.begins_with("crown"):
@@ -241,10 +270,6 @@ static func _body_material(color: Color, outline_color: Color, shader_type: Stri
 				angel_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 				angel_mat.albedo_color = color
 				angel_mat.roughness = 0.3
-				if target == "eye":
-					angel_mat.emission_enabled = true
-					angel_mat.emission = color
-					angel_mat.emission_energy_multiplier = 2.0
 				var angel_outline := ShaderMaterial.new()
 				angel_outline.shader = OUTLINE_SHADER
 				angel_outline.set_shader_parameter("color", outline_color)
