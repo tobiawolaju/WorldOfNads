@@ -1,3 +1,50 @@
 [gd_scene format=3 uid="uid://jqrvlq8oxe4l"]
 
-[node name="Pickup" type="Node3D" unique_id=408056980]
+[ext_resource type="Script" uid="uid://cyrydhs5bxppv" path="res://scripts/pickups/LocalPickup.gd" id="1_local"]
+[ext_resource type="FontFile" uid="uid://bqvrqx4a4joiu" path="res://assets/fonts/fortnite.otf" id="2_7cqbe"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_oipnb"]
+size = Vector3(0.2, 0.2, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_local"]
+shading_mode = 0
+albedo_color = Color(1, 1, 0, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pg2rt"]
+size = Vector3(0.1, 0.1, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q62xx"]
+shading_mode = 0
+albedo_color = Color(1, 1, 0, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_l0bqs"]
+top_radius = 0.002
+bottom_radius = 0.008
+height = 1.1095154
+
+[node name="Pickup" type="RigidBody3D" unique_id=408056980]
+collision_layer = 8
+continuous_cd = true
+script = ExtResource("1_local")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=408056981]
+shape = SubResource("BoxShape3D_oipnb")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=408056982]
+material_override = SubResource("StandardMaterial3D_local")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_pg2rt")
+
+[node name="Label3D" type="Label3D" parent="." unique_id=231793509]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 1.2912738, 0)
+billboard = 1
+modulate = Color(1, 1, 0, 1)
+outline_modulate = Color(0, 0, 0, 0)
+text = "pick up"
+font = ExtResource("2_7cqbe")
+font_size = 90
+
+[node name="line" type="MeshInstance3D" parent="." unique_id=291533340]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6639722, 0)
+material_override = SubResource("StandardMaterial3D_q62xx")
+mesh = SubResource("CylinderMesh_l0bqs")

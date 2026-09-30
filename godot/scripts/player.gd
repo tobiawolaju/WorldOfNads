@@ -8,6 +8,8 @@ const SPEED: float = 6.00
 const DEADZONE: float = 0.12
 const PICKUP_REQUEST_COOLDOWN_MS: int = 150
 const STEAL_RADIUS: float = 2.5
+const LOCAL_PICKUP_RADIUS: float = 2.5
+const LOCAL_PICKUP_THROW_STRENGTH: float = 4.0
 const POS_SCALE: float = 100.0
 const ROT_SCALE: float = 1000.0
 const DEFAULT_MAX_JUMP_HEIGHT: float = (JUMP_VELOCITY * JUMP_VELOCITY) / (2.0 * GRAVITY)
@@ -41,7 +43,18 @@ const STAMINA_MAX: float = 100.0
 const STAMINA_DRAIN_RATE: float = STAMINA_MAX / 7.0
 const STAMINA_REGEN_DELAY: float = 1.0
 const STAMINA_REGEN_RATE: float = STAMINA_MAX / 8.0
+## Standing still regenerates at this multiple of the rate you get while still
+## moving, so stopping is always the faster way back to full stamina.
+const STAMINA_REGEN_IDLE_MULT: float = 2.0
 const STAMINA_HELD_PENALTY: float = 5.0
+## Running out of stamina throttles movement instead of stopping it, so the player
+## keeps moving under their own input, just very slowly.
+const STAMINA_EMPTY_SPEED_MULT: float = 0.1
+## The throttle stays on while the player keeps running, and only lifts once they
+## stop or refill past this fraction of the bar.
+const STAMINA_RECOVERY_FRACTION: float = 0.25
+## Jump strength while throttled, as a fraction of the normal jump velocity.
+const STAMINA_EMPTY_JUMP_MULT: float = 0.6
 
 const LANDING_BOB_DURATION: float = 0.14
 const ANIM_NAME_TO_ID: Dictionary = {
@@ -60,6 +73,7 @@ var held_object: RigidBody3D = null
 @export var hold_distance: float = 0.25
 @export var hold_height: float = 1.5
 var last_pickup_request_ms: int = 0
+var held_local_pickup: RigidBody3D = null
 
 # --- CAMERA & ZOOM SETTINGS ---
 @export var camera_distance: float = 2.0
@@ -147,6 +161,9 @@ var stamina: float = STAMINA_MAX
 var _stamina_regen_timer: float = 0.0
 var _stamina_held_empty: bool = false
 var _stamina_empty_timer: float = 0.0
+## Latched once stamina bottoms out. Keeps the throttle on while the player keeps
+## running, so creeping does not silently restore full speed.
+var _stamina_throttled: bool = false
 var _prev_joy_a_pressed: bool = false
 var _ground_jump_count: int = 0
 
@@ -345,7 +362,7 @@ func request_jump() -> void:
 		return
 	_jump_buffer_timer = JUMP_BUFFER_TIME
 	if is_on_floor():
-		velocity_y = JUMP_VELOCITY
+		velocity_y = _current_jump_velocity()
 		_jump_requested = false
 		if not _double_jump_available:
 			_ground_jump_count += 1
@@ -366,10 +383,15 @@ func request_pickup() -> void:
 func _perform_pickup_request() -> void:
 	if not _is_movement_allowed():
 		return
+	if _is_local_holding_pickup():
+		_drop_local_pickup()
+		return
 	if _is_local_holding_chicken() or _is_local_holding_lootbox():
 		_drop_object()
-	else:
-		_try_pickup()
+		return
+	if _try_pickup_local():
+		return
+	_try_pickup()
 
 func _input(event: InputEvent) -> void:
 	if not is_local:
@@ -443,16 +465,18 @@ func _physics_process(delta: float) -> void:
 		input_dir = input_dir.normalized() * input_strength
 	
 	if movement_allowed and not _is_riding_bus and input_dir.length_squared() > 0.05 and touch_orbit_pending == Vector2.ZERO and joystick_orbit_pending == Vector2.ZERO:
-		# Clamp the orbit demand to the forward hemisphere. A full backward input puts the
-		# target yaw on the atan2 wrap, where sign() flips every frame and the camera
-		# vibrates, so backpedaling deliberately leaves the camera where it is.
-		var orbit_dir := Vector2(input_dir.x, maxf(input_dir.y, 0.0))
-		if orbit_dir.length_squared() > 0.0001:
-			var target_yaw := atan2(-orbit_dir.x, -orbit_dir.y)
-			var yaw_error := angle_difference(cam_rot_y, target_yaw)
-			if absf(yaw_error) > deg_to_rad(auto_orbit_threshold_deg):
-				var turn_sharpness := clampf(absf(yaw_error) / AUTO_ORBIT_SHARPNESS_RAD, 0.0, 1.0)
-				cam_rot_y += signf(yaw_error) * turn_sharpness * auto_orbit_speed * delta
+		# The orbit demand is a *relative* turn away from the current camera heading, not an
+		# absolute world yaw. Using an absolute target made the camera chase a heading that
+		# ignored where it already was, so holding forward from any starting angle swung the
+		# camera to a fixed world direction instead of leaving it alone.
+		# Backward input is clamped away: it would flip the sign of the turn every frame and
+		# vibrate the camera, so backpedaling deliberately leaves the view where it is.
+		var orbit_turn := atan2(input_dir.x, maxf(input_dir.y, 0.0))
+		if absf(orbit_turn) > deg_to_rad(auto_orbit_threshold_deg):
+			var turn_sharpness := clampf(absf(orbit_turn) / AUTO_ORBIT_SHARPNESS_RAD, 0.0, 1.0)
+			# Positive input_dir.x means "strafe right", which should rotate the view to the
+			# right, so the turn is negated to match the other cam_rot_y writers above.
+			cam_rot_y -= signf(orbit_turn) * turn_sharpness * auto_orbit_speed * delta
 
 	_apply_touch_orbit()
 
@@ -467,7 +491,7 @@ func _physics_process(delta: float) -> void:
 		jump_requested_now = _jump_requested or Input.is_action_just_pressed("jump") or Input.is_joy_button_pressed(gamepad_index, JOY_BUTTON_A)
 		_jump_requested = false
 		if movement_allowed and jump_requested_now:
-			velocity_y = JUMP_VELOCITY
+			velocity_y = _current_jump_velocity()
 			if not _double_jump_available:
 				_ground_jump_count += 1
 				if _ground_jump_count >= 2:
@@ -510,10 +534,13 @@ func _physics_process(delta: float) -> void:
 	if jump_any_held_or_pressed:
 		_jump_buffer_timer = JUMP_BUFFER_TIME
 		if not is_on_floor() and _double_jump_available and not _double_jump_used and (jump_just_pressed or jump_joy_just_pressed):
-			var apex_time := JUMP_VELOCITY / GRAVITY
+			var jump_velocity := _current_jump_velocity()
+			# Apex time scales with the jump, otherwise the falloff curve runs off the
+			# end of a shorter jump and the double jump never reaches full strength.
+			var apex_time := jump_velocity / GRAVITY
 			var progress := clampf(_double_jump_air_time / apex_time, 0.0, 1.0)
 			var smooth := progress * progress * (3.0 - 2.0 * progress)
-			velocity_y = JUMP_VELOCITY * lerpf(DOUBLE_JUMP_MIN_MULTIPLIER, 1.0, smooth)
+			velocity_y = jump_velocity * lerpf(DOUBLE_JUMP_MIN_MULTIPLIER, 1.0, smooth)
 			_double_jump_used = true
 			_double_jump_available = false
 			_jump_buffer_timer = 0.0
@@ -523,7 +550,7 @@ func _physics_process(delta: float) -> void:
 	if is_on_floor():
 		var buffered_jump := movement_allowed and (_jump_buffer_timer > 0.0) and (jump_requested_now or _coyote_timer > 0.0)
 		if buffered_jump:
-			velocity_y = JUMP_VELOCITY
+			velocity_y = _current_jump_velocity()
 			_jump_buffer_timer = 0.0
 			if not _double_jump_available and not jump_requested_now:
 				_ground_jump_count += 1
@@ -538,9 +565,26 @@ func _physics_process(delta: float) -> void:
 	if _stamina_held_empty and not is_moving_input:
 		_stamina_held_empty = false
 
-	# Drain (skip if held-penalized — movement already zeroed)
-	var is_holding := _is_local_holding_chicken() or _is_local_holding_lootbox()
-	if is_moving_input and is_holding and stamina > 0.0 and not _stamina_held_empty:
+	# Throttle latches on hitting zero and only lifts when the player stops moving or
+	# refills past the recovery threshold. Creeping alone never restores full speed.
+	# Resolved before the drain below so the latch takes effect the same frame it is set.
+	var stamina_empty := stamina <= 0.0
+	if stamina_empty:
+		_stamina_throttled = true
+	elif not is_moving_input or stamina >= STAMINA_MAX * STAMINA_RECOVERY_FRACTION:
+		_stamina_throttled = false
+		# Recovery is done, so the re-drain lockout has served its purpose. Clearing it
+		# here is what lets drain resume the moment the throttle lifts, instead of the
+		# player sitting at the threshold doing nothing until the penalty times out.
+		_stamina_held_empty = false
+	var speed_to_use := SPEED * (STAMINA_EMPTY_SPEED_MULT if _stamina_throttled else 1.0)
+
+	# Drain and regen are mutually exclusive: while the player is genuinely draining,
+	# stamina only falls. Any other situation regenerates instead, which is what lets a
+	# player who has dropped the item refill again while they keep running.
+	var is_holding := _is_local_holding_chicken() or _is_local_holding_lootbox() or _is_local_holding_pickup()
+	var is_draining := is_moving_input and is_holding and stamina > 0.0 and not _stamina_held_empty and not _stamina_throttled
+	if is_draining:
 		stamina = maxf(0.0, stamina - STAMINA_DRAIN_RATE * delta)
 		_stamina_regen_timer = STAMINA_REGEN_DELAY
 
@@ -555,20 +599,19 @@ func _physics_process(delta: float) -> void:
 		if _stamina_empty_timer <= 0.0:
 			_stamina_held_empty = false
 
-	# Regen when not draining
-	if not is_moving_input or _stamina_held_empty:
+	# Regen: runs whenever the player is not actively draining, whether they are moving
+	# or standing, so stamina can never get stuck at zero and the throttle can always be
+	# recovered from. Never stopping gets the slow rate; stopping doubles it, which makes
+	# standing still the faster way back to full.
+	if not is_draining:
 		_stamina_regen_timer = maxf(0.0, _stamina_regen_timer - delta)
 		if _stamina_regen_timer <= 0.0:
-			stamina = minf(STAMINA_MAX, stamina + STAMINA_REGEN_RATE * delta)
-
-	# Zero movement when empty or held-penalized
-	if stamina <= 0.0 or _stamina_held_empty:
-		move_direction = Vector3.ZERO
-		input_dir = Vector2.ZERO
+			var regen_rate := STAMINA_REGEN_RATE * (1.0 if is_moving_input else STAMINA_REGEN_IDLE_MULT)
+			stamina = minf(STAMINA_MAX, stamina + regen_rate * delta)
 
 	# --- MOMENTUM CALCULATION ---
 	if movement_allowed:
-		var target_vel = move_direction * SPEED
+		var target_vel = move_direction * speed_to_use
 
 		# [MOMENTUM UPDATE] If we are in the air, use max speed instantly (no acceleration)
 		if is_on_floor():
@@ -590,7 +633,7 @@ func _physics_process(delta: float) -> void:
 
 	if _is_sliding:
 		_slide_timer = maxf(0.0, _slide_timer - delta)
-		var slide_speed := SPEED * SLIDE_SPEED_MULTIPLIER
+		var slide_speed := speed_to_use * SLIDE_SPEED_MULTIPLIER
 		velocity.x = _slide_direction.x * slide_speed
 		velocity.z = _slide_direction.z * slide_speed
 		_apply_slide_camera_restore(delta)
@@ -666,7 +709,7 @@ func _physics_process(delta: float) -> void:
 	_handle_animations(move_direction)
 	_handle_camera_gamepad(delta)
 
-	var net_active: bool = (move_direction.length_squared() > 0.0025) or _is_local_holding_chicken() or (current_animation == "running")
+	var net_active: bool = (move_direction.length_squared() > 0.0025) or _is_local_holding_chicken() or _is_local_holding_pickup() or (current_animation == "running")
 	if current_animation == "runningjump" or current_animation == "falling" or current_animation == "runningslide":
 		net_active = true
 
@@ -860,6 +903,10 @@ func _check_map_recovery() -> void:
 	current_animation = "idle"
 	_play_anim("idle")
 
+	# Break the hold so a respawn does not drag the item across the map.
+	if _is_local_holding_pickup():
+		_drop_local_pickup()
+
 	if root and root.has_method("get_local_spawn_position"):
 		global_position = root.get_local_spawn_position()
 	else:
@@ -928,6 +975,53 @@ func _drop_object():
 		"throw_y": max(1.0, throw_dir.y * 5.0),
 		"throw_z": throw_dir.z * 5.0
 	}))
+
+func _is_local_holding_pickup() -> bool:
+	return held_local_pickup != null and is_instance_valid(held_local_pickup) and held_local_pickup.has_method("is_being_held") and held_local_pickup.is_being_held()
+
+func _find_nearest_local_pickup() -> RigidBody3D:
+	var best: RigidBody3D = null
+	var best_dist: float = LOCAL_PICKUP_RADIUS
+	for node in get_tree().get_nodes_in_group("local_pickup_items"):
+		if not (node is RigidBody3D) or not is_instance_valid(node):
+			continue
+		if not node.has_method("can_pick_up") or not node.can_pick_up():
+			continue
+		var dist: float = global_position.distance_to(node.global_position)
+		if dist < best_dist:
+			best_dist = dist
+			best = node
+	return best
+
+# LocalPickup items are never sent to the server, they are grabbed client side only.
+func _try_pickup_local() -> bool:
+	if _is_local_holding_pickup():
+		return false
+	var now := Time.get_ticks_msec()
+	if now - last_pickup_request_ms < PICKUP_REQUEST_COOLDOWN_MS:
+		return false
+	var target := _find_nearest_local_pickup()
+	if target == null:
+		return false
+	if not target.has_method("pick_up") or not target.pick_up(self):
+		return false
+	held_local_pickup = target
+	last_pickup_request_ms = now
+	return true
+
+func _drop_local_pickup() -> void:
+	var item := held_local_pickup
+	held_local_pickup = null
+	if item == null or not is_instance_valid(item):
+		return
+	if not item.has_method("drop"):
+		return
+	var throw_dir := Vector3.ZERO
+	if camera != null:
+		throw_dir = -camera.global_transform.basis.z
+	if throw_dir.length_squared() < 0.0001:
+		throw_dir = -global_transform.basis.z
+	item.drop(throw_dir * LOCAL_PICKUP_THROW_STRENGTH)
 
 func _is_local_holding_chicken() -> bool:
 	if not root or not root.has_method("is_local_player_holding_chicken"):
@@ -1295,6 +1389,12 @@ func _is_movement_allowed() -> bool:
 	if root and root.has_method("is_match_running"):
 		return root.is_match_running()
 	return true
+
+## Jump velocity for the local player, weakened while the stamina throttle is on so a
+## tired player also jumps shorter. Read before the stamina block runs, so this uses
+## last frame's throttle state, which is a one-frame lag and not worth reordering for.
+func _current_jump_velocity() -> float:
+	return JUMP_VELOCITY * (STAMINA_EMPTY_JUMP_MULT if _stamina_throttled else 1.0)
 
 func _get_cached_chicken_node() -> RigidBody3D:
 	if _cached_chicken_node != null and is_instance_valid(_cached_chicken_node):
