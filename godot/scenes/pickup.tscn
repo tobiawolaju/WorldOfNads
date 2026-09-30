@@ -20,7 +20,7 @@ albedo_color = Color(1, 1, 0, 1)
 [sub_resource type="CylinderMesh" id="CylinderMesh_l0bqs"]
 top_radius = 0.002
 bottom_radius = 0.008
-height = 1.1095154
+height = 0.8413788
 
 [node name="Pickup" type="RigidBody3D" unique_id=408056980]
 collision_layer = 8
@@ -40,11 +40,11 @@ transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 1.2912738, 0)
 billboard = 1
 modulate = Color(1, 1, 0, 1)
 outline_modulate = Color(0, 0, 0, 0)
-text = "pick up"
+text = "power up"
 font = ExtResource("2_7cqbe")
 font_size = 90
 
 [node name="line" type="MeshInstance3D" parent="." unique_id=291533340]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6639722, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6540197, 0)
 material_override = SubResource("StandardMaterial3D_q62xx")
 mesh = SubResource("CylinderMesh_l0bqs")

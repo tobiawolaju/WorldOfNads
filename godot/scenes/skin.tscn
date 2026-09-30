@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://u7ahffc1obf8" path="res://scripts/player.gd" id="1_nna72"]
 [ext_resource type="AnimationLibrary" uid="uid://cyoeh8u10140w" path="res://resources/PlayerAnimations.tres" id="2_wrixk"]
+[ext_resource type="Shader" uid="uid://1rdjbx2iess" path="res://assets/shaders/eye.gdshader" id="3_8qxwi"]
 [ext_resource type="Shader" uid="uid://d20hvemeie05j" path="res://scenes/cencored.gdshader" id="4_8qxwi"]
 [ext_resource type="Texture2D" uid="uid://dekbb3ewhm11g" path="res://assets/img/skins/mouth_test1.png" id="4_f0bnh"]
 
@@ -302,8 +303,19 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ywufw"]
-shading_mode = 0
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_f0bnh"]
+render_priority = 0
+shader = ExtResource("3_8qxwi")
+shader_parameter/eye_color = Color(1, 1, 1, 1)
+shader_parameter/pupil_color = Color(1.92523e-07, 0.50997, 0.5348378, 1)
+shader_parameter/pupil_size = 0.46800002083297
+shader_parameter/pupil_softness = 0.30000001192093
+shader_parameter/rim_darken = 0.0
+shader_parameter/dot_shift_x = 0.0
+shader_parameter/dot_shift_y = 0.0
+shader_parameter/dot_roll = 3.1414101800343004
+shader_parameter/flip_dot = 1.0
+shader_parameter/debug_flat = 0.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_b3uek"]
 resource_name = "Material.019"
@@ -1376,11 +1388,11 @@ shadow_mesh = SubResource("ArrayMesh_htorj")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_q62xx"]
 render_priority = 0
 shader = ExtResource("4_8qxwi")
-shader_parameter/pixelation = 0.010000000475
+shader_parameter/pixelation = 0.0130000006175
 shader_parameter/opacity = 1.0
 
 [sub_resource type="BoxMesh" id="BoxMesh_l0bqs"]
-size = Vector3(0.3323242, 0.6469482, 1.3670166)
+size = Vector3(0.3323242, 0.3579544, 1.3047882)
 
 [node name="CharacterBody3D" type="CharacterBody3D" unique_id=1520854348]
 script = ExtResource("1_nna72")
@@ -1731,18 +1743,19 @@ skin = SubResource("Skin_3xuuo")
 skeleton = NodePath("..")
 
 [node name="eye_L" type="MeshInstance3D" parent="Skeleton3D" unique_id=667643918]
-material_override = SubResource("StandardMaterial3D_ywufw")
+material_override = SubResource("ShaderMaterial_f0bnh")
 cast_shadow = 0
 mesh = SubResource("ArrayMesh_p2chr")
 skin = SubResource("Skin_3xuuo")
 skeleton = NodePath("..")
 
 [node name="eye_R" type="MeshInstance3D" parent="Skeleton3D" unique_id=1135602285]
+material_override = SubResource("ShaderMaterial_f0bnh")
 cast_shadow = 0
 mesh = SubResource("ArrayMesh_dxler")
 skin = SubResource("Skin_3xuuo")
 skeleton = NodePath("..")
-surface_material_override/0 = SubResource("StandardMaterial3D_ywufw")
+surface_material_override/0 = SubResource("ShaderMaterial_f0bnh")
 
 [node name="face" type="MeshInstance3D" parent="Skeleton3D" unique_id=57707868]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.024718266, 0)
@@ -1761,7 +1774,7 @@ bone_idx = 5
 [node name="offset" type="Node3D" parent="Skeleton3D/heddds" unique_id=603308018]
 
 [node name="vikingHemblet" type="MeshInstance3D" parent="Skeleton3D/heddds/offset" unique_id=247885085]
-transform = Transform3D(1.408544, 5.820766e-10, -3.7252903e-09, -5.820766e-11, 1.4961863, 0, 1.8626451e-09, 0, 1.6018814, 0, 0.39, -2.9802322e-08)
+transform = Transform3D(1.4085442, 1.5716068e-09, -9.313226e-09, -5.2386895e-10, 1.4961865, 0, 5.5879354e-09, 0, 1.6018816, 8.195639e-08, 0.39002407, 5.9604645e-07)
 mesh = SubResource("ArrayMesh_58w2h")
 
 [node name="strawhat" type="MeshInstance3D" parent="Skeleton3D/heddds/offset" unique_id=1226709350]
@@ -1839,7 +1852,7 @@ transform = Transform3D(0, -0.073855534, 0, 0.3823235, 0, 0, 0, 0, 0.3823235, -0
 mesh = SubResource("ArrayMesh_pd5sa")
 
 [node name="rown" type="MeshInstance3D" parent="Skeleton3D/heddds/offset" unique_id=1949765803]
-transform = Transform3D(0.8497946, 0.003580782, 0.0006974872, -0.018101402, 0.15624414, 0.2414998, 0.0046366863, -0.046302795, 0.8149708, 0, 0.94, -0.05)
+transform = Transform3D(0.9297753, 0.00393227, 0.0007631326, -0.019805063, 0.171581, 0.26422918, 0.005073081, -0.05084786, 0.8916739, 0, 0.94, -0.05)
 visible = false
 cast_shadow = 0
 mesh = SubResource("ArrayMesh_ajlpc")
@@ -1850,6 +1863,7 @@ bone_name = "mixamorig_Hips"
 bone_idx = 0
 
 [node name="duck" type="Node3D" parent="Skeleton3D/hips" unique_id=1503676223]
+visible = false
 
 [node name="Cylinder_002" type="MeshInstance3D" parent="Skeleton3D/hips/duck" unique_id=1962484263]
 transform = Transform3D(0.20439011, 0, 0, 0, 0.20341204, -0.019971428, 0, 0.019971428, 0.20341204, 0, 0.22023724, 1.0426344)
@@ -1867,7 +1881,6 @@ mesh = SubResource("ArrayMesh_br1tc")
 
 [node name="strpon" type="Node3D" parent="Skeleton3D/hips" unique_id=893563472]
 transform = Transform3D(0.9999994, -5.4948032e-08, -1.4901161e-08, -1.0244548e-08, 1, 5.9604645e-08, 8.195639e-08, 1.4901161e-07, 1.0000012, -0.025909027, 0.31022084, -0.019338364)
-visible = false
 
 [node name="Cube_012" type="MeshInstance3D" parent="Skeleton3D/hips/strpon" unique_id=574460229]
 transform = Transform3D(0.17718174, 0, -2.9802322e-08, 1.1641532e-09, 0.18093614, -0.22562303, -1.8626451e-09, 0.05549857, 0.7355755, -1.4901161e-08, -0.513034, 1.5185272)
@@ -1882,7 +1895,7 @@ transform = Transform3D(0.00039164393, -0.060155712, 0.0062565384, 0.8927837, 4.
 mesh = SubResource("ArrayMesh_ahjmt")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Skeleton3D/hips/strpon" unique_id=774733157]
-transform = Transform3D(0.9993976, 0.005499918, 0.034057513, -0.0055508316, 0.9999803, 0.0014331937, -0.034049228, -0.0016233325, 0.9994188, 0.0022291718, -0.41443056, 1.4046148)
+transform = Transform3D(0.99860626, 0.03496363, 0.03955292, -0.02017346, 0.9451202, -0.3260921, -0.048785117, 0.3248365, 0.94450915, 0.0053355265, -0.45400333, 1.4263778)
 material_override = SubResource("ShaderMaterial_q62xx")
 mesh = SubResource("BoxMesh_l0bqs")
 
@@ -1892,4 +1905,4 @@ bone_name = "mixamorig_Spine1"
 bone_idx = 2
 
 [node name="offset" type="Node3D" parent="Skeleton3D/Back" unique_id=1603377131]
-transform = Transform3D(0.9999989, 1.071021e-08, -3.7252903e-09, -9.313226e-10, 0.99999857, -5.9604645e-08, 1.5832484e-08, 3.874302e-07, 0.99999917, -0.0011573676, -0.8005197, -1.191375)
+transform = Transform3D(0.9999981, 2.3283064e-08, -4.656613e-09, -7.450581e-09, 0.99999744, -2.9802322e-07, 3.3527613e-08, 6.556511e-07, 0.9999984, 0.159, -1.472, -0.463)
