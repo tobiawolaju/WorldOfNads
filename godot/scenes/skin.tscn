@@ -1885,3 +1885,11 @@ mesh = SubResource("ArrayMesh_ahjmt")
 transform = Transform3D(0.9993976, 0.005499918, 0.034057513, -0.0055508316, 0.9999803, 0.0014331937, -0.034049228, -0.0016233325, 0.9994188, 0.0022291718, -0.41443056, 1.4046148)
 material_override = SubResource("ShaderMaterial_q62xx")
 mesh = SubResource("BoxMesh_l0bqs")
+
+[node name="Back" type="BoneAttachment3D" parent="Skeleton3D" unique_id=347228359]
+transform = Transform3D(0.9984712, -0.046323095, 0.030155905, 0.05396949, 0.9348615, -0.3508872, -0.011937396, 0.35197836, 0.93593216, 0.00062708464, 0.37914315, 0.1092537)
+bone_name = "mixamorig_Spine1"
+bone_idx = 2
+
+[node name="offset" type="Node3D" parent="Skeleton3D/Back" unique_id=1603377131]
+transform = Transform3D(0.9999989, 1.071021e-08, -3.7252903e-09, -9.313226e-10, 0.99999857, -5.9604645e-08, 1.5832484e-08, 3.874302e-07, 0.99999917, -0.0011573676, -0.8005197, -1.191375)

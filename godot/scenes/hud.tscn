@@ -16,6 +16,7 @@
 [ext_resource type="Shader" uid="uid://cvsro6e0qyqwk" path="res://scenes/glasshud.gdshader" id="11_3swnk"]
 [ext_resource type="Texture2D" uid="uid://blb4gd2pmif22" path="res://assets/img/jump.png" id="12_5n1hp"]
 [ext_resource type="Script" uid="uid://bdgt65wb25puk" path="res://scripts/ui/textfx.gd" id="13_textfx"]
+[ext_resource type="Texture2D" uid="uid://ct6moic2j0bbf" path="res://assets/img/logo.png" id="13_uxdf7"]
 
 [sub_resource type="Shader" id="Shader_storm"]
 code = "shader_type canvas_item;
@@ -535,6 +536,11 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_ymhbd")
 autowrap_trim_flags = 0
 icon_alignment = 1
 expand_icon = true
+
+[node name="Sprite2D" type="Sprite2D" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/Action" unique_id=1719178418]
+position = Vector2(39.297455, 86.5)
+scale = Vector2(0.135, 0.135)
+texture = ExtResource("13_uxdf7")
 
 [node name="HBoxContainer" type="VBoxContainer" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer" unique_id=1406219590]
 layout_mode = 2

@@ -9,12 +9,13 @@
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="5_omrgh"]
 [ext_resource type="Script" uid="uid://dyx5kfl7l30wf" path="res://scripts/lobbymanager.gd" id="7_yad6j"]
 [ext_resource type="PackedScene" uid="uid://bj27lnrpsa1wt" path="res://scenes/busyland.tscn" id="9_07nfq"]
+[ext_resource type="PackedScene" uid="uid://jqrvlq8oxe4l" path="res://scenes/pickup.tscn" id="10_oipnb"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
 render_priority = 0
 shader = ExtResource("5_omrgh")
 shader_parameter/_color = Color(0.6509804, 0.32941177, 1, 1)
-shader_parameter/sphere_size = 1.5
+shader_parameter/sphere_size = 2.0
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_07nfq"]
 top_radius = 1.0
@@ -97,3 +98,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.210027, 0.8174293, -5.2890
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("1_o1atq")]
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("9_07nfq")]
+
+[node name="LocalPickup" parent="." unique_id=408056980 instance=ExtResource("10_oipnb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.716016, 1.749352, 1.384943)

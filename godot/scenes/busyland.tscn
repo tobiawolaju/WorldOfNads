@@ -1696,6 +1696,7 @@ multimesh = SubResource("MultiMesh_k3pvx")
 
 [node name="Landscape" type="MeshInstance3D" parent="Terrain" unique_id=295990206]
 transform = Transform3D(4, 0, 0, 0, 1.6, 0, 0, 0, 4, 0, 0, 0)
+layers = 3
 material_override = SubResource("ShaderMaterial_mx8sn")
 mesh = SubResource("ArrayMesh_1nemc")
 
