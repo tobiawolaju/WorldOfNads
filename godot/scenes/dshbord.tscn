@@ -1,49 +1,61 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="Script" uid="uid://d01wu8clqgui5" path="res://scripts/screens/dshbord.gd" id="1_dshb"]
-[ext_resource type="FontFile" uid="uid://ctxhsu2y7phcf" path="res://assets/fonts/fortnite.otf" id="2_font"]
-[ext_resource type="Texture2D" uid="uid://b1dshb0rdnrg1" path="res://assets/img/energy.png" id="3_energy"]
-[ext_resource type="Texture2D" uid="uid://ceofg5yk6faak" path="res://assets/img/gem.png" id="4_gem"]
-[ext_resource type="Texture2D" uid="uid://ceofg5yk6lkbk" path="res://assets/img/mon.png" id="5_mon"]
+[ext_resource type="FontFile" uid="uid://bkrsehe3e3foh" path="res://assets/fonts/font1.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://y4skjn4e2mya" path="res://assets/fonts/font2.ttf" id="3_font2"]
+[ext_resource type="Texture2D" uid="uid://b1dshb0rdnrg1" path="res://assets/img/energy.png" id="4_energy"]
+[ext_resource type="Texture2D" uid="uid://ceofg5yk6faak" path="res://assets/img/gem.png" id="5_gem"]
+[ext_resource type="Texture2D" uid="uid://ceofg5yk6lkbk" path="res://assets/img/mon.png" id="6_mon"]
+[ext_resource type="Texture2D" uid="uid://87hft1j821i0" path="res://assets/img/lobbybg_masked.png" id="7_lobby"]
 
 [sub_resource type="Environment" id="Environment_dshb"]
-background_mode = 1
-background_color = Color(0.39607843, 0.3254902, 0.78039217, 1)
+background_mode = 0
 ambient_light_source = 2
-ambient_light_color = Color(0.7882353, 0.76862746, 1, 1)
-ambient_light_energy = 1.4
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 1.5
+
+[sub_resource type="Gradient" id="Grad_fade"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.39607843, 0.3254902, 0.78039217, 1, 0.39607843, 0.3254902, 0.78039217, 0)
+
+[sub_resource type="GradientTexture2D" id="GT_fade_l"]
+gradient = SubResource("Grad_fade")
+width = 64
+height = 8
+fill = 0
+fill_from = Vector2(0, 0)
+fill_to = Vector2(1, 0)
+
+[sub_resource type="GradientTexture2D" id="GT_fade_r"]
+gradient = SubResource("Grad_fade")
+width = 64
+height = 8
+fill = 0
+fill_from = Vector2(1, 0)
+fill_to = Vector2(0, 0)
+
+[sub_resource type="Gradient" id="Grad_plate"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.627451, 0, 1, 0.75, 0.627451, 0, 1, 0.3, 0.627451, 0, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GT_plate"]
+gradient = SubResource("Grad_plate")
+width = 8
+height = 128
+fill = 0
+fill_from = Vector2(0, 1)
+fill_to = Vector2(0, 0)
 
 [sub_resource type="StyleBoxFlat" id="SB_pill"]
 bg_color = Color(0.39607843, 0.3254902, 0.78039217, 0.5)
-skew = -0.20943952
+skew = Vector2(0.20943952, 0)
 content_margin_left = 5.0
 content_margin_top = 1.0
 content_margin_right = 5.0
 content_margin_bottom = 1.0
 
-[sub_resource type="StyleBoxFlat" id="SB_tab"]
-bg_color = Color(1, 1, 1, 0)
-content_margin_left = 3.0
-content_margin_top = 2.0
-content_margin_right = 3.0
-content_margin_bottom = 2.0
-
-[sub_resource type="StyleBoxFlat" id="SB_tab_hover"]
-bg_color = Color(1, 1, 1, 0.11764706)
-content_margin_left = 3.0
-content_margin_top = 2.0
-content_margin_right = 3.0
-content_margin_bottom = 2.0
-
 [sub_resource type="StyleBoxFlat" id="SB_filter"]
-bg_color = Color(0, 0, 0, 0.125)
-content_margin_left = 2.0
-content_margin_top = 1.0
-content_margin_right = 2.0
-content_margin_bottom = 1.0
-
-[sub_resource type="StyleBoxFlat" id="SB_filter_hover"]
-bg_color = Color(1, 1, 1, 0.11764706)
+bg_color = Color(0, 0, 0, 0)
 content_margin_left = 2.0
 content_margin_top = 1.0
 content_margin_right = 2.0
@@ -59,15 +71,44 @@ border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(1, 1, 1, 1)
-skew = -0.20943952
+skew = Vector2(0.20943952, 0)
+content_margin_left = 2.0
+content_margin_top = 0.0
+content_margin_right = 2.0
+content_margin_bottom = 0.0
+
+[sub_resource type="StyleBoxFlat" id="SB_store_badge"]
+bg_color = Color(1, 0.92156863, 0.23137255, 1)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
 content_margin_left = 3.0
 content_margin_top = 1.0
 content_margin_right = 3.0
 content_margin_bottom = 1.0
 
+[sub_resource type="StyleBoxFlat" id="SB_store_card"]
+bg_color = Color(0, 0, 0, 0.125)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0)
+skew = Vector2(0.0872665, 0)
+
+[sub_resource type="StyleBoxFlat" id="SB_store_card_sel"]
+bg_color = Color(0, 0, 0, 0.125)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 1)
+skew = Vector2(0.0872665, 0)
+
 [sub_resource type="StyleBoxFlat" id="SB_play"]
 bg_color = Color(1, 0.84313726, 0, 1)
-skew = -0.235
+skew = Vector2(0.24, 0)
 content_margin_left = 30.0
 content_margin_top = 0.0
 content_margin_right = 30.0
@@ -80,7 +121,7 @@ border_width_top = 8
 border_width_right = 8
 border_width_bottom = 8
 border_color = Color(1, 1, 1, 0.407)
-skew = -0.235
+skew = Vector2(0.24, 0)
 content_margin_left = 30.0
 content_margin_top = 0.0
 content_margin_right = 30.0
@@ -93,7 +134,7 @@ border_width_top = 8
 border_width_right = 8
 border_width_bottom = 8
 border_color = Color(1, 1, 1, 0.19607843)
-skew = -0.235
+skew = Vector2(0.24, 0)
 content_margin_left = 30.0
 content_margin_top = 0.0
 content_margin_right = 30.0
@@ -101,35 +142,54 @@ content_margin_bottom = 0.0
 
 [sub_resource type="StyleBoxFlat" id="SB_mint"]
 bg_color = Color(1, 0.84313726, 0, 1)
-skew = -0.13962634
+skew = Vector2(0.14054083, 0)
 shadow_color = Color(0.5647059, 0.4862745, 1, 0.2)
-shadow_size = 12
-shadow_offset = Vector2(0, 5)
-content_margin_left = 0.0
-content_margin_top = 0.0
-content_margin_right = 0.0
-content_margin_bottom = 0.0
+shadow_size = 14
+shadow_offset = Vector2(0, 6)
 
 [sub_resource type="StyleBoxFlat" id="SB_equip"]
 bg_color = Color(0.5647059, 0.4862745, 1, 1)
-skew = -0.13962634
+skew = Vector2(0.14054083, 0)
 shadow_color = Color(0.5647059, 0.4862745, 1, 0.2)
-shadow_size = 12
-shadow_offset = Vector2(0, 5)
-content_margin_left = 0.0
-content_margin_top = 0.0
-content_margin_right = 0.0
-content_margin_bottom = 0.0
+shadow_size = 14
+shadow_offset = Vector2(0, 6)
+
+[sub_resource type="StyleBoxFlat" id="SB_prize"]
+bg_color = Color(0, 0, 0, 0.55)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 3.0
+content_margin_top = 1.0
+content_margin_right = 3.0
+content_margin_bottom = 1.0
+
+[sub_resource type="StyleBoxFlat" id="SB_match_card"]
+bg_color = Color(0, 0, 0, 0)
+
+[sub_resource type="StyleBoxFlat" id="SB_match_card_sel"]
+bg_color = Color(0, 0, 0, 0)
+shadow_color = Color(0.627451, 0, 1, 0.45)
+shadow_size = 8
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="SB_plate"]
+bg_color = Color(0, 0, 0, 0)
+content_margin_left = 5.0
+content_margin_top = 7.0
+content_margin_right = 5.0
+content_margin_bottom = 4.0
 
 [sub_resource type="StyleBoxFlat" id="SB_reward_empty"]
 bg_color = Color(1, 1, 1, 0.6)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-content_margin_left = 4.0
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+content_margin_left = 5.0
 content_margin_top = 6.0
-content_margin_right = 4.0
+content_margin_right = 5.0
 content_margin_bottom = 6.0
 
 [sub_resource type="StyleBoxEmpty" id="SB_empty"]
@@ -138,6 +198,31 @@ content_margin_bottom = 6.0
 script = ExtResource("1_dshb")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="PreviewBg" type="ColorRect" parent="CanvasLayer"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.65
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.39607843, 0.3254902, 0.78039217, 1)
+
+[node name="LobbyBg" type="TextureRect" parent="CanvasLayer"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.65
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -73.0
+offset_bottom = 73.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("7_lobby")
+expand_mode = 1
+stretch_mode = 0
 
 [node name="PreviewView" type="SubViewportContainer" parent="CanvasLayer"]
 layout_mode = 1
@@ -150,6 +235,7 @@ mouse_filter = 2
 stretch = true
 
 [node name="SubViewport" type="SubViewport" parent="CanvasLayer/PreviewView"]
+transparent_bg = true
 own_world_3d = true
 handle_input_locally = false
 size = Vector2i(325, 500)
@@ -159,21 +245,27 @@ render_target_update_mode = 4
 environment = SubResource("Environment_dshb")
 
 [node name="KeyLight" type="DirectionalLight3D" parent="CanvasLayer/PreviewView/SubViewport"]
-transform = Transform3D(0.8660254, -0.3535534, 0.3535534, 0, 0.7071068, 0.7071068, -0.5, -0.61237245, 0.61237245, 0, 3, 3)
-light_color = Color(1, 0.972549, 0.9098039, 1)
-light_energy = 1.2
+transform = Transform3D(0.7071068, 0, -0.7071068, -0.4082483, 0.8164966, -0.4082483, 0.5773503, 0.5773503, 0.5773503, 10, 10, 10)
+light_energy = 2.5
 shadow_enabled = false
 
 [node name="FillLight" type="DirectionalLight3D" parent="CanvasLayer/PreviewView/SubViewport"]
-transform = Transform3D(1, 0, 0, 0, 0.9063078, 0.4226183, 0, -0.4226183, 0.9063078, 1, 2, 2)
+transform = Transform3D(0.4472136, 0, 0.8944272, 0.3651484, 0.9128709, -0.1825742, -0.8164966, 0.4082483, 0.4082483, -10, 5, 5)
 light_color = Color(0.7529412, 0.6784314, 1, 1)
-light_energy = 0.45
+light_energy = 1.5
+shadow_enabled = false
+
+[node name="RimLight" type="OmniLight3D" parent="CanvasLayer/PreviewView/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, -10)
+light_energy = 2.5
+omni_range = 25.0
+shadow_enabled = false
 
 [node name="Camera3D" type="Camera3D" parent="CanvasLayer/PreviewView/SubViewport"]
 transform = Transform3D(1, 0, 0, 0, 0.9986295, 0.0523360, 0, -0.0523360, 0.9986295, 0, 1, 2.5)
-fov = 40.0
+fov = 75.0
 near = 0.01
-far = 50.0
+far = 80.0
 
 [node name="Pivot" type="Node3D" parent="CanvasLayer/PreviewView/SubViewport"]
 
@@ -184,13 +276,14 @@ layout_mode = 1
 anchors_preset = -1
 anchor_right = 0.65
 offset_left = 12.0
-offset_top = 54.0
+offset_top = 101.25
 offset_right = -12.0
-offset_bottom = 74.0
+offset_bottom = 125.25
 grow_horizontal = 2
 theme_override_constants/separation = 10
 
 [node name="EnergyPill" type="PanelContainer" parent="CanvasLayer/StatRail"]
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("SB_pill")
@@ -200,57 +293,64 @@ layout_mode = 2
 theme_override_constants/separation = 3
 
 [node name="Pip1" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips"]
-modulate = Color(1, 0.8784314, 0.2784314, 1)
+modulate = Color(0.99215686, 0.8784314, 0.2784314, 1)
 custom_minimum_size = Vector2(15, 15)
 layout_mode = 2
 size_flags_vertical = 4
+pivot_offset = Vector2(7.5, 7.5)
 mouse_filter = 2
-texture = ExtResource("3_energy")
+texture = ExtResource("4_energy")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Pip2" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips"]
-modulate = Color(1, 0.8784314, 0.2784314, 1)
+modulate = Color(0.99215686, 0.8784314, 0.2784314, 1)
 custom_minimum_size = Vector2(15, 15)
 layout_mode = 2
 size_flags_vertical = 4
+pivot_offset = Vector2(7.5, 7.5)
 mouse_filter = 2
-texture = ExtResource("3_energy")
+texture = ExtResource("4_energy")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Pip3" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips"]
-modulate = Color(1, 0.8784314, 0.2784314, 1)
+modulate = Color(0.99215686, 0.8784314, 0.2784314, 1)
 custom_minimum_size = Vector2(15, 15)
 layout_mode = 2
 size_flags_vertical = 4
+pivot_offset = Vector2(7.5, 7.5)
 mouse_filter = 2
-texture = ExtResource("3_energy")
+texture = ExtResource("4_energy")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Pip4" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips"]
-modulate = Color(1, 0.8784314, 0.2784314, 1)
+modulate = Color(0.99215686, 0.8784314, 0.2784314, 1)
 custom_minimum_size = Vector2(15, 15)
 layout_mode = 2
 size_flags_vertical = 4
+pivot_offset = Vector2(7.5, 7.5)
 mouse_filter = 2
-texture = ExtResource("3_energy")
+texture = ExtResource("4_energy")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Pip5" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips"]
-modulate = Color(0.5490196, 0.5490196, 0.6, 0.2)
+modulate = Color(0.72, 0.72, 0.72, 0.2)
 custom_minimum_size = Vector2(15, 15)
 layout_mode = 2
 size_flags_vertical = 4
+pivot_offset = Vector2(7.5, 7.5)
+scale = Vector2(0.85, 0.85)
 mouse_filter = 2
-texture = ExtResource("3_energy")
+texture = ExtResource("4_energy")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="MonPill" type="PanelContainer" parent="CanvasLayer/StatRail"]
 visible = false
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("SB_pill")
@@ -260,23 +360,24 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="GemIcon" type="TextureRect" parent="CanvasLayer/StatRail/MonPill/Row"]
-custom_minimum_size = Vector2(18, 18)
+custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-texture = ExtResource("4_gem")
+texture = ExtResource("5_gem")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="MonValue" type="Label" parent="CanvasLayer/StatRail/MonPill/Row"]
 layout_mode = 2
 size_flags_vertical = 4
-theme_override_colors/font_color = Color(0.9098039, 0.4745098, 0.9764706, 1)
+theme_override_colors/font_color = Color(0.90980392, 0.4745098, 0.97647059, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 12
 text = "0.0000"
 
 [node name="LevelPill" type="PanelContainer" parent="CanvasLayer/StatRail"]
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 4
@@ -289,7 +390,7 @@ theme_override_constants/separation = 8
 [node name="LevelLabel" type="Label" parent="CanvasLayer/StatRail/LevelPill/Row"]
 layout_mode = 2
 size_flags_vertical = 4
-theme_override_colors/font_color = Color(0.8039216, 0.6784314, 1, 1)
+theme_override_colors/font_color = Color(0.80392157, 0.67843137, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 9
 text = "Level"
@@ -310,7 +411,7 @@ anchor_top = 1.0
 anchor_right = 0.65
 anchor_bottom = 1.0
 offset_left = 28.0
-offset_top = -66.0
+offset_top = -80.0
 offset_right = -10.0
 offset_bottom = -30.0
 grow_horizontal = 2
@@ -323,7 +424,7 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 33
 text = "Default Nad"
 text_overrun_behavior = 3
 
@@ -347,187 +448,193 @@ theme_override_styles/panel = SubResource("SB_panel")
 
 [node name="Margin" type="MarginContainer" parent="CanvasLayer/RightPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 77
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 43
+theme_override_constants/margin_left = 3
+theme_override_constants/margin_top = 23
+theme_override_constants/margin_right = 3
+theme_override_constants/margin_bottom = 42
 
-[node name="Tabs" type="HBoxContainer" parent="CanvasLayer/RightPanel/Margin"]
+[node name="Column" type="VBoxContainer" parent="CanvasLayer/RightPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 7
+theme_override_constants/separation = 0
+
+[node name="TabsMargin" type="MarginContainer" parent="CanvasLayer/RightPanel/Margin/Column"]
+layout_mode = 2
+theme_override_constants/margin_top = 20
+
+[node name="Tabs" type="HBoxContainer" parent="CanvasLayer/RightPanel/Margin/Column/TabsMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
 alignment = 1
 
-[node name="TabEvents" type="Button" parent="CanvasLayer/RightPanel/Margin/Tabs"]
+[node name="TabEvents" type="Button" parent="CanvasLayer/RightPanel/Margin/Column/TabsMargin/Tabs"]
 layout_mode = 2
-size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 12
-theme_override_styles/normal = SubResource("SB_tab")
-theme_override_styles/hover = SubResource("SB_tab_hover")
-theme_override_styles/pressed = SubResource("SB_tab_hover")
+theme_override_fonts/font = ExtResource("3_font2")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("SB_empty")
+theme_override_styles/hover = SubResource("SB_empty")
+theme_override_styles/pressed = SubResource("SB_empty")
 theme_override_styles/focus = SubResource("SB_empty")
-text = "EVENTS"
+text = "Events"
 
-[node name="TabRewards" type="Button" parent="CanvasLayer/RightPanel/Margin/Tabs"]
+[node name="TabRewards" type="Button" parent="CanvasLayer/RightPanel/Margin/Column/TabsMargin/Tabs"]
 modulate = Color(1, 1, 1, 0.35)
 layout_mode = 2
-size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 8
-theme_override_styles/normal = SubResource("SB_tab")
-theme_override_styles/hover = SubResource("SB_tab_hover")
-theme_override_styles/pressed = SubResource("SB_tab_hover")
+theme_override_fonts/font = ExtResource("3_font2")
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("SB_empty")
+theme_override_styles/hover = SubResource("SB_empty")
+theme_override_styles/pressed = SubResource("SB_empty")
 theme_override_styles/focus = SubResource("SB_empty")
-text = "REWARDS"
+text = "Rewards"
 
-[node name="TabStore" type="Button" parent="CanvasLayer/RightPanel/Margin/Tabs"]
+[node name="TabStore" type="Button" parent="CanvasLayer/RightPanel/Margin/Column/TabsMargin/Tabs"]
 modulate = Color(1, 1, 1, 0.35)
 layout_mode = 2
-size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 8
-theme_override_styles/normal = SubResource("SB_tab")
-theme_override_styles/hover = SubResource("SB_tab_hover")
-theme_override_styles/pressed = SubResource("SB_tab_hover")
+theme_override_fonts/font = ExtResource("3_font2")
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("SB_empty")
+theme_override_styles/hover = SubResource("SB_empty")
+theme_override_styles/pressed = SubResource("SB_empty")
 theme_override_styles/focus = SubResource("SB_empty")
-text = "STORE"
+text = "Store"
 
-[node name="Badge" type="Label" parent="CanvasLayer/RightPanel/Margin/Tabs/TabStore"]
+[node name="Badge" type="Label" parent="CanvasLayer/RightPanel/Margin/Column/TabsMargin/Tabs/TabStore"]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -18.0
+offset_left = -3.0
 offset_top = -5.0
-offset_right = -4.0
-offset_bottom = 5.0
+offset_right = 6.0
+offset_bottom = 4.0
 grow_horizontal = 0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = ExtResource("2_font")
+theme_override_fonts/font = ExtResource("3_font2")
 theme_override_font_sizes/font_size = 5
 theme_override_styles/normal = SubResource("SB_badge")
 text = "1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="FiltersEvents" type="HBoxContainer" parent="CanvasLayer/RightPanel/Margin"]
+[node name="FiltersMargin" type="MarginContainer" parent="CanvasLayer/RightPanel/Margin/Column"]
+layout_mode = 2
+theme_override_constants/margin_bottom = 9
+
+[node name="FiltersEvents" type="HBoxContainer" parent="CanvasLayer/RightPanel/Margin/Column/FiltersMargin"]
 layout_mode = 2
 theme_override_constants/separation = 4
 alignment = 1
 
-[node name="FilterUpcoming" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersEvents"]
+[node name="FilterUpcoming" type="Button" parent="CanvasLayer/RightPanel/Margin/Column/FiltersMargin/FiltersEvents"]
 modulate = Color(1, 1, 1, 0.5)
 layout_mode = 2
-size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 5
 theme_override_styles/normal = SubResource("SB_filter")
-theme_override_styles/hover = SubResource("SB_filter_hover")
+theme_override_styles/hover = SubResource("SB_filter")
 theme_override_styles/pressed = SubResource("SB_filter")
 theme_override_styles/focus = SubResource("SB_empty")
-text = "UPCOMING"
+text = "Upcoming"
 
-[node name="FilterLive" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersEvents"]
+[node name="FilterLive" type="Button" parent="CanvasLayer/RightPanel/Margin/Column/FiltersMargin/FiltersEvents"]
 layout_mode = 2
-size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 5
 theme_override_styles/normal = SubResource("SB_filter")
-theme_override_styles/hover = SubResource("SB_filter_hover")
+theme_override_styles/hover = SubResource("SB_filter")
 theme_override_styles/pressed = SubResource("SB_filter")
 theme_override_styles/focus = SubResource("SB_empty")
-text = "LIVE"
+text = "Live"
 
-[node name="FilterCompleted" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersEvents"]
+[node name="FilterCompleted" type="Button" parent="CanvasLayer/RightPanel/Margin/Column/FiltersMargin/FiltersEvents"]
 modulate = Color(1, 1, 1, 0.5)
 layout_mode = 2
-size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 5
 theme_override_styles/normal = SubResource("SB_filter")
-theme_override_styles/hover = SubResource("SB_filter_hover")
+theme_override_styles/hover = SubResource("SB_filter")
 theme_override_styles/pressed = SubResource("SB_filter")
 theme_override_styles/focus = SubResource("SB_empty")
-text = "COMPLETED"
+text = "Completed"
 
-[node name="FiltersStore" type="HFlowContainer" parent="CanvasLayer/RightPanel/Margin"]
+[node name="FiltersStore" type="HFlowContainer" parent="CanvasLayer/RightPanel/Margin/Column/FiltersMargin"]
 visible = false
 layout_mode = 2
 theme_override_constants/h_separation = 4
 theme_override_constants/v_separation = 2
 alignment = 1
 
-[node name="StoreAll" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersStore"]
+[node name="StoreAll" type="Button" parent="CanvasLayer/RightPanel/Margin/Column/FiltersMargin/FiltersStore"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 5
 theme_override_styles/normal = SubResource("SB_filter")
-theme_override_styles/hover = SubResource("SB_filter_hover")
+theme_override_styles/hover = SubResource("SB_filter")
 theme_override_styles/pressed = SubResource("SB_filter")
 theme_override_styles/focus = SubResource("SB_empty")
-text = "ALL"
+text = "All"
 
-[node name="StoreCommon" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersStore"]
+[node name="StoreCommon" type="Button" parent="CanvasLayer/RightPanel/Margin/Column/FiltersMargin/FiltersStore"]
 modulate = Color(1, 1, 1, 0.5)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 5
 theme_override_styles/normal = SubResource("SB_filter")
-theme_override_styles/hover = SubResource("SB_filter_hover")
+theme_override_styles/hover = SubResource("SB_filter")
 theme_override_styles/pressed = SubResource("SB_filter")
 theme_override_styles/focus = SubResource("SB_empty")
-text = "COMMON"
+text = "Common"
 
-[node name="StoreRare" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersStore"]
+[node name="StoreRare" type="Button" parent="CanvasLayer/RightPanel/Margin/Column/FiltersMargin/FiltersStore"]
 modulate = Color(1, 1, 1, 0.5)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 5
 theme_override_styles/normal = SubResource("SB_filter")
-theme_override_styles/hover = SubResource("SB_filter_hover")
+theme_override_styles/hover = SubResource("SB_filter")
 theme_override_styles/pressed = SubResource("SB_filter")
 theme_override_styles/focus = SubResource("SB_empty")
-text = "RARE"
+text = "Rare"
 
-[node name="StoreEpic" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersStore"]
+[node name="StoreEpic" type="Button" parent="CanvasLayer/RightPanel/Margin/Column/FiltersMargin/FiltersStore"]
 modulate = Color(1, 1, 1, 0.5)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 5
 theme_override_styles/normal = SubResource("SB_filter")
-theme_override_styles/hover = SubResource("SB_filter_hover")
+theme_override_styles/hover = SubResource("SB_filter")
 theme_override_styles/pressed = SubResource("SB_filter")
 theme_override_styles/focus = SubResource("SB_empty")
-text = "EPIC"
+text = "Epic"
 
-[node name="StoreLegendary" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersStore"]
+[node name="StoreLegendary" type="Button" parent="CanvasLayer/RightPanel/Margin/Column/FiltersMargin/FiltersStore"]
 modulate = Color(1, 1, 1, 0.5)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 5
 theme_override_styles/normal = SubResource("SB_filter")
-theme_override_styles/hover = SubResource("SB_filter_hover")
+theme_override_styles/hover = SubResource("SB_filter")
 theme_override_styles/pressed = SubResource("SB_filter")
 theme_override_styles/focus = SubResource("SB_empty")
-text = "LEGENDARY"
+text = "Legendary"
 
-[node name="Content" type="Control" parent="CanvasLayer/RightPanel/Margin"]
+[node name="Content" type="Control" parent="CanvasLayer/RightPanel/Margin/Column"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="MatchScroll" type="ScrollContainer" parent="CanvasLayer/RightPanel/Margin/Content"]
+[node name="MatchScroll" type="ScrollContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -537,13 +644,22 @@ grow_vertical = 2
 horizontal_scroll_mode = 1
 vertical_scroll_mode = 0
 
-[node name="MatchCards" type="HBoxContainer" parent="CanvasLayer/RightPanel/Margin/Content/MatchScroll"]
+[node name="MatchMargin" type="MarginContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content/MatchScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="MatchCards" type="HBoxContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content/MatchScroll/MatchMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 4
 
-[node name="RewardScroll" type="ScrollContainer" parent="CanvasLayer/RightPanel/Margin/Content"]
+[node name="RewardScroll" type="ScrollContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content"]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -553,24 +669,34 @@ grow_horizontal = 2
 grow_vertical = 2
 horizontal_scroll_mode = 3
 
-[node name="RewardList" type="VBoxContainer" parent="CanvasLayer/RightPanel/Margin/Content/RewardScroll"]
+[node name="RewardMargin" type="MarginContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content/RewardScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
-[node name="RewardEmpty" type="PanelContainer" parent="CanvasLayer/RightPanel/Margin/Content/RewardScroll/RewardList"]
+[node name="RewardList" type="VBoxContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content/RewardScroll/RewardMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="RewardEmpty" type="PanelContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content/RewardScroll/RewardMargin/RewardList"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("SB_reward_empty")
 
-[node name="Text" type="Label" parent="CanvasLayer/RightPanel/Margin/Content/RewardScroll/RewardList/RewardEmpty"]
+[node name="Text" type="Label" parent="CanvasLayer/RightPanel/Margin/Column/Content/RewardScroll/RewardMargin/RewardList/RewardEmpty"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.75)
+theme_override_colors/font_color = Color(1, 1, 1, 0.7)
 theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 5
+theme_override_font_sizes/font_size = 6
 text = "No rewards yet. Join a match to win some."
 autowrap_mode = 2
 
-[node name="StoreScroll" type="ScrollContainer" parent="CanvasLayer/RightPanel/Margin/Content"]
+[node name="StoreScroll" type="ScrollContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content"]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -580,12 +706,46 @@ grow_horizontal = 2
 grow_vertical = 2
 horizontal_scroll_mode = 3
 
-[node name="StoreGrid" type="GridContainer" parent="CanvasLayer/RightPanel/Margin/Content/StoreScroll"]
+[node name="StoreMargin" type="MarginContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content/StoreScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="StoreGrid" type="GridContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content/StoreScroll/StoreMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/h_separation = 4
 theme_override_constants/v_separation = 4
 columns = 3
+
+[node name="FadeLeft" type="TextureRect" parent="CanvasLayer/RightPanel/Margin/Column/Content"]
+layout_mode = 1
+anchors_preset = -1
+anchor_bottom = 1.0
+offset_right = 23.0
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GT_fade_l")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="FadeRight" type="TextureRect" parent="CanvasLayer/RightPanel/Margin/Column/Content"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -23.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GT_fade_r")
+expand_mode = 1
+stretch_mode = 0
 
 [node name="PlayButton" type="Button" parent="CanvasLayer"]
 visible = false
@@ -596,9 +756,9 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -160.0
+offset_left = -150.0
 offset_top = -80.0
-offset_right = -40.0
+offset_right = -30.0
 offset_bottom = -30.0
 grow_horizontal = 0
 grow_vertical = 0
@@ -620,9 +780,9 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -250.0
+offset_left = -260.0
 offset_top = -86.0
-offset_right = -40.0
+offset_right = -30.0
 offset_bottom = -30.0
 grow_horizontal = 0
 grow_vertical = 0
@@ -647,12 +807,11 @@ text = "MINT"
 custom_minimum_size = Vector2(60, 56)
 layout_mode = 2
 size_flags_vertical = 4
-theme_override_constants/icon_max_width = 40
+theme_override_constants/icon_max_width = 28
 theme_override_styles/normal = SubResource("SB_equip")
 theme_override_styles/hover = SubResource("SB_equip")
 theme_override_styles/pressed = SubResource("SB_equip")
 theme_override_styles/disabled = SubResource("SB_equip")
 theme_override_styles/focus = SubResource("SB_empty")
-icon = ExtResource("5_mon")
+icon = ExtResource("6_mon")
 tooltip_text = "Equip"
-expand_icon = true
