@@ -1,0 +1,622 @@
+[gd_scene load_steps=20 format=3]
+
+[ext_resource type="Script" uid="uid://d01wu8clqgui5" path="res://scripts/screens/dshbord.gd" id="1_dshb"]
+[ext_resource type="FontFile" uid="uid://ctxhsu2y7phcf" path="res://assets/fonts/fortnite.otf" id="2_font"]
+[ext_resource type="Texture2D" uid="uid://b1dshb0rdnrg1" path="res://assets/img/energy.png" id="3_energy"]
+[ext_resource type="Texture2D" uid="uid://ceofg5yk6faak" path="res://assets/img/gem.png" id="4_gem"]
+[ext_resource type="Texture2D" uid="uid://ceofg5yk6lkbk" path="res://assets/img/mon.png" id="5_mon"]
+
+[sub_resource type="Environment" id="Environment_dshb"]
+background_mode = 1
+background_color = Color(0.39607843, 0.3254902, 0.78039217, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.7882353, 0.76862746, 1, 1)
+ambient_light_energy = 1.4
+
+[sub_resource type="StyleBoxFlat" id="SB_pill_energy"]
+bg_color = Color(0.7921569, 0.5411765, 0.015686275, 0.85)
+skew = -0.20943952
+content_margin_left = 5.0
+content_margin_top = 2.0
+content_margin_right = 5.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="SB_pill_mon"]
+bg_color = Color(0.6352941, 0.10980392, 0.6862745, 0.85)
+skew = -0.20943952
+content_margin_left = 5.0
+content_margin_top = 2.0
+content_margin_right = 5.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="SB_pill_level"]
+bg_color = Color(0.35686275, 0.30980392, 1, 0.85)
+skew = -0.20943952
+content_margin_left = 5.0
+content_margin_top = 2.0
+content_margin_right = 5.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="SB_tab"]
+bg_color = Color(1, 1, 1, 0)
+content_margin_left = 3.0
+content_margin_top = 2.0
+content_margin_right = 3.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="SB_tab_hover"]
+bg_color = Color(1, 1, 1, 0.11764706)
+content_margin_left = 3.0
+content_margin_top = 2.0
+content_margin_right = 3.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="SB_filter"]
+bg_color = Color(0, 0, 0, 0.125)
+content_margin_left = 4.0
+content_margin_top = 1.0
+content_margin_right = 4.0
+content_margin_bottom = 1.0
+
+[sub_resource type="StyleBoxFlat" id="SB_panel"]
+bg_color = Color(0.39607843, 0.3254902, 0.78039217, 1)
+
+[sub_resource type="StyleBoxFlat" id="SB_badge"]
+bg_color = Color(1, 0.92156863, 0.23137255, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+skew = -0.20943952
+content_margin_left = 2.0
+content_margin_top = 0.0
+content_margin_right = 2.0
+content_margin_bottom = 0.0
+
+[sub_resource type="StyleBoxFlat" id="SB_play"]
+bg_color = Color(1, 0.84313726, 0, 1)
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxFlat" id="SB_play_disabled"]
+bg_color = Color(1, 0.84313726, 0, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(1, 1, 1, 0.19607843)
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxFlat" id="SB_mint"]
+bg_color = Color(1, 0.84313726, 0, 1)
+skew = -0.13962634
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="SB_equip"]
+bg_color = Color(0.5647059, 0.4862745, 1, 1)
+skew = -0.13962634
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxEmpty" id="SB_empty"]
+
+[node name="Dshbord" type="Node3D"]
+script = ExtResource("1_dshb")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="PreviewView" type="SubViewportContainer" parent="CanvasLayer"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.65
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="CanvasLayer/PreviewView"]
+own_world_3d = true
+handle_input_locally = false
+size = Vector2i(325, 500)
+render_target_update_mode = 4
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="CanvasLayer/PreviewView/SubViewport"]
+environment = SubResource("Environment_dshb")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="CanvasLayer/PreviewView/SubViewport"]
+transform = Transform3D(0.8660254, -0.3535534, 0.3535534, 0, 0.7071068, 0.7071068, -0.5, -0.61237245, 0.61237245, 0, 3, 3)
+light_color = Color(1, 0.972549, 0.9098039, 1)
+light_energy = 1.2
+shadow_enabled = false
+
+[node name="FillLight" type="DirectionalLight3D" parent="CanvasLayer/PreviewView/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 0.9063078, 0.4226183, 0, -0.4226183, 0.9063078, 1, 2, 2)
+light_color = Color(0.7529412, 0.6784314, 1, 1)
+light_energy = 0.45
+
+[node name="Camera3D" type="Camera3D" parent="CanvasLayer/PreviewView/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 0.9986295, 0.0523360, 0, -0.0523360, 0.9986295, 0, 1, 2.5)
+fov = 40.0
+near = 0.01
+far = 50.0
+
+[node name="Pivot" type="Node3D" parent="CanvasLayer/PreviewView/SubViewport"]
+
+[node name="PreviewRoot" type="Node3D" parent="CanvasLayer/PreviewView/SubViewport/Pivot"]
+
+[node name="StatRail" type="HBoxContainer" parent="CanvasLayer"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.65
+offset_left = 10.0
+offset_top = 20.0
+offset_right = -10.0
+offset_bottom = 46.0
+grow_horizontal = 2
+theme_override_constants/separation = 6
+
+[node name="EnergyPill" type="PanelContainer" parent="CanvasLayer/StatRail"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("SB_pill_energy")
+
+[node name="EnergyPips" type="HBoxContainer" parent="CanvasLayer/StatRail/EnergyPill"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Pip1" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips"]
+modulate = Color(0.99215686, 0.8784314, 0.2784314, 1)
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3_energy")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip2" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips"]
+modulate = Color(0.99215686, 0.8784314, 0.2784314, 1)
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3_energy")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip3" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips"]
+modulate = Color(0.99215686, 0.8784314, 0.2784314, 1)
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3_energy")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip4" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips"]
+modulate = Color(0.99215686, 0.8784314, 0.2784314, 1)
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3_energy")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip5" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips"]
+modulate = Color(1, 1, 1, 0.2)
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3_energy")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MonPill" type="PanelContainer" parent="CanvasLayer/StatRail"]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("SB_pill_mon")
+
+[node name="Row" type="HBoxContainer" parent="CanvasLayer/StatRail/MonPill"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="GemIcon" type="TextureRect" parent="CanvasLayer/StatRail/MonPill/Row"]
+custom_minimum_size = Vector2(9, 9)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_gem")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MonValue" type="Label" parent="CanvasLayer/StatRail/MonPill/Row"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.9098039, 0.4745098, 0.9764706, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 7
+text = "0.0000"
+
+[node name="LevelPill" type="PanelContainer" parent="CanvasLayer/StatRail"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_styles/panel = SubResource("SB_pill_level")
+
+[node name="Row" type="HBoxContainer" parent="CanvasLayer/StatRail/LevelPill"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="LevelLabel" type="Label" parent="CanvasLayer/StatRail/LevelPill/Row"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.8039216, 0.6784314, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 6
+text = "LVL"
+
+[node name="LevelValue" type="Label" parent="CanvasLayer/StatRail/LevelPill/Row"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 9
+text = "0"
+
+[node name="SkinPreview" type="VBoxContainer" parent="CanvasLayer"]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_right = 0.65
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = -70.0
+offset_right = -10.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 1
+mouse_filter = 2
+
+[node name="Name" type="Label" parent="CanvasLayer/SkinPreview"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.7058824)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 16
+text = "Default Nad"
+text_overrun_behavior = 3
+
+[node name="Meta" type="Label" parent="CanvasLayer/SkinPreview"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.84313726, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 8
+text = "OWNED"
+
+[node name="RightPanel" type="PanelContainer" parent="CanvasLayer"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.65
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("SB_panel")
+
+[node name="Margin" type="MarginContainer" parent="CanvasLayer/RightPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 7
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 7
+theme_override_constants/margin_bottom = 7
+
+[node name="Tabs" type="HBoxContainer" parent="CanvasLayer/RightPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="TabEvents" type="Button" parent="CanvasLayer/RightPanel/Margin/Tabs"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("SB_tab")
+theme_override_styles/hover = SubResource("SB_tab_hover")
+theme_override_styles/pressed = SubResource("SB_tab_hover")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "EVENTS"
+
+[node name="TabRewards" type="Button" parent="CanvasLayer/RightPanel/Margin/Tabs"]
+modulate = Color(1, 1, 1, 0.35)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("SB_tab")
+theme_override_styles/hover = SubResource("SB_tab_hover")
+theme_override_styles/pressed = SubResource("SB_tab_hover")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "REWARDS"
+
+[node name="TabStore" type="Button" parent="CanvasLayer/RightPanel/Margin/Tabs"]
+modulate = Color(1, 1, 1, 0.35)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("SB_tab")
+theme_override_styles/hover = SubResource("SB_tab_hover")
+theme_override_styles/pressed = SubResource("SB_tab_hover")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "STORE"
+
+[node name="Badge" type="Label" parent="CanvasLayer/RightPanel/Margin/Tabs/TabStore"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+offset_left = -20.0
+offset_top = -4.0
+offset_right = -3.0
+offset_bottom = 6.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 6
+theme_override_styles/normal = SubResource("SB_badge")
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FiltersEvents" type="HBoxContainer" parent="CanvasLayer/RightPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+alignment = 1
+
+[node name="FilterUpcoming" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersEvents"]
+modulate = Color(1, 1, 1, 0.5)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("SB_filter")
+theme_override_styles/hover = SubResource("SB_filter")
+theme_override_styles/pressed = SubResource("SB_filter")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "UPCOMING"
+
+[node name="FilterLive" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersEvents"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("SB_filter")
+theme_override_styles/hover = SubResource("SB_filter")
+theme_override_styles/pressed = SubResource("SB_filter")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "LIVE"
+
+[node name="FilterCompleted" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersEvents"]
+modulate = Color(1, 1, 1, 0.5)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("SB_filter")
+theme_override_styles/hover = SubResource("SB_filter")
+theme_override_styles/pressed = SubResource("SB_filter")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "COMPLETED"
+
+[node name="FiltersStore" type="HFlowContainer" parent="CanvasLayer/RightPanel/Margin"]
+visible = false
+layout_mode = 2
+theme_override_constants/h_separation = 3
+theme_override_constants/v_separation = 2
+alignment = 1
+
+[node name="StoreAll" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersStore"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("SB_filter")
+theme_override_styles/hover = SubResource("SB_filter")
+theme_override_styles/pressed = SubResource("SB_filter")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "ALL"
+
+[node name="StoreCommon" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersStore"]
+modulate = Color(1, 1, 1, 0.5)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("SB_filter")
+theme_override_styles/hover = SubResource("SB_filter")
+theme_override_styles/pressed = SubResource("SB_filter")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "COMMON"
+
+[node name="StoreRare" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersStore"]
+modulate = Color(1, 1, 1, 0.5)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("SB_filter")
+theme_override_styles/hover = SubResource("SB_filter")
+theme_override_styles/pressed = SubResource("SB_filter")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "RARE"
+
+[node name="StoreEpic" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersStore"]
+modulate = Color(1, 1, 1, 0.5)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("SB_filter")
+theme_override_styles/hover = SubResource("SB_filter")
+theme_override_styles/pressed = SubResource("SB_filter")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "EPIC"
+
+[node name="StoreLegendary" type="Button" parent="CanvasLayer/RightPanel/Margin/FiltersStore"]
+modulate = Color(1, 1, 1, 0.5)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("SB_filter")
+theme_override_styles/hover = SubResource("SB_filter")
+theme_override_styles/pressed = SubResource("SB_filter")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "LEGENDARY"
+
+[node name="Content" type="Control" parent="CanvasLayer/RightPanel/Margin"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MatchScroll" type="ScrollContainer" parent="CanvasLayer/RightPanel/Margin/Content"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 1
+vertical_scroll_mode = 0
+
+[node name="MatchCards" type="HBoxContainer" parent="CanvasLayer/RightPanel/Margin/Content/MatchScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="RewardScroll" type="ScrollContainer" parent="CanvasLayer/RightPanel/Margin/Content"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 3
+
+[node name="RewardList" type="VBoxContainer" parent="CanvasLayer/RightPanel/Margin/Content/RewardScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RewardEmpty" type="Label" parent="CanvasLayer/RightPanel/Margin/Content/RewardScroll/RewardList"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.7)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 9
+text = "No rewards yet. Join a match to win some."
+autowrap_mode = 2
+
+[node name="StoreScroll" type="ScrollContainer" parent="CanvasLayer/RightPanel/Margin/Content"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 3
+
+[node name="StoreGrid" type="GridContainer" parent="CanvasLayer/RightPanel/Margin/Content/StoreScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 5
+theme_override_constants/v_separation = 5
+columns = 2
+
+[node name="PlayButton" type="Button" parent="CanvasLayer"]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -148.0
+offset_top = -44.0
+offset_right = -14.0
+offset_bottom = -14.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("SB_play")
+theme_override_styles/hover = SubResource("SB_play_disabled")
+theme_override_styles/pressed = SubResource("SB_play_disabled")
+theme_override_styles/disabled = SubResource("SB_play_disabled")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "READY!"
+
+[node name="FooterButtons" type="HBoxContainer" parent="CanvasLayer"]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -196.0
+offset_top = -52.0
+offset_right = -14.0
+offset_bottom = -14.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/separation = 6
+alignment = 2
+
+[node name="MintButton" type="Button" parent="CanvasLayer/FooterButtons"]
+custom_minimum_size = Vector2(78, 0)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("SB_mint")
+theme_override_styles/hover = SubResource("SB_mint")
+theme_override_styles/pressed = SubResource("SB_mint")
+theme_override_styles/disabled = SubResource("SB_mint")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "MINT"
+
+[node name="EquipButton" type="Button" parent="CanvasLayer/FooterButtons"]
+custom_minimum_size = Vector2(42, 0)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/icon_max_width = 18
+theme_override_styles/normal = SubResource("SB_equip")
+theme_override_styles/hover = SubResource("SB_equip")
+theme_override_styles/pressed = SubResource("SB_equip")
+theme_override_styles/disabled = SubResource("SB_equip")
+theme_override_styles/focus = SubResource("SB_empty")
+icon = ExtResource("5_mon")
+tooltip_text = "Equip"
+expand_icon = true
