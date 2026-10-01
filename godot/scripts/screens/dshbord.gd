@@ -3,6 +3,20 @@ extends Node3D
 # Godot port of the frontend `/dashboard` page (frontend/src/pages/Dashboard.tsx
 # + Dashboard.css). Owns the tab / filter state, the match carousel, the store
 # grid, the reward list, the rotating 3D skin preview and the play countdown.
+#
+# Sizing note. Dashboard.css lays the right panel out at 1280px and relies on
+# --fs-zoom to shrink it on narrow screens, while this project runs a 500x500
+# base viewport. Every panel dimension below is the CSS value multiplied by
+# 500 / 1280, so the proportions match rather than the absolute pixels. Two
+# things do not scale: `position: fixed` chrome (the play button, the footer
+# buttons) and the stat rail, which both sit outside the zoomed panel and keep
+# their native CSS size.
+#
+# Skewing note. CSS `transform: skewX()` on a card also shears that card's text,
+# which the stylesheets undo with a matching counter-skew on the inner overlay.
+# Godot's StyleBoxFlat.skew only shears the drawn box and leaves children alone,
+# so shearing the card's stylebox already yields the frontend's net result:
+# a slanted card with upright labels. No counter-skew is needed.
 
 const API_BASE: String = "https://worldofnads.onrender.com"
 const SKIN_SCENE: PackedScene = preload("res://scenes/skin.tscn")
@@ -17,6 +31,9 @@ const PREVIEW_SPIN_SPEED: float = 0.55
 const C_GOLD: Color = Color(1.0, 0.84313726, 0.0, 1.0)
 const C_PURPLE: Color = Color(0.5647059, 0.4862745, 1.0, 1.0)
 const C_MAGENTA: Color = Color(0.627451, 0.0, 1.0, 1.0)
+# .tab.active { color: var(--primary-light) } and --primary-light is
+# hsl(249, 100%, 74%) in frontend/src/index.css.
+const C_TAB_ACTIVE: Color = Color(0.55686277, 0.47843137, 1.0, 1.0)
 
 const TAB_EVENTS: String = "events"
 const TAB_REWARDS: String = "rewards"
@@ -60,7 +77,7 @@ const TIER_FONTS: Dictionary = {
 @onready var _match_scroll: ScrollContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Content/MatchScroll") as ScrollContainer
 @onready var _match_cards: HBoxContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Content/MatchScroll/MatchCards") as HBoxContainer
 @onready var _reward_scroll: ScrollContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Content/RewardScroll") as ScrollContainer
-@onready var _reward_empty: Label = get_node_or_null("CanvasLayer/RightPanel/Margin/Content/RewardScroll/RewardList/RewardEmpty") as Label
+@onready var _reward_empty: Control = get_node_or_null("CanvasLayer/RightPanel/Margin/Content/RewardScroll/RewardList/RewardEmpty") as Control
 @onready var _store_scroll: ScrollContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Content/StoreScroll") as ScrollContainer
 @onready var _store_grid: GridContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Content/StoreScroll/StoreGrid") as GridContainer
 
@@ -503,15 +520,20 @@ func _build_match_card(match: Dictionary) -> Control:
 
 	var card := PanelContainer.new()
 	card.set_meta("match_id", match_id)
-	card.custom_minimum_size = Vector2(84, 116)
+	# 330x220 at the CSS reference width, scaled by 500 / 1280 to the project's
+	# 500px base viewport. A hair narrower than the panel so the next card peeks in.
+	card.custom_minimum_size = Vector2(124, 86)
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	card.add_theme_stylebox_override("panel", _match_card_style(selected))
 
+	# .match-card rests at opacity 0.5; the selected card lifts to 1. A completed
+	# match additionally gets grayscale(100%) brightness(0.7), which a modulate
+	# cannot express, so it dims to the same visible weight instead.
 	if status == "completed":
-		card.modulate = Color(0.62, 0.62, 0.62, 0.85)
-	elif not selected:
-		card.modulate = Color(1, 1, 1, 0.55)
+		card.modulate = Color(0.7, 0.7, 0.7, 0.5)
+	else:
+		card.modulate = Color(1, 1, 1, 1.0 if selected else 0.5)
 
 	var stack := VBoxContainer.new()
 	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -523,7 +545,7 @@ func _build_match_card(match: Dictionary) -> Control:
 	prize.text = str(match.get("prize", "")).to_upper()
 	prize.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	prize.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	prize.add_theme_font_size_override("font_size", 7)
+	prize.add_theme_font_size_override("font_size", 5)
 	prize.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	prize.add_theme_stylebox_override("normal", _prize_style())
 	_apply_font(prize)
@@ -534,7 +556,8 @@ func _build_match_card(match: Dictionary) -> Control:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(spacer)
 
-	# .match-card-content - purple gradient plate along the bottom edge.
+	# .match-card-content - purple gradient plate along the bottom edge. The overlay
+	# is justify-content: flex-end, so the spacer above pushes it down.
 	var plate := PanelContainer.new()
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	plate.add_theme_stylebox_override("panel", _plate_style(C_MAGENTA, 0.62))
@@ -545,15 +568,18 @@ func _build_match_card(match: Dictionary) -> Control:
 	plate_stack.add_theme_constant_override("separation", 1)
 	plate.add_child(plate_stack)
 
+	# .grayscale-card forces every text child to black with no shadow.
+	var text_color := Color(0, 0, 0, 1) if status == "completed" else Color(1, 1, 1, 1)
+
 	if selected:
 		# Selected cards swap the sponsor for the description (see Dashboard.tsx).
 		var desc := Label.new()
 		desc.text = str(match.get("description", ""))
 		desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		desc.custom_minimum_size = Vector2(0, 52)
-		desc.add_theme_font_size_override("font_size", 6)
-		desc.add_theme_color_override("font_color", Color(1, 1, 1, 0.92))
+		desc.custom_minimum_size = Vector2(0, 38)
+		desc.add_theme_font_size_override("font_size", 5)
+		desc.add_theme_color_override("font_color", text_color if status == "completed" else Color(1, 1, 1, 0.9))
 		_apply_font(desc)
 		plate_stack.add_child(desc)
 	else:
@@ -561,8 +587,8 @@ func _build_match_card(match: Dictionary) -> Control:
 		sponsor.text = str(match.get("sponsor", "")).to_upper()
 		sponsor.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		sponsor.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		sponsor.add_theme_font_size_override("font_size", 8)
-		sponsor.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+		sponsor.add_theme_font_size_override("font_size", 7)
+		sponsor.add_theme_color_override("font_color", text_color)
 		_apply_font(sponsor)
 		plate_stack.add_child(sponsor)
 
@@ -636,12 +662,15 @@ func _build_store_card(item: Dictionary) -> Control:
 	var owned := _is_owned(item)
 
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(74, 68)
+	# .store-grid is three columns of 110px-tall cards at the CSS reference width;
+	# 500 / 1280 puts that at roughly 50x44 in this project's base viewport.
+	card.custom_minimum_size = Vector2(50, 44)
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	card.add_theme_stylebox_override("panel", _store_card_style(selected))
-	if not owned:
-		# .store-card.unowned
-		card.modulate = Color(1, 1, 1, 0.62)
+	# .store-card rests at opacity 0.7 and .unowned pulls it to 0.62; the selected card
+	# is forced back to 1 regardless of ownership.
+	if not selected:
+		card.modulate = Color(1, 1, 1, 0.62 if not owned else 0.7)
 
 	var stack := VBoxContainer.new()
 	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -671,14 +700,15 @@ func _build_store_card(item: Dictionary) -> Control:
 	_apply_font(name_label)
 	stack.add_child(name_label)
 
-	# .store-card-info p - "Owned" in place of the price once the skin is held.
+	# .store-card-info p - "Owned" in place of the price once the skin is held. The
+	# dark colour scheme overrides the #ff2496 pink to white.
 	var price_label := Label.new()
 	price_label.text = "OWNED" if owned else str(item.get("price", "")).to_upper()
 	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	price_label.clip_text = true
 	price_label.add_theme_font_size_override("font_size", 6)
-	price_label.add_theme_color_override("font_color", Color(1, 0.14117648, 0.5882353, 1))
+	price_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	_apply_font(price_label)
 	stack.add_child(price_label)
 
@@ -693,18 +723,18 @@ func _build_store_card(item: Dictionary) -> Control:
 		_apply_font(tier_label)
 		stack.add_child(tier_label)
 
-	# .xp-requirement - the level gate, shown only while the skin is unowned and the
-	# requirement is above zero. Turns gold once the balance meets it.
+	# .xp-requirement - "Lvl N required", shown only while the skin is unowned and the
+	# requirement is above zero.
 	var required_xp := int(item.get("required_xp", 0))
 	if required_xp > 0 and not owned:
 		var xp_label := Label.new()
-		xp_label.text = "LVL %d" % _level_for_xp(required_xp)
+		xp_label.text = "LVL %d REQ" % _level_for_xp(required_xp)
 		xp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		xp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		xp_label.clip_text = true
 		xp_label.add_theme_font_size_override("font_size", 5)
 		var xp_met := xp >= float(required_xp)
-		xp_label.add_theme_color_override("font_color", C_GOLD if xp_met else Color(0.8, 0.8, 0.8, 1))
+		xp_label.add_theme_color_override("font_color", C_GOLD if xp_met else Color(1, 1, 1, 0.7))
 		_apply_font(xp_label)
 		stack.add_child(xp_label)
 
@@ -762,7 +792,7 @@ func _refresh_skin_preview() -> void:
 	if _skin_preview_name != null:
 		_skin_preview_name.text = str(item.get("name", ""))
 	if _skin_preview_meta != null:
-		_skin_preview_meta.text = "OWNED" if _is_owned(item) else str(item.get("price", ""))
+		_skin_preview_meta.text = "Owned" if _is_owned(item) else str(item.get("price", ""))
 
 
 # ---------------------------------------------------------------- play + footer
@@ -772,6 +802,8 @@ func _refresh_play_button() -> void:
 	if _play_button != null:
 		_play_button.visible = show_button
 		_play_button.disabled = not _can_play()
+		# .play-fixed.disabled dims the whole button to 0.5 on top of its white ring.
+		_play_button.modulate = Color(1, 1, 1, 0.5) if _play_button.disabled else Color(1, 1, 1, 1)
 	_update_play_button_text()
 
 
@@ -793,9 +825,9 @@ func _update_play_button_text() -> void:
 	if str(match.get("cta_mode", "")) == "play":
 		_play_button.text = "READY!"
 	elif remaining > 0.0:
-		_play_button.text = "STARTS IN: %s" % _format_countdown(remaining)
+		_play_button.text = "Starts in: %s" % _format_countdown(remaining)
 	else:
-		_play_button.text = "NOT LIVE"
+		_play_button.text = "Not Live"
 
 
 func _can_play() -> bool:
@@ -866,7 +898,7 @@ func _refresh_footer() -> void:
 		elif xp >= required_xp:
 			_mint_button.text = "MINT"
 		else:
-			_mint_button.text = "NEED LVL %d" % _level_for_xp(required_xp)
+			_mint_button.text = "Need Lvl %d" % _level_for_xp(required_xp)
 
 	if _equip_button != null:
 		_equip_button.visible = owned
@@ -970,8 +1002,8 @@ func _set_tab_active(button: Button, active: bool) -> void:
 	# and size but not `scale`, however scaling a centred button inside a packed
 	# row bleeds over its neighbours, so the emphasis is carried by font size.
 	button.modulate = Color(1, 1, 1, 1) if active else Color(1, 1, 1, 0.35)
-	button.add_theme_font_size_override("font_size", 14 if active else 11)
-	button.add_theme_color_override("font_color", C_PURPLE if active else Color(1, 1, 1, 1))
+	button.add_theme_font_size_override("font_size", 12 if active else 8)
+	button.add_theme_color_override("font_color", C_TAB_ACTIVE if active else Color(1, 1, 1, 1))
 
 
 func _set_filter_active(button: Button, active: bool) -> void:
@@ -1004,18 +1036,33 @@ func _badge_style(color: Color) -> StyleBoxFlat:
 
 
 func _tier_style(tier: String) -> StyleBoxFlat:
+	# .store-tier: 0 6px horizontal padding, 2px radius, line-height 1.6.
 	var style := StyleBoxFlat.new()
 	style.bg_color = TIER_COLORS.get(tier, Color(0, 0, 0, 0.5))
-	style.content_margin_left = 3.0
-	style.content_margin_right = 3.0
+	style.set_corner_radius_all(2)
+	style.content_margin_left = 6.0
+	style.content_margin_right = 6.0
 	style.content_margin_top = 0.0
 	style.content_margin_bottom = 0.0
 	return style
 
 
 func _filter_style(active: bool) -> StyleBoxFlat:
+	# .filter has no background of its own; only .filter.active fills #00000020.
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0, 0, 0, 0.125) if active else Color(0, 0, 0, 0)
+	style.content_margin_left = 5.0
+	style.content_margin_right = 5.0
+	style.content_margin_top = 2.0
+	style.content_margin_bottom = 2.0
+	return style
+
+
+func _prize_style() -> StyleBoxFlat:
+	# .match-reward: rgba(0, 0, 0, 0.55) plate, 6px radius, 4px 8px padding.
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0.55)
+	style.set_corner_radius_all(6)
 	style.content_margin_left = 3.0
 	style.content_margin_right = 3.0
 	style.content_margin_top = 1.0
@@ -1023,19 +1070,11 @@ func _filter_style(active: bool) -> StyleBoxFlat:
 	return style
 
 
-func _prize_style() -> StyleBoxFlat:
-	# .match-reward: rgba(0, 0, 0, 0.55) plate, 6px radius.
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0, 0, 0, 0.55)
-	style.set_corner_radius_all(6)
-	style.content_margin_left = 4.0
-	style.content_margin_right = 4.0
-	style.content_margin_top = 1.0
-	style.content_margin_bottom = 1.0
-	return style
-
-
 func _match_card_style(selected: bool) -> StyleBoxFlat:
+	# .match-card: border-radius 0, skewX(-5deg) with the overlay counter-skewed by
+	# 5deg. Godot only shears the stylebox, so the labels come out upright here for
+	# the same reason the stat pills do. The card's background image is not ported
+	# (matches carry no artwork), so the plate stands in for it.
 	var style := StyleBoxFlat.new()
 	if selected:
 		style.bg_color = Color(0.12941177, 0.0, 0.24313726, 0.95)
@@ -1045,7 +1084,8 @@ func _match_card_style(selected: bool) -> StyleBoxFlat:
 		style.shadow_size = 4
 	else:
 		style.bg_color = Color(0.08627451, 0.04313726, 0.18039216, 0.85)
-	style.set_corner_radius_all(6)
+	style.set_corner_radius_all(0)
+	style.skew = -0.0872665
 	style.content_margin_left = 4.0
 	style.content_margin_right = 4.0
 	style.content_margin_top = 4.0
@@ -1054,19 +1094,23 @@ func _match_card_style(selected: bool) -> StyleBoxFlat:
 
 
 func _store_card_style(selected: bool) -> StyleBoxFlat:
-	# The dark-scheme card is #00000020 over the purple panel. The frontend hides the
-	# border in that scheme too, but the port draws no skin thumbnail, so a hairline keeps
-	# the otherwise near-invisible card readable.
+	# .store-card: radius 0, skewX(-5deg) with the image and info counter-skewed by
+	# 5deg, which again comes free here because Godot only shears the stylebox. The
+	# dark scheme drops the border to transparent, so a hairline is kept to keep the
+	# card readable now that the port draws no thumbnail to fill it.
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0, 0, 0, 0.125)
+	style.skew = -0.0872665
 	if selected:
+		# .store-card.selected is a 3px black ring in the light scheme, which the
+		# dark scheme overrides to white, plus scale 1.1 and opacity 1.
 		style.border_color = Color(1, 1, 1, 1)
 		style.set_border_width_all(2)
 	else:
 		style.border_color = Color(1, 1, 1, 0.28)
 		style.set_border_width_all(1)
-	style.content_margin_left = 3.0
-	style.content_margin_right = 3.0
-	style.content_margin_top = 3.0
-	style.content_margin_bottom = 3.0
+	style.content_margin_left = 2.0
+	style.content_margin_right = 2.0
+	style.content_margin_top = 2.0
+	style.content_margin_bottom = 2.0
 	return style
