@@ -22,10 +22,16 @@ signal camera_dragged(relative: Vector2)
 @export var jump_press_duration: float = 0.2
 @export var keep_position_on_release: bool = false # leave the knob where it was last used instead of snapping it back to the center
 @export var rest_opacity: float = 0.25 # knob alpha while it sits idle at the center
+@export var lock_joystick_position: bool = false # anchor the base where it sits instead of jumping to the first touch
+@export var keep_locked_position_on_resize: bool = true # re-clamp the anchor when the viewport changes size
 
 var radiusJoyStick: float = 0.0
 var radiusJoyBase: float = 0.0
 var maxRadius: float = 0.0
+# Home position for the base, captured once in _ready and reused whenever
+# lock_joystick_position is on so the base never chases the finger.
+var locked_base_position: Vector2 = Vector2.ZERO
+var _last_viewport_size: Vector2 = Vector2.ZERO
 var lock_target_position: Vector2 = Vector2.ZERO # The shared overlap point
 var return_to_center: bool = true
 var keys_pressed: Dictionary = {
@@ -59,15 +65,28 @@ var jump_release_token: int = 0
 @onready var joy_base_node: Node = get_node_or_null("../JoyBase")
 @export var joy_lock: Sprite2D 
 
+# set() lets a settings menu flip the pin at runtime; _apply_locked_base_position
+# does the work either way.
+func set_lock_joystick_position(locked: bool) -> void:
+	lock_joystick_position = locked
+	_apply_locked_base_position()
+
 func _ready():
 	add_to_group("touch_joystick")
 	var viewport_size = get_viewport().get_visible_rect().size
+	_last_viewport_size = viewport_size
 	screen_orientation = "portrait" if viewport_size.y > viewport_size.x else "landscape"
 
 	radiusJoyStick = global_scale.x * texture.get_size().x / 2
 	if joy_base_node != null:
 		radiusJoyBase = joy_base_node.global_scale.x * joy_base_node.texture.get_size().x / 2
-	
+
+	# Remember where the base was authored so lock_joystick_position can pin it
+	# there instead of following the first touch.
+	if touch_joystick_node != null:
+		locked_base_position = touch_joystick_node.position
+	_apply_locked_base_position()
+
 	# Consistency: Set max radius and the lock overlap point
 	maxRadius = radiusJoyBase + ((radiusJoyStick * 1)-radiusJoyStick)
 	lock_target_position = Vector2(0, -((maxRadius * 0.9) * auto_lock_north_distance_multiplier )) # Adjust 0.9 to change how far up it locks
@@ -186,6 +205,16 @@ func _process(delta):
 		_release_all_keys()
 		modulate.a = lerp(modulate.a, rest_opacity, delta * 10)
 	
+	# Pinned base: keep it visible and on-screen even when idle.
+	if lock_joystick_position:
+		var viewport_size := get_viewport().get_visible_rect().size
+		if viewport_size != _last_viewport_size:
+			_last_viewport_size = viewport_size
+			screen_orientation = "portrait" if viewport_size.y > viewport_size.x else "landscape"
+			_clamp_locked_base_to_viewport(viewport_size)
+		if touch_joystick_node != null and not touch_joystick_node.visible:
+			touch_joystick_node.visible = true
+	
 	_update_lock_indicator_visuals(delta)
 
 func _update_visuals():
@@ -258,15 +287,53 @@ func _is_double_tap(tap_pos: Vector2) -> bool:
 	var now = Time.get_ticks_msec() / 1000.0
 	return (now - last_tap_time) <= double_tap_interval and (tap_pos - last_tap_position).length() < 80.0
 
+func _apply_locked_base_position() -> void:
+	if not lock_joystick_position:
+		return
+	if touch_joystick_node == null:
+		return
+	touch_joystick_node.position = locked_base_position
+	global_position = locked_base_position
+
+# A pinned base can end up off-screen after a rotate or window resize, so pull
+# it back inside the viewport.
+func _clamp_locked_base_to_viewport(viewport_size: Vector2) -> void:
+	if not lock_joystick_position or not keep_locked_position_on_resize:
+		return
+	if touch_joystick_node == null:
+		return
+	var margin := maxf(radiusJoyBase, radiusJoyStick)
+	var min_x := margin
+	var max_x := maxf(min_x, viewport_size.x - margin)
+	var min_y := margin
+	var max_y := maxf(min_y, viewport_size.y - margin)
+	var clamped := Vector2(
+		clampf(locked_base_position.x, min_x, max_x),
+		clampf(locked_base_position.y, min_y, max_y)
+	)
+	if clamped == locked_base_position:
+		return
+	locked_base_position = clamped
+	touch_joystick_node.position = clamped
+	global_position = clamped
+
 func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick: Node):
 	active_joystick_index = touch_index
 	touchInsideJoystick = true
 	north_drag_distance_accumulated = 0.0
 	lock_candidate_started_at = -1.0
 	last_drag_was_north = false
-	touch_joystick.position = touch_pos
-	global_position = touch_pos
-	position = Vector2.ZERO
+	if lock_joystick_position:
+		# Base stays pinned, so the knob has to jump straight to the finger.
+		# Offset from the base's real global position rather than the cached
+		# one, in case the parent has been moved since _ready.
+		touch_joystick.position = locked_base_position
+		global_position = touch_joystick.global_position
+		position = touch_pos - touch_joystick.global_position
+	else:
+		touch_joystick.position = touch_pos
+		global_position = touch_pos
+		position = Vector2.ZERO
 	touch_joystick.visible = true
 	
 	if _is_double_tap(touch_pos):

@@ -375,7 +375,7 @@ text = "loading
 [node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]
 
 [node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=203270884]
-position = Vector2(105, 386)
+position = Vector2(125, 375)
 
 [node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=121289564]
 anchors_preset = 8
@@ -393,31 +393,10 @@ color = Color(1, 1, 1, 0)
 metadata/_edit_use_anchors_ = true
 
 [node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=420255833]
-scale = Vector2(1.1, 1.1)
+scale = Vector2(0.8, 0.8)
 texture = ExtResource("9_qkknv")
 
 [node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyBase" unique_id=1853570535]
-modulate = Color(1, 1, 1, 0.6313726)
-material = SubResource("ShaderMaterial_q62xx")
-custom_minimum_size = Vector2(130, 130)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -104.0
-offset_top = -104.0
-offset_right = -24.0
-offset_bottom = -24.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
-
-[node name="Button2" type="Button" parent="Joystick/TouchJoyStick/JoyBase" unique_id=1458650178]
 modulate = Color(1, 1, 1, 0.6313726)
 material = SubResource("ShaderMaterial_q62xx")
 custom_minimum_size = Vector2(130, 130)
@@ -446,6 +425,7 @@ scale = Vector2(0.4, 0.4)
 texture = ExtResource("9_qkknv")
 
 [node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyLock/JoyLock" unique_id=379869769]
+visible = false
 material = SubResource("ShaderMaterial_q62xx")
 custom_minimum_size = Vector2(130, 130)
 anchors_preset = 8
@@ -466,12 +446,15 @@ theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
 theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
 
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=661345483 node_paths=PackedStringArray("joy_lock")]
-scale = Vector2(0.6, 0.6)
+scale = Vector2(0.5, 0.5)
 texture = ExtResource("9_qkknv")
 script = ExtResource("9_mphia")
 auto_lock_hold_seconds = 0.0
 auto_lock_forward_min_strength = 0.1
-auto_lock_north_distance_multiplier = 5.0
+auto_lock_north_distance_multiplier = 2.5
+disable_joystick_lock = true
+lock_joystick_position = true
+keep_locked_position_on_resize = false
 joy_lock = NodePath("../JoyLock")
 
 [node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyKnob" unique_id=2054266225]

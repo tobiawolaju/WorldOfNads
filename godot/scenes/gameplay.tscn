@@ -213,7 +213,7 @@ camera = NodePath("../../../../PlayerManager/Camera3D")
 
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("11_hpwea")]
 
-[node name="LocalPickup" parent="." instance=ExtResource("14_pkup")]
+[node name="LocalPickup" parent="." unique_id=991691993 instance=ExtResource("14_pkup")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 6.9, 1.6)
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("12_nt65e")]
