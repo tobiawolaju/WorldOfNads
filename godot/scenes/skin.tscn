@@ -1774,8 +1774,7 @@ bone_idx = 5
 [node name="offset" type="Node3D" parent="Skeleton3D/heddds" unique_id=603308018]
 
 [node name="vikingHemblet" type="MeshInstance3D" parent="Skeleton3D/heddds/offset" unique_id=247885085]
-transform = Transform3D(1.4085442, 1.5716068e-09, -9.313226e-09, -5.2386895e-10, 1.4961865, 0, 5.5879354e-09, 0, 1.6018816, 8.195639e-08, 0.39002407, 5.9604645e-07)
-visible = false
+transform = Transform3D(1.6, 1.6850555e-09, -9.6217105e-09, -1.5868681e-09, 1.699, 1.684454e-17, 8.463297e-09, -6.8200975e-18, 1.819, 9.135157e-05, 0.41481376, 0.0006481707)
 mesh = SubResource("ArrayMesh_58w2h")
 
 [node name="strawhat" type="MeshInstance3D" parent="Skeleton3D/heddds/offset" unique_id=1226709350]
@@ -1802,7 +1801,6 @@ mesh = SubResource("ArrayMesh_ljn8q")
 
 [node name="hair" type="MeshInstance3D" parent="Skeleton3D/heddds/offset" unique_id=42908423]
 transform = Transform3D(1, 6.9849193e-10, -7.450581e-09, 5.820766e-11, 0.5014365, 5.5879354e-09, 5.5879354e-09, 0, 1.0000004, 0, 1.06, 0)
-visible = false
 cast_shadow = 0
 mesh = SubResource("ArrayMesh_vvx07")
 
@@ -1853,6 +1851,7 @@ mesh = SubResource("ArrayMesh_pd5sa")
 
 [node name="rown" type="MeshInstance3D" parent="Skeleton3D/heddds/offset" unique_id=1949765803]
 transform = Transform3D(0.9297753, 0.00393227, 0.0007631326, -0.019805063, 0.171581, 0.26422918, 0.005073081, -0.05084786, 0.8916739, 0, 0.94, -0.05)
+visible = false
 cast_shadow = 0
 mesh = SubResource("ArrayMesh_ajlpc")
 
@@ -1862,6 +1861,7 @@ bone_name = "mixamorig_Hips"
 bone_idx = 0
 
 [node name="duck" type="Node3D" parent="Skeleton3D/hips" unique_id=1503676223]
+visible = false
 
 [node name="Cylinder_002" type="MeshInstance3D" parent="Skeleton3D/hips/duck" unique_id=1962484263]
 transform = Transform3D(0.20439011, 0, 0, 0, 0.20341204, -0.019971428, 0, 0.019971428, 0.20341204, 0, 0.22023724, 1.0426344)
@@ -1879,7 +1879,6 @@ mesh = SubResource("ArrayMesh_br1tc")
 
 [node name="strpon" type="Node3D" parent="Skeleton3D/hips" unique_id=893563472]
 transform = Transform3D(0.9999994, -5.4948032e-08, -1.4901161e-08, -1.0244548e-08, 1, 5.9604645e-08, 8.195639e-08, 1.4901161e-07, 1.0000012, -0.025909027, 0.31022084, -0.019338364)
-visible = false
 
 [node name="Cube_012" type="MeshInstance3D" parent="Skeleton3D/hips/strpon" unique_id=574460229]
 transform = Transform3D(0.17718174, 0, -2.9802322e-08, 1.1641532e-09, 0.18093614, -0.22562303, -1.8626451e-09, 0.05549857, 0.7355755, -1.4901161e-08, -0.513034, 1.5185272)
