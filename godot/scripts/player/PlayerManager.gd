@@ -114,6 +114,10 @@ func _return_player_to_pool(player: Node3D):
 	player.visible = false
 	player.process_mode = PROCESS_MODE_DISABLED
 	player.global_position = Vector3(0, -100, 0)
+	if player.has_method("set_mesh_lod_enabled"):
+		player.set_mesh_lod_enabled(true)
+	if player.has_method("set_animation_lod_enabled"):
+		player.set_animation_lod_enabled(true)
 	if player.has_method("cache_animation_state"):
 		player.cache_animation_state("idle")
 var world_environment: WorldEnvironment = null
@@ -937,6 +941,11 @@ func _update_remote_player_skin(player: Node3D, skin_name: String):
 		player.add_child(child)
 	source.queue_free()
 
+	# The new Skeleton3D starts visible; re-apply LOD so a distant player
+	# doesn't pop its mesh back in until the next LOD tick.
+	if player.has_method("refresh_mesh_lod"):
+		player.refresh_mesh_lod()
+
 func get_local_spawn_position() -> Vector3:
 	if myplayerswpanpoint:
 		return myplayerswpanpoint.global_position
@@ -1122,6 +1131,8 @@ func _apply_remote_interpolation() -> void:
 			var should_animate := dist_sq <= REMOTE_ANIMATION_LOD_DISTANCE_SQ
 			if node.has_method("set_animation_lod_enabled"):
 				node.set_animation_lod_enabled(should_animate)
+			if node.has_method("set_mesh_lod_enabled"):
+				node.set_mesh_lod_enabled(should_animate)
 			if should_animate and node.has_method("set_animation_state"):
 				node.set_animation_state(anim_state)
 
