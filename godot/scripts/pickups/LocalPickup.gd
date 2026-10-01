@@ -47,6 +47,10 @@ var _attach_node: Node3D = null
 
 func _ready() -> void:
 	add_to_group(GROUP)
+	# Run after the holder's AnimationTree and Skeleton3D, which both sit at the
+	# default priority of 0. Without this the copy can read the bone pose before
+	# it has been rewritten for this frame and the item trails by one frame.
+	process_priority = 100
 	# Layer 2 so the player Area3D (mask 2) detects it, like the chicken and lootbox.
 	collision_layer = 2
 	# Layer 1 is the world/terrain. The mask has to include it or the item falls
@@ -137,7 +141,12 @@ func _resolve_attach_node() -> void:
 
 
 # --- TICK ---
-func _physics_process(_delta: float) -> void:
+# Deliberately _process, not _physics_process. The holder's bone pose is written
+# during the animation/skeleton pass of the idle frame, so reading it from the
+# physics step returned last frame's bone and the flag visibly trailed the player
+# at 30 Hz. Following once per rendered frame keeps it welded to the back with no
+# extra interpolation.
+func _process(_delta: float) -> void:
 	if not is_held:
 		# Dropped: the engine owns the transform, nothing to drive.
 		return
