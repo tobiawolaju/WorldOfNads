@@ -78,7 +78,20 @@ func set_mesh_lod_enabled(enabled: bool) -> void:
 	if mesh_lod_enabled == enabled:
 		return
 	mesh_lod_enabled = enabled
-	visible = enabled
+	_apply_mesh_lod()
+
+# Toggles only the visual skeleton, never the root node's `visible`.
+# PlayerManager owns `visible` for its 50 m cull, and the name label should
+# stay readable past the mesh cutoff.
+func _apply_mesh_lod() -> void:
+	var skeleton := get_node_or_null("Skeleton3D") as Node3D
+	if skeleton:
+		skeleton.visible = mesh_lod_enabled
+
+# Re-applies the current LOD state to a freshly swapped-in Skeleton3D, since a
+# skin change replaces the node and resets its visibility.
+func refresh_mesh_lod() -> void:
+	_apply_mesh_lod()
 
 func refresh_animation_state() -> void:
 	if not animation_lod_enabled:

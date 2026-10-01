@@ -21,6 +21,9 @@ var lootbox_target: Node3D = null
 var _storm_eye_node: Node3D = null
 
 var _last_real_minimap_ms: float = 0.0
+var _last_storm_center: Vector2 = Vector2.ZERO
+var _last_storm_radius: float = -1.0
+var _storm_params_valid: bool = false
 
 # === SETTINGS ===
 @export var rotate_pointer: bool = true
@@ -309,8 +312,20 @@ func _update_storm_overlay() -> void:
 
 	var mat = storm_overlay.material
 	if mat is ShaderMaterial:
-		mat.set_shader_parameter("storm_center", center_uv)
-		mat.set_shader_parameter("storm_radius", radius_uv)
+		# Only push uniforms when the storm actually moved/shrank. The storm eye
+		# is static most of the time, so this skips nearly all redundant
+		# set_shader_parameter calls (each one dirties the material).
+		var changed := not _storm_params_valid
+		if not changed:
+			changed = not _last_storm_center.is_equal_approx(center_uv)
+		if not changed:
+			changed = not is_equal_approx(_last_storm_radius, radius_uv)
+		if changed:
+			mat.set_shader_parameter("storm_center", center_uv)
+			mat.set_shader_parameter("storm_radius", radius_uv)
+			_last_storm_center = center_uv
+			_last_storm_radius = radius_uv
+			_storm_params_valid = true
 		storm_overlay.visible = true
 
 func _apply_visibility(force_visible: bool = true) -> void:
