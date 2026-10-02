@@ -14,6 +14,14 @@ var local_player
 var npcs := []
 var _stress_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
+# Hand-off from dshbord.gd: READY counts down on the dashboard and then sends the
+# player here with the match they queued and the nad they picked, written straight
+# onto these exports by SceneTransition.change_scene() so the lobby can read them
+# without hunting them down again. Empty means "resolve it yourself", which is what
+# the frontend's /play?match=...&skin=... entry relies on.
+@export var selected_match_id: String = ""
+@export var selected_skin_id: String = ""
+
 const DEFAULT_SKIN_NAME := "s-default"
 const SKIN_SCENE: PackedScene = preload("res://scenes/skin.tscn")
 const API_BASE: String = "https://worldofnads.onrender.com"
@@ -163,6 +171,8 @@ func _pre_seed_from_session_storage() -> void:
 		print("SkinApplier (lobby): Pre-seeded %d skins from sessionStorage." % parsed.size())
 
 func _resolve_local_skin_name() -> String:
+	if selected_skin_id.strip_edges() != "":
+		return _normalize_skin_name(selected_skin_id)
 	if OS.has_feature("web"):
 		var raw_skin = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('skin') || ''")
 		if typeof(raw_skin) == TYPE_STRING:
@@ -170,6 +180,18 @@ func _resolve_local_skin_name() -> String:
 			if skin_name != "":
 				return _normalize_skin_name(skin_name)
 	return DEFAULT_SKIN_NAME
+
+
+# What the waiting room passes on when LobbyManager sends the player into the match.
+# Gameplay drives itself from its PlayerManager node, so the keys are addressed at
+# that node: the queued match id rides along next to the skin, which is the part
+# that has to survive -- on a native build there is no ?skin= in the URL to fall
+# back on.
+func match_handoff() -> Dictionary:
+	return {
+		"PlayerManager/selected_match_id": selected_match_id,
+		"PlayerManager/selected_skin_id": _resolve_local_skin_name(),
+	}
 
 func _normalize_skin_name(raw_skin: String) -> String:
 	var key := str(raw_skin).strip_edges().to_lower()

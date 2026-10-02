@@ -31,7 +31,7 @@ extends Node3D
 
 const API_BASE: String = "https://worldofnads.onrender.com"
 const SKIN_SCENE: PackedScene = preload("res://scenes/skin.tscn")
-const GAMEPLAY_SCENE: String = "res://scenes/gameplay.tscn"
+const LOBBY_SCENE: String = "res://scenes/lobby.tscn"
 
 const FONT_UI: Font = preload("res://assets/fonts/font1.ttf")
 const FONT_TAB: Font = preload("res://assets/fonts/font2.ttf")
@@ -1527,18 +1527,21 @@ func _begin_match() -> void:
 	_is_counting = false
 
 	var skin_id := _displayed_skin_id()
-	get_tree().set_meta("selected_match_id", selected_match_id)
-	get_tree().set_meta("selected_skin_id", skin_id)
-
 	if OS.has_feature("web"):
-		# lobby.gd reads ?skin= straight off window.location, so mirror the
-		# frontend's /play?match=...&skin=... hand-off without reloading the page.
+		# The web build can be reloaded at any point, and both the lobby and
+		# gameplay read ?match=/?skin= off window.location, so keep the address bar
+		# in step with what is handed over below.
 		JavaScriptBridge.eval(
 			"window.history.replaceState({}, '', window.location.pathname + '?match=%s&skin=%s');"
 			% [selected_match_id.uri_encode(), skin_id.uri_encode()]
 		)
 
-	Game.transition_layer.change_scene(GAMEPLAY_SCENE)
+	# The lobby takes the match that was queued and the nad that is equipped as
+	# exported properties, set on the scene before its _ready() runs.
+	Game.transition_layer.change_scene(LOBBY_SCENE, {
+		"selected_match_id": selected_match_id,
+		"selected_skin_id": skin_id,
+	})
 
 
 func _refresh_footer() -> void:
