@@ -22,5 +22,10 @@ func _on_server_ping_completed(_result, _response_code, _headers, _body):
 		await get_tree().create_timer(1.0).timeout  
 	status_label.text = "Let's go!"
 	
-	# Load the real gameplay scene that connects via WebSocket
-	Game.transition_layer.change_scene("res://scenes/gameplay.tscn")
+	# Load the real gameplay scene that connects via WebSocket, carrying on whatever
+	# the lobby was handed (the queued match, the chosen skin).
+	var lobby := get_parent()
+	var handoff: Dictionary = {}
+	if lobby != null and lobby.has_method("match_handoff"):
+		handoff = lobby.match_handoff()
+	Game.transition_layer.change_scene("res://scenes/gameplay.tscn", handoff)

@@ -12,6 +12,7 @@ var tween: Tween
 var is_transitioning := false
 var logo_base_scale := 1.0
 var _pending_scene := ""
+var _pending_payload := {}
 
 func _ready() -> void:
 	layer = 100
@@ -53,11 +54,17 @@ func _layout_nodes() -> void:
 	logo.scale = Vector2.ONE * maxf(0.05, logo_base_scale * 0.72)
 	logo.rotation = -0.18
 
-func change_scene(target_scene: String) -> void:
+## Fades out, swaps in `target_scene` and fades back in. `payload` is an optional
+## dictionary of exported properties to write on the incoming scene *before* its
+## _ready() runs, which is how a screen hands the next one what it needs (the
+## dashboard passes the queued match and the chosen skin to the lobby) instead of
+## leaving the values somewhere global for the next scene to go and look for.
+func change_scene(target_scene: String, payload: Dictionary = {}) -> void:
 	if is_transitioning:
 		return
 	is_transitioning = true
 	_pending_scene = target_scene
+	_pending_payload = payload
 	_layout_nodes()
 	backdrop.modulate.a = 0.0
 	flash.modulate.a = 0.0
@@ -97,7 +104,45 @@ func _on_flash_impact() -> void:
 	flash.modulate.a = 0.35
 
 func _on_swap_scene() -> void:
-	get_tree().change_scene_to_file(_pending_scene)
+	if _pending_payload.is_empty():
+		get_tree().change_scene_to_file(_pending_scene)
+		return
+	# A payload has to land before _ready(), and change_scene_to_file() instantiates
+	# the scene itself, so the swap is done by hand here instead.
+	var packed: PackedScene = load(_pending_scene)
+	if packed == null:
+		push_warning("SceneTransition: could not load %s, changing scene without its payload." % _pending_scene)
+		get_tree().change_scene_to_file(_pending_scene)
+		return
+	_swap_in.call_deferred(packed.instantiate(), _pending_payload)
+
+func _swap_in(instance: Node, payload: Dictionary) -> void:
+	for key in payload:
+		# A key is either "property" for the scene root or "Node/Path/property" for a
+		# child -- the gameplay scene drives itself from a PlayerManager node rather
+		# than from its root, so a bare name is not always enough.
+		var address := str(key)
+		var target := instance
+		var property := address
+		var slash := address.rfind("/")
+		if slash != -1:
+			target = instance.get_node_or_null(NodePath(address.substr(0, slash)))
+			property = address.substr(slash + 1)
+		if target == null or not _has_property(target, property):
+			push_warning("SceneTransition: %s cannot receive '%s'." % [_pending_scene, address])
+			continue
+		target.set(property, payload[key])
+	var previous := get_tree().current_scene
+	get_tree().root.add_child(instance)
+	get_tree().current_scene = instance
+	if previous != null and previous != instance:
+		previous.queue_free()
+
+func _has_property(node: Object, property: String) -> bool:
+	for info in node.get_property_list():
+		if str(info.get("name", "")) == property:
+			return true
+	return false
 
 func _on_transition_finished() -> void:
 	is_transitioning = false

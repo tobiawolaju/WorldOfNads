@@ -66,6 +66,11 @@ var _remote_lod_timer: float = 0.0
 const REMOTE_LOD_INTERVAL: float = 0.15 # Check distance 6 times per second
 var _storm_env_node: Node = null
 var local_username: String = ""
+# Hand-off from the screens that lead into a match (dshbord -> lobby -> here).
+# Written before _ready() by SceneTransition.change_scene(); empty falls back to
+# ?skin= on the URL, which is how the frontend's /play page enters the game.
+@export var selected_match_id: String = ""
+@export var selected_skin_id: String = ""
 var local_skin_name: String = DEFAULT_SKIN_NAME
 var local_display_name: String = "player"
 var _skin_cycle_index: int = -1
@@ -1275,6 +1280,9 @@ func _resolve_local_username() -> void:
 	local_username = str(raw_username).strip_edges()
 
 func _resolve_local_skin_name() -> void:
+	if selected_skin_id.strip_edges() != "":
+		local_skin_name = _normalize_skin_name(selected_skin_id)
+		return
 	if not OS.has_feature("web"):
 		return
 	var raw_skin = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('skin') || ''")
