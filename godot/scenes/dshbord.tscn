@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://ceofg5yk6faak" path="res://assets/img/gem.png" id="5_gem"]
 [ext_resource type="Texture2D" uid="uid://ceofg5yk6lkbk" path="res://assets/img/mon.png" id="6_mon"]
 [ext_resource type="Texture2D" uid="uid://87hft1j821i0" path="res://assets/img/lobbybg_masked.png" id="7_lobby"]
+[ext_resource type="AudioStream" uid="uid://cmi86vphfpbxg" path="res://assets/audio/lobbysong.mp3" id="8_lobbysong"]
 
 [sub_resource type="Environment" id="Environment_dshb"]
 ambient_light_source = 2
@@ -718,3 +719,8 @@ theme_override_styles/hover = SubResource("SB_equip")
 theme_override_styles/disabled = SubResource("SB_equip")
 theme_override_styles/focus = SubResource("SB_empty")
 icon = ExtResource("6_mon")
+
+[node name="LobbyMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("8_lobbysong")
+volume_db = -7.9588
+autoplay = true

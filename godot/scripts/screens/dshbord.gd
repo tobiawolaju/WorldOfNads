@@ -135,6 +135,7 @@ const DEFAULT_OWNED_IDS := ["s-default", "s-default-unshaded"]
 @onready var _fade_right: Control = get_node_or_null("CanvasLayer/RightPanel/Margin/Column/Content/FadeRight") as Control
 
 @onready var _play_button: Button = get_node_or_null("CanvasLayer/PlayButton") as Button
+@onready var _lobby_music: AudioStreamPlayer = get_node_or_null("LobbyMusic") as AudioStreamPlayer
 @onready var _footer_buttons: Control = get_node_or_null("CanvasLayer/FooterButtons") as Control
 @onready var _mint_button: Button = get_node_or_null("CanvasLayer/FooterButtons/MintButton") as Button
 @onready var _equip_button: Button = get_node_or_null("CanvasLayer/FooterButtons/EquipButton") as Button
@@ -202,6 +203,16 @@ func _ready() -> void:
 	if viewport != null and not viewport.size_changed.is_connected(_on_viewport_size_changed):
 		viewport.size_changed.connect(_on_viewport_size_changed)
 	_layout_panel_zoom()
+
+
+# Dashboard.tsx builds its lobby loop as `new Audio("/lobbysong.mp3")` with
+# `loop = true` / `volume = 0.4` and tears it down in the effect cleanup. The
+# scene carries the equivalent (an AudioStreamPlayer on `autoplay`, the imported
+# stream set to loop and `volume_db = linear_to_db(0.4)`), and leaving the
+# dashboard -- starting a match -- has to silence it the same way.
+func _exit_tree() -> void:
+	if _lobby_music != null:
+		_lobby_music.stop()
 
 
 func _on_viewport_size_changed() -> void:
