@@ -8,10 +8,13 @@ extends Node3D
 # width and relies on --fs-zoom to shrink it, while this project runs a 500x500
 # base viewport. Every dimension inside `.right-info-section` is therefore the
 # CSS value multiplied by 500 / 1280 = 0.390625, which the scene bakes in for
-# the static chrome and this script applies to the generated cards. Two things
-# do not scale: `position: fixed` chrome (the play button, the footer buttons)
-# and the stat rail, which both sit outside the zoomed panel and keep their
-# native CSS size.
+# the static chrome and this script applies to the generated cards. Because the
+# panel is 35% of the window, that base size only fills it at the 500px base
+# viewport, so _layout_panel_zoom() rescales the whole panel content by
+# `panel_width / 175` (see BASE_PANEL_WIDTH). Two things stay at native CSS size
+# instead: `position: fixed` chrome (the play button, the footer buttons) and the
+# stat rail, which both sit outside the zoomed panel, matching the frontend where
+# --fs-zoom only scales `.right-info-zoom`.
 #
 # Typography. The frontend picks a different family per surface: `font1`
 # (Burbank Big Cd Bk) for the dashboard UI and `font2` (Fortnite) for the tab
@@ -22,8 +25,9 @@ extends Node3D
 # Godot's StyleBoxFlat.skew only shears the drawn box and leaves children alone,
 # so shearing the card's stylebox already yields the frontend's net result:
 # a slanted card with upright labels. The exception is `.match-card`, whose
-# artwork is a child and therefore cannot be sheared at draw time; that skew is
-# pre-baked into match_card_bg.png instead (see assets/img/README).
+# artwork is a child and therefore cannot be sheared at draw time; that card is
+# drawn by assets/shaders/match_card.gdshader, which bakes the scale, the skew,
+# the radial dissolve, the halftone rim and the overlay into the artwork.
 
 const API_BASE: String = "https://worldofnads.onrender.com"
 const SKIN_SCENE: PackedScene = preload("res://scenes/skin.tscn")
@@ -31,7 +35,8 @@ const GAMEPLAY_SCENE: String = "res://scenes/gameplay.tscn"
 
 const FONT_UI: Font = preload("res://assets/fonts/font1.ttf")
 const FONT_TAB: Font = preload("res://assets/fonts/font2.ttf")
-const MATCH_ART: Texture2D = preload("res://assets/img/match_card_bg.png")
+const MATCH_SRC: Texture2D = preload("res://assets/img/lobbybg.jpeg")
+const MATCH_CARD_SHADER: Shader = preload("res://assets/shaders/match_card.gdshader")
 const STORE_PLATE: Texture2D = preload("res://assets/img/store_info_plate.png")
 const SKIN_DIR: String = "res://assets/img/skins/"
 
@@ -39,15 +44,41 @@ const DEFAULT_SKIN_ID: String = "s-default"
 const DEFAULT_ENERGY: int = 4
 const PLAY_COUNTDOWN_SECONDS: float = 4.0
 const PREVIEW_SPIN_SPEED: float = 0.55
+# The 3D preview is touch-driven (one finger orbits, two fingers pinch to zoom,
+# wheel and magnify gestures cover desktop/trackpad). Dragging is rad-per-pixel and
+# the pinch/zoom factors are clamped so the model can never be lost or inverted.
+const PREVIEW_ORBIT_SENSITIVITY: float = 0.012
+const PREVIEW_PITCH_MIN: float = -0.55
+const PREVIEW_PITCH_MAX: float = 1.10
+const PREVIEW_ZOOM_MIN: float = 0.45
+const PREVIEW_ZOOM_MAX: float = 3.0
+const PREVIEW_ZOOM_STEP: float = 1.12
+# Auto-spin pauses while the user is manipulating the preview and resumes after a
+# short idle so the gallery keeps its "living" rotation without fighting the finger.
+const PREVIEW_SPIN_RESUME_DELAY: float = 3.0
+
+# The right panel's static chrome is authored against a 175px-wide panel (35% of
+# the 500px base viewport). Dashboard.css lays that panel out at 35% of the window,
+# so the content has to grow with the panel or it ends up marooned in a wide empty
+# column on anything wider than the base. _layout_panel_zoom scales the whole panel
+# content by `panel_width / 175`, which also makes the absolute (native x 500/1280)
+# dimensions resolve back to their CSS values once the window reaches 1280px wide.
+const BASE_PANEL_WIDTH: float = 175.0
+
+# Godot rasterises glyphs at their nominal font size and then the GPU scales the
+# resulting texture. Because the panel content is laid out small and scaled up,
+# that leaves text blurry. `FontFile.oversampling` rasterises the glyphs at a
+# higher resolution instead (the engine equivalent of authoring the type large
+# and scaling it down), so _apply_text_oversampling() tracks the panel's total
+# device scale and keeps text crisp. Quantised to whole steps so a continuous
+# window drag doesn't rebuild the font cache every frame.
+const MAX_TEXT_OVERSAMPLING: float = 8.0
 
 # Dashboard palette (Dashboard.css).
 const C_GOLD: Color = Color(1.0, 0.84313726, 0.0, 1.0)
 const C_MAGENTA: Color = Color(0.627451, 0.0, 1.0, 1.0)
 const C_PIP_ON: Color = Color(0.99215686, 0.8784314, 0.2784314, 1.0)
 const C_PIP_OFF: Color = Color(0.72, 0.72, 0.72, 0.2)
-# .tab.active { color: var(--primary-light) } and --primary-light is
-# hsl(249, 100%, 74%) in frontend/src/index.css.
-const C_TAB_ACTIVE: Color = Color(0.55686277, 0.47843137, 1.0, 1.0)
 
 # .store-tier, under `prefers-color-scheme: dark` (the scheme this screen renders).
 const TIER_COLORS: Dictionary = {
@@ -86,6 +117,9 @@ const DEFAULT_OWNED_IDS := ["s-default", "s-default-unshaded"]
 @onready var _skin_preview_name: Label = get_node_or_null("CanvasLayer/SkinPreview/Name") as Label
 @onready var _skin_preview_meta: Label = get_node_or_null("CanvasLayer/SkinPreview/Meta") as Label
 
+@onready var _right_panel: Control = get_node_or_null("CanvasLayer/RightPanel") as Control
+@onready var _panel_margin: Control = get_node_or_null("CanvasLayer/RightPanel/Margin") as Control
+
 @onready var _tabs: HBoxContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Column/TabsMargin/Tabs") as HBoxContainer
 @onready var _tab_badge: Label = get_node_or_null("CanvasLayer/RightPanel/Margin/Column/TabsMargin/Tabs/TabStore/Badge") as Label
 @onready var _filters_events: HBoxContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Column/FiltersMargin/FiltersEvents") as HBoxContainer
@@ -107,10 +141,24 @@ const DEFAULT_OWNED_IDS := ["s-default", "s-default-unshaded"]
 
 var _preview_player: Node3D = null
 var _skin_applier: SkinApplier = SkinApplier.new()
+# 3D preview camera state. `_preview_base_distance` is the auto-framed distance from
+# `_frame_preview_camera()`; the live distance is that divided by `_preview_zoom`, and
+# the camera is placed on a sphere around `_preview_target` by the orbit angles.
+var _preview_target: Vector3 = Vector3.ZERO
+var _preview_base_distance: float = 3.0
+var _preview_orbit_yaw: float = 0.0
+var _preview_orbit_pitch: float = 0.0799  # atan(0.08), the original camera elevation.
+var _preview_zoom: float = 1.0
+var _preview_dragging: bool = false
+var _preview_touch_active: bool = false
+var _preview_touch_points: Dictionary = {}
+var _preview_pinch_last: float = -1.0
+var _preview_spin_pause: float = 0.0
 var _tab_buttons: Dictionary = {}
 var _filter_buttons: Dictionary = {}
 var _texture_cache: Dictionary = {}
 var _plate_gradient: GradientTexture2D = null
+var _plate_gradient_gray: GradientTexture2D = null
 
 var tab: String = TAB_EVENTS
 var filter: String = "live"
@@ -129,12 +177,14 @@ var xp: float = 0.0
 var _is_counting: bool = false
 var _elapsed: float = 0.0
 var _navigating: bool = false
+var _font_oversampling: float = -1.0
 
 
 func _ready() -> void:
 	owned_ids.assign(DEFAULT_OWNED_IDS)
 
 	_connect_chrome()
+	_hide_scrollbars()
 	_seed_local_store()
 	matches = _build_static_matches()
 	selected_match_id = _fallback_match_id()
@@ -146,11 +196,83 @@ func _ready() -> void:
 
 	if _preview_view != null and not _preview_view.resized.is_connected(_on_preview_resized):
 		_preview_view.resized.connect(_on_preview_resized)
+	if _right_panel != null and not _right_panel.resized.is_connected(_layout_panel_zoom):
+		_right_panel.resized.connect(_layout_panel_zoom)
+	var viewport := get_viewport()
+	if viewport != null and not viewport.size_changed.is_connected(_on_viewport_size_changed):
+		viewport.size_changed.connect(_on_viewport_size_changed)
+	_layout_panel_zoom()
+
+
+func _on_viewport_size_changed() -> void:
+	_layout_panel_zoom()
 
 
 func _on_preview_resized() -> void:
 	_frame_preview_camera()
 	_layout_lobby_bg()
+
+
+# The panel is 35% of the viewport and its contents are authored for a 175px-wide
+# panel, so scaling by `panel_width / 175` keeps them filling the column whatever
+# the window size. The content is laid out at `1 / scale` and then scaled back up,
+# exactly like `.right-info-zoom` does with --fs-zoom, so the internal anchors keep
+# resolving to the same on-screen percentage of the panel.
+func _layout_panel_zoom() -> void:
+	if _right_panel == null or _panel_margin == null:
+		return
+	var panel_size := _right_panel.size
+	if panel_size.x <= 0.0 or panel_size.y <= 0.0:
+		return
+	var factor := panel_size.x / BASE_PANEL_WIDTH
+	_panel_margin.scale = Vector2(factor, factor)
+	_panel_margin.size = Vector2(BASE_PANEL_WIDTH, panel_size.y / factor)
+	_panel_margin.position = Vector2.ZERO
+	_apply_text_oversampling()
+
+
+# Keeps the two dashboard fonts rasterised at (at least) their final on-screen
+# size. The panel scales by `factor` and the viewport stretch scales by
+# `content_scale`, so the total device scale is their product; rounding up means
+# the glyph texture is never stretched past its raster resolution. This is the
+# Godot counterpart of the frontend rendering type large and scaling it down:
+# without it the 3-7px base font is rasterised tiny and then magnified, which is
+# what made every label look soft before and after resizing.
+func _apply_text_oversampling() -> void:
+	var viewport := get_viewport()
+	if viewport == null:
+		return
+	var content_scale := viewport.get_final_transform().get_scale().y
+	if content_scale <= 0.0:
+		content_scale = 1.0
+	var panel_factor := 1.0
+	if _panel_margin != null:
+		panel_factor = maxf(1.0, _panel_margin.scale.y)
+	var target := clampf(ceilf(panel_factor * content_scale), 1.0, MAX_TEXT_OVERSAMPLING)
+	if is_equal_approx(target, _font_oversampling):
+		return
+	_font_oversampling = target
+	for font in [FONT_UI, FONT_TAB]:
+		var file := font as FontFile
+		if file != null:
+			file.oversampling = target
+
+
+# Dashboard.css hides every scrollbar (`scrollbar-width: none` + the
+# `::-webkit-scrollbar { display: none }` rules). An empty stylebox drops the
+# ScrollBar's minimum size to zero, so the bar both disappears and stops eating a
+# strip off the content edge.
+func _hide_scrollbars() -> void:
+	for scroll in [_match_scroll, _reward_scroll, _store_scroll]:
+		if scroll == null:
+			continue
+		for bar in [scroll.get_h_scroll_bar(), scroll.get_v_scroll_bar()]:
+			if bar == null:
+				continue
+			bar.add_theme_stylebox_override("scroll", _empty_style())
+			bar.add_theme_stylebox_override("grabber", _empty_style())
+			bar.add_theme_stylebox_override("grabber_highlight", _empty_style())
+			bar.add_theme_stylebox_override("grabber_pressed", _empty_style())
 
 
 # ---------------------------------------------------------------- chrome wiring
@@ -185,6 +307,11 @@ func _connect_chrome() -> void:
 	for key in _filter_buttons:
 		var filter_button: Button = _filter_buttons[key]
 		if filter_button != null:
+			# Pin every interaction state white so hovering doesn't flip the status/tier
+			# labels dark. _set_filter_active() refreshes font_color on each tab change.
+			filter_button.add_theme_color_override("font_hover_color", Color(1, 1, 1, 1))
+			filter_button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+			filter_button.add_theme_color_override("font_focus_color", Color(1, 1, 1, 1))
 			filter_button.pressed.connect(_on_filter_pressed.bind(key))
 
 	if _play_button != null:
@@ -228,7 +355,9 @@ func _on_filter_pressed(next_filter: String) -> void:
 # ------------------------------------------------------------------ frame loop
 
 func _process(delta: float) -> void:
-	if _preview_pivot != null:
+	if _preview_spin_pause > 0.0:
+		_preview_spin_pause = maxf(_preview_spin_pause - delta, 0.0)
+	if _preview_pivot != null and _preview_spin_pause <= 0.0:
 		_preview_pivot.rotate_y(delta * PREVIEW_SPIN_SPEED)
 
 	if _is_counting:
@@ -267,33 +396,23 @@ func _spawn_preview_player() -> void:
 	_frame_preview_camera()
 
 
-# The nad is ~1.6 units tall and the preview pane is portrait, so a hand-placed camera
-# transform either crops the crown or leaves the character a speck. Measuring the loaded
-# mesh instead keeps the whole body framed and re-fits when the pane is resized. The 75deg
-# field of view is ThreeScene's, so the perspective distortion matches the frontend.
+# The nad's real bounds are needed to frame it: skinned meshes follow the Skeleton3D's
+# bones (and the skeleton carries a 0.25 scale), so a mesh-space AABB under-reports the
+# character and leaves it a speck. Measuring the posed bones instead keeps the whole
+# body framed and re-fits when the pane is resized. The 75deg field of view is
+# ThreeScene's, so the perspective distortion matches the frontend.
 func _frame_preview_camera() -> void:
 	if _preview_camera == null or _preview_player == null:
 		return
 
-	var box := AABB()
-	var has_box := false
-	for node in _preview_player.find_children("*", "MeshInstance3D", true):
-		var mesh_node := node as MeshInstance3D
-		if mesh_node == null or mesh_node.mesh == null:
-			continue
-		var piece: AABB = mesh_node.transform * mesh_node.get_aabb()
-		if has_box:
-			box = box.merge(piece)
-		else:
-			box = piece
-			has_box = true
-	if not has_box or box.size.length_squared() <= 0.0:
+	var box := _preview_model_bounds()
+	if box.size.length_squared() <= 0.0:
 		return
 
-	var center := box.get_center()
-	# ThreeScene looks slightly above the model's centre (the orbit target sits at
-	# eye height), which leaves headroom under the crown.
-	var target := center + Vector3(0.0, box.size.y * 0.08, 0.0)
+	# The nad's core is the centre of its true bounds. Both the camera focus and the
+	# auto-spin pivot use it, so orbiting turns the camera around the body's middle and
+	# the idle spin rotates the body about that same point instead of its feet.
+	var target := box.get_center()
 	var radius := box.size.length() * 0.5
 	# _ready() runs before the first layout pass, so the pane can still be unsized here.
 	# _on_preview_resized() re-frames once the container settles.
@@ -310,8 +429,221 @@ func _frame_preview_camera() -> void:
 	var limiting := maxf(minf(half_vertical, half_horizontal), deg_to_rad(5.0))
 	var distance := radius / sin(limiting) * 1.15
 
-	_preview_camera.position = target + Vector3(0.0, distance * 0.08, distance)
-	_preview_camera.look_at(target, Vector3.UP)
+	_preview_target = target
+	_preview_base_distance = distance
+	# Put the spinning Pivot at the core and shift the model below it by the same
+	# amount, so a Pivot Y-rotation spins the nad about its core while the body keeps
+	# its place in the frame.
+	if _preview_pivot != null:
+		_preview_pivot.position = target
+	if _preview_root != null:
+		_preview_root.position = -target
+	_update_preview_camera()
+
+
+# Measures the preview model in its own local space. Skinned meshes follow the
+# Skeleton3D bones, so a mesh-space AABB under-reports them (the skeleton alone carries
+# a 0.25 scale, and the bind pose differs from the posed mesh); sampling the posed bones
+# captures the real character. Accessories hang off BoneAttachment3D, so their world
+# transforms are already correct and are merged in as unskinned meshes.
+func _preview_model_bounds() -> AABB:
+	var box := AABB()
+	var ready := false
+	if _preview_player == null:
+		return box
+	var to_local := _preview_player.global_transform.affine_inverse()
+
+	var skel := _preview_player.get_node_or_null("Skeleton3D") as Skeleton3D
+	if skel != null:
+		for i in skel.get_bone_count():
+			# Helper "_end" bones poke past the mesh (head/toe tips); skip them so the
+			# box matches the visible body.
+			if String(skel.get_bone_name(i)).ends_with("_end"):
+				continue
+			var world_point: Vector3 = to_local * (skel.global_transform * skel.get_bone_global_pose(i).origin)
+			if ready:
+				box = box.expand(world_point)
+			else:
+				box = AABB(world_point, Vector3.ZERO)
+				ready = true
+
+	for node in _preview_player.find_children("*", "MeshInstance3D", true):
+		var mesh_node := node as MeshInstance3D
+		if mesh_node == null or mesh_node.mesh == null or not mesh_node.is_visible_in_tree():
+			continue
+		if not mesh_node.skeleton.is_empty():
+			continue
+		var piece: AABB = to_local * (mesh_node.global_transform * mesh_node.get_aabb())
+		if ready:
+			box = box.merge(piece)
+		else:
+			box = piece
+			ready = true
+
+	if ready:
+		# Bones sit inside the body, so grow a little to reach the mesh surface.
+		box = box.grow(0.08)
+	return box
+
+
+# Places the camera on a sphere around `_preview_target` using the orbit angles and
+# the pinch/wheel zoom, keeping it level (look_at with UP). At the default angles
+# (yaw 0, pitch atan(0.08)) this resolves to the same transform _frame_preview_camera()
+# used before orbiting existed: target + (0, distance * 0.08, distance).
+func _update_preview_camera() -> void:
+	if _preview_camera == null:
+		return
+	var pitch := clampf(_preview_orbit_pitch, PREVIEW_PITCH_MIN, PREVIEW_PITCH_MAX)
+	var distance := _preview_base_distance / maxf(_preview_zoom, 0.01)
+	var direction := Vector3(
+		sin(_preview_orbit_yaw) * cos(pitch),
+		sin(pitch),
+		cos(_preview_orbit_yaw) * cos(pitch),
+	)
+	_preview_camera.position = _preview_target + direction * distance
+	_preview_camera.look_at(_preview_target, Vector3.UP)
+
+
+# ----------------------------------------------------------- preview touch/mouse
+
+# The preview pane has no interactive chrome of its own (the stat pills and skin
+# captions are not focusable), so unhandled input over its rect is free to drive the
+# camera. Using _unhandled_input keeps the right panel, play button and footer
+# buttons working: their GUI controls consume their own events first.
+func _unhandled_input(event: InputEvent) -> void:
+	if _preview_view == null:
+		return
+	if event is InputEventScreenTouch:
+		_handle_preview_screen_touch(event as InputEventScreenTouch)
+	elif event is InputEventScreenDrag:
+		_handle_preview_screen_drag(event as InputEventScreenDrag)
+	elif event is InputEventMouseButton:
+		_handle_preview_mouse_button(event as InputEventMouseButton)
+	elif event is InputEventMouseMotion:
+		_handle_preview_mouse_motion(event as InputEventMouseMotion)
+	elif event is InputEventMagnifyGesture:
+		_handle_preview_magnify(event as InputEventMagnifyGesture)
+	elif event is InputEventPanGesture:
+		_handle_preview_pan(event as InputEventPanGesture)
+
+
+func _event_in_preview(event_position: Vector2) -> bool:
+	return _preview_view.get_global_rect().has_point(event_position)
+
+
+func _pause_preview_spin() -> void:
+	_preview_spin_pause = PREVIEW_SPIN_RESUME_DELAY
+
+
+func _orbit_preview(relative: Vector2) -> void:
+	if relative == Vector2.ZERO:
+		return
+	# Match OrbitControls: drag right swings the camera left (the model follows the
+	# finger), drag down lifts the camera so more of the crown is visible.
+	_preview_orbit_yaw = wrapf(_preview_orbit_yaw - relative.x * PREVIEW_ORBIT_SENSITIVITY, -PI, PI)
+	_preview_orbit_pitch = clampf(_preview_orbit_pitch + relative.y * PREVIEW_ORBIT_SENSITIVITY, PREVIEW_PITCH_MIN, PREVIEW_PITCH_MAX)
+	_pause_preview_spin()
+	_update_preview_camera()
+
+
+func _zoom_preview(factor: float) -> void:
+	if factor <= 0.0:
+		return
+	_preview_zoom = clampf(_preview_zoom * factor, PREVIEW_ZOOM_MIN, PREVIEW_ZOOM_MAX)
+	_pause_preview_spin()
+	_update_preview_camera()
+
+
+func _pinch_distance() -> float:
+	var indices := _preview_touch_points.keys()
+	if indices.size() < 2:
+		return -1.0
+	var first: Vector2 = _preview_touch_points[indices[0]]
+	var second: Vector2 = _preview_touch_points[indices[1]]
+	return first.distance_to(second)
+
+
+func _handle_preview_mouse_button(event: InputEventMouseButton) -> void:
+	if _preview_touch_active:
+		# The OS also synthesises mouse events from the first finger; drop them so a
+		# single touch doesn't orbit twice.
+		return
+	match event.button_index:
+		MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				if _event_in_preview(event.position):
+					_preview_dragging = true
+					_pause_preview_spin()
+					get_viewport().set_input_as_handled()
+			elif _preview_dragging:
+				_preview_dragging = false
+				get_viewport().set_input_as_handled()
+		MOUSE_BUTTON_WHEEL_UP:
+			if _event_in_preview(event.position):
+				_zoom_preview(PREVIEW_ZOOM_STEP)
+				get_viewport().set_input_as_handled()
+		MOUSE_BUTTON_WHEEL_DOWN:
+			if _event_in_preview(event.position):
+				_zoom_preview(1.0 / PREVIEW_ZOOM_STEP)
+				get_viewport().set_input_as_handled()
+
+
+func _handle_preview_mouse_motion(event: InputEventMouseMotion) -> void:
+	if _preview_touch_active or not _preview_dragging:
+		return
+	_orbit_preview(event.relative)
+	get_viewport().set_input_as_handled()
+
+
+func _handle_preview_screen_touch(event: InputEventScreenTouch) -> void:
+	if event.pressed:
+		if not _event_in_preview(event.position):
+			return
+		_preview_touch_active = true
+		_preview_touch_points[event.index] = event.position
+		_preview_dragging = true
+		_preview_pinch_last = _pinch_distance()
+		_pause_preview_spin()
+		get_viewport().set_input_as_handled()
+		return
+
+	if not _preview_touch_points.has(event.index):
+		return
+	_preview_touch_points.erase(event.index)
+	if _preview_touch_points.is_empty():
+		_preview_touch_active = false
+		_preview_dragging = false
+		_preview_pinch_last = -1.0
+	else:
+		_preview_pinch_last = _pinch_distance()
+	get_viewport().set_input_as_handled()
+
+
+func _handle_preview_screen_drag(event: InputEventScreenDrag) -> void:
+	if not _preview_touch_points.has(event.index):
+		return
+	_preview_touch_points[event.index] = event.position
+	if _preview_touch_points.size() >= 2:
+		# Two fingers: the change in their separation is the zoom factor.
+		var separation := _pinch_distance()
+		if _preview_pinch_last > 0.0 and separation > 0.0:
+			_zoom_preview(separation / _preview_pinch_last)
+		_preview_pinch_last = separation
+	else:
+		_orbit_preview(event.relative)
+	get_viewport().set_input_as_handled()
+
+
+func _handle_preview_magnify(event: InputEventMagnifyGesture) -> void:
+	if _event_in_preview(event.position):
+		_zoom_preview(event.factor)
+		get_viewport().set_input_as_handled()
+
+
+func _handle_preview_pan(event: InputEventPanGesture) -> void:
+	if _event_in_preview(event.position):
+		_orbit_preview(event.delta * 12.0)
+		get_viewport().set_input_as_handled()
 
 
 # `.lobby-bg img` is width:100% with a height derived from the source aspect, centred
@@ -580,35 +912,47 @@ func _build_match_card(match: Dictionary) -> Control:
 	# to black on a completed card.
 	var text_color := Color(0, 0, 0, 1) if status == "completed" else Color(1, 1, 1, 1)
 
-	# `.match-card` is 330x220 in the CSS and carries `scale: 0.9`, so the layout
-	# slot is 129x86 here while the art it draws is 116x77. A Panel (not a
-	# PanelContainer) is used so the artwork can centre itself in the slot while
-	# the content plate pins to the bottom edge.
+	# `.match-card` is 330x220 in the CSS, laid out at 129x86 here and then drawn
+	# through the match-card shader, which applies the card's `scale: 0.9` and
+	# `skewX(-5deg)` itself. A Panel (not a PanelContainer) is used so the artwork
+	# can sit behind the plate, which pins to the bottom edge.
 	var card := Panel.new()
 	card.set_meta("match_id", match_id)
 	card.custom_minimum_size = Vector2(129, 86)
-	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	card.add_theme_stylebox_override("panel", _match_card_style(selected))
 
-	var art := TextureRect.new()
+	# The artwork is a canvas shader (assets/shaders/match_card.gdshader) rather than
+	# a baked texture so the dissolve and the halftone rim stay crisp when the panel
+	# zoom scales the card up. It samples the same cover image the frontend uses.
+	var art := ColorRect.new()
 	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	art.texture = MATCH_ART
-	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	art.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	art.color = Color(1, 1, 1, 1)
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var card_material := ShaderMaterial.new()
+	card_material.shader = MATCH_CARD_SHADER
+	card_material.set_shader_parameter("source_tex", MATCH_SRC)
+	card_material.set_shader_parameter("dot_opacity", 0.9 if selected else 0.6)
+	card_material.set_shader_parameter("neon_opacity", 1.0 if selected else 0.8)
+	card_material.set_shader_parameter("grayscale_amount", 1.0 if status == "completed" else 0.0)
+	card_material.set_shader_parameter("brightness_amount", 0.7 if status == "completed" else 1.0)
+	art.material = card_material
+	card.set_meta("card_material", card_material)
 	card.add_child(art)
 
 	# `.match-reward` - dark prize pill pinned to the top-right corner. It renders
 	# upright because .match-card-overlay counter-skews the card, so it is left
-	# unskewed here too.
+	# unskewed here too. `.match-card-overlay` carries the card's `scale: 0.9`, so
+	# `top/right: 10px` is measured in the overlay and then scaled: the pill's
+	# top-right lands at 0.05 + 10 * 0.9 / 330 = 0.0773 across, not 0.05 + 10/330.
 	var prize := Label.new()
-	prize.text = str(match.get("prize", ""))
+	prize.text = str(match.get("prize", "")).to_upper()
 	prize.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	prize.offset_left = -4.0
-	prize.offset_top = 4.0
-	prize.offset_right = -4.0
-	prize.offset_bottom = 4.0
+	prize.offset_left = -10.055
+	prize.offset_top = 7.813
+	prize.offset_right = -10.055
+	prize.offset_bottom = 7.813
 	prize.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	prize.grow_vertical = Control.GROW_DIRECTION_END
 	prize.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -618,11 +962,15 @@ func _build_match_card(match: Dictionary) -> Control:
 	_apply_font(prize, FONT_UI)
 	card.add_child(prize)
 
-	# `.match-card-content` - purple gradient plate along the bottom edge.
+	# `.match-card-content` - purple gradient plate along the bottom edge. It sits
+	# inside `.match-card-overlay`, which scales the whole overlay to 0.9, so the
+	# plate is inset 5% on each side and its bottom rests 5% up from the card edge.
 	var plate := PanelContainer.new()
 	plate.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	plate.offset_top = 0.0
-	plate.offset_bottom = 0.0
+	plate.anchor_left = 0.05
+	plate.anchor_right = 0.95
+	plate.offset_top = -4.3
+	plate.offset_bottom = -4.3
 	plate.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	plate.add_theme_stylebox_override("panel", _empty_style())
@@ -632,7 +980,7 @@ func _build_match_card(match: Dictionary) -> Control:
 	# spans the whole plate, so it is a sibling drawn first.
 	var plate_bg := TextureRect.new()
 	plate_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	plate_bg.texture = _get_plate_gradient()
+	plate_bg.texture = _get_plate_gradient(status == "completed")
 	plate_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	plate_bg.stretch_mode = TextureRect.STRETCH_SCALE
 	plate_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -643,7 +991,7 @@ func _build_match_card(match: Dictionary) -> Control:
 	padding.add_theme_constant_override("margin_left", 5)
 	padding.add_theme_constant_override("margin_top", 7)
 	padding.add_theme_constant_override("margin_right", 5)
-	padding.add_theme_constant_override("margin_bottom", 4)
+	padding.add_theme_constant_override("margin_bottom", 5)
 	plate.add_child(padding)
 
 	var content := VBoxContainer.new()
@@ -651,12 +999,10 @@ func _build_match_card(match: Dictionary) -> Control:
 	content.add_theme_constant_override("separation", 1)
 	padding.add_child(content)
 
-	if status == "completed":
-		# `.match-card[data-status="completed"]` is grayscale(100%) brightness(0.7),
-		# which a modulate approximates for the artwork and the text alike.
-		card.modulate = Color(0.7, 0.7, 0.7, 0.5 if not selected else 1.0)
-	elif not selected:
-		# `.match-card` rests at opacity 0.5; the selected card lifts to 1.
+	# `.match-card` rests at opacity 0.5; the selected card lifts to 1. The
+	# grayscale/brightness filter for a completed card lives in the shader so it
+	# leaves no colour behind in the artwork.
+	if not selected:
 		card.modulate = Color(1, 1, 1, 0.5)
 
 	if selected:
@@ -666,6 +1012,11 @@ func _build_match_card(match: Dictionary) -> Control:
 		desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		desc.max_lines_visible = 5
+		desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		# `.match-details-inner { line-height: 1.2 }` -> 12px * 1.2 = 14.4px, which is
+		# 14.4 * 500/1280 * 0.9 = 5.06px here. Manrope's own line box at size 4 is 7px,
+		# so the leading is pulled back by ~2px to keep the plate the CSS height.
+		desc.add_theme_constant_override("line_spacing", -2)
 		desc.add_theme_font_size_override("font_size", 4)
 		desc.add_theme_color_override("font_color", text_color if status == "completed" else Color(1, 1, 1, 0.9))
 		_apply_font(desc, FONT_UI)
@@ -675,6 +1026,7 @@ func _build_match_card(match: Dictionary) -> Control:
 		sponsor.text = str(match.get("sponsor", "")).to_upper()
 		sponsor.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		sponsor.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		sponsor.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		sponsor.add_theme_font_size_override("font_size", 6)
 		sponsor.add_theme_color_override("font_color", text_color)
 		_apply_font(sponsor, FONT_UI)
@@ -696,10 +1048,12 @@ func _on_match_card_input(event: InputEvent, match_id: String) -> void:
 
 
 func _on_match_card_enter(card: Control) -> void:
-	# `.match-card:hover` lifts to full opacity and scales to 1.08 about its centre.
+	# `.match-card:hover` lifts to full opacity, brightens the halftone rim and the
+	# neon overlay, and scales to 1.08 about its centre.
 	card.modulate.a = 1.0
 	card.pivot_offset = card.size * 0.5
 	card.scale = Vector2(1.08, 1.08)
+	_set_match_card_glow(card, true)
 
 
 func _on_match_card_exit(card: Control) -> void:
@@ -707,6 +1061,16 @@ func _on_match_card_exit(card: Control) -> void:
 	# `.match-card` rests at opacity 0.5 whether or not it is a completed match.
 	if str(card.get_meta("match_id", "")) != selected_match_id:
 		card.modulate.a = 0.5
+	_set_match_card_glow(card, false)
+
+
+func _set_match_card_glow(card: Control, hovered: bool) -> void:
+	var material := card.get_meta("card_material", null) as ShaderMaterial
+	if material == null:
+		return
+	var selected := str(card.get_meta("match_id", "")) == selected_match_id
+	material.set_shader_parameter("dot_opacity", 0.9 if hovered or selected else 0.6)
+	material.set_shader_parameter("neon_opacity", 1.0 if hovered or selected else 0.8)
 
 
 func _center_selected_card_deferred() -> void:
@@ -725,8 +1089,14 @@ func _center_selected_card_deferred() -> void:
 		if str(control.get_meta("match_id", "")) == selected_match_id:
 			var scroll_rect := _match_scroll.get_global_rect()
 			var card_rect := control.get_global_rect()
-			var leading := card_rect.position.x - scroll_rect.position.x + _match_scroll.scroll_horizontal
-			target_x = int(leading + card_rect.size.x * 0.5 - scroll_rect.size.x * 0.5)
+			# get_global_rect() is in screen space, so the delta has to come back
+			# through the panel scale before it can drive scroll_horizontal, which
+			# is measured in the scroll's (unscaled) local units.
+			var scale := _panel_margin.scale.x if _panel_margin != null else 1.0
+			scale = maxf(scale, 0.0001)
+			var delta_global := card_rect.position.x - scroll_rect.position.x \
+				+ card_rect.size.x * 0.5 - scroll_rect.size.x * 0.5
+			target_x = int(_match_scroll.scroll_horizontal + delta_global / scale)
 			break
 
 	if target_x > 0:
@@ -1197,26 +1567,41 @@ func _load_texture(path: String) -> Texture2D:
 	return texture
 
 
-func _get_plate_gradient() -> GradientTexture2D:
-	if _plate_gradient != null:
+func _get_plate_gradient(completed: bool = false) -> GradientTexture2D:
+	if completed:
+		if _plate_gradient_gray != null:
+			return _plate_gradient_gray
+	elif _plate_gradient != null:
 		return _plate_gradient
 	# .match-card-content background:
 	#   linear-gradient(to top, rgba(160,0,255,.75) 0%, rgba(160,0,255,.3) 50%, transparent 100%)
+	# `.match-card[data-status="completed"]` filters the whole card to
+	# grayscale(100%) brightness(0.7); the shader covers the artwork, so the plate
+	# is pre-desaturated to the same grey so it does not stay purple.
+	var tint := C_MAGENTA
+	if completed:
+		var lum := 0.2126 * C_MAGENTA.r + 0.7152 * C_MAGENTA.g + 0.0722 * C_MAGENTA.b
+		var gray := lum * 0.7
+		tint = Color(gray, gray, gray)
 	var gradient := Gradient.new()
 	gradient.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
 	gradient.colors = PackedColorArray([
-		Color(C_MAGENTA.r, C_MAGENTA.g, C_MAGENTA.b, 0.75),
-		Color(C_MAGENTA.r, C_MAGENTA.g, C_MAGENTA.b, 0.3),
-		Color(C_MAGENTA.r, C_MAGENTA.g, C_MAGENTA.b, 0.0),
+		Color(tint.r, tint.g, tint.b, 0.75),
+		Color(tint.r, tint.g, tint.b, 0.3),
+		Color(tint.r, tint.g, tint.b, 0.0),
 	])
-	_plate_gradient = GradientTexture2D.new()
-	_plate_gradient.gradient = gradient
-	_plate_gradient.width = 8
-	_plate_gradient.height = 128
-	_plate_gradient.fill = GradientTexture2D.FILL_LINEAR
-	_plate_gradient.fill_from = Vector2(0.0, 1.0)
-	_plate_gradient.fill_to = Vector2(0.0, 0.0)
-	return _plate_gradient
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.width = 8
+	texture.height = 128
+	texture.fill = GradientTexture2D.FILL_LINEAR
+	texture.fill_from = Vector2(0.0, 1.0)
+	texture.fill_to = Vector2(0.0, 0.0)
+	if completed:
+		_plate_gradient_gray = texture
+	else:
+		_plate_gradient = texture
+	return texture
 
 
 # -------------------------------------------------------------------- utilities
@@ -1266,16 +1651,26 @@ func _set_tab_active(button: Button, active: bool) -> void:
 	# into this viewport.
 	button.modulate = Color(1, 1, 1, 1) if active else Color(1, 1, 1, 0.35)
 	button.add_theme_font_size_override("font_size", 14 if active else 9)
-	button.add_theme_color_override("font_color", C_TAB_ACTIVE if active else Color(1, 1, 1, 1))
+	# The CSS active colour is --primary-light, but over this purple backdrop the
+	# active tab reads better pure white; the user asked for the active tab to sit at
+	# full opacity in white.
+	button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_hover_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_focus_color", Color(1, 1, 1, 1))
 
 
 func _set_filter_active(button: Button, active: bool) -> void:
 	if button == null:
 		return
-	# .filter { opacity: 0.5 } with .filter.active at 1 plus a #00000020 fill and a
-	# dark rgba(0,0,0,0.463) label. Nothing overrides that in dark mode.
+	# `.filter { opacity: 0.5 }` with `.filter.active` forced to 1. The CSS active
+	# label is dark, but the user wants every status/tier label to stay white (and in
+	# particular not flip dark on hover), so all button states are pinned white.
 	button.modulate = Color(1, 1, 1, 1) if active else Color(1, 1, 1, 0.5)
-	button.add_theme_color_override("font_color", Color(0, 0, 0, 0.463) if active else Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_hover_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_focus_color", Color(1, 1, 1, 1))
 	button.add_theme_stylebox_override("normal", _filter_style(active))
 
 
@@ -1349,8 +1744,21 @@ func _prize_style() -> StyleBoxFlat:
 
 func _match_card_style(selected: bool) -> StyleBoxFlat:
 	# .match-card draws no box of its own - the artwork is the card - so this only
-	# carries the selected card's purple glow. The skew lives in the texture.
+	# carries the selected card's purple glow. The scale and skew live in the
+	# match-card shader, not here. The glow therefore has to be inset to the
+	# visible 90% card (5% a side) and sheared to match, or it wraps the full
+	# layout slot and reads as a rectangle around a smaller, slanted card.
 	var style := StyleBoxFlat.new()
+	# StyleBoxFlat defaults to an opaque grey fill. The artwork only covers the
+	# scaled 90% of the slot, so that fill would show as a straight, unskewed grey
+	# rectangle behind the slanted, dissolved card.
+	style.draw_center = false
+	style.bg_color = Color(0, 0, 0, 0)
+	style.expand_margin_left = -6.45
+	style.expand_margin_right = -6.45
+	style.expand_margin_top = -4.3
+	style.expand_margin_bottom = -4.3
+	style.skew = Vector2(0.0872665, 0.0)
 	if selected:
 		style.shadow_color = Color(C_MAGENTA.r, C_MAGENTA.g, C_MAGENTA.b, 0.45)
 		style.shadow_size = 8
