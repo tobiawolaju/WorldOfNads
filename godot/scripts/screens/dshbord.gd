@@ -44,18 +44,43 @@ const DEFAULT_SKIN_ID: String = "s-default"
 const DEFAULT_ENERGY: int = 4
 const PLAY_COUNTDOWN_SECONDS: float = 4.0
 const PREVIEW_SPIN_SPEED: float = 0.55
-# The 3D preview is touch-driven (one finger orbits, two fingers pinch to zoom,
-# wheel and magnify gestures cover desktop/trackpad). Dragging is rad-per-pixel and
-# the pinch/zoom factors are clamped so the model can never be lost or inverted.
-const PREVIEW_ORBIT_SENSITIVITY: float = 0.012
-const PREVIEW_PITCH_MIN: float = -0.55
-const PREVIEW_PITCH_MAX: float = 1.10
-const PREVIEW_ZOOM_MIN: float = 0.45
-const PREVIEW_ZOOM_MAX: float = 3.0
-const PREVIEW_ZOOM_STEP: float = 1.12
 # Auto-spin pauses while the user is manipulating the preview and resumes after a
 # short idle so the gallery keeps its "living" rotation without fighting the finger.
 const PREVIEW_SPIN_RESUME_DELAY: float = 3.0
+
+# Preview orbit, ported from three's OrbitControls. ThreeScene.tsx mounts drei's
+# <OrbitControls> with every default except `target`, `enablePan={false}` and the
+# button map, and drei forces enableDamping, so these are that controller's own
+# numbers: dampingFactor 0.05, rotateSpeed 1, zoomSpeed 1, getZoomScale() = 0.95,
+# minDistance 0 / maxDistance Infinity, minPolarAngle 0 / maxPolarAngle PI.
+#
+# The damping is the part that actually reads as movement: input accumulates into
+# a delta that the camera chases at 5% per frame, so it lags the finger by a hair,
+# keeps gliding after release and eases to a stop -- instead of snapping to every
+# sample the way the port used to.
+const ORBIT_DAMPING_FACTOR: float = 0.05
+const ORBIT_ROTATE_SPEED: float = 1.0
+const ORBIT_ZOOM_SPEED: float = 1.0
+const ORBIT_WHEEL_ZOOM_STEP: float = 0.95
+# handleMouseMoveRotate uses `rotateLeft(2 * PI * dx / element.clientHeight)`, i.e.
+# one drag across the pane's height is a full turn, so the sensitivity has to track
+# the pane instead of being a fixed rad-per-pixel. Three clamps phi to (0, PI) and
+# lets the camera swing just past the nad's core to look up from underneath; the
+# epsilon keeps that far enough from the poles that look_at() stays well defined.
+const ORBIT_PITCH_LIMIT: float = PI * 0.5 - 0.02
+# OrbitControls leaves both distances open. These only stop the camera from
+# collapsing to radius 0 (inside the nad, where the basis degenerates) or drifting
+# so far out that the preview is a speck.
+const ORBIT_ZOOM_MIN: float = 0.2
+const ORBIT_ZOOM_MAX: float = 6.0
+# InputEventPanGesture.delta is in pan units, not pixels; this is roughly how many
+# pixels one unit covers before the value is fed to the orbit.
+const ORBIT_PAN_UNITS_TO_PIXELS: float = 12.0
+
+# Which stream owns the preview gesture currently in flight.
+const PREVIEW_GESTURE_NONE: int = 0
+const PREVIEW_GESTURE_MOUSE: int = 1
+const PREVIEW_GESTURE_TOUCH: int = 2
 
 # The right panel's static chrome is authored against a 175px-wide panel (35% of
 # the 500px base viewport). Dashboard.css lays that panel out at 35% of the window,
@@ -150,7 +175,17 @@ var _preview_base_distance: float = 3.0
 var _preview_orbit_yaw: float = 0.0
 var _preview_orbit_pitch: float = 0.0799  # atan(0.08), the original camera elevation.
 var _preview_zoom: float = 1.0
-var _preview_dragging: bool = false
+# Pending orbit input, the counterpart of OrbitControls' sphericalDelta and scale:
+# drags and zoom steps accumulate here, _update_preview_camera() folds them into
+# the angles (damped) and the radius (once), then decays them.
+var _preview_delta_yaw: float = 0.0
+var _preview_delta_pitch: float = 0.0
+var _preview_pending_scale: float = 1.0
+# Which input stream owns the current preview gesture. emulate_touch_from_mouse (and
+# emulate_mouse_from_touch on touchscreens) can deliver one physical drag as both a
+# touch and a mouse stream, so whichever arrives first claims the gesture and the
+# other one is ignored -- a drag is never applied twice.
+var _preview_gesture: int = PREVIEW_GESTURE_NONE
 var _preview_touch_active: bool = false
 var _preview_touch_points: Dictionary = {}
 var _preview_pinch_last: float = -1.0
@@ -370,6 +405,7 @@ func _process(delta: float) -> void:
 		_preview_spin_pause = maxf(_preview_spin_pause - delta, 0.0)
 	if _preview_pivot != null and _preview_spin_pause <= 0.0:
 		_preview_pivot.rotate_y(delta * PREVIEW_SPIN_SPEED)
+	_update_preview_camera(delta)
 
 	if _is_counting:
 		_elapsed = minf(_elapsed + delta, PLAY_COUNTDOWN_SECONDS)
@@ -497,19 +533,36 @@ func _preview_model_bounds() -> AABB:
 	return box
 
 
-# Places the camera on a sphere around `_preview_target` using the orbit angles and
-# the pinch/wheel zoom, keeping it level (look_at with UP). At the default angles
-# (yaw 0, pitch atan(0.08)) this resolves to the same transform _frame_preview_camera()
-# used before orbiting existed: target + (0, distance * 0.08, distance).
-func _update_preview_camera() -> void:
+# OrbitControls.update(), one frame of it. Input handlers only accumulate deltas;
+# every frame this folds the pending yaw/pitch into the angles scaled by
+# dampingFactor, applies the one-shot zoom scale to the radius and then decays the
+# leftovers by (1 - dampingFactor), which is what produces the glide and the
+# ease-out. `delta` of 0 re-places the camera without touching that state, which is
+# what _frame_preview_camera() wants after it re-derives the base distance.
+#
+# The camera then sits on a sphere around `_preview_target`, level (look_at with UP).
+# At the default angles (yaw 0, pitch atan(0.08)) this resolves to the same transform
+# _frame_preview_camera() used before orbiting existed: target + (0, distance*0.08, distance).
+func _update_preview_camera(delta: float = 0.0) -> void:
 	if _preview_camera == null:
 		return
-	var pitch := clampf(_preview_orbit_pitch, PREVIEW_PITCH_MIN, PREVIEW_PITCH_MAX)
+	if delta > 0.0:
+		_preview_orbit_yaw = wrapf(
+			_preview_orbit_yaw + _preview_delta_yaw * ORBIT_DAMPING_FACTOR, -PI, PI)
+		_preview_orbit_pitch = clampf(
+			_preview_orbit_pitch + _preview_delta_pitch * ORBIT_DAMPING_FACTOR,
+			-ORBIT_PITCH_LIMIT, ORBIT_PITCH_LIMIT)
+		_preview_delta_yaw *= 1.0 - ORBIT_DAMPING_FACTOR
+		_preview_delta_pitch *= 1.0 - ORBIT_DAMPING_FACTOR
+	if not is_equal_approx(_preview_pending_scale, 1.0):
+		_preview_zoom = clampf(
+			_preview_zoom * _preview_pending_scale, ORBIT_ZOOM_MIN, ORBIT_ZOOM_MAX)
+		_preview_pending_scale = 1.0
 	var distance := _preview_base_distance / maxf(_preview_zoom, 0.01)
 	var direction := Vector3(
-		sin(_preview_orbit_yaw) * cos(pitch),
-		sin(pitch),
-		cos(_preview_orbit_yaw) * cos(pitch),
+		sin(_preview_orbit_yaw) * cos(_preview_orbit_pitch),
+		sin(_preview_orbit_pitch),
+		cos(_preview_orbit_yaw) * cos(_preview_orbit_pitch),
 	)
 	_preview_camera.position = _preview_target + direction * distance
 	_preview_camera.look_at(_preview_target, Vector3.UP)
@@ -546,23 +599,36 @@ func _pause_preview_spin() -> void:
 	_preview_spin_pause = PREVIEW_SPIN_RESUME_DELAY
 
 
+# The height three divides by is the canvas' clientHeight, which here is the
+# preview pane. Falling back keeps the sensitivity sane before the first layout.
+func _preview_pane_height() -> float:
+	if _preview_view != null and _preview_view.size.y > 0.0:
+		return _preview_view.size.y
+	if _preview_viewport != null and _preview_viewport.size.y > 0.0:
+		return _preview_viewport.size.y
+	return 500.0
+
+
+# Queue a drag the way handleMouseMoveRotate does. Directions match OrbitControls:
+# drag right swings the camera left (the model follows the finger), drag down lifts
+# the camera so more of the crown is visible.
 func _orbit_preview(relative: Vector2) -> void:
 	if relative == Vector2.ZERO:
 		return
-	# Match OrbitControls: drag right swings the camera left (the model follows the
-	# finger), drag down lifts the camera so more of the crown is visible.
-	_preview_orbit_yaw = wrapf(_preview_orbit_yaw - relative.x * PREVIEW_ORBIT_SENSITIVITY, -PI, PI)
-	_preview_orbit_pitch = clampf(_preview_orbit_pitch + relative.y * PREVIEW_ORBIT_SENSITIVITY, PREVIEW_PITCH_MIN, PREVIEW_PITCH_MAX)
+	var per_pixel := TAU * ORBIT_ROTATE_SPEED / _preview_pane_height()
+	_preview_delta_yaw -= relative.x * per_pixel
+	_preview_delta_pitch += relative.y * per_pixel
 	_pause_preview_spin()
-	_update_preview_camera()
 
 
+# Queue a zoom step. `factor` above 1 moves in; the wheel, pinch and magnify all
+# multiply into the same pending scale that the next update applies once to the
+# radius, mirroring OrbitControls' `scale`.
 func _zoom_preview(factor: float) -> void:
 	if factor <= 0.0:
 		return
-	_preview_zoom = clampf(_preview_zoom * factor, PREVIEW_ZOOM_MIN, PREVIEW_ZOOM_MAX)
+	_preview_pending_scale *= factor
 	_pause_preview_spin()
-	_update_preview_camera()
 
 
 func _pinch_distance() -> float:
@@ -575,32 +641,29 @@ func _pinch_distance() -> float:
 
 
 func _handle_preview_mouse_button(event: InputEventMouseButton) -> void:
-	if _preview_touch_active:
-		# The OS also synthesises mouse events from the first finger; drop them so a
-		# single touch doesn't orbit twice.
-		return
 	match event.button_index:
 		MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				if _event_in_preview(event.position):
-					_preview_dragging = true
+					_preview_gesture = PREVIEW_GESTURE_MOUSE
 					_pause_preview_spin()
 					get_viewport().set_input_as_handled()
-			elif _preview_dragging:
-				_preview_dragging = false
+			elif _preview_gesture == PREVIEW_GESTURE_MOUSE:
+				_preview_gesture = PREVIEW_GESTURE_NONE
 				get_viewport().set_input_as_handled()
 		MOUSE_BUTTON_WHEEL_UP:
 			if _event_in_preview(event.position):
-				_zoom_preview(PREVIEW_ZOOM_STEP)
+				# dollyIn(getZoomScale()) -- one notch is 5% of the radius.
+				_zoom_preview(1.0 / ORBIT_WHEEL_ZOOM_STEP)
 				get_viewport().set_input_as_handled()
 		MOUSE_BUTTON_WHEEL_DOWN:
 			if _event_in_preview(event.position):
-				_zoom_preview(1.0 / PREVIEW_ZOOM_STEP)
+				_zoom_preview(ORBIT_WHEEL_ZOOM_STEP)
 				get_viewport().set_input_as_handled()
 
 
 func _handle_preview_mouse_motion(event: InputEventMouseMotion) -> void:
-	if _preview_touch_active or not _preview_dragging:
+	if _preview_gesture != PREVIEW_GESTURE_MOUSE:
 		return
 	_orbit_preview(event.relative)
 	get_viewport().set_input_as_handled()
@@ -610,9 +673,9 @@ func _handle_preview_screen_touch(event: InputEventScreenTouch) -> void:
 	if event.pressed:
 		if not _event_in_preview(event.position):
 			return
+		_preview_gesture = PREVIEW_GESTURE_TOUCH
 		_preview_touch_active = true
 		_preview_touch_points[event.index] = event.position
-		_preview_dragging = true
 		_preview_pinch_last = _pinch_distance()
 		_pause_preview_spin()
 		get_viewport().set_input_as_handled()
@@ -623,7 +686,7 @@ func _handle_preview_screen_touch(event: InputEventScreenTouch) -> void:
 	_preview_touch_points.erase(event.index)
 	if _preview_touch_points.is_empty():
 		_preview_touch_active = false
-		_preview_dragging = false
+		_preview_gesture = PREVIEW_GESTURE_NONE
 		_preview_pinch_last = -1.0
 	else:
 		_preview_pinch_last = _pinch_distance()
@@ -631,14 +694,18 @@ func _handle_preview_screen_touch(event: InputEventScreenTouch) -> void:
 
 
 func _handle_preview_screen_drag(event: InputEventScreenDrag) -> void:
+	if _preview_gesture != PREVIEW_GESTURE_TOUCH:
+		return
 	if not _preview_touch_points.has(event.index):
 		return
 	_preview_touch_points[event.index] = event.position
 	if _preview_touch_points.size() >= 2:
-		# Two fingers: the change in their separation is the zoom factor.
+		# handleTouchMoveDolly: the radius scales by
+		# (separation_last / separation_now) ^ zoomSpeed, and pan stays off because
+		# the frontend sets enablePan={false}.
 		var separation := _pinch_distance()
 		if _preview_pinch_last > 0.0 and separation > 0.0:
-			_zoom_preview(separation / _preview_pinch_last)
+			_zoom_preview(pow(_preview_pinch_last / separation, ORBIT_ZOOM_SPEED))
 		_preview_pinch_last = separation
 	else:
 		_orbit_preview(event.relative)
@@ -653,7 +720,7 @@ func _handle_preview_magnify(event: InputEventMagnifyGesture) -> void:
 
 func _handle_preview_pan(event: InputEventPanGesture) -> void:
 	if _event_in_preview(event.position):
-		_orbit_preview(event.delta * 12.0)
+		_orbit_preview(event.delta * ORBIT_PAN_UNITS_TO_PIXELS)
 		get_viewport().set_input_as_handled()
 
 
