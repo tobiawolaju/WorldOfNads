@@ -43,10 +43,6 @@ const SKIN_DIR: String = "res://assets/img/skins/"
 const DEFAULT_SKIN_ID: String = "s-default"
 const DEFAULT_ENERGY: int = 4
 const PLAY_COUNTDOWN_SECONDS: float = 4.0
-const PREVIEW_SPIN_SPEED: float = 0.55
-# Auto-spin pauses while the user is manipulating the preview and resumes after a
-# short idle so the gallery keeps its "living" rotation without fighting the finger.
-const PREVIEW_SPIN_RESUME_DELAY: float = 3.0
 
 # Preview orbit, ported from three's OrbitControls. ThreeScene.tsx mounts drei's
 # <OrbitControls> with every default except `target`, `enablePan={false}` and the
@@ -189,7 +185,6 @@ var _preview_gesture: int = PREVIEW_GESTURE_NONE
 var _preview_touch_active: bool = false
 var _preview_touch_points: Dictionary = {}
 var _preview_pinch_last: float = -1.0
-var _preview_spin_pause: float = 0.0
 var _tab_buttons: Dictionary = {}
 var _filter_buttons: Dictionary = {}
 var _texture_cache: Dictionary = {}
@@ -401,10 +396,6 @@ func _on_filter_pressed(next_filter: String) -> void:
 # ------------------------------------------------------------------ frame loop
 
 func _process(delta: float) -> void:
-	if _preview_spin_pause > 0.0:
-		_preview_spin_pause = maxf(_preview_spin_pause - delta, 0.0)
-	if _preview_pivot != null and _preview_spin_pause <= 0.0:
-		_preview_pivot.rotate_y(delta * PREVIEW_SPIN_SPEED)
 	_update_preview_camera(delta)
 
 	if _is_counting:
@@ -457,8 +448,8 @@ func _frame_preview_camera() -> void:
 		return
 
 	# The nad's core is the centre of its true bounds. Both the camera focus and the
-	# auto-spin pivot use it, so orbiting turns the camera around the body's middle and
-	# the idle spin rotates the body about that same point instead of its feet.
+	# pivot the model hangs from use it, so orbiting turns the camera around the
+	# body's middle rather than around its feet.
 	var target := box.get_center()
 	var radius := box.size.length() * 0.5
 	# _ready() runs before the first layout pass, so the pane can still be unsized here.
@@ -478,8 +469,8 @@ func _frame_preview_camera() -> void:
 
 	_preview_target = target
 	_preview_base_distance = distance
-	# Put the spinning Pivot at the core and shift the model below it by the same
-	# amount, so a Pivot Y-rotation spins the nad about its core while the body keeps
+	# Park the Pivot on the core and shift the model below it by the same amount, so
+	# the node the orbit pivots around sits at the nad's middle while the body keeps
 	# its place in the frame.
 	if _preview_pivot != null:
 		_preview_pivot.position = target
@@ -595,10 +586,6 @@ func _event_in_preview(event_position: Vector2) -> bool:
 	return _preview_view.get_global_rect().has_point(event_position)
 
 
-func _pause_preview_spin() -> void:
-	_preview_spin_pause = PREVIEW_SPIN_RESUME_DELAY
-
-
 # The height three divides by is the canvas' clientHeight, which here is the
 # preview pane. Falling back keeps the sensitivity sane before the first layout.
 func _preview_pane_height() -> float:
@@ -618,7 +605,6 @@ func _orbit_preview(relative: Vector2) -> void:
 	var per_pixel := TAU * ORBIT_ROTATE_SPEED / _preview_pane_height()
 	_preview_delta_yaw -= relative.x * per_pixel
 	_preview_delta_pitch += relative.y * per_pixel
-	_pause_preview_spin()
 
 
 # Queue a zoom step. `factor` above 1 moves in; the wheel, pinch and magnify all
@@ -628,7 +614,6 @@ func _zoom_preview(factor: float) -> void:
 	if factor <= 0.0:
 		return
 	_preview_pending_scale *= factor
-	_pause_preview_spin()
 
 
 func _pinch_distance() -> float:
@@ -646,7 +631,6 @@ func _handle_preview_mouse_button(event: InputEventMouseButton) -> void:
 			if event.pressed:
 				if _event_in_preview(event.position):
 					_preview_gesture = PREVIEW_GESTURE_MOUSE
-					_pause_preview_spin()
 					get_viewport().set_input_as_handled()
 			elif _preview_gesture == PREVIEW_GESTURE_MOUSE:
 				_preview_gesture = PREVIEW_GESTURE_NONE
@@ -677,7 +661,6 @@ func _handle_preview_screen_touch(event: InputEventScreenTouch) -> void:
 		_preview_touch_active = true
 		_preview_touch_points[event.index] = event.position
 		_preview_pinch_last = _pinch_distance()
-		_pause_preview_spin()
 		get_viewport().set_input_as_handled()
 		return
 
