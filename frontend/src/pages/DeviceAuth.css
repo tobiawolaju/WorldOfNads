@@ -1,52 +1,63 @@
 /* Device authorization page (/auth?code=...).
-   Kept deliberately plain and narrow: this page is shown on a phone while the
-   player is holding another device, so legibility beats decoration. */
+   Presentation only: the flow lives in AuthManager / WONDeviceLogin. Kept
+   narrow because it is read on a phone while the player holds another device,
+   but styled to match the rest of World of Nads: signature purple field,
+   Font1/Font2 type, and the square yellow call-to-action used across the site.
+
+   The site forces every text node to #ffffff !important in dark mode
+   (see index.css), so intentional colours below re-assert with !important. */
 
 .device-auth {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1rem;
+  padding: 2rem 1rem;
   box-sizing: border-box;
+  background: #6553c7;
+  color: #ffffff;
+  font-family: "Font1", var(--font-inter), system-ui, sans-serif;
 }
 
 .device-auth__card {
   width: 100%;
-  max-width: 26rem;
-  background: rgba(24, 14, 56, 0.92);
-  border: 2px solid #ff7ab6;
-  border-radius: 18px;
-  padding: 1.75rem 1.5rem 1.25rem;
-  color: #fff;
-  font-family: Inter, system-ui, sans-serif;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  max-width: 27rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0;
+  padding: 2rem 1.75rem 1.5rem;
+  color: #ffffff;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
   text-align: center;
 }
 
 .device-auth__header {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .device-auth__logo {
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 5rem;
+  height: 5rem;
   object-fit: contain;
-  border-radius: 50%;
-  margin-bottom: 0.75rem;
+  border-radius: 0;
+  margin-bottom: 0.85rem;
 }
 
 .device-auth__title {
-  margin: 0 0 0.25rem;
-  font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
+  margin: 0 0 0.35rem;
+  font-family: "Font2", "Font1", var(--font-inter), sans-serif;
+  font-size: 1.7rem;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #ffffff !important;
 }
 
 .device-auth__subtitle {
   margin: 0;
   font-size: 0.9rem;
-  opacity: 0.75;
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 
 .device-auth__body {
@@ -59,115 +70,129 @@
 .device-auth__heading {
   margin: 0;
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff !important;
 }
 
 .device-auth__code {
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 2rem;
-  font-weight: 700;
+  margin: 0.25rem 0;
+  font-family: "Font1", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 2.1rem;
+  font-weight: 900;
   letter-spacing: 0.18em;
-  color: #ff7ab6;
+  color: #ffd700 !important;
 }
 
 .device-auth__device {
   margin: 0;
   font-size: 0.85rem;
-  opacity: 0.7;
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .device-auth__message {
   margin: 0.25rem 0 0;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   line-height: 1.45;
-  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .device-auth__hint {
   margin: 0;
   font-size: 0.8rem;
-  opacity: 0.65;
+  color: rgba(255, 255, 255, 0.65) !important;
 }
 
 .device-auth__account {
   width: 100%;
   padding: 0.85rem;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 122, 182, 0.35);
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .device-auth__account-label {
   margin: 0 0 0.2rem;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.7;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .device-auth__account-name {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 800;
   overflow-wrap: anywhere;
+  color: #ffffff !important;
 }
 
 .device-auth__button {
   width: 100%;
   margin-top: 0.35rem;
-  padding: 0.85rem 1.25rem;
-  font-size: 1rem;
+  padding: 0.95rem 1.5rem;
+  font-family: "Font1", var(--font-inter), sans-serif;
+  font-size: 1.05rem;
   font-weight: 800;
-  font-family: inherit;
-  color: #fff;
-  background: #ff7ab6;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #000000 !important;
+  background: #ffd700;
   border: none;
-  border-radius: 12px;
+  border-radius: 0;
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.2s ease;
+  box-shadow: 0 6px 15px rgba(255, 215, 0, 0.3);
+  transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .device-auth__button:hover:not(:disabled) {
-  background: #ffa9d0;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(255, 215, 0, 0.35);
 }
 
 .device-auth__button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .device-auth__button--approve {
-  background: #6553c7;
+  background: #ffd700;
 }
 
 .device-auth__button--approve:hover:not(:disabled) {
-  background: #7a68dc;
+  background: #ffe14d;
 }
 
 .device-auth__button--ghost {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  font-weight: 600;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: #ffffff !important;
   font-size: 0.85rem;
-  padding: 0.6rem 1rem;
+  font-weight: 700;
+  padding: 0.7rem 1rem;
+  text-transform: none;
+  box-shadow: none;
 }
 
 .device-auth__button--ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
+  transform: none;
+  box-shadow: none;
 }
 
 .device-auth__error {
   margin: 0.25rem 0 0;
   font-size: 0.85rem;
-  color: #ff9d9d;
+  font-weight: 700;
+  color: #ffd1d1 !important;
 }
 
 .device-auth__expiry {
   margin: 0.5rem 0 0;
   font-size: 0.8rem;
-  opacity: 0.7;
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .device-auth__success {
@@ -175,14 +200,15 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.85rem 1rem;
-  border-radius: 12px;
-  background: rgba(101, 216, 154, 0.15);
-  border: 1px solid rgba(101, 216, 154, 0.45);
+  border-radius: 0;
+  background: rgba(101, 216, 154, 0.18);
+  border: 1px solid rgba(101, 216, 154, 0.5);
 }
 
 .device-auth__success p {
   margin: 0;
   font-size: 0.95rem;
+  color: #ffffff !important;
 }
 
 .device-auth__success-mark {
@@ -191,9 +217,9 @@
   justify-content: center;
   width: 1.6rem;
   height: 1.6rem;
-  border-radius: 50%;
+  border-radius: 0;
   background: #65d89a;
-  color: #12210f;
+  color: #12210f !important;
   font-weight: 900;
   flex: 0 0 auto;
 }
@@ -203,7 +229,7 @@
   height: 2rem;
   border-radius: 50%;
   border: 3px solid rgba(255, 255, 255, 0.25);
-  border-top-color: #ff7ab6;
+  border-top-color: #ffd700;
   animation: device-auth-spin 0.9s linear infinite;
 }
 
@@ -216,14 +242,14 @@
 .device-auth__footer {
   margin-top: 1.25rem;
   padding-top: 0.9rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .device-auth__footer p {
   margin: 0;
   font-size: 0.72rem;
   line-height: 1.4;
-  opacity: 0.55;
+  color: rgba(255, 255, 255, 0.55) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
