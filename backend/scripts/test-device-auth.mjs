@@ -137,6 +137,24 @@ check('wrong app id is rejected', !(await auth.verifyPrivyAccessToken(
     .sign(privateKey)
 )).ok);
 
+// 10. Privy user normalization. Regression guard: `users()._get()` returns the
+//     User object directly with snake_case fields, so reading `?.user` or
+//     camelCase made every lookup return null -> "could not verify your account".
+step('10. Privy user normalization');
+const normalized = auth.normalizePrivyUser({
+  id: 'did:privy:probe',
+  linked_accounts: [
+    { type: 'google_oauth', name: 'Probe Player' },
+    { type: 'wallet', chain_type: 'ethereum', address: '0xAbC' },
+    { type: 'wallet', chain_type: 'solana', address: 'So1ana', profile_picture_url: 'https://img.example/x.png' }
+  ]
+});
+check('extracts ethereum wallet', normalized.walletAddress === '0xAbC');
+check('extracts solana wallet', normalized.solanaAddress === 'So1ana');
+check('extracts profile picture', normalized.profilePictureUrl === 'https://img.example/x.png');
+check('keeps linked accounts for username derivation', normalized.linkedAccounts.length === 3);
+check('null user normalizes to null', auth.normalizePrivyUser(null) === null);
+
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
 
 // The Firebase client holds an open connection, so exit explicitly instead of

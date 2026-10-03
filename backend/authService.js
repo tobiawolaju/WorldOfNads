@@ -160,6 +160,38 @@ export async function verifyPrivyAccessToken(accessToken) {
 }
 
 /**
+ * Normalizes the Privy `User` object returned by `users()._get()` into the
+ * camelCase shape this service uses. The SDK resolves the user object directly
+ * (no `{ user }` envelope) and every field is snake_case, e.g. `linked_accounts`
+ * and each wallet's `chain_type`. Exported so the parsing can be unit-tested
+ * without touching Privy.
+ */
+export function normalizePrivyUser(raw) {
+  if (!raw) return null;
+  const accounts = Array.isArray(raw.linked_accounts)
+    ? raw.linked_accounts
+    : Array.isArray(raw.linkedAccounts)
+      ? raw.linkedAccounts
+      : [];
+  const pick = (entry, snake, camel) => entry?.[snake] ?? entry?.[camel];
+  const walletFor = (chainType) =>
+    accounts.find(
+      (entry) => entry?.type === "wallet" && (chainType === null || pick(entry, "chain_type", "chainType") === chainType)
+    );
+  const profilePicture = (entry) => {
+    const value = pick(entry, "profile_picture_url", "profilePictureUrl");
+    return typeof value === "string" && value ? value : "";
+  };
+  return {
+    id: raw.id || "",
+    walletAddress: walletFor("ethereum")?.address || "",
+    solanaAddress: walletFor("solana")?.address || "",
+    linkedAccounts: accounts,
+    profilePictureUrl: accounts.map(profilePicture).find(Boolean) || ""
+  };
+}
+
+/**
  * Server-side fetch of the Privy user object for a verified DID.
  * Identity data is read from Privy, never from the HTTP request body.
  */
@@ -167,20 +199,9 @@ export async function fetchPrivyUser(privyUserId) {
   const client = getPrivyClient();
   if (!client || !privyUserId) return null;
   try {
-    const raw = (await client.users()._get(privyUserId))?.user || null;
-    if (!raw) return null;
-    const accounts = Array.isArray(raw.linkedAccounts) ? raw.linkedAccounts : [];
-    const walletFor = (chainType) =>
-      accounts.find((entry) => entry?.type === "wallet" && (chainType === null || entry?.chainType === chainType));
-    return {
-      id: raw.id || "",
-      walletAddress: walletFor("ethereum")?.address || "",
-      solanaAddress: walletFor("solana")?.address || "",
-      linkedAccounts: accounts,
-      profilePictureUrl:
-        accounts.find((entry) => typeof entry?.profilePictureUrl === "string" && entry.profilePictureUrl)
-          ?.profilePictureUrl || ""
-    };
+    // `users()._get()` resolves to the Privy user object itself, not `{ user }`.
+    const raw = await client.users()._get(privyUserId);
+    return normalizePrivyUser(raw);
   } catch (error) {
     console.warn("[Auth] Privy user lookup failed:", error?.message || error);
     return null;
