@@ -1,0 +1,237 @@
+/* Device authorization page (/auth?code=...).
+   Kept deliberately plain and narrow: this page is shown on a phone while the
+   player is holding another device, so legibility beats decoration. */
+
+.device-auth {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+}
+
+.device-auth__card {
+  width: 100%;
+  max-width: 26rem;
+  background: rgba(24, 14, 56, 0.92);
+  border: 2px solid #ff7ab6;
+  border-radius: 18px;
+  padding: 1.75rem 1.5rem 1.25rem;
+  color: #fff;
+  font-family: Inter, system-ui, sans-serif;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  text-align: center;
+}
+
+.device-auth__header {
+  margin-bottom: 1.25rem;
+}
+
+.device-auth__logo {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: contain;
+  border-radius: 50%;
+  margin-bottom: 0.75rem;
+}
+
+.device-auth__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.device-auth__subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.device-auth__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.device-auth__heading {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.device-auth__code {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #ff7ab6;
+}
+
+.device-auth__device {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.device-auth__message {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  opacity: 0.9;
+}
+
+.device-auth__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.65;
+}
+
+.device-auth__account {
+  width: 100%;
+  padding: 0.85rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 122, 182, 0.35);
+}
+
+.device-auth__account-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.device-auth__account-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.device-auth__button {
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.85rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 800;
+  font-family: inherit;
+  color: #fff;
+  background: #ff7ab6;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.2s ease;
+}
+
+.device-auth__button:hover:not(:disabled) {
+  background: #ffa9d0;
+  transform: translateY(-1px);
+}
+
+.device-auth__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.device-auth__button--approve {
+  background: #6553c7;
+}
+
+.device-auth__button--approve:hover:not(:disabled) {
+  background: #7a68dc;
+}
+
+.device-auth__button--ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.6rem 1rem;
+}
+
+.device-auth__button--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.device-auth__error {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: #ff9d9d;
+}
+
+.device-auth__expiry {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.device-auth__success {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(101, 216, 154, 0.15);
+  border: 1px solid rgba(101, 216, 154, 0.45);
+}
+
+.device-auth__success p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.device-auth__success-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: #65d89a;
+  color: #12210f;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.device-auth__spinner {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #ff7ab6;
+  animation: device-auth-spin 0.9s linear infinite;
+}
+
+@keyframes device-auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.device-auth__footer {
+  margin-top: 1.25rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.device-auth__footer p {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .device-auth__spinner {
+    animation: none;
+  }
+
+  .device-auth__button {
+    transition: none;
+  }
+}
