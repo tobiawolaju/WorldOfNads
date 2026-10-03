@@ -1,8 +1,8 @@
 /**
  * Exercises the post-approval half of the device-login flow (exchange ->
  * session -> refresh -> /auth/me -> logout) by seeding an approved device_login
- * directly. The approval step itself is the only part that needs a real Privy
- * access token, so it is deliberately not faked here.
+ * directly, plus an offline check of Privy access-token verification using a
+ * locally signed token (no network).
  *
  *   node scripts/test-device-auth.mjs
  */
@@ -103,6 +103,39 @@ for (let i = 0; i < 8; i += 1) {
   results.push(await auth.startDeviceLogin({ ip: '10.0.0.9', platform: 'desktop', deviceId: `d-${i}` }));
 }
 check('start is rate limited per ip', results.some((r) => r.status === 429));
+
+// 9. Privy access-token verification. Regression guard for the exact production
+//    outage: the SDK helper takes the raw token string and returns snake_case
+//    claims. Passing `{ access_token }` (or reading `claims.userId`) makes jose
+//    reject the input and surfaces the generic "Failed to verify authentication
+//    token", which broke every web approval.
+step('9. Privy access-token verification');
+const { generateKeyPair, exportSPKI, SignJWT } = await import('jose');
+const { publicKey, privateKey } = await generateKeyPair('ES256', { extractable: true });
+process.env.PRIVY_APP_ID = 'cl_probe';
+process.env.PRIVY_APP_SECRET = 'probe-secret';
+process.env.PRIVY_JWT_VERIFICATION_KEY = await exportSPKI(publicKey);
+const probeJwt = await new SignJWT({ sid: 'ses_probe' })
+  .setProtectedHeader({ alg: 'ES256', typ: 'JWT' })
+  .setIssuer('privy.io')
+  .setAudience('cl_probe')
+  .setSubject('did:privy:probe')
+  .setIssuedAt()
+  .setExpirationTime('1h')
+  .sign(privateKey);
+const verified = await auth.verifyPrivyAccessToken(probeJwt);
+check('valid Privy token verifies', verified.ok, verified.error);
+check('subject read from snake_case user_id', verified.ok && verified.claims.userId === 'did:privy:probe');
+check('wrong app id is rejected', !(await auth.verifyPrivyAccessToken(
+  await new SignJWT({ sid: 'ses_probe' })
+    .setProtectedHeader({ alg: 'ES256', typ: 'JWT' })
+    .setIssuer('privy.io')
+    .setAudience('cl_other')
+    .setSubject('did:privy:probe')
+    .setIssuedAt()
+    .setExpirationTime('1h')
+    .sign(privateKey)
+)).ok);
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
 
