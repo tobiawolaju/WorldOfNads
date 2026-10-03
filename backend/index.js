@@ -6,6 +6,17 @@ import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, upda
 import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 import { refreshAllUserPfps } from './refreshUserPfps.js';
+import {
+  approveDeviceLogin,
+  cancelDeviceLogin,
+  exchangeDeviceLogin,
+  getAuthenticatedSession,
+  getDeviceLoginStatus,
+  lookupDeviceLogin,
+  logoutSession,
+  refreshSession,
+  startDeviceLogin
+} from './authService.js';
 
 const PORT = process.env.PORT || 8080;
 const BROADCAST_RATE = 20;
@@ -336,13 +347,46 @@ function sanitizeMeta(value) {
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // `Authorization` is required by /auth/device/approve and /auth/me, which the
+  // web approval page calls with a Privy access token.
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
 function sendJson(res, status, payload) {
   setCors(res);
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(payload));
+}
+
+/**
+ * Device-auth endpoints tolerate an empty body (the native client may POST with
+ * no payload at all), so a parse failure is not treated as a hard error.
+ */
+async function readOptionalJsonBody(req) {
+  try {
+    return await readJsonBody(req);
+  } catch (error) {
+    return {};
+  }
+}
+
+function getClientIp(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return String(req.socket?.remoteAddress || '');
+}
+
+/** Maps an authService result onto an HTTP response, including Retry-After. */
+function sendAuthResult(res, result) {
+  if (result?.ok) {
+    sendJson(res, result.status || 200, { ok: true, ...result.payload });
+    return;
+  }
+  if (result?.retry_after) {
+    setCors(res);
+    res.setHeader('Retry-After', String(result.retry_after));
+  }
+  sendJson(res, result?.status || 500, { ok: false, error: result?.error || 'internal_error' });
 }
 
 async function readJsonBody(req) {
@@ -503,6 +547,96 @@ const server = createServer(async (req, res) => {
     } catch (error) {
       sendJson(res, 400, { ok: false, error: 'Invalid request' });
     }
+    return;
+  }
+
+  // ---------------------------------------------------------------------------
+  // NATIVE DEVICE AUTH (QR / short-code device linking)
+  //
+  // Privy is the identity authority, this service is the account + session
+  // authority, and the native Godot client is treated as untrusted throughout.
+  // The web build keeps using Privy directly and never enters this flow.
+  // See docs/authentication.md.
+  // ---------------------------------------------------------------------------
+  if (req.method === 'POST' && reqUrl.pathname === '/auth/device/start') {
+    const body = await readOptionalJsonBody(req);
+    const result = await startDeviceLogin({
+      ip: getClientIp(req),
+      platform: body?.platform,
+      deviceId: body?.device_id,
+      deviceLabel: body?.device_label
+    });
+    sendAuthResult(res, result);
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/auth/device/status') {
+    const result = await getDeviceLoginStatus({ deviceLoginId: reqUrl.searchParams.get('device_login_id') });
+    sendAuthResult(res, result);
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/auth/device/lookup') {
+    const result = await lookupDeviceLogin({
+      code: reqUrl.searchParams.get('code'),
+      ip: getClientIp(req)
+    });
+    sendAuthResult(res, result);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/auth/device/approve') {
+    const body = await readOptionalJsonBody(req);
+    const result = await approveDeviceLogin({
+      authorizationHeader: req.headers.authorization,
+      deviceLoginId: body?.device_login_id,
+      code: body?.code
+    });
+    sendAuthResult(res, result);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/auth/device/cancel') {
+    const body = await readOptionalJsonBody(req);
+    const result = await cancelDeviceLogin({ deviceLoginId: body?.device_login_id, secret: body?.secret });
+    sendAuthResult(res, result);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/auth/device/exchange') {
+    const body = await readOptionalJsonBody(req);
+    const result = await exchangeDeviceLogin({
+      deviceLoginId: body?.device_login_id,
+      secret: body?.secret,
+      platform: body?.platform,
+      deviceId: body?.device_id,
+      ip: getClientIp(req)
+    });
+    sendAuthResult(res, result);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/auth/refresh') {
+    const body = await readOptionalJsonBody(req);
+    const result = await refreshSession({
+      refreshToken: body?.refresh_token,
+      deviceId: body?.device_id,
+      ip: getClientIp(req)
+    });
+    sendAuthResult(res, result);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/auth/logout') {
+    const body = await readOptionalJsonBody(req);
+    const result = await logoutSession({ refreshToken: body?.refresh_token });
+    sendAuthResult(res, result);
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/auth/me') {
+    const result = await getAuthenticatedSession({ authorizationHeader: req.headers.authorization });
+    sendAuthResult(res, result);
     return;
   }
 

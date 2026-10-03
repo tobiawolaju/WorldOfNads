@@ -25,6 +25,9 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Play = lazy(() => import("./pages/Play"));
 const Careers = lazy(() => import("./pages/Careers"));
 const Waitlist = lazy(() => import("./pages/Waitlist"));
+// Device authorization page for native (Android/iOS/desktop) clients. NOT the
+// game's normal login page -- see docs/authentication.md.
+const DeviceAuth = lazy(() => import("./pages/DeviceAuth"));
 const SpounsorDashbaord = lazy(() => import("./pages/SpounsorDashbaord"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 import { trackSessionEnded, trackSessionStarted } from "./lib/analyticsClient";
@@ -261,7 +264,7 @@ const AppContent: React.FC = () => {
   }, []);
 
   // Hide navbar on immersive/special landing routes
-  const hideNavbar = location.pathname === "/play";
+  const hideNavbar = location.pathname === "/play" || location.pathname === "/auth";
   const hideTopNavbarContents = location.pathname === "/waitlist" || location.pathname === "/wait-list";
 
   return (
@@ -291,6 +294,9 @@ const AppContent: React.FC = () => {
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={authenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
+                {/* Device linking for native clients. Reachable signed-out on
+                    purpose: the page shows what is asking before sign-in. */}
+                <Route path="/auth" element={<DeviceAuth />} />
                 <Route path="/nad-arena" element={<NadArena />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/community" element={<Community />} />
