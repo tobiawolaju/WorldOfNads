@@ -120,6 +120,40 @@ shadow_color = Color(0.5647059, 0.4862745, 1, 0.2)
 shadow_size = 14
 shadow_offset = Vector2(0, 6)
 
+[sub_resource type="StyleBoxFlat" id="SB_nav_cancel"]
+content_margin_left = 30.0
+content_margin_top = 0.0
+content_margin_right = 30.0
+content_margin_bottom = 0.0
+bg_color = Color(1, 0.47843137, 0.7137255, 1)
+skew = Vector2(0.24, 0)
+
+[sub_resource type="StyleBoxFlat" id="SB_nav_cancel_hover"]
+content_margin_left = 30.0
+content_margin_top = 0.0
+content_margin_right = 30.0
+content_margin_bottom = 0.0
+bg_color = Color(1, 0.47843137, 0.7137255, 1)
+skew = Vector2(0.24, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(1, 1, 1, 0.407)
+
+[sub_resource type="StyleBoxFlat" id="SB_nav_cancel_disabled"]
+content_margin_left = 30.0
+content_margin_top = 0.0
+content_margin_right = 30.0
+content_margin_bottom = 0.0
+bg_color = Color(1, 0.47843137, 0.7137255, 1)
+skew = Vector2(0.24, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(1, 1, 1, 0.19607843)
+
 [node name="Dshbord" type="Node3D" unique_id=1594789276]
 script = ExtResource("1_dshb")
 
@@ -723,10 +757,19 @@ theme_override_styles/disabled = SubResource("SB_equip")
 theme_override_styles/focus = SubResource("SB_empty")
 icon = ExtResource("6_mon")
 
+[node name="NavDismiss" type="Button" parent="CanvasLayer" unique_id=1800000011]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
 [node name="TopNav" type="Control" parent="CanvasLayer" unique_id=1800000001]
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 56.0
+offset_bottom = 120.0
 grow_horizontal = 2
 mouse_filter = 2
 
@@ -771,17 +814,28 @@ theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 15
 text = "Player"
 
-[node name="MenuButton" type="MenuButton" parent="CanvasLayer/TopNav/Badge/Row" unique_id=1800000006]
+[node name="AccountMenu" type="PanelContainer" parent="CanvasLayer/TopNav" unique_id=1800000009]
+visible = false
+layout_mode = 0
+offset_left = 12.0
+offset_top = 60.0
+theme_override_styles/panel = SubResource("SB_empty")
+
+[node name="Logout" type="Button" parent="CanvasLayer/TopNav/AccountMenu" unique_id=1800000010]
+custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
-size_flags_vertical = 4
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
-theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 12
-flat = true
-text = "v"
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("FV_play")
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("SB_nav_cancel")
+theme_override_styles/hover = SubResource("SB_nav_cancel_hover")
+theme_override_styles/pressed = SubResource("SB_nav_cancel_hover")
+theme_override_styles/disabled = SubResource("SB_nav_cancel_disabled")
+theme_override_styles/focus = SubResource("SB_empty")
+text = "Logout"
 
 [node name="Wallet" type="Button" parent="CanvasLayer/TopNav/Badge" unique_id=1800000007]
 layout_mode = 2

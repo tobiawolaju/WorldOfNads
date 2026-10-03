@@ -46,7 +46,6 @@ const DEFAULT_AVATAR: Texture2D = preload("res://assets/img/logo.png")
 # Public Monad testnet RPC, the same endpoint Dashboard.tsx reads MON from.
 const MONAD_RPC_URL: String = "https://testnet-rpc.monad.xyz"
 const LOGIN_SCENE: String = "res://scenes/login.tscn"
-const MENU_ID_LOGOUT: int = 1
 
 const DEFAULT_SKIN_ID: String = "s-default"
 const DEFAULT_ENERGY: int = 4
@@ -148,7 +147,9 @@ const DEFAULT_OWNED_IDS := ["s-default", "s-default-unshaded"]
 @onready var _nav_avatar: TextureRect = get_node_or_null("CanvasLayer/TopNav/Badge/Row/Avatar") as TextureRect
 @onready var _nav_avatar_hit: Button = get_node_or_null("CanvasLayer/TopNav/Badge/Row/Avatar/Hit") as Button
 @onready var _nav_name: Label = get_node_or_null("CanvasLayer/TopNav/Badge/Row/Name") as Label
-@onready var _nav_menu: MenuButton = get_node_or_null("CanvasLayer/TopNav/Badge/Row/MenuButton") as MenuButton
+@onready var _nav_account_menu: Control = get_node_or_null("CanvasLayer/TopNav/AccountMenu") as Control
+@onready var _nav_logout: Button = get_node_or_null("CanvasLayer/TopNav/AccountMenu/Logout") as Button
+@onready var _nav_dismiss: Button = get_node_or_null("CanvasLayer/NavDismiss") as Button
 @onready var _nav_wallet: Button = get_node_or_null("CanvasLayer/TopNav/Badge/Wallet") as Button
 @onready var _skin_preview: Control = get_node_or_null("CanvasLayer/SkinPreview") as Control
 @onready var _skin_preview_name: Label = get_node_or_null("CanvasLayer/SkinPreview/Name") as Label
@@ -1429,23 +1430,31 @@ func _setup_top_nav() -> void:
 		if not _nav_wallet.pressed.is_connected(_on_wallet_pressed):
 			_nav_wallet.pressed.connect(_on_wallet_pressed)
 
-	if _nav_menu != null:
-		var popup := _nav_menu.get_popup()
-		popup.clear()
-		popup.add_item("Logout", MENU_ID_LOGOUT)
-		if not popup.id_pressed.is_connected(_on_nav_menu_id_pressed):
-			popup.id_pressed.connect(_on_nav_menu_id_pressed)
-
-	# The avatar is the primary account trigger; the caret opens the same menu.
+	# Clicking the avatar toggles the account menu (Logout). The menu is a plain
+	# control rather than a popup so its button can carry the same pink skew
+	# style as the login screen's Cancel button.
 	if _nav_avatar_hit != null and not _nav_avatar_hit.pressed.is_connected(_on_nav_avatar_pressed):
 		_nav_avatar_hit.pressed.connect(_on_nav_avatar_pressed)
+	if _nav_logout != null and not _nav_logout.pressed.is_connected(_on_logout_pressed):
+		_nav_logout.pressed.connect(_on_logout_pressed)
+	if _nav_dismiss != null and not _nav_dismiss.pressed.is_connected(_close_account_menu):
+		_nav_dismiss.pressed.connect(_close_account_menu)
+	_set_account_menu_visible(false)
 
 	_load_profile_picture()
 	_fetch_mon_balance()
 
 func _on_nav_avatar_pressed() -> void:
-	if _nav_menu != null:
-		_nav_menu.show_popup()
+	_set_account_menu_visible(_nav_account_menu == null or not _nav_account_menu.visible)
+
+func _close_account_menu() -> void:
+	_set_account_menu_visible(false)
+
+func _set_account_menu_visible(shown: bool) -> void:
+	if _nav_account_menu != null:
+		_nav_account_menu.visible = shown
+	if _nav_dismiss != null:
+		_nav_dismiss.visible = shown
 
 func _on_wallet_pressed() -> void:
 	var address := AuthManager.get_wallet_address()
@@ -1461,9 +1470,8 @@ func _restore_wallet_label() -> void:
 	if _nav_wallet != null:
 		_nav_wallet.text = AuthManager.get_short_wallet_address()
 
-func _on_nav_menu_id_pressed(id: int) -> void:
-	if id != MENU_ID_LOGOUT:
-		return
+func _on_logout_pressed() -> void:
+	_set_account_menu_visible(false)
 	AuthManager.logout("user_requested")
 	# The login screen re-runs the device flow, so the next player on this
 	# install gets a fresh QR code instead of the previous session.
