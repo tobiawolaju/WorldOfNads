@@ -23,8 +23,9 @@ extends Control
 @onready var _open_browser_button: Button = %OpenBrowserButton
 @onready var _cancel_button: Button = %CancelButton
 
-## home.tscn is the existing boot scene: it captures the minimap and then hands
-## off to the lobby. Returning there keeps the normal startup path intact.
+## Fallback when `next_scene` is not set on the scene. login.tscn points at the
+## dashboard directly; home.tscn remains the fallback boot scene (it captures the
+## minimap and then hands off to the lobby).
 const SCENE_DEFAULT_GAME := "res://scenes/home.tscn"
 const QR_TARGET_PX := 512
 
