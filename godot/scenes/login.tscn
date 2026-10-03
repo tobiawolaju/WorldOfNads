@@ -88,6 +88,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_login")
+next_scene = "res://scenes/dshbord.tscn"
 
 [node name="Background" type="ColorRect" parent="." unique_id=1728149188]
 layout_mode = 1
