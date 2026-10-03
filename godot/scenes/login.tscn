@@ -1,30 +1,28 @@
 [gd_scene format=3 uid="uid://bk2t7pvjn6x1s"]
 
 [ext_resource type="Script" uid="uid://dnbvujqtaov8y" path="res://scripts/screens/Login.gd" id="1_login"]
+[ext_resource type="FontFile" uid="uid://bqvrqx4a4joiu" path="res://assets/fonts/fortnite.otf" id="2_0emk2"]
 [ext_resource type="FontFile" uid="uid://bkrsehe3e3foh" path="res://assets/fonts/font1.ttf" id="2_font"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.43137255, 0.32941177, 1, 1)
-
 [sub_resource type="StyleBoxFlat" id="SB_login_panel"]
-bg_color = Color(0.39607844, 0.3254902, 0.78039217, 1)
+bg_color = Color(0.43137255, 0.32941177, 1, 1)
 
 [sub_resource type="FontVariation" id="FV_button"]
 base_font = ExtResource("2_font")
 variation_embolden = 0.6
 
 [sub_resource type="StyleBoxFlat" id="SB_button"]
-content_margin_left = 30.0
+content_margin_left = 16.0
 content_margin_top = 0.0
-content_margin_right = 30.0
+content_margin_right = 16.0
 content_margin_bottom = 0.0
 bg_color = Color(1, 0.84313726, 0, 1)
 skew = Vector2(0.24, 0)
 
 [sub_resource type="StyleBoxFlat" id="SB_button_hover"]
-content_margin_left = 30.0
+content_margin_left = 16.0
 content_margin_top = 0.0
-content_margin_right = 30.0
+content_margin_right = 16.0
 content_margin_bottom = 0.0
 bg_color = Color(1, 0.84313726, 0, 1)
 skew = Vector2(0.24, 0)
@@ -35,9 +33,9 @@ border_width_bottom = 8
 border_color = Color(1, 1, 1, 0.407)
 
 [sub_resource type="StyleBoxFlat" id="SB_button_disabled"]
-content_margin_left = 30.0
+content_margin_left = 16.0
 content_margin_top = 0.0
-content_margin_right = 30.0
+content_margin_right = 16.0
 content_margin_bottom = 0.0
 bg_color = Color(1, 0.84313726, 0, 1)
 skew = Vector2(0.24, 0)
@@ -50,17 +48,17 @@ border_color = Color(1, 1, 1, 0.19607843)
 [sub_resource type="StyleBoxEmpty" id="SB_button_focus"]
 
 [sub_resource type="StyleBoxFlat" id="SB_cancel"]
-content_margin_left = 30.0
+content_margin_left = 16.0
 content_margin_top = 0.0
-content_margin_right = 30.0
+content_margin_right = 16.0
 content_margin_bottom = 0.0
 bg_color = Color(1, 0.47843137, 0.7137255, 1)
 skew = Vector2(0.24, 0)
 
 [sub_resource type="StyleBoxFlat" id="SB_cancel_hover"]
-content_margin_left = 30.0
+content_margin_left = 16.0
 content_margin_top = 0.0
-content_margin_right = 30.0
+content_margin_right = 16.0
 content_margin_bottom = 0.0
 bg_color = Color(1, 0.47843137, 0.7137255, 1)
 skew = Vector2(0.24, 0)
@@ -71,9 +69,9 @@ border_width_bottom = 8
 border_color = Color(1, 1, 1, 0.407)
 
 [sub_resource type="StyleBoxFlat" id="SB_cancel_disabled"]
-content_margin_left = 30.0
+content_margin_left = 16.0
 content_margin_top = 0.0
-content_margin_right = 30.0
+content_margin_right = 16.0
 content_margin_bottom = 0.0
 bg_color = Color(1, 0.47843137, 0.7137255, 1)
 skew = Vector2(0.24, 0)
@@ -118,12 +116,9 @@ theme_override_constants/margin_bottom = 40
 
 [node name="Title" type="Label" parent="LeftArea" unique_id=1800000202]
 layout_mode = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 0.4)
-theme_override_constants/outline_size = 12
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 64
+theme_override_fonts/font = ExtResource("2_0emk2")
+theme_override_font_sizes/font_size = 100
 text = "World of Nads"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -204,14 +199,27 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="Buttons" type="HFlowContainer" parent="RightPanel/Margin/Scroll/VBox" unique_id=421360955]
+[node name="BottomSpacer" type="Control" parent="RightPanel/Margin/Scroll/VBox" unique_id=1800000207]
+custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
-size_flags_horizontal = 4
-theme_override_constants/h_separation = 12
-theme_override_constants/v_separation = 8
-alignment = 1
+mouse_filter = 2
 
-[node name="OpenBrowserButton" type="Button" parent="RightPanel/Margin/Scroll/VBox/Buttons" unique_id=93546490]
+[node name="Buttons" type="HBoxContainer" parent="RightPanel" unique_id=421360955]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/separation = 8
+
+[node name="OpenBrowserButton" type="Button" parent="RightPanel/Buttons" unique_id=93546490]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
@@ -220,7 +228,7 @@ theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = SubResource("FV_button")
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("SB_button")
 theme_override_styles/pressed = SubResource("SB_button_hover")
 theme_override_styles/hover = SubResource("SB_button_hover")
@@ -228,7 +236,7 @@ theme_override_styles/disabled = SubResource("SB_button_disabled")
 theme_override_styles/focus = SubResource("SB_button_focus")
 text = "Open in browser"
 
-[node name="RefreshButton" type="Button" parent="RightPanel/Margin/Scroll/VBox/Buttons" unique_id=95533686]
+[node name="RefreshButton" type="Button" parent="RightPanel/Buttons" unique_id=95533686]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
@@ -237,7 +245,7 @@ theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = SubResource("FV_button")
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("SB_button")
 theme_override_styles/pressed = SubResource("SB_button_hover")
 theme_override_styles/hover = SubResource("SB_button_hover")
@@ -245,7 +253,7 @@ theme_override_styles/disabled = SubResource("SB_button_disabled")
 theme_override_styles/focus = SubResource("SB_button_focus")
 text = "New code"
 
-[node name="CancelButton" type="Button" parent="RightPanel/Margin/Scroll/VBox/Buttons" unique_id=612041518]
+[node name="CancelButton" type="Button" parent="RightPanel/Buttons" unique_id=612041518]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
@@ -254,7 +262,7 @@ theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = SubResource("FV_button")
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("SB_cancel")
 theme_override_styles/pressed = SubResource("SB_cancel_hover")
 theme_override_styles/hover = SubResource("SB_cancel_hover")
