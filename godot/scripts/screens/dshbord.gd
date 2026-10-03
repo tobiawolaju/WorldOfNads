@@ -146,6 +146,7 @@ const DEFAULT_OWNED_IDS := ["s-default", "s-default-unshaded"]
 
 # Top navbar (user badge + logout menu), matching the frontend TopNavbar.
 @onready var _nav_avatar: TextureRect = get_node_or_null("CanvasLayer/TopNav/Badge/Row/Avatar") as TextureRect
+@onready var _nav_avatar_hit: Button = get_node_or_null("CanvasLayer/TopNav/Badge/Row/Avatar/Hit") as Button
 @onready var _nav_name: Label = get_node_or_null("CanvasLayer/TopNav/Badge/Row/Name") as Label
 @onready var _nav_menu: MenuButton = get_node_or_null("CanvasLayer/TopNav/Badge/Row/MenuButton") as MenuButton
 @onready var _nav_wallet: Button = get_node_or_null("CanvasLayer/TopNav/Badge/Wallet") as Button
@@ -1435,8 +1436,16 @@ func _setup_top_nav() -> void:
 		if not popup.id_pressed.is_connected(_on_nav_menu_id_pressed):
 			popup.id_pressed.connect(_on_nav_menu_id_pressed)
 
+	# The avatar is the primary account trigger; the caret opens the same menu.
+	if _nav_avatar_hit != null and not _nav_avatar_hit.pressed.is_connected(_on_nav_avatar_pressed):
+		_nav_avatar_hit.pressed.connect(_on_nav_avatar_pressed)
+
 	_load_profile_picture()
 	_fetch_mon_balance()
+
+func _on_nav_avatar_pressed() -> void:
+	if _nav_menu != null:
+		_nav_menu.show_popup()
 
 func _on_wallet_pressed() -> void:
 	var address := AuthManager.get_wallet_address()
