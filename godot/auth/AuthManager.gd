@@ -111,6 +111,17 @@ func get_wallet_address() -> String:
 func get_privy_user_id() -> String:
 	return _session.privy_user_id if _session != null else ""
 
+## Avatar URL from the linked Privy account. Display only; may be empty.
+func get_profile_picture_url() -> String:
+	return _session.profile_picture_url if _session != null else ""
+
+## `0x1234…abcd` form for compact UI. Empty when there is no wallet.
+func get_short_wallet_address() -> String:
+	var address := get_wallet_address()
+	if address.length() <= 12:
+		return address
+	return "%s...%s" % [address.substr(0, 6), address.substr(address.length() - 4, 4)]
+
 ## Backend-verified profile for the current session.
 func get_profile() -> Dictionary:
 	return _session.profile.duplicate(true) if _session != null else {}
@@ -298,6 +309,7 @@ func _adopt_me_payload(response: Dictionary) -> void:
 		_session.username = str(user.get("username", _session.username))
 		_session.privy_user_id = str(user.get("privy_user_id", _session.privy_user_id))
 		_session.wallet_address = str(user.get("wallet_address", _session.wallet_address))
+		_session.profile_picture_url = str(user.get("profile_picture_url", _session.profile_picture_url))
 		_session.profile = user.duplicate(true)
 
 	var expires_in := int(response.get("expires_in", 0))

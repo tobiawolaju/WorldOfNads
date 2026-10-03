@@ -47,7 +47,8 @@ await createDeviceLogin({
   user_id: 'won_testuser123',
   privy_user_id: 'did:privy:test',
   username: 'testuser',
-  wallet_address: '0x0000000000000000000000000000000000000001'
+  wallet_address: '0x0000000000000000000000000000000000000001',
+  profile_picture_url: 'https://img.example/pfp.png'
 });
 
 step('1. exchange');
@@ -60,6 +61,7 @@ const access1 = exchanged.payload?.access_token;
 const refresh1 = exchanged.payload?.refresh_token;
 check('returns both tokens', Boolean(access1 && refresh1));
 check('returns won user id', exchanged.payload?.user?.id === 'won_testuser123');
+check('exchange carries profile picture', exchanged.payload?.user?.profile_picture_url === 'https://img.example/pfp.png');
 
 // 2. Ticket is single-use.
 const replay = await auth.exchangeDeviceLogin({ deviceLoginId, secret, deviceId, ip: '10.0.0.1' });
@@ -68,6 +70,7 @@ check('replay of exchange is rejected', !replay.ok, replay.error);
 // 3. /auth/me accepts the access token and rejects a wrong one.
 const me = await auth.getAuthenticatedSession({ authorizationHeader: `Bearer ${access1}` });
 check('/auth/me accepts access token', me.ok && me.payload.user.id === 'won_testuser123');
+check('/auth/me carries profile picture', me.payload?.user?.profile_picture_url === 'https://img.example/pfp.png');
 const meBad = await auth.getAuthenticatedSession({ authorizationHeader: 'Bearer deadbeef' });
 check('/auth/me rejects bad token', !meBad.ok, meBad.error);
 
