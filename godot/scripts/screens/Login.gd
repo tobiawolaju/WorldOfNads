@@ -20,6 +20,7 @@ extends Control
 @onready var _expiry_label: Label = %ExpiryLabel
 @onready var _status_label: Label = %StatusLabel
 @onready var _refresh_button: Button = %RefreshButton
+@onready var _open_browser_button: Button = %OpenBrowserButton
 @onready var _cancel_button: Button = %CancelButton
 
 ## home.tscn is the existing boot scene: it captures the minimap and then hands
@@ -46,7 +47,10 @@ const ERROR_COPY := {
 	"bad_request": "The login request was rejected. Please try again.",
 }
 
+var _current_auth_url: String = ""
+
 func _ready() -> void:
+	_open_browser_button.pressed.connect(_on_open_browser_pressed)
 	_refresh_button.pressed.connect(_on_refresh_pressed)
 	_cancel_button.pressed.connect(_on_cancel_pressed)
 
@@ -93,6 +97,7 @@ func _start_login() -> void:
 
 func _render_code(login: WONDeviceLogin) -> void:
 	_code_label.text = login.code
+	_current_auth_url = login.auth_url
 
 	var texture: ImageTexture = null
 	if AuthManager.qr_provider != null and AuthManager.qr_provider.is_available():
@@ -109,6 +114,7 @@ func _render_code(login: WONDeviceLogin) -> void:
 		_set_status("Open %s and enter the code above" % _short_origin(login.auth_url), true)
 
 	_expiry_label.text = ""
+	_open_browser_button.visible = true
 
 func _short_origin(url: String) -> String:
 	var parsed := url.split("?")[0]
@@ -158,10 +164,17 @@ func _on_login_failed(error: String) -> void:
 # Buttons
 # ---------------------------------------------------------------------------
 
+func _on_open_browser_pressed() -> void:
+	if _current_auth_url.is_empty():
+		return
+	# Godot 4: OpenURL opens the default browser
+	OS.shell_open(_current_auth_url)
+
 func _on_refresh_pressed() -> void:
 	_code_label.text = ""
 	_qr_code.texture = null
 	_expiry_label.text = ""
+	_current_auth_url = ""
 	await _start_login()
 
 func _on_cancel_pressed() -> void:
@@ -182,6 +195,8 @@ func _show_idle() -> void:
 	_qr_code.texture = null
 	_qr_code.visible = false
 	_expiry_label.text = ""
+	_current_auth_url = ""
+	_open_browser_button.visible = false
 
 func _set_status(text: String, in_progress: bool) -> void:
 	_status_label.text = text
@@ -192,6 +207,7 @@ func _set_status(text: String, in_progress: bool) -> void:
 	)
 
 func _set_buttons_enabled(enabled: bool) -> void:
+	_open_browser_button.disabled = not enabled
 	_refresh_button.disabled = not enabled
 	_cancel_button.disabled = not enabled
 
