@@ -157,7 +157,8 @@ theme_override_constants/separation = 10
 
 [node name="Description" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=166525486]
 layout_mode = 2
-text = "Sign in to link this device to your account."
+theme_override_font_sizes/font_size = 8
+text = "link device to your account."
 horizontal_alignment = 1
 autowrap_mode = 3
 
@@ -178,12 +179,6 @@ theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 40
 text = "—"
 horizontal_alignment = 1
-
-[node name="CodeHint" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=656390255]
-layout_mode = 2
-text = "Enter this code at worldofnads.xyz/auth if you cannot scan"
-horizontal_alignment = 1
-autowrap_mode = 3
 
 [node name="ExpiryLabel" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=44902473]
 unique_name_in_owner = true
