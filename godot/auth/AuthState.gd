@@ -27,6 +27,8 @@ var user_id: String = ""
 var username: String = ""
 var privy_user_id: String = ""
 var wallet_address: String = ""
+## Privy-linked avatar URL (may be empty). Display data only, never an identity.
+var profile_picture_url: String = ""
 var access_token: String = ""
 var refresh_token: String = ""
 var access_token_expires_at: int = 0
@@ -67,6 +69,7 @@ func to_persisted_dict() -> Dictionary:
 		"username": username,
 		"privy_user_id": privy_user_id,
 		"wallet_address": wallet_address,
+		"profile_picture_url": profile_picture_url,
 		"access_token": access_token,
 		"refresh_token": refresh_token,
 		"access_token_expires_at": access_token_expires_at,
@@ -96,6 +99,7 @@ static func from_exchange_payload(payload: Dictionary) -> WONAuthState:
 	state.username = str(user.get("username", ""))
 	state.privy_user_id = str(user.get("privy_user_id", ""))
 	state.wallet_address = str(user.get("wallet_address", ""))
+	state.profile_picture_url = str(user.get("profile_picture_url", ""))
 	state.access_token = str(payload.get("access_token", ""))
 	state.refresh_token = str(payload.get("refresh_token", ""))
 	state.access_token_expires_at = (
@@ -111,6 +115,7 @@ static func from_persisted_dict(data: Dictionary) -> WONAuthState:
 	state.username = str(data.get("username", ""))
 	state.privy_user_id = str(data.get("privy_user_id", ""))
 	state.wallet_address = str(data.get("wallet_address", ""))
+	state.profile_picture_url = str(data.get("profile_picture_url", ""))
 	state.access_token = str(data.get("access_token", ""))
 	state.refresh_token = str(data.get("refresh_token", ""))
 	state.access_token_expires_at = int(data.get("access_token_expires_at", 0))

@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://ceofg5yk6lkbk" path="res://assets/img/mon.png" id="6_mon"]
 [ext_resource type="Texture2D" uid="uid://87hft1j821i0" path="res://assets/img/lobbybg_masked.png" id="7_lobby"]
 [ext_resource type="AudioStream" uid="uid://cmi86vphfpbxg" path="res://assets/audio/lobbysong.mp3" id="8_lobbysong"]
+[ext_resource type="Texture2D" uid="uid://ct6moic2j0bbf" path="res://assets/img/logo.png" id="9_logo"]
 
 [sub_resource type="StyleBoxFlat" id="SB_pill"]
 content_margin_left = 5.0
@@ -721,6 +722,67 @@ theme_override_styles/hover = SubResource("SB_equip")
 theme_override_styles/disabled = SubResource("SB_equip")
 theme_override_styles/focus = SubResource("SB_empty")
 icon = ExtResource("6_mon")
+
+[node name="TopNav" type="Control" parent="CanvasLayer" unique_id=1800000001]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="Badge" type="VBoxContainer" parent="CanvasLayer/TopNav" unique_id=1800000002]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 4.0
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Row" type="HBoxContainer" parent="CanvasLayer/TopNav/Badge" unique_id=1800000003]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Avatar" type="TextureRect" parent="CanvasLayer/TopNav/Badge/Row" unique_id=1800000004]
+custom_minimum_size = Vector2(34, 34)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("9_logo")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Name" type="Label" parent="CanvasLayer/TopNav/Badge/Row" unique_id=1800000005]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 15
+text = "Player"
+
+[node name="MenuButton" type="MenuButton" parent="CanvasLayer/TopNav/Badge/Row" unique_id=1800000006]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 12
+flat = true
+text = "v"
+
+[node name="Wallet" type="Button" parent="CanvasLayer/TopNav/Badge" unique_id=1800000007]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.8)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 11
+flat = true
+text = ""
+tooltip_text = "Copy wallet address"
 
 [node name="LobbyMusic" type="AudioStreamPlayer" parent="." unique_id=606170782]
 stream = ExtResource("8_lobbysong")

@@ -205,7 +205,8 @@ Response `200`:
     "id": "won_...",
     "username": "nads_abc123",
     "privy_user_id": "did:privy:...",
-    "wallet_address": "0x..."
+    "wallet_address": "0x...",
+    "profile_picture_url": "https://..."
   }
 }
 ```
@@ -255,7 +256,7 @@ Validates the current access token and returns authoritative identity.
 ```json
 {
   "ok": true,
-  "user": { "id": "won_...", "username": "...", "privy_user_id": "...", "wallet_address": "0x..." },
+  "user": { "id": "won_...", "username": "...", "privy_user_id": "...", "wallet_address": "0x...", "profile_picture_url": "https://..." },
   "expires_in": 3540
 }
 ```
@@ -272,6 +273,7 @@ Three identifiers, deliberately not interchangeable:
 | `user_id` | Immutable WON account id | Yes | **Yes** — this is the identity |
 | `privy_user_id` | Privy DID | Yes | No — it is the auth provider's id |
 | `wallet_address` | Blockchain address | No, can change | **No** |
+| `profile_picture_url` | Privy-linked avatar image | No, can change | No — display only |
 
 The existing player model is unchanged: `users/{username}` stays keyed by the
 same username the frontend already derives, so web and native land on one
@@ -323,7 +325,7 @@ native_sessions/{session_id}                # ns_<32 hex>
   created_at          number
   last_used_at        number
   revoked_at          number|null
-  user                object   denormalised {id, username, privy_user_id, wallet_address}
+  user                object   denormalised {id, username, privy_user_id, wallet_address, profile_picture_url}
 
 native_access_index/{access_token_hash}  -> session_id
 native_refresh_index/{refresh_token_hash} -> session_id
@@ -437,7 +439,8 @@ AuthManager signals: `login_started`, `login_completed(state)`,
 `login_required(reason)`, `restore_finished(authenticated)`, `state_changed`.
 
 Public API: `is_authenticated()`, `get_user_id()`, `get_username()`,
-`get_wallet_address()`, `get_privy_user_id()`, `get_profile()`,
+`get_wallet_address()`, `get_short_wallet_address()`, `get_privy_user_id()`,
+`get_profile_picture_url()`, `get_profile()`,
 `get_access_token()`, `get_session()`, `get_device_id()`, `request(...)`,
 `begin_device_login()`, `cancel_device_login()`, `restart_device_login()`,
 `refresh_session()`, `logout(reason)`, `await_restore()`.

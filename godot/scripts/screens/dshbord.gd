@@ -39,6 +39,14 @@ const MATCH_SRC: Texture2D = preload("res://assets/img/lobbybg.jpeg")
 const MATCH_CARD_SHADER: Shader = preload("res://assets/shaders/match_card.gdshader")
 const STORE_PLATE: Texture2D = preload("res://assets/img/store_info_plate.png")
 const SKIN_DIR: String = "res://assets/img/skins/"
+# Fallback avatar when Privy has no profile picture, mirroring the frontend's
+# `/loadinglogo.png`. The nav badge is native-size chrome, not part of the zoomed
+# right panel, so these are authored at CSS pixel values.
+const DEFAULT_AVATAR: Texture2D = preload("res://assets/img/logo.png")
+# Public Monad testnet RPC, the same endpoint Dashboard.tsx reads MON from.
+const MONAD_RPC_URL: String = "https://testnet-rpc.monad.xyz"
+const LOGIN_SCENE: String = "res://scenes/login.tscn"
+const MENU_ID_LOGOUT: int = 1
 
 const DEFAULT_SKIN_ID: String = "s-default"
 const DEFAULT_ENERGY: int = 4
@@ -134,6 +142,13 @@ const DEFAULT_OWNED_IDS := ["s-default", "s-default-unshaded"]
 @onready var _mon_pill: Control = get_node_or_null("CanvasLayer/StatRail/MonPill") as Control
 @onready var _level_pill: Control = get_node_or_null("CanvasLayer/StatRail/LevelPill") as Control
 @onready var _level_value: Label = get_node_or_null("CanvasLayer/StatRail/LevelPill/Row/LevelValue") as Label
+@onready var _mon_value: Label = get_node_or_null("CanvasLayer/StatRail/MonPill/Row/MonValue") as Label
+
+# Top navbar (user badge + logout menu), matching the frontend TopNavbar.
+@onready var _nav_avatar: TextureRect = get_node_or_null("CanvasLayer/TopNav/Badge/Row/Avatar") as TextureRect
+@onready var _nav_name: Label = get_node_or_null("CanvasLayer/TopNav/Badge/Row/Name") as Label
+@onready var _nav_menu: MenuButton = get_node_or_null("CanvasLayer/TopNav/Badge/Row/MenuButton") as MenuButton
+@onready var _nav_wallet: Button = get_node_or_null("CanvasLayer/TopNav/Badge/Wallet") as Button
 @onready var _skin_preview: Control = get_node_or_null("CanvasLayer/SkinPreview") as Control
 @onready var _skin_preview_name: Label = get_node_or_null("CanvasLayer/SkinPreview/Name") as Label
 @onready var _skin_preview_meta: Label = get_node_or_null("CanvasLayer/SkinPreview/Meta") as Label
@@ -204,6 +219,8 @@ var selected_store_id: String = ""
 
 var energy: int = DEFAULT_ENERGY
 var xp: float = 0.0
+# Human-formatted MON balance, or empty until the RPC call returns.
+var _mon_balance: String = ""
 
 var _is_counting: bool = false
 var _elapsed: float = 0.0
@@ -224,6 +241,7 @@ func _ready() -> void:
 	_fetch_store_data()
 
 	_refresh_all()
+	_setup_top_nav()
 
 	if _preview_view != null and not _preview_view.resized.is_connected(_on_preview_resized):
 		_preview_view.resized.connect(_on_preview_resized)
@@ -1391,6 +1409,194 @@ func _is_owned(item: Dictionary) -> bool:
 	return owned_ids.has(str(item.get("id", "")))
 
 
+# --------------------------------------------------------------------- top nav
+
+# Ports the frontend TopNavbar user badge: avatar, username, wallet address and,
+# behind the caret, the logout action. Everything here reads from AuthManager,
+# which is the only source of identity.
+func _setup_top_nav() -> void:
+	var username := AuthManager.get_username()
+	if _nav_name != null:
+		_nav_name.text = username if not username.is_empty() else "Player"
+
+	var address := AuthManager.get_wallet_address()
+	if _nav_wallet != null:
+		var short := AuthManager.get_short_wallet_address()
+		_nav_wallet.text = short
+		_nav_wallet.visible = not short.is_empty()
+		_nav_wallet.tooltip_text = address
+		if not _nav_wallet.pressed.is_connected(_on_wallet_pressed):
+			_nav_wallet.pressed.connect(_on_wallet_pressed)
+
+	if _nav_menu != null:
+		var popup := _nav_menu.get_popup()
+		popup.clear()
+		popup.add_item("Logout", MENU_ID_LOGOUT)
+		if not popup.id_pressed.is_connected(_on_nav_menu_id_pressed):
+			popup.id_pressed.connect(_on_nav_menu_id_pressed)
+
+	_load_profile_picture()
+	_fetch_mon_balance()
+
+func _on_wallet_pressed() -> void:
+	var address := AuthManager.get_wallet_address()
+	if address.is_empty():
+		return
+	DisplayServer.clipboard_set(address)
+	if _nav_wallet != null:
+		_nav_wallet.text = "Copied!"
+		var timer := get_tree().create_timer(1.5)
+		timer.timeout.connect(_restore_wallet_label)
+
+func _restore_wallet_label() -> void:
+	if _nav_wallet != null:
+		_nav_wallet.text = AuthManager.get_short_wallet_address()
+
+func _on_nav_menu_id_pressed(id: int) -> void:
+	if id != MENU_ID_LOGOUT:
+		return
+	AuthManager.logout("user_requested")
+	# The login screen re-runs the device flow, so the next player on this
+	# install gets a fresh QR code instead of the previous session.
+	if Game.transition_layer != null:
+		Game.transition_layer.change_scene(LOGIN_SCENE)
+	else:
+		get_tree().change_scene_to_file(LOGIN_SCENE)
+
+# Avatar is a remote URL, so it is fetched at runtime. Any failure (offline,
+# unknown content type) falls back to the bundled logo rather than leaving an
+# empty square. The format is sniffed from the bytes so a decode is only ever
+# attempted with the matching loader, instead of probing every loader and
+# letting the misses print engine errors.
+func _load_profile_picture() -> void:
+	var url := AuthManager.get_profile_picture_url()
+	if url.is_empty():
+		if _nav_avatar != null:
+			_nav_avatar.texture = DEFAULT_AVATAR
+		return
+
+	var http := HTTPRequest.new()
+	http.timeout = 10.0
+	add_child(http)
+	if http.request(url) != OK:
+		http.queue_free()
+		if _nav_avatar != null:
+			_nav_avatar.texture = DEFAULT_AVATAR
+		return
+
+	var result: Array = await http.request_completed
+	http.queue_free()
+
+	var code := int(result[1])
+	var body: PackedByteArray = result[3]
+	var image := Image.new()
+	var loaded := false
+	if code == 200:
+		if _bytes_are_png(body):
+			loaded = image.load_png_from_buffer(body) == OK
+		elif _bytes_are_jpeg(body):
+			loaded = image.load_jpg_from_buffer(body) == OK
+		elif _bytes_are_webp(body):
+			loaded = image.load_webp_from_buffer(body) == OK
+	if _nav_avatar != null:
+		_nav_avatar.texture = ImageTexture.create_from_image(image) if loaded else DEFAULT_AVATAR
+
+func _bytes_are_png(data: PackedByteArray) -> bool:
+	return (
+		data.size() >= 8
+		and data[0] == 0x89 and data[1] == 0x50 and data[2] == 0x4E and data[3] == 0x47
+	)
+
+func _bytes_are_jpeg(data: PackedByteArray) -> bool:
+	return data.size() >= 3 and data[0] == 0xFF and data[1] == 0xD8 and data[2] == 0xFF
+
+func _bytes_are_webp(data: PackedByteArray) -> bool:
+	return (
+		data.size() >= 12
+		and data[0] == 0x52 and data[1] == 0x49 and data[2] == 0x46 and data[3] == 0x46
+		and data[8] == 0x57 and data[9] == 0x45 and data[10] == 0x42 and data[11] == 0x50
+	)
+
+# Public Monad RPC read, mirroring Dashboard.tsx's ethers getBalance. Display
+# only: the balance is never trusted for anything the game acts on.
+func _fetch_mon_balance() -> void:
+	var address := AuthManager.get_wallet_address()
+	if address.is_empty():
+		return
+
+	var http := HTTPRequest.new()
+	http.timeout = 10.0
+	add_child(http)
+	var payload := {
+		"jsonrpc": "2.0",
+		"id": 1,
+		"method": "eth_getBalance",
+		"params": [address, "latest"]
+	}
+	var err := http.request(
+		MONAD_RPC_URL,
+		PackedStringArray(["Content-Type: application/json"]),
+		HTTPClient.METHOD_POST,
+		JSON.stringify(payload)
+	)
+	if err != OK:
+		http.queue_free()
+		return
+
+	var result: Array = await http.request_completed
+	http.queue_free()
+	if int(result[1]) != 200:
+		return
+
+	var parsed: Variant = JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return
+	var hex_balance := str((parsed as Dictionary).get("result", ""))
+	if hex_balance.is_empty():
+		return
+
+	_mon_balance = _format_wei_to_mon(hex_balance)
+	_refresh_stat_rail()
+
+# Wei hex -> "0.0000" MON, without ever converting the full integer to a float
+# (a balance can exceed Godot's 64-bit int). Decimal is built digit by digit and
+# truncated to 4 places, matching the frontend's `toFixed(4)`.
+func _format_wei_to_mon(hex_value: String) -> String:
+	var hex := hex_value.strip_edges()
+	if hex.begins_with("0x") or hex.begins_with("0X"):
+		hex = hex.substr(2)
+	if hex.is_empty():
+		return "0.0000"
+	return _format_decimal_18(_hex_to_decimal(hex))
+
+func _hex_to_decimal(hex: String) -> String:
+	var digits: Array[int] = [0]
+	var alphabet := "0123456789abcdef"
+	for i in hex.length():
+		var value := alphabet.find(hex[i].to_lower())
+		if value < 0:
+			continue
+		var carry := value
+		for j in digits.size():
+			var current := digits[j] * 16 + carry
+			digits[j] = current % 10
+			carry = current / 10
+		while carry > 0:
+			digits.append(carry % 10)
+			carry = carry / 10
+	var out := ""
+	for i in range(digits.size() - 1, -1, -1):
+		out += str(digits[i])
+	return out
+
+func _format_decimal_18(decimal: String) -> String:
+	while decimal.length() < 19:
+		decimal = "0" + decimal
+	var whole := decimal.substr(0, decimal.length() - 18)
+	var fraction := decimal.substr(decimal.length() - 18, 4)
+	return "%s.%s" % [whole, fraction]
+
+
 # ------------------------------------------------------------------- stat rail
 
 func _refresh_stat_rail() -> void:
@@ -1412,10 +1618,11 @@ func _refresh_stat_rail() -> void:
 	if _level_value != null:
 		_level_value.text = str(_level_from_xp(xp))
 
-	# Dashboard.tsx only renders the rail outside the store tab, and only inside it when a
-	# MON balance exists to show. There is no wallet here, so the store tab hides it.
+	if _mon_value != null:
+		_mon_value.text = _mon_balance if not _mon_balance.is_empty() else "0.0000"
+	# Dashboard.tsx renders the MON pill only once a balance is known.
 	if _mon_pill != null:
-		_mon_pill.visible = false
+		_mon_pill.visible = not _mon_balance.is_empty()
 	if _level_pill != null:
 		_level_pill.visible = true
 	if _stat_rail != null:

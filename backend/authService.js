@@ -256,7 +256,8 @@ export async function startDeviceLogin({ ip, platform, deviceId, deviceLabel } =
     user_id: null,
     privy_user_id: null,
     username: null,
-    wallet_address: null
+    wallet_address: null,
+    profile_picture_url: null
   });
 
   return {
@@ -474,6 +475,7 @@ export async function exchangeDeviceLogin({ deviceLoginId, secret, platform, dev
     username: record.username,
     privy_user_id: record.privy_user_id,
     wallet_address: record.wallet_address,
+    profile_picture_url: record.profile_picture_url,
     device_login_id: String(deviceLoginId),
     platform: ALLOWED_PLATFORMS.has(platform) ? platform : record.platform,
     device_id: sanitizeShort(deviceId, 64) || record.device_id
@@ -546,6 +548,7 @@ export async function refreshSession({ refreshToken, deviceId, ip } = {}) {
       username: session.username,
       privy_user_id: session.privy_user_id,
       wallet_address: session.user?.wallet_address || session.wallet_address,
+      profile_picture_url: session.user?.profile_picture_url || session.profile_picture_url,
       device_login_id: session.device_login_id,
       platform: session.platform,
       device_id: session.device_id
@@ -664,7 +667,8 @@ async function approveDeviceLoginById({ deviceLoginId, privyUserId }) {
     user_id: wonUser.user_id,
     username: wonUser.username,
     privy_user_id: privyUserId,
-    wallet_address: privyUser.walletAddress || null
+    wallet_address: privyUser.walletAddress || null,
+    profile_picture_url: privyUser.profilePictureUrl || null
   });
 
   return {
@@ -676,7 +680,8 @@ async function approveDeviceLoginById({ deviceLoginId, privyUserId }) {
         id: wonUser.user_id,
         username: wonUser.username,
         privy_user_id: privyUserId,
-        wallet_address: privyUser.walletAddress || ""
+        wallet_address: privyUser.walletAddress || "",
+        profile_picture_url: privyUser.profilePictureUrl || ""
       }
     }
   };
@@ -687,12 +692,13 @@ function buildUserPayload(record) {
     id: record.user_id,
     username: record.username || "",
     privy_user_id: record.privy_user_id || "",
-    wallet_address: record.wallet_address || ""
+    wallet_address: record.wallet_address || "",
+    profile_picture_url: record.profile_picture_url || ""
   };
 }
 
 async function issueNativeSession(
-  { user_id, username, privy_user_id, wallet_address, device_login_id, platform, device_id },
+  { user_id, username, privy_user_id, wallet_address, profile_picture_url, device_login_id, platform, device_id },
   opts = {}
 ) {
   const sessionId = opts.sessionId || `ns_${randomToken(16)}`;
@@ -721,7 +727,8 @@ async function issueNativeSession(
       id: user_id,
       username: username || "",
       privy_user_id: privy_user_id || "",
-      wallet_address: wallet_address || ""
+      wallet_address: wallet_address || "",
+      profile_picture_url: profile_picture_url || ""
     }
   };
 
