@@ -393,7 +393,7 @@ color = Color(1, 1, 1, 0)
 metadata/_edit_use_anchors_ = true
 
 [node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=420255833]
-scale = Vector2(0.8, 0.8)
+scale = Vector2(1.1, 1.1)
 texture = ExtResource("9_qkknv")
 
 [node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyBase" unique_id=1853570535]
@@ -446,14 +446,13 @@ theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
 theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
 
 [node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=661345483 node_paths=PackedStringArray("joy_lock")]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.7, 0.7)
 texture = ExtResource("9_qkknv")
 script = ExtResource("9_mphia")
 auto_lock_hold_seconds = 0.0
 auto_lock_forward_min_strength = 0.1
 auto_lock_north_distance_multiplier = 2.5
 disable_joystick_lock = true
-lock_joystick_position = true
 keep_locked_position_on_resize = false
 joy_lock = NodePath("../JoyLock")
 
@@ -617,7 +616,6 @@ show_percentage = false
 script = ExtResource("6_stamina_bar")
 
 [node name="JumpBar" type="ProgressBar" parent="." unique_id=896147534]
-visible = false
 modulate = Color(0.60784316, 0.36078432, 1, 1)
 layout_mode = 1
 anchors_preset = 7
@@ -638,7 +636,6 @@ show_percentage = false
 script = ExtResource("6_jump_bar")
 
 [node name="JumpBar2" type="ProgressBar" parent="." unique_id=1989268868]
-visible = false
 modulate = Color(0.60784316, 0.36078432, 1, 1)
 layout_mode = 1
 anchors_preset = 7

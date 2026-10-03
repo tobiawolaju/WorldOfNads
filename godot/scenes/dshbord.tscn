@@ -3,16 +3,12 @@
 [ext_resource type="Script" uid="uid://d01wu8clqgui5" path="res://scripts/screens/dshbord.gd" id="1_dshb"]
 [ext_resource type="FontFile" uid="uid://bkrsehe3e3foh" path="res://assets/fonts/font1.ttf" id="2_font"]
 [ext_resource type="FontFile" uid="uid://y4skjn4e2mya" path="res://assets/fonts/font2.ttf" id="3_font2"]
+[ext_resource type="Environment" uid="uid://rpidr3omplr6" path="res://assets/resources/day.tres" id="3_u8sr6"]
 [ext_resource type="Texture2D" uid="uid://b1dshb0rdnrg1" path="res://assets/img/energy.png" id="4_energy"]
 [ext_resource type="Texture2D" uid="uid://ceofg5yk6faak" path="res://assets/img/gem.png" id="5_gem"]
 [ext_resource type="Texture2D" uid="uid://ceofg5yk6lkbk" path="res://assets/img/mon.png" id="6_mon"]
 [ext_resource type="Texture2D" uid="uid://87hft1j821i0" path="res://assets/img/lobbybg_masked.png" id="7_lobby"]
 [ext_resource type="AudioStream" uid="uid://cmi86vphfpbxg" path="res://assets/audio/lobbysong.mp3" id="8_lobbysong"]
-
-[sub_resource type="Environment" id="Environment_dshb"]
-ambient_light_source = 2
-ambient_light_color = Color(1, 1, 1, 1)
-ambient_light_energy = 1.5
 
 [sub_resource type="StyleBoxFlat" id="SB_pill"]
 content_margin_left = 5.0
@@ -167,7 +163,7 @@ size = Vector2i(325, 500)
 render_target_update_mode = 4
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="CanvasLayer/PreviewView/SubViewport" unique_id=933715166]
-environment = SubResource("Environment_dshb")
+environment = ExtResource("3_u8sr6")
 
 [node name="KeyLight" type="DirectionalLight3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=2128399815]
 transform = Transform3D(0.7071068, 0, -0.7071068, -0.4082483, 0.8164966, -0.4082483, 0.5773503, 0.5773503, 0.5773503, 10, 10, 10)
@@ -176,11 +172,11 @@ light_energy = 2.5
 [node name="FillLight" type="DirectionalLight3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=962142359]
 transform = Transform3D(0.4472136, 0, 0.8944272, 0.3651484, 0.9128709, -0.1825742, -0.8164966, 0.4082483, 0.4082483, -10, 5, 5)
 light_color = Color(1, 0, 0.73333335, 1)
-light_energy = 1.5
+light_energy = 0.4
 
 [node name="RimLight" type="OmniLight3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=538117877]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, -10)
-light_energy = 0.7
+light_energy = 0.4
 omni_range = 25.0
 
 [node name="Camera3D" type="Camera3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=2018889912]
@@ -720,7 +716,7 @@ theme_override_styles/disabled = SubResource("SB_equip")
 theme_override_styles/focus = SubResource("SB_empty")
 icon = ExtResource("6_mon")
 
-[node name="LobbyMusic" type="AudioStreamPlayer" parent="."]
+[node name="LobbyMusic" type="AudioStreamPlayer" parent="." unique_id=606170782]
 stream = ExtResource("8_lobbysong")
 volume_db = -7.9588
 autoplay = true
