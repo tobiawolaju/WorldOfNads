@@ -75,17 +75,20 @@ func generate(text: String, target_px: int = 512) -> ImageTexture:
 	if modules.is_empty():
 		return null
 
+	# `_build_matrix` returns a flat size*size array, so recover the edge length
+	# from its length instead of using the length itself as the row stride.
 	var count := modules.size()
-	var dimension := count + QUIET_ZONE * 2
+	var size := int(round(sqrt(float(count))))
+	var dimension := size + QUIET_ZONE * 2
 	var scale := maxi(PIXELS_PER_MODULE, int(floor(float(target_px) / float(dimension))))
 
 	var image := Image.create_empty(dimension * scale, dimension * scale, false, Image.FORMAT_RGBA8)
 	image.fill(Color.WHITE)
 
 	# Fill rectangles per dark run rather than writing pixels one at a time.
-	for y in count:
-		for x in count:
-			if modules[y * count + x] != 1:
+	for y in size:
+		for x in size:
+			if modules[y * size + x] != 1:
 				continue
 			image.fill_rect(
 				Rect2i((x + QUIET_ZONE) * scale, (y + QUIET_ZONE) * scale, scale, scale),
