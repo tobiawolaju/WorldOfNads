@@ -6,6 +6,9 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.43137255, 0.32941177, 1, 1)
 
+[sub_resource type="StyleBoxFlat" id="SB_login_panel"]
+bg_color = Color(0.39607844, 0.3254902, 0.78039217, 1)
+
 [sub_resource type="FontVariation" id="FV_button"]
 base_font = ExtResource("2_font")
 variation_embolden = 0.6
@@ -100,66 +103,99 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.43137255, 0.32941177, 1, 1)
 
-[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1972156696]
+[node name="LeftArea" type="MarginContainer" parent="." unique_id=1800000201]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.65
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="Title" type="Label" parent="LeftArea" unique_id=1800000202]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.4)
+theme_override_constants/outline_size = 12
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 64
+text = "World of Nads"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="RightPanel" type="Panel" parent="." unique_id=1800000203]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.65
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("SB_login_panel")
+
+[node name="Margin" type="MarginContainer" parent="RightPanel" unique_id=1800000204]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 20
 
-[node name="Panel" type="PanelContainer" parent="CenterContainer" unique_id=659430990]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(560, 0)
+[node name="Scroll" type="ScrollContainer" parent="RightPanel/Margin" unique_id=1800000205]
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+horizontal_scroll_mode = 0
 
-[node name="Margin" type="MarginContainer" parent="CenterContainer/Panel" unique_id=1167705881]
+[node name="VBox" type="VBoxContainer" parent="RightPanel/Margin/Scroll" unique_id=1800000206]
 layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
 
-[node name="VBox" type="VBoxContainer" parent="CenterContainer/Panel/Margin" unique_id=833290864]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="Title" type="Label" parent="CenterContainer/Panel/Margin/VBox" unique_id=478023779]
-layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "World of Nads"
-horizontal_alignment = 1
-
-[node name="Description" type="Label" parent="CenterContainer/Panel/Margin/VBox" unique_id=166525486]
+[node name="Description" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=166525486]
 layout_mode = 2
 text = "Sign in to link this device to your account."
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="QRCode" type="TextureRect" parent="CenterContainer/Panel/Margin/VBox" unique_id=1581714845]
+[node name="QRCode" type="TextureRect" parent="RightPanel/Margin/Scroll/VBox" unique_id=1581714845]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(256, 256)
+custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
-size_flags_horizontal = 4
+size_flags_horizontal = 3
+size_flags_vertical = 4
 expand_mode = 1
 stretch_mode = 5
 
-[node name="CodeLabel" type="Label" parent="CenterContainer/Panel/Margin/VBox" unique_id=1046721527]
+[node name="CodeLabel" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=1046721527]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 40
 text = "—"
 horizontal_alignment = 1
 
-[node name="CodeHint" type="Label" parent="CenterContainer/Panel/Margin/VBox" unique_id=656390255]
+[node name="CodeHint" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=656390255]
 layout_mode = 2
 text = "Enter this code at worldofnads.xyz/auth if you cannot scan"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="ExpiryLabel" type="Label" parent="CenterContainer/Panel/Margin/VBox" unique_id=44902473]
+[node name="ExpiryLabel" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=44902473]
 unique_name_in_owner = true
 layout_mode = 2
 horizontal_alignment = 1
 
-[node name="StatusLabel" type="Label" parent="CenterContainer/Panel/Margin/VBox" unique_id=929740887]
+[node name="StatusLabel" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=929740887]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
@@ -168,14 +204,14 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="Buttons" type="HFlowContainer" parent="CenterContainer/Panel/Margin/VBox" unique_id=421360955]
+[node name="Buttons" type="HFlowContainer" parent="RightPanel/Margin/Scroll/VBox" unique_id=421360955]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/h_separation = 12
 theme_override_constants/v_separation = 8
 alignment = 1
 
-[node name="OpenBrowserButton" type="Button" parent="CenterContainer/Panel/Margin/VBox/Buttons" unique_id=93546490]
+[node name="OpenBrowserButton" type="Button" parent="RightPanel/Margin/Scroll/VBox/Buttons" unique_id=93546490]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
@@ -192,7 +228,7 @@ theme_override_styles/disabled = SubResource("SB_button_disabled")
 theme_override_styles/focus = SubResource("SB_button_focus")
 text = "Open in browser"
 
-[node name="RefreshButton" type="Button" parent="CenterContainer/Panel/Margin/VBox/Buttons" unique_id=95533686]
+[node name="RefreshButton" type="Button" parent="RightPanel/Margin/Scroll/VBox/Buttons" unique_id=95533686]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
@@ -209,7 +245,7 @@ theme_override_styles/disabled = SubResource("SB_button_disabled")
 theme_override_styles/focus = SubResource("SB_button_focus")
 text = "New code"
 
-[node name="CancelButton" type="Button" parent="CenterContainer/Panel/Margin/VBox/Buttons" unique_id=612041518]
+[node name="CancelButton" type="Button" parent="RightPanel/Margin/Scroll/VBox/Buttons" unique_id=612041518]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
