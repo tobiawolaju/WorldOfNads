@@ -22,6 +22,7 @@ config/icon="uid://ct6moic2j0bbf"
 
 Game="*uid://cyhybl6vr827y"
 GameManager="*uid://ypqfq50ulbig"
+AuthManager="*res://auth/AuthManager.gd"
 
 [display]
 
