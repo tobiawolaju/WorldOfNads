@@ -135,18 +135,21 @@ export async function verifyPrivyAccessToken(accessToken) {
   }
 
   try {
-    const claims = await client.utils().auth().verifyAccessToken({ access_token: accessToken });
-    if (!claims?.userId) {
+    // The public SDK helper takes the raw token string and returns snake_case
+    // claims. Passing an object here (or reading camelCase fields below) makes
+    // jose reject the input and surfaces as "Failed to verify authentication token".
+    const claims = await client.utils().auth().verifyAccessToken(accessToken);
+    if (!claims?.user_id) {
       return { ok: false, error: "missing_subject" };
     }
     return {
       ok: true,
       claims: {
-        userId: claims.userId,
-        appId: claims.appId,
+        userId: claims.user_id,
+        appId: claims.app_id,
         issuer: claims.issuer,
-        sessionId: claims.sessionId,
-        issuedAt: claims.issuedAt,
+        sessionId: claims.session_id,
+        issuedAt: claims.issued_at,
         expiration: claims.expiration
       }
     };
