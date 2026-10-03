@@ -1,9 +1,50 @@
 [gd_scene format=3 uid="uid://bk2t7pvjn6x1s"]
 
 [ext_resource type="Script" uid="uid://dnbvujqtaov8y" path="res://scripts/screens/Login.gd" id="1_login"]
+[ext_resource type="FontFile" uid="uid://bkrsehe3e3foh" path="res://assets/fonts/font1.ttf" id="2_font"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.43137255, 0.32941177, 1, 1)
+
+[sub_resource type="FontVariation" id="FV_button"]
+base_font = ExtResource("2_font")
+variation_embolden = 0.6
+
+[sub_resource type="StyleBoxFlat" id="SB_button"]
+content_margin_left = 30.0
+content_margin_top = 0.0
+content_margin_right = 30.0
+content_margin_bottom = 0.0
+bg_color = Color(1, 0.84313726, 0, 1)
+skew = Vector2(0.24, 0)
+
+[sub_resource type="StyleBoxFlat" id="SB_button_hover"]
+content_margin_left = 30.0
+content_margin_top = 0.0
+content_margin_right = 30.0
+content_margin_bottom = 0.0
+bg_color = Color(1, 0.84313726, 0, 1)
+skew = Vector2(0.24, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(1, 1, 1, 0.407)
+
+[sub_resource type="StyleBoxFlat" id="SB_button_disabled"]
+content_margin_left = 30.0
+content_margin_top = 0.0
+content_margin_right = 30.0
+content_margin_bottom = 0.0
+bg_color = Color(1, 0.84313726, 0, 1)
+skew = Vector2(0.24, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(1, 1, 1, 0.19607843)
+
+[sub_resource type="StyleBoxEmpty" id="SB_button_focus"]
 
 [node name="Login" type="Control" unique_id=747225708]
 layout_mode = 3
@@ -101,15 +142,42 @@ size_flags_horizontal = 4
 
 [node name="OpenBrowserButton" type="Button" parent="CenterContainer/Panel/Margin/VBox/Buttons" unique_id=93546490]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("FV_button")
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("SB_button")
+theme_override_styles/pressed = SubResource("SB_button_hover")
+theme_override_styles/hover = SubResource("SB_button_hover")
+theme_override_styles/disabled = SubResource("SB_button_disabled")
+theme_override_styles/focus = SubResource("SB_button_focus")
 text = "Open in browser"
 
 [node name="RefreshButton" type="Button" parent="CenterContainer/Panel/Margin/VBox/Buttons" unique_id=95533686]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("FV_button")
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("SB_button")
+theme_override_styles/pressed = SubResource("SB_button_hover")
+theme_override_styles/hover = SubResource("SB_button_hover")
+theme_override_styles/disabled = SubResource("SB_button_disabled")
+theme_override_styles/focus = SubResource("SB_button_focus")
 text = "New code"
 
 [node name="CancelButton" type="Button" parent="CenterContainer/Panel/Margin/VBox/Buttons" unique_id=612041518]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("FV_button")
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("SB_button")
+theme_override_styles/pressed = SubResource("SB_button_hover")
+theme_override_styles/hover = SubResource("SB_button_hover")
+theme_override_styles/disabled = SubResource("SB_button_disabled")
+theme_override_styles/focus = SubResource("SB_button_focus")
 text = "Cancel"
