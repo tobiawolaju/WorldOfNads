@@ -1,8 +1,20 @@
 extends Node
 
+## Whether native builds must present the device-linking screen before entering
+## the game. The web export keeps the existing username-token flow, so the gate
+## is deliberately skipped there.
+const NATIVE_LOGIN_REQUIRED := true
+
+const LOGIN_SCENE := "res://scenes/login.tscn"
+
 @onready var progress_bar: ProgressBar = $"CanvasLayer/BoxContainer/Node/ProgressBar"
 
 func _ready() -> void:
+	if _requires_login() and not await AuthManager.await_restore():
+		print("No valid session. Showing device login.")
+		Game.transition_layer.change_scene(LOGIN_SCENE)
+		return
+
 	var bar_tween: Tween
 	if progress_bar:
 		progress_bar.value = 0
@@ -20,6 +32,13 @@ func _ready() -> void:
 
 	print("Loading complete. Entering lobby.")
 	Game.transition_layer.change_scene("res://scenes/lobby.tscn")
+
+## The web build signs in through the legacy /auth/request-token username
+## handshake rather than the device-linking flow, so it must not be redirected.
+func _requires_login() -> bool:
+	if not NATIVE_LOGIN_REQUIRED:
+		return false
+	return not OS.has_feature("web")
 
 func _capture_minimap() -> void:
 	var map_scene = load("res://scenes/busyland.tscn")
