@@ -1,0 +1,42 @@
+{
+	"burgr": {
+		"bone": "mixamorig_Head",
+		"file": "burgr.glb"
+	},
+	"duck": {
+		"bone": "mixamorig_Hips",
+		"file": "duck.glb"
+	},
+	"hair": {
+		"bone": "mixamorig_Head",
+		"file": "hair.glb"
+	},
+	"hair_001": {
+		"bone": "mixamorig_Head",
+		"file": "hair_001.glb"
+	},
+	"hedset": {
+		"bone": "mixamorig_Head",
+		"file": "hedset.glb"
+	},
+	"linnconcap": {
+		"bone": "mixamorig_Head",
+		"file": "linnconcap.glb"
+	},
+	"rown": {
+		"bone": "mixamorig_Head",
+		"file": "rown.glb"
+	},
+	"samuriehat": {
+		"bone": "mixamorig_Head",
+		"file": "samuriehat.glb"
+	},
+	"strawhat": {
+		"bone": "mixamorig_Head",
+		"file": "strawhat.glb"
+	},
+	"vikingHemblet": {
+		"bone": "mixamorig_Head",
+		"file": "vikingHemblet.glb"
+	}
+}

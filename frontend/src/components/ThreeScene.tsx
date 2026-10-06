@@ -3,8 +3,10 @@ import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { OrbitControls, useFBX, Environment, Lightformer } from "@react-three/drei";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
+import { resolveShaderType } from "../lib/skinMapping";
 
 // --- Prop Types ---
 interface Palette {
@@ -25,9 +27,16 @@ interface SkinConfig {
   outline_color?: string;
   crown_color?: string;
   face_texture?: string;
-  shader?: "ghost" | "gold" | "shadow" | "angel" | "default" | "void";
+  shader?: "ghost" | "gold" | "shadow" | "angel" | "default" | "void" | "unshaded";
   shaderTargets?: ("body" | "cheek" | "eye" | "attachment")[];
   attachment?: AttachmentConfig;
+  /**
+   * Names of the attachments this skin wears, e.g. ["duck", "hair_001"].
+   * Each name is a node in godot/scenes/skin.tscn exported to
+   * /attachments/<name>.glb by godot/tools/export_attachments.gd. Unknown
+   * names are skipped, so new attachments never break old skins.
+   */
+  attachments?: string[];
   // Legacy/direct fields for backward compat
   color?: string;
   cheekColor?: string;
@@ -133,6 +142,57 @@ const Chicken: React.FC<ChickenProps> = ({
     />
   );
 };
+
+// --- Named attachment loading (duck, hair, hats, ...) ---
+// skinConfig.attachments lists nodes taken from godot/scenes/skin.tscn and
+// exported to /attachments/*.glb by godot/tools/export_attachments.gd. The GLB
+// already carries the node's authored bone-local transform, so parenting it
+// under the matching bone reproduces the game's placement. Everything is cached
+// and failures are non-fatal: a missing manifest or file just means the preview
+// dresses nothing, which keeps unknown/future attachments safe.
+type AttachmentManifestEntry = { file: string; bone: string };
+type AttachmentManifest = Record<string, AttachmentManifestEntry>;
+
+const ATTACHMENTS_DIR = "/attachments";
+let attachmentManifestPromise: Promise<AttachmentManifest | null> | null = null;
+const attachmentFileCache = new Map<string, Promise<THREE.Group | null>>();
+
+function loadAttachmentManifest(): Promise<AttachmentManifest | null> {
+  if (!attachmentManifestPromise) {
+    attachmentManifestPromise = fetch(`${ATTACHMENTS_DIR}/manifest.json`)
+      .then((res) => (res.ok ? (res.json() as Promise<AttachmentManifest>) : null))
+      .catch(() => null);
+  }
+  return attachmentManifestPromise;
+}
+
+function loadAttachment(file: string): Promise<THREE.Group | null> {
+  let pending = attachmentFileCache.get(file);
+  if (!pending) {
+    pending = new THREE.GLTFLoader()
+      .loadAsync(`${ATTACHMENTS_DIR}/${file}`)
+      .then((gltf) => gltf.scene as THREE.Group)
+      .catch((err) => {
+        console.warn(`[ThreeScene] attachment "${file}" failed to load`, err);
+        return null;
+      });
+    attachmentFileCache.set(file, pending);
+  }
+  return pending;
+}
+
+function findBone(model: THREE.Object3D, boneName: string): THREE.Object3D | null {
+  const exact = model.getObjectByName(boneName);
+  if (exact) return exact;
+  const needle = boneName.toLowerCase();
+  let found: THREE.Object3D | null = null;
+  model.traverse((child) => {
+    if (!found && (child as THREE.Bone).isBone && child.name.toLowerCase().includes(needle)) {
+      found = child;
+    }
+  });
+  return found;
+}
 
 // --- Animated Nad Model Component ---
 interface NadModelProps {
@@ -240,7 +300,9 @@ const NadModel: React.FC<NadModelProps> = ({
         const isCheek = /^(cheek_|Cube[._]?00[45]$)/.test(name);
         const isEye = /^(eye_|Cube[._]?00[67]$)/.test(name);
 
-        const shaderType = equippedSkin?.skinConfig?.shader || "default";
+        // Odd numeric skin ids are the shaded edition, even ids the flat
+        // variant of the same skin (mirrors SkinApplier in Godot).
+        const shaderType = resolveShaderType(equippedSkin?.id, equippedSkin?.skinConfig?.shader);
         const targets = equippedSkin?.skinConfig?.shaderTargets || ["body", "cheek", "eye", "attachment"];
         const shouldApplyShader = targets.includes(isHeadOrBody ? "body" : isCheek ? "cheek" : isEye ? "eye" : "unknown");
 
@@ -276,6 +338,11 @@ const NadModel: React.FC<NadModelProps> = ({
               (newMat as any).emissive = eyeColor.clone();
               (newMat as any).emissiveIntensity = 1.0;
             }
+          } else if (shaderType === "unshaded") {
+            // Flat skin: no lighting, the colour is the colour. The palette
+            // copies below set the exact hue, and outlines still draw - the
+            // same combination as Godot's skin_unshaded.gdshader.
+            newMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
           } else {
             newMat = child.userData.originalMaterial.clone();
           }
@@ -329,7 +396,7 @@ const NadModel: React.FC<NadModelProps> = ({
         }
 
         // Create outline mesh for this part
-        if (shaderType === "default" || !shouldApplyShader) {
+        if (shaderType === "default" || shaderType === "unshaded" || !shouldApplyShader) {
           const outlineMat = new THREE.MeshBasicMaterial({
             color: 0x000000,
             side: THREE.BackSide,
@@ -346,7 +413,9 @@ const NadModel: React.FC<NadModelProps> = ({
           }
           outlineMesh.position.copy(child.position);
           outlineMesh.quaternion.copy(child.quaternion);
-          const baseScale = shaderType === "default" ? 1.04 : 1.0;
+          // Godot draws the unshaded skin with a 1.04 outline (see the
+          // "unshaded" branch in SkinApplier._body_material); match it.
+          const baseScale = shaderType === "default" || shaderType === "unshaded" ? 1.04 : 1.0;
           outlineMesh.scale.copy(child.scale).multiplyScalar(baseScale);
           outlineMesh.renderOrder = -1;
           child.parent?.add(outlineMesh);
@@ -361,8 +430,12 @@ const NadModel: React.FC<NadModelProps> = ({
     };
   }, [model, equippedSkin]);
 
-  // Bone attachment logic
+  // Bone attachment logic (legacy: one primitive shaped by attachment.shape)
   useEffect(() => {
+    // Skins that name real attachments (["duck", "hair_001", ...]) are dressed
+    // by the manifest-driven effect below. Only old configs that set
+    // attachment.shape come through here.
+    if (Array.isArray(equippedSkin?.skinConfig?.attachments)) return;
     let headBone: THREE.Object3D | null = null;
     model.traverse((child) => {
       if (child instanceof THREE.Bone) {
@@ -546,6 +619,53 @@ const NadModel: React.FC<NadModelProps> = ({
         }
       };
     }
+  }, [model, equippedSkin]);
+
+  // Named attachment list: dress the nad exactly like the game does.
+  useEffect(() => {
+    const list = equippedSkin?.skinConfig?.attachments;
+    if (!Array.isArray(list) || list.length === 0) return;
+
+    let disposed = false;
+    const placed: THREE.Object3D[] = [];
+
+    (async () => {
+      const manifest = await loadAttachmentManifest();
+      if (disposed || !manifest) {
+        if (!manifest) {
+          console.warn("[ThreeScene] /attachments/manifest.json missing - run tools/export_attachments.gd");
+        }
+        return;
+      }
+      for (const name of list) {
+        const entry = manifest[name];
+        if (!entry) {
+          console.warn(`[ThreeScene] skin references unknown attachment "${name}"`);
+          continue;
+        }
+        const bone = findBone(model, entry.bone);
+        if (!bone) {
+          console.warn(`[ThreeScene] bone "${entry.bone}" missing for attachment "${name}"`);
+          continue;
+        }
+        const prototype = await loadAttachment(entry.file);
+        if (disposed || !prototype) continue;
+        // Clone per instance: the cached prototype stays pristine when the
+        // skin changes again. Transforms come straight from the GLB.
+        const obj = prototype.clone(true);
+        obj.name = `attachment-${name}`;
+        bone.add(obj);
+        placed.push(obj);
+      }
+    })();
+
+    return () => {
+      disposed = true;
+      for (const obj of placed) {
+        obj.parent?.remove(obj);
+      }
+      placed.length = 0;
+    };
   }, [model, equippedSkin]);
 
   // Overall model cleanup on unmount

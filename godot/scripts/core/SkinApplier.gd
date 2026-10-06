@@ -17,7 +17,10 @@ const FALLBACK_SHADED: Dictionary = {
 	"crown_color": [1.0, 1.0, 0.0, 1],
 	"shader": "default",
 	"shader_targets": ["body", "cheek"],
-	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] }
+	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] },
+	# Which attachment nodes this skin wears (see ATTACHMENT_SLOTS). Keeps the
+	# default nad looking exactly like skin.tscn ships: Lincoln cap + hip duck.
+	"attachments": ["linnconcap", "duck"]
 }
 
 const FALLBACK_UNSHADED: Dictionary = {
@@ -32,7 +35,8 @@ const FALLBACK_UNSHADED: Dictionary = {
 	"crown_color": [1.0, 1.0, 0.0, 1],
 	"shader": "unshaded",
 	"shader_targets": ["body", "cheek"],
-	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] }
+	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] },
+	"attachments": ["linnconcap", "duck"]
 }
 
 static func seed_from_api(json_array: Array) -> void:
@@ -55,7 +59,7 @@ static func seed_single_from_api(skin_id: String, entry: Dictionary) -> void:
 
 static func _convert_api_entry(skin_config: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for key in ["palette", "outline_color", "crown_color", "shader", "shader_targets", "attachment"]:
+	for key in ["palette", "outline_color", "crown_color", "shader", "shader_targets", "attachment", "attachments"]:
 		if skin_config.has(key):
 			result[key] = skin_config[key]
 	if result.is_empty():
@@ -81,6 +85,19 @@ static func _convert_api_entry(skin_config: Dictionary) -> Dictionary:
 		var att = result["attachment"]
 		if att.has("color") and typeof(att["color"]) == TYPE_STRING:
 			att["color"] = _hex2rgba(att["color"])
+	# Attachment lists are just node names from skin.tscn ("duck", "hair_001", ...).
+	# Non-strings are dropped here so apply_skin only ever sees plain names; a
+	# malformed value is erased, which - like a missing key - means "wears
+	# nothing" (the same thing the web preview does).
+	if result.has("attachments"):
+		if result["attachments"] is Array:
+			var clean: Array = []
+			for n in result["attachments"]:
+				if typeof(n) == TYPE_STRING and not String(n).is_empty():
+					clean.append(String(n))
+			result["attachments"] = clean
+		else:
+			result.erase("attachments")
 	return result
 
 static func _hex2rgba(hex: Variant) -> Array:
@@ -102,17 +119,34 @@ static func _hex2rgba(hex: Variant) -> Array:
 
 static func get_skin_data(skin_name: String) -> Dictionary:
 	var key := str(skin_name).strip_edges().to_lower()
+	var data: Dictionary
 	match key:
 		DEFAULT_SKIN:
-			return FALLBACK_SHADED
+			data = FALLBACK_SHADED
 		"s-default-unshaded":
-			return FALLBACK_UNSHADED
-	if _api_cache.has(key):
-		var cached = _api_cache[key]
-		if _is_all_black(cached):
-			return FALLBACK_SHADED
-		return cached
-	return FALLBACK_SHADED
+			data = FALLBACK_UNSHADED
+		_:
+			if _api_cache.has(key):
+				var cached = _api_cache[key]
+				data = FALLBACK_SHADED if _is_all_black(cached) else cached
+			else:
+				data = FALLBACK_SHADED
+	return _apply_shading_parity(key, data)
+
+# Numeric skin ids pick their shading by parity: odd ids are the shaded edition,
+# even ids the unshaded variant (0001 shaded, 0002 flat, 0003 shaded, ...).
+# Named ids (s-default, s-default-unshaded, ...) keep the shader their config
+# asks for. The dictionary is duplicated before overriding so the shared
+# fallback/cache entries are never mutated.
+static func _apply_shading_parity(key: String, data: Dictionary) -> Dictionary:
+	if not key.is_valid_int():
+		return data
+	var wanted := "default" if int(key) % 2 != 0 else "unshaded"
+	if str(data.get("shader", "default")) == wanted:
+		return data
+	var copy := data.duplicate()
+	copy["shader"] = wanted
+	return copy
 
 static func _is_all_black(data: Dictionary) -> bool:
 	var pal = data.get("palette", {})
@@ -130,6 +164,17 @@ const SKIN_UNSHADED_SHADER := preload("res://assets/shaders/skin_unshaded.gdshad
 
 static var _skin_material_sets: Dictionary = {}
 const MAX_MATERIAL_CACHE: int = 30
+
+# Attachment slots: the direct children of these nodes are the equippable
+# attachment units (head hats/hair/burger/headset, hip duck, back items).
+# Adding a new bone attachment to skin.tscn only requires adding its slot path
+# here - the children themselves are discovered at runtime, so new attachment
+# nodes never need a code change.
+const ATTACHMENT_SLOTS: Array[String] = [
+	"Skeleton3D/heddds/offset",
+	"Skeleton3D/hips",
+	"Skeleton3D/Back/offset",
+]
 
 func apply_skin(player: Node3D, skin_name: String) -> void:
 	var data := get_skin_data(skin_name)
@@ -150,6 +195,29 @@ func apply_skin(player: Node3D, skin_name: String) -> void:
 		var mat: Material = _material_for_name(material_set, mi.name)
 		if mat != null:
 			mi.material_override = mat
+
+	_apply_attachments(player, data)
+
+# Shows exactly the attachment nodes a skin lists and hides the rest. A skin
+# with an empty list - or no "attachments" key at all - wears nothing, which is
+# also what the web preview does, so game and web always agree. The default
+# loadout is therefore spelled out explicitly in the fallback configs and in
+# items.json rather than inherited from the scene. Unknown names are ignored on
+# purpose: a skin may name an attachment that only lands in skin.tscn later, and
+# a skin may still list a node that was renamed away - neither may break the
+# rest of the skin. Only visibility is touched, never transforms, so every
+# attachment keeps its authored placement.
+static func _apply_attachments(player: Node3D, data: Dictionary) -> void:
+	var wanted: Variant = data.get("attachments", [])
+	if not wanted is Array:
+		wanted = []
+	for slot_path in ATTACHMENT_SLOTS:
+		var slot := player.get_node_or_null(slot_path) as Node3D
+		if slot == null:
+			continue
+		for child in slot.get_children():
+			if child is Node3D:
+				child.visible = String(child.name) in wanted
 
 # Recolours the eyes without replacing their material. The eye shader draws the
 # camera-facing dot, so overwriting material_override here would discard it and leave a

@@ -28,19 +28,19 @@ const EXISTING_SKINS = [
   { onChainId: 2, frontendId: "s1", name: "Sprout", tier: "common", price: "5 MON", maxSupply: 1000, requiredXP: 0, shader: "default", image: "/skins_png/s1.png",
     palette: { body: "#7bc67e", body_alt: "#5ea861", cheek: "#5ea861", eye: "#ffffff", skin: "#d9b373" },
     outline_color: "#7bc67e", crown_color: "#7bc67e", face_texture: "", shader_targets: ["body","cheek","eye"],
-    attachment: { shape: "box", color: "#d9b373" } },
+    attachment: { shape: "box", color: "#d9b373" }, attachments: ["linnconcap", "duck"] },
   { onChainId: 3, frontendId: "s2", name: "Cobalt", tier: "rare", price: "10 MON", maxSupply: 500, requiredXP: 100, shader: "gold", image: "/skins_png/s2.png",
     palette: { body: "#3b7dd8", body_alt: "#3b7dd8", cheek: "#3b7dd8", eye: "#ffffff", skin: "#8ab4f8" },
     outline_color: "#3b7dd8", crown_color: "#3b7dd8", face_texture: "", shader_targets: ["body","cheek"],
-    attachment: { shape: "box", color: "#8ab4f8" } },
+    attachment: { shape: "box", color: "#8ab4f8" }, attachments: ["linnconcap", "duck"] },
   { onChainId: 4, frontendId: "s3", name: "Magma", tier: "epic", price: "20 MON", maxSupply: 100, requiredXP: 500, shader: "default", image: "/skins_png/s3.png",
     palette: { body: "#ff6b35", body_alt: "#ff6b35", cheek: "#ff6b35", eye: "#ffffff", skin: "#ff9c6e" },
     outline_color: "#ff4500", crown_color: "#ff4500", face_texture: "", shader_targets: ["body","cheek","eye"],
-    attachment: { shape: "cone", color: "#ff4500" } },
+    attachment: { shape: "cone", color: "#ff4500" }, attachments: ["linnconcap", "duck"] },
   { onChainId: 5, frontendId: "s4", name: "Aether", tier: "legendary", price: "50 MON", maxSupply: 50, requiredXP: 2000, shader: "angel", image: "/skins_png/s4.png",
     palette: { body: "#9b59b6", body_alt: "#9b59b6", cheek: "#9b59b6", eye: "#f1c40f", skin: "#c39bd3" },
     outline_color: "#f1c40f", crown_color: "#f1c40f", face_texture: "", shader_targets: ["body","cheek","eye"],
-    attachment: { shape: "torus", color: "#f1c40f" } },
+    attachment: { shape: "torus", color: "#f1c40f" }, attachments: ["linnconcap", "duck"] },
 ];
 
 const BASE_URL = process.env.RENDER_EXTERNAL_URL || "https://worldofnads.onrender.com";
@@ -85,6 +85,9 @@ async function main() {
         shader: skin.shader,
         shader_targets: skin.shader_targets,
         attachment: skin.attachment,
+        // Attachment lists decide which skin.tscn nodes the nad wears; keep
+        // them when present (omitted entirely when undefined).
+        ...(skin.attachments ? { attachments: skin.attachments } : {}),
       },
       schemaVersion: 1,
       updatedAt: new Date().toISOString(),
@@ -104,7 +107,8 @@ async function main() {
       image: "/skins_png/s-default.png", onChainId: null,
       palette: { body: "#fc2d96", body_alt: "#fc4b8c", cheek: "#fc6a9b", eye: "#e7e7e7", skin: "#ff9c6e" },
       outline_color: "#fc00d9", crown_color: "#fc00d9", face_texture: "", shader: "default",
-      shader_targets: ["body","cheek","eye"], attachment: { shape: "box", color: "#ff9c6e" }
+      shader_targets: ["body","cheek","eye"], attachment: { shape: "box", color: "#ff9c6e" },
+      attachments: ["linnconcap", "duck"]
     },
     {
       frontendId: "s-default-unshaded",
@@ -113,7 +117,8 @@ async function main() {
       image: "/skins_png/s-default.png", onChainId: null,
       palette: { body: "#fc2d96", body_alt: "#fc4b8c", cheek: "#fc6a9b", eye: "#e7e7e7", skin: "#ff9c6e" },
       outline_color: "#fc00d9", crown_color: "#fc00d9", face_texture: "", shader: "unshaded",
-      shader_targets: ["body","cheek","eye"], attachment: { shape: "box", color: "#ff9c6e" }
+      shader_targets: ["body","cheek","eye"], attachment: { shape: "box", color: "#ff9c6e" },
+      attachments: ["linnconcap", "duck"]
     }
   ];
 
@@ -124,7 +129,7 @@ async function main() {
       skinConfig: {
         palette: s.palette, outline_color: s.outline_color, crown_color: s.crown_color,
         face_texture: s.face_texture, shader: s.shader, shader_targets: s.shader_targets,
-        attachment: s.attachment,
+        attachment: s.attachment, attachments: s.attachments,
       },
       schemaVersion: 1, updatedAt: new Date().toISOString(),
     };
