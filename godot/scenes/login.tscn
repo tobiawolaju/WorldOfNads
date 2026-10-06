@@ -118,8 +118,8 @@ theme_override_constants/margin_bottom = 40
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_0emk2")
-theme_override_font_sizes/font_size = 100
-text = "World of Nads"
+theme_override_font_sizes/font_size = 160
+text = "WONs"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -146,23 +146,28 @@ theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 20
 
-[node name="Scroll" type="ScrollContainer" parent="RightPanel/Margin" unique_id=1800000205]
-layout_mode = 2
-horizontal_scroll_mode = 0
-
-[node name="VBox" type="VBoxContainer" parent="RightPanel/Margin/Scroll" unique_id=1800000206]
+[node name="VBox" type="VBoxContainer" parent="RightPanel/Margin" unique_id=1800000206]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
+alignment = 1
 
-[node name="Description" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=166525486]
+[node name="ExpiryLabel" type="Label" parent="RightPanel/Margin/VBox" unique_id=44902473]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
-text = "link device to your account."
 horizontal_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="RightPanel/Margin/VBox" unique_id=929740887]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Starting…"
+horizontal_alignment = 1
+vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="QRCode" type="TextureRect" parent="RightPanel/Margin/Scroll/VBox" unique_id=1581714845]
+[node name="QRCode" type="TextureRect" parent="RightPanel/Margin/VBox" unique_id=1581714845]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
@@ -171,30 +176,16 @@ size_flags_vertical = 4
 expand_mode = 1
 stretch_mode = 5
 
-[node name="CodeLabel" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=1046721527]
+[node name="CodeLabel" type="Label" parent="RightPanel/Margin/VBox" unique_id=1046721527]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 24
 text = "—"
 horizontal_alignment = 1
 
-[node name="ExpiryLabel" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=44902473]
-unique_name_in_owner = true
-layout_mode = 2
-horizontal_alignment = 1
-
-[node name="StatusLabel" type="Label" parent="RightPanel/Margin/Scroll/VBox" unique_id=929740887]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-text = "Starting…"
-horizontal_alignment = 1
-vertical_alignment = 1
-autowrap_mode = 3
-
-[node name="BottomSpacer" type="Control" parent="RightPanel/Margin/Scroll/VBox" unique_id=1800000207]
+[node name="BottomSpacer" type="Control" parent="RightPanel/Margin/VBox" unique_id=1800000207]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 mouse_filter = 2
@@ -222,6 +213,8 @@ theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = SubResource("FV_button")
 theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("SB_button")
@@ -239,6 +232,8 @@ theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = SubResource("FV_button")
 theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("SB_button")
@@ -256,6 +251,8 @@ theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = SubResource("FV_button")
 theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("SB_cancel")
