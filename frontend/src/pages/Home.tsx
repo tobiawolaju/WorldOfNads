@@ -388,7 +388,7 @@ const Home: React.FC = () => {
         <div className="hero-content">
           <h1 className="hero-headline"> WORLD OF NADS</h1>
         </div>
-        <p className="hero-subtext">A million Nads enter. Only one becomes Prime. No luck. Just skill. ↓</p>
+        <p className="hero-subtext">20 PLAYERS. ONE CHICKEN. TAKE THE PRIZE. ↓</p>
 
       </section>
 
@@ -401,7 +401,7 @@ const Home: React.FC = () => {
             <div className="func-content">
               <h2 className="func-headline">Play</h2>
               <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}>
-                <WaveText text="Drop into the arena. Outplay everyone. Earn your place. Every match is a fight for position. Every win moves you closer to recognition." />
+                <WaveText text="Drop into the arena with 19 other players. Find the chicken. Take it. Run. Everyone else wants what you're holding." />
               </p>
             </div>
             <div className="func-image">
@@ -414,8 +414,8 @@ const Home: React.FC = () => {
           {/* Slide 2: Hosts */}
           <div className="functional-slide reverse">
             <div className="func-content">
-              <h2 className="func-headline">Hosts</h2>
-              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}> <WaveText text="Control the arena. Shape the battlefield. Get seen where competition happens. Sponsors don’t just fund matches — they influence the game." /></p>
+              <h2 className="func-headline">THE CHASE</h2>
+              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}> <WaveText text="One player has the chicken. Everyone else wants it. Chase them. Ambush them. Steal it. Keep it until the timer runs out." /></p>
             </div>
             <div className="func-image">
               <Slide2 />
@@ -425,10 +425,10 @@ const Home: React.FC = () => {
           {/* Slide 3: Vision */}
           <div className="functional-slide">
             <div className="func-content">
-              <h2 className="func-headline">Built for Competition</h2>
-              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}><WaveText text="No bots. No shortcuts. No second chances. Every match is real. Every win is earned. Only skill decides who rises." /></p>
+              <h2 className="func-headline">PLAY TO WIN</h2>
+              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}><WaveText text="No luck. No pay-to-win shortcuts. Just players, skill and chaos. Every match is a chance to take the prize." /></p>
               <h2 className="section-title">How it works</h2>
-              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}><WaveText text="The arena resets every month. Players compete. Only the top rise. The best become recognized Nads." /></p>
+              <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}><WaveText text="Get the chicken. Keep the chicken. Survive the chase. When the timer hits zero, the player holding it wins." /></p>
 
 
             </div>
@@ -443,20 +443,20 @@ const Home: React.FC = () => {
           {[...Array(2)].map((_, i) => (
             <div key={i} className="stats-group">
               <div className="stat-item">
-                <span className="stat-num">The First</span>
-                <span className="stat-label">Arena</span>
+                <span className="stat-num">20</span>
+                <span className="stat-label">PLAYERS</span>
               </div>
               <div className="stat-item">
-                <span className="stat-num">100</span>
-                <span className="stat-label">Players</span>
+                <span className="stat-num">1</span>
+                <span className="stat-label">CHICKEN</span>
               </div>
               <div className="stat-item">
-                <span className="stat-num">10</span>
-                <span className="stat-label">Sponsors</span>
+                <span className="stat-num">1</span>
+                <span className="stat-label">WINNER</span>
               </div>
               <div className="stat-item">
-                <span className="stat-num" style={{ fontSize: 'clamp(18px, 2vw, 28px)' }}>100 enter. Only the best rise.</span>
-                <span className="stat-label" style={{ textTransform: 'none', letterSpacing: 'normal', fontSize: '13px' }}>Be early. Or fight your way in</span>
+                <span className="stat-num" style={{ fontSize: 'clamp(18px, 2vw, 28px)' }}>ONE CHICKEN. EVERYONE WANTS IT.</span>
+                <span className="stat-label" style={{ textTransform: 'none', letterSpacing: 'normal', fontSize: '13px' }}>GET IT. KEEP IT. WIN.</span>
               </div>
             </div>
           ))}
@@ -465,7 +465,7 @@ const Home: React.FC = () => {
 
       {/* SECTION 4: EVENTS GRID */}
       <section className="events-grid-section reveal">
-        <h2 className="section-title">What’s happening</h2>
+        <h2 className="section-title">WHAT'S HAPPENING</h2>
 <div className="events-grid">
           <LatestTweet />
         </div>
