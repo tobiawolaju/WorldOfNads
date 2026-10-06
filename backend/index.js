@@ -6,6 +6,7 @@ import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, upda
 import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 import { refreshAllUserPfps } from './refreshUserPfps.js';
+import { attachmentsForId } from './skinIndex.js';
 import {
   approveDeviceLogin,
   cancelDeviceLogin,
@@ -722,6 +723,15 @@ const server = createServer(async (req, res) => {
       const skinId = onChainId || String(predictedOnChainId || `s-${Date.now()}`);
       const baseUrl = process.env.RENDER_EXTERNAL_URL || `https://worldofnads.onrender.com`;
 
+      // Numeric ids own a combo in skinCombos.json: fill attachments from the
+      // shared index unless the caller pinned them explicitly. Appending a
+      // combo to that list is then all it takes for new ids to dress right.
+      const resolvedSkinConfig = { ...(skinConfig || {}) };
+      if (!Array.isArray(resolvedSkinConfig.attachments)) {
+        const indexed = attachmentsForId(skinId);
+        if (indexed) resolvedSkinConfig.attachments = indexed;
+      }
+
       await saveSkin(skinId, {
         name,
         tier: tier || 'common',
@@ -730,7 +740,7 @@ const server = createServer(async (req, res) => {
         requiredXP: requiredXP || 0,
         image: image || '',
         onChainId: predictedOnChainId || null,
-        skinConfig
+        skinConfig: resolvedSkinConfig
       });
 
       // 2. Create on-chain with correct URI pointing to Firebase
