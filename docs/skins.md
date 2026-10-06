@@ -26,6 +26,53 @@ Both shader variants exist because both are used: the unshaded pipeline
 Implementation: `SkinApplier._apply_shading_parity()` (Godot) and
 `resolveShaderType()` (`frontend/src/lib/skinMapping.ts`, web).
 
+## The skin index (id &#8660; combo)
+
+For numbered skins an id is not just a label — it is a slot in an ordered
+catalog. `backend/skinCombos.json` lists the combinations in order:
+
+```
+combo n (0-based)  ->  ids 2n+1 (shaded, odd)  and  2n+2 (unshaded, even)
+id N               ->  combo floor((N-1)/2)
+```
+
+So `0001`/`0002` are the shaded and flat halves of combo 1, `0003`/`0004` of
+combo 2, and so on — every possible outcome automatically gets both variants.
+Each combo is one readable line:
+
+```json
+{ "name": "Viking", "attachments": ["vikingHemblet"] }
+```
+
+The list is **append-only**: adding a combo extends the index while old ids keep
+their slot. Non-numeric ids (`s-default`) sit outside the index and are pinned
+in the same file's `defaults` map.
+
+`backend/skinIndex.js` is the single implementation of the mapping
+(`comboForId`, `attachmentsForId`, `idsForCombo`). The game and the web never
+read it — they consume the flat `attachments` list materialized onto each skin,
+so the runtime stays dumb.
+
+### Materializing the index
+
+```
+cd backend
+node scripts/generateSkinsFromCombos.js                        # dry run
+node scripts/generateSkinsFromCombos.js --write                # stamp existing skins
+node scripts/generateSkinsFromCombos.js --write --create-missing
+```
+
+- **Stamp (default write):** for every existing skin, set `skinConfig.attachments`
+  to the combo its id owns, preserving palette, name and tier. This is what
+  fixed the pre-attachments skins that rendered bare.
+- **`--create-missing`:** also write a doc for every combo pair that has no skin
+  yet, so a future mint/preview of that id resolves the right combo. Opt-in,
+  because the in-game store and the web dashboard list every `/api/skins` entry.
+
+`POST /admin/create-skin` derives attachments from the index when the caller
+does not pass a list, so minting a new numbered id dresses it with no extra
+data entry.
+
 ## Attachment lists
 
 A skin chooses what the nad wears with a flat list of node names:
@@ -126,13 +173,15 @@ unknown attachment name only means that item is not shown.
 
 1. Add the node under the right slot in `godot/scenes/skin.tscn` and place it.
 2. Re-run `tools/export_attachments.gd`.
-3. Reference it: `"attachments": ["duck", "wings"]`.
+3. Append a combo that uses it to `backend/skinCombos.json`, then run
+   `generateSkinsFromCombos.js --write --create-missing` — or let the next mint
+   of that id derive it automatically. No game or web code changes.
 
 **A new skin** (e.g. id `0004`, unshaded by parity):
 
-1. Create it via admin/`POST /admin/create-skin` with its `skinConfig`:
-   `palette`, `outline_color`, `crown_color`, `shader_targets`, and
-   `attachments` (use `[]` for a bare nad).
+1. Create it via admin/`POST /admin/create-skin`. For a numbered id the
+   `attachments` list is filled from the index automatically; pass an explicit
+   `attachments` list in `skinConfig` to override.
 2. Nothing else. Godot and the web both pick it up from `/api/skins`.
 
 ## Verifying changes
