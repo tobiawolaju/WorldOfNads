@@ -68,11 +68,13 @@ type SkinConfig = {
   color?: string;
   cheekColor?: string;
   attachmentColor?: string;
-  shader?: "ghost" | "gold" | "shadow" | "angel" | "default";
+  shader?: "ghost" | "gold" | "shadow" | "angel" | "default" | "unshaded" | "void";
   shaderTargets?: ("body" | "cheek" | "eye" | "attachment")[];
   eyeColor?: string;
   rawFragmentShader?: string;
   rawVertexShader?: string;
+  /** Attachment node names this skin wears, e.g. ["duck", "hair_001"]. */
+  attachments?: string[];
 };
 
 type StoreItem = {

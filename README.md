@@ -146,6 +146,18 @@ The analytics pipeline is live and documented in `docs/analytics.md`.
 
 ---
 
+## Skins
+
+Skins are id + config: an `attachments` list picks what the nad wears, and
+numeric ids pick their shading by parity (odd = shaded, even = unshaded).
+Documented in `docs/skins.md`.
+
+- **Config:** `skinConfig` in Firebase, served by `GET /api/skins` (local defaults in `frontend/src/data/items.json`).
+- **Game:** `godot/scripts/core/SkinApplier.gd` applies materials, eye tint and attachment visibility.
+- **Preview:** `frontend/src/components/ThreeScene.tsx` dresses the same attachments from `/attachments/*.glb` (exported by `godot/tools/export_attachments.gd`).
+
+---
+
 ## Tech Stack & Highlights
 
 - **Frontend / Engine:** Godot -> WASM embedded in React/Vite
