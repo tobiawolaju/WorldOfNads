@@ -267,11 +267,14 @@ const AppContent: React.FC = () => {
   const hideNavbar = location.pathname === "/play" || location.pathname === "/auth";
   const hideTopNavbarContents = location.pathname === "/waitlist" || location.pathname === "/wait-list";
 
+  // Keep the fullscreen toggle off the landing page (Home).
+  const isHomeRoute = location.pathname === "/" || location.pathname === "/home";
+
   return (
     <>
       <BackgroundPattern />
       <RainbowBeam />
-      <FullscreenToggle />
+      {!isHomeRoute && <FullscreenToggle />}
       <FullScreenLoader visible={showLoader} />
       <ToastContainer
         position="top-center"
