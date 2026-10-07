@@ -3,8 +3,10 @@
   bottom: 1rem;
   left: 1rem;
   z-index: 9999;
-  width: 3rem;
+  width: auto;
   height: 3rem;
+  padding: 0 0.9rem;
+  gap: 0.5rem;
   border-radius: 0;
   border: none;
   background: #ff7ab6;
@@ -18,6 +20,14 @@
   -webkit-user-select: none;
   user-select: none;
   transition: background 0.2s ease;
+}
+
+.fullscreen-toggle__label {
+  font: 700 0.8rem/1 inherit;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .fullscreen-toggle:hover {
