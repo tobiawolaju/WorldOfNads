@@ -27,7 +27,7 @@
 				"shape": "box",
 				"color": "#ff9c6e"
 			},
-			"attachments": ["linnconcap", "duck"]
+			"attachments": []
 		}
 	},
 	{
@@ -58,7 +58,7 @@
 				"shape": "box",
 				"color": "#ff9c6e"
 			},
-			"attachments": ["linnconcap", "duck"]
+			"attachments": []
 		}
 	}
 ]

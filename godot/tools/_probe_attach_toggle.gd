@@ -18,7 +18,7 @@ func _init() -> void:
 			{"attachments": ["linnconcap", "duck"]},
 			{"attachments": ["hair_001", "duck"]},
 		],
-		"defaults": {"s-default": ["linnconcap", "duck"]},
+		"defaults": {"s-default": [], "s-default-unshaded": []},
 	})
 
 	_dump(nad, applier, "6")        # seeded -> burger + duck

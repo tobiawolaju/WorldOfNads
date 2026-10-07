@@ -123,7 +123,7 @@ Rules — identical in Godot and on the web:
 
 - **Exact set.** Listed names are shown, every other attachment is hidden.
 - **Missing or empty list = wears nothing.** The default loadout
-  (`["linnconcap", "duck"]`) is spelled out explicitly in
+  (empty list) is spelled out explicitly in
   `SkinApplier.FALLBACK_SHADED/FALLBACK_UNSHADED` and in
   `frontend/src/data/items.json`, never inherited implicitly.
 - **Unknown names are ignored** (with a console warning). A skin may reference an
