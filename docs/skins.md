@@ -86,6 +86,31 @@ node scripts/generateSkinsFromCombos.js --write --create-missing
 does not pass a list, so minting a new numbered id dresses it with no extra
 data entry.
 
+### Resetting to a clean catalog
+
+A fresh `WONsSkins` starts at `nextSkinId = 1`, so creating one skin per combo
+slot in index order makes the on-chain id, the Firebase doc key and the combo
+all line up exactly.
+
+```
+cd backend
+node scripts/deploySkinsContract.js                # dry run (shows balance/owner)
+node scripts/deploySkinsContract.js --broadcast    # deploy a fresh WONsSkins
+
+node scripts/resetSkinCatalog.js                          # dry-run plan
+node scripts/resetSkinCatalog.js --wipe --onchain --write # delete + createSkin + save docs
+```
+
+`resetSkinCatalog.js` wipes the numeric `skins/<id>` docs, then for each id in
+combo order calls `createSkin` (owner-only) and writes the matching doc. It
+aborts loudly if the contract is not fresh (`nextSkinId != 1`), because ids
+would be offset. Every combo carries its own palette / outline / crown / tier /
+price / supply in `skinCombos.json`, and `newDocForCombo()` in `skinIndex.js`
+turns that into the Firebase doc for both scripts.
+
+After deploying, update `SKINS_ADDRESS` (backend/Render) and
+`VITE_SKINS_CONTRACT_ADDRESS` (frontend/Vercel, then rebuild — Vite inlines it).
+
 ## Attachment lists
 
 A skin chooses what the nad wears with a flat list of node names:

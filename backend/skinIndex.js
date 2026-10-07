@@ -84,3 +84,33 @@ export function isShadedId(id) {
 export function idsForCombo(index) {
   return { shaded: index * 2 + 1, unshaded: index * 2 + 2 };
 }
+
+export const DEFAULT_PALETTE = { body: "#fc2d96", body_alt: "#fc4b8c", cheek: "#fc6a9b", eye: "#e7e7e7", skin: "#ff9c6e" };
+
+// Firebase doc for a numeric id whose combo comes from the index. Odd ids are
+// shaded, even ids are the "(Flat)" unshaded variant (parity is also enforced
+// at runtime by SkinApplier; naming it here just keeps the store readable).
+export function newDocForCombo(combo, id) {
+  const numericId = Number(id);
+  const flat = Number.isFinite(numericId) && numericId % 2 === 0;
+  return {
+    name: `${combo.name}${flat ? " (Flat)" : ""}`,
+    tier: combo.tier || "common",
+    price: combo.price || "0.01 MON",
+    maxSupply: combo.maxSupply ?? 1000,
+    requiredXP: combo.requiredXP ?? 0,
+    image: combo.image || "/skins_png/s-default.png",
+    onChainId: Number.isFinite(numericId) ? numericId : null,
+    skinConfig: {
+      palette: combo.palette || DEFAULT_PALETTE,
+      outline_color: combo.outline_color || "#fc00d9",
+      crown_color: combo.crown_color || "#fc00d9",
+      face_texture: "",
+      shader: "default",
+      shader_targets: ["body", "cheek", "eye"],
+      attachments: Array.isArray(combo.attachments) ? combo.attachments : [],
+    },
+    schemaVersion: 1,
+    updatedAt: new Date().toISOString(),
+  };
+}

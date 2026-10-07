@@ -187,7 +187,7 @@ All must be set on Render (or your Node host):
 | `MATCH_ENGINE_ADDRESS` | `0xe94d3E317763758689DCc62DC28fBe269a1f177C` | Deployed MatchEngine |
 | `XP_TOKEN_ADDRESS` | `0x0CD0bfdFE9562e4A71Bd56182981426b09F91E4` | Deployed XP token |
 | `LOOTBOX_ADDRESS` | `0x4c0823A6D61ADc5d38BA976eb50800c84127f7bf` | Deployed LootBox |
-| `SKINS_ADDRESS` | `0xaa3F5Cf26403F0EF88ef7fF34Bb015ab76783E86` | Deployed Skins |
+| `SKINS_ADDRESS` | `0xC189Ee56995A2b2027b403BfBaB0B7b2785daF4c` | Deployed Skins (v2) |
 | `BOT_SERVER_URL` | `wss://worldofnads.onrender.com` | Bot server for stress testing |
 | `BOT_*` | various | Bot runner config |
 
@@ -216,7 +216,7 @@ All must be set on Vercel:
 | `VITE_PRIVY_CLIENT_ID` | Privy client ID | Privy authentication |
 | `VITE_ANALYTICS_API_URL` | Backend URL | Analytics endpoint |
 | `VITE_MATCH_ENGINE_ADDRESS` | `0xe94d3E...` | MatchEngine contract |
-| `VITE_SKINS_CONTRACT_ADDRESS` | `0xaa3F5C...` | Skins contract |
+| `VITE_SKINS_CONTRACT_ADDRESS` | `0xC189Ee...daF4c` | Skins contract |
 | `VITE_XP_TOKEN_ADDRESS` | `0x0CD0bf...` | XP token contract |
 | `VITE_SPONSOR_CLICK_CONTRACT_ADDRESS` | Old escrow | Legacy (remove later) |
 | `VITE_GA_MEASUREMENT_ID` | `G-...` | Google Analytics |

@@ -22,7 +22,7 @@ dotenv.config();
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, update } from "firebase/database";
-import { loadCombos, attachmentsForId, idsForCombo, isShadedId, isNumericSkinId } from "../skinIndex.js";
+import { loadCombos, attachmentsForId, idsForCombo, isShadedId, isNumericSkinId, newDocForCombo } from "../skinIndex.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBNFaveUoWNE4bBTNBgCnK63Bp25BFr5gs",
@@ -37,31 +37,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-
-const DEFAULT_PALETTE = { body: "#fc2d96", body_alt: "#fc4b8c", cheek: "#fc6a9b", eye: "#e7e7e7", skin: "#ff9c6e" };
-
-function newDocForCombo(combo, id) {
-  return {
-    name: `${combo.name}${Number(id) % 2 === 0 ? " (Flat)" : ""}`,
-    tier: combo.tier || "common",
-    price: combo.price || "0.01 MON",
-    maxSupply: combo.maxSupply ?? 1000,
-    requiredXP: combo.requiredXP ?? 0,
-    image: combo.image || "/skins_png/s-default.png",
-    onChainId: Number(id),
-    skinConfig: {
-      palette: combo.palette || DEFAULT_PALETTE,
-      outline_color: combo.outline_color || "#fc00d9",
-      crown_color: combo.crown_color || "#fc00d9",
-      face_texture: "",
-      shader: "default",
-      shader_targets: ["body", "cheek", "eye"],
-      attachments: Array.isArray(combo.attachments) ? combo.attachments : [],
-    },
-    schemaVersion: 1,
-    updatedAt: new Date().toISOString(),
-  };
-}
 
 async function main() {
   const write = process.argv.includes("--write");
