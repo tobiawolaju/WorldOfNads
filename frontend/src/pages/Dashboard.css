@@ -386,11 +386,12 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
 .tab-content-scroll {
   flex: 1;
   min-height: 0;
-  overflow-y: hidden;
+  overflow-y: auto;
   overflow-x: hidden;
   padding-bottom: 100px;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tab-content-scroll::-webkit-scrollbar {
