@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://u7ahffc1obf8" path="res://scripts/player.gd" id="1_nna72"]
 [ext_resource type="AnimationLibrary" uid="uid://cyoeh8u10140w" path="res://resources/PlayerAnimations.tres" id="2_wrixk"]
 [ext_resource type="Shader" uid="uid://1rdjbx2iess" path="res://assets/shaders/eye.gdshader" id="3_8qxwi"]
+[ext_resource type="Shader" uid="uid://b7k9m2n4p6r8" path="res://assets/shaders/mouth_wobble.gdshader" id="5_mouth_wobble"]
 [ext_resource type="Texture2D" uid="uid://dekbb3ewhm11g" path="res://assets/img/skins/mouth_test1.png" id="4_f0bnh"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hqo6i"]
@@ -315,6 +316,16 @@ shader_parameter/dot_shift_y = 0.0
 shader_parameter/dot_roll = 3.1414101800343004
 shader_parameter/flip_dot = 1.0
 shader_parameter/debug_flat = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mouth_wobble"]
+render_priority = 0
+shader = ExtResource("5_mouth_wobble")
+shader_parameter/wobble_amp = 0.008
+shader_parameter/wobble_freq = 0.7
+shader_parameter/wobble_speech_amp = 0.0
+shader_parameter/wobble_speech_freq = 8.0
+shader_parameter/mouth_uv_min = Vector2(0.25, 0.375)
+shader_parameter/mouth_uv_max = Vector2(0.75, 0.545)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_b3uek"]
 resource_name = "Material.019"
@@ -1631,8 +1642,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_f0bnh")
 
 [node name="face" type="MeshInstance3D" parent="Skeleton3D" unique_id=57707868]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.024718266, 0)
-visible = false
-material_override = SubResource("StandardMaterial3D_q62xx")
+material_override = SubResource("ShaderMaterial_mouth_wobble")
 cast_shadow = 0
 mesh = SubResource("ArrayMesh_ms301")
 skin = SubResource("Skin_dxk75")
