@@ -205,6 +205,94 @@ function findBone(model: THREE.Object3D, boneName: string): THREE.Object3D | nul
   return match || loose;
 }
 
+// Port of godot/assets/shaders/eye.gdshader: an unshaded sphere with a single
+// dot that always faces the camera. Everything is measured in view space (the
+// camera sits at the origin), so the dot does not depend on where the mesh was
+// authored. It rides on a MeshBasicMaterial through onBeforeCompile so the
+// built-in normal + skinning pipeline is kept (the nad's eyes are
+// SkinnedMeshes) and tone mapping / colour space still run exactly like on
+// every other material - the only thing replaced is the final colour.
+//
+// The uniform values mirror the ShaderMaterial on eye_L/eye_R in
+// godot/scenes/skin.tscn; eye_color is the one per-skin tint, pushed the same
+// way SkinApplier._tint_eye does it. dot_roll and debug_flat are not ported:
+// roll only matters for an elongated dot (there is none, and every shift is
+// 0), debug_flat only paints magenta.
+function createEyeMaterial(eyeColor: THREE.Color): THREE.MeshBasicMaterial {
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    side: THREE.DoubleSide, // Godot: render_mode cull_disabled
+  });
+  mat.onBeforeCompile = (shader) => {
+    if (
+      !shader.vertexShader.includes("#include <project_vertex>") ||
+      !shader.fragmentShader.includes("#include <opaque_fragment>")
+    ) {
+      console.warn("[ThreeScene] eye shader injection point missing - three.js upgrade?");
+      return;
+    }
+    Object.assign(shader.uniforms, {
+      eye_color: { value: eyeColor.clone() },
+      // skin.tscn authors the pupil teal; three stores colours linear.
+      pupil_color: { value: new THREE.Color().setRGB(0.0, 0.50997, 0.534838, THREE.SRGBColorSpace) },
+      pupil_size: { value: 0.468 },
+      pupil_softness: { value: 0.3 },
+      rim_darken: { value: 0.0 },
+      dot_shift_x: { value: 0.0 },
+      dot_shift_y: { value: 0.0 },
+      // skin.tscn's eye sphere carries inward normals, so it flips (1.0). The
+      // nad.fbx eye spheres are outward-facing (probed: radialDot ~ +0.96),
+      // so no flip here - either way the dot lands on the camera-facing side.
+      flip_dot: { value: 0.0 },
+    });
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+varying vec3 vEyeViewNormal;
+varying vec3 vEyeViewPosition;`
+      )
+      .replace(
+        "#include <project_vertex>",
+        `#include <project_vertex>
+  vEyeViewPosition = mvPosition.xyz;
+  vEyeViewNormal = transformedNormal;`
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+varying vec3 vEyeViewNormal;
+varying vec3 vEyeViewPosition;
+uniform vec3 eye_color;
+uniform vec3 pupil_color;
+uniform float pupil_size;
+uniform float pupil_softness;
+uniform float rim_darken;
+uniform float dot_shift_x;
+uniform float dot_shift_y;
+uniform float flip_dot;`
+      )
+      .replace(
+        "#include <opaque_fragment>",
+        `#include <opaque_fragment>
+  vec3 to_camera = normalize(-vEyeViewPosition);
+  vec3 surface_normal = normalize(vEyeViewNormal) * mix(1.0, -1.0, flip_dot);
+  vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), to_camera) + vec3(0.0001, 0.0, 0.0));
+  vec3 up = normalize(cross(to_camera, right));
+  vec3 aim = normalize(to_camera + right * dot_shift_x + up * dot_shift_y);
+  float facing = acos(clamp(dot(surface_normal, aim), -1.0, 1.0));
+  float softness = max(pupil_softness, 0.001);
+  float inside = 1.0 - smoothstep(pupil_size - softness, pupil_size + softness, facing);
+  float rim = smoothstep(0.9, 1.5708, acos(clamp(dot(surface_normal, to_camera), -1.0, 1.0)));
+  vec3 eyeShade = mix(eye_color, eye_color * (1.0 - rim_darken), rim);
+  eyeShade = mix(eyeShade, pupil_color, inside);
+  gl_FragColor = vec4(eyeShade, diffuseColor.a);`
+      );
+  };
+  return mat;
+}
+
 // --- Animated Nad Model Component ---
 interface NadModelProps {
   position?: [number, number, number];
@@ -323,8 +411,12 @@ const NadModel: React.FC<NadModelProps> = ({
 
         let newMat: THREE.Material;
 
-        // Apply Custom Shader Logic
-        if (shouldApplyShader && shaderType !== "default") {
+        if (isEye) {
+          // Eyes keep the camera-facing dot shader in every edition: Godot's
+          // apply_skin never claims them (_tint_eye only pushes the palette
+          // tint into eye_color), so no shader type replaces them.
+          newMat = createEyeMaterial(eyeColor);
+        } else if (shouldApplyShader && shaderType !== "default") {
           if (shaderType === "ghost") {
             newMat = child.userData.originalMaterial.clone();
             newMat.transparent = true;
@@ -374,7 +466,9 @@ const NadModel: React.FC<NadModelProps> = ({
 
         const rawFrag = equippedSkin?.skinConfig?.rawFragmentShader;
         const rawVert = equippedSkin?.skinConfig?.rawVertexShader;
-        if (rawFrag || rawVert) {
+        // Eyes never take the raw overlay either - the dot shader wins, the
+        // same way SkinApplier gives them nothing but the eye_color tint.
+        if (!isEye && (rawFrag || rawVert)) {
           newMat.onBeforeCompile = (shader) => {
             shader.uniforms.uTime = { value: 0 };
             if (rawFrag) {
@@ -407,15 +501,18 @@ const NadModel: React.FC<NadModelProps> = ({
         } else if (isCheek) {
           if ((child.material as any).color) (child.material as any).color.copy(cheekColor);
         } else if (isEye) {
-          if ((child.material as any).color) (child.material as any).color.copy(eyeColor);
+          // Tinted through the eye_color uniform inside createEyeMaterial;
+          // pushing palette.eye elsewhere would miss it.
         }
 
         // Godot only draws an outline pass for the skins that ask for one: the
         // unshaded edition (black, 1.04) and gold/angel (the skin's own
         // outline_color, 1.04) - see SkinApplier._body_material. The shaded
         // "default" edition, ghost/shadow/void and anything outside
-        // shader_targets are drawn plain, with no outline at all.
+        // shader_targets are drawn plain, with no outline at all. Eyes are
+        // excluded absolutely: their dot shader has no outline pass in Godot.
         const wantsOutline =
+          !isEye &&
           shouldApplyShader &&
           (shaderType === "unshaded" || shaderType === "gold" || shaderType === "angel");
         if (wantsOutline) {
