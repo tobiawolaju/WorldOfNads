@@ -1,21 +1,142 @@
 {
   "version": 1,
-  "comment": "Ordered skin index. Combo n (0-based) owns ids 2n+1 (shaded) and 2n+2 (unshaded). Order is the index: appending a combo is safe, reordering/removing remaps existing ids. attachments names must match frontend/public/attachments/manifest.json (exported from godot/scenes/skin.tscn by godot/tools/export_attachments.gd). 'defaults' pins non-numeric skins (which are not part of the numeric index) to explicit combos.",
+  "comment": "Ordered skin index. Combo n (0-based) owns ids 2n+1 (shaded) and 2n+2 (unshaded). Order is the index: appending a combo is safe, reordering/removing remaps existing ids. attachments names must match frontend/public/attachments/manifest.json (exported from godot/scenes/skin.tscn by godot/tools/export_attachments.gd). 'defaults' pins non-numeric skins (which are not part of the numeric index) to explicit combos. Each combo may also carry presentation metadata (tier/price/maxSupply/requiredXP/image/palette/outline_color/crown_color) used when materialising docs.",
   "defaults": {
     "s-default": ["linnconcap", "duck"],
     "s-default-unshaded": ["linnconcap", "duck"]
   },
   "combos": [
-    { "name": "Classic Cap", "attachments": ["linnconcap", "duck"] },
-    { "name": "Bedhead", "attachments": ["hair_001", "duck"] },
-    { "name": "Burger Fiend", "attachments": ["burgr", "duck"] },
-    { "name": "Headset", "attachments": ["hedset", "duck"] },
-    { "name": "Viking", "attachments": ["vikingHemblet"] },
-    { "name": "Samurai", "attachments": ["samuriehat", "duck"] },
-    { "name": "Straw Hat", "attachments": ["strawhat", "duck"] },
-    { "name": "Crowned", "attachments": ["rown", "duck"] },
-    { "name": "Long Hair", "attachments": ["hair", "duck"] },
-    { "name": "Just Duck", "attachments": ["duck"] },
-    { "name": "Bare", "attachments": [] }
+    {
+      "name": "Classic Cap",
+      "attachments": ["linnconcap", "duck"],
+      "tier": "common",
+      "price": "0.01 MON",
+      "maxSupply": 1000,
+      "requiredXP": 0,
+      "image": "/skins_png/s-default.png",
+      "palette": { "body": "#fc2d96", "body_alt": "#fc4b8c", "cheek": "#fc6a9b", "eye": "#e7e7e7", "skin": "#ff9c6e" },
+      "outline_color": "#fc00d9",
+      "crown_color": "#fc00d9"
+    },
+    {
+      "name": "Bedhead",
+      "attachments": ["hair_001", "duck"],
+      "tier": "common",
+      "price": "0.01 MON",
+      "maxSupply": 1000,
+      "requiredXP": 0,
+      "image": "/skins_png/s-default.png",
+      "palette": { "body": "#b5651d", "body_alt": "#a0522d", "cheek": "#c8763a", "eye": "#3b2a1a", "skin": "#ffcfa3" },
+      "outline_color": "#7a3e00",
+      "crown_color": "#ffb347"
+    },
+    {
+      "name": "Burger Fiend",
+      "attachments": ["burgr", "duck"],
+      "tier": "common",
+      "price": "0.01 MON",
+      "maxSupply": 1000,
+      "requiredXP": 0,
+      "image": "/skins_png/s5.png",
+      "palette": { "body": "#e8a33d", "body_alt": "#d98e2b", "cheek": "#f0b95e", "eye": "#7a4a12", "skin": "#ffe0b2" },
+      "outline_color": "#8b4513",
+      "crown_color": "#ffd700"
+    },
+    {
+      "name": "Headset",
+      "attachments": ["hedset", "duck"],
+      "tier": "common",
+      "price": "0.01 MON",
+      "maxSupply": 1000,
+      "requiredXP": 0,
+      "image": "/skins_png/s6.png",
+      "palette": { "body": "#1e90ff", "body_alt": "#1873cc", "cheek": "#4dabff", "eye": "#e0f4ff", "skin": "#cfe8ff" },
+      "outline_color": "#0033a0",
+      "crown_color": "#00d4ff"
+    },
+    {
+      "name": "Viking",
+      "attachments": ["vikingHemblet"],
+      "tier": "common",
+      "price": "0.01 MON",
+      "maxSupply": 1000,
+      "requiredXP": 0,
+      "image": "/skins_png/s-default.png",
+      "palette": { "body": "#5f9ea0", "body_alt": "#4a7f81", "cheek": "#7fb8ba", "eye": "#d8f0ff", "skin": "#e6f5f7" },
+      "outline_color": "#2f4f4f",
+      "crown_color": "#aaddff"
+    },
+    {
+      "name": "Samurai",
+      "attachments": ["samuriehat", "duck"],
+      "tier": "common",
+      "price": "0.01 MON",
+      "maxSupply": 1000,
+      "requiredXP": 0,
+      "image": "/skins_png/s-default.png",
+      "palette": { "body": "#b22222", "body_alt": "#8b1a1a", "cheek": "#d9534f", "eye": "#ffe066", "skin": "#ffd9b3" },
+      "outline_color": "#4d0000",
+      "crown_color": "#ffcc00"
+    },
+    {
+      "name": "Straw Hat",
+      "attachments": ["strawhat", "duck"],
+      "tier": "common",
+      "price": "0.01 MON",
+      "maxSupply": 1000,
+      "requiredXP": 0,
+      "image": "/skins_png/s-default.png",
+      "palette": { "body": "#f4c430", "body_alt": "#dcae1d", "cheek": "#f7d76a", "eye": "#6b4f00", "skin": "#ffe9b0" },
+      "outline_color": "#8b6508",
+      "crown_color": "#fff2a8"
+    },
+    {
+      "name": "Crowned",
+      "attachments": ["rown", "duck"],
+      "tier": "common",
+      "price": "0.01 MON",
+      "maxSupply": 1000,
+      "requiredXP": 0,
+      "image": "/skins_png/s-default.png",
+      "palette": { "body": "#6a0dad", "body_alt": "#550a8a", "cheek": "#8a2be2", "eye": "#ffd700", "skin": "#d8c2f0" },
+      "outline_color": "#2e0854",
+      "crown_color": "#ffd700"
+    },
+    {
+      "name": "Long Hair",
+      "attachments": ["hair", "duck"],
+      "tier": "common",
+      "price": "0.01 MON",
+      "maxSupply": 1000,
+      "requiredXP": 0,
+      "image": "/skins_png/s-default.png",
+      "palette": { "body": "#967bb6", "body_alt": "#7e6499", "cheek": "#b39ddb", "eye": "#f0e6ff", "skin": "#e8d8ff" },
+      "outline_color": "#4b356e",
+      "crown_color": "#d1b3ff"
+    },
+    {
+      "name": "Just Duck",
+      "attachments": ["duck"],
+      "tier": "common",
+      "price": "0.01 MON",
+      "maxSupply": 1000,
+      "requiredXP": 0,
+      "image": "/skins_png/s-default.png",
+      "palette": { "body": "#ffd11a", "body_alt": "#f2b705", "cheek": "#ffe066", "eye": "#333333", "skin": "#fff3b0" },
+      "outline_color": "#cc8800",
+      "crown_color": "#fff700"
+    },
+    {
+      "name": "Bare",
+      "attachments": [],
+      "tier": "common",
+      "price": "0.01 MON",
+      "maxSupply": 1000,
+      "requiredXP": 0,
+      "image": "/skins_png/s-default.png",
+      "palette": { "body": "#3cb371", "body_alt": "#2e9e5f", "cheek": "#6fd9a0", "eye": "#e8fff2", "skin": "#c8f7dc" },
+      "outline_color": "#1b5e3a",
+      "crown_color": "#7fffd4"
+    }
   ]
 }
