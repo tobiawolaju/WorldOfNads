@@ -226,17 +226,21 @@ const NadModel: React.FC<NadModelProps> = ({
 
   function createToonGradientTexture(steps: number = 4): THREE.CanvasTexture {
     const canvas = document.createElement('canvas');
-    canvas.width = 8;
-    canvas.height = 64;
+    canvas.width = 64;
+    canvas.height = 8;
     const ctx = canvas.getContext('2d')!;
-    const gradient = ctx.createLinearGradient(0, 0, 0, 64);
+    // three.js samples the gradient map with coord = vec2(dotNL * 0.5 + 0.5, 0.0),
+    // i.e. along X only. A ramp drawn vertically would be read as one constant
+    // column and every sample would come back identical, which makes the "shaded"
+    // edition render completely flat - so the ramp has to run horizontally.
+    const gradient = ctx.createLinearGradient(0, 0, 64, 0);
     for (let i = 0; i < steps; i++) {
       const t = i / (steps - 1);
       const val = Math.floor(t * 255);
       gradient.addColorStop(t, `rgb(${val},${val},${val})`);
     }
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 8, 64);
+    ctx.fillRect(0, 0, 64, 8);
     const texture = new THREE.CanvasTexture(canvas);
     texture.minFilter = THREE.NearestFilter;
     texture.magFilter = THREE.NearestFilter;
@@ -406,10 +410,26 @@ const NadModel: React.FC<NadModelProps> = ({
           if ((child.material as any).color) (child.material as any).color.copy(eyeColor);
         }
 
-        // Create outline mesh for this part
-        if (shaderType === "default" || shaderType === "unshaded" || !shouldApplyShader) {
+        // Godot only draws an outline pass for the skins that ask for one: the
+        // unshaded edition (black, 1.04) and gold/angel (the skin's own
+        // outline_color, 1.04) - see SkinApplier._body_material. The shaded
+        // "default" edition, ghost/shadow/void and anything outside
+        // shader_targets are drawn plain, with no outline at all.
+        const wantsOutline =
+          shouldApplyShader &&
+          (shaderType === "unshaded" || shaderType === "gold" || shaderType === "angel");
+        if (wantsOutline) {
+          const oc: unknown = equippedSkin?.skinConfig?.outline_color;
+          let outlineColor: THREE.Color | number = 0x000000;
+          if (shaderType !== "unshaded") {
+            if (Array.isArray(oc) && oc.length >= 3) {
+              outlineColor = new THREE.Color(Number(oc[0]) || 0, Number(oc[1]) || 0, Number(oc[2]) || 0);
+            } else if (typeof oc === "string") {
+              outlineColor = new THREE.Color(oc);
+            }
+          }
           const outlineMat = new THREE.MeshBasicMaterial({
-            color: 0x000000,
+            color: outlineColor,
             side: THREE.BackSide,
           });
           const outlineGeo = child.geometry.clone();
@@ -424,9 +444,9 @@ const NadModel: React.FC<NadModelProps> = ({
           }
           outlineMesh.position.copy(child.position);
           outlineMesh.quaternion.copy(child.quaternion);
-          // Godot draws the unshaded skin with a 1.04 outline (see the
-          // "unshaded" branch in SkinApplier._body_material); match it.
-          const baseScale = shaderType === "default" || shaderType === "unshaded" ? 1.04 : 1.0;
+          // Every outline pass Godot draws uses size 1.04, so scale the
+          // stand-in mesh by the same factor.
+          const baseScale = 1.04;
           outlineMesh.scale.copy(child.scale).multiplyScalar(baseScale);
           outlineMesh.renderOrder = -1;
           child.parent?.add(outlineMesh);
