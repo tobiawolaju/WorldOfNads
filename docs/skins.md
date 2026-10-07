@@ -49,9 +49,22 @@ their slot. Non-numeric ids (`s-default`) sit outside the index and are pinned
 in the same file's `defaults` map.
 
 `backend/skinIndex.js` is the single implementation of the mapping
-(`comboForId`, `attachmentsForId`, `idsForCombo`). The game and the web never
-read it — they consume the flat `attachments` list materialized onto each skin,
-so the runtime stays dumb.
+(`comboForId`, `attachmentsForId`, `idsForCombo`) and serves it at
+`GET /api/skin-combos` as `{ combos, defaults }`. Both clients fetch that and
+seed an id index:
+
+- Godot: `SkinApplier.seed_index_from_api()` (called by `PlayerManager` and
+  `preview.tscn`). `get_skin_data()` falls back to the index for any id whose own
+  config has no `attachments` list.
+- Web: `buildComboMap()` / `resolveSkinAttachments()` in `skinMapping.ts`, used
+  by the dashboard before it hands a skin to `ThreeScene`.
+
+Materializing docs is convenience, not a requirement: a brand new numbered id
+(or a preview of an unminted one) dresses correctly straight from the index. A
+skin that pins its own `attachments` list always wins over the index.
+
+Numeric ids are normalised (`0002` == `2`) on both sides, so zero-padded ids,
+bare ids and the index all agree.
 
 ### Materializing the index
 

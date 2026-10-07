@@ -19,7 +19,7 @@ import {
 } from "./firebaseClient";
 import { trackMatchJoined } from "../lib/analyticsClient";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
-import { resolveGameSkinName } from "../lib/skinMapping";
+import { resolveGameSkinName, buildComboMap, resolveSkinAttachments } from "../lib/skinMapping";
 import { staticMatches } from "./staticMatches.js";
 import storeItemsData from "../data/items.json";
 
@@ -137,10 +137,19 @@ export default function Dashboard() {
     let mounted = true;
     const fetchSkins = async () => {
       try {
-        const res = await fetch(`${LAUNCHER_API}/api/skins`);
+        const [res, combosRes] = await Promise.all([
+          fetch(`${LAUNCHER_API}/api/skins`),
+          fetch(`${LAUNCHER_API}/api/skin-combos`).catch(() => null),
+        ]);
         if (!res.ok) return;
         const data = await res.json();
         if (!data.ok || !Array.isArray(data.skins) || !mounted) return;
+        let comboMap: Record<string, string[]> = {};
+        if (combosRes && combosRes.ok) {
+          try {
+            comboMap = buildComboMap(await combosRes.json());
+          } catch { /* index unavailable: keep stamped attachments only */ }
+        }
         const apiItems: StoreItem[] = data.skins.map((s: any): StoreItem => ({
           id: String(s.id || ''),
           name: s.name || 'Unknown',
@@ -152,7 +161,10 @@ export default function Dashboard() {
           requiredXP: s.requiredXP || 0,
           maxSupply: s.maxSupply || null,
           tier: s.tier || 'common',
-          skinConfig: s.skinConfig,
+          skinConfig: {
+            ...(s.skinConfig || {}),
+            attachments: resolveSkinAttachments(String(s.id || ''), s.skinConfig?.attachments, comboMap),
+          },
         })).filter(item => item.id !== '');
         if (!mounted) return;
         setStoreItems(prev => {

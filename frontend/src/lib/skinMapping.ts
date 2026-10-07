@@ -55,3 +55,51 @@ export function resolveShaderType(
   }
   return configured || "default";
 }
+
+export interface SkinComboIndexPayload {
+  combos?: Array<{ name?: string; attachments?: string[] }>;
+  defaults?: Record<string, string[]>;
+}
+
+/**
+ * Builds the id -> attachments map from GET /api/skin-combos: combo n owns ids
+ * 2n+1 (shaded) and 2n+2 (unshaded), plus any named ids in "defaults". Mirrors
+ * SkinApplier.seed_index_from_api in Godot.
+ */
+export function buildComboMap(
+  payload: SkinComboIndexPayload | null | undefined
+): Record<string, string[]> {
+  const map: Record<string, string[]> = {};
+  const combos = payload?.combos;
+  if (Array.isArray(combos)) {
+    combos.forEach((combo, index) => {
+      const atts = Array.isArray(combo?.attachments) ? combo.attachments : [];
+      map[String(index * 2 + 1)] = atts;
+      map[String(index * 2 + 2)] = atts;
+    });
+  }
+  const defaults = payload?.defaults;
+  if (defaults && typeof defaults === "object") {
+    for (const [id, atts] of Object.entries(defaults)) {
+      if (Array.isArray(atts)) map[String(id).toLowerCase()] = atts;
+    }
+  }
+  return map;
+}
+
+/**
+ * Effective attachments for a skin: its own list when present (even []), else
+ * the combo its id owns in the index. Keeps the index authoritative without any
+ * extra document, and matches the Godot runtime.
+ */
+export function resolveSkinAttachments(
+  skinId: string | null | undefined,
+  configured: string[] | undefined,
+  comboMap: Record<string, string[]>
+): string[] {
+  if (Array.isArray(configured)) return configured;
+  const raw = String(skinId ?? "").trim();
+  if (!raw) return [];
+  const key = /^\d+$/.test(raw) ? String(Number(raw)) : raw.toLowerCase();
+  return comboMap[key] ?? [];
+}

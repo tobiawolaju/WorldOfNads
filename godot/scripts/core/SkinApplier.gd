@@ -4,6 +4,10 @@ class_name SkinApplier
 const DEFAULT_SKIN := "s-default"
 
 static var _api_cache: Dictionary = {}
+# id -> attachments resolved from the shared index (GET /api/skin-combos). Used
+# when a skin's own config does not pin an attachments list, so any numbered id
+# resolves its combo at runtime without needing a per-skin document.
+static var _index_cache: Dictionary = {}
 
 const FALLBACK_SHADED: Dictionary = {
 	"palette": {
@@ -50,12 +54,41 @@ static func seed_from_api(json_array: Array) -> void:
 			var skin_config: Dictionary = entry.get("skinConfig", entry.get("skin_config", {}))
 			if skin_config.is_empty():
 				continue
-			_api_cache[key] = _convert_api_entry(skin_config)
+			_api_cache[_index_key(key)] = _convert_api_entry(skin_config)
 
 static func seed_single_from_api(skin_id: String, entry: Dictionary) -> void:
 	var skin_config: Dictionary = entry.get("skinConfig", entry.get("skin_config", {}))
 	if not skin_config.is_empty():
-		_api_cache[skin_id.to_lower()] = _convert_api_entry(skin_config)
+		_api_cache[_index_key(skin_id)] = _convert_api_entry(skin_config)
+
+# Seeds the id index from GET /api/skin-combos: combo n owns ids 2n+1 (shaded)
+# and 2n+2 (unshaded), plus any named ids pinned in "defaults". This is the
+# runtime half of backend/skinCombos.json, so the game can dress a numbered id
+# that has no document of its own (a new mint, or a preview of an unminted id).
+static func seed_index_from_api(payload: Dictionary) -> void:
+	_index_cache.clear()
+	var combos: Variant = payload.get("combos", [])
+	if combos is Array:
+		var index := 0
+		for combo in combos:
+			if combo is Dictionary:
+				var atts: Variant = combo.get("attachments", [])
+				if atts is Array:
+					_index_cache[str(index * 2 + 1)] = atts
+					_index_cache[str(index * 2 + 2)] = atts
+			index += 1
+	var pinned: Variant = payload.get("defaults", {})
+	if pinned is Dictionary:
+		for id in pinned.keys():
+			var atts2: Variant = pinned[id]
+			if atts2 is Array:
+				_index_cache[str(id).to_lower()] = atts2
+
+
+# Numeric ids are normalised so "0002", "2" and 2 all resolve to the same key.
+static func _index_key(skin_id: String) -> String:
+	var key := str(skin_id).strip_edges().to_lower()
+	return str(int(key)) if key.is_valid_int() else key
 
 static func _convert_api_entry(skin_config: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
@@ -118,7 +151,8 @@ static func _hex2rgba(hex: Variant) -> Array:
 	return [r, g, b, a]
 
 static func get_skin_data(skin_name: String) -> Dictionary:
-	var key := str(skin_name).strip_edges().to_lower()
+	var key := _index_key(skin_name)
+	var cached: Variant = _api_cache.get(key, null)
 	var data: Dictionary
 	match key:
 		DEFAULT_SKIN:
@@ -126,11 +160,16 @@ static func get_skin_data(skin_name: String) -> Dictionary:
 		"s-default-unshaded":
 			data = FALLBACK_UNSHADED
 		_:
-			if _api_cache.has(key):
-				var cached = _api_cache[key]
+			if cached is Dictionary:
 				data = FALLBACK_SHADED if _is_all_black(cached) else cached
 			else:
 				data = FALLBACK_SHADED
+	# The index owns the combo for any id whose own config does not pin an
+	# attachments list: a document without one, or a numbered id with no
+	# document at all (new mint, preview of an unminted id).
+	if _index_cache.has(key) and not (cached is Dictionary and cached.has("attachments")):
+		data = data.duplicate()
+		data["attachments"] = _index_cache[key]
 	return _apply_shading_parity(key, data)
 
 # Numeric skin ids pick their shading by parity: odd ids are the shaded edition,

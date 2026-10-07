@@ -158,6 +158,7 @@ func _ready():
 	_pre_seed_from_session_storage()
 	_update_debug_skin()
 	_fetch_skin_data()
+	_fetch_skin_index()
 	_init_player_pool()
 	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
 	_attempt_connection()
@@ -212,6 +213,24 @@ func _on_skin_data_fetched(result: int, response_code: int, _headers: PackedStri
 			_update_debug2_cache()
 			_update_debug_skin()
 			_reapply_skins()
+
+func _fetch_skin_index() -> void:
+	var http := HTTPRequest.new()
+	add_child(http)
+	http.request_completed.connect(_on_skin_index_fetched.bind(http))
+	http.request("%s/api/skin-combos" % API_BASE)
+
+
+func _on_skin_index_fetched(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest) -> void:
+	if http != null and is_instance_valid(http):
+		http.queue_free()
+	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		return
+	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
+	if parsed is Dictionary and parsed.get("ok") == true:
+		SkinApplier.seed_index_from_api(parsed)
+		_reapply_skins()
+
 
 func _reapply_skins() -> void:
 	var count := 0
