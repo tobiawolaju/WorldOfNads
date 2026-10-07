@@ -201,6 +201,11 @@ static func _is_all_black(data: Dictionary) -> bool:
 const OUTLINE_SHADER := preload("res://assets/shaders/outline.gdshader")
 const SKIN_UNSHADED_SHADER := preload("res://assets/shaders/skin_unshaded.gdshader")
 
+# Records the material an attachment mesh shipped with, captured before the
+# first override is ever assigned, so re-applying an unshaded skin can rebuild
+# from the authored material instead of from its own previous override.
+const AUTHORED_MATERIAL_META := "_skin_authored_material"
+
 static var _skin_material_sets: Dictionary = {}
 const MAX_MATERIAL_CACHE: int = 30
 
@@ -245,11 +250,13 @@ func apply_skin(player: Node3D, skin_name: String) -> void:
 # purpose: a skin may name an attachment that only lands in skin.tscn later, and
 # a skin may still list a node that was renamed away - neither may break the
 # rest of the skin. Only visibility is touched, never transforms, so every
-# attachment keeps its authored placement.
+# attachment keeps its authored placement. The shading decision (see
+# _apply_attachment_shader) runs over the same units.
 static func _apply_attachments(player: Node3D, data: Dictionary) -> void:
 	var wanted: Variant = data.get("attachments", [])
 	if not wanted is Array:
 		wanted = []
+	var shader_type := str(data.get("shader", "default"))
 	for slot_path in ATTACHMENT_SLOTS:
 		var slot := player.get_node_or_null(slot_path) as Node3D
 		if slot == null:
@@ -257,6 +264,57 @@ static func _apply_attachments(player: Node3D, data: Dictionary) -> void:
 		for child in slot.get_children():
 			if child is Node3D:
 				child.visible = String(child.name) in wanted
+				_apply_attachment_shader(child, shader_type)
+
+# Attachments follow the skin's shading decision. The unshaded edition draws
+# the body flat with a black outline pass (see _body_material), so hats/duck
+# have to go flat and outlined too or the edition reads half-finished. Each
+# mesh keeps its own authored colour and texture - only the lighting model and
+# the outline change, never the hue. Every other shader clears the override,
+# so toggling back from an unshaded skin restores the authored material
+# exactly instead of leaving a stale override behind.
+static func _apply_attachment_shader(unit: Node3D, shader_type: String) -> void:
+	var targets: Array[MeshInstance3D] = []
+	if unit is MeshInstance3D:
+		targets.append(unit as MeshInstance3D)
+	for node in unit.find_children("*", "MeshInstance3D", true):
+		if node is MeshInstance3D:
+			targets.append(node as MeshInstance3D)
+	for mi in targets:
+		# Eyes keep the camera-facing dot shader from skin.tscn, always.
+		if String(mi.name).begins_with("eye"):
+			continue
+		if shader_type != "unshaded":
+			mi.material_override = null
+			continue
+		if not mi.has_meta(AUTHORED_MATERIAL_META):
+			# Captured on the first touch, when material_override is still
+			# whatever skin.tscn authored (apply_skin never claims these).
+			mi.set_meta(AUTHORED_MATERIAL_META, mi.get_active_material(0))
+		mi.material_override = _unshaded_attachment_material(mi.get_meta(AUTHORED_MATERIAL_META) as Material)
+
+# The unshaded edition of an attachment: flat (no lighting) with the black
+# 1.04 outline pass - the same combination _body_material builds for the body.
+# The authored albedo colour and texture carry over, so the duck stays yellow
+# and the cap keeps its print; only the shading changes.
+static func _unshaded_attachment_material(authored: Material) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	if authored is BaseMaterial3D:
+		var src := authored as BaseMaterial3D
+		mat.albedo_color = src.albedo_color
+		mat.albedo_texture = src.albedo_texture
+		mat.vertex_color_use_as_albedo = src.vertex_color_use_as_albedo
+	elif authored is ShaderMaterial:
+		var albedo: Variant = (authored as ShaderMaterial).get_shader_parameter("albedo")
+		if albedo is Color:
+			mat.albedo_color = albedo
+	var outline := ShaderMaterial.new()
+	outline.shader = OUTLINE_SHADER
+	outline.set_shader_parameter("color", Color(0, 0, 0, 1))
+	outline.set_shader_parameter("size", 1.04)
+	mat.next_pass = outline
+	return mat
 
 # Recolours the eyes without replacing their material. The eye shader draws the
 # camera-facing dot, so overwriting material_override here would discard it and leave a
