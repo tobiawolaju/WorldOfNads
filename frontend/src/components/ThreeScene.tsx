@@ -293,6 +293,67 @@ uniform float flip_dot;`
   return mat;
 }
 
+// Procedural mouth wobble for the head (Cube). The nad.fbx head uses a
+// single SkinnedMesh with UV atlas: head region U=[0.25,0.75], V=[0.375,0.875].
+// The mouth occupies roughly the lower 35% of that V range.
+// This injects a subtle vertex displacement along the normal in the mouth
+// region, driven by a slow sine wave (breathing) + optional speech wobble.
+// It rides on whatever base material the head gets (Toon, Basic, Standard)
+// so it works for every skin edition without extra passes.
+function applyMouthWobble(mat: THREE.Material): void {
+  const originalOnBeforeCompile = mat.onBeforeCompile;
+  mat.onBeforeCompile = (shader) => {
+    originalOnBeforeCompile?.(shader);
+    if (
+      !shader.vertexShader.includes("#include <project_vertex>") ||
+      !shader.fragmentShader.includes("#include <opaque_fragment>")
+    ) {
+      console.warn("[ThreeScene] mouth wobble injection point missing");
+      return;
+    }
+    Object.assign(shader.uniforms, {
+      uTime: { value: 0 },
+      // Mouth UV bounds in the head atlas (Cube mesh):
+      // U: 0.25 -> 0.75, V: 0.375 -> 0.875. Mouth ~ lower 35% of V.
+      mouthUvMin: { value: new THREE.Vector2(0.25, 0.375) },
+      mouthUvMax: { value: new THREE.Vector2(0.75, 0.545) },
+      // Wobble params (tweak to taste)
+      wobbleAmp: { value: 0.008 },      // max vertex offset (world units)
+      wobbleFreq: { value: 0.7 },       // breathing frequency (Hz)
+      wobbleSpeechAmp: { value: 0.0 },  // speech layer (drive externally if needed)
+      wobbleSpeechFreq: { value: 8.0 },
+    });
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+varying vec2 vMouthUv;
+uniform float uTime;
+uniform vec2 mouthUvMin;
+uniform vec2 mouthUvMax;
+uniform float wobbleAmp;
+uniform float wobbleFreq;
+uniform float wobbleSpeechAmp;
+uniform float wobbleSpeechFreq;`
+      )
+      .replace(
+        "#include <project_vertex>",
+        `#include <project_vertex>
+  vMouthUv = uv;
+  // Mouth mask: 1.0 inside mouth UV rect, 0.0 outside, smooth edges
+  vec2 mouthRel = (vMouthUv - mouthUvMin) / (mouthUvMax - mouthUvMin);
+  float inMouth = smoothstep(0.0, 0.05, mouthRel.y) * smoothstep(1.0, 0.95, mouthRel.y) *
+                  smoothstep(0.0, 0.08, mouthRel.x) * smoothstep(1.0, 0.92, mouthRel.x);
+  // Breathing wave (slow) + optional speech wobble (fast)
+  float breath = sin(uTime * wobbleFreq * 6.28318) * 0.5 + 0.5;
+  float speech = sin(uTime * wobbleSpeechFreq * 6.28318) * 0.5 + 0.5;
+  float disp = (breath * wobbleAmp + speech * wobbleSpeechAmp) * inMouth;
+  // Displace along view-space normal (transformedNormal already available)
+  transformed += normalize(transformedNormal) * disp;`
+      );
+  };
+}
+
 // --- Animated Nad Model Component ---
 interface NadModelProps {
   position?: [number, number, number];
@@ -350,6 +411,7 @@ const NadModel: React.FC<NadModelProps> = ({
   }
 
   useEffect(() => {
+    animatedMaterialsRef.current = [];
     const box = new THREE.Box3().setFromObject(model);
     const size = new THREE.Vector3();
     box.getSize(size);
@@ -494,6 +556,13 @@ const NadModel: React.FC<NadModelProps> = ({
         }
 
         child.material = newMat;
+
+        // Procedural mouth wobble on the head mesh only (name === "Cube")
+        if (name === "Cube") {
+          applyMouthWobble(child.material);
+          // Track for uTime updates (the onBeforeCompile adds uTime uniform)
+          animatedMaterialsRef.current.push(child.material);
+        }
 
         // Apply base colors
         if (isHeadOrBody) {
