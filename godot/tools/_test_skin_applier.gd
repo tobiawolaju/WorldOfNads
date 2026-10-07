@@ -9,15 +9,18 @@ func _initialize() -> void:
 	var applier := SkinApplier.new()
 	var player := (load("res://scenes/skin.tscn") as PackedScene).instantiate() as Node3D
 
-	# 1. Named default skins keep the scene's default loadout.
+	# 1. Named default skins wear nothing: the default loadout is an empty
+	#    list, so every attachment is hidden (the "Bare" rule). A skin opts in
+	#    by naming the nodes it wants (see section 6).
 	applier.apply_skin(player, "s-default")
-	_check("s-default wears linnconcap", _visible(player, "Skeleton3D/heddds/offset/linnconcap"))
-	_check("s-default wears duck", _visible(player, "Skeleton3D/hips/duck"))
+	_check("s-default hides linnconcap", not _visible(player, "Skeleton3D/heddds/offset/linnconcap"))
+	_check("s-default hides duck", not _visible(player, "Skeleton3D/hips/duck"))
 	_check("s-default hides hair", not _visible(player, "Skeleton3D/heddds/offset/hair"))
 	_check("s-default body stays shaded", not _is_unshaded_body(player))
 
 	applier.apply_skin(player, "s-default-unshaded")
-	_check("s-default-unshaded wears linnconcap", _visible(player, "Skeleton3D/heddds/offset/linnconcap"))
+	_check("s-default-unshaded hides linnconcap", not _visible(player, "Skeleton3D/heddds/offset/linnconcap"))
+	_check("s-default-unshaded hides duck", not _visible(player, "Skeleton3D/hips/duck"))
 	_check("s-default-unshaded body is unshaded", _is_unshaded_body(player))
 
 	# 2. Numeric ids pick shading by parity; named ids keep their config.
@@ -70,7 +73,7 @@ func _initialize() -> void:
 			{ "attachments": ["hair_001", "duck"] },
 			{ "attachments": [] },
 		],
-		"defaults": { "s-default": ["linnconcap", "duck"] },
+		"defaults": { "s-default": [], "s-default-unshaded": [] },
 	})
 	applier.apply_skin(player, "0003")
 	_check("index: 0003 -> hair_001", _visible(player, "Skeleton3D/heddds/offset/hair_001"))
@@ -117,7 +120,8 @@ func _initialize() -> void:
 	applier.apply_skin(player, "s-default")
 	_check("shaded skin restores authored cap material", cap_mi.material_override == null)
 	_check("shaded skin restores authored duck material", duck_mi.material_override == null)
-	_check("shaded skin still wears both", _visible(player, cap_path) and _visible(player, "Skeleton3D/hips/duck"))
+	# s-default now has an empty attachment list -> wears nothing
+	_check("shaded skin default wears nothing", not _visible(player, cap_path) and not _visible(player, "Skeleton3D/hips/duck"))
 
 	player.free()
 	if failures == 0:

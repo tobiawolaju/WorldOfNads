@@ -22,9 +22,9 @@ const FALLBACK_SHADED: Dictionary = {
 	"shader": "default",
 	"shader_targets": ["body", "cheek"],
 	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] },
-	# Which attachment nodes this skin wears (see ATTACHMENT_SLOTS). Keeps the
-	# default nad looking exactly like skin.tscn ships: Lincoln cap + hip duck.
-	"attachments": ["linnconcap", "duck"]
+	# Which attachment nodes this skin wears (see ATTACHMENT_SLOTS). The default
+	# loadout is empty: the Default Nad ships bare and skins opt in by name.
+	"attachments": []
 }
 
 const FALLBACK_UNSHADED: Dictionary = {
@@ -40,7 +40,7 @@ const FALLBACK_UNSHADED: Dictionary = {
 	"shader": "unshaded",
 	"shader_targets": ["body", "cheek"],
 	"attachment": { "shape": "box", "color": [1.0, 0.612, 0.431, 1] },
-	"attachments": ["linnconcap", "duck"]
+	"attachments": []
 }
 
 static func seed_from_api(json_array: Array) -> void:
@@ -65,6 +65,7 @@ static func seed_single_from_api(skin_id: String, entry: Dictionary) -> void:
 # and 2n+2 (unshaded), plus any named ids pinned in "defaults". This is the
 # runtime half of backend/skinCombos.json, so the game can dress a numbered id
 # that has no document of its own (a new mint, or a preview of an unminted id).
+# defaults are now empty: s-default / s-default-unshaded wear nothing.
 static func seed_index_from_api(payload: Dictionary) -> void:
 	_index_cache.clear()
 	var combos: Variant = payload.get("combos", [])

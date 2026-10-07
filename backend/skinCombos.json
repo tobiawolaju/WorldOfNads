@@ -2,8 +2,8 @@
   "version": 1,
   "comment": "Ordered skin index. Combo n (0-based) owns ids 2n+1 (shaded) and 2n+2 (unshaded). Order is the index: appending a combo is safe, reordering/removing remaps existing ids. attachments names must match frontend/public/attachments/manifest.json (exported from godot/scenes/skin.tscn by godot/tools/export_attachments.gd). 'defaults' pins non-numeric skins (which are not part of the numeric index) to explicit combos. Each combo may also carry presentation metadata (tier/price/maxSupply/requiredXP/image/palette/outline_color/crown_color) used when materialising docs.",
   "defaults": {
-    "s-default": ["linnconcap", "duck"],
-    "s-default-unshaded": ["linnconcap", "duck"]
+    "s-default": [],
+    "s-default-unshaded": []
   },
   "combos": [
     {
