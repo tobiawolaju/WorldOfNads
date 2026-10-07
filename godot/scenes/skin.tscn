@@ -1663,6 +1663,7 @@ mesh = SubResource("ArrayMesh_ewrgp")
 
 [node name="linnconcap" type="MeshInstance3D" parent="Skeleton3D/heddds/offset" unique_id=875038923]
 transform = Transform3D(0.13745868, 9.313226e-10, -9.313226e-10, 4.3655746e-11, 0.21500474, 0.066042155, 0, -0.11778405, 0.12055428, 0, 1.425, -0.48)
+visible = false
 cast_shadow = 0
 mesh = SubResource("ArrayMesh_28oof")
 
@@ -1735,6 +1736,7 @@ bone_name = "mixamorig_Hips"
 bone_idx = 0
 
 [node name="duck" type="Node3D" parent="Skeleton3D/hips" unique_id=1503676223]
+visible = false
 
 [node name="Cylinder_002" type="MeshInstance3D" parent="Skeleton3D/hips/duck" unique_id=1962484263]
 transform = Transform3D(0.20439011, 0, 0, 0, 0.20341204, -0.019971428, 0, 0.019971428, 0.20341204, 0, 0.22023724, 1.0426344)
