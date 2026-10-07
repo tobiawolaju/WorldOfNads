@@ -659,6 +659,61 @@ const NadModel: React.FC<NadModelProps> = ({
 
     let disposed = false;
     const placed: THREE.Object3D[] = [];
+    const shaderType = resolveShaderType(equippedSkin?.id, equippedSkin?.skinConfig?.shader);
+    const madeMaterials: THREE.Material[] = [];
+    const madeOutlines: THREE.Mesh[] = [];
+
+    // The unshaded edition draws the body flat with a black 1.04 outline, so
+    // its attachments have to follow or the hat and duck read shaded and bare
+    // against a flat body. Mirrors SkinApplier._apply_attachment_shader: the
+    // authored colour and texture carry over, only the lighting model changes.
+    const applyUnshadedLook = (root: THREE.Object3D) => {
+      // Snapshot first: outlines are added to the tree while we work, and a
+      // live traverse would pick them up and outline the outlines.
+      const meshes: THREE.Mesh[] = [];
+      root.traverse((c) => {
+        if (c instanceof THREE.Mesh && !c.userData.isAttachmentOutline) meshes.push(c);
+      });
+      for (const child of meshes) {
+        const src = Array.isArray(child.material) ? child.material[0] : child.material;
+        const srcStd = src as THREE.MeshStandardMaterial;
+        // The prototype's material is shared with the cache, so it is swapped
+        // out here, never mutated or disposed - only what we create is disposed.
+        const flat = new THREE.MeshBasicMaterial({
+          color: srcStd.color ? srcStd.color.clone() : new THREE.Color(0xffffff),
+          map: srcStd.map ?? null,
+          transparent: src.transparent,
+          opacity: src.opacity,
+        });
+        madeMaterials.push(flat);
+        child.material = flat;
+
+        const outlineMat = new THREE.MeshBasicMaterial({
+          color: 0x000000,
+          side: THREE.BackSide,
+        });
+        madeMaterials.push(outlineMat);
+        const outlineGeo = child.geometry.clone();
+        let outlineMesh: THREE.Mesh;
+        if (child instanceof THREE.SkinnedMesh) {
+          const skinned = new THREE.SkinnedMesh(outlineGeo, outlineMat);
+          skinned.skeleton = child.skeleton;
+          skinned.bindMatrix = child.bindMatrix;
+          skinned.bindMatrixInverse = child.bindMatrixInverse;
+          outlineMesh = skinned;
+        } else {
+          outlineMesh = new THREE.Mesh(outlineGeo, outlineMat);
+        }
+        outlineMesh.name = "attachment-outline";
+        outlineMesh.userData.isAttachmentOutline = true;
+        outlineMesh.position.copy(child.position);
+        outlineMesh.quaternion.copy(child.quaternion);
+        outlineMesh.scale.copy(child.scale).multiplyScalar(1.04);
+        outlineMesh.renderOrder = -1;
+        child.parent?.add(outlineMesh);
+        madeOutlines.push(outlineMesh);
+      }
+    };
 
     (async () => {
       const manifest = await loadAttachmentManifest();
@@ -685,6 +740,7 @@ const NadModel: React.FC<NadModelProps> = ({
         // skin changes again. Transforms come straight from the GLB.
         const obj = prototype.clone(true);
         obj.name = `attachment-${name}`;
+        if (shaderType === "unshaded") applyUnshadedLook(obj);
         bone.add(obj);
         placed.push(obj);
       }
@@ -692,6 +748,11 @@ const NadModel: React.FC<NadModelProps> = ({
 
     return () => {
       disposed = true;
+      for (const outline of madeOutlines) {
+        outline.parent?.remove(outline);
+        outline.geometry.dispose();
+      }
+      for (const mat of madeMaterials) mat.dispose();
       for (const obj of placed) {
         obj.parent?.remove(obj);
       }

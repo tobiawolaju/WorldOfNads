@@ -93,6 +93,32 @@ func _initialize() -> void:
 	_check("no attachments key wears no cap", not _visible(player, cap_path))
 	_check("no attachments key wears no duck", not _visible(player, "Skeleton3D/hips/duck"))
 
+	# 7. The unshaded edition flattens its attachments and gives them the black
+	#    outline pass, keeps the authored colour, and a shaded skin afterwards
+	#    hands the authored material straight back.
+	var cap_mi := player.get_node(cap_path) as MeshInstance3D
+	var duck_mi := player.get_node("Skeleton3D/hips/duck/Cylinder_002") as MeshInstance3D
+	SkinApplier.seed_single_from_api("1008", { "skinConfig": {
+		"palette": { "body": "#ff00ff" },
+		"attachments": ["linnconcap", "duck"],
+	} })
+	applier.apply_skin(player, "1008")
+	_check("1008 body unshaded", _is_unshaded_body(player))
+	_check("1008 cap flattened", _is_unshaded_attachment(cap_mi))
+	_check("1008 cap outlined", _has_outline_pass(cap_mi))
+	_check("1008 duck flattened", _is_unshaded_attachment(duck_mi))
+	_check("1008 duck outlined", _has_outline_pass(duck_mi))
+	var authored := cap_mi.get_meta(SkinApplier.AUTHORED_MATERIAL_META) as Material
+	var built := cap_mi.material_override as StandardMaterial3D
+	_check("1008 keeps authored albedo",
+		authored is StandardMaterial3D
+		and built.albedo_color.is_equal_approx((authored as StandardMaterial3D).albedo_color))
+
+	applier.apply_skin(player, "s-default")
+	_check("shaded skin restores authored cap material", cap_mi.material_override == null)
+	_check("shaded skin restores authored duck material", duck_mi.material_override == null)
+	_check("shaded skin still wears both", _visible(player, cap_path) and _visible(player, "Skeleton3D/hips/duck"))
+
 	player.free()
 	if failures == 0:
 		print("SELFTEST PASS")
@@ -113,6 +139,21 @@ func _is_unshaded_body(player: Node) -> bool:
 	if not (mat is ShaderMaterial):
 		return false
 	return (mat as ShaderMaterial).shader == load("res://assets/shaders/skin_unshaded.gdshader")
+
+func _is_unshaded_attachment(mi: MeshInstance3D) -> bool:
+	var mat := mi.material_override
+	if not (mat is StandardMaterial3D):
+		return false
+	return (mat as StandardMaterial3D).shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED
+
+func _has_outline_pass(mi: MeshInstance3D) -> bool:
+	var mat := mi.material_override
+	if not (mat is BaseMaterial3D):
+		return false
+	var next := (mat as BaseMaterial3D).next_pass
+	if not (next is ShaderMaterial):
+		return false
+	return (next as ShaderMaterial).shader == SkinApplier.OUTLINE_SHADER
 
 func _check(label: String, ok: bool) -> void:
 	if ok:

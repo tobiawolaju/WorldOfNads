@@ -132,9 +132,18 @@ Rules — identical in Godot and on the web:
 - **Only visibility is toggled, never transforms.** Every attachment keeps the
   transform authored in `godot/scenes/skin.tscn`.
 
-No colours are pinned onto attachments: they keep the materials they were
-authored with. The body colour system (palette, outline, crown,
+No colours are pinned onto attachments: they keep the colours and textures
+they were authored with. The body colour system (palette, outline, crown,
 `shader_targets`) is a separate concern and works exactly as before.
+
+The one shading rule attachments do follow is the **unshaded edition**
+(`shader = "unshaded"` — every even id and `s-default-unshaded`): it flattens
+each attachment mesh — keeping its authored colour and texture — and adds the
+same black 1.04 outline pass the body uses, so the flat variant reads as one
+look instead of a flat nad wearing lit, outline-less hats. Any other shader
+hands the authored material straight back, so toggling never leaves a stale
+override. Godot does this in `SkinApplier._apply_attachment_shader`, the web
+in the named-attachment effect in `ThreeScene.tsx`.
 
 ## Slots
 
@@ -229,5 +238,5 @@ Godot_v4.7-stable_win64_console.exe --headless --path godot --script res://tools
 ```
 
 Prints `PASS`/`FAIL` per expectation (attachment visibility, unknown-name
-handling, parity, no-transform-touched guarantees) and exits non-zero on
-failure.
+handling, parity, no-transform-touched guarantees, unshaded attachment
+flattening + outline restore) and exits non-zero on failure.
