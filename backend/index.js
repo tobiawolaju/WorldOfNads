@@ -6,7 +6,7 @@ import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, upda
 import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec } from './contractClient.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 import { refreshAllUserPfps } from './refreshUserPfps.js';
-import { attachmentsForId } from './skinIndex.js';
+import { attachmentsForId, loadCombos, loadDefaults } from './skinIndex.js';
 import {
   approveDeviceLogin,
   cancelDeviceLogin,
@@ -490,6 +490,14 @@ const server = createServer(async (req, res) => {
   if (req.method === 'GET' && reqUrl.pathname === '/api/skins') {
     const skins = await getAllSkins();
     sendJson(res, 200, { ok: true, skins });
+    return;
+  }
+
+  // The ordered id -> combo index. Clients use it to resolve attachments for
+  // numbered ids that have no per-skin document (unminted ids, previews), so
+  // appending a combo to skinCombos.json lights it up everywhere at once.
+  if (req.method === 'GET' && reqUrl.pathname === '/api/skin-combos') {
+    sendJson(res, 200, { ok: true, combos: loadCombos(), defaults: loadDefaults() });
     return;
   }
 

@@ -62,6 +62,29 @@ func _initialize() -> void:
 	_check("1004 hides duck", not _visible(player, "Skeleton3D/hips/duck"))
 	_check("1004 hides all hats", not _visible(player, "Skeleton3D/heddds/offset/strawhat"))
 
+	# 6. The index resolves a combo for any numbered id - even without a document
+	#    of its own - and zero-padded / unpadded ids hit the same slot.
+	SkinApplier.seed_index_from_api({
+		"combos": [
+			{ "attachments": ["linnconcap", "duck"] },
+			{ "attachments": ["hair_001", "duck"] },
+			{ "attachments": [] },
+		],
+		"defaults": { "s-default": ["linnconcap", "duck"] },
+	})
+	applier.apply_skin(player, "0003")
+	_check("index: 0003 -> hair_001", _visible(player, "Skeleton3D/heddds/offset/hair_001"))
+	_check("index: 0003 hides linnconcap", not _visible(player, cap_path))
+	applier.apply_skin(player, "4")
+	_check("index: 4 (unpadded) -> hair_001", _visible(player, "Skeleton3D/heddds/offset/hair_001"))
+	applier.apply_skin(player, "0005")
+	_check("index: 0005 (empty combo) wears nothing", not _visible(player, "Skeleton3D/hips/duck"))
+	# A document that pins its own list still wins over the index.
+	SkinApplier.seed_single_from_api("5", { "skinConfig": { "attachments": ["burgr"] } })
+	applier.apply_skin(player, "5")
+	_check("index: explicit doc list wins", _visible(player, "Skeleton3D/heddds/offset/burgr"))
+	_check("index: explicit doc hides indexed combo", not _visible(player, "Skeleton3D/hips/duck"))
+
 	# 5. A skin without an attachments key wears nothing (deterministic - the
 	#    same rule the web preview applies, and no state leaks from the skin
 	#    that was applied before it).

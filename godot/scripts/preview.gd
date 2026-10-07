@@ -28,6 +28,7 @@ func _ready() -> void:
 	nad = SKIN_SCENE.instantiate()
 	add_child(nad)
 	_build_ui()
+	_fetch_index()
 	_fetch_skins()
 	apply(current_id)
 
@@ -137,6 +138,8 @@ func apply(id: String) -> void:
 	var source := "local fallback"
 	if SkinApplier._api_cache.has(key):
 		source = "API (GET /api/skins)"
+	elif SkinApplier._index_cache.has(key):
+		source = "index (GET /api/skin-combos)"
 	elif key == SkinApplier.DEFAULT_SKIN or key == "s-default-unshaded":
 		source = "local default"
 
@@ -193,4 +196,26 @@ func _on_skins_fetched(result: int, response_code: int, _headers: PackedStringAr
 	var skins: Array = parsed.get("skins")
 	SkinApplier.seed_from_api(skins)
 	status_label.text = "API: %d live skins loaded" % skins.size()
+	apply(current_id)
+
+
+func _fetch_index() -> void:
+	var http := HTTPRequest.new()
+	add_child(http)
+	http.request_completed.connect(_on_index_fetched.bind(http))
+	http.request("%s/api/skin-combos" % API_BASE)
+
+
+func _on_index_fetched(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest) -> void:
+	if http != null and is_instance_valid(http):
+		http.queue_free()
+	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		return
+	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
+	if not (parsed is Dictionary) or parsed.get("ok") != true:
+		return
+	SkinApplier.seed_index_from_api(parsed)
+	var combos: Variant = parsed.get("combos", [])
+	if combos is Array:
+		status_label.text = "API: index loaded (%d combos -> ids 1..%d)" % [combos.size(), combos.size() * 2]
 	apply(current_id)
