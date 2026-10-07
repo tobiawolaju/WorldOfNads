@@ -169,7 +169,7 @@ function loadAttachmentManifest(): Promise<AttachmentManifest | null> {
 function loadAttachment(file: string): Promise<THREE.Group | null> {
   let pending = attachmentFileCache.get(file);
   if (!pending) {
-    pending = new THREE.GLTFLoader()
+    pending = new GLTFLoader()
       .loadAsync(`${ATTACHMENTS_DIR}/${file}`)
       .then((gltf) => gltf.scene as THREE.Group)
       .catch((err) => {
@@ -181,17 +181,28 @@ function loadAttachment(file: string): Promise<THREE.Group | null> {
   return pending;
 }
 
+// Godot sanitises Mixamo bone names ("mixamorig:Head" -> "mixamorig_Head") while
+// three.js strips the separators entirely ("mixamorigHead"), so compare on a
+// normalised form that ignores case and any punctuation.
+function normalizeBoneName(name: string): string {
+  return String(name).toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 function findBone(model: THREE.Object3D, boneName: string): THREE.Object3D | null {
   const exact = model.getObjectByName(boneName);
   if (exact) return exact;
-  const needle = boneName.toLowerCase();
-  let found: THREE.Object3D | null = null;
+  const needle = normalizeBoneName(boneName);
+  if (!needle) return null;
+  let loose: THREE.Object3D | null = null;
+  let match: THREE.Object3D | null = null;
   model.traverse((child) => {
-    if (!found && (child as THREE.Bone).isBone && child.name.toLowerCase().includes(needle)) {
-      found = child;
-    }
+    if (match) return;
+    const current = normalizeBoneName(child.name);
+    if (!current) return;
+    if (current === needle) match = child;
+    else if (!loose && current.includes(needle)) loose = child;
   });
-  return found;
+  return match || loose;
 }
 
 // --- Animated Nad Model Component ---
