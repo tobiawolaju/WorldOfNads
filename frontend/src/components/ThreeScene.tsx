@@ -850,18 +850,17 @@ const NadModel: React.FC<NadModelProps> = ({
   }, [model, equippedSkin]);
 
   // Procedural mouth mesh (port of godot/assets/shaders/mouth_wobble.gdshader)
-  // Created as a plane parented to the head bone, positioned just in front of the face.
+  // Created as a plane parented to the HEAD MESH (Cube), not the head bone,
+  // so it stays on the face during animation. Positioned at the face surface.
   useEffect(() => {
-    let headBone: THREE.Object3D | null = null;
+    // Find the head mesh (Cube) - this is the face
+    let headMesh: THREE.Mesh | null = null;
     model.traverse((child) => {
-      if (child instanceof THREE.Bone) {
-        const name = child.name;
-        if (name === "mixamorig_Head" || name.toLowerCase().includes("head")) {
-          headBone = child;
-        }
+      if (child instanceof THREE.Mesh && child.name === "Cube") {
+        headMesh = child;
       }
     });
-    if (!headBone) return;
+    if (!headMesh) return;
 
     const pal = equippedSkin?.skinConfig?.palette || {};
     const mouthMat = createMouthMaterial({
@@ -870,26 +869,30 @@ const NadModel: React.FC<NadModelProps> = ({
       tooth: "#fff2d9",
     });
 
-    // Create a plane for the mouth
-    // Size matches Godot shader's width/height in local space
-    const mouthGeo = new THREE.PlaneGeometry(0.5, 0.2, 1, 1);
+    // Create a plane for the mouth, sized to match the face proportions
+    // Head mesh size after normalization: ~0.47 wide, ~0.48 tall, ~0.5 deep
+    // Mouth occupies lower ~35% of face height, ~60% of face width
+    const mouthGeo = new THREE.PlaneGeometry(0.28, 0.12, 1, 1);
     const mouthMesh = new THREE.Mesh(mouthGeo, mouthMat);
     mouthMesh.name = "procedural-mouth";
-    mouthMesh.renderOrder = 10; // render on top of face
+    mouthMesh.renderOrder = 10;
 
-    // Position: slightly in front of face, centered on mouth area
-    // Head center is roughly at y=1.35, z=0.7 in model space
-    // Godot's mouth mesh is at z=0.0055 offset from head
-    mouthMesh.position.set(0, -0.12, 0.25); // tweak as needed
+    // Position at the face surface (front of head mesh)
+    // Head mesh center is at its local origin. Face front is at +Z = half depth.
+    // Head depth ≈ 0.5 → face front at z = +0.25
+    // Mouth vertical center: face UV V=0.375..0.545 → lower 35% of face
+    // Face height ≈ 0.48 → mouth center at y ≈ -0.08 from face center
+    mouthMesh.position.set(0, -0.08, 0.26);
+    // PlaneGeometry normal is +Z; face normal is +Z → matches camera view
     mouthMesh.rotation.set(0, 0, 0);
 
-    headBone.add(mouthMesh);
+    headMesh.add(mouthMesh);
 
     // Track for uTime updates
     animatedMaterialsRef.current.push(mouthMat);
 
     return () => {
-      headBone.remove(mouthMesh);
+      headMesh.remove(mouthMesh);
       mouthGeo.dispose();
       mouthMat.dispose();
       animatedMaterialsRef.current = animatedMaterialsRef.current.filter(m => m !== mouthMat);
