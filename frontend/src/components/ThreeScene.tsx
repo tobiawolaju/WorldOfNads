@@ -869,20 +869,19 @@ const NadModel: React.FC<NadModelProps> = ({
       tooth: "#fff2d9",
     });
 
-    // Create a plane for the mouth, sized to match the face proportions
-    // Head mesh size after normalization: ~0.47 wide, ~0.48 tall, ~0.5 deep
-    // Mouth occupies lower ~35% of face height, ~60% of face width
-    const mouthGeo = new THREE.PlaneGeometry(0.28, 0.12, 1, 1);
+    // Create a plane for the mouth, sized to cover the face area in normalized space
+    // Face: ~0.036 wide x 0.028 tall. Plane slightly larger to avoid clipping.
+    const mouthGeo = new THREE.PlaneGeometry(0.04, 0.03, 1, 1);
     const mouthMesh = new THREE.Mesh(mouthGeo, mouthMat);
     mouthMesh.name = "procedural-mouth";
     mouthMesh.renderOrder = 10;
 
-    // Position at the face surface (front of head mesh)
-    // Head mesh center is at its local origin. Face front is at +Z = half depth.
-    // Head depth ≈ 0.5 → face front at z = +0.25
-    // Mouth vertical center: face UV V=0.375..0.545 → lower 35% of face
-    // Face height ≈ 0.48 → mouth center at y ≈ -0.08 from face center
-    mouthMesh.position.set(0, -0.08, 0.26);
+    // Position in headMesh (Cube) local space (normalized: maxDim=1):
+    // headMesh bounds: center=(0, 0.0408, 0), size=(0.045, 0.047, 0.048)
+    // Y range: 0.017 to 0.064, Face front Z = 0.024 (max Z)
+    // Mouth UV V=[0.375,0.545] → lower 34% of face tile → Y ≈ 0.035–0.041
+    // Plane sits just in front of face: Z = face front (0.024) + epsilon
+    mouthMesh.position.set(0, 0.038, 0.025);
     // PlaneGeometry normal is +Z; face normal is +Z → matches camera view
     mouthMesh.rotation.set(0, 0, 0);
 
@@ -891,14 +890,14 @@ const NadModel: React.FC<NadModelProps> = ({
     // Track for uTime updates
     animatedMaterialsRef.current.push(mouthMat);
 
-    // Keyboard control for Y position: O = up, P = down
+    // Keyboard control for Y position: O = up, P = down (small steps for normalized space)
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'o' || e.key === 'O') {
-        mouthMesh.position.y += 0.01;
-        console.log("[Mouth] position:", mouthMesh.position.toArray().map(v => v.toFixed(4)));
+        mouthMesh.position.y += 0.001;
+        console.log("[Mouth] position:", mouthMesh.position.toArray().map(v => v.toFixed(5)));
       } else if (e.key === 'p' || e.key === 'P') {
-        mouthMesh.position.y -= 0.01;
-        console.log("[Mouth] position:", mouthMesh.position.toArray().map(v => v.toFixed(4)));
+        mouthMesh.position.y -= 0.001;
+        console.log("[Mouth] position:", mouthMesh.position.toArray().map(v => v.toFixed(5)));
       }
     };
     window.addEventListener('keydown', handleKeyDown);
