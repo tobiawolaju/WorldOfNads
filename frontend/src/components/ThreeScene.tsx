@@ -891,7 +891,20 @@ const NadModel: React.FC<NadModelProps> = ({
     // Track for uTime updates
     animatedMaterialsRef.current.push(mouthMat);
 
+    // Keyboard control for Y position: O = up, P = down
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'o' || e.key === 'O') {
+        mouthMesh.position.y += 0.01;
+        console.log("[Mouth] position:", mouthMesh.position.toArray().map(v => v.toFixed(4)));
+      } else if (e.key === 'p' || e.key === 'P') {
+        mouthMesh.position.y -= 0.01;
+        console.log("[Mouth] position:", mouthMesh.position.toArray().map(v => v.toFixed(4)));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
+      window.removeEventListener('keydown', handleKeyDown);
       headMesh.remove(mouthMesh);
       mouthGeo.dispose();
       mouthMat.dispose();
