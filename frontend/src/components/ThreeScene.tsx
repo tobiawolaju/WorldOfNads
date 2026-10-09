@@ -874,10 +874,15 @@ const NadModel: React.FC<NadModelProps> = ({
       tooth: "#fff2d9",
     });
 
+    // DEBUG: use bright red material to verify plane renders
+    const debugMat = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide });
+    const useDebug = true;
+    const finalMat = useDebug ? debugMat : mouthMat;
+
     // Create a plane for the mouth with standard UV (0-1) so the shader's mouth math works
     // The shader expects UV 0-1 mapped to mouth space via base_p = UV*2-1
-    const mouthGeo = new THREE.PlaneGeometry(0.04, 0.03, 1, 1);
-    const mouthMesh = new THREE.Mesh(mouthGeo, mouthMat);
+    const mouthGeo = new THREE.PlaneGeometry(0.08, 0.06, 1, 1);
+    const mouthMesh = new THREE.Mesh(mouthGeo, finalMat);
     mouthMesh.name = "procedural-mouth";
     mouthMesh.renderOrder = 10;
 
