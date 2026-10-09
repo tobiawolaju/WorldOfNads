@@ -872,6 +872,20 @@ const NadModel: React.FC<NadModelProps> = ({
     // Create a plane for the mouth, sized to cover the face area in normalized space
     // Face: ~0.036 wide x 0.028 tall. Plane slightly larger to avoid clipping.
     const mouthGeo = new THREE.PlaneGeometry(0.04, 0.03, 1, 1);
+    
+    // IMPORTANT: Set UV to match the head's UV atlas mouth region
+    // Head atlas: mouth at U=[0.25, 0.75], V=[0.375, 0.545]
+    // This way the shader's UV-based mouth shape works correctly.
+    const uvAttr = mouthGeo.getAttribute('uv');
+    const uvArray = uvAttr.array;
+    // PlaneGeometry UV order: (0,0), (1,0), (0,1), (1,1) for 4 vertices
+    // Map to head atlas mouth region:
+    uvArray[0] = 0.25; uvArray[1] = 0.375;   // bottom-left
+    uvArray[2] = 0.75; uvArray[3] = 0.375;   // bottom-right
+    uvArray[4] = 0.25; uvArray[5] = 0.545;   // top-left
+    uvArray[6] = 0.75; uvArray[7] = 0.545;   // top-right
+    uvAttr.needsUpdate = true;
+    
     const mouthMesh = new THREE.Mesh(mouthGeo, mouthMat);
     mouthMesh.name = "procedural-mouth";
     mouthMesh.renderOrder = 10;
@@ -886,6 +900,16 @@ const NadModel: React.FC<NadModelProps> = ({
     mouthMesh.rotation.set(0, 0, 0);
 
     headMesh.add(mouthMesh);
+
+    // Debug: verify mouth mesh in scene
+    console.log("[Mouth] Created:", {
+      position: mouthMesh.position.toArray(),
+      rotation: mouthMesh.rotation.toArray(),
+      geometry: mouthGeo.type,
+      uv: mouthGeo.getAttribute('uv').array.slice(0, 8),
+      material: mouthMat.type,
+      parent: mouthMesh.parent?.name
+    });
 
     // Track for uTime updates
     animatedMaterialsRef.current.push(mouthMat);
