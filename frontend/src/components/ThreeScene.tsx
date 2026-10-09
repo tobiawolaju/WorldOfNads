@@ -886,7 +886,7 @@ const NadModel: React.FC<NadModelProps> = ({
     const finalMat = useDebug ? debugMat : mouthMat;
 
     // Create a plane for the mouth
-    const mouthGeo = new THREE.PlaneGeometry(0.08, 0.06, 1, 1);
+    const mouthGeo = new THREE.PlaneGeometry(0.15, 0.1, 1, 1);
     const mouthMesh = new THREE.Mesh(mouthGeo, finalMat);
     mouthMesh.name = "procedural-mouth";
     mouthMesh.renderOrder = 10;
@@ -897,7 +897,7 @@ const NadModel: React.FC<NadModelProps> = ({
     // We want mouth just in front of face. Bone local Z=0 is at head center.
     // Face is forward (+Z) from bone. Mouth is lower on face.
     // Try: Y negative (down from bone center), Z positive (forward)
-    mouthMesh.position.set(0, -0.02, 0.03);
+    mouthMesh.position.set(0, -0.08, 0.04);
     mouthMesh.rotation.set(0, 0, 0);
 
     headBone.add(mouthMesh);
@@ -921,12 +921,12 @@ const NadModel: React.FC<NadModelProps> = ({
     // Keyboard control for Y position: O = up, P = down
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'o' || e.key === 'O') {
-        mouthMesh.position.y += 0.005;
+        mouthMesh.position.y += 0.02;
         const wp = new THREE.Vector3();
         mouthMesh.getWorldPosition(wp);
         console.log("[Mouth] local:", mouthMesh.position.toArray().map(v => v.toFixed(5)), "world:", wp.toArray().map(v => v.toFixed(5)));
       } else if (e.key === 'p' || e.key === 'P') {
-        mouthMesh.position.y -= 0.005;
+        mouthMesh.position.y -= 0.02;
         const wp = new THREE.Vector3();
         mouthMesh.getWorldPosition(wp);
         console.log("[Mouth] local:", mouthMesh.position.toArray().map(v => v.toFixed(5)), "world:", wp.toArray().map(v => v.toFixed(5)));
