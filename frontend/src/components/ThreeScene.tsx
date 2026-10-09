@@ -293,291 +293,246 @@ uniform float flip_dot;`
   return mat;
 }
 
-// Procedural mouth wobble for the head (Cube). The nad.fbx head uses a
-// single SkinnedMesh with UV atlas: head region U=[0.25,0.75], V=[0.375,0.875].
-// The mouth occupies roughly the lower 35% of that V range.
-// This injects a subtle vertex displacement along the normal in the mouth
-// region, driven by a slow sine wave (breathing) + optional speech wobble.
-// It rides on whatever base material the head gets (Toon, Basic, Standard)
-// so it works for every skin edition without extra passes.
-function applyMouthWobble(mat: THREE.Material): void {
-  const originalOnBeforeCompile = mat.onBeforeCompile;
+
+
+// Port of godot/assets/shaders/mouth_wobble.gdshader — full procedural mouth
+// with lips, teeth, and cavity. Uses onBeforeCompile to inject into a base
+// material that supports skinning (MeshBasicMaterial), same pattern as eyes.
+function createMouthMaterial(palette: { mouth?: string; lipOutline?: string; tooth?: string }): THREE.MeshBasicMaterial {
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    depthWrite: true,
+    side: THREE.DoubleSide,
+  });
+
+  const uniforms = {
+    uTime: { value: 0 },
+    // Colors (sRGB → linear handled by three)
+    mouthColor: { value: new THREE.Color(palette.mouth || "#ff2b05") },
+    lipOutlineColor: { value: new THREE.Color(palette.lipOutline || "#ff7d00") },
+    toothColor: { value: new THREE.Color(palette.tooth || "#fff2d9") },
+    toothShadowColor: { value: new THREE.Color(0.75, 0.68, 0.58) },
+    // Lip params
+    lipOutlineThickness: { value: 0.188 },
+    lipCurve: { value: -0.5 },
+    upperLipFullness: { value: 0.124 },
+    lowerLipFullness: { value: 0.04 },
+    // Tooth params
+    toothWidth: { value: 0.268 },
+    toothHeight: { value: 0.245 },
+    toothSpacing: { value: 0.325 },
+    toothDrop: { value: -0.605 },
+    toothRoundness: { value: 0.01 },
+    toothTaper: { value: 0.25 },
+    toothHighlight: { value: 0.20 },
+    // Mouth size - adjusted for plane with UV 0-1
+    width: { value: 1.0 },
+    height: { value: 1.0 },
+    // Cavity
+    layers: { value: 16 },
+    depth: { value: 0.25 },
+    taper: { value: 0.65 },
+    darkness: { value: 1.0 },
+    endX: { value: 0.0 },
+    endY: { value: 0.0 },
+    // Parallax
+    parallaxFactor: { value: 1.0 },
+    // UV bounds for mouth region (plane uses full 0-1 UV)
+    mouthUvMin: { value: new THREE.Vector2(0.0, 0.0) },
+    mouthUvMax: { value: new THREE.Vector2(1.0, 1.0) },
+  };
+
   mat.onBeforeCompile = (shader) => {
-    originalOnBeforeCompile?.(shader);
+    // Ensure the base material has the standard vertex includes for skinning
     if (
       !shader.vertexShader.includes("#include <project_vertex>") ||
       !shader.fragmentShader.includes("#include <opaque_fragment>")
     ) {
-      console.warn("[ThreeScene] mouth wobble injection point missing");
+      console.warn("[ThreeScene] mouth shader injection point missing - three.js upgrade?");
       return;
     }
-    Object.assign(shader.uniforms, {
-      uTime: { value: 0 },
-      // Mouth UV bounds in the head atlas (Cube mesh):
-      // U: 0.25 -> 0.75, V: 0.375 -> 0.875. Mouth ~ lower 35% of V.
-      mouthUvMin: { value: new THREE.Vector2(0.25, 0.375) },
-      mouthUvMax: { value: new THREE.Vector2(0.75, 0.545) },
-      // Wobble params (tweak to taste)
-      wobbleAmp: { value: 0.008 },      // max vertex offset (world units)
-      wobbleFreq: { value: 0.7 },       // breathing frequency (Hz)
-      wobbleSpeechAmp: { value: 0.0 },  // speech layer (drive externally if needed)
-      wobbleSpeechFreq: { value: 8.0 },
-    });
+
+    // Inject uniforms
+    Object.assign(shader.uniforms, uniforms);
+
+    // Inject varying for UV
     shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+varying vec2 vMouthUv;`
+      )
+      .replace(
+        "#include <project_vertex>",
+        `#include <project_vertex>
+  vMouthUv = uv;`
+      );
+
+    // Replace fragment shader with mouth_wobble logic
+    shader.fragmentShader = shader.fragmentShader
       .replace(
         "#include <common>",
         `#include <common>
 varying vec2 vMouthUv;
 uniform float uTime;
+uniform vec3 mouthColor;
+uniform vec3 lipOutlineColor;
+uniform vec3 toothColor;
+uniform vec3 toothShadowColor;
+uniform float lipOutlineThickness;
+uniform float lipCurve;
+uniform float upperLipFullness;
+uniform float lowerLipFullness;
+uniform float toothWidth;
+uniform float toothHeight;
+uniform float toothSpacing;
+uniform float toothDrop;
+uniform float toothRoundness;
+uniform float toothTaper;
+uniform float toothHighlight;
+uniform float width;
+uniform float height;
+uniform int layers;
+uniform float depth;
+uniform float taper;
+uniform float darkness;
+uniform float endX;
+uniform float endY;
+uniform float parallaxFactor;
 uniform vec2 mouthUvMin;
 uniform vec2 mouthUvMax;
-uniform float wobbleAmp;
-uniform float wobbleFreq;
-uniform float wobbleSpeechAmp;
-uniform float wobbleSpeechFreq;`
+
+float roundedBox(vec2 p, vec2 halfSize, float radius) {
+  vec2 q = abs(p) - halfSize + radius;
+  return length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0) - radius;
+}`
       )
       .replace(
-        "#include <project_vertex>",
-        `#include <project_vertex>
-  vMouthUv = uv;
-  // Mouth mask: 1.0 inside mouth UV rect, 0.0 outside, smooth edges
-  vec2 mouthRel = (vMouthUv - mouthUvMin) / (mouthUvMax - mouthUvMin);
-  float inMouth = smoothstep(0.0, 0.05, mouthRel.y) * smoothstep(1.0, 0.95, mouthRel.y) *
-                  smoothstep(0.0, 0.08, mouthRel.x) * smoothstep(1.0, 0.92, mouthRel.x);
-  // Breathing wave (slow) + optional speech wobble (fast)
-  float breath = sin(uTime * wobbleFreq * 6.28318) * 0.5 + 0.5;
-  float speech = sin(uTime * wobbleSpeechFreq * 6.28318) * 0.5 + 0.5;
-  float disp = (breath * wobbleAmp + speech * wobbleSpeechAmp) * inMouth;
-  // Displace along view-space normal (transformedNormal already available)
-  transformed += normalize(transformedNormal) * disp;`
+        "#include <opaque_fragment>",
+        `#include <opaque_fragment>
+  vec2 baseUv = vMouthUv;
+  vec2 baseP = baseUv * 2.0 - 1.0;
+
+  // Mouth space
+  vec2 mouthP = baseP;
+  mouthP.x /= width;
+  mouthP.y /= height;
+
+  // Lip curve
+  float curveX = clamp(mouthP.x, -1.0, 1.0);
+  float curveShape = 1.0 - curveX * curveX;
+  mouthP.y -= lipCurve * curveShape;
+
+  // Lip fullness
+  float upper = max(mouthP.y, 0.0);
+  float lower = max(-mouthP.y, 0.0);
+  mouthP.y -= upper * upperLipFullness;
+  mouthP.y += lower * lowerLipFullness;
+
+  // Mouth opening
+  float baseShape = mouthP.x * mouthP.x + mouthP.y * mouthP.y;
+  float openingAA = fwidth(baseShape) * 1.5;
+  float opening = 1.0 - smoothstep(1.0 - openingAA, 1.0 + openingAA, baseShape);
+
+  // Lip outline
+  float innerScale = max(0.05, 1.0 - lipOutlineThickness);
+  vec2 innerP = mouthP / innerScale;
+  float innerShape = innerP.x * innerP.x + innerP.y * innerP.y;
+  float innerAA = fwidth(innerShape) * 1.5;
+  float innerOpening = 1.0 - smoothstep(1.0 - innerAA, 1.0 + innerAA, innerShape);
+  float lipOutline = clamp(opening - innerOpening, 0.0, 1.0);
+
+  // View / parallax basis (approximate for plane facing camera)
+  vec3 view = vec3(0.0, 0.0, 1.0); // Plane faces +Z (camera)
+  vec3 tangent = vec3(1.0, 0.0, 0.0);
+  vec3 bitangent = vec3(0.0, 1.0, 0.0);
+  vec2 viewOffset = vec2(dot(view, tangent), dot(view, bitangent));
+
+  // Cavity (ray-marched layers)
+  float deepest = 0.0;
+  float deepestT = 0.0;
+
+  for (int i = 0; i < 32; i++) { // capped at 32 for GLSL loop unroll
+    if (i >= layers) break;
+    float t = float(i) / float(max(layers - 1, 1));
+    float z = t * depth;
+
+    vec2 uv = baseUv;
+    uv -= viewOffset * z * parallaxFactor;
+
+    vec2 endOffset = vec2(endX, endY) * t;
+    uv -= endOffset;
+
+    float scale = mix(1.0, taper, t);
+
+    vec2 p = uv * 2.0 - 1.0;
+    p.x /= width * scale;
+    p.y /= height * scale;
+
+    float cavityX = clamp(p.x, -1.0, 1.0);
+    float cavityCurve = 1.0 - cavityX * cavityX;
+    p.y -= lipCurve * cavityCurve;
+
+    float shape = p.x * p.x + p.y * p.y;
+    float layerAA = fwidth(shape) * 1.5;
+    float layerMask = 1.0 - smoothstep(1.0 - layerAA, 1.0 + layerAA, shape);
+
+    if (layerMask > 0.0) {
+      deepest = 1.0;
+      deepestT = t;
+    }
+  }
+
+  // Cavity color
+  float darkAmount = deepestT * darkness;
+  vec3 cavityColor = mix(mouthColor, vec3(0.0), darkAmount);
+
+  // Start with cavity
+  vec3 finalColor = cavityColor;
+
+  // Bunny teeth
+  float toothMask = 0.0;
+
+  // Left tooth
+  vec2 leftTooth = baseP - vec2(-toothSpacing, toothDrop);
+  float leftBottom = clamp(-leftTooth.y / max(toothHeight, 0.001), 0.0, 1.0);
+  float leftWidth = mix(toothWidth, toothWidth * (1.0 - toothTaper), leftBottom);
+  float leftShape = roundedBox(leftTooth, vec2(leftWidth, toothHeight), toothRoundness);
+  float leftAA = fwidth(leftShape) * 1.5;
+  float leftMask = 1.0 - smoothstep(-leftAA, leftAA, leftShape);
+
+  // Right tooth
+  vec2 rightTooth = baseP - vec2(toothSpacing, toothDrop);
+  float rightBottom = clamp(-rightTooth.y / max(toothHeight, 0.001), 0.0, 1.0);
+  float rightWidth = mix(toothWidth, toothWidth * (1.0 - toothTaper), rightBottom);
+  float rightShape = roundedBox(rightTooth, vec2(rightWidth, toothHeight), toothRoundness);
+  float rightAA = fwidth(rightShape) * 1.5;
+  float rightMask = 1.0 - smoothstep(-rightAA, rightAA, rightShape);
+
+  toothMask = max(leftMask, rightMask);
+  toothMask *= opening;
+
+  // Tooth color
+  float toothPosition = clamp((baseP.y - toothDrop + toothHeight) / (2.0 * toothHeight), 0.0, 1.0);
+  vec3 toothFinalColor = mix(toothShadowColor, toothColor, 0.75);
+  toothFinalColor = mix(toothFinalColor, toothColor, toothPosition * toothHighlight);
+
+  // Teeth behind lips
+  finalColor = mix(finalColor, toothFinalColor, toothMask);
+
+  // Lip on top
+  vec3 finalLipColor = mix(lipOutlineColor, mouthColor, 0.12);
+  finalColor = mix(finalColor, finalLipColor, lipOutline);
+
+  // Output
+  float alpha = max(opening, toothMask);
+  gl_FragColor = vec4(finalColor, alpha);`
       );
+
+    mat.userData.shader = shader;
   };
-}
 
-// Port of godot/assets/shaders/mouth_wobble.gdshader — full procedural mouth
-// with lips, teeth, and cavity. Renders on a dedicated PlaneGeometry placed
-// just in front of the face. Matches the Godot uniform set 1:1.
-function createMouthMaterial(palette: { mouth?: string; lipOutline?: string; tooth?: string }): THREE.ShaderMaterial {
-  const mat = new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: true,
-    side: THREE.DoubleSide,
-    uniforms: {
-      uTime: { value: 0 },
-      // Colors (sRGB → linear handled by three)
-      mouthColor: { value: new THREE.Color(palette.mouth || "#ff2b05") },
-      lipOutlineColor: { value: new THREE.Color(palette.lipOutline || "#ff7d00") },
-      toothColor: { value: new THREE.Color(palette.tooth || "#fff2d9") },
-      toothShadowColor: { value: new THREE.Color(0.75, 0.68, 0.58) },
-      // Lip params
-      lipOutlineThickness: { value: 0.188 },
-      lipCurve: { value: -0.5 },
-      upperLipFullness: { value: 0.124 },
-      lowerLipFullness: { value: 0.04 },
-      // Tooth params
-      toothWidth: { value: 0.268 },
-      toothHeight: { value: 0.245 },
-      toothSpacing: { value: 0.325 },
-      toothDrop: { value: -0.605 },
-      toothRoundness: { value: 0.01 },
-      toothTaper: { value: 0.25 },
-      toothHighlight: { value: 0.20 },
-      // Mouth size - adjusted for plane with UV 0-1
-      width: { value: 1.0 },
-      height: { value: 1.0 },
-      // Cavity
-      layers: { value: 16 },
-      depth: { value: 0.25 },
-      taper: { value: 0.65 },
-      darkness: { value: 1.0 },
-      endX: { value: 0.0 },
-      endY: { value: 0.0 },
-      // Parallax
-      parallaxFactor: { value: 1.0 },
-      // UV bounds for mouth region (plane uses full 0-1 UV)
-      mouthUvMin: { value: new THREE.Vector2(0.0, 0.0) },
-      mouthUvMax: { value: new THREE.Vector2(1.0, 1.0) },
-    },
-    vertexShader: /* glsl */ `
-      varying vec2 vUv;
-      uniform float uTime;
-      void main() {
-        vUv = uv;
-        vec3 pos = position;
-        // Subtle breathing wobble on the whole mouth plane
-        float breath = sin(uTime * 0.7 * 6.28318) * 0.002;
-        pos.z += breath;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      varying vec2 vUv;
-      uniform float uTime;
-
-      // Colors
-      uniform vec3 mouthColor;
-      uniform vec3 lipOutlineColor;
-      uniform vec3 toothColor;
-      uniform vec3 toothShadowColor;
-
-      // Lip params
-      uniform float lipOutlineThickness;
-      uniform float lipCurve;
-      uniform float upperLipFullness;
-      uniform float lowerLipFullness;
-
-      // Tooth params
-      uniform float toothWidth;
-      uniform float toothHeight;
-      uniform float toothSpacing;
-      uniform float toothDrop;
-      uniform float toothRoundness;
-      uniform float toothTaper;
-      uniform float toothHighlight;
-
-      // Mouth size
-      uniform float width;
-      uniform float height;
-
-      // Cavity
-      uniform int layers;
-      uniform float depth;
-      uniform float taper;
-      uniform float darkness;
-      uniform float endX;
-      uniform float endY;
-
-      // Parallax
-      uniform float parallaxFactor;
-      uniform vec2 mouthUvMin;
-      uniform vec2 mouthUvMax;
-
-      float roundedBox(vec2 p, vec2 halfSize, float radius) {
-        vec2 q = abs(p) - halfSize + radius;
-        return length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0) - radius;
-      }
-
-      void main() {
-        vec2 baseUv = vUv;
-        vec2 baseP = baseUv * 2.0 - 1.0;
-
-        // Mouth space
-        vec2 mouthP = baseP;
-        mouthP.x /= width;
-        mouthP.y /= height;
-
-        // Lip curve
-        float curveX = clamp(mouthP.x, -1.0, 1.0);
-        float curveShape = 1.0 - curveX * curveX;
-        mouthP.y -= lipCurve * curveShape;
-
-        // Lip fullness
-        float upper = max(mouthP.y, 0.0);
-        float lower = max(-mouthP.y, 0.0);
-        mouthP.y -= upper * upperLipFullness;
-        mouthP.y += lower * lowerLipFullness;
-
-        // Mouth opening
-        float baseShape = mouthP.x * mouthP.x + mouthP.y * mouthP.y;
-        float openingAA = fwidth(baseShape) * 1.5;
-        float opening = 1.0 - smoothstep(1.0 - openingAA, 1.0 + openingAA, baseShape);
-
-        // Lip outline
-        float innerScale = max(0.05, 1.0 - lipOutlineThickness);
-        vec2 innerP = mouthP / innerScale;
-        float innerShape = innerP.x * innerP.x + innerP.y * innerP.y;
-        float innerAA = fwidth(innerShape) * 1.5;
-        float innerOpening = 1.0 - smoothstep(1.0 - innerAA, 1.0 + innerAA, innerShape);
-        float lipOutline = clamp(opening - innerOpening, 0.0, 1.0);
-
-        // View / parallax basis (approximate for plane facing camera)
-        vec3 view = vec3(0.0, 0.0, 1.0); // Plane faces +Z (camera)
-        vec3 tangent = vec3(1.0, 0.0, 0.0);
-        vec3 bitangent = vec3(0.0, 1.0, 0.0);
-        vec2 viewOffset = vec2(dot(view, tangent), dot(view, bitangent));
-
-        // Cavity (ray-marched layers)
-        float deepest = 0.0;
-        float deepestT = 0.0;
-
-        for (int i = 0; i < 32; i++) { // capped at 32 for GLSL loop unroll
-          if (i >= layers) break;
-          float t = float(i) / float(max(layers - 1, 1));
-          float z = t * depth;
-
-          vec2 uv = baseUv;
-          uv -= viewOffset * z * parallaxFactor;
-
-          vec2 endOffset = vec2(endX, endY) * t;
-          uv -= endOffset;
-
-          float scale = mix(1.0, taper, t);
-
-          vec2 p = uv * 2.0 - 1.0;
-          p.x /= width * scale;
-          p.y /= height * scale;
-
-          float cavityX = clamp(p.x, -1.0, 1.0);
-          float cavityCurve = 1.0 - cavityX * cavityX;
-          p.y -= lipCurve * cavityCurve;
-
-          float shape = p.x * p.x + p.y * p.y;
-          float layerAA = fwidth(shape) * 1.5;
-          float layerMask = 1.0 - smoothstep(1.0 - layerAA, 1.0 + layerAA, shape);
-
-          if (layerMask > 0.0) {
-            deepest = 1.0;
-            deepestT = t;
-          }
-        }
-
-        // Cavity color
-        float darkAmount = deepestT * darkness;
-        vec3 cavityColor = mix(mouthColor, vec3(0.0), darkAmount);
-
-        // Start with cavity
-        vec3 finalColor = cavityColor;
-
-        // Bunny teeth
-        float toothMask = 0.0;
-
-        // Left tooth
-        vec2 leftTooth = baseP - vec2(-toothSpacing, toothDrop);
-        float leftBottom = clamp(-leftTooth.y / max(toothHeight, 0.001), 0.0, 1.0);
-        float leftWidth = mix(toothWidth, toothWidth * (1.0 - toothTaper), leftBottom);
-        float leftShape = roundedBox(leftTooth, vec2(leftWidth, toothHeight), toothRoundness);
-        float leftAA = fwidth(leftShape) * 1.5;
-        float leftMask = 1.0 - smoothstep(-leftAA, leftAA, leftShape);
-
-        // Right tooth
-        vec2 rightTooth = baseP - vec2(toothSpacing, toothDrop);
-        float rightBottom = clamp(-rightTooth.y / max(toothHeight, 0.001), 0.0, 1.0);
-        float rightWidth = mix(toothWidth, toothWidth * (1.0 - toothTaper), rightBottom);
-        float rightShape = roundedBox(rightTooth, vec2(rightWidth, toothHeight), toothRoundness);
-        float rightAA = fwidth(rightShape) * 1.5;
-        float rightMask = 1.0 - smoothstep(-rightAA, rightAA, rightShape);
-
-        toothMask = max(leftMask, rightMask);
-        toothMask *= opening;
-
-        // Tooth color
-        float toothPosition = clamp((baseP.y - toothDrop + toothHeight) / (2.0 * toothHeight), 0.0, 1.0);
-        vec3 toothFinalColor = mix(toothShadowColor, toothColor, 0.75);
-        toothFinalColor = mix(toothFinalColor, toothColor, toothPosition * toothHighlight);
-
-        // Teeth behind lips
-        finalColor = mix(finalColor, toothFinalColor, toothMask);
-
-        // Lip on top
-        vec3 finalLipColor = mix(lipOutlineColor, mouthColor, 0.12);
-        finalColor = mix(finalColor, finalLipColor, lipOutline);
-
-        // Output
-        float alpha = max(opening, toothMask);
-        gl_FragColor = vec4(finalColor, alpha);
-      }
-    `,
-  });
   return mat;
 }
 
@@ -691,6 +646,9 @@ const NadModel: React.FC<NadModelProps> = ({
         const isHeadOrBody = /^(body_|Cube$|Cube[._]?00[123]$)/.test(name);
         const isCheek = /^(cheek_|Cube[._]?00[45]$)/.test(name);
         const isEye = /^(eye_|Cube[._]?00[67]$)/.test(name);
+        // Match Godot node names ("mouth", "mouth2") and common FBX export variations
+        // (mesh resource names like "nad2_Cubemesh_002" -> "Cube_002" but that's taken by body)
+        const isMouth = /^(mouth|mouth2)$/i.test(name);
 
         // Odd numeric skin ids are the shaded edition, even ids the flat
         // variant of the same skin (mirrors SkinApplier in Godot).
@@ -705,6 +663,16 @@ const NadModel: React.FC<NadModelProps> = ({
           // apply_skin never claims them (_tint_eye only pushes the palette
           // tint into eye_color), so no shader type replaces them.
           newMat = createEyeMaterial(eyeColor);
+        } else if (isMouth) {
+          // Mouth uses the ported mouth_wobble shader (procedural lips, teeth, cavity).
+          // It's a base character part like eyes - always present, not an attachment.
+          // Uses palette colors for mouth/lip outline.
+          const pal = equippedSkin?.skinConfig?.palette || {};
+          newMat = createMouthMaterial({
+            mouth: pal.body || "#ff2b05",
+            lipOutline: pal.cheek || "#ff7d00",
+            tooth: "#fff2d9",
+          });
         } else if (shouldApplyShader && shaderType !== "default") {
           if (shaderType === "ghost") {
             newMat = child.userData.originalMaterial.clone();
@@ -784,10 +752,8 @@ const NadModel: React.FC<NadModelProps> = ({
 
         child.material = newMat;
 
-        // Procedural mouth wobble on the head mesh only (name === "Cube")
-        if (name === "Cube") {
-          applyMouthWobble(child.material);
-          // Track for uTime updates (the onBeforeCompile adds uTime uniform)
+        // Track materials with uTime uniforms for animation
+        if (isMouth) {
           animatedMaterialsRef.current.push(child.material);
         }
 
@@ -796,9 +762,9 @@ const NadModel: React.FC<NadModelProps> = ({
           if ((child.material as any).color) (child.material as any).color.copy(baseColor);
         } else if (isCheek) {
           if ((child.material as any).color) (child.material as any).color.copy(cheekColor);
-        } else if (isEye) {
-          // Tinted through the eye_color uniform inside createEyeMaterial;
-          // pushing palette.eye elsewhere would miss it.
+        } else if (isEye || isMouth) {
+          // Tinted through uniforms inside createEyeMaterial / createMouthMaterial;
+          // pushing palette colors elsewhere would miss it.
         }
 
         // Godot only draws an outline pass for the skins that ask for one: the
@@ -807,8 +773,10 @@ const NadModel: React.FC<NadModelProps> = ({
         // "default" edition, ghost/shadow/void and anything outside
         // shader_targets are drawn plain, with no outline at all. Eyes are
         // excluded absolutely: their dot shader has no outline pass in Godot.
+        // Mouth also has no outline pass in Godot (mouth_wobble is a single pass).
         const wantsOutline =
           !isEye &&
+          !isMouth &&
           shouldApplyShader &&
           (shaderType === "unshaded" || shaderType === "gold" || shaderType === "angel");
         if (wantsOutline) {
@@ -1150,97 +1118,6 @@ const NadModel: React.FC<NadModelProps> = ({
         obj.parent?.remove(obj);
       }
       placed.length = 0;
-    };
-  }, [model, equippedSkin]);
-
-  // Mouth mesh: load the mouth.glb and apply the mouth_wobble shader.
-  // The mouth is part of the base character (always present, like in Godot).
-  // It uses the mouth mesh from the manifest (mouth.glb, bone: mixamorig_Head).
-  useEffect(() => {
-    let disposed = false;
-    let mouthMesh: THREE.Object3D | null = null;
-    let mouthMat: THREE.Material | null = null;
-
-    const loadMouth = async () => {
-      const pal = equippedSkin?.skinConfig?.palette || {};
-
-      // Load the mouth mesh from the manifest
-      const manifest = await loadAttachmentManifest();
-      if (!manifest || !manifest.mouth) {
-        console.warn("[Mouth] mouth not found in manifest");
-        return;
-      }
-
-      const mouthEntry = manifest.mouth;
-      const prototype = await loadAttachment(mouthEntry.file);
-      if (disposed || !prototype) return;
-
-      // Debug: log the loaded mouth mesh size
-      prototype.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-          const box = new THREE.Box3().setFromObject(child);
-          const size = box.getSize(new THREE.Vector3());
-          const center = box.getCenter(new THREE.Vector3());
-          console.log("[Mouth] Loaded mesh:", child.name, "size:", size.toArray().map(v => v.toFixed(4)), "center:", center.toArray().map(v => v.toFixed(4)));
-        }
-      });
-
-      // Create mouth material with the ported mouth_wobble shader
-      const localMouthMat = createMouthMaterial({
-        mouth: pal.body || "#ff2b05",
-        lipOutline: pal.cheek || "#ff7d00",
-        tooth: "#fff2d9",
-      });
-      mouthMat = localMouthMat;
-
-      // Clone and add to head bone
-      const localMouthMesh = prototype.clone(true);
-      localMouthMesh.name = "mouth";
-      localMouthMesh.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-          child.material = localMouthMat;
-          child.frustumCulled = false; // Ensure it renders even if bounds are odd
-        }
-      });
-      mouthMesh = localMouthMesh;
-
-      // SCALE: Godot mouth mesh is tiny (~0.13 units). 
-      // The model is normalized to maxDim=1, so we need to scale up the mouth.
-      // Godot mouth AABB size: ~0.136 x 0.072 x 0.052. After model normalization (maxDim~35 -> scale 0.0286),
-      // the mouth would be ~0.004 units. Scale up by ~50 to be visible.
-      mouthMesh.scale.setScalar(50);
-
-      // Find head bone
-      let headBone: THREE.Object3D | null = null;
-      model.traverse((child) => {
-        if (child instanceof THREE.Bone) {
-          const name = child.name;
-          if (name === "mixamorig_Head" || name.toLowerCase().includes("head")) {
-            headBone = child;
-          }
-        }
-      });
-
-      if (headBone && mouthMesh) {
-        // The mouth GLB comes with its own transform from the export (Z=0.0055 offset)
-        // Just add it to the head bone - the GLB's local transform positions it correctly
-        headBone.add(mouthMesh);
-        animatedMaterialsRef.current.push(localMouthMat);
-        console.log("[Mouth] Added to head bone, world pos:", mouthMesh.getWorldPosition(new THREE.Vector3()).toArray().map(v => v.toFixed(4)));
-      }
-    };
-
-    loadMouth();
-
-    return () => {
-      disposed = true;
-      if (mouthMesh && mouthMesh.parent) {
-        mouthMesh.parent.remove(mouthMesh);
-      }
-      if (mouthMat) {
-        mouthMat.dispose();
-        animatedMaterialsRef.current = animatedMaterialsRef.current.filter(m => m !== mouthMat);
-      }
     };
   }, [model, equippedSkin]);
 
