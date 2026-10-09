@@ -855,17 +855,23 @@ const NadModel: React.FC<NadModelProps> = ({
   }, [model, equippedSkin]);
 
   // Procedural mouth mesh (port of godot/assets/shaders/mouth_wobble.gdshader)
-  // Created as a plane parented to the HEAD MESH (Cube), not the head bone,
-  // so it stays on the face during animation. Positioned at the face surface.
+  // Parent to HEAD BONE (mixamorig_Head) like Godot's mouth mesh parents to Skeleton3D
+  // This ensures it moves with facial animation.
   useEffect(() => {
-    // Find the head mesh (Cube) - this is the face
-    let headMesh: THREE.Mesh | null = null;
+    // Find the head bone
+    let headBone: THREE.Bone | null = null;
     model.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.name === "Cube") {
-        headMesh = child;
+      if (child instanceof THREE.Bone) {
+        const name = child.name;
+        if (name === "mixamorig_Head" || name.toLowerCase().includes("head")) {
+          headBone = child;
+        }
       }
     });
-    if (!headMesh) return;
+    if (!headBone) {
+      console.warn("[Mouth] head bone not found");
+      return;
+    }
 
     const pal = equippedSkin?.skinConfig?.palette || {};
     const mouthMat = createMouthMaterial({
@@ -879,55 +885,62 @@ const NadModel: React.FC<NadModelProps> = ({
     const useDebug = true;
     const finalMat = useDebug ? debugMat : mouthMat;
 
-    // Create a plane for the mouth with standard UV (0-1) so the shader's mouth math works
-    // The shader expects UV 0-1 mapped to mouth space via base_p = UV*2-1
+    // Create a plane for the mouth
     const mouthGeo = new THREE.PlaneGeometry(0.08, 0.06, 1, 1);
     const mouthMesh = new THREE.Mesh(mouthGeo, finalMat);
     mouthMesh.name = "procedural-mouth";
     mouthMesh.renderOrder = 10;
 
-    // Position in headMesh (Cube) local space (normalized: maxDim=1):
-    // headMesh bounds: center=(0, 0.0408, 0), size=(0.045, 0.047, 0.048)
-    // Y range: 0.017 to 0.064, Face front Z = 0.024 (max Z)
-    // Mouth UV V=[0.375,0.545] → lower 34% of face tile → Y ≈ 0.035–0.041
-    // Plane sits just in front of face: Z = face front (0.024) + epsilon
-    mouthMesh.position.set(0, 0.038, 0.025);
-    // PlaneGeometry normal is +Z; face normal is +Z → matches camera view
+    // Position in HEAD BONE local space
+    // Godot's mouth mesh is at Z=0.0055 in Skeleton3D space.
+    // Head bone world pos after normalization: ~(0, 1.37, 0.02)
+    // We want mouth just in front of face. Bone local Z=0 is at head center.
+    // Face is forward (+Z) from bone. Mouth is lower on face.
+    // Try: Y negative (down from bone center), Z positive (forward)
+    mouthMesh.position.set(0, -0.02, 0.03);
     mouthMesh.rotation.set(0, 0, 0);
 
-    headMesh.add(mouthMesh);
+    headBone.add(mouthMesh);
 
-    // Debug: verify mouth mesh in scene
-    console.log("[Mouth] Created:", {
-      position: mouthMesh.position.toArray(),
-      rotation: mouthMesh.rotation.toArray(),
+    // Debug: verify
+    const worldPos = new THREE.Vector3();
+    mouthMesh.getWorldPosition(worldPos);
+    headBone.getWorldPosition(new THREE.Vector3());
+    console.log("[Mouth] Created on head bone:", {
+      localPosition: mouthMesh.position.toArray().map(v => v.toFixed(5)),
+      worldPosition: worldPos.toArray().map(v => v.toFixed(5)),
+      boneName: headBone.name,
       geometry: mouthGeo.type,
-      uv: mouthGeo.getAttribute('uv').array.slice(0, 8),
-      material: mouthMat.type,
-      parent: mouthMesh.parent?.name
+      material: finalMat.type,
     });
 
     // Track for uTime updates
     animatedMaterialsRef.current.push(mouthMat);
+    animatedMaterialsRef.current.push(debugMat);
 
-    // Keyboard control for Y position: O = up, P = down (small steps for normalized space)
+    // Keyboard control for Y position: O = up, P = down
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'o' || e.key === 'O') {
-        mouthMesh.position.y += 0.001;
-        console.log("[Mouth] position:", mouthMesh.position.toArray().map(v => v.toFixed(5)));
+        mouthMesh.position.y += 0.005;
+        const wp = new THREE.Vector3();
+        mouthMesh.getWorldPosition(wp);
+        console.log("[Mouth] local:", mouthMesh.position.toArray().map(v => v.toFixed(5)), "world:", wp.toArray().map(v => v.toFixed(5)));
       } else if (e.key === 'p' || e.key === 'P') {
-        mouthMesh.position.y -= 0.001;
-        console.log("[Mouth] position:", mouthMesh.position.toArray().map(v => v.toFixed(5)));
+        mouthMesh.position.y -= 0.005;
+        const wp = new THREE.Vector3();
+        mouthMesh.getWorldPosition(wp);
+        console.log("[Mouth] local:", mouthMesh.position.toArray().map(v => v.toFixed(5)), "world:", wp.toArray().map(v => v.toFixed(5)));
       }
     };
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      headMesh.remove(mouthMesh);
+      headBone.remove(mouthMesh);
       mouthGeo.dispose();
       mouthMat.dispose();
-      animatedMaterialsRef.current = animatedMaterialsRef.current.filter(m => m !== mouthMat);
+      debugMat.dispose();
+      animatedMaterialsRef.current = animatedMaterialsRef.current.filter(m => m !== mouthMat && m !== debugMat);
     };
   }, [model, equippedSkin]);
 
