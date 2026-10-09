@@ -1175,6 +1175,16 @@ const NadModel: React.FC<NadModelProps> = ({
       const prototype = await loadAttachment(mouthEntry.file);
       if (disposed || !prototype) return;
 
+      // Debug: log the loaded mouth mesh size
+      prototype.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          const box = new THREE.Box3().setFromObject(child);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
+          console.log("[Mouth] Loaded mesh:", child.name, "size:", size.toArray().map(v => v.toFixed(4)), "center:", center.toArray().map(v => v.toFixed(4)));
+        }
+      });
+
       // Create mouth material with the ported mouth_wobble shader
       const localMouthMat = createMouthMaterial({
         mouth: pal.body || "#ff2b05",
@@ -1189,9 +1199,16 @@ const NadModel: React.FC<NadModelProps> = ({
       localMouthMesh.traverse((child) => {
         if (child instanceof THREE.Mesh) {
           child.material = localMouthMat;
+          child.frustumCulled = false; // Ensure it renders even if bounds are odd
         }
       });
       mouthMesh = localMouthMesh;
+
+      // SCALE: Godot mouth mesh is tiny (~0.13 units). 
+      // The model is normalized to maxDim=1, so we need to scale up the mouth.
+      // Godot mouth AABB size: ~0.136 x 0.072 x 0.052. After model normalization (maxDim~35 -> scale 0.0286),
+      // the mouth would be ~0.004 units. Scale up by ~50 to be visible.
+      mouthMesh.scale.setScalar(50);
 
       // Find head bone
       let headBone: THREE.Object3D | null = null;
@@ -1209,6 +1226,7 @@ const NadModel: React.FC<NadModelProps> = ({
         // Just add it to the head bone - the GLB's local transform positions it correctly
         headBone.add(mouthMesh);
         animatedMaterialsRef.current.push(localMouthMat);
+        console.log("[Mouth] Added to head bone, world pos:", mouthMesh.getWorldPosition(new THREE.Vector3()).toArray().map(v => v.toFixed(4)));
       }
     };
 
