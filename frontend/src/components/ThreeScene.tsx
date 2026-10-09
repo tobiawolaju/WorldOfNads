@@ -382,9 +382,9 @@ function createMouthMaterial(palette: { mouth?: string; lipOutline?: string; too
       toothRoundness: { value: 0.01 },
       toothTaper: { value: 0.25 },
       toothHighlight: { value: 0.20 },
-      // Mouth size
-      width: { value: 0.75 },
-      height: { value: 0.25 },
+      // Mouth size - adjusted for plane with UV 0-1
+      width: { value: 1.0 },
+      height: { value: 1.0 },
       // Cavity
       layers: { value: 16 },
       depth: { value: 0.25 },
@@ -394,6 +394,9 @@ function createMouthMaterial(palette: { mouth?: string; lipOutline?: string; too
       endY: { value: 0.0 },
       // Parallax
       parallaxFactor: { value: 1.0 },
+      // UV bounds for mouth region (plane uses full 0-1 UV)
+      mouthUvMin: { value: new THREE.Vector2(0.0, 0.0) },
+      mouthUvMax: { value: new THREE.Vector2(1.0, 1.0) },
     },
     vertexShader: /* glsl */ `
       varying vec2 vUv;
@@ -446,6 +449,8 @@ function createMouthMaterial(palette: { mouth?: string; lipOutline?: string; too
 
       // Parallax
       uniform float parallaxFactor;
+      uniform vec2 mouthUvMin;
+      uniform vec2 mouthUvMax;
 
       float roundedBox(vec2 p, vec2 halfSize, float radius) {
         vec2 q = abs(p) - halfSize + radius;
@@ -869,23 +874,9 @@ const NadModel: React.FC<NadModelProps> = ({
       tooth: "#fff2d9",
     });
 
-    // Create a plane for the mouth, sized to cover the face area in normalized space
-    // Face: ~0.036 wide x 0.028 tall. Plane slightly larger to avoid clipping.
+    // Create a plane for the mouth with standard UV (0-1) so the shader's mouth math works
+    // The shader expects UV 0-1 mapped to mouth space via base_p = UV*2-1
     const mouthGeo = new THREE.PlaneGeometry(0.04, 0.03, 1, 1);
-    
-    // IMPORTANT: Set UV to match the head's UV atlas mouth region
-    // Head atlas: mouth at U=[0.25, 0.75], V=[0.375, 0.545]
-    // This way the shader's UV-based mouth shape works correctly.
-    const uvAttr = mouthGeo.getAttribute('uv');
-    const uvArray = uvAttr.array;
-    // PlaneGeometry UV order: (0,0), (1,0), (0,1), (1,1) for 4 vertices
-    // Map to head atlas mouth region:
-    uvArray[0] = 0.25; uvArray[1] = 0.375;   // bottom-left
-    uvArray[2] = 0.75; uvArray[3] = 0.375;   // bottom-right
-    uvArray[4] = 0.25; uvArray[5] = 0.545;   // top-left
-    uvArray[6] = 0.75; uvArray[7] = 0.545;   // top-right
-    uvAttr.needsUpdate = true;
-    
     const mouthMesh = new THREE.Mesh(mouthGeo, mouthMat);
     mouthMesh.name = "procedural-mouth";
     mouthMesh.renderOrder = 10;
