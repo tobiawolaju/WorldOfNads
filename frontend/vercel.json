@@ -17,7 +17,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!godot|assets|api|favicon.ico|play.html).*)",
+      "source": "/((?!godot|assets|api|favicon.ico|play.html|attachments).*)",
       "destination": "/"
     }
   ]
