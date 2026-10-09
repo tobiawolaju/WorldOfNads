@@ -12,7 +12,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!godot|assets|api|favicon.ico).*)",
+      "source": "/((?!godot|assets|api|favicon.ico|attachments).*)",
       "destination": "/"
     }
   ]
