@@ -646,9 +646,8 @@ const NadModel: React.FC<NadModelProps> = ({
         const isHeadOrBody = /^(body_|Cube$|Cube[._]?00[123]$)/.test(name);
         const isCheek = /^(cheek_|Cube[._]?00[45]$)/.test(name);
         const isEye = /^(eye_|Cube[._]?00[67]$)/.test(name);
-        // Match Godot node names ("mouth", "mouth2") and common FBX export variations
-        // (mesh resource names like "nad2_Cubemesh_002" -> "Cube_002" but that's taken by body)
-        const isMouth = /^(mouth|mouth2)$/i.test(name);
+        // Mouth/mouth2 are loaded from manifest as base parts (see base parts effect),
+        // not from FBX traversal. If they exist in FBX, they'll get default material.
 
         // Odd numeric skin ids are the shaded edition, even ids the flat
         // variant of the same skin (mirrors SkinApplier in Godot).
@@ -663,16 +662,6 @@ const NadModel: React.FC<NadModelProps> = ({
           // apply_skin never claims them (_tint_eye only pushes the palette
           // tint into eye_color), so no shader type replaces them.
           newMat = createEyeMaterial(eyeColor);
-        } else if (isMouth) {
-          // Mouth uses the ported mouth_wobble shader (procedural lips, teeth, cavity).
-          // It's a base character part like eyes - always present, not an attachment.
-          // Uses palette colors for mouth/lip outline.
-          const pal = equippedSkin?.skinConfig?.palette || {};
-          newMat = createMouthMaterial({
-            mouth: pal.body || "#ff2b05",
-            lipOutline: pal.cheek || "#ff7d00",
-            tooth: "#fff2d9",
-          });
         } else if (shouldApplyShader && shaderType !== "default") {
           if (shaderType === "ghost") {
             newMat = child.userData.originalMaterial.clone();
@@ -752,18 +741,13 @@ const NadModel: React.FC<NadModelProps> = ({
 
         child.material = newMat;
 
-        // Track materials with uTime uniforms for animation
-        if (isMouth) {
-          animatedMaterialsRef.current.push(child.material);
-        }
-
         // Apply base colors
         if (isHeadOrBody) {
           if ((child.material as any).color) (child.material as any).color.copy(baseColor);
         } else if (isCheek) {
           if ((child.material as any).color) (child.material as any).color.copy(cheekColor);
-        } else if (isEye || isMouth) {
-          // Tinted through uniforms inside createEyeMaterial / createMouthMaterial;
+        } else if (isEye) {
+          // Tinted through uniforms inside createEyeMaterial;
           // pushing palette colors elsewhere would miss it.
         }
 
@@ -773,10 +757,8 @@ const NadModel: React.FC<NadModelProps> = ({
         // "default" edition, ghost/shadow/void and anything outside
         // shader_targets are drawn plain, with no outline at all. Eyes are
         // excluded absolutely: their dot shader has no outline pass in Godot.
-        // Mouth also has no outline pass in Godot (mouth_wobble is a single pass).
         const wantsOutline =
           !isEye &&
-          !isMouth &&
           shouldApplyShader &&
           (shaderType === "unshaded" || shaderType === "gold" || shaderType === "angel");
         if (wantsOutline) {
@@ -1118,6 +1100,73 @@ const NadModel: React.FC<NadModelProps> = ({
         obj.parent?.remove(obj);
       }
       placed.length = 0;
+    };
+  }, [model, equippedSkin]);
+
+  // Base character parts (mouth, mouth2) - always present, loaded from manifest
+  // like attachments but not controlled by skinConfig.attachments.
+  useEffect(() => {
+    let disposed = false;
+    const placedBaseParts: THREE.Object3D[] = [];
+
+    const loadBaseParts = async () => {
+      const manifest = await loadAttachmentManifest();
+      if (!manifest || disposed) return;
+
+      for (const partName of ["mouth", "mouth2"] as const) {
+        const entry = manifest[partName];
+        if (!entry) {
+          console.warn(`[ThreeScene] base part "${partName}" not in manifest`);
+          continue;
+        }
+        const bone = findBone(model, entry.bone);
+        if (!bone) {
+          console.warn(`[ThreeScene] bone "${entry.bone}" missing for base part "${partName}"`);
+          continue;
+        }
+        const prototype = await loadAttachment(entry.file);
+        if (disposed || !prototype) continue;
+
+        // Apply mouth_wobble shader to mouth/mouth2
+        const pal = equippedSkin?.skinConfig?.palette || {};
+        const mouthMat = createMouthMaterial({
+          mouth: pal.body || "#ff2b05",
+          lipOutline: pal.cheek || "#ff7d00",
+          tooth: "#fff2d9",
+        });
+
+        const obj = prototype.clone(true);
+        obj.name = `base-${partName}`;
+        obj.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.material = mouthMat;
+            child.frustumCulled = false;
+          }
+        });
+        bone.add(obj);
+        placedBaseParts.push(obj);
+        animatedMaterialsRef.current.push(mouthMat);
+      }
+    };
+
+    loadBaseParts();
+
+    return () => {
+      disposed = true;
+      for (const obj of placedBaseParts) {
+        obj.parent?.remove(obj);
+        obj.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.geometry.dispose();
+            if (Array.isArray(child.material)) {
+              child.material.forEach(m => m.dispose());
+            } else {
+              child.material.dispose();
+            }
+          }
+        });
+      }
+      placedBaseParts.length = 0;
     };
   }, [model, equippedSkin]);
 

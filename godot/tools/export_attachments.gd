@@ -24,6 +24,10 @@ const SLOTS: Array[String] = [
 	"Skeleton3D/heddds/offset",
 	"Skeleton3D/hips",
 	"Skeleton3D/Back/offset",
+	# Base character parts (mouth, eyes) - exported as attachments so Three.js
+	# loads them with correct bone-local transforms via manifest.
+	"Skeleton3D/mouth",
+	"Skeleton3D/mouth2",
 ]
 
 # Lives in Vite's public/ folder, served at /attachments/*.
