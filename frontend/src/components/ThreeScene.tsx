@@ -854,97 +854,7 @@ const NadModel: React.FC<NadModelProps> = ({
     };
   }, [model, equippedSkin]);
 
-  // Procedural mouth mesh (port of godot/assets/shaders/mouth_wobble.gdshader)
-  // Parent to HEAD BONE (mixamorig_Head) like Godot's mouth mesh parents to Skeleton3D
-  // This ensures it moves with facial animation.
-  useEffect(() => {
-    // Find the head bone
-    let headBone: THREE.Bone | null = null;
-    model.traverse((child) => {
-      if (child instanceof THREE.Bone) {
-        const name = child.name;
-        if (name === "mixamorig_Head" || name.toLowerCase().includes("head")) {
-          headBone = child;
-        }
-      }
-    });
-    if (!headBone) {
-      console.warn("[Mouth] head bone not found");
-      return;
-    }
-
-    const pal = equippedSkin?.skinConfig?.palette || {};
-    const mouthMat = createMouthMaterial({
-      mouth: pal.body || "#ff2b05",
-      lipOutline: pal.cheek || "#ff7d00",
-      tooth: "#fff2d9",
-    });
-
-    // DEBUG: use bright red material to verify plane renders
-    const debugMat = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide });
-    const useDebug = true;
-    const finalMat = useDebug ? debugMat : mouthMat;
-
-    // Create a plane for the mouth
-    const mouthGeo = new THREE.PlaneGeometry(0.15, 0.1, 1, 1);
-    const mouthMesh = new THREE.Mesh(mouthGeo, finalMat);
-    mouthMesh.name = "procedural-mouth";
-    mouthMesh.renderOrder = 10;
-
-    // Position in HEAD BONE local space
-    // Godot's mouth mesh is at Z=0.0055 in Skeleton3D space.
-    // Head bone world pos after normalization: ~(0, 1.37, 0.02)
-    // We want mouth just in front of face. Bone local Z=0 is at head center.
-    // Face is forward (+Z) from bone. Mouth is lower on face.
-    // Try: Y negative (down from bone center), Z positive (forward)
-    mouthMesh.position.set(0, -0.08, 0.04);
-    mouthMesh.rotation.set(0, 0, 0);
-
-    headBone.add(mouthMesh);
-
-    // Debug: verify
-    const worldPos = new THREE.Vector3();
-    mouthMesh.getWorldPosition(worldPos);
-    headBone.getWorldPosition(new THREE.Vector3());
-    console.log("[Mouth] Created on head bone:", {
-      localPosition: mouthMesh.position.toArray().map(v => v.toFixed(5)),
-      worldPosition: worldPos.toArray().map(v => v.toFixed(5)),
-      boneName: headBone.name,
-      geometry: mouthGeo.type,
-      material: finalMat.type,
-    });
-
-    // Track for uTime updates
-    animatedMaterialsRef.current.push(mouthMat);
-    animatedMaterialsRef.current.push(debugMat);
-
-    // Keyboard control for Y position: O = up, P = down
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'o' || e.key === 'O') {
-        mouthMesh.position.y += 0.02;
-        const wp = new THREE.Vector3();
-        mouthMesh.getWorldPosition(wp);
-        console.log("[Mouth] local:", mouthMesh.position.toArray().map(v => v.toFixed(5)), "world:", wp.toArray().map(v => v.toFixed(5)));
-      } else if (e.key === 'p' || e.key === 'P') {
-        mouthMesh.position.y -= 0.02;
-        const wp = new THREE.Vector3();
-        mouthMesh.getWorldPosition(wp);
-        console.log("[Mouth] local:", mouthMesh.position.toArray().map(v => v.toFixed(5)), "world:", wp.toArray().map(v => v.toFixed(5)));
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      headBone.remove(mouthMesh);
-      mouthGeo.dispose();
-      mouthMat.dispose();
-      debugMat.dispose();
-      animatedMaterialsRef.current = animatedMaterialsRef.current.filter(m => m !== mouthMat && m !== debugMat);
-    };
-  }, [model, equippedSkin]);
-
-  // Bone attachment logic (legacy: one primitive shaped by attachment.shape)
+  // Bone attachment logic (legacy: one primitive shaped by attachment.shape)ape)
   useEffect(() => {
     // Skins that name real attachments (["duck", "hair_001", ...]) are dressed
     // by the manifest-driven effect below. Only old configs that set
@@ -1240,6 +1150,79 @@ const NadModel: React.FC<NadModelProps> = ({
         obj.parent?.remove(obj);
       }
       placed.length = 0;
+    };
+  }, [model, equippedSkin]);
+
+  // Mouth mesh: load the mouth.glb and apply the mouth_wobble shader.
+  // The mouth is part of the base character (always present, like in Godot).
+  // It uses the mouth mesh from the manifest (mouth.glb, bone: mixamorig_Head).
+  useEffect(() => {
+    let disposed = false;
+    let mouthMesh: THREE.Object3D | null = null;
+    let mouthMat: THREE.Material | null = null;
+
+    const loadMouth = async () => {
+      const pal = equippedSkin?.skinConfig?.palette || {};
+
+      // Load the mouth mesh from the manifest
+      const manifest = await loadAttachmentManifest();
+      if (!manifest || !manifest.mouth) {
+        console.warn("[Mouth] mouth not found in manifest");
+        return;
+      }
+
+      const mouthEntry = manifest.mouth;
+      const prototype = await loadAttachment(mouthEntry.file);
+      if (disposed || !prototype) return;
+
+      // Create mouth material with the ported mouth_wobble shader
+      const localMouthMat = createMouthMaterial({
+        mouth: pal.body || "#ff2b05",
+        lipOutline: pal.cheek || "#ff7d00",
+        tooth: "#fff2d9",
+      });
+      mouthMat = localMouthMat;
+
+      // Clone and add to head bone
+      const localMouthMesh = prototype.clone(true);
+      localMouthMesh.name = "mouth";
+      localMouthMesh.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.material = localMouthMat;
+        }
+      });
+      mouthMesh = localMouthMesh;
+
+      // Find head bone
+      let headBone: THREE.Object3D | null = null;
+      model.traverse((child) => {
+        if (child instanceof THREE.Bone) {
+          const name = child.name;
+          if (name === "mixamorig_Head" || name.toLowerCase().includes("head")) {
+            headBone = child;
+          }
+        }
+      });
+
+      if (headBone && mouthMesh) {
+        // The mouth GLB comes with its own transform from the export (Z=0.0055 offset)
+        // Just add it to the head bone - the GLB's local transform positions it correctly
+        headBone.add(mouthMesh);
+        animatedMaterialsRef.current.push(localMouthMat);
+      }
+    };
+
+    loadMouth();
+
+    return () => {
+      disposed = true;
+      if (mouthMesh && mouthMesh.parent) {
+        mouthMesh.parent.remove(mouthMesh);
+      }
+      if (mouthMat) {
+        mouthMat.dispose();
+        animatedMaterialsRef.current = animatedMaterialsRef.current.filter(m => m !== mouthMat);
+      }
     };
   }, [model, equippedSkin]);
 
