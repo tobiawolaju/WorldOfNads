@@ -353,9 +353,11 @@ function createMouthMaterial(
     toothSpacing: { value: 0.325 },
     toothDrop: { value: -0.605 },
     toothRoundness: { value: 0.01 },
-    // Mouth size
-    width: { value: 0.36 },
-    height: { value: 0.189 },
+    // Mouth size — these are fractions of the plate's UV span. The whole
+    // mouth (ellipse, teeth, lip) lives in the same divided baseP space, so
+    // scaling both keeps the same shape, just smaller on the face.
+    width: { value: 0.30 },
+    height: { value: 0.16 },
     // Cavity
     layers: { value: 5 },
     depth: { value: 0.214 },
@@ -371,8 +373,8 @@ function createMouthMaterial(
     // Shift the drawn mouth down within the plate. The mouth sits at UV
     // (0.5, 0.5) = the plate centre; adding to the (downward-incrementing) V
     // relocates the whole mouth (lips, cavity, teeth) downward without
-    // touching the mesh. 0.12 ≈ 12% of the plate height.
-    mouthShiftY: { value: 0.12 },
+    // touching the mesh. 0.18 ≈ 18% of the plate height.
+    mouthShiftY: { value: 0.18 },
   };
 
   mat.onBeforeCompile = (shader) => {
