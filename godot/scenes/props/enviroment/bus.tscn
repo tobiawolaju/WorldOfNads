@@ -4,8 +4,8 @@
 [ext_resource type="Texture2D" uid="uid://defespl54abgc" path="res://assets/img/VanTex.png" id="2_alnap"]
 [ext_resource type="Texture2D" uid="uid://cue03s30l685a" path="res://assets/models/textures/trump_baby_balloon_from_the_uk_protest_2.png" id="3_0ur64"]
 [ext_resource type="Texture2D" uid="uid://bda1iwpnwp1lq" path="res://assets/models/textures/trump_baby_balloon_from_the_uk_protest_3.png" id="4_8cuq2"]
-[ext_resource type="Texture2D" path="res://assets/img/balloon_albedo.png" id="5_0ur64"]
-[ext_resource type="Texture2D" path="res://assets/img/balloon_orm.png" id="6_8cuq2"]
+[ext_resource type="Texture2D" uid="uid://tynf5suyskbj" path="res://assets/img/balloon_albedo.png" id="5_0ur64"]
+[ext_resource type="Texture2D" uid="uid://bel7jpq4c853y" path="res://assets/img/balloon_orm.png" id="6_8cuq2"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ur64"]
 albedo_color = Color(1, 0.22745098, 1, 1)
@@ -137,7 +137,7 @@ shadow_mesh = SubResource("ArrayMesh_0ur64")
 [node name="Bus" type="Node3D" unique_id=1811375150]
 script = ExtResource("1_xtfkx")
 
-[node name="Marker3D" type="Marker3D" parent="." unique_id=1053993853]
+[node name="myplayerswpanpoint" type="Marker3D" parent="." unique_id=1053993853]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4864397, 0)
 
 [node name="bus" type="MeshInstance3D" parent="." unique_id=1872449115]

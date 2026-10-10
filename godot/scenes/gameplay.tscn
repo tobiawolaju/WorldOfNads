@@ -136,7 +136,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_s5y6v")
 [node name="PlayerManager" type="Node3D" parent="." unique_id=226066109 node_paths=PackedStringArray("myplayerswpanpoint")]
 script = ExtResource("1_hpwea")
 player_scene = ExtResource("2_w01lk")
-myplayerswpanpoint = NodePath("../Bus/Marker3D")
+myplayerswpanpoint = NodePath("../Bus/myplayerswpanpoint")
 countdown_label_path = NodePath("../Hud/CanvasLayer/BoxContainer/Node2/BoxContainer/Countdown")
 world_environment_path = NodePath("")
 camera_block_path = NodePath("Camera3D/CAMERABlock")

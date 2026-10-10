@@ -20,6 +20,7 @@ extends Node3D
 		update_mesh_scales()
 
 @export var check_interval: float = 0.1
+@export var damage_per_second: float = 2.0  # Health drained per second while outside (was 10, reduced 80%)
 
 var is_player_outside: bool = false
 var _check_accumulator: float = 0.0
@@ -28,6 +29,8 @@ var _last_real_storm_ms: float = 0.0
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
+
+	add_to_group("storm_eye")
 
 	if world_env and normal_env:
 		world_env.environment = normal_env
@@ -42,6 +45,15 @@ func _ready() -> void:
 
 func set_storm_radius(radius: float) -> void:
 	cylinder_radius = radius
+
+func get_storm_center() -> Vector2:
+	return Vector2(global_position.x, global_position.z)
+
+func get_storm_radius() -> float:
+	return cylinder_radius
+
+func get_damage_per_second() -> float:
+	return damage_per_second
 
 func _process(_delta: float) -> void:
 	if Engine.is_editor_hint():
@@ -59,14 +71,18 @@ func _process(_delta: float) -> void:
 		return
 	_check_accumulator = 0.0
 
+	# Visual effects track CAMERA (what player sees)
 	if not camera or not world_env or not light_normal or not light_storm:
+		print("StormEye: Missing camera/world_env/lights")
 		return
 
 	var camera_pos_2d = Vector2(camera.global_position.x, camera.global_position.z)
 	var cylinder_pos_2d = Vector2(global_position.x, global_position.z)
-	var current_distance = camera_pos_2d.distance_to(cylinder_pos_2d)
+	var camera_distance = camera_pos_2d.distance_to(cylinder_pos_2d)
 
-	if current_distance > cylinder_radius:
+	var visual_outside: bool = camera_distance > cylinder_radius
+
+	if visual_outside:
 		if not is_player_outside:
 			enter_storm()
 	else:

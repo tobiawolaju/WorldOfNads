@@ -44,6 +44,13 @@ var holder: Node3D = null
 var _mesh: MeshInstance3D = null
 var _attach_node: Node3D = null
 
+# The local player body (layer 1, same as the world). Cached once so the pickup
+# only scans for it one time after spawn.
+var _ignored_local_player: Node = null
+# True once add_collision_exception_with() has run for the cached body, so the
+# physics-server call happens once per player node instead of every _process tick.
+var _local_player_exception_active: bool = false
+
 
 func _ready() -> void:
 	add_to_group(GROUP)
@@ -140,6 +147,25 @@ func _resolve_attach_node() -> void:
 	_attach_node = holder.get_node_or_null(ATTACH_PATH) as Node3D
 
 
+# The player capsule and the world floor both live on collision layer 1, so no
+# layer split can make the flag rest on the ground without also being shoved by
+# the player. A collision exception removes exactly that one pair: the flag still
+# falls and rests on the terrain, but walking into it never pushes it around.
+# Area3D pickup detection (mask 2) is unaffected, so nearby grab still works.
+func _ensure_local_player_exception() -> void:
+	if _ignored_local_player != null and not is_instance_valid(_ignored_local_player):
+		_ignored_local_player = null
+		_local_player_exception_active = false
+	if _ignored_local_player == null:
+		_ignored_local_player = get_tree().get_first_node_in_group("local_player")
+		if _ignored_local_player == null:
+			return  # Player not spawned yet - try again next frame.
+		_local_player_exception_active = false
+	if not _local_player_exception_active and _ignored_local_player is CollisionObject3D:
+		add_collision_exception_with(_ignored_local_player)
+		_local_player_exception_active = true
+
+
 # --- TICK ---
 # Deliberately _process, not _physics_process. The holder's bone pose is written
 # during the animation/skeleton pass of the idle frame, so reading it from the
@@ -147,6 +173,7 @@ func _resolve_attach_node() -> void:
 # at 30 Hz. Following once per rendered frame keeps it welded to the back with no
 # extra interpolation.
 func _process(_delta: float) -> void:
+	_ensure_local_player_exception()
 	if not is_held:
 		# Dropped: the engine owns the transform, nothing to drive.
 		return

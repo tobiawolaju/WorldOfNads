@@ -19,6 +19,15 @@ const JUMP_BUFFER_TIME: float = 0.12
 const COYOTE_TIME: float = 0.10
 const DOUBLE_JUMP_MIN_MULTIPLIER: float = 0.3
 
+# --- STORM DAMAGE ---
+@export var storm_center: Vector2 = Vector2(0, 0)
+@export var storm_radius: float = 10.0
+@export var storm_damage_per_second: float = 10.0
+var _storm_damage_accumulator: float = 0.0
+var _storm_check_timer: float = 0.0
+const STORM_CHECK_INTERVAL: float = 0.1
+var _storm_eye: Node = null
+
 # --- MOMENTUM CONSTANTS ---
 const ACCELERATION: float = 25.0  # How fast you reach max speed (Ground)
 const FRICTION: float = 22.0      # How fast you stop (Ground)
@@ -60,6 +69,12 @@ const STAMINA_EMPTY_SPEED_MULT: float = 0.4
 const STAMINA_RECOVERY_FRACTION: float = 0.25
 ## Jump strength while throttled, as a fraction of the normal jump velocity.
 const STAMINA_EMPTY_JUMP_MULT: float = 0.6
+
+# --- HEALTH ---
+const MAX_HEALTH: float = 100.0
+const HEALTH_REGEN_DELAY: float = 3.0
+const HEALTH_REGEN_RATE: float = 15.0
+const RESPAWN_DELAY: float = 2.0
 
 const LANDING_BOB_DURATION: float = 0.14
 const ANIM_NAME_TO_ID: Dictionary = {
@@ -105,6 +120,8 @@ var held_local_pickup: RigidBody3D = null
 @export var joystick_orbit_clamp: float = 40.0
 @export var joystick_orbit_invert_x: bool = false
 @export var joystick_orbit_invert_y: bool = false
+@export var touch_edge_ignore_margin: float = 32.0 # Ignore touches that START within this many px of a screen edge
+@export var low_pitch_ease_speed: float = 2.5 # While moving below the 20% pitch mark, ease pitch up to it (0 = off)
 @export var swipe_down_threshold: float = 20.0
 @export var swipe_up_threshold: float = 70.0
 @export var swipe_x_tolerance: float = 80.0
@@ -169,6 +186,14 @@ var _stamina_empty_timer: float = 0.0
 ## Latched once stamina bottoms out. Keeps the throttle on while the player keeps
 ## running, so creeping does not silently restore full speed.
 var _stamina_throttled: bool = false
+
+# --- HEALTH STATE ---
+var health: float = MAX_HEALTH
+var _health_regen_timer: float = 0.0
+var _is_dead: bool = false
+var _respawn_timer: float = 0.0
+var _cached_health_bar: Node = null  # Cached once; avoid per-hit tree scans
+
 var _prev_joy_a_pressed: bool = false
 var _ground_jump_count: int = 0
 
@@ -245,6 +270,7 @@ var joystick_orbit_pending: Vector2 = Vector2.ZERO
 var _touch_slide_start_pos: Vector2 = Vector2.ZERO
 var _touch_slide_start_time_ms: int = 0
 var _touch_slide_start_cam_rot_x: float = 0.0
+var _edge_ignored_touch_indices: Dictionary = {} # Finger indices whose press landed in the edge dead zone
 var _touch_slide_start_cam_rot_y: float = 0.0
 var _slide_requested: bool = false
 var _slide_camera_restore_active: bool = false
@@ -286,6 +312,32 @@ func _ready() -> void:
 	_was_on_floor = is_on_floor()
 	_slide_timer = 0.0
 	_is_sliding = false
+	
+	# Initialize health
+	health = MAX_HEALTH
+	_health_regen_timer = 0.0
+	_is_dead = false
+	_respawn_timer = 0.0
+	_cached_health_bar = _find_health_bar()  # One-time lookup, avoids per-hit tree scans
+	
+	# Auto-detect StormEye for damage zone
+	_storm_eye = get_tree().get_first_node_in_group("storm_eye")
+	if _storm_eye:
+		if _storm_eye.has_method("get_storm_center"):
+			storm_center = _storm_eye.get_storm_center()
+		elif _storm_eye.has_property("global_position"):
+			storm_center = Vector2(_storm_eye.global_position.x, _storm_eye.global_position.z)
+		if _storm_eye.has_method("get_storm_radius"):
+			storm_radius = _storm_eye.get_storm_radius()
+		elif _storm_eye.has_property("cylinder_radius"):
+			storm_radius = _storm_eye.cylinder_radius
+		if _storm_eye.has_method("get_damage_per_second"):
+			storm_damage_per_second = _storm_eye.get_damage_per_second()
+		elif _storm_eye.has_property("damage_per_second"):
+			storm_damage_per_second = _storm_eye.damage_per_second
+	else:
+		print("Player: No StormEye found in group 'storm_eye', using defaults")
+	
 	_cached_viewport_size = get_viewport().get_visible_rect().size
 	_setup_anim_tree()
 	_play_anim("idle")
@@ -348,6 +400,12 @@ func configure_demo_agent(
 	_demo_wobble_phase = _demo_rng.randf_range(0.0, TAU)
 	_demo_last_safe_position = home_center + Vector3(0, DEMO_RECOVERY_RAISE_OFFSET, 0)
 	_demo_offground_timer = 0.0
+	
+	# Initialize health for demo agent
+	health = MAX_HEALTH
+	_health_regen_timer = 0.0
+	_is_dead = false
+	_respawn_timer = 0.0
 
 func _process(delta: float) -> void:
 	if not is_local:
@@ -404,12 +462,19 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventScreenTouch:
 		if event.pressed:
+			# Dead zone along the screen edges so system gestures / accidental touches
+			# near the frame never hijack the slide detection.
+			if _is_touch_in_edge_margin(event.position):
+				_edge_ignored_touch_indices[event.index] = true
+				return
 			active_touches += 1
 			_touch_slide_start_pos = event.position
 			_touch_slide_start_time_ms = Time.get_ticks_msec()
 			_touch_slide_start_cam_rot_x = cam_rot_x
 			_touch_slide_start_cam_rot_y = cam_rot_y
 		else:
+			if _edge_ignored_touch_indices.erase(event.index):
+				return
 			var swipe_vector: Vector2 = event.position - _touch_slide_start_pos
 			var swipe_duration: int = Time.get_ticks_msec() - _touch_slide_start_time_ms
 			if swipe_vector.y > swipe_down_threshold and absf(swipe_vector.x) < swipe_x_tolerance and swipe_duration <= swipe_max_duration_ms:
@@ -434,6 +499,18 @@ func _input(event: InputEvent) -> void:
 	# --- 2. PICKUP CONTROLS ---
 	if _is_movement_allowed() and event.is_action_pressed("pickup"):
 		_perform_pickup_request()
+
+# Invisible dead zone along all four screen edges. Any touch that STARTS here is
+# ignored entirely (no orbit, no slide, no joystick) because OS/browser gestures
+# live at the frame - home indicator, notch, notification shade, swipe-backs.
+func _is_touch_in_edge_margin(touch_pos: Vector2) -> bool:
+	if touch_edge_ignore_margin <= 0.0:
+		return false
+	var vp := get_viewport().get_visible_rect().size
+	return touch_pos.x < touch_edge_ignore_margin \
+		or touch_pos.y < touch_edge_ignore_margin \
+		or touch_pos.x > vp.x - touch_edge_ignore_margin \
+		or touch_pos.y > vp.y - touch_edge_ignore_margin
 
 func _physics_process(delta: float) -> void:
 	if demo_agent and not is_local:
@@ -618,6 +695,34 @@ func _physics_process(delta: float) -> void:
 			var regen_rate := STAMINA_REGEN_RATE * (1.0 if is_moving_input else STAMINA_REGEN_IDLE_MULT)
 			stamina = minf(STAMINA_MAX, stamina + regen_rate * delta)
 
+	# --- HEALTH REGEN ---
+	if not _is_dead:
+		_health_regen_timer = maxf(0.0, _health_regen_timer - delta)
+		if _health_regen_timer <= 0.0 and health < MAX_HEALTH:
+			health = minf(MAX_HEALTH, health + HEALTH_REGEN_RATE * delta)
+	elif _is_dead:
+		_respawn_timer = maxf(0.0, _respawn_timer - delta)
+		if _respawn_timer <= 0.0:
+			respawn_at_spawn_point()
+
+	# --- STORM DAMAGE (check every 0.1s) ---
+	# Skipped while dead: the dead body is about to respawn, and accumulating storm
+	# damage here would leave a leftover chunk that fires the instant they come back.
+	if not _is_dead:
+		_storm_check_timer += delta
+		if _storm_check_timer >= STORM_CHECK_INTERVAL:
+			_storm_check_timer = 0.0
+			var player_pos_2d := Vector2(global_position.x, global_position.z)
+			var dist := player_pos_2d.distance_to(storm_center)
+			if dist > storm_radius:
+				_storm_damage_accumulator += storm_damage_per_second * STORM_CHECK_INTERVAL
+				if _storm_damage_accumulator >= 1.0:
+					var dmg := int(_storm_damage_accumulator)
+					_storm_damage_accumulator -= dmg
+					take_damage(dmg, self)
+			else:
+				_storm_damage_accumulator = 0.0
+
 	# --- MOMENTUM CALCULATION ---
 	if movement_allowed:
 		var target_vel = move_direction * speed_to_use
@@ -653,7 +758,8 @@ func _physics_process(delta: float) -> void:
 
 	if is_on_floor() and not was_on_floor_before_move:
 		_start_landing_bob(vertical_speed_before_move)
-		_double_jump_available = false
+		# Landing re-arms the double jump: the earned charge carries over until it is
+		# actually used, so the HUD can show "double available" while grounded.
 		_double_jump_used = false
 		_double_jump_air_time = 0.0
 		_zoom_cap_override = -1.0
@@ -721,6 +827,10 @@ func _physics_process(delta: float) -> void:
 	var net_active: bool = (move_direction.length_squared() > 0.0025) or _is_local_holding_chicken() or _is_local_holding_pickup() or (current_animation == "running")
 	if current_animation == "runningjump" or current_animation == "falling" or current_animation == "runningslide":
 		net_active = true
+
+	# Only send network updates in gameplay (root is PlayerManager with WebSocket)
+	if not (root and root.has_method("send_xp_update")):
+		net_active = false
 
 	var now_ms := float(Time.get_ticks_msec())
 	if _last_real_net_ms == 0.0:
@@ -890,6 +1000,12 @@ func _recover_demo_agent() -> void:
 	camera_is_moving = false
 	current_animation = "idle"
 	_play_anim("idle")
+	
+	# Reset health on recovery
+	health = MAX_HEALTH
+	_health_regen_timer = 0.0
+	_is_dead = false
+	_respawn_timer = 0.0
 
 func _check_map_recovery() -> void:
 	if global_position.y >= -5.0:
@@ -916,10 +1032,25 @@ func _check_map_recovery() -> void:
 	if _is_local_holding_pickup():
 		_drop_local_pickup()
 
+	# Reset health on map recovery (fell off world)
+	health = MAX_HEALTH
+	_health_regen_timer = 0.0
+	_is_dead = false
+	_respawn_timer = 0.0
+
+	# Get spawn position - try root first, then search scene for spawn marker
+	var spawn_pos: Vector3
 	if root and root.has_method("get_local_spawn_position"):
-		global_position = root.get_local_spawn_position()
+		spawn_pos = root.get_local_spawn_position()
 	else:
-		global_position = Vector3(0, 2, 0)
+		# Search for myplayerswpanpoint marker in scene (PlayerManager export)
+		var player_manager = get_tree().get_first_node_in_group("player_manager")
+		if player_manager and player_manager.has_method("get_local_spawn_position"):
+			spawn_pos = player_manager.get_local_spawn_position()
+		else:
+			spawn_pos = Vector3(0, 2, 0)
+	
+	global_position = spawn_pos
 
 	_last_world_y = global_position.y
 	_airborne_start_y = global_position.y
@@ -1031,6 +1162,123 @@ func _drop_local_pickup() -> void:
 	if throw_dir.length_squared() < 0.0001:
 		throw_dir = -global_transform.basis.z
 	item.drop(throw_dir * LOCAL_PICKUP_THROW_STRENGTH)
+
+# --- HEALTH SYSTEM ---
+func take_damage(amount: float, source: Node = null) -> void:
+	if _is_dead:
+		return
+	health = maxf(0.0, health - amount)
+	_health_regen_timer = HEALTH_REGEN_DELAY
+	
+	# Flash the health bar on damage (cached reference from _ready; no per-hit tree search)
+	if _cached_health_bar != null and not is_instance_valid(_cached_health_bar):
+		_cached_health_bar = null
+	if _cached_health_bar and _cached_health_bar.has_method("_on_damage_taken"):
+		_cached_health_bar._on_damage_taken()
+	
+	if health <= 0.0:
+		die()
+
+func _find_health_bar() -> Node:
+	var hud := get_tree().root.find_child("Hud", true, false)
+	if hud == null:
+		return null
+	return hud.find_child("HealthBar", true, false)
+
+func die() -> void:
+	if _is_dead:
+		return
+	_is_dead = true
+	_respawn_timer = RESPAWN_DELAY
+	
+	# Disable movement and input
+	velocity = Vector3.ZERO
+	velocity_y = 0.0
+	
+	# Drop held items
+	if _is_local_holding_chicken() or _is_local_holding_lootbox():
+		_drop_object()
+	if _is_local_holding_pickup():
+		_drop_local_pickup()
+	
+	# Visual feedback - could add death animation here
+	print("Player died! Respawning in ", RESPAWN_DELAY, "s...")
+
+func respawn_at_spawn_point() -> void:
+	if not _is_dead:
+		return
+	
+	# Reset health
+	health = MAX_HEALTH
+	_health_regen_timer = 0.0
+	_is_dead = false
+	
+	# Reset stamina
+	stamina = STAMINA_MAX
+	_stamina_regen_timer = 0.0
+	_stamina_throttled = false
+	_stamina_held_empty = false
+	
+	# Reset movement state
+	velocity = Vector3.ZERO
+	velocity_y = 0.0
+	_is_sliding = false
+	_slide_timer = 0.0
+	_jump_requested = false
+	_double_jump_available = false
+	_double_jump_used = false
+	_coyote_timer = 0.0
+	_jump_buffer_timer = 0.0
+	
+	# Respawn at spawn point
+	var spawn_pos: Vector3
+	if root and root.has_method("get_local_spawn_position"):
+		spawn_pos = root.get_local_spawn_position()
+	else:
+		# Search for myplayerswpanpoint marker in scene (PlayerManager export)
+		var player_manager = get_tree().get_first_node_in_group("player_manager")
+		if player_manager and player_manager.has_method("get_local_spawn_position"):
+			spawn_pos = player_manager.get_local_spawn_position()
+		else:
+			spawn_pos = Vector3(0, 2, 0)
+	
+	global_position = spawn_pos
+	_last_world_y = spawn_pos.y
+	_airborne_start_y = spawn_pos.y
+	_was_on_floor = true
+	
+	# Reset camera
+	cam_rot_x = min_pitch
+	cam_rot_y = deg_to_rad(90.0)
+	camera_distance_current = camera_distance
+	_camera_base_target_prev = global_transform.origin + Vector3(0, 1.5, 0)
+	_camera_base_target_curr = _camera_base_target_prev
+	_camera_follow_target = _camera_base_target_curr
+	_camera_look_target = _camera_follow_target
+	
+	# Reset animation
+	current_animation = "idle"
+	_play_anim("idle")
+	
+	# Notify server of new position (only if in gameplay with WebSocket)
+	if root and root.has_method("send_xp_update"):  # PlayerManager has this method
+		_send_state_to_server(true)
+	_update_global_player_shader_pos(true)
+	
+	print("Player respawned at ", spawn_pos)
+
+func _on_damage_taken() -> void:
+	# Called by health bar for visual feedback
+	pass
+
+func is_dead() -> bool:
+	return _is_dead
+
+func get_health() -> float:
+	return health
+
+func get_max_health() -> float:
+	return MAX_HEALTH
 
 func _is_local_holding_chicken() -> bool:
 	if not root or not root.has_method("is_local_player_holding_chicken"):
@@ -1247,6 +1495,20 @@ func _update_camera_collision_logic(delta: float) -> void:
 			if _camera_collision_hold_timer <= 0.0:
 				_camera_collision_distance = move_toward(_camera_collision_distance, target_collision_distance, delta * 2.0 * CAMERA_COLLISION_RECOVERY_SPEED)
 
+# While moving with the camera pitched into the lowest 20% of its range, gently
+# pull the pitch up to the 20% mark. Stops the camera dwelling under/near the
+# terrain - where the near plane cuts the ground - without fighting the player's
+# manual pitch once they lift it above the mark. Stops easing the moment the
+# player stops moving or lifts the pitch above 20%.
+func _apply_movement_pitch_ease(delta: float) -> void:
+	if not camera_is_moving or low_pitch_ease_speed <= 0.0:
+		return
+	var pitch_range := maxf(max_pitch - min_pitch, 0.001)
+	var low_pitch_mark: float = min_pitch + 0.2 * pitch_range
+	if cam_rot_x >= low_pitch_mark:
+		return
+	cam_rot_x = lerpf(cam_rot_x, low_pitch_mark, minf(1.0, delta * low_pitch_ease_speed))
+
 func _update_camera_visual(delta: float) -> void:
 	var interp := Engine.get_physics_interpolation_fraction()
 	var raw_target_pos: Vector3 = _camera_base_target_prev.lerp(_camera_base_target_curr, interp)
@@ -1258,7 +1520,10 @@ func _update_camera_visual(delta: float) -> void:
 	_camera_follow_target = follow_result[0]
 	_camera_follow_velocity = follow_result[1]
 	var target_pos: Vector3 = _camera_follow_target
+	_apply_movement_pitch_ease(delta)
 	cam_rot_x = clamp(cam_rot_x, min_pitch, max_pitch)
+	_sin_cam_x = sin(cam_rot_x)
+	_cos_cam_x = cos(cam_rot_x)
 	var cam_offset: Vector3 = Vector3(_sin_cam_y * _cos_cam_x, _sin_cam_x, _cos_cam_y * _cos_cam_x) 
 	var camera_direction := cam_offset 
 	if camera_direction.length_squared() < 0.0001:
@@ -1301,7 +1566,8 @@ var _chicken_payload: Dictionary = {}
 var _lootbox_payload: Dictionary = {}
 
 func _send_state_to_server(_force_send := false) -> void:
-	if not root or not root.ws:
+	# Only send if root is PlayerManager with active WebSocket
+	if not root or not root.has_method("send_xp_update"):
 		return
 	if root.ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		root._last_server_position = global_transform.origin
