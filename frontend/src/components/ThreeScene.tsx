@@ -373,8 +373,8 @@ function createMouthMaterial(
     // Shift the drawn mouth down within the plate. The mouth sits at UV
     // (0.5, 0.5) = the plate centre; adding to the (downward-incrementing) V
     // relocates the whole mouth (lips, cavity, teeth) downward without
-    // touching the mesh. 0.18 ≈ 18% of the plate height.
-    mouthShiftY: { value: 0.18 },
+    // touching the mesh. 0.4 ≈ 40% of the plate height.
+    mouthShiftY: { value: 0.4 },
   };
 
   mat.onBeforeCompile = (shader) => {
