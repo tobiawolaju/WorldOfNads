@@ -371,9 +371,8 @@ function createMouthMaterial(
     // Shift the drawn mouth down within the plate. The mouth sits at UV
     // (0.5, 0.5) = the plate centre; adding to the (downward-incrementing) V
     // relocates the whole mouth (lips, cavity, teeth) downward without
-    // touching the mesh. Currently 0 (mouth centred on the plate like the
-    // Godot render) — bump if a nudge is wanted after verifying orientation.
-    mouthShiftY: { value: 0.0 },
+    // touching the mesh. 0.12 ≈ 12% of the plate height.
+    mouthShiftY: { value: 0.12 },
   };
 
   mat.onBeforeCompile = (shader) => {
