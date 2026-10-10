@@ -634,15 +634,10 @@ const NadModel: React.FC<NadModelProps> = ({
           // tint into eye_color), so no shader type replaces them.
           newMat = createEyeMaterial(eyeColor);
         } else if (isMouth) {
-          // The mouth mesh ships inside nad.fbx, skinned to the skeleton. Like
-          // the eyes it is never claimed by apply_skin (the mouth shader owns
-          // its colour), so it always gets the procedural mouth material with
-          // the palette tints applied through uniforms.
-          newMat = createMouthMaterial({
-            mouth: pal.body || "#ff2b05",
-            lipOutline: pal.cheek || "#ff7d00",
-            tooth: "#fff2d9",
-          });
+          // SIMPLE TEST: render the mouth mesh with a plain white material so
+          // we can confirm the FBX mouth mesh is actually in the scene. No
+          // position/scale changes, no procedural shader.
+          newMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
           animatedMaterialsRef.current.push(newMat);
         } else if (shouldApplyShader && shaderType !== "default") {
           if (shaderType === "ghost") {
