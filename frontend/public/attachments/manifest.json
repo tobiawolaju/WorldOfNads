@@ -23,10 +23,6 @@
 		"bone": "mixamorig_Head",
 		"file": "linnconcap.glb"
 	},
-	"mouth": {
-		"bone": "mixamorig_Head",
-		"file": "mouth.glb"
-	},
 	"rown": {
 		"bone": "mixamorig_Head",
 		"file": "rown.glb"
