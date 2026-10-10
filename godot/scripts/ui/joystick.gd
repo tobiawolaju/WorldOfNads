@@ -24,6 +24,7 @@ signal camera_dragged(relative: Vector2)
 @export var rest_opacity: float = 0.25 # knob alpha while it sits idle at the center
 @export var lock_joystick_position: bool = false # anchor the base where it sits instead of jumping to the first touch
 @export var keep_locked_position_on_resize: bool = true # re-clamp the anchor when the viewport changes size
+@export var ignore_edge_margin: float = 32.0 # Ignore touches that START within this many px of any screen edge (safe-area / system-gesture dead zone)
 
 var radiusJoyStick: float = 0.0
 var radiusJoyBase: float = 0.0
@@ -101,10 +102,15 @@ func _ready():
 		joy_lock.position = lock_target_position 
 	
 func _input(event):
-	var viewport_size = get_viewport().get_visible_rect().size
-
 	if event is InputEventScreenTouch:
+		# Only touch presses need the visible rect - don't fetch it for every
+		# mouse-move/keyboard event that gets routed to this script.
+		var viewport_size = get_viewport().get_visible_rect().size
 		if event.pressed:
+			# Dead zone along the screen edges: accidental touches on system/OS gesture
+			# zones must never grab the joystick or start a camera-orbit drag.
+			if _is_within_edge_margin(event.position, viewport_size):
+				return
 			if is_auto_locked:
 				if auto_lock_touch_index == -1 and touch_joystick_node != null and event.position.distance_to(touch_joystick_node.global_position) <= radiusJoyBase * 2.5:
 					auto_lock_touch_index = event.index
@@ -260,6 +266,14 @@ func _is_joystick_area(pos: Vector2, viewport_size: Vector2) -> bool:
 	if viewport_size.y > viewport_size.x * 1.4: # Portrait
 		return pos.y >= viewport_size.y * 0.5
 	return pos.x <= viewport_size.x * 0.5 # Landscape
+
+func _is_within_edge_margin(pos: Vector2, viewport_size: Vector2) -> bool:
+	if ignore_edge_margin <= 0.0:
+		return false
+	return pos.x < ignore_edge_margin \
+		or pos.y < ignore_edge_margin \
+		or pos.x > viewport_size.x - ignore_edge_margin \
+		or pos.y > viewport_size.y - ignore_edge_margin
 
 func _update_input_from_joystick(pos: Vector2):
 	_release_all_keys()

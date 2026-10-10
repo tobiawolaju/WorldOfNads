@@ -14,8 +14,12 @@
 [ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/ui/buttons.gd" id="10_mphia"]
 [ext_resource type="Texture2D" uid="uid://b7qle767pmjpp" path="res://assets/img/ui_atlas.png" id="10_ui_atlas"]
 [ext_resource type="Shader" uid="uid://cvsro6e0qyqwk" path="res://scenes/glasshud.gdshader" id="11_3swnk"]
-[ext_resource type="Texture2D" uid="uid://blb4gd2pmif22" path="res://assets/img/jump.png" id="12_5n1hp"]
+[ext_resource type="Texture2D" uid="uid://m35yge224eke" path="res://assets/img/ui/act.png" id="13_qpprf"]
 [ext_resource type="Script" uid="uid://bdgt65wb25puk" path="res://scripts/ui/textfx.gd" id="13_textfx"]
+[ext_resource type="Texture2D" uid="uid://c3u4jnw2frtwl" path="res://assets/img/ui/jump2x.png" id="14_3xg78"]
+[ext_resource type="Script" uid="uid://ckvd68tol7hfn" path="res://scripts/ui/health_bar.gd" id="14_health_bar"]
+[ext_resource type="Texture2D" uid="uid://fr7y6xwyrjdh" path="res://assets/img/ui/slide.png" id="15_48y67"]
+[ext_resource type="Texture2D" uid="uid://b4672bxcnnqg3" path="res://assets/img/ui/jump1x.png" id="15_qpprf"]
 
 [sub_resource type="Shader" id="Shader_storm"]
 code = "shader_type canvas_item;
@@ -95,6 +99,14 @@ corner_radius_bottom_left = 50
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0m4u7"]
 bg_color = Color(0, 0, 0, 0.34117648)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uxdf7"]
+bg_color = Color(0.30816644, 0.63264525, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.29411766, 0, 0.69411767, 1)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l0bqs"]
 bg_color = Color(1, 0, 1, 1)
 border_width_left = 2
@@ -102,11 +114,6 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.29411766, 0, 0.69411767, 1)
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_8f1mq"]
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tllmm"]
-texture = ExtResource("12_5n1hp")
 
 [node name="Hud" type="Control" unique_id=861416889]
 layout_mode = 3
@@ -554,6 +561,31 @@ autowrap_trim_flags = 0
 icon_alignment = 1
 expand_icon = true
 
+[node name="Sprite2D" type="Sprite2D" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" unique_id=1038089062]
+modulate = Color(0.88235295, 0.98039216, 1, 1)
+position = Vector2(16.59491, 30)
+rotation = -0.37524578
+scale = Vector2(0.5, 0.442)
+texture = ExtResource("14_3xg78")
+centered = false
+script = ExtResource("6_jump_bar")
+single_jump_image = ExtResource("15_qpprf")
+double_jump_image = ExtResource("14_3xg78")
+
+[node name="Sprite2D2" type="Sprite2D" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" unique_id=1131521826]
+modulate = Color(0.88235295, 0.98039216, 1, 1)
+position = Vector2(21.59491, 109)
+scale = Vector2(0.5, 0.442)
+texture = ExtResource("15_48y67")
+centered = false
+
+[node name="Sprite2D" type="Sprite2D" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer" unique_id=1418083215]
+modulate = Color(0.88235295, 0.98039216, 1, 1)
+position = Vector2(15.59491, 16)
+scale = Vector2(0.69333375, 0.6133334)
+texture = ExtResource("13_qpprf")
+centered = false
+
 [node name="XPstream" type="Label" parent="." unique_id=2087879689]
 visible = false
 layout_mode = 1
@@ -596,6 +628,25 @@ theme_override_fonts/font = ExtResource("3_apjy4")
 theme_override_font_sizes/font_size = 18
 text = "Total MON pool"
 
+[node name="HealthBar" type="ProgressBar" parent="." unique_id=385514625]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -87.0
+offset_top = -81.0
+offset_right = 89.0
+offset_bottom = -74.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/background = SubResource("StyleBoxFlat_0m4u7")
+theme_override_styles/fill = SubResource("StyleBoxFlat_uxdf7")
+value = 100.0
+show_percentage = false
+script = ExtResource("14_health_bar")
+
 [node name="StaminaBar" type="ProgressBar" parent="." unique_id=285514625]
 layout_mode = 1
 anchors_preset = 7
@@ -614,46 +665,6 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_l0bqs")
 value = 100.0
 show_percentage = false
 script = ExtResource("6_stamina_bar")
-
-[node name="JumpBar" type="ProgressBar" parent="." unique_id=896147534]
-modulate = Color(0.60784316, 0.36078432, 1, 1)
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -87.0
-offset_top = -95.0
-offset_right = -65.0
-offset_bottom = -75.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_styles/background = SubResource("StyleBoxEmpty_8f1mq")
-theme_override_styles/fill = SubResource("StyleBoxTexture_tllmm")
-value = 100.0
-show_percentage = false
-script = ExtResource("6_jump_bar")
-
-[node name="JumpBar2" type="ProgressBar" parent="." unique_id=1989268868]
-modulate = Color(0.60784316, 0.36078432, 1, 1)
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -70.0
-offset_top = -95.0
-offset_right = -48.0
-offset_bottom = -75.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_styles/background = SubResource("StyleBoxEmpty_8f1mq")
-theme_override_styles/fill = SubResource("StyleBoxTexture_tllmm")
-value = 100.0
-show_percentage = false
-script = ExtResource("6_jump_bar")
 
 [node name="shde" type="ColorRect" parent="." unique_id=1541956272]
 layout_mode = 1
@@ -688,7 +699,7 @@ theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
 theme_override_constants/outline_size = 2
 theme_override_fonts/font = ExtResource("3_apjy4")
 theme_override_font_sizes/font_size = 140
-text = "Rug Belly"
+text = "Moonad"
 horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("13_textfx")

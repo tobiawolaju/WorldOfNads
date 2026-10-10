@@ -1,4 +1,18 @@
-extends ProgressBar
+extends Sprite2D
+## Simple double-jump indicator.
+##
+## Swaps this sprite's texture between the two exported images based on the local
+## player's double-jump state:
+##   - single_jump_image : shown while the double jump is NOT available or already used
+##   - double_jump_image : shown while the double jump is available and unused
+##
+## The indicator lights up the moment the double jump is earned (mid-air or on the
+## ground), stays on while you hold the charge, and flips to single only after you
+## actually use the double jump. A charge you carry down to a landing keeps showing
+## double until spent.
+
+@export var single_jump_image: Texture2D # shown when only a single jump is available
+@export var double_jump_image: Texture2D # shown when a double jump is charged
 
 var _cached_player: Node = null
 
@@ -10,14 +24,6 @@ func _process(_delta: float) -> void:
 		return
 
 	var p := _cached_player
-	var on_floor: bool = p.is_on_floor()
-	var can_double: bool = p.get("_double_jump_available") == true
-	var used_double: bool = p.get("_double_jump_used") == true
-	var ground_count: int = int(p.get("_ground_jump_count"))
+	var can_double: bool = p.get("_double_jump_available") == true and p.get("_double_jump_used") != true
 
-	if on_floor:
-		value = 100.0 if can_double or ground_count >= 1 else 50.0
-	elif can_double and not used_double:
-		value = 50.0
-	else:
-		value = 0.0
+	texture = double_jump_image if can_double else single_jump_image

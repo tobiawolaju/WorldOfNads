@@ -13,6 +13,7 @@ extends Node3D
 var local_player
 var npcs := []
 var _stress_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _last_recovery_ms: int = 0
 
 # Hand-off from dshbord.gd: READY counts down on the dashboard and then sends the
 # player here with the match they queued and the nad they picked, written straight
@@ -56,6 +57,32 @@ func _ready():
 	_spawn_lobby_stress_agents()
 	_assign_camera()
 
+func _process(delta: float) -> void:
+	_check_map_recovery()
+
+func _check_map_recovery() -> void:
+	# Respawn at lobby spawn point if player falls off map
+	if local_player == null:
+		return
+	if local_player.global_position.y >= -5.0:
+		return
+	
+	# Cooldown to prevent rapid re-triggering
+	var now_ms := Time.get_ticks_msec()
+	if now_ms - _last_recovery_ms < 750:
+		return
+	_last_recovery_ms = now_ms
+	
+	var spawn_pos: Vector3
+	if spawn_point:
+		spawn_pos = spawn_point.global_position
+	else:
+		spawn_pos = global_position
+	
+	local_player.global_position = spawn_pos
+	local_player.velocity = Vector3.ZERO if local_player.has_method("get_velocity") else Vector3.ZERO
+	print("Lobby: Player fell off map, respawned at ", spawn_pos)
+
 func _fetch_skin_data() -> void:
 	var http := HTTPRequest.new()
 	add_child(http)
@@ -87,6 +114,7 @@ func _spawn_local_player():
 	local_player.is_local = true
 	local_player.add_to_group("local_player")
 	local_player.player_id = "PLAYER_1"
+	local_player.root = self  # Set root so death respawn works
 	print("Local player skin:", skin_name)
 
 	if spawn_point:
@@ -104,6 +132,11 @@ func _assign_camera():
 
 	if cam and local_player:
 		local_player.camera = cam
+
+func get_local_spawn_position() -> Vector3:
+	if spawn_point:
+		return spawn_point.global_position
+	return global_position
 
 func _spawn_lobby_stress_agents() -> void:
 	if not spawn_lobby_stress_agents or lobby_stress_agent_count <= 0:

@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://dyx5kfl7l30wf" path="res://scripts/lobbymanager.gd" id="7_yad6j"]
 [ext_resource type="PackedScene" uid="uid://bj27lnrpsa1wt" path="res://scenes/busyland.tscn" id="9_07nfq"]
 [ext_resource type="PackedScene" uid="uid://jqrvlq8oxe4l" path="res://scenes/pickup.tscn" id="10_oipnb"]
+[ext_resource type="PackedScene" uid="uid://ds74a1sw044u4" path="res://scenes/powerup1.tscn" id="11_yad6j"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
 render_priority = 0
@@ -39,7 +40,7 @@ stencil_outline_thickness = 0.034
 script = ExtResource("1_07nfq")
 local_player_scene = ExtResource("2_oipnb")
 camera_node = NodePath("Player/Camera3D")
-spawn_point = NodePath("Player/spawnpoint")
+spawn_point = NodePath("Player/myplayerswpanpoint")
 
 [node name="env" type="Node3D" parent="." unique_id=933934101 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
 script = ExtResource("3_ncsg4")
@@ -52,6 +53,7 @@ cylinder_border = NodePath("Cylinder2")
 normal_env = ExtResource("4_ncsg4")
 storm_env = ExtResource("5_07nfq")
 cylinder_radius = 18.0
+damage_per_second = 10.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=580568222]
 environment = ExtResource("4_ncsg4")
@@ -90,8 +92,11 @@ doppler_tracking = 1
 fov = 70.0
 far = 100.0
 
-[node name="spawnpoint" type="Node3D" parent="Player" unique_id=765824796]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.210027, 0.8174293, -5.2890306)
+[node name="myplayerswpanpoint" type="Node3D" parent="Player" unique_id=765824796]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.4717655, 1.0232358, -5.4464617)
+
+[node name="myplayerswpanpoint" type="Marker3D" parent="Player/myplayerswpanpoint" unique_id=1225670085]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4864397, 0)
 
 [node name="Timer" type="Timer" parent="Player" unique_id=1278349154]
 
@@ -101,3 +106,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.210027, 0.8174293, -5.2890
 
 [node name="LocalPickup" parent="." unique_id=408056980 instance=ExtResource("10_oipnb")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.716016, 1.749352, 1.384943)
+
+[node name="Pickup" parent="." unique_id=348478555 instance=ExtResource("11_yad6j")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.095271, 1.4365964, 0)
+
+[node name="Pickup2" parent="." unique_id=47207438 instance=ExtResource("11_yad6j")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.095271, 1.4365964, -1)
+
+[node name="Pickup3" parent="." unique_id=542460695 instance=ExtResource("11_yad6j")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.647236, 1.4365964, -0.26766753)
+
+[node name="Pickup4" parent="." unique_id=1118312215 instance=ExtResource("11_yad6j")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -1.649298)

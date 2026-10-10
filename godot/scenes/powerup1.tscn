@@ -1,0 +1,51 @@
+[gd_scene format=3 uid="uid://ds74a1sw044u4"]
+
+[ext_resource type="Script" uid="uid://cyrydhs5bxppv" path="res://scripts/pickups/LocalPickup.gd" id="1_jjeh5"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_oipnb"]
+size = Vector3(0.5, 0.5, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tv0er"]
+shading_mode = 0
+
+[sub_resource type="SphereMesh" id="SphereMesh_vkujj"]
+radius = 0.05
+height = 0.1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jjeh5"]
+shading_mode = 0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_l0bqs"]
+top_radius = 0.002
+bottom_radius = 0.008
+height = 0.8413788
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_036xw"]
+shading_mode = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_l0bqs"]
+size = Vector3(0.15, 0.15, 0.15)
+
+[node name="Pickup" type="RigidBody3D" unique_id=408056980]
+collision_layer = 8
+continuous_cd = true
+script = ExtResource("1_jjeh5")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=408056981]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.20320824, 0)
+shape = SubResource("BoxShape3D_oipnb")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=408056982]
+material_override = SubResource("StandardMaterial3D_tv0er")
+cast_shadow = 0
+mesh = SubResource("SphereMesh_vkujj")
+
+[node name="line" type="MeshInstance3D" parent="." unique_id=291533340]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6540197, 0)
+material_override = SubResource("StandardMaterial3D_jjeh5")
+mesh = SubResource("CylinderMesh_l0bqs")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=183772736]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2848841, 0)
+material_override = SubResource("StandardMaterial3D_036xw")
+mesh = SubResource("BoxMesh_l0bqs")
