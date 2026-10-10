@@ -310,13 +310,24 @@ uniform float flip_dot;`
 
 
 // Port of godot/assets/shaders/mouth_wobble.gdshader — procedural mouth with
-// lips, parallax cavity, and two bunny teeth, driven entirely by the mesh UV.
-// Applied via onBeforeCompile on a MeshBasicMaterial (same pattern as the eyes).
+// lips, parallax cavity, and two bunny teeth. Applied via onBeforeCompile on a
+// MeshBasicMaterial (same pattern as the eyes).
+//
+// nad.fbx bakes the mouth's Blender UVs as garbage values outside 0..1 (u=0,
+// v≈1.6-1.8), so the shader cannot read attribute `uv`. Instead the vertex
+// shader synthesises a UV by mapping the mouth's object-space XY bounding box
+// (bounds) into 0..1 — the mouth plate sits in the XY plane of its local
+// frame, and the whole mesh is SkinnedMesh, so `transformed` tracks the plate
+// even while it follows the head bone. Same illusion as authored UVs, no
+// position/scale changes.
 //
 // The uniform defaults mirror the ShaderMaterial on Skeleton3D/mouth in
 // godot/scenes/skin.tscn. mouth_color / lip_outline_color are the per-skin
 // tints (pushed like the palette tint on the body).
-function createMouthMaterial(palette: { mouth?: string; lipOutline?: string; tooth?: string }): THREE.MeshBasicMaterial {
+function createMouthMaterial(
+  palette: { mouth?: string; lipOutline?: string; tooth?: string },
+  bounds?: { min: [number, number]; size: [number, number] }
+): THREE.MeshBasicMaterial {
   const mat = new THREE.MeshBasicMaterial({
     color: 0xffffff,
     transparent: true,
@@ -349,6 +360,9 @@ function createMouthMaterial(palette: { mouth?: string; lipOutline?: string; too
     endY: { value: 0.0 },
     // Parallax
     parallaxFactor: { value: 1.0 },
+    // Synthetic UV: mouth's object-space XY bbox mapped to 0..1 (see header).
+    mouthBoundsMin: { value: new THREE.Vector2(bounds?.min[0] ?? 0, bounds?.min[1] ?? 0) },
+    mouthBoundsSize: { value: new THREE.Vector2(Math.max(bounds?.size[0] ?? 1, 1e-6), Math.max(bounds?.size[1] ?? 1, 1e-6)) },
   };
 
   mat.onBeforeCompile = (shader) => {
@@ -363,18 +377,22 @@ function createMouthMaterial(palette: { mouth?: string; lipOutline?: string; too
     // Inject uniforms
     Object.assign(shader.uniforms, uniforms);
 
-    // Inject varying for UV + view position (view space, camera at origin)
+    // Inject varyings + uniforms; build the mouth UV from the skinned
+    // object-space position (the mouth plate's XY plane) instead of the
+    // garbage `uv` attribute coming out of the Blender FBX export.
     shader.vertexShader = shader.vertexShader
       .replace(
         "#include <common>",
         `#include <common>
 varying vec2 vMouthUv;
-varying vec3 vMouthViewPos;`
+varying vec3 vMouthViewPos;
+uniform vec2 mouthBoundsMin;
+uniform vec2 mouthBoundsSize;`
       )
       .replace(
         "#include <project_vertex>",
         `#include <project_vertex>
-  vMouthUv = uv;
+  vMouthUv = (transformed.xy - mouthBoundsMin) / mouthBoundsSize;
   vMouthViewPos = mvPosition.xyz;`
       );
 
@@ -634,10 +652,35 @@ const NadModel: React.FC<NadModelProps> = ({
           // tint into eye_color), so no shader type replaces them.
           newMat = createEyeMaterial(eyeColor);
         } else if (isMouth) {
-          // SIMPLE TEST: render the mouth mesh with a plain white material so
-          // we can confirm the FBX mouth mesh is actually in the scene. No
-          // position/scale changes, no procedural shader.
-          newMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+          // Apply the Godot mouth_wobble port. The Blender FBX bakes garbage
+          // UVs on this mesh (u=0, v out of 0..1), so the shader synthesises
+          // its UV from the mouth plate's object-space XY bounding box. Feed
+          // that box from the geometry — no position/scale changes.
+          const mouthGeo = child.geometry as THREE.BufferGeometry;
+          const mouthPos = mouthGeo.getAttribute("position");
+          let mMinX = Infinity;
+          let mMinY = Infinity;
+          let mMaxX = -Infinity;
+          let mMaxY = -Infinity;
+          for (let i = 0; i < mouthPos.count; i++) {
+            const px = mouthPos.getX(i);
+            const py = mouthPos.getY(i);
+            if (px < mMinX) mMinX = px;
+            if (py < mMinY) mMinY = py;
+            if (px > mMaxX) mMaxX = px;
+            if (py > mMaxY) mMaxY = py;
+          }
+          newMat = createMouthMaterial(
+            {
+              mouth: pal.body || "#ff2b05",
+              lipOutline: pal.cheek || "#ff7d00",
+              tooth: "#fff2d9",
+            },
+            {
+              min: [mMinX, mMinY],
+              size: [mMaxX - mMinX, mMaxY - mMinY],
+            }
+          );
           animatedMaterialsRef.current.push(newMat);
         } else if (shouldApplyShader && shaderType !== "default") {
           if (shaderType === "ghost") {
