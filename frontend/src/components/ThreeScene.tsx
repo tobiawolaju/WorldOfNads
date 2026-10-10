@@ -321,6 +321,11 @@ uniform float flip_dot;`
 // even while it follows the head bone. Same illusion as authored UVs, no
 // position/scale changes.
 //
+// V-convention: the original mouth mesh (nad2.glb textura / Godot) has v=0 at
+// the TOP of the plate and v increasing downward, so the synthetic V is
+// inverted (1 - normalized) to match. That keeps the teeth hanging from the
+// upper lip in the same orientation Godot rendered.
+//
 // The uniform defaults mirror the ShaderMaterial on Skeleton3D/mouth in
 // godot/scenes/skin.tscn. mouth_color / lip_outline_color are the per-skin
 // tints (pushed like the palette tint on the body).
@@ -363,6 +368,12 @@ function createMouthMaterial(
     // Synthetic UV: mouth's object-space XY bbox mapped to 0..1 (see header).
     mouthBoundsMin: { value: new THREE.Vector2(bounds?.min[0] ?? 0, bounds?.min[1] ?? 0) },
     mouthBoundsSize: { value: new THREE.Vector2(Math.max(bounds?.size[0] ?? 1, 1e-6), Math.max(bounds?.size[1] ?? 1, 1e-6)) },
+    // Shift the drawn mouth down within the plate. The mouth sits at UV
+    // (0.5, 0.5) = the plate centre; adding to the (downward-incrementing) V
+    // relocates the whole mouth (lips, cavity, teeth) downward without
+    // touching the mesh. Currently 0 (mouth centred on the plate like the
+    // Godot render) — bump if a nudge is wanted after verifying orientation.
+    mouthShiftY: { value: 0.0 },
   };
 
   mat.onBeforeCompile = (shader) => {
@@ -387,12 +398,18 @@ function createMouthMaterial(
 varying vec2 vMouthUv;
 varying vec3 vMouthViewPos;
 uniform vec2 mouthBoundsMin;
-uniform vec2 mouthBoundsSize;`
+uniform vec2 mouthBoundsSize;
+uniform float mouthShiftY;`
       )
       .replace(
         "#include <project_vertex>",
         `#include <project_vertex>
-  vMouthUv = (transformed.xy - mouthBoundsMin) / mouthBoundsSize;
+  // Synthesise the mouth UV from the skinned object-space position. V is
+  // inverted (v=0 at the top) to match the original mesh's UV convention.
+  vMouthUv = vec2(
+    (transformed.x - mouthBoundsMin.x) / mouthBoundsSize.x,
+    1.0 - (transformed.y - mouthBoundsMin.y) / mouthBoundsSize.y
+  ) + vec2(0.0, mouthShiftY);
   vMouthViewPos = mvPosition.xyz;`
       );
 
