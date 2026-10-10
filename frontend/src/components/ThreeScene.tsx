@@ -205,6 +205,152 @@ function findBone(model: THREE.Object3D, boneName: string): THREE.Object3D | nul
   return match || loose;
 }
 
+// --- Mouth base part (baked from the ground-truth rig) ---
+//
+// The old mouth path loaded mouth.glb (a static export of the game's mouth
+// mesh) and just parented its raw vertices under the head bone. Its vertices
+// were written in the mesh's *bind/skeleton* space, where Vertex y = 0.18-0.25
+// sits down by the hips - nowhere near the face - which is why the mouth never
+// rendered. Skin.tscn gives the same result: the mouth is skinned to the head
+// bone with an identity bind, so "raw vertex under the head bone" is only
+// correct once the vertex has been expressed in the head bone's own frame.
+//
+// nad2.glb is the authoritative rigged player the game is built from (user
+// confirmed the mouth lives in there). It holds the mouth as a proper
+// SkinnedMesh bound to the same Mixamo skeleton as nad.fbx, so its skinned
+// bind-pose position IS the game's mouth placement. We bake that position into
+// head-bone-local coordinates here, at runtime, using three's own skinning math:
+//
+//   world = mouth.matrixWorld * Σᵢ wᵢ (boneWorldᵢ · boneInverseᵢ) · v
+//
+// then express it relative to the head bone's rest frame and scale it by the
+// two rigs' head/neck bone-length ratio (k) so unit differences (cm vs m, the
+// GLB's 0.1 armature scale) cancel out. The result is parented under the FBX
+// head bone with bone.add(obj), exactly like a BoneAttachment3D export.
+let mouthRigPromise: Promise<THREE.Group | null> | null = null;
+
+function loadMouthRig(): Promise<THREE.Group | null> {
+  if (!mouthRigPromise) {
+    mouthRigPromise = new GLTFLoader()
+      .loadAsync(`${ATTACHMENTS_DIR}/nad2.glb`)
+      .then((gltf) => gltf.scene as THREE.Group)
+      .catch((err) => {
+        console.warn(`[ThreeScene] mouth rig "/attachments/nad2.glb" failed to load`, err);
+        return null;
+      });
+  }
+  return mouthRigPromise;
+}
+
+function findJointIndex(skeleton: THREE.Skeleton, boneName: string): number {
+  const needle = normalizeBoneName(boneName);
+  if (!needle) return -1;
+  return skeleton.bones.findIndex((b) => normalizeBoneName(b.name) === needle);
+}
+
+// CPU twin of the GPU skinning path (SkinnedMesh.applyBoneTransform in three
+// r182): vertex bindspace -> Σ wᵢ (boneWorldᵢ · boneInverseᵢ) -> bindMatrixInverse,
+// giving the vertex in the mesh's LOCAL space, then localToWorld -> world space.
+// Implemented inline (not via boneTransform/applyBoneTransform) so it survives
+// three version renames; matches SkinnedMesh.boneTransform for older releases.
+function skinnedVertexWorld(
+  mesh: THREE.SkinnedMesh,
+  index: number,
+  out: THREE.Vector3
+): boolean {
+  const geometry = mesh.geometry as THREE.BufferGeometry;
+  const posAttr = geometry.getAttribute("position") as THREE.BufferAttribute | null;
+  const skinIndexAttr = geometry.getAttribute("skinIndex") as THREE.BufferAttribute | null;
+  const skinWeightAttr = geometry.getAttribute("skinWeight") as THREE.BufferAttribute | null;
+  if (!posAttr || !skinIndexAttr || !skinWeightAttr) return false;
+  if (!mesh.skeleton || mesh.skeleton.bones.length === 0) return false;
+
+  const base = out.fromBufferAttribute(posAttr, index).applyMatrix4(mesh.bindMatrix);
+  const skinned = new THREE.Vector3();
+  const m = new THREE.Matrix4();
+  const bones = mesh.skeleton.bones;
+  const inverses = mesh.skeleton.boneInverses;
+  for (let i = 0; i < 4; i++) {
+    const w = skinWeightAttr.getComponent(i, index);
+    if (w === 0) continue;
+    const boneIndex = skinIndexAttr.getComponent(i, index);
+    if (boneIndex < 0 || boneIndex >= bones.length || !inverses[boneIndex]) continue;
+    m.multiplyMatrices(bones[boneIndex].matrixWorld, inverses[boneIndex]);
+    skinned.addScaledVector(base.clone().applyMatrix4(m), w);
+  }
+  out.copy(skinned).applyMatrix4(mesh.bindMatrixInverse);
+  return true;
+}
+
+// Rebuild the mouth as head-bone-local geometry by skinning nad2.glb's mouth
+// mesh at its bind/rest pose. Returns null (-> callers fall back to the legacy
+// attachment GLB) whenever the rig or a required bone is unavailable.
+async function bakeMouthGeometry(
+  fbxHeadRest: THREE.Matrix4,
+  fbxNeckRest: THREE.Matrix4
+): Promise<THREE.BufferGeometry | null> {
+  const rig = await loadMouthRig();
+  if (!rig) return null;
+  rig.updateMatrixWorld(true);
+
+  let mouth: THREE.SkinnedMesh | null = null;
+  rig.traverse((child) => {
+    if (mouth) return;
+    if ((child as THREE.SkinnedMesh).isSkinnedMesh && child.name === "mouth") {
+      mouth = child as THREE.SkinnedMesh;
+    }
+  });
+  if (!mouth || !mouth.skeleton || mouth.skeleton.bones.length === 0) return null;
+
+  // Bind-pose world transforms of the two anchor bones inside nad2.glb.
+  const headIdx = findJointIndex(mouth.skeleton, "mixamorigHead");
+  const neckIdx = findJointIndex(mouth.skeleton, "mixamorigNeck");
+  if (headIdx < 0 || neckIdx < 0) return null;
+  const glbHeadWorld = mouth.skeleton.bones[headIdx].matrixWorld;
+  const glbNeckWorld = mouth.skeleton.bones[neckIdx].matrixWorld;
+
+  // Unit calibration: same real-world bone, two files. Both lengths are
+  // measured at rest so the ratio is whatever scale separates the rigs.
+  const fbxHeadPos = new THREE.Vector3().setFromMatrixPosition(fbxHeadRest);
+  const fbxNeckPos = new THREE.Vector3().setFromMatrixPosition(fbxNeckRest);
+  const glbHeadPos = new THREE.Vector3().setFromMatrixPosition(glbHeadWorld);
+  const glbNeckPos = new THREE.Vector3().setFromMatrixPosition(glbNeckWorld);
+  const fbxHeadLen = fbxHeadPos.distanceTo(fbxNeckPos);
+  const glbHeadLen = glbHeadPos.distanceTo(glbNeckPos);
+  if (glbHeadLen < 1e-6) return null;
+  const k = fbxHeadLen / glbHeadLen;
+
+  // Maps glb world -> head-bone-local (glb units); k then converts to fbx units.
+  const headInv = new THREE.Matrix4().copy(glbHeadWorld).invert();
+
+  const geometry = mouth.geometry as THREE.BufferGeometry;
+  const posAttr = geometry.getAttribute("position") as THREE.BufferAttribute;
+  const uvAttr = geometry.getAttribute("uv") as THREE.BufferAttribute;
+  if (!posAttr || !uvAttr) return null;
+
+  const count = posAttr.count;
+  const positions = new Float32Array(count * 3);
+  const v = new THREE.Vector3();
+  for (let i = 0; i < count; i++) {
+    // Skinned vertex at the rig's rest pose, in the mouth's local space, then to
+    // glb world - this is exactly what the GPU renders for nad2.glb.
+    if (!skinnedVertexWorld(mouth, i, v)) return null;
+    mouth.localToWorld(v);
+    v.applyMatrix4(headInv);
+    v.multiplyScalar(k);
+    positions[i * 3 + 0] = v.x;
+    positions[i * 3 + 1] = v.y;
+    positions[i * 3 + 2] = v.z;
+  }
+
+  const baked = new THREE.BufferGeometry();
+  baked.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  baked.setAttribute("uv", uvAttr.clone());
+  if (geometry.index) baked.setIndex(geometry.index.clone());
+  baked.computeBoundingSphere();
+  return baked;
+}
+
 // Port of godot/assets/shaders/eye.gdshader: an unshaded sphere with a single
 // dot that always faces the camera. Everything is measured in view space (the
 // camera sits at the origin), so the dot does not depend on where the mesh was
@@ -1058,7 +1204,12 @@ const NadModel: React.FC<NadModelProps> = ({
   }, [model, equippedSkin]);
 
   // Base character parts (mouth) - always present, loaded from manifest
-  // like attachments but not controlled by skinConfig.attachments.
+  // like attachments but not controlled by skinConfig.attachments. The old
+  // implementation attached mouth.glb's raw bind-space vertices under the head
+  // bone, which never rendered (the vertices live at the hips in skeleton
+  // space, not the face). Now the mouth is re-built from nad2.glb - the
+  // ground-truth rig the game is made from - by skinning its mouth mesh at rest
+  // pose and baking it into head-bone-local coordinates.
   useEffect(() => {
     let disposed = false;
     const placedBaseParts: THREE.Object3D[] = [];
@@ -1078,10 +1229,7 @@ const NadModel: React.FC<NadModelProps> = ({
           console.warn(`[ThreeScene] bone "${entry.bone}" missing for base part "${partName}"`);
           continue;
         }
-        const prototype = await loadAttachment(entry.file);
-        if (disposed || !prototype) continue;
 
-        // Apply mouth_wobble shader to the mouth mesh
         const pal = equippedSkin?.skinConfig?.palette || {};
         const mouthMat = createMouthMaterial({
           mouth: pal.body || "#ff2b05",
@@ -1089,14 +1237,49 @@ const NadModel: React.FC<NadModelProps> = ({
           tooth: "#fff2d9",
         });
 
-        const obj = prototype.clone(true);
-        obj.name = `base-${partName}`;
-        obj.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            child.material = mouthMat;
-            child.frustumCulled = false;
+        // Capture the FBX head/neck rest frames synchronously - the animation
+        // mixer has not run yet (it updates per-frame in useFrame), so these
+        // world matrices are the bind/rest pose, including the model scale.
+        model.updateMatrixWorld(true);
+        const fbxHeadBone = findBone(model, "mixamorig_Head");
+        const fbxNeckBone = findBone(model, "mixamorig_Neck");
+        const fbxHeadRest = fbxHeadBone
+          ? new THREE.Matrix4().copy(fbxHeadBone.matrixWorld)
+          : null;
+        const fbxNeckRest = fbxNeckBone
+          ? new THREE.Matrix4().copy(fbxNeckBone.matrixWorld)
+          : null;
+
+        let obj: THREE.Object3D | null = null;
+        if (fbxHeadRest && fbxNeckRest) {
+          const baked = await bakeMouthGeometry(fbxHeadRest, fbxNeckRest);
+          if (disposed) continue;
+          if (baked) {
+            const mesh = new THREE.Mesh(baked, mouthMat);
+            mesh.name = `base-${partName}`;
+            mesh.frustumCulled = false;
+            obj = mesh;
+          } else {
+            console.warn(
+              `[ThreeScene] mouth bake failed for "${partName}" - falling back to legacy attachment`
+            );
           }
-        });
+        }
+
+        if (!obj) {
+          // Legacy path: attach the raw mouth.glb export under the head bone.
+          const prototype = await loadAttachment(entry.file);
+          if (disposed || !prototype) continue;
+          obj = prototype.clone(true);
+          obj.name = `base-${partName}`;
+          obj.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              child.material = mouthMat;
+              child.frustumCulled = false;
+            }
+          });
+        }
+
         bone.add(obj);
         placedBaseParts.push(obj);
         animatedMaterialsRef.current.push(mouthMat);
