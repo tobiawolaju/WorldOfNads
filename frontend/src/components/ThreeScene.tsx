@@ -295,6 +295,203 @@ uniform float flip_dot;`
 
 
 
+// Port of godot/assets/shaders/mouth_wobble.gdshader — procedural mouth with
+// lips, parallax cavity, and two bunny teeth, driven entirely by the mesh UV.
+// Applied via onBeforeCompile on a MeshBasicMaterial (same pattern as the eyes).
+//
+// The uniform defaults mirror the ShaderMaterial on Skeleton3D/mouth in
+// godot/scenes/skin.tscn. mouth_color / lip_outline_color are the per-skin
+// tints (pushed like the palette tint on the body).
+function createMouthMaterial(palette: { mouth?: string; lipOutline?: string; tooth?: string }): THREE.MeshBasicMaterial {
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    depthWrite: true,
+    side: THREE.DoubleSide, // Godot: render_mode cull_disabled
+  });
+
+  const uniforms = {
+    // Colors (sRGB → linear handled by three)
+    mouthColor: { value: new THREE.Color(palette.mouth || "#ff2b00") },
+    lipOutlineColor: { value: new THREE.Color(palette.lipOutline || "#ff7d00") },
+    toothColor: { value: new THREE.Color(palette.tooth || "#ffffff") },
+    // Lip params (skin.tscn ShaderMaterial_lr00t)
+    lipOutlineThickness: { value: 0.188 },
+    // Tooth params
+    toothWidth: { value: 0.268 },
+    toothHeight: { value: 0.245 },
+    toothSpacing: { value: 0.325 },
+    toothDrop: { value: -0.605 },
+    toothRoundness: { value: 0.01 },
+    // Mouth size
+    width: { value: 0.36 },
+    height: { value: 0.189 },
+    // Cavity
+    layers: { value: 5 },
+    depth: { value: 0.214 },
+    taper: { value: 0.65 },
+    darkness: { value: 1.0 },
+    endX: { value: 0.144 },
+    endY: { value: 0.0 },
+    // Parallax
+    parallaxFactor: { value: 1.0 },
+  };
+
+  mat.onBeforeCompile = (shader) => {
+    if (
+      !shader.vertexShader.includes("#include <project_vertex>") ||
+      !shader.fragmentShader.includes("#include <opaque_fragment>")
+    ) {
+      console.warn("[ThreeScene] mouth shader injection point missing - three.js upgrade?");
+      return;
+    }
+
+    // Inject uniforms
+    Object.assign(shader.uniforms, uniforms);
+
+    // Inject varying for UV + view position (view space, camera at origin)
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+varying vec2 vMouthUv;
+varying vec3 vMouthViewPos;`
+      )
+      .replace(
+        "#include <project_vertex>",
+        `#include <project_vertex>
+  vMouthUv = uv;
+  vMouthViewPos = mvPosition.xyz;`
+      );
+
+    // Replace fragment shader with mouth_wobble logic
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+varying vec2 vMouthUv;
+varying vec3 vMouthViewPos;
+uniform vec3 mouthColor;
+uniform vec3 lipOutlineColor;
+uniform vec3 toothColor;
+uniform float lipOutlineThickness;
+uniform float toothWidth;
+uniform float toothHeight;
+uniform float toothSpacing;
+uniform float toothDrop;
+uniform float toothRoundness;
+uniform float width;
+uniform float height;
+uniform int layers;
+uniform float depth;
+uniform float taper;
+uniform float darkness;
+uniform float endX;
+uniform float endY;
+uniform float parallaxFactor;
+
+float roundedBox(vec2 p, vec2 halfSize, float radius) {
+  vec2 q = abs(p) - halfSize + radius;
+  return length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0) - radius;
+}`
+      )
+      .replace(
+        "#include <opaque_fragment>",
+        `#include <opaque_fragment>
+  vec2 baseUv = vMouthUv;
+
+  vec2 baseP = baseUv * 2.0 - 1.0;
+  baseP.x /= width;
+  baseP.y /= height;
+
+  float baseShape = baseP.x * baseP.x + baseP.y * baseP.y;
+
+  // Mouth opening
+  float opening = step(baseShape, 1.0);
+
+  // Lip outline
+  float innerRadius = 1.0 - lipOutlineThickness;
+  float innerShape =
+    (baseP.x / innerRadius) * (baseP.x / innerRadius) +
+    (baseP.y / innerRadius) * (baseP.y / innerRadius);
+  float innerOpening = step(innerShape, 1.0);
+  float lipOutline = opening - innerOpening;
+
+  // View / parallax basis. Godot uses the mesh TANGENT/NORMAL attributes; this
+  // synthesises an equivalent camera-relative basis from the view-space normal
+  // (same trick as the eye shader), so the parallax follows the orbit camera.
+  vec3 toCamera = normalize(-vMouthViewPos);
+  vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), toCamera) + vec3(0.0001, 0.0, 0.0));
+  vec3 up = normalize(cross(toCamera, right));
+  vec2 viewOffset = vec2(dot(toCamera, right), dot(toCamera, up));
+
+  // Cavity (ray-marched layers, capped at 32 for GLSL loop unrolling)
+  float deepest = 0.0;
+  float deepestT = 0.0;
+
+  for (int i = 0; i < 32; i++) {
+    if (i >= layers) break;
+    float t = float(i) / float(max(layers - 1, 1));
+    float z = t * depth;
+
+    vec2 uv = baseUv;
+    uv -= viewOffset * z * parallaxFactor;
+    uv -= vec2(endX, endY) * t;
+
+    float scale = mix(1.0, taper, t);
+
+    vec2 p = uv * 2.0 - 1.0;
+    p.x /= width * scale;
+    p.y /= height * scale;
+
+    float shape = p.x * p.x + p.y * p.y;
+    float layerMask = step(shape, 1.0);
+
+    if (layerMask > 0.0) {
+      deepest = 1.0;
+      deepestT = t;
+    }
+  }
+
+  // Cavity color
+  float darkAmount = deepestT * darkness;
+  vec3 cavityColor = mix(mouthColor, vec3(0.0), darkAmount);
+
+  // Start with cavity
+  vec3 finalColor = mix(cavityColor, lipOutlineColor, lipOutline);
+
+  // Two bunny teeth
+  float toothMask = 0.0;
+
+  // Left tooth
+  vec2 leftTooth = baseP - vec2(-toothSpacing, toothDrop);
+  float leftShape = roundedBox(leftTooth, vec2(toothWidth, toothHeight), toothRoundness);
+  float leftMask = step(leftShape, 0.0);
+
+  // Right tooth
+  vec2 rightTooth = baseP - vec2(toothSpacing, toothDrop);
+  float rightShape = roundedBox(rightTooth, vec2(toothWidth, toothHeight), toothRoundness);
+  float rightMask = step(rightShape, 0.0);
+
+  toothMask = max(leftMask, rightMask);
+  toothMask *= opening;
+
+  // Teeth go over the cavity (behind the lips)
+  finalColor = mix(cavityColor, toothColor, toothMask);
+
+  // Lip outline is ALWAYS on top
+  finalColor = mix(finalColor, lipOutlineColor, lipOutline);
+
+  float alpha = max(opening, toothMask);
+  gl_FragColor = vec4(finalColor, alpha);`
+      );
+
+    mat.userData.shader = shader;
+  };
+
+  return mat;
+}
+
 // --- Animated Nad Model Component ---
 interface NadModelProps {
   position?: [number, number, number];
@@ -860,7 +1057,7 @@ const NadModel: React.FC<NadModelProps> = ({
     };
   }, [model, equippedSkin]);
 
-  // Base character parts (mouth, mouth2) - always present, loaded from manifest
+  // Base character parts (mouth) - always present, loaded from manifest
   // like attachments but not controlled by skinConfig.attachments.
   useEffect(() => {
     let disposed = false;
@@ -870,7 +1067,7 @@ const NadModel: React.FC<NadModelProps> = ({
       const manifest = await loadAttachmentManifest();
       if (!manifest || disposed) return;
 
-      for (const partName of ["mouth", "mouth2"] as const) {
+      for (const partName of ["mouth"] as const) {
         const entry = manifest[partName];
         if (!entry) {
           console.warn(`[ThreeScene] base part "${partName}" not in manifest`);
@@ -884,7 +1081,7 @@ const NadModel: React.FC<NadModelProps> = ({
         const prototype = await loadAttachment(entry.file);
         if (disposed || !prototype) continue;
 
-        // Apply mouth_wobble shader to mouth/mouth2
+        // Apply mouth_wobble shader to the mouth mesh
         const pal = equippedSkin?.skinConfig?.palette || {};
         const mouthMat = createMouthMaterial({
           mouth: pal.body || "#ff2b05",
