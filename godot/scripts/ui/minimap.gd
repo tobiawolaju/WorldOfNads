@@ -205,13 +205,17 @@ func _refresh_targets() -> void:
 		if camera_candidate is Camera3D:
 			local_camera = camera_candidate
 
-	if chicken_target == null or not is_instance_valid(chicken_target):
+	# Resolve the manager once and reuse it. It is a persistent node, so a
+	# tree-wide find_child on every ~33 Hz update (while the chicken/lootbox
+	# have not spawned yet) is pure waste.
+	if player_manager == null or not is_instance_valid(player_manager):
 		player_manager = _find_player_manager()
+
+	if chicken_target == null or not is_instance_valid(chicken_target):
 		if player_manager != null and player_manager.has_method("get_chicken_node"):
 			chicken_target = player_manager.call("get_chicken_node")
 
 	if lootbox_target == null or not is_instance_valid(lootbox_target):
-		player_manager = _find_player_manager()
 		if player_manager != null and player_manager.has_method("get_lootbox_node"):
 			lootbox_target = player_manager.call("get_lootbox_node")
 
