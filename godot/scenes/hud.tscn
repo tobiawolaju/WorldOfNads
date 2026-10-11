@@ -309,20 +309,20 @@ alignment = 2
 
 [node name="username" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer2" unique_id=229289726]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
 theme_override_constants/shadow_outline_size = 0
 theme_override_font_sizes/font_size = 12
-text = "username"
+text = "...."
 
 [node name="BoxContainer3" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1509763072]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -251.0
-offset_top = 199.0
-offset_right = -27.0
-offset_bottom = 217.0
+offset_left = -84.0
+offset_top = 176.0
+offset_right = -26.0
+offset_bottom = 196.0
 grow_horizontal = 0
 size_flags_horizontal = 0
 size_flags_vertical = 4
@@ -333,7 +333,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0, 1, 0, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
 theme_override_font_sizes/font_size = 13
-text = "BeNad:"
+text = "...."
 
 [node name="status" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=1931454316]
 layout_mode = 2
@@ -341,7 +341,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
 theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxTexture_p3vpr")
-text = "you are holding the chicken"
+text = "...."
 
 [node name="CompassBar" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2" unique_id=1476260550]
 modulate = Color(1, 1, 1, 0.6509804)
@@ -361,14 +361,16 @@ fade_color = Color(0, 0, 0, 0)
 north_label_color = Color(1, 1, 1, 1)
 
 [node name="subtitle" type="Label" parent="CanvasLayer/BoxContainer/Node2" unique_id=1792981601]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -186.0
-offset_top = 178.0
-offset_right = -29.0
-offset_bottom = 195.0
-grow_horizontal = 0
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -78.5
+offset_top = -17.0
+offset_right = 78.5
+grow_horizontal = 2
+grow_vertical = 0
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 12
 text = "Stand your Ground for 60s"
@@ -605,7 +607,6 @@ icon_alignment = 1
 expand_icon = true
 
 [node name="Sprite2D" type="Sprite2D" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" unique_id=1038089062]
-modulate = Color(0.88235295, 0.98039216, 1, 1)
 position = Vector2(16.59491, 30)
 rotation = -0.37524578
 scale = Vector2(0.5, 0.442)
@@ -616,7 +617,6 @@ single_jump_image = ExtResource("15_qpprf")
 double_jump_image = ExtResource("14_3xg78")
 
 [node name="Sprite2D2" type="Sprite2D" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" unique_id=1131521826]
-modulate = Color(0.88235295, 0.98039216, 1, 1)
 position = Vector2(21.59491, 109)
 scale = Vector2(0.5, 0.442)
 texture = ExtResource("15_48y67")

@@ -46,7 +46,7 @@ material_override = SubResource("StandardMaterial3D_jjeh5")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_l0bqs")
 
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=183772736]
+[node name="box" type="MeshInstance3D" parent="." unique_id=183772736]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2848841, 0)
 material_override = SubResource("StandardMaterial3D_036xw")
 cast_shadow = 0

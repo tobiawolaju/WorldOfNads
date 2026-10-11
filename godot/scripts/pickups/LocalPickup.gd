@@ -129,7 +129,6 @@ func _ready() -> void:
 	can_sleep = true
 	_mesh = _find_mesh()
 	_apply_mesh_offset()
-	_apply_power_up_color()
 
 
 func _find_mesh() -> MeshInstance3D:
@@ -137,27 +136,6 @@ func _find_mesh() -> MeshInstance3D:
 		if child is MeshInstance3D:
 			return child
 	return null
-
-
-# Tints every mesh child with the power-up color. The scene's material_overrides
-# are shared across instances, so each mesh gets its own duplicated material -
-# otherwise coloring one pickup would recolor them all.
-func _apply_power_up_color() -> void:
-	var color := power_up_color()
-	for child in get_children():
-		var mi := child as MeshInstance3D
-		if mi == null:
-			continue
-		var base_mat := mi.material_override
-		if base_mat is StandardMaterial3D:
-			var mat: StandardMaterial3D = (base_mat as StandardMaterial3D).duplicate()
-			mat.albedo_color = color
-			mi.material_override = mat
-		else:
-			var mat := StandardMaterial3D.new()
-			mat.albedo_color = color
-			mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			mi.material_override = mat
 
 
 func _apply_mesh_offset() -> void:

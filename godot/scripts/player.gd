@@ -19,6 +19,17 @@ const JUMP_BUFFER_TIME: float = 0.12
 const COYOTE_TIME: float = 0.10
 const DOUBLE_JUMP_MIN_MULTIPLIER: float = 0.3
 
+# --- POWER-UP EFFECTS ---
+## SPEED_BURST (RUSH): multiply run speed for a few seconds when used.
+const SPEED_BURST_MULT: float = 2.0
+const SPEED_BURST_DURATION: float = 8.0
+## MEGA_LEAP (LEAP): super jumps at this multiple of the normal jump force for
+## MEGA_LEAP_DURATION seconds.
+const MEGA_LEAP_MULT: float = 4.0
+const MEGA_LEAP_DURATION: float = 8.0
+## Shared empty result from get_active_power_up(), so the idle case allocates nothing.
+const NO_ACTIVE_POWER_UP := {}
+
 # --- STORM DAMAGE ---
 @export var storm_center: Vector2 = Vector2(0, 0)
 @export var storm_radius: float = 10.0
@@ -96,6 +107,15 @@ var last_pickup_request_ms: int = 0
 var held_local_pickup: RigidBody3D = null
 ## The power-up granted by the currently carried pickup (LocalPickup.PowerUpMode).
 var held_power_up_mode: int = LocalPickup.PowerUpMode.NONE
+## Timed power-up that is currently running (LocalPickup.PowerUpMode), or NONE.
+## Only one runs at a time; using another replaces it.
+var _active_power_up_mode: int = LocalPickup.PowerUpMode.NONE
+## Seconds left on the running timed power-up.
+var _active_power_up_remaining: float = 0.0
+## Total duration of the running timed power-up, for the HUD's progress ring.
+var _active_power_up_duration: float = 0.0
+## Set when MEGA_LEAP (LEAP) is used; consumed in the next physics step to launch.
+var _mega_leap_pending: bool = false
 ## Cached once; avoids a tree search every pickup/drop.
 var _cached_buttons_hud: Node = null
 
@@ -457,6 +477,12 @@ func request_pickup() -> void:
 func _perform_pickup_request() -> void:
 	if not _is_movement_allowed():
 		return
+	# While the LEAP power-up is running, the Action (GRAB) button is the mega
+	# jump button — but only while grounded: mid-air presses are ignored so LEAP
+	# can't be chained into an infinite double-jump. The normal jump is unaffected.
+	if _is_mega_leap_active():
+		_trigger_mega_leap()
+		return
 	if _is_local_holding_pickup():
 		# A held power-up is USED, not dropped: it vanishes and recycles to a
 		# random far-away spot on the map (effects are not implemented yet).
@@ -539,6 +565,12 @@ func _physics_process(delta: float) -> void:
 	_update_camera_zoom(delta)
 	_update_camera_collision_logic(delta)
 	_landing_bob_timer = maxf(0.0, _landing_bob_timer - delta)
+	if _active_power_up_remaining > 0.0:
+		_active_power_up_remaining = maxf(0.0, _active_power_up_remaining - delta)
+		if _active_power_up_remaining <= 0.0:
+			# Timed effect ran out.
+			_active_power_up_mode = LocalPickup.PowerUpMode.NONE
+			_active_power_up_duration = 0.0
 
 	var input_dir := Vector2.ZERO
 	var movement_allowed := _is_movement_allowed()
@@ -676,6 +708,9 @@ func _physics_process(delta: float) -> void:
 		# player sitting at the threshold doing nothing until the penalty times out.
 		_stamina_held_empty = false
 	var speed_to_use := SPEED * (STAMINA_EMPTY_SPEED_MULT if _stamina_throttled else 1.0)
+	# RUSH: while the burst is active, run at a multiple of the normal speed.
+	if _active_power_up_mode == LocalPickup.PowerUpMode.SPEED_BURST and _active_power_up_remaining > 0.0:
+		speed_to_use *= SPEED_BURST_MULT
 
 	# Drain and regen are mutually exclusive: while the player is genuinely draining,
 	# stamina only falls. Any other situation regenerates instead, which is what lets a
@@ -758,6 +793,12 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0, FRICTION * delta)
 		velocity.z = move_toward(velocity.z, 0, FRICTION * delta)
 		velocity_y = 0.0
+
+	if _mega_leap_pending:
+		# Applied here (not from input) so the grounded "velocity_y = 0" above
+		# cannot wipe it before it reaches velocity.y.
+		_mega_leap_pending = false
+		velocity_y = _current_jump_velocity() * MEGA_LEAP_MULT
 
 	velocity.y = velocity_y
 
@@ -1189,27 +1230,90 @@ func _drop_local_pickup() -> void:
 	item.drop(throw_dir * LOCAL_PICKUP_THROW_STRENGTH)
 
 # Uses the held power-up pickup: it is consumed here and teleports to a random
-# far-away spot on the map instead of being dropped at the player's feet. The
-# actual power-up effect is not implemented yet; this only frees the HUD slot.
+# far-away spot on the map instead of being dropped at the player's feet, then
+# its effect is applied.
 func _use_held_power_up() -> void:
+	var mode := held_power_up_mode
 	var item := held_local_pickup
 	held_local_pickup = null
 	held_power_up_mode = LocalPickup.PowerUpMode.NONE
+	# Activate before refreshing the HUD so the caption can switch straight to the
+	# running effect instead of flashing GRAB for a frame.
+	_activate_power_up(mode)
 	_update_hud_power_up()
 	if item != null and is_instance_valid(item) and item.has_method("consume_and_respawn"):
 		item.call("consume_and_respawn", global_position)
 
-# Shows the carried power-up (if any) on the HUD Action button.
+# Applies the one-shot effect for a consumed power-up. Modes without an effect
+# yet simply do nothing (the pickup is still consumed and recycled).
+func _activate_power_up(mode: int) -> void:
+	match mode:
+		LocalPickup.PowerUpMode.SPEED_BURST:
+			# RUSH: 2x run speed for 8 seconds.
+			_start_timed_power_up(LocalPickup.PowerUpMode.SPEED_BURST, SPEED_BURST_DURATION)
+		LocalPickup.PowerUpMode.MEGA_LEAP:
+			# LEAP: 8 seconds during which the Action button launches 4x jumps,
+			# plus an immediate launch on use.
+			_start_timed_power_up(LocalPickup.PowerUpMode.MEGA_LEAP, MEGA_LEAP_DURATION)
+			_trigger_mega_leap()
+		_:
+			pass
+
+# True while the timed MEGA_LEAP effect is still running.
+func _is_mega_leap_active() -> bool:
+	return _active_power_up_mode == LocalPickup.PowerUpMode.MEGA_LEAP and _active_power_up_remaining > 0.0
+
+# Launches a 4x mega jump, one per time the player leaves the ground. The launch
+# is deferred to the next physics step so the grounded "velocity_y = 0" reset
+# can't cancel it. Mid-air presses during the LEAP window are ignored, so the
+# player must land before the Action button launches another mega jump.
+func _trigger_mega_leap() -> void:
+	if not is_on_floor():
+		return
+	_mega_leap_pending = true
+
+# Starts (or replaces) the single timed power-up the HUD draws a ring for.
+func _start_timed_power_up(mode: int, duration: float) -> void:
+	_active_power_up_mode = mode
+	_active_power_up_duration = duration
+	_active_power_up_remaining = duration
+
+# HUD API: describes the running timed power-up, or an empty dictionary when none.
+func get_active_power_up() -> Dictionary:
+	if _active_power_up_mode == LocalPickup.PowerUpMode.NONE or _active_power_up_remaining <= 0.0:
+		return NO_ACTIVE_POWER_UP
+	return {
+		"label": LocalPickup.POWER_UP_LABELS.get(_active_power_up_mode, ""),
+		"color": LocalPickup.POWER_UP_COLORS.get(_active_power_up_mode, Color.WHITE),
+		"remaining": _active_power_up_remaining,
+		"duration": _active_power_up_duration,
+	}
+
+# Shows the carried power-up (if any) on the HUD Action button. `duration` tells
+# the HUD how long the held pickup's effect would run, so it can draw the
+# countdown ring as a full "ready" ring while the pickup is carried.
 func _update_hud_power_up() -> void:
 	var buttons := _find_buttons_hud()
 	if buttons == null or not buttons.has_method("show_power_up"):
 		return
 	var label := ""
 	var color: Color = Color.WHITE
+	var duration := 0.0
 	if _is_local_holding_pickup() and held_power_up_mode != LocalPickup.PowerUpMode.NONE:
 		label = str(held_local_pickup.call("power_up_label"))
 		color = held_local_pickup.call("power_up_color")
-	buttons.call("show_power_up", label, color)
+		duration = _timed_duration_for(held_power_up_mode)
+	buttons.call("show_power_up", label, color, duration)
+
+# How long the given power-up's effect runs once used, or 0 for pickups with no
+# timed effect (they are consumed without a countdown).
+func _timed_duration_for(mode: int) -> float:
+	match mode:
+		LocalPickup.PowerUpMode.SPEED_BURST:
+			return SPEED_BURST_DURATION
+		LocalPickup.PowerUpMode.MEGA_LEAP:
+			return MEGA_LEAP_DURATION
+	return 0.0
 
 # Finds the HUD node that owns the Action button (buttons.gd). Only scanned once.
 func _find_buttons_hud() -> Node:
@@ -1706,14 +1810,12 @@ func set_animation_state(new_state: String):
 func _handle_animations(move_dir: Vector3) -> void:
 	if not is_local: return
 	if not _is_movement_allowed():
-		current_animation = "idle"
-		_play_anim("idle")
+		_set_anim("idle")
 		_was_on_floor = is_on_floor()
 		_last_world_y = global_position.y
 		return
 	if _is_sliding:
-		current_animation = "runningslide"
-		_play_anim("runningslide")
+		_set_anim("runningslide")
 		_last_world_y = global_position.y
 		return
 	var on_floor_now := is_on_floor()
@@ -1729,11 +1831,9 @@ func _handle_animations(move_dir: Vector3) -> void:
 		# the run loop alive at any throttle strength; the speed test is kept so residual
 		# momentum still animates after input is released.
 		if move_dir.length_squared() > 0.05 or horizontal_speed_sq > 0.25:
-			current_animation = "running"
-			_play_anim("running")
+			_set_anim("running")
 		else:
-			current_animation = "idle"
-			_play_anim("idle")
+			_set_anim("idle")
 		return
 	if _was_on_floor:
 		_airborne_start_y = current_y
@@ -1743,11 +1843,9 @@ func _handle_animations(move_dir: Vector3) -> void:
 	var vertical_distance_from_takeoff: float = absf(height_from_takeoff)
 	var is_falling: bool = ((velocity_y <= 0.0 and height_from_takeoff < 0.0 and vertical_distance_from_takeoff >= max_jump_height) or (y_delta < -0.01 and height_from_takeoff < 0.0 and vertical_distance_from_takeoff >= max_jump_height))
 	if is_falling:
-		current_animation = "falling"
-		_play_anim("falling")
+		_set_anim("falling")
 	else:
-		current_animation = "runningjump"
-		_play_anim("runningjump")
+		_set_anim("runningjump")
 	_last_world_y = current_y
 
 func _is_movement_allowed() -> bool:
@@ -1780,6 +1878,12 @@ func _get_cached_lootbox_node() -> RigidBody3D:
 			_cached_lootbox_node = lootbox
 			return _cached_lootbox_node
 	return null
+
+func _set_anim(anim_name: String) -> void:
+	if current_animation == anim_name:
+		return
+	current_animation = anim_name
+	_play_anim(anim_name)
 
 func _play_anim(anim_name: String) -> void:
 	if anim_state_machine:
