@@ -10,6 +10,7 @@ const DAMAGE_FLASH_TIME: float = 0.15
 var _cached_player: Node = null
 var _alpha: float = 0.0
 var _last_health: float = -1.0
+var _last_value: float = -1.0
 var _damage_flash_timer: float = 0.0
 var _is_flashing_low: bool = false
 var _last_fill_color: Color = Color(-1.0, -1.0, -1.0, -1.0)  # Sentinel = "not applied yet"
@@ -34,9 +35,14 @@ func _process(delta: float) -> void:
 	if _cached_player.has_method("get_max_health"):
 		max_health = _cached_player.get_max_health()
 	
-	# Update bar value
-	value = (current_health / max_health) * 100.0
-	max_value = 100.0
+	# Update bar value — only when the fraction actually changed. Writing value
+	# every frame dirties the control for a redraw even when health is static,
+	# which is the common case.
+	var ratio := (current_health / max_health) * 100.0
+	if not is_equal_approx(ratio, _last_value):
+		_last_value = ratio
+		value = ratio
+		max_value = 100.0
 
 	# Detect damage taken (health decreased)
 	if _last_health >= 0.0 and current_health < _last_health:
@@ -50,6 +56,14 @@ func _process(delta: float) -> void:
 
 	# Show when not at full health
 	var show_bar := current_health < max_health
+
+	# Fast path: health unchanged, fade settled, nothing flashing — skip the
+	# per-frame modulate / fill-color writes entirely (each one dirties the control).
+	var target_alpha := 1.0 if show_bar else 0.0
+	if _damage_flash_timer <= 0.0 and not _is_flashing_low \
+			and is_equal_approx(_alpha, target_alpha) \
+			and is_equal_approx((current_health / max_health) * 100.0, _last_value):
+		return
 
 	# Handle damage flash (white flash)
 	if _damage_flash_timer > 0.0:

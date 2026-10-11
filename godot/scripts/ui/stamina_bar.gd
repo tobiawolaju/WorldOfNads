@@ -10,6 +10,7 @@ const FADE_TIME: float = 0.25
 
 var _cached_player: Node = null
 var _alpha: float = 0.0
+var _last_value: float = -1.0
 
 
 func _ready() -> void:
@@ -28,7 +29,12 @@ func _process(delta: float) -> void:
 		_set_alpha(0.0, delta)
 		return
 
-	value = _cached_player.get("stamina")
+	# Only write value when the stamina actually changed - a repeated write
+	# dirties the control for a redraw every frame.
+	var stamina_value := float(_cached_player.get("stamina"))
+	if not is_equal_approx(stamina_value, _last_value):
+		_last_value = stamina_value
+		value = stamina_value
 
 	var holding := false
 	for method in ["_is_local_holding_chicken", "_is_local_holding_lootbox", "_is_local_holding_pickup"]:
@@ -36,7 +42,10 @@ func _process(delta: float) -> void:
 			holding = true
 			break
 
-	_set_alpha(1.0 if holding else 0.0, delta)
+	var target_alpha := 1.0 if holding else 0.0
+	if is_equal_approx(_alpha, target_alpha) and is_equal_approx(stamina_value, _last_value):
+		return
+	_set_alpha(target_alpha, delta)
 
 
 func _set_alpha(target: float, delta: float) -> void:
