@@ -111,6 +111,32 @@ const LOCAL_ITEMS = storeItemsData as StoreItem[];
 
 const getStoreImageUrl = (item: StoreItem) => item.image || `/skins_png/${item.id}.png`;
 
+/**
+ * Group key for a store item: the combo it belongs to, so its shaded and
+ * unshaded ("Flat") variants collapse into one card. Numeric ids pair up as
+ * 2n+1 (shaded) / 2n+2 (unshaded); named ids pair by stripping "-unshaded".
+ */
+function skinGroupKey(itemId: string): string {
+  const id = String(itemId ?? "").trim();
+  if (/^\d+$/.test(id)) return `combo-${Math.floor((Number(id) - 1) / 2)}`;
+  return `named-${id.replace(/-unshaded$/i, "")}`;
+}
+
+/** Base display name for a skin, dropping the " (Flat)" variant suffix. */
+function skinBaseName(name: string): string {
+  return String(name || "").replace(/\s*\(Flat\)\s*$/i, "");
+}
+
+/**
+ * True for the unshaded ("Flat") edition of a skin: even numeric ids and ids
+ * ending in "-unshaded". Mirrors the shaded/unshaded parity used elsewhere.
+ */
+function isFlatSkinId(itemId: string): boolean {
+  const id = String(itemId ?? "").trim();
+  if (/^\d+$/.test(id)) return Number(id) % 2 === 0;
+  return /-unshaded$/i.test(id);
+}
+
 function prefetchLinks(urls: string[]) {
   for (const href of urls) {
     const link = document.createElement("link");
@@ -133,6 +159,10 @@ function getXPForLevel(level: number): number {
 
 export default function Dashboard() {
   const [storeItems, setStoreItems] = useState<StoreItem[]>(LOCAL_ITEMS);
+  // Random variant (shaded vs flat) picked per skin, re-rolled each time the
+  // Store tab opens so the grid shows one card per skin instead of both
+  // shaded/unshaded editions side by side.
+  const [storeVariantPicks, setStoreVariantPicks] = useState<Record<string, number>>({});
   useEffect(() => {
     let mounted = true;
     const fetchSkins = async () => {
@@ -215,6 +245,24 @@ export default function Dashboard() {
   const [storeFilter, setStoreFilter] = useState<"all" | "common" | "rare" | "epic" | "legendary">("all");
   const [supplyData, setSupplyData] = useState<Record<number, { minted: number; maxSupply: number }>>({});
 
+  // Re-roll the shaded/flat variant shown for each skin every time the Store
+  // tab opens, so the grid lists one card per skin (not both editions).
+  useEffect(() => {
+    if (tab !== "store") return;
+    setStoreVariantPicks((prev) => {
+      const next: Record<string, number> = { ...prev };
+      for (const item of storeItems) {
+        const key = skinGroupKey(item.id);
+        if (key !== undefined) {
+          // Deterministic-ish roll per group: alternate/random per open.
+          next[key] = Math.floor(Math.random() * 2);
+        }
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
   const currentStoreItem = selectedStore ? storeItems.find((i) => i.id === selectedStore) || null : null;
   const isSelectedStoreOwned = Boolean(
     currentStoreItem &&
@@ -225,6 +273,27 @@ export default function Dashboard() {
   const hasEnoughXP = xpBalance >= selectedItemXP;
   const selectedItemLevel = getLevelFromXP(selectedItemXP);
   const displayedSkin = (tab === "store" && currentStoreItem) ? currentStoreItem : equippedSkin;
+
+  // Grouped store list: one card per skin (combo), showing the shaded or flat
+  // variant rolled for this store-tab open. Each group owns both editions, so
+  // the toggle squares in the preview swap between them.
+  const storeGroups = useMemo(() => {
+    const map = new Map<string, StoreItem[]>();
+    for (const item of storeItems) {
+      const key = skinGroupKey(item.id);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(item);
+    }
+    return Array.from(map.entries()).map(([key, items]) => {
+      const pickIndex = storeVariantPicks[key] ?? 0;
+      const pick = items[pickIndex % items.length] ?? items[0];
+      return { key, items, pick };
+    });
+  }, [storeItems, storeVariantPicks]);
+
+  const currentStoreGroup = currentStoreItem
+    ? storeGroups.find((g) => g.items.some((i) => i.id === currentStoreItem.id)) || null
+    : null;
 
   const [matches, setMatches] = useState<Match[]>(staticMatches as Match[]);
   const [rewards, setRewards] = useState<RewardItem[]>([]);
@@ -739,7 +808,35 @@ export default function Dashboard() {
 
         {tab === "store" && currentStoreItem && (
           <div className="skin-preview">
-            <p className="skin-preview__name">{currentStoreItem.name}</p>
+            {currentStoreGroup && currentStoreGroup.items.length > 1 && (
+              <div className="skin-preview__variants">
+                {currentStoreGroup.items
+                  .slice()
+                  .sort((a, b) => Number(isFlatSkinId(a.id)) - Number(isFlatSkinId(b.id)))
+                  .map((variant) => {
+                    const flat = isFlatSkinId(variant.id);
+                    const active = variant.id === currentStoreItem.id;
+                    return (
+                      <button
+                        key={variant.id}
+                        type="button"
+                        className={`skin-preview__variant ${active ? "is-active" : ""}`}
+                        aria-pressed={active}
+                        title={flat ? "Flat (unshaded)" : "Shaded"}
+                        onClick={() => setSelectedStore(variant.id)}
+                      >
+                        <img
+                          src={getStoreImageUrl(variant)}
+                          alt=""
+                          className={`skin-preview__variant-img ${flat ? "is-flat" : ""}`}
+                        />
+                        <span className="skin-preview__variant-label">{flat ? "Flat" : "Shaded"}</span>
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
+            <p className="skin-preview__name">{skinBaseName(currentStoreItem.name)}</p>
             <p className="skin-preview__meta">
               {isSelectedStoreOwned ? "Owned" : currentStoreItem.price}
             </p>
@@ -861,15 +958,19 @@ export default function Dashboard() {
 
             {tab === "store" && (
               <div className="store-grid">
-                {storeItems
-                  .filter((item) => storeFilter === "all" || item.tier === storeFilter)
-                  .map((item) => {
-                    const isOwned = item.id === "s-default" || item.id === "s-default-unshaded" || (item.onChainId && ownedSkinIds.includes(item.onChainId));
+                {storeGroups
+                  .filter((group) => storeFilter === "all" || group.pick.tier === storeFilter)
+                  .map((group) => {
+                    const item = group.pick;
+                    const isOwned = group.items.some(
+                      (g) => g.id === "s-default" || g.id === "s-default-unshaded" || (g.onChainId && ownedSkinIds.includes(g.onChainId))
+                    );
+                    const isSelected = group.items.some((g) => g.id === selectedStore);
                     const itemSupply = item.onChainId ? supplyData[item.onChainId] : null;
                     return (
                     <div
-                      key={item.id}
-                      className={`store-card ${isOwned ? "owned" : "unowned"} ${selectedStore === item.id ? "selected" : ""}`}
+                      key={group.key}
+                      className={`store-card ${isOwned ? "owned" : "unowned"} ${isSelected ? "selected" : ""}`}
                       onClick={() => setSelectedStore(item.id)}
                     >
                       <div className="store-card-image" style={{ backgroundImage: `url(${getStoreImageUrl(item)})` }}>
@@ -881,7 +982,7 @@ export default function Dashboard() {
                         )}
                       </div>
                       <div className="store-card-info">
-                        <h3>{item.name}</h3>
+                        <h3>{skinBaseName(item.name)}</h3>
                         <p>
                           {isOwned ? "Owned" : item.price}
                         </p>
