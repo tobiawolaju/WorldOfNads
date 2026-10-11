@@ -122,6 +122,7 @@ var held_local_pickup: RigidBody3D = null
 @export var joystick_orbit_invert_y: bool = false
 @export var touch_edge_ignore_margin: float = 32.0 # Ignore touches that START within this many px of a screen edge
 @export var low_pitch_ease_speed: float = 2.5 # While moving below the movement pitch mark, ease pitch up to it (0 = off)
+@export var movement_pitch_raise_fraction: float = 0.1 # While moving, raise the pitch to this fraction of the range down from max_pitch (0.1 = 10%)
 @export var swipe_down_threshold: float = 20.0
 @export var swipe_up_threshold: float = 70.0
 @export var swipe_x_tolerance: float = 80.0
@@ -165,9 +166,10 @@ var _camera_retreat_velocity: float = 0.0
 var _zoom_cap_override: float = -1.0 # < 0 means "use the authored max_zoom"
 var _effective_camera_distance: float = 0.0
 # Temporary movement pitch auto-raise. While moving, the camera pitch is eased
-# up to the movement pitch mark (20% of the range down from max_pitch) so its
-# near plane never cuts the floor. The raise is temporary: once the player stops
-# moving, the pitch eases back to the angle it had before the raise kicked in.
+# up to the movement pitch mark (movement_pitch_raise_fraction of the range down
+# from max_pitch) so its near plane never cuts the floor. The raise is
+# temporary: once the player stops moving, the pitch eases back to the angle it
+# had before the raise kicked in.
 var _movement_pitch_ease_active: bool = false
 var _pitch_before_movement_ease: float = -1.0
 @export var max_jump_height: float = DEFAULT_MAX_JUMP_HEIGHT
@@ -1506,17 +1508,18 @@ func _update_camera_collision_logic(delta: float) -> void:
 				_camera_collision_distance = move_toward(_camera_collision_distance, target_collision_distance, delta * 2.0 * CAMERA_COLLISION_RECOVERY_SPEED)
 
 # While moving, the camera pitch is pulled up to the movement pitch mark — the
-# point 20% of the range down from max_pitch — so the camera rises out of the
-# lowest band where its near plane clips the floor and the player sees through
-# it. The raise is temporary: when the player stops moving, the pitch eases back
-# down to the angle they had before the raise kicked in. Manual input still
-# wins while pitching above the mark; only below the mark does movement nudge
-# the camera up. Set low_pitch_ease_speed to 0 to disable.
+# point movement_pitch_raise_fraction (10% by default) of the range down from
+# max_pitch — so the camera rises out of the lowest band where its near plane
+# clips the floor and the player sees through it. The raise is temporary: when
+# the player stops moving, the pitch eases back down to the angle they had
+# before the raise kicked in. Manual input still wins while pitching above the
+# mark; only below the mark does movement nudge the camera up. Set
+# low_pitch_ease_speed to 0 to disable.
 func _apply_movement_pitch_ease(delta: float) -> void:
 	if low_pitch_ease_speed <= 0.0:
 		return
 	var pitch_range := maxf(max_pitch - min_pitch, 0.001)
-	var movement_pitch_mark: float = max_pitch - 0.2 * pitch_range
+	var movement_pitch_mark: float = max_pitch - movement_pitch_raise_fraction * pitch_range
 	if camera_is_moving:
 		if not _movement_pitch_ease_active:
 			_movement_pitch_ease_active = true
