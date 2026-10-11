@@ -107,6 +107,71 @@
   letter-spacing: 0.12em;
 }
 
+/* Shaded / Flat variant toggle: two small squares above the preview name.
+   The parent .skin-preview is pointer-events:none, so buttons opt back in. */
+.skin-preview__variants {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.skin-preview__variant {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  border: 2px solid rgba(128, 128, 128, 0.4);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.skin-preview__variant:hover {
+  border-color: #fc00d9;
+  transform: translateY(-1px);
+}
+
+.skin-preview__variant.is-active {
+  border-color: #fc00d9;
+  box-shadow: 0 0 0 2px rgba(252, 0, 217, 0.35);
+}
+
+.skin-preview__variant-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.skin-preview__variant-img.is-flat {
+  filter: saturate(0.15) contrast(0.95) brightness(1.05);
+}
+
+.skin-preview__variant-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .skin-preview__variant {
+    background: rgba(30, 30, 44, 0.9);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+  .skin-preview__variant-label {
+    color: #ffffff;
+  }
+  .skin-preview__variant-img {
+    background: #1e1e2c;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .skin-preview {
     color: #ffffff;
