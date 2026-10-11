@@ -690,8 +690,11 @@ const NadModel: React.FC<NadModelProps> = ({
           }
           newMat = createMouthMaterial(
             {
-              mouth: pal.body || "#ff2b05",
-              lipOutline: pal.cheek || "#ff7d00",
+              // Fixed mouth colors (mirrors skin.tscn's ShaderMaterial):
+              // mouth_color #ff2b00, lip_outline_color #ff7d00. The mouth
+              // never inherits the skin palette — only the body/cheek do.
+              mouth: "#ff2b00",
+              lipOutline: "#ff7d00",
               tooth: "#fff2d9",
             },
             {
