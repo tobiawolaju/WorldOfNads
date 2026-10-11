@@ -39,6 +39,9 @@ const MATCH_SRC: Texture2D = preload("res://assets/img/lobbybg.jpeg")
 const MATCH_CARD_SHADER: Shader = preload("res://assets/shaders/match_card.gdshader")
 const STORE_PLATE: Texture2D = preload("res://assets/img/store_info_plate.png")
 const SKIN_DIR: String = "res://assets/img/skins/"
+# Flatten filter for the shaded/flat toggle's flat square, ported from
+# `.skin-preview__variant.is-flat .skin-preview__variant-img` in Dashboard.css.
+const THUMB_FLAT_SHADER: Shader = preload("res://assets/shaders/thumb_flat.gdshader")
 # Fallback avatar when Privy has no profile picture, mirroring the frontend's
 # `/loadinglogo.png`. The nav badge is native-size chrome, not part of the zoomed
 # right panel, so these are authored at CSS pixel values.
@@ -130,6 +133,12 @@ const EVENT_STATUSES := ["upcoming", "live", "completed"]
 const STORE_TIERS := ["all", "common", "rare", "epic", "legendary"]
 const DEFAULT_OWNED_IDS := ["s-default", "s-default-unshaded"]
 
+# The shaded/flat toggle square. `.skin-preview__variant` is a 36px artwork
+# (`object-fit: cover`) inside a 2px border, so the button is 40px before the
+# panel zoom scales it. These are native chrome sizes, like the preview name.
+const VARIANT_THUMB_SIZE: float = 36.0
+const VARIANT_BORDER_WIDTH: int = 2
+
 @onready var _preview_root: Node3D = get_node_or_null("CanvasLayer/PreviewView/SubViewport/Pivot/PreviewRoot") as Node3D
 @onready var _preview_pivot: Node3D = get_node_or_null("CanvasLayer/PreviewView/SubViewport/Pivot") as Node3D
 @onready var _preview_view: SubViewportContainer = get_node_or_null("CanvasLayer/PreviewView") as SubViewportContainer
@@ -152,6 +161,8 @@ const DEFAULT_OWNED_IDS := ["s-default", "s-default-unshaded"]
 @onready var _nav_dismiss: Button = get_node_or_null("CanvasLayer/NavDismiss") as Button
 @onready var _nav_wallet: Button = get_node_or_null("CanvasLayer/TopNav/Badge/Wallet") as Button
 @onready var _skin_preview: Control = get_node_or_null("CanvasLayer/SkinPreview") as Control
+@onready var _skin_preview_variants_margin: Control = get_node_or_null("CanvasLayer/SkinPreview/VariantsMargin") as Control
+@onready var _skin_preview_variants: HBoxContainer = get_node_or_null("CanvasLayer/SkinPreview/VariantsMargin/Variants") as HBoxContainer
 @onready var _skin_preview_name: Label = get_node_or_null("CanvasLayer/SkinPreview/Name") as Label
 @onready var _skin_preview_meta: Label = get_node_or_null("CanvasLayer/SkinPreview/Meta") as Label
 
@@ -218,6 +229,10 @@ var owned_ids: Array[String] = []
 var equipped_skin_id: String = DEFAULT_SKIN_ID
 var selected_match_id: String = ""
 var selected_store_id: String = ""
+# Which edition of each skin the store grid shows: a random roll per group,
+# re-rolled every time the Store tab opens, so the grid lists one card per skin
+# instead of both shaded/unshaded editions (Dashboard.tsx storeVariantPicks).
+var _store_variant_picks: Dictionary = {}
 
 var energy: int = DEFAULT_ENERGY
 var xp: float = 0.0
@@ -391,6 +406,11 @@ func _on_tab_pressed(next_tab: String) -> void:
 	tab = next_tab
 	selected_match_id = ""
 	selected_store_id = ""
+
+	if tab == TAB_STORE:
+		# Dashboard.tsx re-rolls each skin's shaded/flat variant whenever the
+		# Store tab opens, so the grid gets one card per skin.
+		_reroll_store_variants()
 
 	if tab == TAB_EVENTS:
 		if previous_tab == TAB_STORE:
@@ -1201,22 +1221,30 @@ func _refresh_store() -> void:
 		_store_grid.remove_child(child)
 		child.queue_free()
 
-	for item in store_items:
-		if store_filter != "all" and str(item.get("tier", "")) != store_filter:
+	# One card per skin (group), showing the shaded or flat edition rolled for
+	# this store open, exactly like Dashboard.tsx's storeGroups.
+	for group: Dictionary in _store_groups():
+		var pick: Dictionary = group.get("pick", {})
+		if store_filter != "all" and str(pick.get("tier", "")) != store_filter:
 			continue
-		_store_grid.add_child(_build_store_card(item))
+		_store_grid.add_child(_build_store_card(group))
 
 
-func _build_store_card(item: Dictionary) -> Control:
+func _build_store_card(group: Dictionary) -> Control:
+	var item: Dictionary = group.get("pick", {})
 	var item_id: String = str(item.get("id", ""))
 	var tier: String = str(item.get("tier", "common"))
-	var selected := item_id == selected_store_id
-	var owned := _is_owned(item)
+	# Selection is group-level: the card stays selected while either edition is
+	# picked, and a card is "owned" when either edition is held.
+	var selected := _group_selected(group)
+	var owned := _group_owned(group)
 
 	# `.store-grid` is three 1fr tracks with a 10px gap, and the card carries a 5px
 	# margin, so each 51px track here holds a 47x43 card.
 	var card := Panel.new()
 	card.set_meta("item_id", item_id)
+	card.set_meta("selected", selected)
+	card.set_meta("owned", owned)
 	card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	card.add_theme_stylebox_override("panel", _store_card_style(selected))
@@ -1308,7 +1336,7 @@ func _build_store_card(item: Dictionary) -> Control:
 	padding.add_child(caption)
 
 	var name_label := Label.new()
-	name_label.text = str(item.get("name", ""))
+	name_label.text = _skin_base_name(str(item.get("name", "")))
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.clip_text = true
@@ -1365,11 +1393,17 @@ func _on_store_card_input(event: InputEvent, item_id: String) -> void:
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
 		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
-			selected_store_id = item_id
-			_apply_preview_skin(item_id)
-			_refresh_store()
-			_refresh_skin_preview()
-			_refresh_footer()
+			_select_store_item(item_id)
+
+
+# A grid card picks that group's rolled edition; a preview toggle square picks
+# the other edition of the same skin. Both land here.
+func _select_store_item(item_id: String) -> void:
+	selected_store_id = item_id
+	_apply_preview_skin(item_id)
+	_refresh_store()
+	_refresh_skin_preview()
+	_refresh_footer()
 
 
 func _apply_store_card_rest(card: Control) -> void:
@@ -1380,7 +1414,9 @@ func _apply_store_card_rest(card: Control) -> void:
 
 
 func _store_card_rest_scale(card: Control) -> Vector2:
-	if str(card.get_meta("item_id", "")) == selected_store_id:
+	# `.store-card.selected` keeps scale(1.1); selection is group-level so a card
+	# stays selected while either of its editions is picked in the toggle.
+	if bool(card.get_meta("selected", false)):
 		return Vector2(1.1, 1.1)
 	return Vector2.ONE
 
@@ -1390,21 +1426,21 @@ func _on_store_card_enter(card: Control) -> void:
 	# card keeps the higher `scale(1.1)` from `.store-card.selected`.
 	card.modulate.a = 1.0
 	card.pivot_offset = card.size * 0.5
-	if str(card.get_meta("item_id", "")) == selected_store_id:
+	if bool(card.get_meta("selected", false)):
 		card.scale = Vector2(1.1, 1.1)
 	else:
 		card.scale = Vector2(1.05, 1.05)
 
 
 func _on_store_card_exit(card: Control) -> void:
-	var item_id := str(card.get_meta("item_id", ""))
 	card.pivot_offset = card.size * 0.5
 	card.scale = _store_card_rest_scale(card)
-	if item_id == selected_store_id:
+	if bool(card.get_meta("selected", false)):
 		card.modulate.a = 1.0
 		return
-	# `.store-card` rests at opacity 0.7 and `.unowned` pulls it to 0.62.
-	card.modulate.a = 0.7 if owned_ids.has(item_id) else 0.62
+	# `.store-card` rests at opacity 0.7 and `.unowned` pulls it to 0.62. A group
+	# is owned when either of its editions is held.
+	card.modulate.a = 0.7 if bool(card.get_meta("owned", false)) else 0.62
 
 
 func _is_owned(item: Dictionary) -> bool:
@@ -1654,14 +1690,211 @@ func _refresh_skin_preview() -> void:
 	# while the preview pane is showing the gallery background.
 	if _lobby_bg != null:
 		_lobby_bg.visible = tab != TAB_STORE
+	_build_skin_variants()
 	if not visible:
 		return
 
 	var item := _selected_store_item()
 	if _skin_preview_name != null:
-		_skin_preview_name.text = str(item.get("name", ""))
+		_skin_preview_name.text = _skin_base_name(str(item.get("name", "")))
 	if _skin_preview_meta != null:
 		_skin_preview_meta.text = "Owned" if _is_owned(item) else str(item.get("price", ""))
+
+
+# ------------------------------------------------------------- shaded/flat toggle
+
+# Builds the `.skin-preview__variants` row above the preview name: one square per
+# edition of the selected skin, shaded first then flat. A skin with a single
+# edition (or nothing selected) shows no row, matching Dashboard.tsx.
+func _build_skin_variants() -> void:
+	if _skin_preview_variants == null:
+		return
+	for child in _skin_preview_variants.get_children():
+		_skin_preview_variants.remove_child(child)
+		child.queue_free()
+
+	var group := _store_group_for(selected_store_id)
+	var items: Array = group.get("items", [])
+	# The MarginContainer owns the row's visibility (and its 8px gap): hiding the
+	# inner HBox alone would leave the empty margin behind.
+	var show := tab == TAB_STORE and selected_store_id != "" and items.size() > 1
+	if _skin_preview_variants_margin != null:
+		_skin_preview_variants_margin.visible = show
+	if not show:
+		return
+
+	var variants := items.duplicate()
+	variants.sort_custom(_variant_sort)
+	for variant: Dictionary in variants:
+		_skin_preview_variants.add_child(_build_variant_button(variant))
+
+
+# Shaded before flat, matching the frontend's ascending isFlatSkinId sort.
+func _variant_sort(a: Dictionary, b: Dictionary) -> bool:
+	var a_flat := 1 if _is_flat_skin_id(str(a.get("id", ""))) else 0
+	var b_flat := 1 if _is_flat_skin_id(str(b.get("id", ""))) else 0
+	return a_flat < b_flat
+
+
+func _build_variant_button(item: Dictionary) -> Button:
+	var item_id := str(item.get("id", ""))
+	var flat := _is_flat_skin_id(item_id)
+	var active := item_id == selected_store_id
+
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(
+		VARIANT_THUMB_SIZE + VARIANT_BORDER_WIDTH * 2,
+		VARIANT_THUMB_SIZE + VARIANT_BORDER_WIDTH * 2,
+	)
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.tooltip_text = "Flat (unshaded)" if flat else "Shaded"
+	button.add_theme_stylebox_override("normal", _variant_style(active))
+	button.add_theme_stylebox_override("hover", _variant_style(active))
+	button.add_theme_stylebox_override("pressed", _variant_style(active))
+	button.add_theme_stylebox_override("focus", _empty_style())
+
+	# `.skin-preview__variant-img`: 36px square, `object-fit: cover`, sitting
+	# inside the 2px border.
+	var image := TextureRect.new()
+	image.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	image.offset_left = VARIANT_BORDER_WIDTH
+	image.offset_top = VARIANT_BORDER_WIDTH
+	image.offset_right = -VARIANT_BORDER_WIDTH
+	image.offset_bottom = -VARIANT_BORDER_WIDTH
+	image.texture = _skin_texture(item, false)
+	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	image.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if flat:
+		# `.skin-preview__variant.is-flat .skin-preview__variant-img` filter.
+		var material := ShaderMaterial.new()
+		material.shader = THUMB_FLAT_SHADER
+		image.material = material
+	button.add_child(image)
+
+	button.pressed.connect(_select_store_item.bind(item_id))
+	button.mouse_entered.connect(_on_variant_enter.bind(button))
+	button.mouse_exited.connect(_on_variant_exit.bind(button))
+	return button
+
+
+# `.skin-preview__variant:hover { transform: translateY(-1px) }`. The container
+# owns each button's laid-out position, so remember it before nudging and put it
+# back on exit.
+func _on_variant_enter(button: Button) -> void:
+	var rest_y := button.position.y
+	button.set_meta("rest_y", rest_y)
+	button.position.y = rest_y - 1.0
+
+
+func _on_variant_exit(button: Button) -> void:
+	button.position.y = float(button.get_meta("rest_y", button.position.y))
+
+
+# ------------------------------------------------------------------ store groups
+
+# Group key for a store item, mirroring Dashboard.tsx skinGroupKey(): the combo a
+# skin belongs to, so its shaded and unshaded ("Flat") editions collapse into one
+# card. Numeric ids pair as 2n+1 (shaded) / 2n+2 (unshaded); named ids pair by
+# stripping the "-unshaded" suffix.
+func _skin_group_key(item_id: String) -> String:
+	var id := item_id.strip_edges()
+	if _is_numeric_id(id):
+		# GDScript "/" on ints returns a float, and `%d` formatting of a float is
+		# not reliably truncating, so floor explicitly -- Math.floor((id - 1) / 2)
+		# in skinGroupKey().
+		return "combo-%d" % int((int(id) - 1) / 2)
+	return "named-" + _strip_unshaded_suffix(id)
+
+
+# `/^\d+$/` - digits only, so "0001" groups but "s-default" does not.
+func _is_numeric_id(id: String) -> bool:
+	if id.is_empty():
+		return false
+	for i in id.length():
+		if id[i] < "0" or id[i] > "9":
+			return false
+	return true
+
+
+func _strip_unshaded_suffix(id: String) -> String:
+	var suffix := "-unshaded"
+	if id.to_lower().ends_with(suffix):
+		return id.substr(0, id.length() - suffix.length())
+	return id
+
+
+# True for the unshaded ("Flat") edition: even numeric ids and ids ending in
+# "-unshaded". Mirrors isFlatSkinId() and SkinApplier's shaded/unshaded parity.
+func _is_flat_skin_id(item_id: String) -> bool:
+	var id := item_id.strip_edges()
+	if _is_numeric_id(id):
+		return int(id) % 2 == 0
+	return id.to_lower().ends_with("-unshaded")
+
+
+# Base display name, dropping the " (Flat)" variant suffix (skinBaseName()).
+func _skin_base_name(skin_name: String) -> String:
+	var trimmed := skin_name.strip_edges()
+	var suffix := "(flat)"
+	if trimmed.to_lower().ends_with(suffix):
+		return trimmed.substr(0, trimmed.length() - suffix.length()).strip_edges()
+	return skin_name
+
+
+# Dashboard.tsx's storeGroups: one entry per skin, carrying its editions and the
+# edition rolled for this store open. Insertion order is preserved so the grid
+# keeps the store_items order.
+func _store_groups() -> Array:
+	var order: Array = []
+	var map: Dictionary = {}
+	for item: Dictionary in store_items:
+		var key := _skin_group_key(str(item.get("id", "")))
+		if not map.has(key):
+			map[key] = []
+			order.append(key)
+		var list: Array = map[key]
+		list.append(item)
+
+	var groups: Array = []
+	for key: String in order:
+		var items: Array = map[key]
+		var pick_index := int(_store_variant_picks.get(key, 0))
+		var pick: Dictionary = {}
+		if not items.is_empty():
+			pick = items[pick_index % items.size()]
+		groups.append({"key": key, "items": items, "pick": pick})
+	return groups
+
+
+func _store_group_for(item_id: String) -> Dictionary:
+	for group: Dictionary in _store_groups():
+		for item: Dictionary in group.get("items", []):
+			if str(item.get("id", "")) == item_id:
+				return group
+	return {}
+
+
+func _group_owned(group: Dictionary) -> bool:
+	for item: Dictionary in group.get("items", []):
+		if _is_owned(item):
+			return true
+	return false
+
+
+func _group_selected(group: Dictionary) -> bool:
+	for item: Dictionary in group.get("items", []):
+		if str(item.get("id", "")) == selected_store_id:
+			return true
+	return false
+
+
+# Dashboard.tsx re-rolls each skin's shaded/flat variant when the Store tab opens.
+func _reroll_store_variants() -> void:
+	for item: Dictionary in store_items:
+		var key := _skin_group_key(str(item.get("id", "")))
+		_store_variant_picks[key] = randi() % 2
 
 
 # ---------------------------------------------------------------- play + footer
@@ -1966,6 +2199,21 @@ func _set_filter_active(button: Button, active: bool) -> void:
 
 func _empty_style() -> StyleBoxEmpty:
 	return StyleBoxEmpty.new()
+
+
+func _variant_style(active: bool) -> StyleBoxFlat:
+	# `.skin-preview__variant`: no radius, 2px rgba(128,128,128,.4) border and a
+	# transparent fill that the thumbnail's white 0.2 backdrop shows through. The
+	# active edition takes a white border (the dark scheme this screen renders).
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(1, 1, 1, 0.2)
+	style.set_border_width_all(VARIANT_BORDER_WIDTH)
+	style.border_color = Color(1, 1, 1, 1) if active else Color(0.5, 0.5, 0.5, 0.4)
+	style.content_margin_left = 0.0
+	style.content_margin_top = 0.0
+	style.content_margin_right = 0.0
+	style.content_margin_bottom = 0.0
+	return style
 
 
 func _badge_style(color: Color) -> StyleBoxFlat:
