@@ -9,7 +9,6 @@
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="5_omrgh"]
 [ext_resource type="Script" uid="uid://dyx5kfl7l30wf" path="res://scripts/lobbymanager.gd" id="7_yad6j"]
 [ext_resource type="PackedScene" uid="uid://bj27lnrpsa1wt" path="res://scenes/busyland.tscn" id="9_07nfq"]
-[ext_resource type="PackedScene" uid="uid://jqrvlq8oxe4l" path="res://scenes/pickup.tscn" id="10_oipnb"]
 [ext_resource type="PackedScene" uid="uid://ds74a1sw044u4" path="res://scenes/powerup1.tscn" id="11_yad6j"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
@@ -104,10 +103,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4864397, 0)
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("9_07nfq")]
 
-[node name="LocalPickup" parent="." unique_id=408056980 instance=ExtResource("10_oipnb")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.716016, 1.749352, 1.384943)
-
-[node name="Pickup" parent="." unique_id=348478555 instance=ExtResource("11_yad6j")]
+[node name="Pickup1" parent="." unique_id=348478555 instance=ExtResource("11_yad6j")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.095271, 1.4365964, 0)
 
 [node name="Pickup2" parent="." unique_id=47207438 instance=ExtResource("11_yad6j")]

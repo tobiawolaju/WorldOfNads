@@ -1,9 +1,8 @@
 [gd_scene format=3 uid="uid://q85dx3n5lik1"]
 
 [ext_resource type="Script" uid="uid://cxhx02vpfwbk1" path="res://scripts/map/Waypoint.gd" id="1_hy65e"]
-[ext_resource type="FontFile" path="res://assets/fonts/fortnite.otf" id="2_hy65e"]
-[ext_resource type="Texture2D" path="res://assets/img/point.webp" id="2_kvbum"]
-
+[ext_resource type="FontFile" uid="uid://bqvrqx4a4joiu" path="res://assets/fonts/fortnite.otf" id="2_hy65e"]
+[ext_resource type="Texture2D" uid="uid://fr7y6xwyrjdh" path="res://assets/img/ui/slide.png" id="3_hy65e"]
 
 [node name="Waypoint" type="Control" unique_id=1984879985]
 layout_mode = 3
@@ -26,12 +25,11 @@ text = "Label"
 horizontal_alignment = 1
 
 [node name="Marker" type="TextureRect" parent="." unique_id=1619728802]
-visible = false
-modulate = Color(0.3019608, 0.3019608, 0.3019608, 1)
+self_modulate = Color(1, 1, 0, 1)
 layout_mode = 0
 offset_left = -6.0
 offset_top = 1.0
 offset_right = 6.0
 offset_bottom = 13.0
-texture = ExtResource("2_kvbum")
+texture = ExtResource("3_hy65e")
 expand_mode = 3

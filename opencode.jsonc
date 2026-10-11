@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Dependency installs are done by CI on push (Vercel / Render).
+  // Never install locally: frontend/node_modules + the pnpm store are
+  // multi-GB and this machine has very little free disk.
+  // The last matching rule wins, so these denies override the default allow.
+  "permissions": [
+    { "action": "shell", "resource": "pnpm *install*", "effect": "deny" },
+    { "action": "shell", "resource": "pnpm add *", "effect": "deny" },
+    { "action": "shell", "resource": "pnpm i *", "effect": "deny" },
+
+    { "action": "shell", "resource": "npm *install*", "effect": "deny" },
+    { "action": "shell", "resource": "npm ci*", "effect": "deny" },
+    { "action": "shell", "resource": "npm add *", "effect": "deny" },
+    { "action": "shell", "resource": "npm i *", "effect": "deny" },
+
+    { "action": "shell", "resource": "yarn *install*", "effect": "deny" },
+    { "action": "shell", "resource": "yarn add *", "effect": "deny" },
+
+    { "action": "shell", "resource": "bun *install*", "effect": "deny" },
+    { "action": "shell", "resource": "bun add *", "effect": "deny" },
+    { "action": "shell", "resource": "bun i *", "effect": "deny" }
+  ]
+}

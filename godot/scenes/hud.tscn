@@ -14,7 +14,6 @@
 [ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/ui/buttons.gd" id="10_mphia"]
 [ext_resource type="Texture2D" uid="uid://b7qle767pmjpp" path="res://assets/img/ui_atlas.png" id="10_ui_atlas"]
 [ext_resource type="Shader" uid="uid://cvsro6e0qyqwk" path="res://scenes/glasshud.gdshader" id="11_3swnk"]
-[ext_resource type="Texture2D" uid="uid://m35yge224eke" path="res://assets/img/ui/act.png" id="13_qpprf"]
 [ext_resource type="Script" uid="uid://bdgt65wb25puk" path="res://scripts/ui/textfx.gd" id="13_textfx"]
 [ext_resource type="Texture2D" uid="uid://c3u4jnw2frtwl" path="res://assets/img/ui/jump2x.png" id="14_3xg78"]
 [ext_resource type="Script" uid="uid://ckvd68tol7hfn" path="res://scripts/ui/health_bar.gd" id="14_health_bar"]
@@ -432,7 +431,6 @@ scale = Vector2(0.4, 0.4)
 texture = ExtResource("9_qkknv")
 
 [node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyLock/JoyLock" unique_id=379869769]
-visible = false
 material = SubResource("ShaderMaterial_q62xx")
 custom_minimum_size = Vector2(130, 130)
 anchors_preset = 8
@@ -459,7 +457,6 @@ script = ExtResource("9_mphia")
 auto_lock_hold_seconds = 0.0
 auto_lock_forward_min_strength = 0.1
 auto_lock_north_distance_multiplier = 2.5
-disable_joystick_lock = true
 keep_locked_position_on_resize = false
 joy_lock = NodePath("../JoyLock")
 
@@ -577,13 +574,6 @@ modulate = Color(0.88235295, 0.98039216, 1, 1)
 position = Vector2(21.59491, 109)
 scale = Vector2(0.5, 0.442)
 texture = ExtResource("15_48y67")
-centered = false
-
-[node name="Sprite2D" type="Sprite2D" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer" unique_id=1418083215]
-modulate = Color(0.88235295, 0.98039216, 1, 1)
-position = Vector2(15.59491, 16)
-scale = Vector2(0.69333375, 0.6133334)
-texture = ExtResource("13_qpprf")
 centered = false
 
 [node name="XPstream" type="Label" parent="." unique_id=2087879689]
