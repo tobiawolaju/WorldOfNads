@@ -121,7 +121,7 @@ var held_local_pickup: RigidBody3D = null
 @export var joystick_orbit_invert_x: bool = false
 @export var joystick_orbit_invert_y: bool = false
 @export var touch_edge_ignore_margin: float = 32.0 # Ignore touches that START within this many px of a screen edge
-@export var low_pitch_ease_speed: float = 2.5 # While moving below the 20% pitch mark, ease pitch up to it (0 = off)
+@export var low_pitch_ease_speed: float = 2.5 # While moving below the movement pitch mark, ease pitch up to it (0 = off)
 @export var swipe_down_threshold: float = 20.0
 @export var swipe_up_threshold: float = 70.0
 @export var swipe_x_tolerance: float = 80.0
@@ -164,6 +164,12 @@ var _camera_retreat_smooth: float = 0.0
 var _camera_retreat_velocity: float = 0.0
 var _zoom_cap_override: float = -1.0 # < 0 means "use the authored max_zoom"
 var _effective_camera_distance: float = 0.0
+# Temporary movement pitch auto-raise. While moving, the camera pitch is eased
+# up to the movement pitch mark (20% of the range down from max_pitch) so its
+# near plane never cuts the floor. The raise is temporary: once the player stops
+# moving, the pitch eases back to the angle it had before the raise kicked in.
+var _movement_pitch_ease_active: bool = false
+var _pitch_before_movement_ease: float = -1.0
 @export var max_jump_height: float = DEFAULT_MAX_JUMP_HEIGHT
 var _last_world_y: float = 0.0
 var _airborne_start_y: float = 0.0
@@ -1025,6 +1031,8 @@ func _check_map_recovery() -> void:
 	velocity = Vector3.ZERO
 	velocity_y = 0.0
 	cam_rot_x = clamp(cam_rot_x, min_pitch, max_pitch)
+	_movement_pitch_ease_active = false
+	_pitch_before_movement_ease = -1.0
 	current_animation = "idle"
 	_play_anim("idle")
 
@@ -1250,6 +1258,8 @@ func respawn_at_spawn_point() -> void:
 	# Reset camera
 	cam_rot_x = min_pitch
 	cam_rot_y = deg_to_rad(90.0)
+	_movement_pitch_ease_active = false
+	_pitch_before_movement_ease = -1.0
 	camera_distance_current = camera_distance
 	_camera_base_target_prev = global_transform.origin + Vector3(0, 1.5, 0)
 	_camera_base_target_curr = _camera_base_target_prev
@@ -1495,19 +1505,34 @@ func _update_camera_collision_logic(delta: float) -> void:
 			if _camera_collision_hold_timer <= 0.0:
 				_camera_collision_distance = move_toward(_camera_collision_distance, target_collision_distance, delta * 2.0 * CAMERA_COLLISION_RECOVERY_SPEED)
 
-# While moving with the camera pitched into the lowest 20% of its range, gently
-# pull the pitch up to the 20% mark. Stops the camera dwelling under/near the
-# terrain - where the near plane cuts the ground - without fighting the player's
-# manual pitch once they lift it above the mark. Stops easing the moment the
-# player stops moving or lifts the pitch above 20%.
+# While moving, the camera pitch is pulled up to the movement pitch mark — the
+# point 20% of the range down from max_pitch — so the camera rises out of the
+# lowest band where its near plane clips the floor and the player sees through
+# it. The raise is temporary: when the player stops moving, the pitch eases back
+# down to the angle they had before the raise kicked in. Manual input still
+# wins while pitching above the mark; only below the mark does movement nudge
+# the camera up. Set low_pitch_ease_speed to 0 to disable.
 func _apply_movement_pitch_ease(delta: float) -> void:
-	if not camera_is_moving or low_pitch_ease_speed <= 0.0:
+	if low_pitch_ease_speed <= 0.0:
 		return
 	var pitch_range := maxf(max_pitch - min_pitch, 0.001)
-	var low_pitch_mark: float = min_pitch + 0.2 * pitch_range
-	if cam_rot_x >= low_pitch_mark:
-		return
-	cam_rot_x = lerpf(cam_rot_x, low_pitch_mark, minf(1.0, delta * low_pitch_ease_speed))
+	var movement_pitch_mark: float = max_pitch - 0.2 * pitch_range
+	if camera_is_moving:
+		if not _movement_pitch_ease_active:
+			_movement_pitch_ease_active = true
+			_pitch_before_movement_ease = cam_rot_x
+		if cam_rot_x < movement_pitch_mark:
+			cam_rot_x = lerpf(cam_rot_x, movement_pitch_mark, minf(1.0, delta * low_pitch_ease_speed))
+	else:
+		# Not moving: ease back toward the pre-movement pitch every frame until
+		# reached, then drop the temporary raise state.
+		if _movement_pitch_ease_active and _pitch_before_movement_ease >= 0.0:
+			var restore_target: float = _pitch_before_movement_ease
+			if absf(cam_rot_x - restore_target) <= 0.001:
+				_movement_pitch_ease_active = false
+				_pitch_before_movement_ease = -1.0
+			else:
+				cam_rot_x = lerpf(cam_rot_x, restore_target, minf(1.0, delta * low_pitch_ease_speed))
 
 func _update_camera_visual(delta: float) -> void:
 	var interp := Engine.get_physics_interpolation_fraction()
