@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://bj27lnrpsa1wt" path="res://scenes/busyland.tscn" id="12_nt65e"]
 [ext_resource type="Texture2D" uid="uid://b4q27tedq04t7" path="res://assets/img/mboxcore.png" id="12_qixtg"]
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="13_i18v2"]
+[ext_resource type="PackedScene" uid="uid://ds74a1sw044u4" path="res://scenes/pickup.tscn" id="13_nt65e"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_qixtg"]
 render_priority = 0
@@ -222,6 +223,26 @@ update_interval = null
 zoom_level = null
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("12_nt65e")]
+
+[node name="Pickup1" parent="." unique_id=408056980 instance=ExtResource("13_nt65e")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.095271, 1.4365964, 0)
+power_up_mode = 1
+
+[node name="Pickup2" parent="." unique_id=1336722164 instance=ExtResource("13_nt65e")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.095271, 1.4365964, -1)
+power_up_mode = 2
+
+[node name="Pickup3" parent="." unique_id=1605833814 instance=ExtResource("13_nt65e")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.647236, 1.4365964, -0.26766753)
+power_up_mode = 3
+
+[node name="Pickup4" parent="." unique_id=80862294 instance=ExtResource("13_nt65e")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -1.649298)
+power_up_mode = 4
+
+[node name="Pickup5" parent="." unique_id=300391791 instance=ExtResource("13_nt65e")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -1.649298)
+power_up_mode = 5
 
 [editable path="Bus"]
 [editable path="Hud"]
