@@ -1518,24 +1518,25 @@ func _update_camera_collision_logic(delta: float) -> void:
 func _apply_movement_pitch_ease(delta: float) -> void:
 	if low_pitch_ease_speed <= 0.0:
 		return
-	var pitch_range := maxf(max_pitch - min_pitch, 0.001)
-	var movement_pitch_mark: float = min_pitch + movement_pitch_raise_fraction * pitch_range
+	# Only do the pitch-mark maths while moving. When idle with no lingering
+	# raise left to unwind, this is just a couple of cheap boolean checks.
 	if camera_is_moving:
+		var pitch_range := maxf(max_pitch - min_pitch, 0.001)
+		var movement_pitch_mark: float = min_pitch + movement_pitch_raise_fraction * pitch_range
 		if not _movement_pitch_ease_active:
 			_movement_pitch_ease_active = true
 			_pitch_before_movement_ease = cam_rot_x
 		if cam_rot_x < movement_pitch_mark:
 			cam_rot_x = lerpf(cam_rot_x, movement_pitch_mark, minf(1.0, delta * low_pitch_ease_speed))
-	else:
+	elif _movement_pitch_ease_active and _pitch_before_movement_ease >= 0.0:
 		# Not moving: ease back toward the pre-movement pitch every frame until
 		# reached, then drop the temporary raise state.
-		if _movement_pitch_ease_active and _pitch_before_movement_ease >= 0.0:
-			var restore_target: float = _pitch_before_movement_ease
-			if absf(cam_rot_x - restore_target) <= 0.001:
-				_movement_pitch_ease_active = false
-				_pitch_before_movement_ease = -1.0
-			else:
-				cam_rot_x = lerpf(cam_rot_x, restore_target, minf(1.0, delta * low_pitch_ease_speed))
+		var restore_target: float = _pitch_before_movement_ease
+		if absf(cam_rot_x - restore_target) <= 0.001:
+			_movement_pitch_ease_active = false
+			_pitch_before_movement_ease = -1.0
+		else:
+			cam_rot_x = lerpf(cam_rot_x, restore_target, minf(1.0, delta * low_pitch_ease_speed))
 
 func _update_camera_visual(delta: float) -> void:
 	var interp := Engine.get_physics_interpolation_fraction()

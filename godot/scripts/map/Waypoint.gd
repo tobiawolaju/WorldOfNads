@@ -97,15 +97,18 @@ func _process(delta: float) -> void:
 	# by the focal length. This makes the marker slide along the top/bottom
 	# edges (and into the corners) exactly like the X slides along the
 	# left/right edges, so it tracks vertical offsets instead of only moving
-	# sideways. The signed forward distance keeps behind targets bounded near
-	# the centre instead of exploding to an edge.
-	var to_parent := parent_position - camera_position
-	var cam_up := camera_transform.basis.y
-	var cam_forward := -camera_basis_z
-	var focal := (viewport_base_size.y * 0.5) / tan(_vertical_fov_rad(viewport_base_size) * 0.5)
-	var fwd := to_parent.dot(cam_forward)
-	var denom := fwd if absf(fwd) > 0.0001 else 0.0001
-	unprojected_position.y = viewport_base_size.y * 0.5 - (to_parent.dot(cam_up) / denom) * focal
+	# sideways. Only needed once the waypoint is behind or past the left/right
+	# edge (an on-screen waypoint already has a correct unprojected Y). The
+	# signed forward distance keeps behind targets bounded near the centre.
+	if is_behind or unprojected_position.x < MARGIN or \
+			unprojected_position.x > viewport_base_size.x - MARGIN:
+		var to_parent := parent_position - camera_position
+		var cam_up := camera_transform.basis.y
+		var cam_forward := -camera_basis_z
+		var focal := (viewport_base_size.y * 0.5) / tan(_vertical_fov_rad(viewport_base_size) * 0.5)
+		var fwd := to_parent.dot(cam_forward)
+		var denom := fwd if absf(fwd) > 0.0001 else 0.0001
+		unprojected_position.y = viewport_base_size.y * 0.5 - (to_parent.dot(cam_up) / denom) * focal
 
 	position = Vector2(
 			clamp(unprojected_position.x, MARGIN, viewport_base_size.x - MARGIN),
