@@ -820,7 +820,7 @@ export default function Dashboard() {
                       <button
                         key={variant.id}
                         type="button"
-                        className={`skin-preview__variant ${active ? "is-active" : ""}`}
+                        className={`skin-preview__variant ${active ? "is-active" : ""} ${flat ? "is-flat" : ""}`}
                         aria-pressed={active}
                         title={flat ? "Flat (unshaded)" : "Shaded"}
                         onClick={() => setSelectedStore(variant.id)}
@@ -828,9 +828,8 @@ export default function Dashboard() {
                         <img
                           src={getStoreImageUrl(variant)}
                           alt=""
-                          className={`skin-preview__variant-img ${flat ? "is-flat" : ""}`}
+                          className="skin-preview__variant-img"
                         />
-                        <span className="skin-preview__variant-label">{flat ? "Flat" : "Shaded"}</span>
                       </button>
                     );
                   })}
