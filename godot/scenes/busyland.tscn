@@ -2515,6 +2515,7 @@ transform = Transform3D(-0.007908016, 0, -0.028938957, 0, 0.03, 0, 0.028938957, 
 transform = Transform3D(-0.027921548, -0.9996101, 1.8215006e-06, 2.6886731e-08, -1.8229621e-06, -1, 0.9996101, -0.027921548, 7.777617e-08, 51.774323, 42.499985, 22.243523)
 
 [node name="430x210x270_1_Cardboard_Box_Mat_0" type="MeshInstance3D" parent="boxes/430x210x270_1" unique_id=1434549656]
+cast_shadow = 0
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_q7wqe")
@@ -2530,6 +2531,7 @@ transform = Transform3D(0.9984407, -0.055821486, 5.357268e-09, 2.9126843e-09, -4
 
 [node name="290x170x190_1_Cardboard_Box_Mat_0" type="MeshInstance3D" parent="boxes/290x170x190_1" unique_id=1171660290]
 transform = Transform3D(0.07133475, 0.2627975, -0.96220994, -0.018925669, 0.9648502, 0.26211572, 0.9972728, -0.00048764714, 0.07380101, 77.92166, -10.070068, -57.993103)
+cast_shadow = 0
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_qoi2e")
@@ -2544,6 +2546,7 @@ shape = SubResource("ConcavePolygonShape3D_y5j5r")
 transform = Transform3D(1, 0, 0, 0, -1.6292068e-07, -1, 0, 1, -1.6292068e-07, 1.5591145, 14.499993, 1.9324057)
 
 [node name="290x290x290_1_Cardboard_Box_Mat_0" type="MeshInstance3D" parent="boxes/290x290x290_1" unique_id=1965933781]
+cast_shadow = 0
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_2ylut")
@@ -2558,6 +2561,7 @@ shape = SubResource("ConcavePolygonShape3D_hxkay")
 transform = Transform3D(0.86602545, 0.49999997, -4.3672507e-08, -1.8893916e-08, -5.4619797e-08, -1, -0.49999997, 0.86602545, -3.7855177e-08, -43.52137, 14.499993, 14.748224)
 
 [node name="290x290x400_1_Cardboard_Box_Mat_0" type="MeshInstance3D" parent="boxes/290x290x400_1" unique_id=97158827]
+cast_shadow = 0
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_xxugn")
@@ -2572,6 +2576,7 @@ shape = SubResource("ConcavePolygonShape3D_1cm27")
 transform = Transform3D(-0.9659259, -0.25881892, 2.1552848e-08, -9.890612e-09, -4.636157e-08, -1, 0.25881892, -0.9659259, 4.2221963e-08, -22.584337, 42.49999, 5.4356923)
 
 [node name="430x210x270_2_Cardboard_Box_Mat_0" type="MeshInstance3D" parent="boxes/430x210x270_2" unique_id=1883963853]
+cast_shadow = 0
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_qdnof")
@@ -2586,6 +2591,7 @@ shape = SubResource("ConcavePolygonShape3D_j3iog")
 transform = Transform3D(0.94494885, -0.32721788, 7.149889e-08, 1.7187041e-08, -1.6887222e-07, -1, 0.32721788, 0.94494885, -1.5395172e-07, 24.756655, 38.499996, -3.7151515)
 
 [node name="290x170x190_2_Cardboard_Box_Mat_0" type="MeshInstance3D" parent="boxes/290x170x190_2" unique_id=1476927164]
+cast_shadow = 0
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_w1ggo")
@@ -2601,6 +2607,7 @@ transform = Transform3D(-0.74825156, 0.663415, 8.920337e-08, 2.9906357e-08, 1.68
 
 [node name="430x210x270_3_Cardboard_Box_Mat_0" type="MeshInstance3D" parent="boxes/430x210x270_3" unique_id=319506667]
 transform = Transform3D(0.9999993, 0, 0, 0, 1.0000004, 7.1054274e-15, 2.1316282e-14, 0, 0.9999994, -18.875935, 26.111038, -82.13003)
+cast_shadow = 0
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_6hn8e")
@@ -2617,6 +2624,7 @@ transform = Transform3D(-0.8660254, 6.1232336e-17, 0.50000006, 1.0605752e-16, 1,
 
 [node name="290x290x400_2_Cardboard_Box_Mat_0" type="MeshInstance3D" parent="boxes/290x290x400_2" unique_id=1696933644]
 transform = Transform3D(1, -1.15805286e-23, 2.9802322e-08, -1.6543612e-24, 1, 9.926167e-24, -2.9802322e-08, 1.323489e-23, 1, -45.19905, 25.935505, -44.753464)
+cast_shadow = 0
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_faukr")
@@ -2629,10 +2637,11 @@ transform = Transform3D(1, -1.8197973e-23, 2.9802322e-08, -1.6543612e-24, 1, 1.6
 shape = SubResource("ConcavePolygonShape3D_kfr67")
 
 [node name="290x170x190_3" type="Node3D" parent="boxes" unique_id=1971031727]
-transform = Transform3D(0.7858569, -0.61840844, -8.067021e-09, -2.7582407e-08, -2.2006175e-08, -1, 0.61840844, 0.7858569, -3.4350897e-08, 18.615944, 56.5, -3.7151515)
+transform = Transform3D(0.7858574, -0.61840856, -8.067026e-09, -2.758242e-08, -2.2006185e-08, -1, 0.61840856, 0.7858574, -3.435091e-08, 139.18094, 97.49746, -33.76387)
 
 [node name="290x170x190_3_Cardboard_Box_Mat_0" type="MeshInstance3D" parent="boxes/290x170x190_3" unique_id=171295568]
-transform = Transform3D(1, 0, 3.719247e-15, 0, 1, 4.440892e-15, 1.110223e-16, 9.214851e-15, 1, 51.502148, 23.433449, -55.17141)
+transform = Transform3D(1, 0, 4.2188475e-15, 0, 1, 3.8857806e-15, 1.831868e-15, 9.325873e-15, 1, 51.50214, 23.433449, -55.171417)
+cast_shadow = 0
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_ds5tn")
@@ -2648,6 +2657,7 @@ shape = SubResource("ConcavePolygonShape3D_2tlr5")
 transform = Transform3D(0.9099613, 0.4146932, -4.373447e-08, -2.3301974e-08, -5.4330712e-08, -1, -0.4146932, 0.9099613, -3.9775674e-08, 57.62633, 14.499993, 45.56886)
 
 [node name="290x290x290_2_Cardboard_Box_Mat_0" type="MeshInstance3D" parent="boxes/290x290x290_2" unique_id=1719001761]
+cast_shadow = 0
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_kqd13")
@@ -2664,6 +2674,7 @@ transform = Transform3D(7.54979e-08, 0.97357893, -0.22835083, -1, 7.571553e-08, 
 
 [node name="290x170x190_4_Cardboard_Box_Mat_0" type="MeshInstance3D" parent="boxes/290x170x190_4" unique_id=1459357248]
 transform = Transform3D(0.99999994, 7.1054274e-15, -7.1054274e-15, -7.1054274e-15, 0.99999994, 0, 3.5527137e-15, 0, 0.99999994, 0, 0, 0)
+cast_shadow = 0
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_1vwax")
