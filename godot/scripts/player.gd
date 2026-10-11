@@ -94,6 +94,10 @@ var held_object: RigidBody3D = null
 @export var hold_height: float = 1.5
 var last_pickup_request_ms: int = 0
 var held_local_pickup: RigidBody3D = null
+## The power-up granted by the currently carried pickup (LocalPickup.PowerUpMode).
+var held_power_up_mode: int = LocalPickup.PowerUpMode.NONE
+## Cached once; avoids a tree search every pickup/drop.
+var _cached_buttons_hud: Node = null
 
 # --- CAMERA & ZOOM SETTINGS ---
 @export var camera_distance: float = 2.0
@@ -454,7 +458,12 @@ func _perform_pickup_request() -> void:
 	if not _is_movement_allowed():
 		return
 	if _is_local_holding_pickup():
-		_drop_local_pickup()
+		# A held power-up is USED, not dropped: it vanishes and recycles to a
+		# random far-away spot on the map (effects are not implemented yet).
+		if held_power_up_mode != LocalPickup.PowerUpMode.NONE:
+			_use_held_power_up()
+		else:
+			_drop_local_pickup()
 		return
 	if _is_local_holding_chicken() or _is_local_holding_lootbox():
 		_drop_object()
@@ -1156,11 +1165,18 @@ func _try_pickup_local() -> bool:
 		return false
 	held_local_pickup = target
 	last_pickup_request_ms = now
+	# Power-up foundation: remember the mode and surface it in the HUD Action
+	# button. Activation mechanics come later.
+	var mode_value = target.get("power_up_mode")
+	held_power_up_mode = int(mode_value) if mode_value != null else LocalPickup.PowerUpMode.NONE
+	_update_hud_power_up()
 	return true
 
 func _drop_local_pickup() -> void:
 	var item := held_local_pickup
 	held_local_pickup = null
+	held_power_up_mode = LocalPickup.PowerUpMode.NONE
+	_update_hud_power_up()
 	if item == null or not is_instance_valid(item):
 		return
 	if not item.has_method("drop"):
@@ -1171,6 +1187,46 @@ func _drop_local_pickup() -> void:
 	if throw_dir.length_squared() < 0.0001:
 		throw_dir = -global_transform.basis.z
 	item.drop(throw_dir * LOCAL_PICKUP_THROW_STRENGTH)
+
+# Uses the held power-up pickup: it is consumed here and teleports to a random
+# far-away spot on the map instead of being dropped at the player's feet. The
+# actual power-up effect is not implemented yet; this only frees the HUD slot.
+func _use_held_power_up() -> void:
+	var item := held_local_pickup
+	held_local_pickup = null
+	held_power_up_mode = LocalPickup.PowerUpMode.NONE
+	_update_hud_power_up()
+	if item != null and is_instance_valid(item) and item.has_method("consume_and_respawn"):
+		item.call("consume_and_respawn", global_position)
+
+# Shows the carried power-up (if any) on the HUD Action button.
+func _update_hud_power_up() -> void:
+	var buttons := _find_buttons_hud()
+	if buttons == null or not buttons.has_method("show_power_up"):
+		return
+	var label := ""
+	var color: Color = Color.WHITE
+	if _is_local_holding_pickup() and held_power_up_mode != LocalPickup.PowerUpMode.NONE:
+		label = str(held_local_pickup.call("power_up_label"))
+		color = held_local_pickup.call("power_up_color")
+	buttons.call("show_power_up", label, color)
+
+# Finds the HUD node that owns the Action button (buttons.gd). Only scanned once.
+func _find_buttons_hud() -> Node:
+	if _cached_buttons_hud != null and is_instance_valid(_cached_buttons_hud):
+		return _cached_buttons_hud
+	_cached_buttons_hud = null
+	var hud := get_tree().root.find_child("Hud", true, false)
+	if hud == null:
+		return null
+	var holder := hud.find_child("buttons_holder", true, false)
+	if holder == null:
+		return null
+	for child in holder.get_children():
+		if child.has_method("show_power_up"):
+			_cached_buttons_hud = child
+			break
+	return _cached_buttons_hud
 
 # --- HEALTH SYSTEM ---
 func take_damage(amount: float, source: Node = null) -> void:

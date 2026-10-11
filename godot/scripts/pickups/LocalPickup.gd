@@ -1,4 +1,5 @@
 extends RigidBody3D
+class_name LocalPickup
 ## Client-side only pickup item.
 ##
 ## Behaves like the chicken / lootbox holds (grab it when close, drop it any time)
@@ -17,6 +18,44 @@ signal dropped(item: RigidBody3D)
 
 const GROUP: String = "local_pickup_items"
 
+## Power-up roster — foundation only, no activation mechanics yet. Set this on
+## each pickup instance in the editor. When a pickup with a non-NONE mode is
+## picked up, player.gd shows its label in the HUD Action button.
+enum PowerUpMode {
+	NONE,
+	SPEED_BURST,    # ~4s of boosted run speed
+	THROWABLE,      # throw an object; a hit knocks the target down
+	SMOKE_GRENADE,  # temporary smoke cloud that blocks vision
+	BOXING_GLOVE,   # lunge punch; one hit drops the target and their chicken
+	MEGA_LEAP       # one super high jump, consumed on use
+}
+
+const POWER_UP_LABELS := {
+	PowerUpMode.SPEED_BURST: "RUSH",
+	PowerUpMode.THROWABLE: "TOSS",
+	PowerUpMode.SMOKE_GRENADE: "SMOG",
+	PowerUpMode.BOXING_GLOVE: "FIST",
+	PowerUpMode.MEGA_LEAP: "LEAP",
+}
+
+## One color per power-up. Drives both the pickup's mesh tint and the HUD Action
+## caption color, so an item and its on-screen text always match.
+const POWER_UP_COLORS := {
+	PowerUpMode.SPEED_BURST: Color(0.25, 0.55, 1.0),   # blue
+	PowerUpMode.THROWABLE: Color(1.0, 0.85, 0.15),     # yellow
+	PowerUpMode.SMOKE_GRENADE: Color(0.45, 0.8, 0.4),  # smoke green
+	PowerUpMode.BOXING_GLOVE: Color(1.0, 0.2, 0.2),    # red
+	PowerUpMode.MEGA_LEAP: Color(0.65, 0.3, 1.0),      # purple
+}
+
+@export var power_up_mode: PowerUpMode = PowerUpMode.NONE
+
+func power_up_label() -> String:
+	return POWER_UP_LABELS.get(power_up_mode, "")
+
+func power_up_color() -> Color:
+	return POWER_UP_COLORS.get(power_up_mode, Color.WHITE)
+
 ## Godot's default 3D gravity. GRAVITY_SCALE is derived from the player so the item
 ## falls at the same rate the player does.
 const DEFAULT_GRAVITY: float = 9.8
@@ -30,6 +69,17 @@ const GRAVITY_SCALE: float = GAME_GRAVITY / DEFAULT_GRAVITY
 const ATTACH_PATH: String = "Skeleton3D/Back/offset"
 ## Drops are capped so the item lands nearby instead of shooting across the map.
 const MAX_DROP_SPEED: float = 4.0
+
+## A consumed power-up teleports to a random spot at least this far (world units)
+## from the holder, so it can never be re-grabbed immediately.
+const RESPAWN_MIN_DISTANCE: float = 22.0
+## Random probes attempted before falling back to the farthest valid point found.
+const RESPAWN_TRIES: int = 32
+const RESPAWN_PROBE_HEIGHT: float = 80.0
+const RESPAWN_PROBE_DEPTH: float = 160.0
+## Keeps respawns inside the minimap bounds so their pointers stay on the map.
+const RESPAWN_EDGE_MARGIN: float = 5.0
+const RESPAWN_GROUND_OFFSET: float = 1.0
 
 @export var can_be_picked: bool = true
 @export var mesh_offset_y: float = 0.25:
@@ -79,6 +129,7 @@ func _ready() -> void:
 	can_sleep = true
 	_mesh = _find_mesh()
 	_apply_mesh_offset()
+	_apply_power_up_color()
 
 
 func _find_mesh() -> MeshInstance3D:
@@ -86,6 +137,27 @@ func _find_mesh() -> MeshInstance3D:
 		if child is MeshInstance3D:
 			return child
 	return null
+
+
+# Tints every mesh child with the power-up color. The scene's material_overrides
+# are shared across instances, so each mesh gets its own duplicated material -
+# otherwise coloring one pickup would recolor them all.
+func _apply_power_up_color() -> void:
+	var color := power_up_color()
+	for child in get_children():
+		var mi := child as MeshInstance3D
+		if mi == null:
+			continue
+		var base_mat := mi.material_override
+		if base_mat is StandardMaterial3D:
+			var mat: StandardMaterial3D = (base_mat as StandardMaterial3D).duplicate()
+			mat.albedo_color = color
+			mi.material_override = mat
+		else:
+			var mat := StandardMaterial3D.new()
+			mat.albedo_color = color
+			mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			mi.material_override = mat
 
 
 func _apply_mesh_offset() -> void:
@@ -109,6 +181,8 @@ func pick_up(by: Node3D) -> bool:
 		return false
 	holder = by
 	is_held = true
+	# Carried items are invisible; the HUD indicator is the only feedback.
+	visible = false
 	# Frozen while carried so the player pose drives the item, not gravity.
 	freeze = true
 	linear_velocity = Vector3.ZERO
@@ -126,6 +200,7 @@ func drop(impulse: Vector3 = Vector3.ZERO) -> void:
 	is_held = false
 	holder = null
 	_attach_node = null
+	visible = true
 	var capped := impulse
 	if capped.length() > MAX_DROP_SPEED:
 		capped = capped.normalized() * MAX_DROP_SPEED
@@ -136,6 +211,75 @@ func drop(impulse: Vector3 = Vector3.ZERO) -> void:
 	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
 	freeze = false
 	emit_signal("dropped", self)
+
+
+## Called when the holder USES the power-up. Instead of dropping the item at the
+## player's feet, it is released and teleported to a random point on the map that
+## is far from the holder, then dropped so it falls and rests there. No power-up
+## effect is applied yet - this only recycles the pickup and frees the HUD slot.
+func consume_and_respawn(from_position: Vector3) -> void:
+	is_held = false
+	holder = null
+	_attach_node = null
+	visible = true
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+	var target := _pick_respawn_point(from_position)
+	# Frozen while teleporting so Jolt never drags the body across the map.
+	freeze = true
+	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	global_position = target
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+	freeze = false
+	emit_signal("dropped", self)
+
+
+# Picks a valid standing spot inside the minimap bounds, preferring one that is
+# at least RESPAWN_MIN_DISTANCE away from the holder. Falls back to the farthest
+# valid point if no probe clears the distance.
+func _pick_respawn_point(from_position: Vector3) -> Vector3:
+	var world_size: Vector2 = GameManager.minimap_world_size
+	var world_origin: Vector2 = GameManager.minimap_origin
+	if world_size.x <= 0.0 or world_size.y <= 0.0:
+		world_size = Vector2(70.0, 70.0)
+	var half_x: float = maxf(world_size.x * 0.5 - RESPAWN_EDGE_MARGIN, 1.0)
+	var half_z: float = maxf(world_size.y * 0.5 - RESPAWN_EDGE_MARGIN, 1.0)
+	var space := get_world_3d().direct_space_state
+	var min_sq: float = RESPAWN_MIN_DISTANCE * RESPAWN_MIN_DISTANCE
+	# Guaranteed fallback even if every probe misses (should not happen on land).
+	var best: Vector3 = from_position + Vector3(half_x, 0.0, 0.0)
+	var best_sq: float = -1.0
+	for _i in RESPAWN_TRIES:
+		var x: float = world_origin.x + randf_range(-half_x, half_x)
+		var z: float = world_origin.y + randf_range(-half_z, half_z)
+		var probe_start := Vector3(x, from_position.y + RESPAWN_PROBE_HEIGHT, z)
+		var ground: Variant = _probe_ground(probe_start, space)
+		if ground == null:
+			continue
+		var point: Vector3 = ground
+		var dx: float = point.x - from_position.x
+		var dz: float = point.z - from_position.z
+		var d_sq: float = dx * dx + dz * dz
+		if d_sq >= min_sq:
+			return point
+		if d_sq > best_sq:
+			best_sq = d_sq
+			best = point
+	return best
+
+
+# Casts straight down and returns the first world-layer (1) surface hit, raised a
+# little so the item drops onto it rather than spawning inside it.
+func _probe_ground(from: Vector3, space: PhysicsDirectSpaceState3D) -> Variant:
+	var exclude: Array[RID] = [get_rid()]
+	var query := PhysicsRayQueryParameters3D.create(
+		from, from - Vector3(0.0, RESPAWN_PROBE_DEPTH, 0.0), 1, exclude
+	)
+	var hit := space.intersect_ray(query)
+	if hit.is_empty():
+		return null
+	return hit.position + Vector3(0.0, RESPAWN_GROUND_OFFSET, 0.0)
 
 
 # Resolves the holder's back attachment. Remote players are instances of the same
