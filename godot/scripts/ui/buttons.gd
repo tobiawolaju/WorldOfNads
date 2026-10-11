@@ -12,9 +12,48 @@ var _touch_indices: Dictionary = {}
 var _animating_buttons: Dictionary = {}
 var _cached_local_player: Node = null
 
+# The visible caption on the Action button is a Label child named "action"
+# (the Button's own text property is covered by it). Captured in _ready so the
+# authored default can be restored when no power-up is held.
+var _action_caption: Label = null
+var _action_caption_default: String = ""
+var _action_caption_default_color: Color = Color.WHITE
+
+## Shows the currently held power-up on the Action button, or clears its text
+## when the label is empty. Called by player.gd whenever a pickup is grabbed or
+## dropped, so the button doubles as the power-up indicator.
+## The caption is authored as a one-letter-per-line stack in the scene, so any
+## power-up name is stacked the same way to keep the style consistent. `color`
+## tints the text to match the held power-up.
+func show_power_up(label: String, color: Color) -> void:
+	var text := _action_caption_default if label == "" else _stack_vertically(label)
+	var tint := _action_caption_default_color if label == "" else color
+	if _action_caption != null and is_instance_valid(_action_caption):
+		_action_caption.text = text
+		_action_caption.add_theme_color_override("font_color", tint)
+		return
+	if action_button != null:
+		action_button.text = text
+		action_button.add_theme_color_override("font_color", tint)
+
+# Puts every non-space character on its own line so a name like "SPEED" renders
+# as a vertical stack matching the scene's authored "G\nR\nA\nB".
+func _stack_vertically(text: String) -> String:
+	var lines := PackedStringArray()
+	for i in text.length():
+		var c: String = text[i]
+		if c.strip_edges() != "":
+			lines.append(c)
+	return "\n".join(lines)
+
 func _ready() -> void:
 	get_viewport().size_changed.connect(_reposition)
 	_reposition()
+	if action_button != null:
+		_action_caption = action_button.get_node_or_null("action") as Label
+		if _action_caption != null:
+			_action_caption_default = _action_caption.text
+			_action_caption_default_color = _action_caption.get_theme_color("font_color")
 
 func _input(event: InputEvent) -> void:
 	if not (event is InputEventScreenTouch or event is InputEventScreenDrag):
@@ -149,8 +188,10 @@ func _process(_delta: float) -> void:
 	and _cached_local_player.get_pickup_cooldown() <= 0.0:
 		target_alpha = 1.0
 
-	if action_button.modulate.a != target_alpha:
-		action_button.modulate.a = target_alpha
+	# self_modulate (not modulate): the button's own drawing fades, but the
+	# child caption label keeps full opacity instead of fading with it.
+	if action_button.self_modulate.a != target_alpha:
+		action_button.self_modulate.a = target_alpha
 
 func _reposition() -> void:
 	var viewport_size := get_viewport().get_visible_rect().size

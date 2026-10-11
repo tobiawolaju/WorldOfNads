@@ -106,15 +106,23 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4864397, 0)
 
 [node name="Pickup1" parent="." unique_id=348478555 instance=ExtResource("11_yad6j")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.095271, 1.4365964, 0)
+power_up_mode = 1
 
 [node name="Pickup2" parent="." unique_id=47207438 instance=ExtResource("11_yad6j")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.095271, 1.4365964, -1)
+power_up_mode = 2
 
 [node name="Pickup3" parent="." unique_id=542460695 instance=ExtResource("11_yad6j")]
 transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.647236, 1.4365964, -0.26766753)
+power_up_mode = 3
 
 [node name="Pickup4" parent="." unique_id=1118312215 instance=ExtResource("11_yad6j")]
 transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -1.649298)
+power_up_mode = 4
+
+[node name="Pickup5" parent="." unique_id=408056980 instance=ExtResource("11_yad6j")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -1.649298)
+power_up_mode = 5
 
 [node name="Bus" parent="." unique_id=1811375150 instance=ExtResource("11_m1sns")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 60, 0)
