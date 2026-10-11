@@ -12,7 +12,6 @@
 [ext_resource type="PackedScene" uid="uid://bj27lnrpsa1wt" path="res://scenes/busyland.tscn" id="12_nt65e"]
 [ext_resource type="Texture2D" uid="uid://b4q27tedq04t7" path="res://assets/img/mboxcore.png" id="12_qixtg"]
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="13_i18v2"]
-[ext_resource type="PackedScene" uid="uid://jqrvlq8oxe4l" path="res://scenes/pickup.tscn" id="14_pkup"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_qixtg"]
 render_priority = 0
@@ -213,8 +212,14 @@ camera = NodePath("../../../../PlayerManager/Camera3D")
 
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("11_hpwea")]
 
-[node name="LocalPickup" parent="." unique_id=991691993 instance=ExtResource("14_pkup")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 6.9, 1.6)
+[node name="Minimap" parent="Hud/CanvasLayer/BoxContainer/Node2" parent_id_path=PackedInt32Array(861416889, 802481236) index="0" unique_id=43787215]
+enabled = null
+disable_on_mobile = null
+disable_on_web = null
+minimum_fps_to_enable = null
+rotate_pointer = null
+update_interval = null
+zoom_level = null
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("12_nt65e")]
 

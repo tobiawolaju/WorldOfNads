@@ -230,21 +230,24 @@ func _update_visuals():
 		rotation = deg_to_rad(sprite_rotation_offset_degrees)
 		
 	if is_auto_locked:
-		modulate.a = 0.5
+		# Hide the knob while locked instead of the lock icon.
+		visible = false
 		return
-		
+
+	visible = true
 	var strength = clamp(position.length() / maxRadius, 0.0, 1.0)
 	modulate.a = lerp(min_opacity, max_opacity, strength)
 
 func _update_lock_indicator_visuals(delta):
-	if not joy_lock: return
-	
 	if is_auto_locked:
-		joy_lock.visible = true
-		joy_lock.modulate.a = lerp(joy_lock.modulate.a, 1.0, delta * 10)
-		var pulse = 1.0 + (sin(Time.get_ticks_msec() * 0.01) * 0.05)
-		joy_lock.scale = Vector2.ONE * pulse
+		if joy_lock:
+			# Cup stays visible while locked and breathes slowly.
+			joy_lock.visible = true
+			joy_lock.modulate.a = lerp(joy_lock.modulate.a, 1.0, delta * 10)
+			var breath = 1.0 + (sin(Time.get_ticks_msec() * 0.004) * 0.06)
+			joy_lock.scale = Vector2.ONE * breath
 		return
+	if not joy_lock: return
 
 	var is_forward = position.y < -maxRadius * 0.4
 	var required_north = float(maxRadius) * max(auto_lock_north_distance_multiplier, 0.1)
@@ -373,6 +376,8 @@ func _lock_auto_move():
 	active_joystick_index = -1
 	touchInsideJoystick = false
 	auto_lock_touch_index = -1
+	# Hide the knob while locked instead of showing the lock icon.
+	visible = false
 	# SNAP knob exactly to the lock icon position
 	position = lock_target_position
 	_update_input_from_joystick(position)
@@ -391,6 +396,7 @@ func _unlock_auto_move():
 	last_drag_was_north = false
 	auto_lock_touch_index = -1
 	position = Vector2.ZERO
+	visible = true
 	_release_all_keys()
 	_update_visuals()
 
