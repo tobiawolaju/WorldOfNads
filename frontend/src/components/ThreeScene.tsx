@@ -372,9 +372,9 @@ function createMouthMaterial(
     mouthBoundsSize: { value: new THREE.Vector2(Math.max(bounds?.size[0] ?? 1, 1e-6), Math.max(bounds?.size[1] ?? 1, 1e-6)) },
     // Shift the drawn mouth down within the plate. The mouth sits at UV
     // (0.5, 0.5) = the plate centre; adding to the (downward-incrementing) V
-    // relocates the whole mouth (lips, cavity, teeth) downward without
-    // touching the mesh. 0.4 ≈ 40% of the plate height.
-    mouthShiftY: { value: 0.4 },
+    // relocates the whole mouth downward; a negative value moves it up.
+    // Tuning in progress — currently -0.4 for an experimental check.
+    mouthShiftY: { value: -0.4 },
   };
 
   mat.onBeforeCompile = (shader) => {
