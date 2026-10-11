@@ -90,15 +90,22 @@ func _process(delta: float) -> void:
 
 	# For the screen's Y axis, the projected position is NOT useful to us
 	# because we don't want to indicate to the user that they need to look
-	# up or down to see something behind them. Instead, here we approximate
-	# the correct position using difference of the X axis Euler angles
-	# (up/down rotation) and the ratio of that with the camera's FOV.
-	# This will be slightly off from the theoretical "ideal" position.
-	if is_behind or unprojected_position.x < MARGIN or \
-			unprojected_position.x > viewport_base_size.x - MARGIN:
-		var look := camera_transform.looking_at(parent_position, Vector3.UP)
-		var diff := angle_difference(look.basis.get_euler().x, camera_transform.basis.get_euler().x)
-		unprojected_position.y = viewport_base_size.y * (0.5 + (diff / deg_to_rad(camera.fov)))
+	# up or down to see something behind them. Instead we derive the Y from
+	# the waypoint's camera-relative direction with the same planar
+	# perspective projection that unproject_position uses: the waypoint's
+	# height above the camera's forward axis over its forward distance, scaled
+	# by the focal length. This makes the marker slide along the top/bottom
+	# edges (and into the corners) exactly like the X slides along the
+	# left/right edges, so it tracks vertical offsets instead of only moving
+	# sideways. The signed forward distance keeps behind targets bounded near
+	# the centre instead of exploding to an edge.
+	var to_parent := parent_position - camera_position
+	var cam_up := camera_transform.basis.y
+	var cam_forward := -camera_basis_z
+	var focal := (viewport_base_size.y * 0.5) / tan(_vertical_fov_rad(viewport_base_size) * 0.5)
+	var fwd := to_parent.dot(cam_forward)
+	var denom := fwd if absf(fwd) > 0.0001 else 0.0001
+	unprojected_position.y = viewport_base_size.y * 0.5 - (to_parent.dot(cam_up) / denom) * focal
 
 	position = Vector2(
 			clamp(unprojected_position.x, MARGIN, viewport_base_size.x - MARGIN),
@@ -130,3 +137,15 @@ func _process(delta: float) -> void:
 		# Bottom overflow.
 		label.visible = false
 		rotation = -overflow
+
+
+# The camera's vertical field of view in radians. Godot's `fov` property is the
+# vertical FOV when keep_aspect is KEEP_HEIGHT and the horizontal FOV when it is
+# KEEP_WIDTH, so this normalises it to the vertical value the planar projection
+# above needs.
+func _vertical_fov_rad(viewport_size: Vector2i) -> float:
+	var fov_rad := deg_to_rad(camera.fov)
+	if camera.keep_aspect == Camera3D.KEEP_HEIGHT:
+		return fov_rad
+	var aspect := float(viewport_size.x) / maxf(float(viewport_size.y), 1.0)
+	return 2.0 * atan(tan(fov_rad * 0.5) / aspect)
