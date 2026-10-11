@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/Events.gd" id="1_mphia"]
 [ext_resource type="Script" uid="uid://b5tvb8chtonxg" path="res://scripts/ui/minimap.gd" id="2_mphia"]
+[ext_resource type="Script" path="res://scripts/ui/bus_path_overlay.gd" id="16_bus_path"]
 [ext_resource type="Texture2D" uid="uid://mthb8icx6x1m" path="res://assets/img/white_circle1.png" id="2_white_circle"]
 [ext_resource type="FontFile" uid="uid://bqvrqx4a4joiu" path="res://assets/fonts/fortnite.otf" id="3_apjy4"]
 [ext_resource type="Texture2D" uid="uid://hdhbnox5e2d0" path="res://assets/img/point.webp" id="6_3swnk"]
@@ -135,7 +136,7 @@ offset_bottom = 40.0
 
 [node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=802481236]
 
-[node name="Minimap" type="Control" parent="CanvasLayer/BoxContainer/Node2" unique_id=43787215 node_paths=PackedStringArray("background_texture", "minimap_container", "player_pointer", "chicken_pointer", "lootbox_pointer", "storm_overlay")]
+[node name="Minimap" type="Control" parent="CanvasLayer/BoxContainer/Node2" unique_id=43787215 node_paths=PackedStringArray("background_texture", "minimap_container", "player_pointer", "chicken_pointer", "lootbox_pointer", "pickup_pointer", "storm_overlay", "bus_path_overlay")]
 custom_minimum_size = Vector2(60, 60)
 clip_contents = true
 layout_mode = 3
@@ -156,7 +157,9 @@ minimap_container = NodePath(".")
 player_pointer = NodePath("Pointer")
 chicken_pointer = NodePath("ChickenPointer")
 lootbox_pointer = NodePath("LootBoxPointer")
+pickup_pointer = NodePath("PickupsPointer")
 storm_overlay = NodePath("StormOverlay")
+bus_path_overlay = NodePath("BusPath")
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=123456789]
 layout_mode = 1
@@ -190,6 +193,17 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("2_white_circle")
 expand_mode = 1
+
+[node name="BusPath" type="Control" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=2199901867]
+z_index = 4
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("16_bus_path")
 
 [node name="Pointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1253168890]
 modulate = Color(1, 0, 1, 1)
@@ -228,6 +242,20 @@ offset_left = 51.0
 offset_top = 51.0
 offset_right = 69.0
 offset_bottom = 69.0
+texture = ExtResource("6_3swnk")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="PickupsPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=259660790]
+visible = false
+z_index = 11
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 0
+offset_left = 51.0
+offset_top = 51.0
+offset_right = 69.0
+offset_bottom = 69.0
+scale = Vector2(0.7, 0.7)
 texture = ExtResource("6_3swnk")
 expand_mode = 1
 stretch_mode = 4
@@ -688,8 +716,8 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
 theme_override_constants/outline_size = 2
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 140
-text = "Moonad"
+theme_override_font_sizes/font_size = 100
+text = "Pink Sink"
 horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("13_textfx")

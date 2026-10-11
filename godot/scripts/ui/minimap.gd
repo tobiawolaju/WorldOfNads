@@ -1,4 +1,4 @@
-extends Node
+extends Control
 
 # === REFERENCES ===
 @export var background_texture: TextureRect
@@ -7,11 +7,18 @@ extends Node
 @export var player_pointer: TextureRect
 @export var chicken_pointer: TextureRect
 @export var lootbox_pointer: TextureRect
+@export var pickup_pointer: TextureRect # Template; one clone is spawned per pickup
 @export var storm_overlay: TextureRect
+@export var bus_path_overlay: BusPathOverlay # Draws the white bus-route circle above the background
 @export var enabled: bool = true
 @export var disable_on_mobile: bool = false
 @export var disable_on_web: bool = false
 @export var minimum_fps_to_enable: float = 0.0
+
+# --- BUS PATH OVERLAY ---
+@export var show_bus_path: bool = true
+@export var bus_path_color: Color = Color(1, 1, 1, 1)
+@export var bus_path_width: float = 2.0
 
 var local_player: Node3D = null
 var local_camera: Camera3D = null
@@ -19,6 +26,28 @@ var chicken_target: Node3D = null
 var player_manager: Node = null
 var lootbox_target: Node3D = null
 var _storm_eye_node: Node3D = null
+
+# One white pointer per pickup in the "local_pickup_items" group.
+var _pickup_targets: Dictionary = {}  # instance_id -> Node3D
+var _pickup_pointers: Dictionary = {} # instance_id -> TextureRect
+var _last_pickup_rescan_ms: int = -100000 # rescan immediately on first frame
+
+var _bus_node: Node3D = null
+
+# --- BUS PATH OVERLAY CACHE ---
+# The bus route is a static circle; only its screen projection changes. We
+# cache the world->uv samples (computed only when the bus or map config
+# changes) and reuse a preallocated point buffer, so a normal update tick is a
+# handful of multiply-adds instead of trig + GameManager reads every 33 ms.
+const BUS_PATH_STEPS := 96
+const BUS_PATH_MIN_MOVE_PX := 1.0 # only re-upload when the projection moved this much
+
+var _bus_circle_uvs := PackedVector2Array() # BUS_PATH_STEPS uv samples, built once
+var _bus_circle_points := PackedVector2Array() # reusable output buffer (BUS_PATH_STEPS + 1)
+var _bus_circle_world_size := Vector2.ZERO # map config the uv cache was built from
+var _bus_circle_world_origin := Vector2.ZERO
+var _last_bus_fullscreen := false
+var _last_bus_offset := Vector2(INF, INF) # forces the very first upload
 
 var _last_real_minimap_ms: float = 0.0
 var _last_storm_center: Vector2 = Vector2.ZERO
@@ -55,6 +84,10 @@ func _ready() -> void:
 	_setup_pointer(player_pointer)
 	_setup_pointer(chicken_pointer)
 	_setup_pointer(lootbox_pointer)
+	if pickup_pointer:
+		# The template never shows; clones are created for each pickup.
+		pickup_pointer.visible = false
+	_setup_pointer(pickup_pointer)
 	_refresh_targets()
 
 	_apply_visibility()
@@ -82,6 +115,7 @@ func _toggle_fullscreen() -> void:
 		minimap_container.offset_top = _original_offsets.y
 		minimap_container.offset_right = _original_offsets.z
 		minimap_container.offset_bottom = _original_offsets.w
+	_update_bus_path_overlay()
 
 func _update_fullscreen_layout() -> void:
 	var viewport_size = get_viewport().get_visible_rect().size
@@ -172,8 +206,14 @@ func _process(_delta: float) -> void:
 	if lootbox_pointer:
 		_update_lootbox_pointer()
 
+	if pickup_pointer and _pickup_targets.size() > 0:
+		_update_pickup_pointers()
+
 	if storm_overlay:
 		_update_storm_overlay()
+
+	if show_bus_path:
+		_update_bus_path_overlay()
 
 func _get_world_uv(world_pos: Vector3) -> Vector2:
 	var world_size = GameManager.minimap_world_size
@@ -183,6 +223,71 @@ func _get_world_uv(world_pos: Vector3) -> Vector2:
 	var rel_x = world_pos.x - world_origin.x
 	var rel_z = world_pos.z - world_origin.y
 	return Vector2((rel_x / world_size.x) + 0.5, (rel_z / world_size.y) + 0.5)
+
+func _update_bus_path_overlay() -> void:
+	# Feed the white bus-route circle to the overlay node (which is a sibling
+	# above the background texture). The overlay draws in its own local space,
+	# and it is anchored to fill the minimap, so its coordinates match
+	# _world_to_minimap() output.
+	if not is_instance_valid(bus_path_overlay) or not enabled or not show_bus_path:
+		return
+	if not is_instance_valid(background_texture):
+		return
+	if _bus_node == null or not is_instance_valid(_bus_node):
+		_bus_node = get_tree().get_first_node_in_group("bus")
+	if _bus_node == null or not is_instance_valid(_bus_node):
+		return
+
+	# Rebuild the static circle samples only when the bus or map config changes.
+	if (
+		GameManager.minimap_world_size != _bus_circle_world_size
+		or GameManager.minimap_origin != _bus_circle_world_origin
+	):
+		_bus_circle_uvs = PackedVector2Array() # invalidate
+	if _bus_circle_uvs.is_empty():
+		_build_bus_circle_uvs()
+		if _bus_circle_uvs.is_empty():
+			return
+
+	# The circle is static; skip the per-tick upload + redraw unless the
+	# projection actually moved (fullscreen flip, or the zoomed background
+	# tracked the player by more than a pixel).
+	if (
+		_is_fullscreen == _last_bus_fullscreen
+		and absf(background_texture.position.x - _last_bus_offset.x) < BUS_PATH_MIN_MOVE_PX
+		and absf(background_texture.position.y - _last_bus_offset.y) < BUS_PATH_MIN_MOVE_PX
+	):
+		return
+	_last_bus_fullscreen = _is_fullscreen
+	_last_bus_offset = background_texture.position
+
+	var mm := minimap_container.size
+	var pts := _bus_circle_points
+	if _is_fullscreen:
+		for i in BUS_PATH_STEPS:
+			pts[i] = _bus_circle_uvs[i] * mm
+	else:
+		var scaled := mm * zoom_level
+		var off := background_texture.position
+		for i in BUS_PATH_STEPS:
+			pts[i] = _bus_circle_uvs[i] * scaled + off
+	pts[BUS_PATH_STEPS] = pts[0] # close the loop
+	bus_path_overlay.set_path(pts, bus_path_color, bus_path_width)
+
+func _build_bus_circle_uvs() -> void:
+	var bus_center: Variant = _bus_node.get("center")
+	var bus_radius: Variant = _bus_node.get("radius")
+	if not bus_center is Vector3 or bus_radius <= 0.0:
+		return
+	_bus_circle_world_size = GameManager.minimap_world_size
+	_bus_circle_world_origin = GameManager.minimap_origin
+	_bus_circle_uvs = PackedVector2Array()
+	_bus_circle_uvs.resize(BUS_PATH_STEPS)
+	for i in BUS_PATH_STEPS:
+		var angle := TAU * float(i) / float(BUS_PATH_STEPS)
+		var wp: Vector3 = bus_center + Vector3(cos(angle) * bus_radius, 0.0, sin(angle) * bus_radius)
+		_bus_circle_uvs[i] = _get_world_uv(wp)
+	_bus_circle_points.resize(BUS_PATH_STEPS + 1)
 
 func _world_to_minimap(world_pos: Vector3) -> Vector2:
 	var uv = _get_world_uv(world_pos)
@@ -219,6 +324,9 @@ func _refresh_targets() -> void:
 		if player_manager != null and player_manager.has_method("get_lootbox_node"):
 			lootbox_target = player_manager.call("get_lootbox_node")
 
+	if pickup_pointer:
+		_refresh_pickup_targets()
+
 	if _storm_eye_node == null or not is_instance_valid(_storm_eye_node):
 		_storm_eye_node = get_tree().root.find_child("env", true, false)
 		if _storm_eye_node == null:
@@ -245,6 +353,65 @@ func _setup_pointer(pointer: TextureRect) -> void:
 		return
 
 	pointer.pivot_offset = pointer.size * 0.5
+
+func _refresh_pickup_targets() -> void:
+	# Rescanning the "local_pickup_items" group is a full scene-tree walk, so
+	# throttle it to ~2 Hz instead of every 33 ms update tick. Pointer positions
+	# still track live each tick; only the set of pickups refreshes slowly.
+	var now_ms := Time.get_ticks_msec()
+	if now_ms - _last_pickup_rescan_ms < 500:
+		return
+	_last_pickup_rescan_ms = now_ms
+
+	# One pointer per pickup currently in the world. Held/local items are skipped
+	# so a carried pickup stops showing up while it rides on the player.
+	var current: Array[Node] = get_tree().get_nodes_in_group("local_pickup_items")
+	var seen := {}
+	for node in current:
+		if not node is Node3D or not is_instance_valid(node):
+			continue
+		if node.has_method("is_being_held") and node.is_being_held():
+			continue
+		seen[node.get_instance_id()] = node
+
+	# Free pointers whose pickup was removed or got picked up.
+	for id in _pickup_pointers.keys():
+		if not seen.has(id):
+			var ptr: TextureRect = _pickup_pointers[id]
+			if ptr != null and is_instance_valid(ptr):
+				ptr.queue_free()
+			_pickup_pointers.erase(id)
+
+	# Give new pickups their own pointer.
+	for id in seen.keys():
+		if not _pickup_pointers.has(id):
+			_pickup_pointers[id] = _make_pickup_pointer()
+
+	_pickup_targets = seen
+
+func _make_pickup_pointer() -> TextureRect:
+	var ptr := pickup_pointer.duplicate() as TextureRect
+	pickup_pointer.get_parent().add_child(ptr)
+	_setup_pointer(ptr)
+	ptr.visible = false
+	return ptr
+
+func _update_pickup_pointers() -> void:
+	for id in _pickup_targets.keys():
+		var node: Node3D = _pickup_targets[id]
+		var ptr: TextureRect = _pickup_pointers.get(id)
+		if not is_instance_valid(node) or not is_instance_valid(ptr):
+			continue
+		var mm_pos: Vector2 = _world_to_minimap(node.global_position)
+		var mm_size: Vector2 = minimap_container.size
+		var half: Vector2 = ptr.size * 0.5
+		var clamped := Vector2(
+			clampf(mm_pos.x, half.x, mm_size.x - half.x),
+			clampf(mm_pos.y, half.y, mm_size.y - half.y)
+		)
+		ptr.visible = true
+		ptr.position = clamped - half
+		ptr.rotation = 0.0
 
 func _update_chicken_pointer() -> void:
 	if chicken_target == null or not is_instance_valid(chicken_target):
