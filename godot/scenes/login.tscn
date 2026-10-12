@@ -2,10 +2,12 @@
 
 [ext_resource type="Script" uid="uid://dnbvujqtaov8y" path="res://scripts/screens/Login.gd" id="1_login"]
 [ext_resource type="FontFile" uid="uid://bqvrqx4a4joiu" path="res://assets/fonts/fortnite.otf" id="2_0emk2"]
+[ext_resource type="Texture2D" uid="uid://dn4jy58lw73w1" path="res://assets/img/map/nightsky_test.png" id="2_47b6t"]
 [ext_resource type="FontFile" uid="uid://bkrsehe3e3foh" path="res://assets/fonts/font1.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://3ldunq2ayvi6" path="res://assets/fonts/Modak-Regular.ttf" id="3_cs5o2"]
 
 [sub_resource type="StyleBoxFlat" id="SB_login_panel"]
-bg_color = Color(0.43137255, 0.32941177, 1, 1)
+bg_color = Color(0.6, 0.6, 0.6, 0)
 
 [sub_resource type="FontVariation" id="FV_button"]
 base_font = ExtResource("2_font")
@@ -91,15 +93,15 @@ grow_vertical = 2
 script = ExtResource("1_login")
 next_scene = "res://scenes/dshbord.tscn"
 
-[node name="Background" type="ColorRect" parent="." unique_id=1728149188]
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1584820213]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
-color = Color(0.43137255, 0.32941177, 1, 1)
+texture = ExtResource("2_47b6t")
+expand_mode = 5
 
 [node name="LeftArea" type="MarginContainer" parent="." unique_id=1800000201]
 layout_mode = 1
@@ -118,8 +120,8 @@ theme_override_constants/margin_bottom = 40
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_0emk2")
-theme_override_font_sizes/font_size = 160
-text = "WONs"
+theme_override_font_sizes/font_size = 100
+text = "World of Nads"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -180,7 +182,7 @@ stretch_mode = 5
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("2_font")
+theme_override_fonts/font = ExtResource("3_cs5o2")
 theme_override_font_sizes/font_size = 24
 text = "—"
 horizontal_alignment = 1

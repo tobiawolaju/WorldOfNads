@@ -85,7 +85,7 @@ let matchTimeLeft = MATCH_DURATION_SECONDS;
 let matchRunning = false;
 let matchStartedThisRound = false;
 let isBatchResetting = false;
-let currentMinPlayersToStart = DEFAULT_MIN_PLAYERS_TO_START;
+let currentMinPlayersToStart = 3; // Force minimum of 3 for now
 let currentMaxPlayers = null;
 
 // Storm radius (server-authoritative)
@@ -1174,7 +1174,8 @@ function broadcastPayload(payload) {
 
 function restartMatchIfEligible() {
   matchTimeLeft = MATCH_DURATION_SECONDS;
-  matchRunning = getPlayerCount() >= currentMinPlayersToStart;
+  // Minimum players to start is 3 (for now)
+  matchRunning = getPlayerCount() >= 3;
   if (matchRunning) {
     matchStartedThisRound = true;
   }
@@ -1357,7 +1358,7 @@ gameWss.on('connection', (ws, req) => {
     ws.playerId = playerId;
     ws.send(mpEncode({ type: 'connect', id: playerId, username, skin: resolvedSkin, xp }));
     getRecipientNetworkState(playerId);
-    if (!matchRunning && getPlayerCount() >= currentMinPlayersToStart) {
+    if (!matchRunning && getPlayerCount() >= 3) {
       matchRunning = true;
       matchStartedThisRound = true;
     }
@@ -1712,7 +1713,7 @@ gameWss.on('connection', (ws, req) => {
       forgetPlayerForAllRecipients(playerId);
       broadcastPayload({ type: 'state_delta', q: 1, removed: [playerId] });
     }
-    if (!matchStartedThisRound && getPlayerCount() < currentMinPlayersToStart) {
+    if (!matchStartedThisRound && getPlayerCount() < 3) {
       matchRunning = false;
       matchTimeLeft = MATCH_DURATION_SECONDS;
     }
@@ -2032,7 +2033,7 @@ setInterval(() => {
   } else {
     if (!matchStartedThisRound) {
       matchTimeLeft = MATCH_DURATION_SECONDS;
-      if (getPlayerCount() >= currentMinPlayersToStart) {
+      if (getPlayerCount() >= 3) {
         matchRunning = true;
         matchStartedThisRound = true;
       }
