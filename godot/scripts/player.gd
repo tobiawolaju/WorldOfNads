@@ -30,9 +30,16 @@ const MEGA_LEAP_DURATION: float = 8.0
 ## TWIN: spawns a decoy clone that mirrors the player's movement for
 ## TWIN_DURATION seconds. Client-side and visual-only, like the other power-ups.
 const TWIN_DURATION: float = 8.0
-## How far the decoy sits from the player, in the player's local space, so it is
-## visible beside them rather than hidden inside the body.
-const TWIN_DECOY_OFFSET: Vector3 = Vector3(0.8, 0.0, 0.0)
+## The decoy stands beside the player at a random distance in this range
+## (metres), so it reads as a separate body rather than a copy glued on.
+const TWIN_DECOY_DISTANCE_MIN: float = 1.2
+const TWIN_DECOY_DISTANCE_MAX: float = 1.8
+## The decoy's facing is nudged by a random angle in this range (degrees) so the
+## clone does not stare in exactly the same direction as the player.
+const TWIN_FACING_JITTER_MIN_DEG: float = 5.0
+const TWIN_FACING_JITTER_MAX_DEG: float = 25.0
+## How far the decoy may drift forward/back from straight to the side (degrees).
+const TWIN_BEARING_JITTER_DEG: float = 30.0
 ## Fallback scene for the decoy when the local player's own scene path is unknown.
 const TWIN_SKIN_SCENE_PATH: String = "res://scenes/skin.tscn"
 ## Lightweight visual-only node the decoy's character parts are re-parented onto.
@@ -131,6 +138,9 @@ var _twin_decoy: Node3D = null
 ## The decoy's Skeleton3D, mirrored directly (the root must not carry the
 ## skeleton's scale again, or the clone shrinks to a fraction of the size).
 var _twin_decoy_mesh: Node3D = null
+## Random per-spawn placement: local offset and extra facing angle (radians).
+var _twin_facing_offset: float = 0.0
+var _twin_local_offset: Vector3 = Vector3.ZERO
 ## Cached once; avoids a tree search every pickup/drop.
 var _cached_buttons_hud: Node = null
 
@@ -1303,6 +1313,7 @@ func _spawn_twin_decoy() -> void:
 	_despawn_twin_decoy()
 	if not is_inside_tree():
 		return
+	_roll_twin_randomness()
 	var scene := _resolve_decoy_scene()
 	if scene == null:
 		return
@@ -1344,7 +1355,8 @@ func _despawn_twin_decoy() -> void:
 # Copies the local player's skeleton transform (position, facing and
 # squash/stretch) onto the decoy's own skeleton each physics step, and keeps its
 # animation state in sync. Mirrors the skeleton directly rather than the decoy
-# root so the skeleton's authored scale is not applied a second time.
+# root so the skeleton's authored scale is not applied a second time. The
+# per-spawn random side distance and facing offset are applied on top.
 func _mirror_twin_decoy() -> void:
 	if _twin_decoy == null or not is_instance_valid(_twin_decoy):
 		_twin_decoy = null
@@ -1355,10 +1367,25 @@ func _mirror_twin_decoy() -> void:
 		if _twin_decoy_mesh == null:
 			return
 	var src := mesh.global_transform
-	var offset := src.basis.orthonormalized() * TWIN_DECOY_OFFSET
-	_twin_decoy_mesh.global_transform = Transform3D(src.basis, src.origin + offset)
+	var base := src.basis.orthonormalized()
+	var origin := src.origin + base * _twin_local_offset
+	var decoy_basis := Basis(Vector3.UP, _twin_facing_offset) * src.basis
+	_twin_decoy_mesh.global_transform = Transform3D(decoy_basis, origin)
 	if _twin_decoy.has_method("set_animation_state"):
 		_twin_decoy.call("set_animation_state", current_animation)
+
+
+# Rolls the decoy's random side distance, bearing and facing offset once per
+# spawn, so each clone sits a little differently beside the player.
+func _roll_twin_randomness() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	_twin_facing_offset = deg_to_rad(rng.randf_range(TWIN_FACING_JITTER_MIN_DEG, TWIN_FACING_JITTER_MAX_DEG))
+	if rng.randf() < 0.5:
+		_twin_facing_offset = -_twin_facing_offset
+	var distance := rng.randf_range(TWIN_DECOY_DISTANCE_MIN, TWIN_DECOY_DISTANCE_MAX)
+	var bearing := deg_to_rad(rng.randf_range(-TWIN_BEARING_JITTER_DEG, TWIN_BEARING_JITTER_DEG))
+	_twin_local_offset = Vector3(cos(bearing) * distance, 0.0, sin(bearing) * distance)
 
 
 func _resolve_decoy_scene() -> PackedScene:
