@@ -18,7 +18,7 @@ const FADE_IN: float = 0.4
 const FADE_OUT: float = 1.4
 const PARTICLE_AMOUNT: int = 24
 const PARTICLE_LIFETIME: float = 2.6
-const SMOKE_COLOR := Color(0.45, 0.8, 0.4)
+const SMOKE_COLOR := Color(0.62, 0.82, 0.32)
 
 ## Soft round puff sprite, built once and shared by every cloud instance.
 static var _puff_texture: ImageTexture = null
