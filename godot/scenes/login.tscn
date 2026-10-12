@@ -103,6 +103,14 @@ grow_vertical = 2
 texture = ExtResource("2_47b6t")
 expand_mode = 5
 
+[node name="ColorRect" type="ColorRect" parent="." unique_id=2135092189]
+layout_mode = 0
+offset_left = -689.0
+offset_top = -694.0
+offset_right = 1311.0
+offset_bottom = 1306.0
+color = Color(0.43137255, 0.32941177, 1, 1)
+
 [node name="LeftArea" type="MarginContainer" parent="." unique_id=1800000201]
 layout_mode = 1
 anchors_preset = -1
