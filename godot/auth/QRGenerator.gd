@@ -83,7 +83,7 @@ func generate(text: String, target_px: int = 512) -> ImageTexture:
 	var scale := maxi(PIXELS_PER_MODULE, int(floor(float(target_px) / float(dimension))))
 
 	var image := Image.create_empty(dimension * scale, dimension * scale, false, Image.FORMAT_RGBA8)
-	image.fill(Color.WHITE)
+	image.fill(Color(0.43137255, 0.32941177, 1.0, 1.0))
 
 	# Fill rectangles per dark run rather than writing pixels one at a time.
 	for y in size:
@@ -92,7 +92,7 @@ func generate(text: String, target_px: int = 512) -> ImageTexture:
 				continue
 			image.fill_rect(
 				Rect2i((x + QUIET_ZONE) * scale, (y + QUIET_ZONE) * scale, scale, scale),
-				Color.BLACK
+				Color.WHITE
 			)
 
 	return ImageTexture.create_from_image(image)
