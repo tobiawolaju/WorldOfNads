@@ -45,7 +45,12 @@ const sessionTokens = new Map();
 const rateLimitTracker = new Map();
 const ipBanTracker = new Map();
 
-const MAX_PLAYER_SPEED = 12.0; // units/sec server-side clamp against teleport cheating
+const MAX_PLAYER_SPEED = 12.0; // units/sec horizontal clamp against teleport cheating
+// Vertical is clamped separately: jumps/falls move far faster vertically than a
+// player can run. The LEAP mega-leap launches at ~24 u/s up and falls back at the
+// same speed, so a single 3D cap (MAX_PLAYER_SPEED) used to halve it for everyone
+// else. Bounded, but with room for that leap (and network jitter).
+const MAX_PLAYER_VERTICAL_SPEED = 36.0; // units/sec vertical allowance (mega-leap/falls)
 const PICKUP_RADIUS = 1.1;
 const STEAL_RADIUS = 1.4;
 const MAX_THROW_IMPULSE = 8.0;
@@ -814,6 +819,25 @@ const server = createServer(async (req, res) => {
 const gameWss = new WebSocketServer({ noServer: true });
 const eventsWss = new WebSocketServer({ noServer: true });
 
+// Heartbeat: a client that vanishes without a clean WebSocket close (tab killed,
+// network drop, proxy timeout) would otherwise linger in `players` and keep being
+// broadcast to everyone else at its last position - a frozen player. Ping every
+// interval and terminate any socket that missed the previous pong, which fires the
+// normal 'close' handler so the player is cleaned up and everyone is told.
+// The Godot WebSocketPeer answers ping frames automatically during poll().
+const GAME_HEARTBEAT_INTERVAL_MS = 30000;
+const gameHeartbeat = setInterval(() => {
+  gameWss.clients.forEach((client) => {
+    if (client.isAlive === false) {
+      client.terminate();
+      return;
+    }
+    client.isAlive = false;
+    client.ping();
+  });
+}, GAME_HEARTBEAT_INTERVAL_MS);
+gameWss.on('close', () => clearInterval(gameHeartbeat));
+
 function publishEvent(eventType, message, playerId = '', meta = {}) {
   const event = {
     id: ++eventSequence,
@@ -1018,6 +1042,15 @@ function getRecipientNetworkState(recipientId) {
     recipientNetworkState.set(recipientId, state);
   }
   return state;
+}
+
+// Drops a disconnected player from every recipient's last-sent bookkeeping, so no
+// later delta or full snapshot re-announces them once the removal was broadcast.
+function forgetPlayerForAllRecipients(playerId) {
+  for (const state of recipientNetworkState.values()) {
+    state.lastSentPlayers.delete(playerId);
+    state.lastSentPlayerAt.delete(playerId);
+  }
 }
 
 function buildRecipientPayload(recipientId, currentPlayers, currentChicken, currentLootbox, currentMatch, now) {
@@ -1252,12 +1285,18 @@ eventsWss.on('connection', (ws) => {
 });
 
 gameWss.on('connection', (ws, req) => {
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
+
   if (currentMaxPlayers !== null && getPlayerCount() >= currentMaxPlayers) {
     ws.close(1008, 'match_full');
     return;
   }
 
   const playerId = randomUUID();
+  // Set when the socket closes, so an in-flight profile fetch cannot resurrect the
+  // player after the 'close' cleanup has already removed it.
+  let connectionClosed = false;
   const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const rawParam = (reqUrl.searchParams.get('username') || '').trim();
   const requestedSkin = resolveSkinName(reqUrl.searchParams.get('skin') || reqUrl.searchParams.get('skinId') || '');
@@ -1289,6 +1328,8 @@ gameWss.on('connection', (ws, req) => {
     const walletAddress = await getPlayerWallet(username);
     const firebaseSkin = resolveSkinName(profile?.skin || profile?.equippedSkinId || profile?.selectedSkin || profile?.selectedSkinId || profile?.skinName || profile?.skinId || await getPlayerSkin(username) || '');
     const resolvedSkin = firebaseSkin || requestedOrDefaultSkin;
+
+    if (connectionClosed) return; // socket dropped mid-fetch; do not resurrect it
 
     players[playerId] = {
       id: playerId,
@@ -1322,6 +1363,7 @@ gameWss.on('connection', (ws, req) => {
     }
   }).catch((err) => {
     console.error(`[Firebase] Failed to fetch profile for ${username}:`, err);
+    if (connectionClosed) return;
     const resolvedSkin = requestedOrDefaultSkin;
     players[playerId] = {
       id: playerId,
@@ -1391,18 +1433,27 @@ gameWss.on('connection', (ws, req) => {
         const dx = nx - player.x;
         const dy = ny - player.y;
         const dz = nz - player.z;
-        const maxStep = MAX_PLAYER_SPEED * Math.max(elapsedSec, FIXED_DT) * (isSliding ? 1.75 : 1.0);
-        const dist = length3(dx, dy, dz);
+        const stepScale = Math.max(elapsedSec, FIXED_DT);
+        // Clamp horizontal and vertical independently. Horizontal keeps the tight
+        // anti-teleport cap (with the slide allowance), while vertical gets its own
+        // larger cap so jumps/falls are not squashed.
+        const maxHorizontalStep = MAX_PLAYER_SPEED * stepScale * (isSliding ? 1.75 : 1.0);
+        const maxVerticalStep = MAX_PLAYER_VERTICAL_SPEED * stepScale;
 
-        if (dist <= maxStep || dist === 0) {
+        const horizontalDist = Math.sqrt(dx * dx + dz * dz);
+        if (horizontalDist <= maxHorizontalStep || horizontalDist === 0) {
           player.x = nx;
-          player.y = ny;
           player.z = nz;
         } else {
-          const scale = maxStep / dist;
+          const scale = maxHorizontalStep / horizontalDist;
           player.x += dx * scale;
-          player.y += dy * scale;
           player.z += dz * scale;
+        }
+
+        if (Math.abs(dy) <= maxVerticalStep || dy === 0) {
+          player.y = ny;
+        } else {
+          player.y += Math.sign(dy) * maxVerticalStep;
         }
 
         player.rotationY = nrot;
@@ -1615,6 +1666,7 @@ gameWss.on('connection', (ws, req) => {
   });
 
   ws.on('close', () => {
+    connectionClosed = true;
     rateLimitTracker.delete(ws);
 
     // Clean up session token
@@ -1651,6 +1703,15 @@ gameWss.on('connection', (ws, req) => {
     delete playerRewards[playerId];
     removePlayerFromCellIndex(playerId);
     recipientNetworkState.delete(playerId);
+
+    // Tell every remaining client to drop this player now, instead of leaving
+    // them frozen at their last broadcast position, and forget them so no later
+    // delta or full snapshot re-announces them. Skipped during a batch reset,
+    // which closes every client at once and resets the world itself.
+    if (!isBatchResetting) {
+      forgetPlayerForAllRecipients(playerId);
+      broadcastPayload({ type: 'state_delta', q: 1, removed: [playerId] });
+    }
     if (!matchStartedThisRound && getPlayerCount() < currentMinPlayersToStart) {
       matchRunning = false;
       matchTimeLeft = MATCH_DURATION_SECONDS;

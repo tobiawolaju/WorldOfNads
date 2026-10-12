@@ -1328,6 +1328,23 @@ func _drop_local_pickup() -> void:
 		throw_dir = -global_transform.basis.z
 	item.drop(throw_dir * LOCAL_PICKUP_THROW_STRENGTH)
 
+# On death, an unused power-up is left exactly where the player fell, so it can
+# be recovered on the spot. Unlike a manual drop it is not thrown along the
+# camera direction, and unlike a used power-up it is never recycled to a random
+# map spot. The holder is stripped of the pickup and its HUD slot.
+func _drop_power_up_at_death() -> void:
+	var item := held_local_pickup
+	held_local_pickup = null
+	held_power_up_mode = LocalPickup.PowerUpMode.NONE
+	_update_hud_power_up()
+	if item == null or not is_instance_valid(item):
+		return
+	if not item.has_method("drop"):
+		return
+	# Drop straight down from the death position so it rests exactly there.
+	item.global_position = global_position
+	item.drop(Vector3.ZERO)
+
 # Uses the held power-up pickup: it is consumed here and teleports to a random
 # far-away spot on the map instead of being dropped at the player's feet, then
 # its effect is applied.
@@ -1530,9 +1547,14 @@ func _resolve_decoy_scene() -> PackedScene:
 	return load(path) as PackedScene
 
 
-# Uses the local player's own skin when the gameplay root exposes it, otherwise
-# falls back to the default skin (e.g. in the lobby).
+# Uses the skin this player node actually wears, which apply_skin records on the
+# node itself - so the duplicate matches in every flow (gameplay, lobby, skin
+# cycled with T), not just where a root node exposes local_skin_name. Falls back
+# to the gameplay root's skin name, then the default skin.
 func _resolve_decoy_skin_name() -> String:
+	var own := str(get_meta(SkinApplier.APPLIED_SKIN_META, ""))
+	if own != "":
+		return own
 	if root != null:
 		var skin_name = root.get("local_skin_name")
 		if skin_name is String and not (skin_name as String).is_empty():
@@ -1709,7 +1731,9 @@ func die() -> void:
 	if _is_local_holding_chicken() or _is_local_holding_lootbox():
 		_drop_object()
 	if _is_local_holding_pickup():
-		_drop_local_pickup()
+		# An unused power-up stays where the player died (never recycled to a
+		# random spot) and the player is stripped of it.
+		_drop_power_up_at_death()
 	
 	# Visual feedback - could add death animation here
 	print("Player died! Respawning in ", RESPAWN_DELAY, "s...")

@@ -207,6 +207,11 @@ const SKIN_UNSHADED_SHADER := preload("res://assets/shaders/skin_unshaded.gdshad
 # from the authored material instead of from its own previous override.
 const AUTHORED_MATERIAL_META := "_skin_authored_material"
 
+# Meta key recording the skin name a node was last dressed with, so clones
+# (TWIN decoy) can reproduce the exact same look straight from that node,
+# without relying on any manager exposing a local_skin_name.
+const APPLIED_SKIN_META := "applied_skin_name"
+
 static var _skin_material_sets: Dictionary = {}
 const MAX_MATERIAL_CACHE: int = 30
 
@@ -242,6 +247,11 @@ func apply_skin(player: Node3D, skin_name: String) -> void:
 			mi.material_override = mat
 
 	_apply_attachments(player, data)
+	# Remember which skin this node now wears. TWIN decoys read this meta on the
+	# player so the duplicate always matches the actual rendered look, even where
+	# no root node exposes local_skin_name (e.g. the lobby's own player or a skin
+	# cycled with the T key).
+	player.set_meta(APPLIED_SKIN_META, skin_name)
 
 # Shows exactly the attachment nodes a skin lists and hides the rest. A skin
 # with an empty list - or no "attachments" key at all - wears nothing, which is
