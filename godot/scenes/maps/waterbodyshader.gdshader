@@ -133,7 +133,11 @@ void vertex() {
 	//npw = NODE_POSITION_WORLD;
 	vec2 adj_v_pos = VERTEX.xz;
 
-	float _height = wave(adj_v_pos, NODE_POSITION_WORLD) * height_scale;
+	// Keep the centre wave sample so the slope only needs one extra fetch per
+	// axis. Central difference sampled +/- epsilon, so the slope is doubled to
+	// keep the same normal strength: 5 wave reads per vertex down to 3.
+	float w0 = wave(adj_v_pos, NODE_POSITION_WORLD);
+	float _height = w0 * height_scale;
 	VERTEX.y += _height;
 
 	float wave_color_mix = remap(-wave_color_range, wave_color_range, 0.0, 1.0, _height);
@@ -144,7 +148,9 @@ void vertex() {
 	vec2 e = vec2(0.1, 0.0);
 	float v_scale = height_scale * v_normal_scale;
 
-	vec3 normal = normalize(vec3(wave(adj_v_pos - e, NODE_POSITION_WORLD) * v_scale - wave(adj_v_pos + e, NODE_POSITION_WORLD) * v_scale, 1.0 * e.x, wave(adj_v_pos - e.yx, NODE_POSITION_WORLD) * v_scale - wave(adj_v_pos + e.yx, NODE_POSITION_WORLD) * v_scale));
+	float wx = wave(adj_v_pos + e, NODE_POSITION_WORLD);
+	float wz = wave(adj_v_pos + e.yx, NODE_POSITION_WORLD);
+	vec3 normal = normalize(vec3((w0 - wx) * 2.0 * v_scale, 1.0 * e.x, (w0 - wz) * 2.0 * v_scale));
 
 	NORMAL = normal;
 	triplanar_pos = VERTEX.xyz * vec3(1.0, 0, 1.0);
@@ -211,7 +217,7 @@ void fragment() {
 	
 	// Antz!!! FOAM!
 	// set edge near/far to your camera near/far - TODO convert to uniform
-	float z_depth = edge(0.05, 200, texture(depth_texture, SCREEN_UV).x); // depth texture
+	float z_depth = edge(0.05, 200, depth3); // reuse the depth sample taken above
 	float z_pos = edge(0.05, 200, FRAGCOORD.z); // from position
 	float waterDepth = z_depth - z_pos; // diff
 	waterDepth = max(waterDepth, 0.0); // make sure waterdepth >= 0

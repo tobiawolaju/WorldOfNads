@@ -241,7 +241,7 @@ transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.539
 power_up_mode = 4
 
 [node name="Pickup5" parent="." unique_id=300391791 instance=ExtResource("13_nt65e")]
-transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -1.649298)
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -2.2704427)
 power_up_mode = 5
 
 [editable path="Bus"]
