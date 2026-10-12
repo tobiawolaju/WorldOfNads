@@ -580,9 +580,9 @@ func _receive_messages():
 				if data.has("players"):
 					_update_world_state(data["players"], true, quantized_full)
 				if data.has("chicken"):
-					_update_chicken_state(data["chicken"], quantized_full)
+					_update_chicken_state(data["chicken"], quantized_full, true)
 				if data.has("lootbox"):
-					_update_lootbox_state(data["lootbox"], quantized_full)
+					_update_lootbox_state(data["lootbox"], quantized_full, true)
 				if data.has("match") and typeof(data["match"]) == TYPE_DICTIONARY:
 					_update_match_state(data["match"], quantized_full)
 			"state_delta":
@@ -723,7 +723,7 @@ func _cache_chicken_node() -> void:
 			return
 	chicken_node = get_tree().root.find_child("Chicken", true, false) as RigidBody3D
 
-func _update_chicken_state(chicken_state: Dictionary, quantized := false) -> void:
+func _update_chicken_state(chicken_state: Dictionary, quantized := false, snap := false) -> void:
 	_cache_chicken_node()
 	if chicken_node == null:
 		return
@@ -747,13 +747,19 @@ func _update_chicken_state(chicken_state: Dictionary, quantized := false) -> voi
 	var target_rot_y = server_target_rot_y
 
 	if chicken_node.has_method("apply_network_state"):
-		chicken_node.apply_network_state(target_pos, target_rot_y, chicken_is_held)
+		chicken_node.apply_network_state(target_pos, target_rot_y, chicken_is_held, snap)
 	else:
 		chicken_node.freeze = true
-		chicken_node.global_position = chicken_node.global_position.lerp(target_pos, 0.45)
-		var rot = chicken_node.global_rotation
-		rot.y = lerp_angle(rot.y, target_rot_y, 0.45)
-		chicken_node.global_rotation = rot
+		if snap:
+			chicken_node.global_position = target_pos
+			var rot = chicken_node.global_rotation
+			rot.y = target_rot_y
+			chicken_node.global_rotation = rot
+		else:
+			chicken_node.global_position = chicken_node.global_position.lerp(target_pos, 0.45)
+			var rot = chicken_node.global_rotation
+			rot.y = lerp_angle(rot.y, target_rot_y, 0.45)
+			chicken_node.global_rotation = rot
 
 func is_local_player_holding_chicken() -> bool:
 	return chicken_is_held and chicken_holder_id == player_id
@@ -810,7 +816,7 @@ func _cache_lootbox_node() -> void:
 			return
 	lootbox_node = get_tree().root.find_child("LootBox", true, false) as RigidBody3D
 
-func _update_lootbox_state(lootbox_state: Dictionary, quantized := false) -> void:
+func _update_lootbox_state(lootbox_state: Dictionary, quantized := false, snap := false) -> void:
 	_cache_lootbox_node()
 	if lootbox_node == null:
 		return
@@ -832,13 +838,19 @@ func _update_lootbox_state(lootbox_state: Dictionary, quantized := false) -> voi
 	var target_rot_y = server_target_rot_y
 
 	if lootbox_node.has_method("apply_network_state"):
-		lootbox_node.apply_network_state(target_pos, target_rot_y, lootbox_is_held)
+		lootbox_node.apply_network_state(target_pos, target_rot_y, lootbox_is_held, snap)
 	else:
 		lootbox_node.freeze = true
-		lootbox_node.global_position = lootbox_node.global_position.lerp(target_pos, 0.45)
-		var rot = lootbox_node.global_rotation
-		rot.y = lerp_angle(rot.y, target_rot_y, 0.45)
-		lootbox_node.global_rotation = rot
+		if snap:
+			lootbox_node.global_position = target_pos
+			var rot = lootbox_node.global_rotation
+			rot.y = target_rot_y
+			lootbox_node.global_rotation = rot
+		else:
+			lootbox_node.global_position = lootbox_node.global_position.lerp(target_pos, 0.45)
+			var rot = lootbox_node.global_rotation
+			rot.y = lerp_angle(rot.y, target_rot_y, 0.45)
+			lootbox_node.global_rotation = rot
 
 func is_local_player_holding_lootbox() -> bool:
 	return lootbox_is_held and lootbox_holder_id == player_id

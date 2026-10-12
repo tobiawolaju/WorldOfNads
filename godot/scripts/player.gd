@@ -7,7 +7,12 @@ const JUMP_VELOCITY: float = 6
 const SPEED: float = 4.00
 const DEADZONE: float = 0.12
 const PICKUP_REQUEST_COOLDOWN_MS: int = 150
-const STEAL_RADIUS: float = 2.5
+## How close the chicken/lootbox must be before a pickup_request is even sent.
+## Mirrors the server's PICKUP_RADIUS so every press we send is one the server
+## will honour (its old 1.1 radius silently rejected grabs the client signalled
+## as available from its 2.0 grab area — the "can't pick the chicken" feel).
+## The server still validates distances authority-side.
+const ITEM_PICKUP_RADIUS: float = 2.2
 const LOCAL_PICKUP_RADIUS: float = 2.5
 const LOCAL_PICKUP_THROW_STRENGTH: float = 4.0
 const POS_SCALE: float = 100.0
@@ -128,10 +133,12 @@ var gamepad_index: int = 0
 ## HOOK punch: how long the punch plays when the HOOK power-up is used. Read from
 ## the hook animation's own length when available; this is the fallback.
 const HOOK_FALLBACK_DURATION: float = 2.4
-## HOOK punch: the punch animation plays at this speed multiplier (3x faster).
-const PUNCH_SPEED_MULT: float = 3.0
+## HOOK punch: the punch animation plays at this speed multiplier. Doubled from
+## the original 3x to 6x so the full swing reads as a quicker jab.
+const PUNCH_SPEED_MULT: float = 6.0
 ## HOOK punch: for HOOK_DURATION seconds after use, the Action button fires the
-## punch (spammable), with an immediate first punch on use.
+## punch (repeatable — each swing finishes before the next starts), with an
+## immediate first punch on use.
 const HOOK_DURATION: float = 8.0
 ## Health fraction (of MAX_HEALTH) at or below which the near-death fall animation
 ## plays once, right before the health bar empties.
@@ -447,7 +454,8 @@ func _setup_anim_tree() -> void:
 		var node := AnimationNodeAnimation.new()
 		node.animation = state_name
 		if state_name == "hook":
-			# Play a 3x-faster copy of the punch so the one-shot reads as a quick jab.
+			# Play a faster copy of the punch (PUNCH_SPEED_MULT) so the one-shot
+			# reads as a quick jab.
 			node.animation = _ensure_fast_hook_animation(PUNCH_SPEED_MULT)
 		state_machine.add_node(state_name, node)
 	for from_name in state_names:
@@ -1245,7 +1253,7 @@ func _try_pickup():
 			_get_cached_chicken_node(),
 			_get_cached_lootbox_node(),
 		]
-		var fallback_dist: float = STEAL_RADIUS
+		var fallback_dist: float = ITEM_PICKUP_RADIUS
 		for entity in entities:
 			if entity != null and entity.is_in_group("pickup_items"):
 				var dist = global_position.distance_to(entity.global_position)
@@ -1294,7 +1302,11 @@ func _find_nearest_local_pickup() -> RigidBody3D:
 
 # LocalPickup items are never sent to the server, they are grabbed client side only.
 func _try_pickup_local() -> bool:
-	if _is_local_holding_pickup():
+	# One power-up at a time: a carried (still unused) power-up or an effect that
+	# is still running blocks a new pickup, so the current one has to be used up
+	# before another can be taken. Server-synced items (chicken / lootbox) are
+	# unaffected and still fall through to _try_pickup().
+	if _is_local_holding_pickup() or _active_power_up_remaining > 0.0:
 		return false
 	var now := Time.get_ticks_msec()
 	if now - last_pickup_request_ms < PICKUP_REQUEST_COOLDOWN_MS:
@@ -1385,7 +1397,8 @@ func _activate_power_up(mode: int) -> void:
 			_trigger_mega_leap()
 		LocalPickup.PowerUpMode.HOOK:
 			# HOOK: an 8s window during which the Action button fires the punch,
-			# spammable like SMOG/LEAP, with an immediate first punch on use.
+			# with an immediate first punch on use. Each punch plays to completion
+			# before another can be fired.
 			_start_timed_power_up(LocalPickup.PowerUpMode.HOOK, HOOK_DURATION)
 			_start_punch()
 		_:
@@ -1434,6 +1447,12 @@ func _ensure_fast_hook_animation(speed_mult: float) -> StringName:
 # Plays the HOOK punch animation once, locking the run/idle animation states for
 # the animation's duration so a moving player punches in place instead of running.
 func _start_punch() -> void:
+	# A punch already in flight is left alone to finish: the Action button can be
+	# pressed as often as you like during the HOOK window, but each swing has to
+	# play to the end before the next one starts, so spamming never restarts the
+	# clip mid-swing (which also keeps the movement lock from being held forever).
+	if _is_punching:
+		return
 	_is_punching = true
 	var duration := HOOK_FALLBACK_DURATION / PUNCH_SPEED_MULT
 	var punch_anim := anim_player.get_animation("hook") as Animation
@@ -1441,8 +1460,8 @@ func _start_punch() -> void:
 		duration = punch_anim.length / PUNCH_SPEED_MULT
 	_punch_timer = duration
 	if current_animation == "hook":
-		# Spam-trigger: restart the punch in place instead of being swallowed by the
-		# _set_anim guard, which skips when already on the hook animation.
+		# Rare: the state is still on "hook" (held past the clip), so restart it
+		# from the top rather than being skipped by _set_anim's same-state guard.
 		if anim_state_machine:
 			anim_state_machine.start(&"hook", true)
 		return

@@ -64,16 +64,25 @@ func _physics_process(delta: float) -> void:
 func update_circle_center(new_center: Vector3) -> void:
 	wiggle_center = new_center
 
-func apply_network_state(target_pos: Vector3, target_rot_y: float, held: bool) -> void:
+func apply_network_state(target_pos: Vector3, target_rot_y: float, held: bool, snap := false) -> void:
 	network_authoritative = true
 	is_held = held
 	freeze = true
 
-	var lerp_weight := 0.85 if held else 0.5
-	global_position = global_position.lerp(target_pos, lerp_weight)
-	var rot = global_rotation
-	rot.y = lerp_angle(rot.y, target_rot_y, lerp_weight)
-	global_rotation = rot
+	if snap:
+		# Match start / (re)join: place the item exactly where the server says
+		# instead of easing toward it, so it never visibly drops from the editor
+		# scene position down to the server spawn.
+		global_position = target_pos
+		var rot = global_rotation
+		rot.y = target_rot_y
+		global_rotation = rot
+	else:
+		var lerp_weight := 0.85 if held else 0.5
+		global_position = global_position.lerp(target_pos, lerp_weight)
+		var rot = global_rotation
+		rot.y = lerp_angle(rot.y, target_rot_y, lerp_weight)
+		global_rotation = rot
 
 	if not held:
 		wiggle_center = target_pos

@@ -51,8 +51,10 @@ const MAX_PLAYER_SPEED = 12.0; // units/sec horizontal clamp against teleport ch
 // same speed, so a single 3D cap (MAX_PLAYER_SPEED) used to halve it for everyone
 // else. Bounded, but with room for that leap (and network jitter).
 const MAX_PLAYER_VERTICAL_SPEED = 36.0; // units/sec vertical allowance (mega-leap/falls)
-const PICKUP_RADIUS = 1.1;
-const STEAL_RADIUS = 1.4;
+const PICKUP_RADIUS = 2.2;
+// Stealing works off the distance to the HOLDER (not the item), since the item
+// rides ~1 off their body.
+const STEAL_RADIUS = 2.0;
 const MAX_THROW_IMPULSE = 8.0;
 const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 1.195;
@@ -150,6 +152,49 @@ const DEFAULT_LOOTBOX_STATE = {
   z: 0,
   rotationY: 0
 };
+
+// --- MATCH-START ITEM SPAWNS ---
+// The server picks where the chicken and lootbox start every match, inside the
+// starter safe zone and far enough apart that they don't overlap. y is FLOOR_Y
+// so they rest on the floor instead of the editor scene positions (the chicken
+// node in gameplay.tscn floats high above the terrain).
+const ITEM_SPAWN_MAX_RADIUS = 18.0;
+const ITEM_SPAWN_MIN_SEPARATION = 8.0;
+
+function randomItemSpawnPoint() {
+  // Uniformly random point inside a disc of ITEM_SPAWN_MAX_RADIUS.
+  const r = Math.sqrt(Math.random()) * ITEM_SPAWN_MAX_RADIUS;
+  const a = Math.random() * Math.PI * 2;
+  return { x: Math.cos(a) * r, z: Math.sin(a) * r };
+}
+
+function prepareItemSpawns() {
+  const c = randomItemSpawnPoint();
+  let b = randomItemSpawnPoint();
+  for (let i = 0; i < 12 && length3(c.x - b.x, 0, c.z - b.z) < ITEM_SPAWN_MIN_SEPARATION; i++) {
+    b = randomItemSpawnPoint();
+  }
+
+  chicken.x = c.x;
+  chicken.y = FLOOR_Y;
+  chicken.z = c.z;
+  chicken.rotationY = 0;
+  chicken.isHeld = false;
+  chicken.holderId = null;
+  chicken.vx = 0;
+  chicken.vy = 0;
+  chicken.vz = 0;
+
+  lootbox.x = b.x;
+  lootbox.y = FLOOR_Y;
+  lootbox.z = b.z;
+  lootbox.rotationY = 0;
+  lootbox.isHeld = false;
+  lootbox.holderId = null;
+  lootbox.vx = 0;
+  lootbox.vy = 0;
+  lootbox.vz = 0;
+}
 
 function length3(x, y, z) {
   return Math.sqrt(x * x + y * y + z * z);
@@ -1359,6 +1404,9 @@ gameWss.on('connection', (ws, req) => {
     ws.send(mpEncode({ type: 'connect', id: playerId, username, skin: resolvedSkin, xp }));
     getRecipientNetworkState(playerId);
     if (!matchRunning && getPlayerCount() >= 3) {
+      // A fresh match starts here: the server picks where the chicken and
+      // lootbox spawn this round before anyone has seen them.
+      prepareItemSpawns();
       matchRunning = true;
       matchStartedThisRound = true;
     }
@@ -2034,6 +2082,10 @@ setInterval(() => {
     if (!matchStartedThisRound) {
       matchTimeLeft = MATCH_DURATION_SECONDS;
       if (getPlayerCount() >= 3) {
+        // Match transitions to running from the sim loop: pick fresh item spawns
+        // for this round (the connect handler path above also does this, but
+        // this covers starts that don't coincide with a join).
+        prepareItemSpawns();
         matchRunning = true;
         matchStartedThisRound = true;
       }
