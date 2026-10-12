@@ -852,6 +852,7 @@ func _physics_process(delta: float) -> void:
 		_storm_check_timer += delta
 		if _storm_check_timer >= STORM_CHECK_INTERVAL:
 			_storm_check_timer = 0.0
+			_refresh_storm_zone()
 			var player_pos_2d := Vector2(global_position.x, global_position.z)
 			var dist := player_pos_2d.distance_to(storm_center)
 			if dist > storm_radius:
@@ -1692,6 +1693,21 @@ func _find_buttons_hud() -> Node:
 			_cached_buttons_hud = child
 			break
 	return _cached_buttons_hud
+
+# --- STORM ZONE ---
+## The server shrinks the storm over the match. The damage zone is simulated
+## here, so re-read the live centre/radius from the StormEye instead of trusting
+## the values captured at spawn, or the damage boundary would stay at its
+## starting size while the visible wall moved.
+func _refresh_storm_zone() -> void:
+	if _storm_eye == null or not is_instance_valid(_storm_eye):
+		_storm_eye = get_tree().get_first_node_in_group("storm_eye")
+	if _storm_eye == null:
+		return
+	if _storm_eye.has_method("get_storm_radius"):
+		storm_radius = _storm_eye.get_storm_radius()
+	if _storm_eye.has_method("get_storm_center"):
+		storm_center = _storm_eye.get_storm_center()
 
 # --- HEALTH SYSTEM ---
 func take_damage(amount: float, source: Node = null) -> void:
