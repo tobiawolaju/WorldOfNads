@@ -27,6 +27,16 @@ const SPEED_BURST_DURATION: float = 8.0
 ## MEGA_LEAP_DURATION seconds.
 const MEGA_LEAP_MULT: float = 4.0
 const MEGA_LEAP_DURATION: float = 8.0
+## TWIN: spawns a decoy clone that mirrors the player's movement for
+## TWIN_DURATION seconds. Client-side and visual-only, like the other power-ups.
+const TWIN_DURATION: float = 8.0
+## How far the decoy sits from the player, in the player's local space, so it is
+## visible beside them rather than hidden inside the body.
+const TWIN_DECOY_OFFSET: Vector3 = Vector3(0.8, 0.0, 0.0)
+## Fallback scene for the decoy when the local player's own scene path is unknown.
+const TWIN_SKIN_SCENE_PATH: String = "res://scenes/skin.tscn"
+## Lightweight visual-only node the decoy's character parts are re-parented onto.
+const REMOTE_PLAYER_SCRIPT := preload("res://scripts/player/RemotePlayer.gd")
 ## Shared empty result from get_active_power_up(), so the idle case allocates nothing.
 const NO_ACTIVE_POWER_UP := {}
 
@@ -116,6 +126,11 @@ var _active_power_up_remaining: float = 0.0
 var _active_power_up_duration: float = 0.0
 ## Set when MEGA_LEAP (LEAP) is used; consumed in the next physics step to launch.
 var _mega_leap_pending: bool = false
+## The TWIN decoy clone while the effect is running, or null.
+var _twin_decoy: Node3D = null
+## The decoy's Skeleton3D, mirrored directly (the root must not carry the
+## skeleton's scale again, or the clone shrinks to a fraction of the size).
+var _twin_decoy_mesh: Node3D = null
 ## Cached once; avoids a tree search every pickup/drop.
 var _cached_buttons_hud: Node = null
 
@@ -569,6 +584,8 @@ func _physics_process(delta: float) -> void:
 		_active_power_up_remaining = maxf(0.0, _active_power_up_remaining - delta)
 		if _active_power_up_remaining <= 0.0:
 			# Timed effect ran out.
+			if _active_power_up_mode == LocalPickup.PowerUpMode.TWIN:
+				_despawn_twin_decoy()
 			_active_power_up_mode = LocalPickup.PowerUpMode.NONE
 			_active_power_up_duration = 0.0
 
@@ -880,6 +897,7 @@ func _physics_process(delta: float) -> void:
 
 	_handle_animations(move_direction)
 	_handle_camera_gamepad(delta)
+	_mirror_twin_decoy()
 
 	var net_active: bool = (move_direction.length_squared() > 0.0025) or _is_local_holding_chicken() or _is_local_holding_pickup() or (current_animation == "running")
 	if current_animation == "runningjump" or current_animation == "falling" or current_animation == "runningslide":
@@ -1251,6 +1269,10 @@ func _activate_power_up(mode: int) -> void:
 		LocalPickup.PowerUpMode.SPEED_BURST:
 			# RUSH: 2x run speed for 8 seconds.
 			_start_timed_power_up(LocalPickup.PowerUpMode.SPEED_BURST, SPEED_BURST_DURATION)
+		LocalPickup.PowerUpMode.TWIN:
+			# TWIN: spawn a decoy clone that mirrors movement for 8 seconds.
+			_start_timed_power_up(LocalPickup.PowerUpMode.TWIN, TWIN_DURATION)
+			_spawn_twin_decoy()
 		LocalPickup.PowerUpMode.MEGA_LEAP:
 			# LEAP: 8 seconds during which the Action button launches 4x jumps,
 			# plus an immediate launch on use.
@@ -1272,8 +1294,106 @@ func _trigger_mega_leap() -> void:
 		return
 	_mega_leap_pending = true
 
+# --- TWIN DECOY ---
+# Spawns the TWIN decoy. It is a visual-only copy of the local player: the same
+# skin scene is instanced, its physics nodes are stripped, and its visual children
+# are re-parented onto a lightweight RemotePlayer node. That gives us an animated
+# character we drive ourselves without it running player.gd's gameplay logic.
+func _spawn_twin_decoy() -> void:
+	_despawn_twin_decoy()
+	if not is_inside_tree():
+		return
+	var scene := _resolve_decoy_scene()
+	if scene == null:
+		return
+	var source := scene.instantiate() as Node3D
+	if source == null:
+		return
+	var applier := SkinApplier.new()
+	applier.apply_skin(source, _resolve_decoy_skin_name())
+	_strip_decoy_physics(source)
+	var decoy: Node3D = REMOTE_PLAYER_SCRIPT.new()
+	decoy.name = "TwinDecoy"
+	for child in source.get_children():
+		source.remove_child(child)
+		child.owner = null
+		decoy.add_child(child)
+	source.queue_free()
+	# Parent to the scene root so it lives and dies with the current scene and
+	# never shows up where gameplay code expects an actual player node.
+	var parent := get_tree().current_scene
+	if parent == null:
+		parent = get_parent()
+	if parent == null:
+		decoy.queue_free()
+		return
+	parent.add_child(decoy)
+	decoy.set("display_name", "")  # no floating name over the decoy
+	_twin_decoy = decoy
+	_twin_decoy_mesh = decoy.get_node_or_null("Skeleton3D") as Node3D
+	_mirror_twin_decoy()
+
+
+func _despawn_twin_decoy() -> void:
+	if _twin_decoy != null and is_instance_valid(_twin_decoy):
+		_twin_decoy.queue_free()
+	_twin_decoy = null
+	_twin_decoy_mesh = null
+
+
+# Copies the local player's skeleton transform (position, facing and
+# squash/stretch) onto the decoy's own skeleton each physics step, and keeps its
+# animation state in sync. Mirrors the skeleton directly rather than the decoy
+# root so the skeleton's authored scale is not applied a second time.
+func _mirror_twin_decoy() -> void:
+	if _twin_decoy == null or not is_instance_valid(_twin_decoy):
+		_twin_decoy = null
+		_twin_decoy_mesh = null
+		return
+	if _twin_decoy_mesh == null or not is_instance_valid(_twin_decoy_mesh):
+		_twin_decoy_mesh = _twin_decoy.get_node_or_null("Skeleton3D") as Node3D
+		if _twin_decoy_mesh == null:
+			return
+	var src := mesh.global_transform
+	var offset := src.basis.orthonormalized() * TWIN_DECOY_OFFSET
+	_twin_decoy_mesh.global_transform = Transform3D(src.basis, src.origin + offset)
+	if _twin_decoy.has_method("set_animation_state"):
+		_twin_decoy.call("set_animation_state", current_animation)
+
+
+func _resolve_decoy_scene() -> PackedScene:
+	var path := scene_file_path
+	if path.is_empty():
+		path = TWIN_SKIN_SCENE_PATH
+	return load(path) as PackedScene
+
+
+# Uses the local player's own skin when the gameplay root exposes it, otherwise
+# falls back to the default skin (e.g. in the lobby).
+func _resolve_decoy_skin_name() -> String:
+	if root != null:
+		var skin_name = root.get("local_skin_name")
+		if skin_name is String and not (skin_name as String).is_empty():
+			return str(skin_name)
+	return SkinApplier.DEFAULT_SKIN
+
+
+# Removes every physics node so the decoy is purely visual and cannot collide,
+# push the player, or trigger pickup areas.
+func _strip_decoy_physics(node: Node) -> void:
+	for child in node.get_children():
+		if child is CollisionObject3D or child is CollisionShape3D or child is Area3D or child is RayCast3D:
+			node.remove_child(child)
+			child.queue_free()
+			continue
+		_strip_decoy_physics(child)
+
+
 # Starts (or replaces) the single timed power-up the HUD draws a ring for.
 func _start_timed_power_up(mode: int, duration: float) -> void:
+	# Leaving a TWIN effect for any other effect tears the decoy down.
+	if mode != LocalPickup.PowerUpMode.TWIN:
+		_despawn_twin_decoy()
 	_active_power_up_mode = mode
 	_active_power_up_duration = duration
 	_active_power_up_remaining = duration
@@ -1311,6 +1431,8 @@ func _timed_duration_for(mode: int) -> float:
 	match mode:
 		LocalPickup.PowerUpMode.SPEED_BURST:
 			return SPEED_BURST_DURATION
+		LocalPickup.PowerUpMode.TWIN:
+			return TWIN_DURATION
 		LocalPickup.PowerUpMode.MEGA_LEAP:
 			return MEGA_LEAP_DURATION
 	return 0.0
