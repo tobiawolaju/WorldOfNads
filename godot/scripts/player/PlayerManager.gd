@@ -1246,7 +1246,13 @@ func _update_match_ui() -> void:
 
 func _apply_storm_radius(radius: float) -> void:
 	if _storm_env_node == null or not is_instance_valid(_storm_env_node):
-		_storm_env_node = get_tree().root.find_child("enviroment", true, false)
+		# The storm node is named "env" in gameplay.tscn; look it up by the group
+		# StormEye registers itself in so a rename can't silently break this again.
+		_storm_env_node = get_tree().get_first_node_in_group("storm_eye")
+		if _storm_env_node == null:
+			_storm_env_node = get_tree().root.find_child("env", true, false)
+		if _storm_env_node == null:
+			_storm_env_node = get_tree().root.find_child("enviroment", true, false)
 	if _storm_env_node and _storm_env_node.has_method("set_storm_radius"):
 		_storm_env_node.set_storm_radius(radius)
 

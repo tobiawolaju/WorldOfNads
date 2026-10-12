@@ -328,7 +328,11 @@ func _refresh_targets() -> void:
 		_refresh_pickup_targets()
 
 	if _storm_eye_node == null or not is_instance_valid(_storm_eye_node):
-		_storm_eye_node = get_tree().root.find_child("env", true, false)
+		# Prefer the group StormEye registers itself in; the node names below are
+		# only a fallback for scenes that predate it.
+		_storm_eye_node = get_tree().get_first_node_in_group("storm_eye") as Node3D
+		if _storm_eye_node == null:
+			_storm_eye_node = get_tree().root.find_child("env", true, false)
 		if _storm_eye_node == null:
 			_storm_eye_node = get_tree().root.find_child("enviroment", true, false)
 
