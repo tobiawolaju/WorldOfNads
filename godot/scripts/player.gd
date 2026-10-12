@@ -40,6 +40,19 @@ const TWIN_BEARING_JITTER_DEG: float = 30.0
 const TWIN_SKIN_SCENE_PATH: String = "res://scenes/skin.tscn"
 ## Lightweight visual-only node the decoy's character parts are re-parented onto.
 const REMOTE_PLAYER_SCRIPT := preload("res://scripts/player/RemotePlayer.gd")
+## SMOKE_GRENADE (SMOG): for SMOKE_DURATION seconds, pressing Action drops a
+## stationary smoke cloud at the player's feet. Each cloud then lives for its own
+## SMOKE_CLOUD_LIFETIME. Purely visual and client-side for now, like the others.
+const SMOKE_DURATION: float = 8.0
+## Half-width of a dropped cloud in metres (~8x the player's size across).
+const SMOKE_CLOUD_RADIUS: float = 7.0
+## Minimum seconds between drops while the SMOG window is running.
+const SMOKE_DROP_COOLDOWN: float = 0.6
+## Hard cap on simultaneous clouds; the oldest is recycled beyond this.
+const MAX_SMOKE_CLOUDS: int = 6
+## The standalone cloud prefab. Spawned under the scene root (not the player) so
+## it stays put, and so multiplayer can replicate it by position + seed.
+const SMOKE_CLOUD_SCENE := preload("res://scenes/smoke_cloud.tscn")
 ## Shared empty result from get_active_power_up(), so the idle case allocates nothing.
 const NO_ACTIVE_POWER_UP := {}
 
@@ -138,6 +151,10 @@ var _twin_decoy_mesh: Node3D = null
 ## keeps its distance and never swings around the player when they turn. Its
 ## rotation still tracks the player each step, spinning about its own axis.
 var _twin_world_offset: Vector3 = Vector3.ZERO
+## Seconds until the next SMOG cloud may be dropped.
+var _smoke_drop_cooldown: float = 0.0
+## Live smog clouds this player spawned, for the concurrent-cloud cap.
+var _smoke_clouds: Array = []
 ## Cached once; avoids a tree search every pickup/drop.
 var _cached_buttons_hud: Node = null
 
@@ -505,6 +522,10 @@ func _perform_pickup_request() -> void:
 	if _is_mega_leap_active():
 		_trigger_mega_leap()
 		return
+	# While the SMOG power-up is running, the Action button drops smoke clouds.
+	if _is_smoke_active():
+		_try_drop_smoke_cloud()
+		return
 	if _is_local_holding_pickup():
 		# A held power-up is USED, not dropped: it vanishes and recycles to a
 		# random far-away spot on the map (effects are not implemented yet).
@@ -595,6 +616,9 @@ func _physics_process(delta: float) -> void:
 				_despawn_twin_decoy()
 			_active_power_up_mode = LocalPickup.PowerUpMode.NONE
 			_active_power_up_duration = 0.0
+
+	if _smoke_drop_cooldown > 0.0:
+		_smoke_drop_cooldown = maxf(0.0, _smoke_drop_cooldown - delta)
 
 	var input_dir := Vector2.ZERO
 	var movement_allowed := _is_movement_allowed()
@@ -1280,6 +1304,12 @@ func _activate_power_up(mode: int) -> void:
 			# TWIN: spawn a decoy clone that mirrors movement for 8 seconds.
 			_start_timed_power_up(LocalPickup.PowerUpMode.TWIN, TWIN_DURATION)
 			_spawn_twin_decoy()
+		LocalPickup.PowerUpMode.SMOKE_GRENADE:
+			# SMOG: 8 seconds during which the Action button drops smoke clouds.
+			# Drop the first cloud immediately, right where the player used it.
+			_start_timed_power_up(LocalPickup.PowerUpMode.SMOKE_GRENADE, SMOKE_DURATION)
+			_smoke_drop_cooldown = 0.0
+			_try_drop_smoke_cloud()
 		LocalPickup.PowerUpMode.MEGA_LEAP:
 			# LEAP: 8 seconds during which the Action button launches 4x jumps,
 			# plus an immediate launch on use.
@@ -1409,6 +1439,57 @@ func _strip_decoy_physics(node: Node) -> void:
 		_strip_decoy_physics(child)
 
 
+# --- SMOKE CLOUDS (SMOG) ---
+# True while the SMOG effect's 8-second drop window is running.
+func _is_smoke_active() -> bool:
+	return _active_power_up_mode == LocalPickup.PowerUpMode.SMOKE_GRENADE and _active_power_up_remaining > 0.0
+
+
+# Drops a smog cloud at the player's feet, if the drop cooldown has elapsed.
+func _try_drop_smoke_cloud() -> void:
+	if _smoke_drop_cooldown > 0.0:
+		return
+	_smoke_drop_cooldown = SMOKE_DROP_COOLDOWN
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var drop_position := global_position + Vector3(0.0, SMOKE_CLOUD_RADIUS * 0.3, 0.0)
+	_spawn_smoke_cloud(drop_position, rng.randi())
+
+
+# Network seam: today this just spawns the cloud locally. The multiplayer version
+# replaces the body with an RPC that broadcasts the same position + seed, so every
+# client builds an identical cloud without touching the cloud itself.
+func _spawn_smoke_cloud(world_position: Vector3, spawn_seed: int) -> void:
+	var cloud := SMOKE_CLOUD_SCENE.instantiate() as Node3D
+	if cloud == null:
+		return
+	cloud.call("setup", SMOKE_CLOUD_RADIUS, spawn_seed)
+	var parent := get_tree().current_scene
+	if parent == null:
+		parent = get_parent()
+	if parent == null:
+		cloud.queue_free()
+		return
+	parent.add_child(cloud)
+	cloud.global_position = world_position
+	_track_smoke_cloud(cloud)
+
+
+# Keeps at most MAX_SMOKE_CLOUDS alive by recycling the oldest when full. Clouds
+# free themselves after their own lifetime, so this only hears about the extras.
+func _track_smoke_cloud(cloud: Node3D) -> void:
+	var alive: Array = []
+	for existing in _smoke_clouds:
+		if is_instance_valid(existing) and not existing.is_queued_for_deletion():
+			alive.append(existing)
+	_smoke_clouds = alive
+	while _smoke_clouds.size() >= MAX_SMOKE_CLOUDS:
+		var oldest = _smoke_clouds.pop_front()
+		if is_instance_valid(oldest):
+			oldest.queue_free()
+	_smoke_clouds.append(cloud)
+
+
 # Starts (or replaces) the single timed power-up the HUD draws a ring for.
 func _start_timed_power_up(mode: int, duration: float) -> void:
 	# Leaving a TWIN effect for any other effect tears the decoy down.
@@ -1453,6 +1534,8 @@ func _timed_duration_for(mode: int) -> float:
 			return SPEED_BURST_DURATION
 		LocalPickup.PowerUpMode.TWIN:
 			return TWIN_DURATION
+		LocalPickup.PowerUpMode.SMOKE_GRENADE:
+			return SMOKE_DURATION
 		LocalPickup.PowerUpMode.MEGA_LEAP:
 			return MEGA_LEAP_DURATION
 	return 0.0
