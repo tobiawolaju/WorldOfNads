@@ -1,16 +1,18 @@
 shader_type spatial;
-// Unshaded camera-facing puff. Rendered in the OPAQUE pass with a Bayer dither
-// instead of alpha blending, so smoke costs no transparent pass - the same trick
-// as proximityfade.gdshader, which matters a lot on mobile WebGL.
-render_mode unshaded, cull_disabled, depth_draw_opaque, billboard;
+// Soft, camera-facing smoke puff for CPUParticles3D. Particles need real alpha,
+// so this blends (rather than the opaque-pass dither trick) and uses a radial
+// falloff plus fbm noise so each particle reads as a round wisp instead of a
+// flat quad. COLOR carries the particle's own colour/alpha: COLOR.a fades each
+// puff in/out over its lifetime, COLOR.r randomises its spin + noise offset.
+render_mode blend_mix, cull_disabled, unshaded, billboard, depth_draw_never;
 
-uniform vec4 smoke_color : source_color = vec4(0.72, 0.74, 0.76, 1.0);
-uniform float density : hint_range(0.0, 1.0) = 0.85;
-uniform float dissolve = 0.0;
-uniform float uv_rot = 0.0;
-uniform float fade : hint_range(0.0, 1.0) = 1.0;
+uniform vec4 smoke_color : source_color = vec4(0.45, 0.8, 0.4, 1.0);
+uniform float softness : hint_range(0.0, 1.0) = 0.5;
+uniform float density : hint_range(0.0, 1.0) = 0.75;
+uniform float cloud_alpha : hint_range(0.0, 1.0) = 1.0;
 
 varying vec2 puff_uv;
+varying vec4 puff_color;
 
 float hash21(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -39,34 +41,24 @@ float fbm(vec2 p) {
 }
 
 void vertex() {
-	// Per-puff UV spin so overlapping puffs do not share the same noise pattern.
-	float s = sin(uv_rot);
-	float c = cos(uv_rot);
-	vec2 centered = UV - vec2(0.5);
-	puff_uv = vec2(centered.x * c - centered.y * s, centered.x * s + centered.y * c) + vec2(0.5);
+	puff_uv = UV;
+	puff_color = COLOR;
 }
 
 void fragment() {
-	vec2 centered = puff_uv * 2.0 - 1.0;
-	float r = length(centered);
-	float mask = 1.0 - smoothstep(0.35, 1.0, r);
-	float n = fbm(puff_uv * 4.0 + dissolve);
-	float alpha = mask * density * fade * (0.55 + 0.5 * n);
+	// Spin the puff's UV by a per-particle angle (COLOR.r), so overlapping
+	// particles do not stack the same noise pattern.
+	float angle = puff_color.r * 6.28318530718;
+	float s = sin(angle);
+	float c = cos(angle);
+	vec2 centered = puff_uv - vec2(0.5);
+	vec2 spun = vec2(centered.x * c - centered.y * s, centered.x * s + centered.y * c);
 
-	// --- 4x4 BAYER DITHER ---
-	// Simulates soft transparency without the expensive transparent render pass.
-	const float bayer[16] = {
-		0.0, 8.0, 2.0, 10.0,
-		12.0, 4.0, 14.0, 6.0,
-		3.0, 11.0, 1.0, 9.0,
-		15.0, 7.0, 13.0, 5.0
-	};
-	ivec2 screen_pos = ivec2(FRAGCOORD.xy) % 4;
-	float dither = (bayer[screen_pos.x + screen_pos.y * 4] + 0.5) / 16.0;
+	float r = length(spun * 2.0);
+	float mask = 1.0 - smoothstep(softness, 1.0, r);
+	float n = fbm((spun + vec2(0.5)) * 4.0 + puff_color.r * 9.0);
+	float alpha = mask * density * cloud_alpha * puff_color.a * (0.5 + 0.6 * n);
 
-	if (alpha < dither) {
-		discard;
-	}
-
-	ALBEDO = smoke_color.rgb * (0.85 + 0.35 * n);
+	ALBEDO = smoke_color.rgb * (0.8 + 0.4 * n);
+	ALPHA = clamp(alpha, 0.0, 1.0);
 }
