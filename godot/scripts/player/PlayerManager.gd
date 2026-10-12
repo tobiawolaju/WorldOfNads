@@ -902,6 +902,7 @@ func _spawn_player(id: String, p_is_local := false, skin_name: String = DEFAULT_
 		player = _instantiate_player_scene_for_skin(skin_name)
 		add_child(player)
 		player.add_to_group("local_player")
+		_skin_applier.apply_skin(player, skin_name)
 	else:
 		player = _get_player_from_pool()
 		_update_remote_player_skin(player, skin_name)
@@ -963,6 +964,9 @@ func _update_remote_player_skin(player: Node3D, skin_name: String):
 		source.remove_child(child)
 		child.owner = null
 		player.add_child(child)
+	# Record applied skin on the player so TWIN decoys can match
+	_skin_applier.apply_skin(player, skin_name)
+	player.set_meta(SkinApplier.APPLIED_SKIN_META, skin_name)
 	source.queue_free()
 
 	# The new Skeleton3D starts visible; re-apply LOD so a distant player
