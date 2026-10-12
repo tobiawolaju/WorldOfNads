@@ -23,8 +23,8 @@ const GROUP: String = "local_pickup_items"
 ## picked up, player.gd shows its label in the HUD Action button.
 enum PowerUpMode {
 	NONE,
-	SPEED_BURST,    # ~4s of boosted run speed
-	THROWABLE,      # throw an object; a hit knocks the target down
+	SPEED_BURST,    # 8s of boosted run speed
+	TWIN,           # spawn a decoy clone that mirrors your movement for 8s
 	SMOKE_GRENADE,  # temporary smoke cloud that blocks vision
 	BOXING_GLOVE,   # lunge punch; one hit drops the target and their chicken
 	MEGA_LEAP       # one super high jump, consumed on use
@@ -32,7 +32,7 @@ enum PowerUpMode {
 
 const POWER_UP_LABELS := {
 	PowerUpMode.SPEED_BURST: "RUSH",
-	PowerUpMode.THROWABLE: "TOSS",
+	PowerUpMode.TWIN: "TWIN",
 	PowerUpMode.SMOKE_GRENADE: "SMOG",
 	PowerUpMode.BOXING_GLOVE: "FIST",
 	PowerUpMode.MEGA_LEAP: "LEAP",
@@ -42,7 +42,7 @@ const POWER_UP_LABELS := {
 ## caption color, so an item and its on-screen text always match.
 const POWER_UP_COLORS := {
 	PowerUpMode.SPEED_BURST: Color(0.25, 0.55, 1.0),   # blue
-	PowerUpMode.THROWABLE: Color(1.0, 0.85, 0.15),     # yellow
+	PowerUpMode.TWIN: Color(1.0, 0.85, 0.15),          # yellow
 	PowerUpMode.SMOKE_GRENADE: Color(0.45, 0.8, 0.4),  # smoke green
 	PowerUpMode.BOXING_GLOVE: Color(1.0, 0.2, 0.2),    # red
 	PowerUpMode.MEGA_LEAP: Color(0.65, 0.3, 1.0),      # purple
