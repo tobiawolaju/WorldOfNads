@@ -125,6 +125,20 @@ const ANIM_NAME_TO_ID: Dictionary = {
 # --- INPUT VARIABLES ---
 var gamepad_index: int = 0
 
+## HOOK punch: how long the punch plays when the HOOK power-up is used. Read from
+## the hook animation's own length when available; this is the fallback.
+const HOOK_FALLBACK_DURATION: float = 2.4
+## HOOK punch: the punch animation plays at this speed multiplier (3x faster).
+const PUNCH_SPEED_MULT: float = 3.0
+## HOOK punch: for HOOK_DURATION seconds after use, the Action button fires the
+## punch (spammable), with an immediate first punch on use.
+const HOOK_DURATION: float = 8.0
+## Health fraction (of MAX_HEALTH) at or below which the near-death fall animation
+## plays once, right before the health bar empties.
+const HEALTH_CRITICAL_FRACTION: float = 0.05
+## Fallback length of the near-death fall animation, if the clip cannot be read.
+const CRITICAL_FALL_FALLBACK: float = 2.5
+
 # --- PICKUP VARIABLES ---
 var held_object: RigidBody3D = null
 @export var hold_distance: float = 0.25
@@ -157,6 +171,16 @@ var _smoke_drop_cooldown: float = 0.0
 var _smoke_clouds: Array = []
 ## Cached once; avoids a tree search every pickup/drop.
 var _cached_buttons_hud: Node = null
+## HOOK punch: while true, the run/idle animation states stay suppressed and the
+## punch (hook) animation plays once to completion.
+var _is_punching: bool = false
+## Seconds left on the punch; the run/idle states resume when it hits zero.
+var _punch_timer: float = 0.0
+## Near-death fall: while true, the run/idle animation states stay suppressed and
+## the "fall" animation plays once after health drops to the critical threshold.
+var _is_dying_fall: bool = false
+## Seconds left on the near-death fall; the run/idle states resume at zero.
+var _critical_fall_timer: float = 0.0
 
 # --- CAMERA & ZOOM SETTINGS ---
 @export var camera_distance: float = 2.0
@@ -418,10 +442,13 @@ func _ready() -> void:
 
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
-	var state_names := ["idle", "running", "runningjump", "falling", "runningslide"]
+	var state_names := ["idle", "running", "runningjump", "falling", "runningslide", "hook", "fall"]
 	for state_name in state_names:
 		var node := AnimationNodeAnimation.new()
 		node.animation = state_name
+		if state_name == "hook":
+			# Play a 3x-faster copy of the punch so the one-shot reads as a quick jab.
+			node.animation = _ensure_fast_hook_animation(PUNCH_SPEED_MULT)
 		state_machine.add_node(state_name, node)
 	for from_name in state_names:
 		for to_name in state_names:
@@ -526,6 +553,10 @@ func _perform_pickup_request() -> void:
 	if _is_smoke_active():
 		_try_drop_smoke_cloud()
 		return
+	# While the HOOK power-up is running, the Action button fires a punch.
+	if _is_hook_active():
+		_start_punch()
+		return
 	if _is_local_holding_pickup():
 		# A held power-up is USED, not dropped: it vanishes and recycles to a
 		# random far-away spot on the map (effects are not implemented yet).
@@ -620,6 +651,16 @@ func _physics_process(delta: float) -> void:
 	if _smoke_drop_cooldown > 0.0:
 		_smoke_drop_cooldown = maxf(0.0, _smoke_drop_cooldown - delta)
 
+	if _is_punching:
+		_punch_timer = maxf(0.0, _punch_timer - delta)
+		if _punch_timer <= 0.0:
+			_is_punching = false
+
+	if _is_dying_fall:
+		_critical_fall_timer = maxf(0.0, _critical_fall_timer - delta)
+		if _critical_fall_timer <= 0.0:
+			_is_dying_fall = false
+
 	var input_dir := Vector2.ZERO
 	var movement_allowed := _is_movement_allowed()
 	var is_falling_anim_playing := current_animation == "falling"
@@ -693,7 +734,7 @@ func _physics_process(delta: float) -> void:
 	var slide_requested_now := Input.is_action_just_pressed("slide") or _slide_requested
 	if slide_requested_now:
 		var slide_from_touch: bool = _slide_requested
-		if movement_allowed and is_on_floor() and move_direction.length_squared() > 0.01 and not _is_sliding:
+		if movement_allowed and is_on_floor() and move_direction.length_squared() > 0.01 and not _is_sliding and not _is_action_locked():
 			_slide_requested = false
 			_start_slide(move_direction, slide_from_touch)
 		else:
@@ -823,7 +864,7 @@ func _physics_process(delta: float) -> void:
 				_storm_damage_accumulator = 0.0
 
 	# --- MOMENTUM CALCULATION ---
-	if movement_allowed:
+	if movement_allowed and not _is_action_locked():
 		var target_vel = move_direction * speed_to_use
 
 		# [MOMENTUM UPDATE] If we are in the air, use max speed instantly (no acceleration)
@@ -840,7 +881,11 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, 0, FRICTION * delta)
 		velocity.z = move_toward(velocity.z, 0, FRICTION * delta)
-		velocity_y = 0.0
+		# The HOOK punch / near-death fall lock the player in place, so no glide
+		# under the animation — but unlike a blocked match they still fall while
+		# airborne.
+		if not _is_action_locked():
+			velocity_y = 0.0
 
 	if _mega_leap_pending:
 		# Applied here (not from input) so the grounded "velocity_y = 0" above
@@ -852,9 +897,10 @@ func _physics_process(delta: float) -> void:
 
 	if _is_sliding:
 		_slide_timer = maxf(0.0, _slide_timer - delta)
-		var slide_speed := speed_to_use * SLIDE_SPEED_MULTIPLIER
-		velocity.x = _slide_direction.x * slide_speed
-		velocity.z = _slide_direction.z * slide_speed
+		if not _is_action_locked():
+			var slide_speed := speed_to_use * SLIDE_SPEED_MULTIPLIER
+			velocity.x = _slide_direction.x * slide_speed
+			velocity.z = _slide_direction.z * slide_speed
 		_apply_slide_camera_restore(delta)
 		if _slide_timer <= 0.0 or not is_on_floor():
 			_stop_slide()
@@ -1122,6 +1168,10 @@ func _check_map_recovery() -> void:
 		return
 
 	_last_recovery_ms = now_ms
+	_is_punching = false
+	_punch_timer = 0.0
+	_is_dying_fall = false
+	_critical_fall_timer = 0.0
 	_is_sliding = false
 	_slide_timer = 0.0
 	_slide_direction = Vector3.ZERO
@@ -1315,12 +1365,21 @@ func _activate_power_up(mode: int) -> void:
 			# plus an immediate launch on use.
 			_start_timed_power_up(LocalPickup.PowerUpMode.MEGA_LEAP, MEGA_LEAP_DURATION)
 			_trigger_mega_leap()
+		LocalPickup.PowerUpMode.HOOK:
+			# HOOK: an 8s window during which the Action button fires the punch,
+			# spammable like SMOG/LEAP, with an immediate first punch on use.
+			_start_timed_power_up(LocalPickup.PowerUpMode.HOOK, HOOK_DURATION)
+			_start_punch()
 		_:
 			pass
 
 # True while the timed MEGA_LEAP effect is still running.
 func _is_mega_leap_active() -> bool:
 	return _active_power_up_mode == LocalPickup.PowerUpMode.MEGA_LEAP and _active_power_up_remaining > 0.0
+
+# True while the timed HOOK punch window is still running.
+func _is_hook_active() -> bool:
+	return _active_power_up_mode == LocalPickup.PowerUpMode.HOOK and _active_power_up_remaining > 0.0
 
 # Launches a 4x mega jump, one per time the player leaves the ground. The launch
 # is deferred to the next physics step so the grounded "velocity_y = 0" reset
@@ -1330,6 +1389,59 @@ func _trigger_mega_leap() -> void:
 	if not is_on_floor():
 		return
 	_mega_leap_pending = true
+
+# Returns the name of a PUNCH_SPEED_MULT-faster copy of the hook punch animation,
+# creating and registering it in the animator's library on first call. The
+# original clip is left untouched; the state machine's "hook" state plays the copy.
+func _ensure_fast_hook_animation(speed_mult: float) -> StringName:
+	var fast_name := &"hook_fast"
+	if anim_player.has_animation(fast_name):
+		return fast_name
+	var src := anim_player.get_animation("hook") as Animation
+	if src == null:
+		return &"hook"
+	var fast := src.duplicate() as Animation
+	for track in fast.get_track_count():
+		var key_count := fast.track_get_key_count(track)
+		for key in key_count:
+			fast.track_set_key_time(track, key, fast.track_get_key_time(track, key) / speed_mult)
+	fast.length = src.length / speed_mult
+	var lib := anim_player.get_animation_library(&"") as AnimationLibrary
+	if lib == null:
+		lib = AnimationLibrary.new()
+		anim_player.add_animation_library(&"", lib)
+	lib.add_animation(fast_name, fast)
+	return fast_name
+
+# Plays the HOOK punch animation once, locking the run/idle animation states for
+# the animation's duration so a moving player punches in place instead of running.
+func _start_punch() -> void:
+	_is_punching = true
+	var duration := HOOK_FALLBACK_DURATION / PUNCH_SPEED_MULT
+	var punch_anim := anim_player.get_animation("hook") as Animation
+	if punch_anim != null:
+		duration = punch_anim.length / PUNCH_SPEED_MULT
+	_punch_timer = duration
+	if current_animation == "hook":
+		# Spam-trigger: restart the punch in place instead of being swallowed by the
+		# _set_anim guard, which skips when already on the hook animation.
+		if anim_state_machine:
+			anim_state_machine.start(&"hook", true)
+		return
+	_set_anim("hook")
+
+# Plays the near-death fall animation once when health drops to the critical
+# threshold (5% of max), right before the health bar empties.
+func _start_critical_fall() -> void:
+	if _is_dying_fall or _is_action_locked():
+		return
+	_is_dying_fall = true
+	var duration := CRITICAL_FALL_FALLBACK
+	var fall_anim := anim_player.get_animation("fall") as Animation
+	if fall_anim != null:
+		duration = fall_anim.length
+	_critical_fall_timer = duration
+	_set_anim("fall")
 
 # --- TWIN DECOY ---
 # Spawns the TWIN decoy. It is a visual-only copy of the local player: the same
@@ -1538,6 +1650,8 @@ func _timed_duration_for(mode: int) -> float:
 			return SMOKE_DURATION
 		LocalPickup.PowerUpMode.MEGA_LEAP:
 			return MEGA_LEAP_DURATION
+		LocalPickup.PowerUpMode.HOOK:
+			return HOOK_DURATION
 	return 0.0
 
 # Finds the HUD node that owns the Action button (buttons.gd). Only scanned once.
@@ -1572,6 +1686,8 @@ func take_damage(amount: float, source: Node = null) -> void:
 	
 	if health <= 0.0:
 		die()
+	elif health <= MAX_HEALTH * HEALTH_CRITICAL_FRACTION:
+		_start_critical_fall()
 
 func _find_health_bar() -> Node:
 	var hud := get_tree().root.find_child("Hud", true, false)
@@ -1653,6 +1769,10 @@ func respawn_at_spawn_point() -> void:
 	_camera_look_target = _camera_follow_target
 	
 	# Reset animation
+	_is_punching = false
+	_punch_timer = 0.0
+	_is_dying_fall = false
+	_critical_fall_timer = 0.0
 	current_animation = "idle"
 	_play_anim("idle")
 	
@@ -2032,8 +2152,22 @@ func set_animation_state(new_state: String):
 	current_animation = new_state
 	_play_anim(new_state)
 
+# True while a non-locomotion animation is playing that must not be interrupted
+# (HOOK punch or the near-death fall): the player stops and the run/idle states
+# stay suppressed until it completes.
+func _is_action_locked() -> bool:
+	return _is_punching or _is_dying_fall
+
 func _handle_animations(move_dir: Vector3) -> void:
 	if not is_local: return
+	if _is_punching:
+		# Hold the punch animation; the run/idle logic below must not override it.
+		_set_anim("hook")
+		return
+	if _is_dying_fall:
+		# Nearly dead: hold the fall animation for its full length.
+		_set_anim("fall")
+		return
 	if not _is_movement_allowed():
 		_set_anim("idle")
 		_was_on_floor = is_on_floor()
