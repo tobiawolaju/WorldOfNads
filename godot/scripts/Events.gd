@@ -31,9 +31,26 @@ var _navigated_to_gameover := false
 @onready var _debug_label: Label
 @onready var _debug2_label: Label
 
+# --- REWARD COUNTER JUICE ---
+# When the XP / MON stream counters tick up we punch the label: a quick scale
+# pop plus a white flash that fades back to the label's normal colour. This
+# only runs on a value increase (about once a second, driven by the server's
+# reward_update), never per frame, so it stays off the performance hot path.
+const REWARD_POP_DURATION := 0.30
+const REWARD_POP_SCALE := 1.35
+const REWARD_FLASH_COLOR := Color(1, 1, 1, 1)
+
+var _xp_base_color: Color = Color(1, 1, 0, 1)
+var _mon_base_color: Color = Color(0.8235294, 0, 1, 1)
+var _xp_pop_tween: Tween = null
+var _mon_pop_tween: Tween = null
+var _last_xp_shown: int = -1
+var _last_mon_shown: float = -1.0
+
 func _ready() -> void:
 	add_to_group("events_bridge")
 	_setup_debug_labels()
+	_cache_reward_colors()
 	_try_set_username_from_web_query()
 	tried_live = true
 	var err = ws.connect_to_url(LIVE_EVENTS_URL)
@@ -82,10 +99,17 @@ func show_local_event(message: String) -> void:
 func update_xp_display(total_xp: int) -> void:
 	if xp_stream_label:
 		xp_stream_label.text = "+ %d XP" % total_xp
+		if _last_xp_shown >= 0 and total_xp > _last_xp_shown:
+			_xp_pop_tween = _play_reward_pop(xp_stream_label, _xp_base_color, _xp_pop_tween)
+		_last_xp_shown = total_xp
 
 func update_mon_display(earned_mon: float, pool_remaining: float) -> void:
 	if mon_stream_label:
-		mon_stream_label.text = "+ %d MON" % int(earned_mon)
+		# 3 decimals so the lootbox stream (0.002 MON/sec) is visible ticking up.
+		mon_stream_label.text = "+ %.3f MON" % earned_mon
+		if _last_mon_shown >= 0.0 and earned_mon > _last_mon_shown + 0.0005:
+			_mon_pop_tween = _play_reward_pop(mon_stream_label, _mon_base_color, _mon_pop_tween)
+		_last_mon_shown = earned_mon
 	if prize_pool_label:
 		pool_remaining = maxf(0.0, pool_remaining)
 		if pool_remaining >= 1000.0:
@@ -96,6 +120,36 @@ func update_mon_display(earned_mon: float, pool_remaining: float) -> void:
 				prize_pool_label.text = "%.1fk MON pool" % k_val
 		else:
 			prize_pool_label.text = "%d MON pool" % int(pool_remaining)
+
+# --- REWARD COUNTER JUICE HELPERS ---
+
+func _cache_reward_colors() -> void:
+	if xp_stream_label != null:
+		_xp_base_color = xp_stream_label.get_theme_color("font_color")
+	if mon_stream_label != null:
+		_mon_base_color = mon_stream_label.get_theme_color("font_color")
+
+# Reusable one-shot punch: kill any in-flight pop on this label, snap it large
+# and white, then ease back to normal size and colour. Returns the new tween so
+# the caller can cancel it on the next tick.
+func _play_reward_pop(label: Label, base_color: Color, previous: Tween) -> Tween:
+	if label == null:
+		return previous
+	if previous != null and previous.is_valid():
+		previous.kill()
+	label.pivot_offset = label.size * 0.5
+	label.scale = Vector2(REWARD_POP_SCALE, REWARD_POP_SCALE)
+	label.add_theme_color_override("font_color", REWARD_FLASH_COLOR)
+
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "scale", Vector2.ONE, REWARD_POP_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_method(_apply_label_color.bind(label), REWARD_FLASH_COLOR, base_color, REWARD_POP_DURATION).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	return tween
+
+func _apply_label_color(color: Color, label: Label) -> void:
+	if label != null and is_instance_valid(label):
+		label.add_theme_color_override("font_color", color)
 
 func _start_local_fallback(reason: String) -> void:
 	fallback_started = true
