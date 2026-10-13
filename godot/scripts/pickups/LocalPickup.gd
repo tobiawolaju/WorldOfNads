@@ -60,6 +60,11 @@ const POWER_UP_COLORS := {
 	PowerUpMode.LOOTBOX: Color(0.35, 0.68, 1.0),       # blue
 }
 
+## Mesh tints while an objective item is being carried. The chicken rides the
+## back in yellow, the lootbox in green; both return to white on release.
+const HELD_CHICKEN_TINT := Color(1.0, 0.9, 0.1)
+const HELD_LOOTBOX_TINT := Color(0.3, 0.85, 0.35)
+
 @export var power_up_mode: PowerUpMode = PowerUpMode.NONE
 
 func power_up_label() -> String:
@@ -138,6 +143,10 @@ var is_held: bool = false
 var holder: Node3D = null
 
 var _mesh: MeshInstance3D = null
+# Every mesh child of the pickup, so a while-held tint covers all of them. Each
+# gets its own material copy (see _ready) because the scene sub-resources are
+# shared by every pickup instance.
+var _mesh_instances: Array[MeshInstance3D] = []
 var _attach_node: Node3D = null
 
 # The local player body (layer 1, same as the world). Cached once so the pickup
@@ -175,6 +184,13 @@ func _ready() -> void:
 	can_sleep = true
 	_mesh = _find_mesh()
 	_apply_mesh_offset()
+	# Copy the materials so a tint never mutates the shared scene sub-resource
+	# (every pickup instance references the same StandardMaterial3D otherwise).
+	for child in get_children():
+		if child is MeshInstance3D:
+			_mesh_instances.append(child)
+			if child.material_override != null:
+				child.material_override = child.material_override.duplicate()
 
 
 func _find_mesh() -> MeshInstance3D:
@@ -189,6 +205,27 @@ func _apply_mesh_offset() -> void:
 		_mesh = _find_mesh()
 	if _mesh:
 		_mesh.position.y = mesh_offset_y
+
+
+# Tints every mesh child's material. Materials were duplicated per-instance in
+# _ready, so only this pickup's copy is affected.
+func _tint_mesh(color: Color) -> void:
+	for mi in _mesh_instances:
+		if mi == null or not is_instance_valid(mi):
+			continue
+		var mat := mi.material_override
+		if mat is StandardMaterial3D:
+			mat.albedo_color = color
+
+
+# Yellow while the chicken is carried, green while the lootbox is carried.
+func _held_tint_color() -> Color:
+	match power_up_mode:
+		PowerUpMode.CHICKEN:
+			return HELD_CHICKEN_TINT
+		PowerUpMode.LOOTBOX:
+			return HELD_LOOTBOX_TINT
+	return Color.WHITE
 
 
 # --- PLAYER.GD API ---
@@ -207,9 +244,11 @@ func pick_up(by: Node3D) -> bool:
 	is_held = true
 	# Ordinary pickups hide while carried (the HUD indicator is the only
 	# feedback); objective items (chicken / lootbox) stay visible so the holder
-	# sees them riding on their back.
+	# sees them riding on their back, tinted yellow (chicken) or green (lootbox).
 	if not is_objective_item():
 		visible = false
+	else:
+		_tint_mesh(_held_tint_color())
 	# Frozen while carried so the player pose drives the item, not gravity.
 	freeze = true
 	linear_velocity = Vector3.ZERO
@@ -230,6 +269,7 @@ func drop(impulse: Vector3 = Vector3.ZERO) -> void:
 	holder = null
 	_attach_node = null
 	visible = true
+	_tint_mesh(Color.WHITE)
 	var capped := impulse
 	if capped.length() > MAX_DROP_SPEED:
 		capped = capped.normalized() * MAX_DROP_SPEED
@@ -253,6 +293,7 @@ func consume_and_respawn(from_position: Vector3) -> void:
 	holder = null
 	_attach_node = null
 	visible = true
+	_tint_mesh(Color.WHITE)
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
 	var target := _pick_respawn_point(from_position)
