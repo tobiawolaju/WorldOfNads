@@ -79,6 +79,11 @@ var _last_lootbox_holder_id: String = ""
 # item's spawn spot and who holds it. These mirror the last snapshot so the
 # per-frame pass can hide carried power-ups and seat released ones.
 const POWER_UP_ITEM_IDS: Array[String] = ["p1", "p2", "p3", "p4", "p5"]
+## How far (on the HORIZONTAL plane) a server item spot must move before the local
+## copy is re-seated. The server's y is a flat placeholder below the terrain, so
+## once physics has dropped an item onto the ground its y no longer matches the
+## server; comparing y would re-bury the item on every heartbeat.
+const ITEM_RESEAT_RADIUS: float = 0.5
 var item_nodes: Dictionary = {}       # item id -> Node3D
 var item_is_held: Dictionary = {}     # item id -> bool (server state)
 var item_holder: Dictionary = {}      # item id -> holder player id
@@ -1069,9 +1074,13 @@ func _apply_item_spawn(item_id: String, pos: Vector3, force := false) -> void:
 	var node := _get_item_node(item_id)
 	if node == null or not is_instance_valid(node):
 		return
-	# Already at the server's spot (physics settled it there, or the same snapshot
-	# is being repeated on the heartbeat)? Leave it alone so nothing jitters.
-	if not force and node.global_position.distance_to(pos) < 0.4:
+	# Already at the server's spot? Leave it alone so nothing jitters. Compare on
+	# the HORIZONTAL plane only: the server's y is a flat placeholder below the
+	# terrain, so a dropped item's y never matches and a full 3D compare would
+	# re-seat (re-bury) it on every heartbeat.
+	var dx := node.global_position.x - pos.x
+	var dz := node.global_position.z - pos.z
+	if not force and (dx * dx + dz * dz) < ITEM_RESEAT_RADIUS * ITEM_RESEAT_RADIUS:
 		return
 	if node.has_method("apply_server_spawn"):
 		node.call("apply_server_spawn", pos)

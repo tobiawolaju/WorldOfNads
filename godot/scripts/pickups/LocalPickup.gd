@@ -170,6 +170,9 @@ const RESPAWN_PROBE_DEPTH: float = 160.0
 ## Keeps respawns inside the minimap bounds so their pointers stay on the map.
 const RESPAWN_EDGE_MARGIN: float = 5.0
 const RESPAWN_GROUND_OFFSET: float = 1.0
+## Extra height above the terrain that a server-placed item is dropped from, so it
+## lands on uneven ground instead of spawning inside or under it.
+const SPAWN_DROP_HEIGHT: float = 2.0
 
 @export var can_be_picked: bool = true
 @export var mesh_offset_y: float = 0.25:
@@ -388,21 +391,41 @@ func consume_for_server() -> void:
 
 
 ## Applies a position chosen by the server. Used for match-start spawns,
-## respawns after a use, and drops (death / disconnect / manual). Seats the item
-## on the spot, cancels any pending consume, and makes it grabbable again.
+## respawns after a use, and drops (death / disconnect / manual). Drops the item
+## above the terrain at the server's x/z so it settles on the ground, cancels any
+## pending consume, and makes it grabbable again.
 func apply_server_spawn(target: Vector3) -> void:
 	_awaiting_server_spawn = false
 	remote_held = false
 	visible = true
 	freeze = true
 	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
-	global_position = target
+	# The server only owns the spot on the HORIZONTAL plane (x/z). Its y is a flat
+	# constant that sits below the hilly terrain, so seating the item there buries
+	# it or drops it through the map. Spawn it ABOVE the terrain at that x/z and let
+	# gravity drop it onto the ground.
+	global_position = _grounded_spawn_point(target)
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
-	# Unfreeze so physics can settle it onto the terrain at (or just below) the
-	# server's spot. The server re-sends the same spot for a while, and
-	# PlayerManager only re-seats on a change, so this will not fight itself.
+	# Unfreeze so physics can settle it onto the terrain. PlayerManager re-seats
+	# only on a horizontal change, so the fall does not fight the heartbeat.
 	freeze = false
+
+
+# Picks a point above the terrain at the server's x/z so the item drops and rests
+# on the ground instead of spawning inside or under it.
+func _grounded_spawn_point(target: Vector3) -> Vector3:
+	var space := get_world_3d().direct_space_state
+	var ground: Variant = _probe_ground(
+		Vector3(target.x, target.y + RESPAWN_PROBE_HEIGHT, target.z), space
+	)
+	if ground == null:
+		# Nothing below (over water/void, or the map has not streamed in yet):
+		# keep the server's x/z but still drop from the probe height rather than
+		# seat at a flat y that may be under the map.
+		return Vector3(target.x, target.y + RESPAWN_PROBE_HEIGHT, target.z)
+	var point: Vector3 = ground
+	return Vector3(target.x, point.y + SPAWN_DROP_HEIGHT, target.z)
 
 
 ## Marks the item as carried by ANOTHER player (server says so). Freezes it in
