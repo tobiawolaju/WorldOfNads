@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode  blend_mix, cull_disabled;
+render_mode  cull_disabled;
 
 uniform vec4 mouth_color : source_color = vec4(0.15, 0.02, 0.02, 1.0);
 
@@ -230,9 +230,17 @@ final_color =
 
 ALBEDO = final_color;
 
-ALPHA =
+// Cut out the pixels outside the mouth shape instead of alpha-blending them.
+// A blended (transparent) mouth is drawn in the transparent pass after the SMOG
+// smoke particles, so it would show through the smoke; a discarded cutout
+// renders in the opaque pass like the body and the smoke hides it the same way.
+// The alpha was already a hard 0/1 step(), so this changes nothing visually.
+float mouth_alpha =
     max(
         opening,
         tooth_mask
     );
+if (mouth_alpha < 0.5) {
+    discard;
+}
 }
