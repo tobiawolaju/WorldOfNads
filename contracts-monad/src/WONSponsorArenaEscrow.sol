@@ -265,4 +265,14 @@ contract WONSponsorArenaEscrow is ERC1155, Ownable, ReentrancyGuard {
     function uri(uint256 tokenId) public view override returns (string memory) {
         return tokenURIs[tokenId];
     }
+
+    // Safety net so escrowed funds can never be permanently lost. Owner-only,
+    // for stray MON that is not tied to a live, settleable match.
+    function withdraw() external onlyOwner nonReentrant {
+        uint256 balance = address(this).balance;
+        if (balance > 0) {
+            (bool success, ) = payable(owner()).call{value: balance}("");
+            require(success, "Transfer failed");
+        }
+    }
 }
