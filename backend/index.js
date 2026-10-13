@@ -75,8 +75,6 @@ const ANIM_ID_TO_NAME = Object.freeze({
   4: 'runningslide'
 });
 
-const XP_PER_SEC = 10;
-const MON_RADIUS = 8.0;
 
 const MAX_EVENT_HISTORY = 100;
 let eventSequence = 0;
@@ -107,11 +105,6 @@ const cellOccupants = new Map();
 const backgroundJobs = [];
 let backgroundJobActive = false;
 
-const playerRewards = {};
-const REWARD_COMMIT_INTERVAL_MS = 5000;
-const MON_PER_SEC_FLOAT = 0.002;
-let rewardTickCounter = 0;
-let lastRewardCommitTime = 0;
 
 const chicken = {
   id: 'Chicken',
@@ -158,43 +151,6 @@ const DEFAULT_LOOTBOX_STATE = {
 // starter safe zone and far enough apart that they don't overlap. y is FLOOR_Y
 // so they rest on the floor instead of the editor scene positions (the chicken
 // node in gameplay.tscn floats high above the terrain).
-const ITEM_SPAWN_MAX_RADIUS = 18.0;
-const ITEM_SPAWN_MIN_SEPARATION = 8.0;
-
-function randomItemSpawnPoint() {
-  // Uniformly random point inside a disc of ITEM_SPAWN_MAX_RADIUS.
-  const r = Math.sqrt(Math.random()) * ITEM_SPAWN_MAX_RADIUS;
-  const a = Math.random() * Math.PI * 2;
-  return { x: Math.cos(a) * r, z: Math.sin(a) * r };
-}
-
-function prepareItemSpawns() {
-  const c = randomItemSpawnPoint();
-  let b = randomItemSpawnPoint();
-  for (let i = 0; i < 12 && length3(c.x - b.x, 0, c.z - b.z) < ITEM_SPAWN_MIN_SEPARATION; i++) {
-    b = randomItemSpawnPoint();
-  }
-
-  chicken.x = c.x;
-  chicken.y = FLOOR_Y;
-  chicken.z = c.z;
-  chicken.rotationY = 0;
-  chicken.isHeld = false;
-  chicken.holderId = null;
-  chicken.vx = 0;
-  chicken.vy = 0;
-  chicken.vz = 0;
-
-  lootbox.x = b.x;
-  lootbox.y = FLOOR_Y;
-  lootbox.z = b.z;
-  lootbox.rotationY = 0;
-  lootbox.isHeld = false;
-  lootbox.holderId = null;
-  lootbox.vx = 0;
-  lootbox.vy = 0;
-  lootbox.vz = 0;
-}
 
 function length3(x, y, z) {
   return Math.sqrt(x * x + y * y + z * z);
@@ -1390,13 +1346,6 @@ gameWss.on('connection', (ws, req) => {
       xp: xp,
       lastUpdateAt: Date.now()
     };
-    playerRewards[playerId] = {
-      accumulatedXP: 0,
-      accumulatedMON: 0,
-      chickenHoldTime: 0,
-      lastMonFromLootBox: 0,
-      lastXpFromChicken: 0
-    };
     updatePlayerCellIndex(playerId, players[playerId]);
 
     console.log(`🎮 Player connected: ${playerId} (${username}) skin=${resolvedSkin} xp=${xp}`);
@@ -1404,9 +1353,6 @@ gameWss.on('connection', (ws, req) => {
     ws.send(mpEncode({ type: 'connect', id: playerId, username, skin: resolvedSkin, xp }));
     getRecipientNetworkState(playerId);
     if (!matchRunning && getPlayerCount() >= 3) {
-      // A fresh match starts here: the server picks where the chicken and
-      // lootbox spawn this round before anyone has seen them.
-      prepareItemSpawns();
       matchRunning = true;
       matchStartedThisRound = true;
     }
@@ -1426,13 +1372,6 @@ gameWss.on('connection', (ws, req) => {
       animation: 'idle',
       xp: 0,
       lastUpdateAt: Date.now()
-    };
-    playerRewards[playerId] = {
-      accumulatedXP: 0,
-      accumulatedMON: 0,
-      chickenHoldTime: 0,
-      lastMonFromLootBox: 0,
-      lastXpFromChicken: 0
     };
     updatePlayerCellIndex(playerId, players[playerId]);
     ws.playerId = playerId;
@@ -1512,195 +1451,37 @@ gameWss.on('connection', (ws, req) => {
         }
         updatePlayerCellIndex(playerId, player);
 
-        // Holder is allowed to stream chicken pose, but it is distance-validated.
-        if (chicken.isHeld && chicken.holderId === playerId && data.chicken && typeof data.chicken === 'object') {
-          const c = data.chicken;
-          const hasQuantizedChicken = Number.isFinite(Number(c.qx)) && Number.isFinite(Number(c.qy)) && Number.isFinite(Number(c.qz));
-          const cx = hasQuantizedChicken ? dequantizePosition(Number(c.qx)) : Number(c.x);
-          const cy = hasQuantizedChicken ? dequantizePosition(Number(c.qy)) : Number(c.y);
-          const cz = hasQuantizedChicken ? dequantizePosition(Number(c.qz)) : Number(c.z);
-          const hasQuantizedChickenRot = Number.isFinite(Number(c.qrot));
-          const crot = hasQuantizedChickenRot ? dequantizeRotation(Number(c.qrot)) : Number(c.rotation_y);
-
-          if (Number.isFinite(cx) && Number.isFinite(cy) && Number.isFinite(cz) && Number.isFinite(crot)) {
-            const pdx = cx - player.x;
-            const pdy = cy - player.y;
-            const pdz = cz - player.z;
-            const fromPlayer = length3(pdx, pdy, pdz);
-            if (fromPlayer <= PICKUP_RADIUS + 1.2) {
-              chicken.x = cx;
-              chicken.y = cy;
-              chicken.z = cz;
-              chicken.rotationY = crot;
-              chicken.vx = 0;
-              chicken.vy = 0;
-              chicken.vz = 0;
-            }
-          }
-        }
-
-        // Holder is allowed to stream lootbox pose, distance-validated.
-        if (lootbox.isHeld && lootbox.holderId === playerId && data.lootbox && typeof data.lootbox === 'object') {
-          const b = data.lootbox;
-          const hasQuantizedLootbox = Number.isFinite(Number(b.qx)) && Number.isFinite(Number(b.qy)) && Number.isFinite(Number(b.qz));
-          const bx = hasQuantizedLootbox ? dequantizePosition(Number(b.qx)) : Number(b.x);
-          const by = hasQuantizedLootbox ? dequantizePosition(Number(b.qy)) : Number(b.y);
-          const bz = hasQuantizedLootbox ? dequantizePosition(Number(b.qz)) : Number(b.z);
-          const hasQuantizedLootboxRot = Number.isFinite(Number(b.qrot));
-          const brot = hasQuantizedLootboxRot ? dequantizeRotation(Number(b.qrot)) : Number(b.rotation_y);
-
-          if (Number.isFinite(bx) && Number.isFinite(by) && Number.isFinite(bz) && Number.isFinite(brot)) {
-            const pdx = bx - player.x;
-            const pdy = by - player.y;
-            const pdz = bz - player.z;
-            const fromPlayer = length3(pdx, pdy, pdz);
-            if (fromPlayer <= PICKUP_RADIUS + 1.2) {
-              lootbox.x = bx;
-              lootbox.y = by;
-              lootbox.z = bz;
-              lootbox.rotationY = brot;
-              lootbox.vx = 0;
-              lootbox.vy = 0;
-              lootbox.vz = 0;
-            }
-          }
-        }
       }
 
       if (data.type === 'pickup_request') {
+        // Client-authoritative hold: item positions are client-side now, so the
+        // server trusts the client's claim and only records who is holding each
+        // objective item (for the end-of-match winner resolution). Last claim wins.
         const itemId = typeof data.item_id === 'string' ? data.item_id : 'Chicken';
-
-        if (itemId === 'LootBox') {
-          const distToLootbox = length3(
-            lootbox.x - player.x,
-            lootbox.y - player.y,
-            lootbox.z - player.z
-          );
-
-          let canPickup = distToLootbox <= PICKUP_RADIUS;
-
-          if (!canPickup && lootbox.isHeld && lootbox.holderId && lootbox.holderId !== playerId) {
-            const holder = players[lootbox.holderId];
-            if (holder) {
-              const distToHolder = length3(
-                holder.x - player.x,
-                holder.y - player.y,
-                holder.z - player.z
-              );
-              canPickup = distToHolder <= STEAL_RADIUS;
-            }
-          }
-
-          if (canPickup) {
-            if (lootbox.isHeld && lootbox.holderId === playerId) {
-              return;
-            }
-
-            const previousHolder = lootbox.holderId;
-            lootbox.isHeld = true;
-            lootbox.holderId = playerId;
-            lootbox.vx = 0;
-            lootbox.vy = 0;
-            lootbox.vz = 0;
-            if (previousHolder && previousHolder !== playerId) {
-              console.log(`📦 LootBox stolen by ${playerId} from ${previousHolder}`);
-            } else {
-              console.log(`📦 LootBox picked by ${playerId}`);
-            }
-          }
+        const item = itemId === 'LootBox' ? lootbox : chicken;
+        const emoji = itemId === 'LootBox' ? '📦' : '🥚';
+        if (item.isHeld && item.holderId === playerId) {
+          return;
+        }
+        const previousHolder = item.holderId;
+        item.isHeld = true;
+        item.holderId = playerId;
+        if (previousHolder && previousHolder !== playerId) {
+          console.log(`${emoji} ${itemId} stolen by ${playerId} from ${previousHolder}`);
         } else {
-          const distToChicken = length3(
-            chicken.x - player.x,
-            chicken.y - player.y,
-            chicken.z - player.z
-          );
-
-          let canPickup = distToChicken <= PICKUP_RADIUS;
-
-          if (!canPickup && chicken.isHeld && chicken.holderId && chicken.holderId !== playerId) {
-            const holder = players[chicken.holderId];
-            if (holder) {
-              const distToHolder = length3(
-                holder.x - player.x,
-                holder.y - player.y,
-                holder.z - player.z
-              );
-              canPickup = distToHolder <= STEAL_RADIUS;
-            }
-          }
-
-          if (canPickup) {
-            if (chicken.isHeld && chicken.holderId === playerId) {
-              return;
-            }
-
-            const previousHolder = chicken.holderId;
-            chicken.isHeld = true;
-            chicken.holderId = playerId;
-            chicken.vx = 0;
-            chicken.vy = 0;
-            chicken.vz = 0;
-            if (previousHolder && previousHolder !== playerId) {
-              console.log(`🐔 Chicken stolen by ${playerId} from ${previousHolder}`);
-            } else {
-              console.log(`🐔 Chicken picked by ${playerId}`);
-            }
-          }
+          console.log(`${emoji} ${itemId} picked by ${playerId}`);
         }
       }
 
       if (data.type === 'drop_request') {
         const itemId = typeof data.item_id === 'string' ? data.item_id : 'Chicken';
-
-        if (itemId === 'LootBox') {
-          if (!lootbox.isHeld || lootbox.holderId !== playerId) {
-            return;
-          }
-
-          lootbox.isHeld = false;
-          lootbox.holderId = null;
-
-          const ix = Number(data.throw_x);
-          const iy = Number(data.throw_y);
-          const iz = Number(data.throw_z);
-
-          if (Number.isFinite(ix) && Number.isFinite(iy) && Number.isFinite(iz)) {
-            const len = length3(ix, iy, iz);
-            if (len > 0) {
-              const capped = Math.min(len, MAX_THROW_IMPULSE);
-              const scale = capped / len;
-              lootbox.vx = ix * scale;
-              lootbox.vy = iy * scale;
-              lootbox.vz = iz * scale;
-            }
-          }
-
-          console.log(`📦 LootBox dropped by ${playerId}`);
-        } else {
-          if (!chicken.isHeld || chicken.holderId !== playerId) {
-            return;
-          }
-
-          chicken.isHeld = false;
-          chicken.holderId = null;
-
-          const ix = Number(data.throw_x);
-          const iy = Number(data.throw_y);
-          const iz = Number(data.throw_z);
-
-          if (Number.isFinite(ix) && Number.isFinite(iy) && Number.isFinite(iz)) {
-            const len = length3(ix, iy, iz);
-            if (len > 0) {
-              const capped = Math.min(len, MAX_THROW_IMPULSE);
-              const scale = capped / len;
-              chicken.vx = ix * scale;
-              chicken.vy = iy * scale;
-              chicken.vz = iz * scale;
-            }
-          }
-
-          console.log(`🥚 Chicken dropped by ${playerId}`);
+        const item = itemId === 'LootBox' ? lootbox : chicken;
+        if (!item.isHeld || item.holderId !== playerId) {
+          return;
         }
+        item.isHeld = false;
+        item.holderId = null;
+        console.log(`${itemId === 'LootBox' ? '📦' : '🥚'} ${itemId} dropped by ${playerId}`);
       }
 
       if (data.type === 'request_full_state') {
@@ -1749,7 +1530,6 @@ gameWss.on('connection', (ws, req) => {
       lootbox.vz = 0;
     }
     delete players[playerId];
-    delete playerRewards[playerId];
     removePlayerFromCellIndex(playerId);
     recipientNetworkState.delete(playerId);
 
@@ -1878,186 +1658,9 @@ setInterval(() => {
       }
     }
 
-    rewardTickCounter++;
-    const isRewardTick = rewardTickCounter >= BROADCAST_RATE;
-
-    if (rewardTickCounter >= BROADCAST_RATE) {
-      rewardTickCounter = 0;
-    }
-
-    if (isRewardTick && matchRunning) {
-      for (const [pid, reward] of Object.entries(playerRewards)) {
-        const player = players[pid];
-        if (!player) continue;
-
-        if (chicken.holderId === pid) {
-          reward.chickenHoldTime += 1;
-          reward.accumulatedXP += XP_PER_SEC;
-        }
-
-        const dx = lootbox.x - player.x;
-        const dz = lootbox.z - player.z;
-        const distToLootBox = Math.sqrt(dx * dx + dz * dz);
-        if (distToLootBox <= MON_RADIUS) {
-          const proximity = 1 - (distToLootBox / MON_RADIUS);
-          reward.accumulatedMON += MON_PER_SEC_FLOAT * proximity;
-        }
-      }
-
-      for (const client of gameWss.clients) {
-        if (client.readyState !== 1) continue;
-        const pid = client.playerId;
-        if (!pid || !playerRewards[pid]) continue;
-        const r = playerRewards[pid];
-        client.send(mpEncode({
-          type: 'reward_update',
-          xp: Math.floor(r.accumulatedXP),
-          mon: parseFloat(r.accumulatedMON.toFixed(6)),
-          holdTime: r.chickenHoldTime
-        }));
-      }
-    }
 
     if (matchTimeLeft <= 0) {
       const winner = resolveRoundWinner();
-
-      // Capture all player/wallet data BEFORE resetRoundForNextBatch clears it
-      const capturedWinnerId = winner.winnerId;
-      const capturedWinnerName = winner.winnerName;
-      const capturedWinnerWallet = capturedWinnerId ? players[capturedWinnerId]?.walletAddress : undefined;
-      const capturedLootBoxHolderId = lootbox.holderId || capturedWinnerId;
-      const capturedLootBoxHolderWallet = capturedLootBoxHolderId ? players[capturedLootBoxHolderId]?.walletAddress : undefined;
-      const capturedRewardSnapshot = Object.entries(playerRewards).map(([pid, r]) => ({
-        pid,
-        wallet: players[pid]?.walletAddress,
-        accumulatedMON: r.accumulatedMON,
-        accumulatedXP: r.accumulatedXP
-      }));
-      const capturedPlayerWallets = [...new Set(
-        Object.values(players).map(p => p.walletAddress).filter(w => !!w)
-      )];
-
-      enqueueBackgroundJob("match-settlement", async () => {
-        try {
-          console.log(`[Payout-Debug] Round ended. Potential winner: ${capturedWinnerName}`);
-          const activeMatch = await findActiveMatch();
-
-          if (!activeMatch) {
-            console.log(`[Payout-Debug] No 'upcoming' or 'live' matches found in Firebase for payout.`);
-            return;
-          }
-
-          const matchId = activeMatch.matchId;
-          console.log(`[Payout-Debug] Found candidate match: ${matchId} (Status: ${activeMatch.status})`);
-
-          // Commit accumulated rewards on-chain before settlement
-          if (capturedRewardSnapshot.length > 0) {
-            const monRecipients = [];
-            let monAmounts = [];
-            const xpRecipients = [];
-            const xpAmounts = [];
-
-            for (const entry of capturedRewardSnapshot) {
-              if (!entry.wallet) continue;
-
-              if (entry.accumulatedMON > 0) {
-                monRecipients.push(entry.wallet);
-                monAmounts.push(entry.accumulatedMON);
-              }
-
-              if (entry.accumulatedXP > 0) {
-                xpRecipients.push(entry.wallet);
-                xpAmounts.push(entry.accumulatedXP);
-              }
-            }
-
-            if (monRecipients.length > 0) {
-              // Scale micro-rewards to ensure 1000+ micro-txns worth from the 20% pool
-              const prizeAmount = Number(activeMatch.prizeAmount || 0);
-              const netPrize90 = prizeAmount * 0.9;
-              const lootBoxPool = netPrize90 * 0.2;
-              const microBudget = lootBoxPool / 1000;
-              const totalAccumulated = monAmounts.reduce((a, b) => a + b, 0);
-              if (totalAccumulated > microBudget && microBudget > 0) {
-                const scale = microBudget / totalAccumulated;
-                monAmounts = monAmounts.map(a => a * scale);
-                console.log(`[Rewards] Scaled MON: ${totalAccumulated.toFixed(6)} → ${microBudget.toFixed(6)} (×${scale.toFixed(4)})`);
-              }
-
-              console.log(`[Rewards] Streaming MON to ${monRecipients.length} players...`);
-              const monResult = await batchStreamMON(matchId, monRecipients, monAmounts);
-              if (monResult.success) {
-                console.log(`[Rewards] MON streamed: ${monResult.txHash}`);
-              } else {
-                console.error(`[Rewards] MON streaming failed: ${monResult.error}`);
-              }
-            }
-
-            if (xpRecipients.length > 0) {
-              console.log(`[Rewards] Minting XP for ${xpRecipients.length} players...`);
-              for (let i = 0; i < xpRecipients.length; i++) {
-                const xr = await mintXP(xpRecipients[i], xpAmounts[i]);
-                if (xr.success) {
-                  console.log(`[Rewards] Minted ${xpAmounts[i]} XP for ${xpRecipients[i]}`);
-                } else {
-                  console.error(`[Rewards] XP mint failed for ${xpRecipients[i]}: ${xr.error}`);
-                }
-              }
-            }
-          }
-
-          if (capturedWinnerId && capturedWinnerName !== 'No one') {
-            if (!capturedWinnerWallet) {
-              console.warn(`[Payout] No wallet for winner: ${capturedWinnerName === 'No one' ? capturedWinnerId : capturedWinnerName}.`);
-              return;
-            }
-
-            console.log(`[Payout] Winner ${capturedWinnerName} wallet: ${capturedWinnerWallet}`);
-
-            const validParticipants = [...capturedPlayerWallets];
-            if (!validParticipants.some((w) => w.toLowerCase() === capturedWinnerWallet.toLowerCase())) {
-              validParticipants.push(capturedWinnerWallet);
-            }
-
-            const lootBoxHolderWallet = capturedLootBoxHolderWallet || capturedWinnerWallet;
-
-            console.log(`[Payout] Settle params: winner=${capturedWinnerWallet}, participantsCount=${validParticipants.length}, lootBoxHolder=${lootBoxHolderWallet}`);
-
-            const result = await settleMatchOnchain(matchId, capturedWinnerWallet, validParticipants, lootBoxHolderWallet);
-            if (!result.success) {
-              console.error(`[Payout] On-chain settlement failed: ${result.error}`);
-              return;
-            }
-
-            await markMatchSettled(matchId, result.txHash);
-            console.log(`[Payout] Payout successful for ${matchId}. TX: ${result.txHash}`);
-
-            const prizeAmount = Number(activeMatch.prizeAmount || 0);
-            await logAnalyticsEvent({
-              event_type: 'reward_paid',
-              user_id: capturedWinnerName,
-              match_id: matchId,
-              sponsor_id: activeMatch.sponsor || '',
-              value: Number.isFinite(prizeAmount) ? prizeAmount : 0,
-              metadata: { txHash: result.txHash, prize: activeMatch.prize }
-            });
-
-            await saveReward({
-              username: capturedWinnerName,
-              wallet: capturedWinnerWallet,
-              amount: activeMatch.prize,
-              matchId: matchId,
-              source: activeMatch.sponsor,
-              category: "earned",
-              txHash: result.txHash
-            });
-          } else {
-            console.log(`[Payout-Debug] No valid winner found for this round.`);
-          }
-        } catch (err) {
-          console.error(`[Payout] Error during automated settlement:`, err);
-        }
-      });
 
       if (winner.winnerId) {
         const secondPart = winner.secondId ? `, ${winner.secondName} came 2nd` : '';
@@ -2082,53 +1685,12 @@ setInterval(() => {
     if (!matchStartedThisRound) {
       matchTimeLeft = MATCH_DURATION_SECONDS;
       if (getPlayerCount() >= 3) {
-        // Match transitions to running from the sim loop: pick fresh item spawns
-        // for this round (the connect handler path above also does this, but
-        // this covers starts that don't coincide with a join).
-        prepareItemSpawns();
         matchRunning = true;
         matchStartedThisRound = true;
       }
     }
   }
 
-  if (!chicken.isHeld) {
-    chicken.vy -= CHICKEN_GRAVITY * FIXED_DT;
-    chicken.x += chicken.vx * FIXED_DT;
-    chicken.y += chicken.vy * FIXED_DT;
-    chicken.z += chicken.vz * FIXED_DT;
-
-    chicken.vx *= 0.96;
-    chicken.vz *= 0.96;
-
-    if (chicken.y <= FLOOR_Y) {
-      chicken.y = FLOOR_Y;
-      if (Math.abs(chicken.vy) > 0.5) {
-        chicken.vy *= -0.2;
-      } else {
-        chicken.vy = 0;
-      }
-    }
-  }
-
-  if (!lootbox.isHeld) {
-    lootbox.vy -= CHICKEN_GRAVITY * FIXED_DT;
-    lootbox.x += lootbox.vx * FIXED_DT;
-    lootbox.y += lootbox.vy * FIXED_DT;
-    lootbox.z += lootbox.vz * FIXED_DT;
-
-    lootbox.vx *= 0.96;
-    lootbox.vz *= 0.96;
-
-    if (lootbox.y <= FLOOR_Y) {
-      lootbox.y = FLOOR_Y;
-      if (Math.abs(lootbox.vy) > 0.5) {
-        lootbox.vy *= -0.2;
-      } else {
-        lootbox.vy = 0;
-      }
-    }
-  }
 
   const now = Date.now();
   const currentPlayers = buildEncodedPlayersMap();

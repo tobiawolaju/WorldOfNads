@@ -139,6 +139,17 @@ var _match_clock_anchor_time_left: float = 180.0
 static var local_base_xp: int = 0
 static var session_earned_xp: float = 0.0
 
+# --- CLIENT-SIDE REWARDS ---
+# The server no longer computes match rewards (they moved fully client-side for
+# now). These mirror the old server rates so the HUD XP / MON counters keep
+# working off locally-tracked distances and holds.
+const CLIENT_REWARD_TICK_INTERVAL: float = 1.0
+const CLIENT_XP_PER_SEC: float = 10.0
+const CLIENT_MON_PER_SEC: float = 0.002
+const CLIENT_MON_RADIUS: float = 8.0
+var session_earned_mon: float = 0.0
+var _client_reward_timer: float = 0.0
+
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live: bool = true
 var connection_attempted: bool = false
@@ -319,6 +330,13 @@ func _process(_delta: float):
 			if events_bridge == null or not is_instance_valid(events_bridge):
 				_resolve_events_bridge()
 			_update_match_ui()
+
+	# Client-authoritative reward tick: XP while holding the chicken, MON while
+	# standing near the lootbox. Only accrues during a live match.
+	_client_reward_timer += real_delta
+	if _client_reward_timer >= CLIENT_REWARD_TICK_INTERVAL:
+		_client_reward_timer = 0.0
+		_tick_client_rewards()
 
 	if not connection_attempted and not _reconnecting:
 		_apply_remote_interpolation()
@@ -608,6 +626,33 @@ func _receive_messages():
 					events_node.update_mon_display(earned_mon, 0.0)
 
 
+# --- CLIENT-SIDE REWARDS ---
+# Computes XP / MON exactly like the old server reward tick, but locally: the
+# server stopped tracking rewards, so the HUD counters are driven from the
+# local hold state (chicken) and the local lootbox distance instead.
+func _tick_client_rewards() -> void:
+	if not connected or not match_is_running:
+		return
+	if player_id == "" or not players.has(player_id):
+		return
+	var events_node := events_bridge
+	if events_node == null or not is_instance_valid(events_node):
+		events_node = get_tree().get_first_node_in_group("events_bridge")
+	if is_local_player_holding_chicken():
+		session_earned_xp += CLIENT_XP_PER_SEC
+		if events_node != null and events_node.has_method("update_xp_display"):
+			events_node.call("update_xp_display", int(session_earned_xp))
+	var local_player: Node3D = players.get(player_id) as Node3D
+	var box: RigidBody3D = get_lootbox_node()
+	if local_player != null and box != null and is_instance_valid(box):
+		var dist := local_player.global_position.distance_to(box.global_position)
+		if dist <= CLIENT_MON_RADIUS:
+			var proximity := 1.0 - (dist / CLIENT_MON_RADIUS)
+			session_earned_mon += CLIENT_MON_PER_SEC * proximity
+			if events_node != null and events_node.has_method("update_mon_display"):
+				events_node.call("update_mon_display", session_earned_mon, 0.0)
+
+
 # --- WORLD STATE UPDATE ---
 func _decode_pos(p_state: Dictionary, key: String, quantized: bool) -> float:
 	if quantized:
@@ -723,43 +768,13 @@ func _cache_chicken_node() -> void:
 			return
 	chicken_node = get_tree().root.find_child("Chicken", true, false) as RigidBody3D
 
-func _update_chicken_state(chicken_state: Dictionary, quantized := false, snap := false) -> void:
-	_cache_chicken_node()
-	if chicken_node == null:
-		return
-
-	var server_target_pos = Vector3(
-		(float(chicken_state.get("x", chicken_node.global_position.x)) / POS_SCALE) if quantized else float(chicken_state.get("x", chicken_node.global_position.x)),
-		(float(chicken_state.get("y", chicken_node.global_position.y)) / POS_SCALE) if quantized else float(chicken_state.get("y", chicken_node.global_position.y)),
-		(float(chicken_state.get("z", chicken_node.global_position.z)) / POS_SCALE) if quantized else float(chicken_state.get("z", chicken_node.global_position.z))
-	)
-	var server_target_rot_y = (float(chicken_state.get("r", chicken_node.global_rotation.y)) / ROT_SCALE) if quantized else float(chicken_state.get("rotationY", chicken_node.global_rotation.y))
+func _update_chicken_state(chicken_state: Dictionary, _quantized := false, _snap := false) -> void:
+	# The chicken is a client-controlled pickup now. Each client owns its own copy
+	# in its scene, so the server only mirrors WHO is holding it (for the match
+	# winner) — positions are never applied here anymore.
 	chicken_is_held = bool(chicken_state.get("h", chicken_state.get("isHeld", false)))
 	chicken_holder_id = str(chicken_state.get("o", chicken_state.get("holderId", "")))
 	_handle_chicken_state_event(chicken_is_held, chicken_holder_id)
-
-	# Ignore server chicken pose while local player is holder.
-	# Local holder already drives a smoother client-side hold visual in Player.gd.
-	if chicken_is_held and chicken_holder_id == player_id:
-		return
-
-	var target_pos = server_target_pos
-	var target_rot_y = server_target_rot_y
-
-	if chicken_node.has_method("apply_network_state"):
-		chicken_node.apply_network_state(target_pos, target_rot_y, chicken_is_held, snap)
-	else:
-		chicken_node.freeze = true
-		if snap:
-			chicken_node.global_position = target_pos
-			var rot = chicken_node.global_rotation
-			rot.y = target_rot_y
-			chicken_node.global_rotation = rot
-		else:
-			chicken_node.global_position = chicken_node.global_position.lerp(target_pos, 0.45)
-			var rot = chicken_node.global_rotation
-			rot.y = lerp_angle(rot.y, target_rot_y, 0.45)
-			chicken_node.global_rotation = rot
 
 func is_local_player_holding_chicken() -> bool:
 	return chicken_is_held and chicken_holder_id == player_id
@@ -816,41 +831,12 @@ func _cache_lootbox_node() -> void:
 			return
 	lootbox_node = get_tree().root.find_child("LootBox", true, false) as RigidBody3D
 
-func _update_lootbox_state(lootbox_state: Dictionary, quantized := false, snap := false) -> void:
-	_cache_lootbox_node()
-	if lootbox_node == null:
-		return
-
-	var server_target_pos = Vector3(
-		(float(lootbox_state.get("x", lootbox_node.global_position.x)) / POS_SCALE) if quantized else float(lootbox_state.get("x", lootbox_node.global_position.x)),
-		(float(lootbox_state.get("y", lootbox_node.global_position.y)) / POS_SCALE) if quantized else float(lootbox_state.get("y", lootbox_node.global_position.y)),
-		(float(lootbox_state.get("z", lootbox_node.global_position.z)) / POS_SCALE) if quantized else float(lootbox_state.get("z", lootbox_node.global_position.z))
-	)
-	var server_target_rot_y = (float(lootbox_state.get("r", lootbox_node.global_rotation.y)) / ROT_SCALE) if quantized else float(lootbox_state.get("rotationY", lootbox_node.global_rotation.y))
+func _update_lootbox_state(lootbox_state: Dictionary, _quantized := false, _snap := false) -> void:
+	# The lootbox is a client-controlled pickup now. Only the server's hold mirror
+	# is applied — positions are owned by each client's scene.
 	lootbox_is_held = bool(lootbox_state.get("h", lootbox_state.get("isHeld", false)))
 	lootbox_holder_id = str(lootbox_state.get("o", lootbox_state.get("holderId", "")))
 	_handle_lootbox_state_event(lootbox_is_held, lootbox_holder_id)
-
-	if lootbox_is_held and lootbox_holder_id == player_id:
-		return
-
-	var target_pos = server_target_pos
-	var target_rot_y = server_target_rot_y
-
-	if lootbox_node.has_method("apply_network_state"):
-		lootbox_node.apply_network_state(target_pos, target_rot_y, lootbox_is_held, snap)
-	else:
-		lootbox_node.freeze = true
-		if snap:
-			lootbox_node.global_position = target_pos
-			var rot = lootbox_node.global_rotation
-			rot.y = target_rot_y
-			lootbox_node.global_rotation = rot
-		else:
-			lootbox_node.global_position = lootbox_node.global_position.lerp(target_pos, 0.45)
-			var rot = lootbox_node.global_rotation
-			rot.y = lerp_angle(rot.y, target_rot_y, 0.45)
-			lootbox_node.global_rotation = rot
 
 func is_local_player_holding_lootbox() -> bool:
 	return lootbox_is_held and lootbox_holder_id == player_id
@@ -858,6 +844,42 @@ func is_local_player_holding_lootbox() -> bool:
 func get_lootbox_node() -> RigidBody3D:
 	_cache_lootbox_node()
 	return lootbox_node
+
+
+# Called by a local objective pickup (chicken / lootbox) right after it is
+# grabbed or released. The hold is recorded optimistically here so the HUD and
+# minimap react instantly, then the server is told (it trusts the client for now)
+# so it can resolve the match winner from whoever is holding the chicken.
+func notify_item_held(item_id: String) -> void:
+	if item_id == "LootBox":
+		lootbox_is_held = true
+		lootbox_holder_id = player_id
+		_handle_lootbox_state_event(lootbox_is_held, lootbox_holder_id)
+	else:
+		chicken_is_held = true
+		chicken_holder_id = player_id
+		_handle_chicken_state_event(chicken_is_held, chicken_holder_id)
+	_send_item_hold_message("pickup_request", item_id)
+
+
+func notify_item_dropped(item_id: String) -> void:
+	if item_id == "LootBox":
+		lootbox_is_held = false
+		lootbox_holder_id = ""
+		_handle_lootbox_state_event(lootbox_is_held, lootbox_holder_id)
+	else:
+		chicken_is_held = false
+		chicken_holder_id = ""
+		_handle_chicken_state_event(chicken_is_held, chicken_holder_id)
+	_send_item_hold_message("drop_request", item_id)
+
+
+func _send_item_hold_message(msg_type: String, item_id: String) -> void:
+	if player_id == "" or ws == null:
+		return
+	if ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
+		return
+	ws.send(MsgPack.pack({"type": msg_type, "item_id": item_id}))
 
 const LOOTBOX_HOLD_DISTANCE: float = 1.0
 const LOOTBOX_HOLD_HEIGHT: float = 0.75

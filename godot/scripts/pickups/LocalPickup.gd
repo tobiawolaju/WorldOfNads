@@ -1,9 +1,15 @@
 extends RigidBody3D
 class_name LocalPickup
-## Client-side only pickup item.
+## Client-side pickup item.
 ##
 ## Behaves like the chicken / lootbox holds (grab it when close, drop it any time)
-## but nothing is sent to the server, so every client owns its own copy of the item.
+## and nothing about its position is sent to the server — every client owns its
+## own copy of the item at its own place in the scene.
+##
+## Pickups with the CHICKEN or LOOTBOX power_up_mode (the objective items) still
+## tell the server when the LOCAL player grabs or drops them, so the server knows
+## who is holding what for the end-of-match winner resolution. All other modes are
+## fully silent.
 ##
 ## Falling and resting are left entirely to the physics engine. The body is only
 ## frozen while it is being carried; the moment it is dropped it is unfrozen and
@@ -11,7 +17,7 @@ class_name LocalPickup
 ##
 ## player.gd finds these through the "local_pickup_items" group and never sends a
 ## pickup_request for them, so they must NOT be added to the "pickup_items" group
-## (that group is reserved for the server-synced chicken and lootbox).
+## (that group was reserved for the old server-synced chicken and lootbox).
 
 signal picked_up(item: RigidBody3D)
 signal dropped(item: RigidBody3D)
@@ -27,7 +33,9 @@ enum PowerUpMode {
 	TWIN,           # spawn a decoy clone that mirrors your movement for 8s
 	SMOKE_GRENADE,  # temporary smoke cloud that blocks vision
 	HOOK,           # lunge punch; one hit drops the target and their chicken
-	MEGA_LEAP       # one super high jump, consumed on use
+	MEGA_LEAP,      # one super high jump, consumed on use
+	CHICKEN,        # the objective chicken — server tracks its holder (winner)
+	LOOTBOX         # the objective lootbox — server tracks its holder (2nd place)
 }
 
 const POWER_UP_LABELS := {
@@ -36,6 +44,8 @@ const POWER_UP_LABELS := {
 	PowerUpMode.SMOKE_GRENADE: "SMOG",
 	PowerUpMode.HOOK: "HOOK",
 	PowerUpMode.MEGA_LEAP: "LEAP",
+	PowerUpMode.CHICKEN: "CHICKEN",
+	PowerUpMode.LOOTBOX: "LOOTBOX",
 }
 
 ## One color per power-up. Drives both the pickup's mesh tint and the HUD Action
@@ -46,6 +56,8 @@ const POWER_UP_COLORS := {
 	PowerUpMode.SMOKE_GRENADE: Color(0.45, 0.8, 0.4),  # smoke green
 	PowerUpMode.HOOK: Color(1.0, 0.2, 0.2),            # red
 	PowerUpMode.MEGA_LEAP: Color(0.65, 0.3, 1.0),      # purple
+	PowerUpMode.CHICKEN: Color(0.98, 0.8, 0.3),        # gold
+	PowerUpMode.LOOTBOX: Color(0.35, 0.68, 1.0),       # blue
 }
 
 @export var power_up_mode: PowerUpMode = PowerUpMode.NONE
@@ -55,6 +67,40 @@ func power_up_label() -> String:
 
 func power_up_color() -> Color:
 	return POWER_UP_COLORS.get(power_up_mode, Color.WHITE)
+
+
+# Objective items (chicken / lootbox) report their hold state to the server so
+# it can resolve the match winner. Returns the item id string the server's
+# pickup_request / drop_request protocol understands, or "" for normal pickups.
+func objective_item_id() -> String:
+	match power_up_mode:
+		PowerUpMode.CHICKEN:
+			return "Chicken"
+		PowerUpMode.LOOTBOX:
+			return "LootBox"
+	return ""
+
+
+func is_objective_item() -> bool:
+	return objective_item_id() != ""
+
+
+# Tells the server this objective item was just grabbed (holding) or released.
+# Only copies held by the LOCAL player report anything — every client owns its
+# own copy, and only the local copy ever has a local holder.
+func _notify_server_hold(holding: bool, holder_node: Node3D = null) -> void:
+	var claimant: Node3D = holder_node if holder_node != null else holder
+	if claimant == null or not claimant.is_in_group("local_player"):
+		return
+	if not is_objective_item():
+		return
+	var pm := get_tree().get_first_node_in_group("player_manager")
+	if pm == null or not (pm.has_method("notify_item_held") and pm.has_method("notify_item_dropped")):
+		return
+	if holding:
+		pm.call("notify_item_held", objective_item_id())
+	else:
+		pm.call("notify_item_dropped", objective_item_id())
 
 ## Godot's default 3D gravity. GRAVITY_SCALE is derived from the player so the item
 ## falls at the same rate the player does.
@@ -169,12 +215,14 @@ func pick_up(by: Node3D) -> bool:
 	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
 	_resolve_attach_node()
 	emit_signal("picked_up", self)
+	_notify_server_hold(true)
 	return true
 
 
 func drop(impulse: Vector3 = Vector3.ZERO) -> void:
 	if not is_held:
 		return
+	var dropped_by := holder
 	is_held = false
 	holder = null
 	_attach_node = null
@@ -189,6 +237,7 @@ func drop(impulse: Vector3 = Vector3.ZERO) -> void:
 	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
 	freeze = false
 	emit_signal("dropped", self)
+	_notify_server_hold(false, dropped_by)
 
 
 ## Called when the holder USES the power-up. Instead of dropping the item at the
@@ -196,6 +245,7 @@ func drop(impulse: Vector3 = Vector3.ZERO) -> void:
 ## is far from the holder, then dropped so it falls and rests there. No power-up
 ## effect is applied yet - this only recycles the pickup and frees the HUD slot.
 func consume_and_respawn(from_position: Vector3) -> void:
+	var released_by := holder
 	is_held = false
 	holder = null
 	_attach_node = null
@@ -211,6 +261,7 @@ func consume_and_respawn(from_position: Vector3) -> void:
 	angular_velocity = Vector3.ZERO
 	freeze = false
 	emit_signal("dropped", self)
+	_notify_server_hold(false, released_by)
 
 
 # Picks a valid standing spot inside the minimap bounds, preferring one that is
