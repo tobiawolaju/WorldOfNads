@@ -414,7 +414,7 @@ text = "loading
 [node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]
 
 [node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=203270884]
-position = Vector2(125, 375)
+position = Vector2(-152, -134)
 
 [node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=121289564]
 anchors_preset = 8

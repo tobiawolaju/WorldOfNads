@@ -119,6 +119,8 @@ const HEALTH_REGEN_RATE: float = 15.0
 const RESPAWN_DELAY: float = 2.0
 
 const LANDING_BOB_DURATION: float = 0.14
+## How fast the landing FOV punch decays back to the base FOV (higher = shorter flash).
+const LANDING_FOV_DECAY: float = 14.0
 const ANIM_NAME_TO_ID: Dictionary = {
 	"idle": 0,
 	"running": 1,
@@ -208,6 +210,12 @@ var _critical_fall_timer: float = 0.0
 @export var bus_camera_look_target: Vector2 = Vector2(0.0, 0.0) # xz point the camera self-adjusts toward while riding the bus
 @export var bus_camera_recenter_speed: float = 1.4 # higher = pulls back to the look target faster, 0 = disabled
 @export var bus_camera_height_offset: float = 0.5 # lifts the camera while riding the bus
+@export_range(0.0, 40.0, 0.5) var dive_ramp_low: float = 15.0 # below this altitude (y) the dive camera blend is fully off
+@export_range(0.0, 200.0, 0.5) var dive_ramp_high: float = 55.0 # at/above this altitude (y) the dive camera blend is full while falling
+@export_range(0.5, 20.0, 0.5) var dive_ramp_speed: float = 5.0 # how quickly the dive blend eases to its target (higher = snappier)
+@export_range(0.0, 20.0, 0.5) var dive_fov_boost_max: float = 8.0 # extra FOV while diving at full speed
+@export_range(5.0, 100.0, 1.0) var dive_fov_ref_speed: float = 35.0 # fall speed (m/s) that reaches the full dive FOV boost
+@export_range(0.0, 15.0, 0.5) var landing_fov_kick_max: float = 6.0 # FOV flash on a hard landing
 @export var fov: float = 70.0
 @export var touch_orbit_sensitivity: float = 0.032
 @export var joystick_orbit_sensitivity: float = 0.003
@@ -310,6 +318,12 @@ var _slow_update_timer: float = 0.0
 const SLOW_UPDATE_INTERVAL: float = 0.1 # 10 FPS for non-critical updates
 var _landing_bob_timer: float = 0.0
 var _landing_bob_strength: float = 0.0
+## 0 on the ground, ramps to 1 while airborne and falling from altitude. Drives
+## the dive camera blend (zoom, stiffness, FOV) so jumping off the bus eases in
+## and out instead of switching at a hard height.
+var _dive_level: float = 0.0
+## Temporary FOV punch after a hard landing; decays back to zero over ~0.4s.
+var _landing_fov_kick: float = 0.0
 var _spawn_flash_done: bool = false
 var _squash_stretch_y: float = 1.0
 var _squash_stretch_velocity: float = 0.0
@@ -352,7 +366,7 @@ const SPRING_SETTLE_VELOCITY_EPSILON: float = 0.0005
 var touch_joystick: Node = null
 var network_tick_timer: float = 0.0
 var network_heartbeat_timer: float = 0.0
-const NETWORK_TICK_ACTIVE: float = 0.066
+const NETWORK_TICK_ACTIVE: float = 0.05 # 20 Hz while moving (matches server BROADCAST_RATE)
 const NETWORK_TICK_IDLE: float = 0.33
 const NETWORK_HEARTBEAT: float = 1.0
 var player_id: String = "" :
@@ -1193,6 +1207,8 @@ func _check_map_recovery() -> void:
 	cam_rot_x = clamp(cam_rot_x, min_pitch, max_pitch)
 	_movement_pitch_ease_active = false
 	_pitch_before_movement_ease = -1.0
+	_dive_level = 0.0
+	_landing_fov_kick = 0.0
 	current_animation = "idle"
 	_play_anim("idle")
 
@@ -1232,6 +1248,10 @@ func _start_landing_bob(fall_velocity: float) -> void:
 		return
 	_landing_bob_strength = clamp((impact_speed - 4.5) / 12.0, 0.0, 1.0)
 	_landing_bob_timer = LANDING_BOB_DURATION
+	# Short FOV punch on hard landings: the harder the impact, the bigger the
+	# flash, decaying back to normal over a fraction of a second in
+	# _update_camera_visual.
+	_landing_fov_kick = landing_fov_kick_max * (0.35 + 0.65 * _landing_bob_strength)
 
 func _try_pickup():
 	if not pickup_area:
@@ -1967,37 +1987,47 @@ func _handle_camera_gamepad(delta: float) -> void:
 	if abs(ry) > DEADZONE:
 		cam_rot_x = clamp(cam_rot_x + ry * 0.05 * delta * 60, min_pitch, max_pitch)
 
+func _update_dive_level(delta: float) -> void:
+	# Continuous "skydive" camera blend: 0 on the ground, ramping toward 1 while
+	# the player is actually airborne and falling from altitude. Every downstream
+	# value (zoom, follow stiffness, FOV) is lerped through this, so leaving the
+	# bus and hitting the ground eases instead of snapping at a hard height.
+	var dive_target: float = 0.0
+	if not is_on_floor() and velocity_y < 0.0:
+		var band := maxf(dive_ramp_high - dive_ramp_low, 0.001)
+		dive_target = clampf((global_position.y - dive_ramp_low) / band, 0.0, 1.0)
+	_dive_level = move_toward(_dive_level, dive_target, delta * dive_ramp_speed)
+
 func _update_camera_zoom(delta: float) -> void:
 	_apply_bus_camera_recenter(delta)
-	var above_12 := global_position.y > 12.0
+	_update_dive_level(delta)
 	var movement_allowed := _is_movement_allowed()
 	var base_zoom_cap: float = _zoom_cap_base()
-	var vehicle_zoom_cap: float = base_zoom_cap
-	if above_12:
-		vehicle_zoom_cap = base_zoom_cap * 2.0
+	var dive_zoom_cap: float = base_zoom_cap * 2.0
 	# Running left/right/back drifts the player toward the near edge of the frame. A short spring
 	# on the axis keeps the pull-back from stepping, which is what read as screen shake.
 	var raw_retreat: float = 0.0
-	if not above_12 and not _is_riding_bus and current_animation != "falling":
+	if _dive_level <= 0.01 and not _is_riding_bus and current_animation != "falling":
 		raw_retreat = camera_retreat_axis
 	var retreat_result := _spring_float(_camera_retreat_smooth, _camera_retreat_velocity, raw_retreat, RETREAT_ZOOM_SMOOTHNESS, delta)
 	_camera_retreat_smooth = retreat_result[0]
 	_camera_retreat_velocity = retreat_result[1]
 	var retreat_boost: float = _camera_retreat_smooth * move_zoom_out
-	var zoom_ceiling: float = maxf(max_zoom_ceiling, vehicle_zoom_cap + retreat_boost)
-	var ground_zoom: float = lerp(min_zoom, vehicle_zoom_cap, 0.5)
+	var zoom_ceiling: float = maxf(max_zoom_ceiling, dive_zoom_cap + retreat_boost)
+	var ground_zoom: float = lerp(min_zoom, base_zoom_cap, 0.5)
 	var state_zoom: float = min_zoom
-	if above_12:
-		state_zoom = vehicle_zoom_cap
-	elif current_animation == "falling":
-		state_zoom = min_zoom
+	if current_animation == "falling":
+		# The dive camera: high above the ground the view pulls back to frame the
+		# fall (dive_zoom_cap), blending into the tight min_zoom tuck as the
+		# player approaches the ground instead of switching at a hard height.
+		state_zoom = lerp(min_zoom, dive_zoom_cap, _dive_level)
 	elif camera_is_airborne:
 		state_zoom = base_zoom_cap
 	elif camera_is_moving:
 		state_zoom = ground_zoom + retreat_boost
 	elif not movement_allowed and root and root.has_method("is_waiting_for_players") and root.is_waiting_for_players():
 		state_zoom = base_zoom_cap
-	var target_distance: float = min_zoom if current_animation == "falling" else clamp(state_zoom + camera_distance_bias, min_zoom, zoom_ceiling)
+	var target_distance: float = clamp(state_zoom + camera_distance_bias, min_zoom, zoom_ceiling)
 	if _is_riding_bus:
 		target_distance = bus_zoom
 	var distance_result := _spring_float(camera_distance_current, _camera_distance_velocity, target_distance, camera_smoothness, delta)
@@ -2089,10 +2119,12 @@ func _apply_movement_pitch_ease(delta: float) -> void:
 func _update_camera_visual(delta: float) -> void:
 	var interp := Engine.get_physics_interpolation_fraction()
 	var raw_target_pos: Vector3 = _camera_base_target_prev.lerp(_camera_base_target_curr, interp)
-	var above_12 := global_position.y > 12.0
-	var follow_omega := 80.0 if above_12 else lerpf(follow_sharpness, follow_sharpness_retreat, _camera_retreat_smooth)
-	var pos_smoothness := camera_smoothness * 5.0 if above_12 else camera_smoothness
-	var look_smoothness := camera_smoothness * 0.85 * 5.0 if above_12 else camera_smoothness * 0.85
+	# While skydiving the camera has to track a fast-falling player, so it runs
+	# several times stiffer than on the ground. Blended through _dive_level
+	# instead of a hard height switch, so the approach to the ground eases off.
+	var follow_omega := lerpf(lerpf(follow_sharpness, follow_sharpness_retreat, _camera_retreat_smooth), 80.0, _dive_level)
+	var pos_smoothness := lerpf(camera_smoothness, camera_smoothness * 5.0, _dive_level)
+	var look_smoothness := lerpf(camera_smoothness * 0.85, camera_smoothness * 0.85 * 5.0, _dive_level)
 	var follow_result := _spring_vec3(_camera_follow_target, _camera_follow_velocity, raw_target_pos, follow_omega, delta)
 	_camera_follow_target = follow_result[0]
 	_camera_follow_velocity = follow_result[1]
@@ -2118,7 +2150,13 @@ func _update_camera_visual(delta: float) -> void:
 	_camera_look_target = look_result[0]
 	_camera_look_target_velocity = look_result[1]
 	camera.look_at(_camera_look_target, Vector3.UP)
-	var target_fov: float = fov
+	# Dive FOV: falling fast from altitude widens the view (speed-scaled); a hard
+	# landing adds a short FOV punch that decays back to the base FOV.
+	_landing_fov_kick = maxf(0.0, _landing_fov_kick - delta * LANDING_FOV_DECAY)
+	var fall_speed := -minf(velocity_y, 0.0)
+	var speed_fraction := clampf(fall_speed / maxf(dive_fov_ref_speed, 0.001), 0.0, 1.0)
+	var dive_fov := dive_fov_boost_max * _dive_level * speed_fraction
+	var target_fov: float = fov + dive_fov + _landing_fov_kick
 	var fov_result := _spring_float(camera.fov, _camera_fov_velocity, target_fov, camera_smoothness * 1.1, delta)
 	camera.fov = fov_result[0]
 	_camera_fov_velocity = fov_result[1]
