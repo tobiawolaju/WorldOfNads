@@ -127,6 +127,7 @@ update_interval = null
 zoom_level = null
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("12_nt65e")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3177776, 12.262243, -12.536736)
 
 [node name="p1" parent="." unique_id=408056980 instance=ExtResource("13_nt65e")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.095271, 1.4365964, 0)
