@@ -1,4 +1,4 @@
-[gd_scene format=4 uid="uid://b4wta5d5nlcua"]
+[gd_scene format=3 uid="uid://b4wta5d5nlcua"]
 
 [ext_resource type="Script" uid="uid://ds7rfadg6n6k8" path="res://scripts/player/PlayerManager.gd" id="1_hpwea"]
 [ext_resource type="PackedScene" uid="uid://bq3i1po3drd3s" path="res://scenes/skin.tscn" id="2_w01lk"]
@@ -39,7 +39,6 @@ stencil_outline_thickness = 0.034
 albedo_color = Color(0.92156863, 0.47058824, 0.9647059, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_4r1bg"]
-
 
 [node name="Gameplay" type="Node3D" unique_id=2001810245]
 
@@ -116,7 +115,6 @@ cast_shadow = 0
 [node name="Object_2" parent="Bus" index="4" unique_id=1403144337]
 cast_shadow = 0
 
-
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("11_hpwea")]
 
 [node name="Minimap" parent="Hud/CanvasLayer/BoxContainer/Node2" parent_id_path=PackedInt32Array(861416889, 802481236) index="0" unique_id=43787215]
@@ -149,6 +147,14 @@ power_up_mode = 4
 [node name="Pickup5" parent="." unique_id=300391791 instance=ExtResource("13_nt65e")]
 transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -2.2704427)
 power_up_mode = 5
+
+[node name="Chicken" parent="." unique_id=1795549842 instance=ExtResource("13_nt65e")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 1.246697, 5.703834, -0.28305912)
+power_up_mode = 6
+
+[node name="LootBox" parent="." unique_id=784657971 instance=ExtResource("13_nt65e")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 1.246697, 5.703834, -0.9042039)
+power_up_mode = 7
 
 [editable path="Bus"]
 [editable path="Hud"]
