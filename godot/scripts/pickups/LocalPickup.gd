@@ -61,9 +61,9 @@ const POWER_UP_COLORS := {
 }
 
 ## Mesh tints while an objective item is being carried. The chicken rides the
-## back in yellow, the lootbox in green; both return to white on release.
+## back in yellow, the lootbox in purple; both return to white on release.
 const HELD_CHICKEN_TINT := Color(1.0, 0.9, 0.1)
-const HELD_LOOTBOX_TINT := Color(0.3, 0.85, 0.35)
+const HELD_LOOTBOX_TINT := Color(0.65, 0.3, 1.0)
 
 @export var power_up_mode: PowerUpMode = PowerUpMode.NONE
 
@@ -218,7 +218,7 @@ func _tint_mesh(color: Color) -> void:
 			mat.albedo_color = color
 
 
-# Yellow while the chicken is carried, green while the lootbox is carried.
+# Yellow while the chicken is carried, purple while the lootbox is carried.
 func _held_tint_color() -> Color:
 	match power_up_mode:
 		PowerUpMode.CHICKEN:
@@ -244,7 +244,7 @@ func pick_up(by: Node3D) -> bool:
 	is_held = true
 	# Ordinary pickups hide while carried (the HUD indicator is the only
 	# feedback); objective items (chicken / lootbox) stay visible so the holder
-	# sees them riding on their back, tinted yellow (chicken) or green (lootbox).
+	# sees them riding on their back, tinted yellow (chicken) or purple (lootbox).
 	if not is_objective_item():
 		visible = false
 	else:
