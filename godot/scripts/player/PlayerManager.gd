@@ -316,6 +316,14 @@ const RECONNECT_INITIAL_DELAY: float = 1.0
 const RECONNECT_GRACE_TIME: float = 0.5
 const RECONNECT_COUNTDOWN_STEPS: int = 3
 var _waiting_for_connect: bool = false
+
+# Liveness watchdog: the server only broadcasts while a match runs, so if we are
+# in a match and hear nothing for this long the link has silently died. A silent
+# network drop leaves WebSocketPeer reporting OPEN, which never reaches the
+# STATE_CLOSED branch, so the client would sit in a ghost session forever.
+var _last_rx_ms: float = 0.0
+const LIVENESS_TIMEOUT_MS: float = 5000.0
+
 # Local player node kept alive across a reconnect. Freeing it (the old behaviour)
 # destroyed the only object driving the camera, so the view froze and the player
 # vanished mid-match. We now reuse this node instead of respawning it.
@@ -391,7 +399,33 @@ func _process(_delta: float):
 
 	if connected:
 		_receive_messages()
+	_check_server_liveness(now_ms)
 	_apply_remote_interpolation()
+
+func _check_server_liveness(now_ms: float) -> void:
+	# Only meaningful while a match is live, since that's the only time the
+	# server pushes state at ~20 Hz. A longer silence means the link died.
+	if not connected or _reconnecting or not match_is_running:
+		return
+	if _last_rx_ms <= 0.0:
+		_last_rx_ms = now_ms
+		return
+	if now_ms - _last_rx_ms > LIVENESS_TIMEOUT_MS:
+		_force_reconnect_now()
+
+func _force_reconnect_now() -> void:
+	if _reconnecting:
+		return
+	print("[Net] No server traffic for %.0fs; forcing reconnect." % (LIVENESS_TIMEOUT_MS / 1000.0))
+	# A half-open WebSocketPeer (link dropped but the peer still reports OPEN)
+	# cannot be reused for connect_to_url, so discard it and open a fresh one.
+	if ws != null:
+		ws.close()
+	ws = WebSocketPeer.new()
+	connected = false
+	connection_attempted = false
+	_last_rx_ms = 0.0
+	_start_reconnection()
 
 func _trigger_fallback():
 	is_connecting_to_live = false
@@ -479,6 +513,7 @@ func _attempt_reconnection():
 
 func _on_reconnect_success():
 	connected = true
+	_last_rx_ms = float(Time.get_ticks_msec())
 	var was_reconnecting := _reconnecting
 	_reconnecting = false
 	_reconnect_attempts = 0
@@ -607,6 +642,7 @@ func _receive_messages():
 	var packets_processed := 0
 	while ws.get_available_packet_count() > 0 and packets_processed < MAX_PACKETS_PER_FRAME:
 		packets_processed += 1
+		_last_rx_ms = float(Time.get_ticks_msec())
 		var raw_packet = ws.get_packet()
 		if raw_packet.is_empty():
 			continue
