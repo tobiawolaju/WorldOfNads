@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode unshaded, cull_disabled, depth_draw_opaque, shadows_disabled;
+render_mode  cull_disabled, depth_draw_opaque, shadows_disabled;
 
 // White sphere with a single black dot that always faces the camera.
 //
@@ -81,5 +81,9 @@ void fragment() {
 	}
 
 	ALBEDO = color;
-	ALPHA = 1.0;
+	// Deliberately no ALPHA write: assigning ALPHA (even a constant 1.0) makes
+	// the renderer sort this mesh into the transparent pass, where it can be
+	// drawn on top of the SMOG smoke particles and peek through them. Omitting
+	// it renders the eyes as plain opaque geometry, so the smoke hides them
+	// exactly like it hides the body.
 }
