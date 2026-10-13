@@ -65,5 +65,15 @@ contract WONsRewards is Ownable, ReentrancyGuard {
         return claimedRewards[player];
     }
 
+    /// @notice Rescue any MON that is not owed to players (e.g. accidental
+    /// transfers) so it cannot be permanently stuck in the contract.
+    function withdraw() external onlyOwner nonReentrant {
+        uint256 balance = address(this).balance;
+        if (balance > 0) {
+            (bool success, ) = payable(owner()).call{value: balance}("");
+            require(success, "Transfer failed");
+        }
+    }
+
     receive() external payable {}
 }
