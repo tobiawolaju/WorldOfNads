@@ -568,7 +568,11 @@ func _perform_pickup_request() -> void:
 	if _is_local_holding_pickup():
 		# A held power-up is USED, not dropped: it vanishes and recycles to a
 		# random far-away spot on the map (effects are not implemented yet).
-		if held_power_up_mode != LocalPickup.PowerUpMode.NONE:
+		# Objective items (chicken / lootbox) and plain NONE-mode pickups are
+		# dropped instead.
+		if _is_objective_item_mode(held_power_up_mode):
+			_drop_local_pickup()
+		elif held_power_up_mode != LocalPickup.PowerUpMode.NONE:
 			_use_held_power_up()
 		else:
 			_drop_local_pickup()
@@ -1009,9 +1013,6 @@ func _physics_process(delta: float) -> void:
 		if force_heartbeat:
 			network_heartbeat_timer = 0.0
 
-	_update_local_chicken_visual(delta)
-	_update_local_lootbox_visual(delta)
-
 	_slow_update_timer += real_delta
 	if _slow_update_timer >= SLOW_UPDATE_INTERVAL:
 		_slow_update_timer = 0.0
@@ -1286,6 +1287,11 @@ func _drop_object():
 func _is_local_holding_pickup() -> bool:
 	return held_local_pickup != null and is_instance_valid(held_local_pickup) and held_local_pickup.has_method("is_being_held") and held_local_pickup.is_being_held()
 
+# Objective items (chicken / lootbox) are carried and dropped like a plain
+# pickup — they are never consumed as a power-up.
+func _is_objective_item_mode(mode: int) -> bool:
+	return mode == LocalPickup.PowerUpMode.CHICKEN or mode == LocalPickup.PowerUpMode.LOOTBOX
+
 func _find_nearest_local_pickup() -> RigidBody3D:
 	var best: RigidBody3D = null
 	var best_dist: float = LOCAL_PICKUP_RADIUS
@@ -1302,11 +1308,8 @@ func _find_nearest_local_pickup() -> RigidBody3D:
 
 # LocalPickup items are never sent to the server, they are grabbed client side only.
 func _try_pickup_local() -> bool:
-	# One power-up at a time: a carried (still unused) power-up or an effect that
-	# is still running blocks a new pickup, so the current one has to be used up
-	# before another can be taken. Server-synced items (chicken / lootbox) are
-	# unaffected and still fall through to _try_pickup().
-	if _is_local_holding_pickup() or _active_power_up_remaining > 0.0:
+	# One carried item at a time: holding anything blocks another pickup.
+	if _is_local_holding_pickup():
 		return false
 	var now := Time.get_ticks_msec()
 	if now - last_pickup_request_ms < PICKUP_REQUEST_COOLDOWN_MS:
@@ -1314,12 +1317,18 @@ func _try_pickup_local() -> bool:
 	var target := _find_nearest_local_pickup()
 	if target == null:
 		return false
+	# A running timed power-up effect only blocks a new POWER-UP pickup.
+	# Objective items (chicken / lootbox) can still be grabbed mid-effect.
+	var target_mode_value = target.get("power_up_mode")
+	var target_mode := int(target_mode_value) if target_mode_value != null else LocalPickup.PowerUpMode.NONE
+	if _active_power_up_remaining > 0.0 and not _is_objective_item_mode(target_mode):
+		return false
 	if not target.has_method("pick_up") or not target.pick_up(self):
 		return false
 	held_local_pickup = target
 	last_pickup_request_ms = now
-	# Power-up foundation: remember the mode and surface it in the HUD Action
-	# button. Activation mechanics come later.
+	# Remember the mode and surface it in the HUD Action button. Objective items
+	# (chicken / lootbox) show their caption here too.
 	var mode_value = target.get("power_up_mode")
 	held_power_up_mode = int(mode_value) if mode_value != null else LocalPickup.PowerUpMode.NONE
 	_update_hud_power_up()
@@ -1865,38 +1874,6 @@ func _is_local_holding_lootbox() -> bool:
 		return false
 	return root.is_local_player_holding_lootbox()
 
-func _update_local_chicken_visual(delta: float) -> void:
-	if not is_local or not _is_local_holding_chicken():
-		return
-	var chicken: RigidBody3D = _get_cached_chicken_node()
-	if chicken == null:
-		return
-	var forward = -global_transform.basis.z
-	forward.y = 0.0
-	if forward.length_squared() < 0.0001:
-		forward = Vector3.FORWARD
-	else:
-		forward = forward.normalized()
-	var target_pos = global_position + (forward * hold_distance)
-	target_pos.y += hold_height
-	chicken.global_position = chicken.global_position.lerp(target_pos, min(1.0, 16.0 * delta))
-
-func _update_local_lootbox_visual(delta: float) -> void:
-	if not is_local or not _is_local_holding_lootbox():
-		return
-	var lootbox: RigidBody3D = _get_cached_lootbox_node()
-	if lootbox == null:
-		return
-	var forward = -global_transform.basis.z
-	forward.y = 0.0
-	if forward.length_squared() < 0.0001:
-		forward = Vector3.FORWARD
-	else:
-		forward = forward.normalized()
-	var target_pos = global_position + (forward * hold_distance)
-	target_pos.y += hold_height
-	lootbox.global_position = lootbox.global_position.lerp(target_pos, min(1.0, 16.0 * delta))
-
 var _spring_rv: Array = [0.0, 0.0]
 var _spring_rv3: Array = [Vector3.ZERO, Vector3.ZERO]
 
@@ -2179,22 +2156,6 @@ func _send_state_to_server(_force_send := false) -> void:
 		_payload["skin"] = str(root.local_skin_name) if root != null else ""
 		_payload.erase("chicken")
 		_payload.erase("lootbox")
-		if _is_local_holding_chicken() and root.has_method("build_local_chicken_payload"):
-			var chicken_payload = root.build_local_chicken_payload(global_position, -global_transform.basis.z, mesh.rotation.y)
-			if chicken_payload != null:
-				_chicken_payload["qx"] = _quantize_pos(float(chicken_payload.get("x", 0.0)))
-				_chicken_payload["qy"] = _quantize_pos(float(chicken_payload.get("y", 0.0)))
-				_chicken_payload["qz"] = _quantize_pos(float(chicken_payload.get("z", 0.0)))
-				_chicken_payload["qrot"] = _quantize_rot(float(chicken_payload.get("rotation_y", 0.0)))
-				_payload["chicken"] = _chicken_payload
-		if _is_local_holding_lootbox() and root.has_method("build_local_lootbox_payload"):
-			var lootbox_payload = root.build_local_lootbox_payload(global_position, -global_transform.basis.z, mesh.rotation.y)
-			if lootbox_payload != null:
-				_lootbox_payload["qx"] = _quantize_pos(float(lootbox_payload.get("x", 0.0)))
-				_lootbox_payload["qy"] = _quantize_pos(float(lootbox_payload.get("y", 0.0)))
-				_lootbox_payload["qz"] = _quantize_pos(float(lootbox_payload.get("z", 0.0)))
-				_lootbox_payload["qrot"] = _quantize_rot(float(lootbox_payload.get("rotation_y", 0.0)))
-				_payload["lootbox"] = _lootbox_payload
 		root.ws.send(MsgPack.pack(_payload))
 
 func _update_global_player_shader_pos(force: bool = false) -> void:
