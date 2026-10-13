@@ -6,7 +6,6 @@
 [ext_resource type="FontFile" uid="uid://bqvrqx4a4joiu" path="res://assets/fonts/fortnite.otf" id="3_apjy4"]
 [ext_resource type="Texture2D" uid="uid://hdhbnox5e2d0" path="res://assets/img/point.webp" id="6_3swnk"]
 [ext_resource type="Texture2D" uid="uid://ccgocjs5rb0gf" path="res://assets/img/ui/point3.png" id="6_48y67"]
-[ext_resource type="Texture2D" uid="uid://c3sqh2dara71n" path="res://assets/img/ui/point2.png" id="6_084dp"]
 [ext_resource type="Script" uid="uid://txqqdi5bw3hx" path="res://scripts/ui/jump_bar.gd" id="6_jump_bar"]
 [ext_resource type="Script" uid="uid://7xw4k7bx7fmy" path="res://scripts/ui/stamina_bar.gd" id="6_stamina_bar"]
 [ext_resource type="Script" uid="uid://smygpuu7lbkh" path="res://scripts/ui/compassbar.gd" id="7_mphia"]
@@ -222,20 +221,22 @@ stretch_mode = 4
 flip_v = true
 
 [node name="ChickenPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1952187711]
-modulate = Color(1, 0.921569, 0.254902, 1)
+modulate = Color(1, 0.92156863, 0, 1)
 z_index = 11
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 0
 offset_left = 51.0
-offset_top = 51.0
-offset_right = 61.0
-offset_bottom = 61.0
-texture = ExtResource("6_084dp")
+offset_top = 68.0
+offset_right = 69.0
+offset_bottom = 88.0
+scale = Vector2(1, -1)
+texture = ExtResource("21_gltyx")
 expand_mode = 1
 stretch_mode = 4
 flip_v = true
 
 [node name="LootBoxPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=146359137]
+visible = false
 modulate = Color(0.5176471, 0.20392157, 0.8745098, 1)
 z_index = 11
 custom_minimum_size = Vector2(18, 18)
@@ -244,7 +245,7 @@ offset_left = 51.0
 offset_top = 51.0
 offset_right = 61.0
 offset_bottom = 61.0
-texture = ExtResource("6_084dp")
+texture = ExtResource("22_mgfyp")
 expand_mode = 1
 stretch_mode = 4
 
@@ -666,7 +667,7 @@ offset_top = 80.0
 offset_right = -157.0
 offset_bottom = 106.0
 grow_horizontal = 0
-theme_override_colors/font_color = Color(0.8235294, 0, 1, 1)
+theme_override_colors/font_color = Color(0.4392157, 0.023529412, 0.99607843, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
