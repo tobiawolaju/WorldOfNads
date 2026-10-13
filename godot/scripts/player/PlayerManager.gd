@@ -44,10 +44,17 @@ const ANIM_ID_TO_NAME: Dictionary = {
 # interval so render_time routinely reaches the newest snapshot; the gap is then
 # bridged by velocity extrapolation (REMOTE_MAX_EXTRAPOLATE_MS) instead of a
 # freeze-and-teleport. Keeps remote motion smooth even while packets are late.
-const REMOTE_INTERP_BACKTIME_MS: float = 60.0
+const REMOTE_INTERP_BACKTIME_MS: float = 80.0
 const REMOTE_MIN_INTERP_BACKTIME_MS: float = 40.0
 const REMOTE_MAX_INTERP_BACKTIME_MS: float = 180.0
 const REMOTE_MAX_EXTRAPOLATE_MS: float = 100.0
+# Remote avatars are carried forward (extrapolated) from the last two snapshots.
+# When a burst of deltas lands in the same frame the gap between them collapses
+# to ~1 ms, which inflates the derived velocity ~50x; a single late packet then
+# flings the avatar across the map. Floor the interval and clamp the velocity so
+# that can never happen.
+const REMOTE_MIN_SNAPSHOT_DT_MS: float = 16.0
+const REMOTE_MAX_EXTRAP_SPEED: float = 14.0
 const REMOTE_ANIMATION_LOD_DISTANCE: float = 20.0
 const REMOTE_ANIMATION_LOD_DISTANCE_SQ: float = REMOTE_ANIMATION_LOD_DISTANCE * REMOTE_ANIMATION_LOD_DISTANCE
 const REMOTE_PLAYER_SCRIPT := preload("res://scripts/player/RemotePlayer.gd")
@@ -1356,7 +1363,8 @@ func _push_remote_snapshot(id: String, pos: Vector3, rot_y: float, anim: String,
 			"prev_t": now_ms,
 			"curr_t": now_ms,
 			"interp_delay_ms": REMOTE_INTERP_BACKTIME_MS,
-			"pos_vel": Vector3.ZERO,
+			"prev_vel": Vector3.ZERO,
+			"curr_vel": Vector3.ZERO,
 			"rot_vel": 0.0,
 			"anim": anim
 		}
@@ -1368,7 +1376,10 @@ func _push_remote_snapshot(id: String, pos: Vector3, rot_y: float, anim: String,
 	snap["curr_rot"] = rot_y
 	snap["prev_t"] = snap["curr_t"]
 	snap["curr_t"] = now_ms
-	var pos_dt := maxf(1.0, snap["curr_t"] - snap["prev_t"])
+	# Floor at one frame: a burst of deltas delivered in the same frame would
+	# otherwise yield a ~1 ms interval, inflating the derived velocity ~50x and
+	# (through extrapolation) teleporting the avatar on the next late packet.
+	var pos_dt := maxf(REMOTE_MIN_SNAPSHOT_DT_MS, snap["curr_t"] - snap["prev_t"])
 	var prev_interp_delay := float(snap.get("interp_delay_ms", REMOTE_INTERP_BACKTIME_MS))
 	# Delay slightly UNDER the observed interval: render_time crosses curr_t each
 	# cycle and the leftover gap is bridged by extrapolation (see
@@ -1376,7 +1387,12 @@ func _push_remote_snapshot(id: String, pos: Vector3, rot_y: float, anim: String,
 	var target_interp_delay := clampf(pos_dt * 0.9, REMOTE_MIN_INTERP_BACKTIME_MS, REMOTE_MAX_INTERP_BACKTIME_MS)
 	snap["interp_delay_ms"] = lerpf(prev_interp_delay, target_interp_delay, 0.35)
 	snap["prev_vel"] = snap.get("curr_vel", Vector3.ZERO)
-	snap["curr_vel"] = (snap["curr_pos"] - snap["prev_pos"]) / (pos_dt / 1000.0)
+	var from_pos: Vector3 = snap["prev_pos"]
+	var to_pos: Vector3 = snap["curr_pos"]
+	var vel: Vector3 = (to_pos - from_pos) / (pos_dt / 1000.0)
+	if vel.length() > REMOTE_MAX_EXTRAP_SPEED:
+		vel = vel.normalized() * REMOTE_MAX_EXTRAP_SPEED
+	snap["curr_vel"] = vel
 	snap["rot_vel"] = angle_difference(snap["curr_rot"], snap["prev_rot"]) / (pos_dt / 1000.0)
 	snap["anim"] = anim
 	remote_snapshots[id] = snap
@@ -1438,7 +1454,7 @@ func _apply_remote_interpolation() -> void:
 		var prev_t := float(snap.get("prev_t", render_time))
 		var curr_t := float(snap.get("curr_t", prev_t))
 		
-		var dt := maxf(1.0, curr_t - prev_t)
+		var dt := maxf(REMOTE_MIN_SNAPSHOT_DT_MS, curr_t - prev_t)
 		var t := clampf((render_time - prev_t) / dt, 0.0, 1.0)
 		
 		# Simpler math for mobile: Use Lerp instead of Hermite for all players
@@ -1454,6 +1470,8 @@ func _apply_remote_interpolation() -> void:
 		if render_error_ms > 0.0:
 			var extrap_sec := minf(render_error_ms / 1000.0, REMOTE_MAX_EXTRAPOLATE_MS / 1000.0)
 			var pos_vel: Vector3 = snap.get("curr_vel", Vector3.ZERO)
+			if pos_vel.length() > REMOTE_MAX_EXTRAP_SPEED:
+				pos_vel = pos_vel.normalized() * REMOTE_MAX_EXTRAP_SPEED
 			node.global_position = curr_pos + pos_vel * extrap_sec
 
 		var prev_rot := float(snap.get("prev_rot", node.rotation.y))
