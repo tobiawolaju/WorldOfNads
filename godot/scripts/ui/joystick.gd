@@ -20,6 +20,7 @@ signal camera_dragged(relative: Vector2)
 @export var swipe_jump_threshold: float = 250.0
 @export var swipe_jump_horizontal_tolerance: float = 120.0
 @export var jump_press_duration: float = 0.2
+@export var pickup_press_duration: float = 0.1 # how long a double-tap pickup press is held
 @export var keep_position_on_release: bool = false # leave the knob where it was last used instead of snapping it back to the center
 @export var rest_opacity: float = 0.25 # knob alpha while it sits idle at the center
 @export var lock_joystick_position: bool = false # anchor the base where it sits instead of jumping to the first touch
@@ -61,6 +62,7 @@ var active_camera_last_position: Vector2 = Vector2.ZERO
 var active_camera_start_position: Vector2 = Vector2.ZERO
 var active_camera_swipe_jump_triggered: bool = false
 var jump_release_token: int = 0
+var pickup_release_token: int = 0
 
 @onready var touch_joystick_node: Node = get_node_or_null("../../TouchJoyStick")
 @onready var joy_base_node: Node = get_node_or_null("../JoyBase")
@@ -115,7 +117,7 @@ func _input(event):
 				if auto_lock_touch_index == -1 and touch_joystick_node != null and event.position.distance_to(touch_joystick_node.global_position) <= radiusJoyBase * 2.5:
 					auto_lock_touch_index = event.index
 					if _is_double_tap(event.position):
-						_queue_jump_press()
+						_queue_pickup_press()
 					last_tap_time = Time.get_ticks_msec() / 1000.0
 					last_tap_position = event.position
 				elif active_camera_index == -1:
@@ -354,7 +356,7 @@ func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick:
 	touch_joystick.visible = true
 	
 	if _is_double_tap(touch_pos):
-		_queue_jump_press()
+		_queue_pickup_press()
 		if not disable_joystick_lock and _is_joystick_actively_moving():
 			_lock_auto_move_from_current(touch_joystick)
 			
@@ -410,6 +412,25 @@ func _queue_jump_press(duration: float = jump_press_duration) -> void:
 	await get_tree().create_timer(duration).timeout
 	if token == jump_release_token:
 		_release_key("jump")
+
+func _queue_pickup_press(duration: float = pickup_press_duration) -> void:
+	# Same double-tap gesture as _queue_jump_press, but simulates the action
+	# button (pick/pickup/drop) instead of jumping. Pickup is consumed in
+	# player.gd from _input events, so it must be routed through
+	# parse_input_event like the HUD buttons do - Input.action_press only
+	# affects the is_action_* polling API.
+	pickup_release_token += 1
+	var token = pickup_release_token
+	_emit_pickup_action(true)
+	await get_tree().create_timer(duration).timeout
+	if token == pickup_release_token:
+		_emit_pickup_action(false)
+
+func _emit_pickup_action(pressed: bool) -> void:
+	var event := InputEventAction.new()
+	event.action = &"pickup"
+	event.pressed = pressed
+	Input.parse_input_event(event)
 
 func _update_north_drag_progress_from_screen_drag(drag_relative: Vector2) -> void:
 	var north_progress = drag_relative.dot(Vector2.UP)

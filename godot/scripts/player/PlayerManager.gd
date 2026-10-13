@@ -40,9 +40,13 @@ const ANIM_ID_TO_NAME: Dictionary = {
 	3: "falling",
 	4: "runningslide"
 }
-const REMOTE_INTERP_BACKTIME_MS: float = 140.0
-const REMOTE_MIN_INTERP_BACKTIME_MS: float = 80.0
-const REMOTE_MAX_INTERP_BACKTIME_MS: float = 260.0
+# Interpolation buffer. Delay sits slightly BELOW the server's per-player update
+# interval so render_time routinely reaches the newest snapshot; the gap is then
+# bridged by velocity extrapolation (REMOTE_MAX_EXTRAPOLATE_MS) instead of a
+# freeze-and-teleport. Keeps remote motion smooth even while packets are late.
+const REMOTE_INTERP_BACKTIME_MS: float = 60.0
+const REMOTE_MIN_INTERP_BACKTIME_MS: float = 40.0
+const REMOTE_MAX_INTERP_BACKTIME_MS: float = 180.0
 const REMOTE_MAX_EXTRAPOLATE_MS: float = 100.0
 const REMOTE_ANIMATION_LOD_DISTANCE: float = 20.0
 const REMOTE_ANIMATION_LOD_DISTANCE_SQ: float = REMOTE_ANIMATION_LOD_DISTANCE * REMOTE_ANIMATION_LOD_DISTANCE
@@ -131,6 +135,10 @@ var _world_env_duplicated: bool = false
 var match_duration_seconds: float = 180.0
 var match_time_left: float = 180.0
 var match_is_running: bool = false
+var min_players_to_start: int = 0
+var max_players: int = 0
+var connected_player_count: int = 0
+var start_countdown_sec: int = 0
 var _match_clock_anchor_ms: float = 0.0
 var _match_clock_anchor_time_left: float = 180.0
 
@@ -712,39 +720,20 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 		if not players.has(id):
 			_spawn_player(id, false, resolved_skin)
 			players[id].global_position = server_pos  # FIX: spawn at correct position
-		var snap = remote_snapshots.get(id)
-		if snap == null:
-			remote_snapshots[id] = {
-				"prev_pos": server_pos,
-				"curr_pos": server_pos,
-				"prev_rot": server_rot_y,
-				"curr_rot": server_rot_y,
-				"prev_vel": Vector3.ZERO,
-				"curr_vel": Vector3.ZERO,
-				"prev_t": now_ms,
-				"curr_t": now_ms,
-				"anim": server_anim
-			}
-		else:
-			snap["prev_pos"] = snap["curr_pos"]
-			snap["curr_pos"] = server_pos
-			snap["prev_rot"] = snap["curr_rot"]
-			snap["curr_rot"] = server_rot_y
-			snap["prev_vel"] = snap.get("curr_vel", Vector3.ZERO)
-			snap["curr_vel"] = (server_pos - snap["prev_pos"]) / maxf(1.0, (now_ms - snap.get("prev_t", now_ms)) / 1000.0)
-			snap["prev_t"] = snap["curr_t"]
-			snap["curr_t"] = now_ms
-			snap["anim"] = server_anim
 
 		var node = players[id]
 		node.display_name = resolved_name
 		if skin_changed:
 			_update_remote_player_skin(node, resolved_skin)
 
-		# 🚗 Vehicle sync
+		# 🚗 Vehicle sync (passenger is locked to its seat; not interpolated).
 		if p_state.has("vehicle") and p_state["vehicle"] != null:
 			_sync_vehicle_player(node, p_state)
 		else:
+			# _push_remote_snapshot is the ONLY writer of the interpolation buffer.
+			# Writing it here too double-shifted prev/curr to the same value, which
+			# silently killed interpolation — remote players snapped at the raw
+			# server update rate instead of lerping smoothly.
 			_push_remote_snapshot(id, server_pos, server_rot_y, server_anim, now_ms)
 
 		# Visibility (NO RETURN)
@@ -1080,6 +1069,14 @@ func _cleanup_stale_remote_players(now_ms: float) -> void:
 	for id in players:
 		if id == player_id:
 			continue
+		var node: Node3D = players.get(id) as Node3D
+		if node == null:
+			stale.append(id)
+			continue
+		# Vehicle passengers are locked to a seat and have no interpolation buffer;
+		# full snapshots keep them alive, so lack of a buffer is not staleness.
+		if node.get_parent() != self:
+			continue
 		var snap = remote_snapshots.get(id)
 		if snap == null:
 			stale.append(id)
@@ -1115,7 +1112,10 @@ func _push_remote_snapshot(id: String, pos: Vector3, rot_y: float, anim: String,
 	snap["curr_t"] = now_ms
 	var pos_dt := maxf(1.0, snap["curr_t"] - snap["prev_t"])
 	var prev_interp_delay := float(snap.get("interp_delay_ms", REMOTE_INTERP_BACKTIME_MS))
-	var target_interp_delay := clampf(pos_dt * 1.15, REMOTE_MIN_INTERP_BACKTIME_MS, REMOTE_MAX_INTERP_BACKTIME_MS)
+	# Delay slightly UNDER the observed interval: render_time crosses curr_t each
+	# cycle and the leftover gap is bridged by extrapolation (see
+	# _apply_remote_interpolation), so dropped/late packets don't freeze-then-jump.
+	var target_interp_delay := clampf(pos_dt * 0.9, REMOTE_MIN_INTERP_BACKTIME_MS, REMOTE_MAX_INTERP_BACKTIME_MS)
 	snap["interp_delay_ms"] = lerpf(prev_interp_delay, target_interp_delay, 0.35)
 	snap["prev_vel"] = snap.get("curr_vel", Vector3.ZERO)
 	snap["curr_vel"] = (snap["curr_pos"] - snap["prev_pos"]) / (pos_dt / 1000.0)
@@ -1154,10 +1154,14 @@ func _apply_remote_interpolation() -> void:
 	for id in players:
 		if id == player_id:
 			continue
-		if not remote_snapshots.has(id):
-			continue
 		var node = players[id]
 		if node == null:
+			continue
+		# Vehicle passengers are locked to their seat by _sync_vehicle_player and
+		# are not part of the positional interpolation buffer.
+		if node.get_parent() != self:
+			continue
+		if not remote_snapshots.has(id):
 			continue
 
 		var dist_sq := local_pos.distance_squared_to(node.global_position)
@@ -1183,6 +1187,16 @@ func _apply_remote_interpolation() -> void:
 		var prev_pos: Vector3 = snap.get("prev_pos", node.global_position)
 		var curr_pos: Vector3 = snap.get("curr_pos", prev_pos)
 		node.global_position = prev_pos.lerp(curr_pos, t)
+
+		# Extrapolation: when the next snapshot hasn't arrived yet (jitter or packet
+		# loss), keep drifting with the last known velocity instead of freezing and
+		# later teleporting. Capped so we never run ahead of the latest data; the
+		# next snapshot resumes the lerp seamlessly.
+		var render_error_ms := render_time - curr_t
+		if render_error_ms > 0.0:
+			var extrap_sec := minf(render_error_ms / 1000.0, REMOTE_MAX_EXTRAPOLATE_MS / 1000.0)
+			var pos_vel: Vector3 = snap.get("curr_vel", Vector3.ZERO)
+			node.global_position = curr_pos + pos_vel * extrap_sec
 
 		var prev_rot := float(snap.get("prev_rot", node.rotation.y))
 		var curr_rot := float(snap.get("curr_rot", prev_rot))
@@ -1225,6 +1239,19 @@ func _resolve_ui_nodes() -> void:
 		world_environment.environment = world_environment.environment.duplicate()
 		_world_env_duplicated = true
 
+# Null-safe integer read for match/player state. MsgPack delivers JSON null
+# (e.g. "max" is null while no active match caps players) and int(null) throws
+# "Nonexistent 'int' constructor"; fall back to the default instead.
+func _match_int(match_state: Dictionary, key: String, default: int) -> int:
+	var v: Variant = match_state.get(key, default)
+	if v is int:
+		return v
+	if v is float:
+		return int(v)
+	if v is bool:
+		return 1 if v else 0
+	return default
+
 func _update_match_state(match_state: Dictionary, quantized := false) -> void:
 	var now_ms := float(Time.get_ticks_msec())
 	if quantized:
@@ -1234,6 +1261,10 @@ func _update_match_state(match_state: Dictionary, quantized := false) -> void:
 		var sr: int = match_state.get("sr", -1)
 		if sr >= 0:
 			_apply_storm_radius(float(sr) / 100.0)
+		connected_player_count = maxi(0, _match_int(match_state, "pl", connected_player_count))
+		min_players_to_start = maxi(0, _match_int(match_state, "min", min_players_to_start))
+		max_players = maxi(0, _match_int(match_state, "max", max_players))
+		start_countdown_sec = maxi(0, _match_int(match_state, "c", 0))
 	else:
 		match_duration_seconds = maxf(1.0, float(match_state.get("durationSeconds", match_duration_seconds)))
 		match_time_left = clampf(float(match_state.get("timeLeft", match_time_left)), 0.0, match_duration_seconds)
@@ -1241,6 +1272,10 @@ func _update_match_state(match_state: Dictionary, quantized := false) -> void:
 		var sr: float = match_state.get("stormRadius", -1.0)
 		if sr >= 0:
 			_apply_storm_radius(sr)
+		connected_player_count = maxi(0, _match_int(match_state, "playerCount", connected_player_count))
+		min_players_to_start = maxi(0, _match_int(match_state, "minPlayersToStart", min_players_to_start))
+		max_players = maxi(0, _match_int(match_state, "maxPlayers", max_players))
+		start_countdown_sec = maxi(0, _match_int(match_state, "startCountdown", 0))
 
 	if match_is_running:
 		# Anchor the HUD clock to real time so it stays synced even if gameplay speed changes.
@@ -1267,7 +1302,26 @@ func _update_match_ui() -> void:
 			var seconds = whole_seconds % 60
 			new_text = "%02d:%02d" % [minutes, seconds]
 		else:
-			new_text = "Waiting for players"
+			# Pre-match lobby polish: show a live start countdown once enough
+			# players are connected, otherwise how many more are needed. If the
+			# server hasn't reported the live count yet (pre-/old build), fall back
+			# to counting ourselves rather than printing a bogus "N more".
+			if start_countdown_sec > 0:
+				new_text = "Match starts in %d…" % start_countdown_sec
+			elif min_players_to_start > 0:
+				var count := connected_player_count
+				if count <= 0 and connected and player_id != "":
+					count = 1  # we can at least count ourselves
+				var need := maxi(0, min_players_to_start - count)
+				if count <= 0:
+					new_text = "Waiting for players…"
+				elif need > 0:
+					var plural := "s" if need != 1 else ""
+					new_text = "Waiting for %d more player%s…" % [need, plural]
+				else:
+					new_text = "Match starting…"
+			else:
+				new_text = "Waiting for players"
 		if new_text != _last_countdown_text:
 			_last_countdown_text = new_text
 			countdown_label.text = new_text

@@ -23,8 +23,8 @@ const PORT = process.env.PORT || 8080;
 const BROADCAST_RATE = 20;
 const FIXED_DT = 1 / BROADCAST_RATE;
 const NEAR_UPDATE_RATE = 20;
-const MEDIUM_UPDATE_RATE = 10;
-const FAR_UPDATE_RATE = 2;
+const MEDIUM_UPDATE_RATE = 15;
+const FAR_UPDATE_RATE = 6;
 const NEAR_UPDATE_DISTANCE = 12.0;
 const MEDIUM_UPDATE_DISTANCE = 28.0;
 const CELL_SIZE = 18.0;
@@ -59,7 +59,7 @@ const MAX_THROW_IMPULSE = 8.0;
 const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 1.195;
 const MATCH_DURATION_SECONDS = 180.0;
-const DEFAULT_MIN_PLAYERS_TO_START = 3;
+const DEFAULT_MIN_PLAYERS_TO_START = 2;
 const ANIM_NAME_TO_ID = Object.freeze({
   idle: 0,
   running: 1,
@@ -85,8 +85,13 @@ let matchTimeLeft = MATCH_DURATION_SECONDS;
 let matchRunning = false;
 let matchStartedThisRound = false;
 let isBatchResetting = false;
-let currentMinPlayersToStart = 3; // Force minimum of 3 for now
+let currentMinPlayersToStart = 2; // Force minimum of 2 for now
 let currentMaxPlayers = null;
+
+// Pre-start lobby countdown: once enough players are connected, wait this long
+// so everyone gets a clear "Match starts in N…" before movement unlocks.
+const MATCH_START_COUNTDOWN_SECONDS = 5;
+let matchStartCountdown = -1; // -1 = not counting down; >0 = counting to start
 
 // Storm radius (server-authoritative)
 let stormRadius = 20.0;
@@ -994,7 +999,9 @@ function buildEncodedMatch() {
     d: Math.round(matchState.durationSeconds * 100),
     min: matchState.minPlayersToStart,
     max: matchState.maxPlayers,
-    sr: Math.round(matchState.stormRadius * 100)
+    sr: Math.round(matchState.stormRadius * 100),
+    pl: getPlayerCount(),
+    c: matchStartCountdown >= 0 ? Math.max(0, Math.ceil(matchStartCountdown)) : 0
   };
 }
 
@@ -1251,6 +1258,7 @@ function resetRoundForNextBatch() {
   matchRunning = false;
   matchTimeLeft = MATCH_DURATION_SECONDS;
   matchStartedThisRound = false;
+  matchStartCountdown = -1;
 
   stormRadius = 20.0;
   stormShrinkTimer = 0.0;
@@ -1352,9 +1360,10 @@ gameWss.on('connection', (ws, req) => {
     ws.playerId = playerId;
     ws.send(mpEncode({ type: 'connect', id: playerId, username, skin: resolvedSkin, xp }));
     getRecipientNetworkState(playerId);
-    if (!matchRunning && getPlayerCount() >= 3) {
-      matchRunning = true;
-      matchStartedThisRound = true;
+    // Kick off the pre-start countdown as soon as enough players are in; the sim
+    // loop flips matchRunning once MATCH_START_COUNTDOWN_SECONDS elapses.
+    if (!matchRunning && matchStartCountdown < 0 && getPlayerCount() >= currentMinPlayersToStart) {
+      matchStartCountdown = MATCH_START_COUNTDOWN_SECONDS;
     }
   }).catch((err) => {
     console.error(`[Firebase] Failed to fetch profile for ${username}:`, err);
@@ -1541,9 +1550,10 @@ gameWss.on('connection', (ws, req) => {
       forgetPlayerForAllRecipients(playerId);
       broadcastPayload({ type: 'state_delta', q: 1, removed: [playerId] });
     }
-    if (!matchStartedThisRound && getPlayerCount() < 3) {
+    if (!matchStartedThisRound && getPlayerCount() < currentMinPlayersToStart) {
       matchRunning = false;
       matchTimeLeft = MATCH_DURATION_SECONDS;
+      matchStartCountdown = -1;
     }
   });
 });
@@ -1681,13 +1691,17 @@ setInterval(() => {
       }
       resetRoundForNextBatch();
     }
-  } else {
-    if (!matchStartedThisRound) {
-      matchTimeLeft = MATCH_DURATION_SECONDS;
-      if (getPlayerCount() >= 3) {
+  } else if (!matchStartedThisRound) {
+    matchTimeLeft = MATCH_DURATION_SECONDS;
+    if (matchStartCountdown >= 0) {
+      matchStartCountdown -= FIXED_DT;
+      if (matchStartCountdown <= 0) {
+        matchStartCountdown = -1;
         matchRunning = true;
         matchStartedThisRound = true;
       }
+    } else if (getPlayerCount() >= currentMinPlayersToStart) {
+      matchStartCountdown = MATCH_START_COUNTDOWN_SECONDS;
     }
   }
 
