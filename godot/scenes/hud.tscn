@@ -625,46 +625,49 @@ centered = false
 
 [node name="XPstream" type="Label" parent="." unique_id=2087879689]
 layout_mode = 1
-offset_left = 10.0
-offset_top = 21.0
-offset_right = 109.0
-offset_bottom = 40.0
+offset_left = 12.0
+offset_top = 24.0
+offset_right = 111.0
+offset_bottom = 43.0
+theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
 theme_override_constants/outline_size = 0
 theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 20
 text = "Your Xp stream"
 
 [node name="MONstream" type="Label" parent="." unique_id=366851244]
 layout_mode = 1
-offset_left = 22.0
-offset_top = 40.0
-offset_right = 133.0
-offset_bottom = 61.0
+offset_left = 24.0
+offset_top = 43.0
+offset_right = 135.0
+offset_bottom = 64.0
+theme_override_colors/font_color = Color(0.8235294, 0, 1, 1)
 theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
 theme_override_constants/outline_size = 0
 theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 20
 text = "Your MON stream"
 
 [node name="PrizePool" type="Label" parent="." unique_id=1341296255]
 layout_mode = 1
-offset_left = 5.0
-offset_right = 101.0
-offset_bottom = 20.0
+offset_left = 7.0
+offset_top = 3.0
+offset_right = 103.0
+offset_bottom = 23.0
 theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
 theme_override_constants/outline_size = 0
 theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 20
 text = "Total MON pool"
 
 [node name="HealthBar" type="ProgressBar" parent="." unique_id=385514625]

@@ -66,6 +66,16 @@ var lootbox_is_held: bool = false
 var lootbox_holder_id: String = ""
 var _last_lootbox_is_held: bool = false
 var _last_lootbox_holder_id: String = ""
+
+# --- SERVER-AUTHORITATIVE ITEM STATE (power-ups p1..p5) ---
+# The five power-ups share the chicken/lootbox protocol: the server owns each
+# item's spawn spot and who holds it. These mirror the last snapshot so the
+# per-frame pass can hide carried power-ups and seat released ones.
+const POWER_UP_ITEM_IDS: Array[String] = ["p1", "p2", "p3", "p4", "p5"]
+var item_nodes: Dictionary = {}       # item id -> Node3D
+var item_is_held: Dictionary = {}     # item id -> bool (server state)
+var item_holder: Dictionary = {}      # item id -> holder player id
+var item_local_held: String = ""      # item id the LOCAL player is carrying (or "")
 var _remote_lod_timer: float = 0.0
 const REMOTE_LOD_INTERVAL: float = 0.15 # Check distance 6 times per second
 var _storm_env_node: Node = null
@@ -310,6 +320,11 @@ const RECONNECT_INITIAL_DELAY: float = 1.0
 const RECONNECT_GRACE_TIME: float = 0.5
 const RECONNECT_COUNTDOWN_STEPS: int = 3
 var _waiting_for_connect: bool = false
+# Local player node kept alive across a reconnect. Freeing it (the old behaviour)
+# destroyed the only object driving the camera, so the view froze and the player
+# vanished mid-match. We now reuse this node instead of respawning it.
+var _preserved_local_node: Node3D = null
+var _preserved_local_id: String = ""
 
 func _input(event: InputEvent):
 	if event is InputEventKey and event.keycode == KEY_T and event.pressed and not event.echo:
@@ -345,6 +360,10 @@ func _process(_delta: float):
 	if _client_reward_timer >= CLIENT_REWARD_TICK_INTERVAL:
 		_client_reward_timer = 0.0
 		_tick_client_rewards()
+
+	# Seat shared items: hide power-ups a remote player is carrying and weld an
+	# objective item onto a remote holder's back so it is visible to everyone.
+	_update_item_hold_visuals()
 
 	if not connection_attempted and not _reconnecting:
 		_apply_remote_interpolation()
@@ -485,22 +504,67 @@ func _on_reconnect_success():
 
 func _clear_players_for_reconnect():
 	var old_id := player_id
+	# The server drops anything we were carrying when the socket closed, so our
+	# local hold is stale. Forget it; the post-reconnect snapshots re-seat items.
+	if item_local_held != "":
+		_release_local_item_hold(item_local_held)
 	for id in players:
 		var p = players[id]
 		if p.is_local:
+			# Keep the local node (and the camera it drives) alive. Only the
+			# remote avatars are recycled; the local player keeps rendering and
+			# stays controllable while the socket is down.
+			_preserved_local_node = p
+			_preserved_local_id = id
 			_last_server_position = p.global_position
-			p.queue_free()
+			p.visible = true
 		else:
 			_return_player_to_pool(p)
 	players.clear()
 	player_display_names.clear()
 	player_skin_names.clear()
 	remote_snapshots.clear()
-	_cached_local_player = null
-	player_id = ""
+	# Re-register the preserved node under its old key so local lookups
+	# (get_local_player_node / minimap / HUD) keep working during the outage.
+	if _preserved_local_node != null and is_instance_valid(_preserved_local_node):
+		players[_preserved_local_id] = _preserved_local_node
+		player_id = _preserved_local_id
+		_cached_local_player = _preserved_local_node
+	else:
+		_preserved_local_node = null
+		_cached_local_player = null
+		player_id = ""
 	events_bridge = null
 	_resolve_events_bridge()
-	print("🗑️ Cleared player state for reconnect (was %s)" % old_id)
+	print("🗑️ Cleared remote players for reconnect (kept local %s)" % old_id)
+
+# Reuse the local player node preserved through a reconnect instead of spawning a
+# fresh one, so the camera never stops following and the avatar never blinks out.
+# The server may hand out a new id, so the node is re-keyed. Returns true when an
+# existing node was adopted.
+func _adopt_preserved_local_player(new_id: String, _skin_name: String) -> bool:
+	if _preserved_local_node == null or not is_instance_valid(_preserved_local_node):
+		_preserved_local_node = null
+		return false
+	var p := _preserved_local_node
+	_preserved_local_node = null
+	# Drop stale keys (the server may issue a different id) before re-keying.
+	for existing_id in players.keys():
+		if players[existing_id] == p:
+			players.erase(existing_id)
+	players[new_id] = p
+	p.name = "Player_%s" % new_id
+	p.player_id = new_id
+	p.display_name = _get_player_display_name(new_id)
+	p.is_local = true
+	p.root = self
+	p.visible = true
+	if not p.is_in_group("local_player"):
+		p.add_to_group("local_player")
+	_cached_local_player = p
+	_preserved_local_id = ""
+	print("♻️ Reused local player node across reconnect (id %s)" % new_id)
+	return true
 
 func _resync_after_reconnect():
 	if player_id == "":
@@ -579,7 +643,8 @@ func _receive_messages():
 				_resolve_ui_nodes()
 				if camera_block != null:
 					camera_block.visible = false
-				_spawn_player(player_id, true, local_skin_name)
+				if not _adopt_preserved_local_player(player_id, local_skin_name):
+					_spawn_player(player_id, true, local_skin_name)
 				_set_local_username(local_display_name)
 				_set_local_player_id(player_id)
 				_emit_player_event(
@@ -599,6 +664,8 @@ func _receive_messages():
 					_update_chicken_state(data["chicken"], false)
 				if data.has("lootbox"):
 					_update_lootbox_state(data["lootbox"], false)
+				if data.has("items"):
+					_update_item_states(data["items"], true)
 				if data.has("match") and typeof(data["match"]) == TYPE_DICTIONARY:
 					_update_match_state(data["match"], false)
 			"state_full":
@@ -609,6 +676,8 @@ func _receive_messages():
 					_update_chicken_state(data["chicken"], quantized_full, true)
 				if data.has("lootbox"):
 					_update_lootbox_state(data["lootbox"], quantized_full, true)
+				if data.has("items"):
+					_update_item_states(data["items"], true)
 				if data.has("match") and typeof(data["match"]) == TYPE_DICTIONARY:
 					_update_match_state(data["match"], quantized_full)
 			"state_delta":
@@ -621,6 +690,8 @@ func _receive_messages():
 					_update_chicken_state(data["chicken"], quantized_delta)
 				if data.has("lootbox"):
 					_update_lootbox_state(data["lootbox"], quantized_delta)
+				if data.has("items"):
+					_update_item_states(data["items"], true)
 				if data.has("match") and typeof(data["match"]) == TYPE_DICTIONARY:
 					_update_match_state(data["match"], quantized_delta)
 			"reward_update":
@@ -758,11 +829,19 @@ func _cache_chicken_node() -> void:
 	chicken_node = get_tree().root.find_child("Chicken", true, false) as RigidBody3D
 
 func _update_chicken_state(chicken_state: Dictionary, _quantized := false, _snap := false) -> void:
-	# The chicken is a client-controlled pickup now. Each client owns its own copy
-	# in its scene, so the server only mirrors WHO is holding it (for the match
-	# winner) — positions are never applied here anymore.
+	# The server owns the chicken's spot and who holds it. While it is carried the
+	# holder's back drives the visual (see _update_item_hold_visuals / LocalPickup),
+	# otherwise the authoritative position below is applied. Positions are always
+	# quantized by the server.
 	chicken_is_held = bool(chicken_state.get("h", chicken_state.get("isHeld", false)))
 	chicken_holder_id = str(chicken_state.get("o", chicken_state.get("holderId", "")))
+	var has_pos := chicken_state.has("x")
+	var pos := Vector3(
+		_decode_pos(chicken_state, "x", true),
+		_decode_pos(chicken_state, "y", true),
+		_decode_pos(chicken_state, "z", true)
+	)
+	_set_item_server_state("Chicken", chicken_is_held, chicken_holder_id, pos, has_pos)
 	_handle_chicken_state_event(chicken_is_held, chicken_holder_id)
 
 func is_local_player_holding_chicken() -> bool:
@@ -821,10 +900,18 @@ func _cache_lootbox_node() -> void:
 	lootbox_node = get_tree().root.find_child("LootBox", true, false) as RigidBody3D
 
 func _update_lootbox_state(lootbox_state: Dictionary, _quantized := false, _snap := false) -> void:
-	# The lootbox is a client-controlled pickup now. Only the server's hold mirror
-	# is applied — positions are owned by each client's scene.
+	# Same server-authoritative model as the chicken: the server owns the spot and
+	# the holder; a carried lootbox rides the holder's back. Positions are always
+	# quantized by the server.
 	lootbox_is_held = bool(lootbox_state.get("h", lootbox_state.get("isHeld", false)))
 	lootbox_holder_id = str(lootbox_state.get("o", lootbox_state.get("holderId", "")))
+	var has_pos := lootbox_state.has("x")
+	var pos := Vector3(
+		_decode_pos(lootbox_state, "x", true),
+		_decode_pos(lootbox_state, "y", true),
+		_decode_pos(lootbox_state, "z", true)
+	)
+	_set_item_server_state("LootBox", lootbox_is_held, lootbox_holder_id, pos, has_pos)
 	_handle_lootbox_state_event(lootbox_is_held, lootbox_holder_id)
 
 func is_local_player_holding_lootbox() -> bool:
@@ -835,32 +922,48 @@ func get_lootbox_node() -> RigidBody3D:
 	return lootbox_node
 
 
-# Called by a local objective pickup (chicken / lootbox) right after it is
-# grabbed or released. The hold is recorded optimistically here so the HUD and
-# minimap react instantly, then the server is told (it trusts the client for now)
-# so it can resolve the match winner from whoever is holding the chicken.
+# Called by a local pickup right after it is grabbed or released. The hold is
+# recorded optimistically here so the HUD and minimap react instantly, then the
+# server is told so it can mirror the claim to everyone else.
 func notify_item_held(item_id: String) -> void:
-	if item_id == "LootBox":
-		lootbox_is_held = true
-		lootbox_holder_id = player_id
-		_handle_lootbox_state_event(lootbox_is_held, lootbox_holder_id)
-	else:
+	item_local_held = item_id
+	item_is_held[item_id] = true
+	item_holder[item_id] = player_id
+	if item_id == "Chicken":
 		chicken_is_held = true
 		chicken_holder_id = player_id
 		_handle_chicken_state_event(chicken_is_held, chicken_holder_id)
+	elif item_id == "LootBox":
+		lootbox_is_held = true
+		lootbox_holder_id = player_id
+		_handle_lootbox_state_event(lootbox_is_held, lootbox_holder_id)
 	_send_item_hold_message("pickup_request", item_id)
 
 
 func notify_item_dropped(item_id: String) -> void:
-	if item_id == "LootBox":
-		lootbox_is_held = false
-		lootbox_holder_id = ""
-		_handle_lootbox_state_event(lootbox_is_held, lootbox_holder_id)
-	else:
+	if item_local_held == item_id:
+		item_local_held = ""
+	item_is_held[item_id] = false
+	item_holder[item_id] = ""
+	if item_id == "Chicken":
 		chicken_is_held = false
 		chicken_holder_id = ""
 		_handle_chicken_state_event(chicken_is_held, chicken_holder_id)
+	elif item_id == "LootBox":
+		lootbox_is_held = false
+		lootbox_holder_id = ""
+		_handle_lootbox_state_event(lootbox_is_held, lootbox_holder_id)
 	_send_item_hold_message("drop_request", item_id)
+
+
+# The local player USED a carried power-up. The server picks its new spot and
+# broadcasts it back; locally it just hides until that arrives.
+func notify_item_used(item_id: String) -> void:
+	if item_local_held == item_id:
+		item_local_held = ""
+	item_is_held[item_id] = false
+	item_holder[item_id] = ""
+	_send_item_hold_message("use_request", item_id)
 
 
 func _send_item_hold_message(msg_type: String, item_id: String) -> void:
@@ -869,6 +972,153 @@ func _send_item_hold_message(msg_type: String, item_id: String) -> void:
 	if ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		return
 	ws.send(MsgPack.pack({"type": msg_type, "item_id": item_id}))
+
+
+# --- SERVER-AUTHORITATIVE ITEM APPLICATION ---
+
+func _is_objective_item_id(item_id: String) -> bool:
+	return item_id == "Chicken" or item_id == "LootBox"
+
+
+func _is_known_item_id(item_id: String) -> bool:
+	return _is_objective_item_id(item_id) or POWER_UP_ITEM_IDS.has(item_id)
+
+
+# Resolves (and caches) the world node for an item id. Only the local scene's own
+# copies are resolved — every client has its own copy of every item.
+func _get_item_node(item_id: String) -> Node3D:
+	var cached = item_nodes.get(item_id)
+	if cached != null and is_instance_valid(cached):
+		return cached
+	var found: Node3D = null
+	for node in get_tree().get_nodes_in_group("local_pickup_items"):
+		if node is Node3D and String(node.name) == item_id:
+			found = node
+			break
+	if found == null:
+		found = get_tree().root.find_child(item_id, true, false) as Node3D
+	if found != null:
+		item_nodes[item_id] = found
+	return found
+
+
+# Applies the server's hold/position state for one item. When held, the per-frame
+# pass (remote holder) or LocalPickup (local holder) drives the visual; when free
+# the authoritative spot is seated.
+func _set_item_server_state(item_id: String, held: bool, holder: String, server_pos: Vector3, has_pos: bool) -> void:
+	if not _is_known_item_id(item_id):
+		return
+	var was_held := bool(item_is_held.get(item_id, false))
+	item_is_held[item_id] = held
+	item_holder[item_id] = holder
+	if held:
+		if holder != player_id and item_local_held == item_id:
+			# Snatched off us: drop the local claim without echoing to the server.
+			_release_local_item_hold(item_id)
+		return
+	# Free: clear any stale remote-hold flag before seating, so a just-released
+	# item is grabbable again even if its spot did not move.
+	var node := _get_item_node(item_id)
+	if node != null and is_instance_valid(node) and node.has_method("set_remote_held"):
+		node.call("set_remote_held", false)
+	if has_pos:
+		# Force the seat when the item was just released, or when our copy is still
+		# hidden (e.g. a used power-up the server re-rolled to a nearby spot), so it
+		# always reappears instead of staying invisible.
+		var hidden := node != null and is_instance_valid(node) and not node.visible
+		_apply_item_spawn(item_id, server_pos, was_held or hidden)
+
+
+func _update_item_states(items_state, quantized := true) -> void:
+	if typeof(items_state) != TYPE_ARRAY:
+		return
+	for entry in items_state:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var item_id := str(entry.get("i", entry.get("id", "")))
+		if item_id == "":
+			continue
+		var held := int(entry.get("h", entry.get("isHeld", 0))) != 0
+		var holder := str(entry.get("o", entry.get("holderId", "")))
+		var pos := Vector3(
+			_decode_pos(entry, "x", quantized),
+			_decode_pos(entry, "y", quantized),
+			_decode_pos(entry, "z", quantized)
+		)
+		_set_item_server_state(item_id, held, holder, pos, true)
+
+
+func _apply_item_spawn(item_id: String, pos: Vector3, force := false) -> void:
+	if item_local_held == item_id:
+		return
+	var node := _get_item_node(item_id)
+	if node == null or not is_instance_valid(node):
+		return
+	# Already at the server's spot (physics settled it there, or the same snapshot
+	# is being repeated on the heartbeat)? Leave it alone so nothing jitters.
+	if not force and node.global_position.distance_to(pos) < 0.4:
+		return
+	if node.has_method("apply_server_spawn"):
+		node.call("apply_server_spawn", pos)
+	elif node is RigidBody3D:
+		var body := node as RigidBody3D
+		body.freeze = true
+		body.freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+		body.global_position = pos
+		body.linear_velocity = Vector3.ZERO
+		body.angular_velocity = Vector3.ZERO
+		body.freeze = false
+
+
+func _release_local_item_hold(item_id: String) -> void:
+	if item_local_held == item_id:
+		item_local_held = ""
+	var local := players.get(player_id) as Node3D
+	if local != null and local.has_method("release_item_if_holding"):
+		local.call("release_item_if_holding", item_id)
+
+
+# Back-of-the-holder offset for a carried item. The chicken and lootbox use their
+# own distances/heights so a carried item sits the way the holder sees it.
+func _build_item_hold_target(item_id: String, player_node: Node3D) -> Vector3:
+	var forward = -player_node.global_transform.basis.z
+	forward.y = 0.0
+	if forward.length_squared() < 0.0001:
+		forward = Vector3.FORWARD
+	else:
+		forward = forward.normalized()
+	var dist := LOOTBOX_HOLD_DISTANCE if item_id == "LootBox" else CHICKEN_HOLD_DISTANCE
+	var height := LOOTBOX_HOLD_HEIGHT if item_id == "LootBox" else CHICKEN_HOLD_HEIGHT
+	var target_pos = player_node.global_position + (forward * dist)
+	target_pos.y += height
+	return target_pos
+
+
+# Per-frame visual pass for items carried by OTHER players: power-ups are hidden,
+# objective items ride the holder's back (so everyone sees the chicken/lootbox).
+# The local holder is left alone — LocalPickup drives its own copy.
+func _update_item_hold_visuals() -> void:
+	for item_id in item_is_held.keys():
+		if not bool(item_is_held[item_id]):
+			continue
+		var holder := str(item_holder.get(item_id, ""))
+		if holder == "" or holder == player_id:
+			continue
+		var node := _get_item_node(item_id)
+		if node == null or not is_instance_valid(node):
+			continue
+		var is_objective := _is_objective_item_id(item_id)
+		var pnode := _get_player_node_by_id(holder)
+		if is_objective and pnode != null and is_instance_valid(pnode):
+			if node.has_method("set_remote_held"):
+				node.call("set_remote_held", true)
+			node.visible = true
+			node.global_position = _build_item_hold_target(item_id, pnode)
+		else:
+			if node.has_method("set_remote_held"):
+				node.call("set_remote_held", true)
+			node.visible = false
+
 
 const LOOTBOX_HOLD_DISTANCE: float = 1.0
 const LOOTBOX_HOLD_HEIGHT: float = 0.75
