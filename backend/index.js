@@ -151,11 +151,40 @@ const DEFAULT_LOOTBOX_STATE = {
   rotationY: 0
 };
 
+// --- POWER-UPS (server-authoritative) ---
+// The five map power-ups. Like the chicken and lootbox they are owned by the
+// server: it picks a random spot for each at match start, tracks who is holding
+// them, re-rolls the spot when they are used, and drops them where the holder
+// died or disconnected. Clients mirror the server position and hide a power-up
+// while it is being carried.
+const POWER_UP_IDS = ['p1', 'p2', 'p3', 'p4', 'p5'];
+
+// Whole-map random spawn bounds. The client minimap is 70x70 centred on the
+// origin, so spawns stay inside +/- ARENA_HALF_SIZE with an edge margin.
+const ARENA_HALF_SIZE = 35.0;
+const ITEM_SPAWN_MARGIN = 4.0;
+
+const powerUps = {};
+for (const id of POWER_UP_IDS) {
+  powerUps[id] = {
+    id,
+    x: 0,
+    y: FLOOR_Y,
+    z: 0,
+    rotationY: 0,
+    isHeld: false,
+    holderId: null,
+    vx: 0,
+    vy: 0,
+    vz: 0
+  };
+}
+
 // --- MATCH-START ITEM SPAWNS ---
-// The server picks where the chicken and lootbox start every match, inside the
-// starter safe zone and far enough apart that they don't overlap. y is FLOOR_Y
-// so they rest on the floor instead of the editor scene positions (the chicken
-// node in gameplay.tscn floats high above the terrain).
+// The server picks where every item starts each match (whole map, see above)
+// and re-rolls the spot whenever an item is used. y is FLOOR_Y so items rest on
+// the floor instead of the editor scene positions (the chicken node in
+// gameplay.tscn floats high above the terrain).
 
 function length3(x, y, z) {
   return Math.sqrt(x * x + y * y + z * z);
@@ -991,6 +1020,107 @@ function buildEncodedLootbox() {
   };
 }
 
+function buildEncodedItem(item) {
+  return {
+    i: item.id,
+    x: quantizePosition(item.x),
+    y: quantizePosition(item.y),
+    z: quantizePosition(item.z),
+    r: quantizeRotation(item.rotationY),
+    h: item.isHeld ? 1 : 0,
+    o: item.holderId || ''
+  };
+}
+
+function buildEncodedPowerUps() {
+  const list = [];
+  for (const id of POWER_UP_IDS) {
+    list.push(buildEncodedItem(powerUps[id]));
+  }
+  return list;
+}
+
+function randomItemSpawnPoint() {
+  const half = Math.max(ARENA_HALF_SIZE - ITEM_SPAWN_MARGIN, 1.0);
+  return {
+    x: (Math.random() * 2 - 1) * half,
+    y: FLOOR_Y,
+    z: (Math.random() * 2 - 1) * half,
+    rotationY: Math.random() * Math.PI * 2
+  };
+}
+
+function placeItemAtRandomSpawn(item) {
+  const p = randomItemSpawnPoint();
+  item.x = p.x;
+  item.y = p.y;
+  item.z = p.z;
+  item.rotationY = p.rotationY;
+  item.vx = 0;
+  item.vy = 0;
+  item.vz = 0;
+}
+
+// Re-rolls every item onto a fresh random spot with no holder. Called at server
+// start and at the start of every match, so a new round never starts with last
+// round's item positions.
+function randomizeAllItemSpawns() {
+  for (const id of POWER_UP_IDS) {
+    const item = powerUps[id];
+    item.isHeld = false;
+    item.holderId = null;
+    placeItemAtRandomSpawn(item);
+  }
+  chicken.isHeld = false;
+  chicken.holderId = null;
+  placeItemAtRandomSpawn(chicken);
+  lootbox.isHeld = false;
+  lootbox.holderId = null;
+  placeItemAtRandomSpawn(lootbox);
+}
+
+// Resolves a client item id to the authoritative item object. Power-ups, the
+// chicken and the lootbox are all server-tracked now. Returns null for anything
+// unknown, so an unknown id can never fall back onto the chicken.
+function resolveItemById(itemId) {
+  if (itemId === 'Chicken') return chicken;
+  if (itemId === 'LootBox') return lootbox;
+  if (Object.prototype.hasOwnProperty.call(powerUps, itemId)) return powerUps[itemId];
+  return null;
+}
+
+function itemEmoji(itemId) {
+  if (itemId === 'Chicken') return '🥚';
+  if (itemId === 'LootBox') return '📦';
+  return '⚡';
+}
+
+// Drops every item held by this player at the player's last known position.
+// Used on death (client asks for a drop) and on a full disconnect.
+function dropHeldItemsAtPlayer(itemHolderId) {
+  const holder = players[itemHolderId];
+  const items = [chicken, lootbox];
+  for (const id of POWER_UP_IDS) {
+    items.push(powerUps[id]);
+  }
+  for (const item of items) {
+    if (item.holderId !== itemHolderId) continue;
+    item.isHeld = false;
+    item.holderId = null;
+    if (holder) {
+      item.x = holder.x;
+      item.y = holder.y;
+      item.z = holder.z;
+    }
+    item.vx = 0;
+    item.vy = 0;
+    item.vz = 0;
+  }
+}
+
+// Seed the world so the first pre-match snapshot already has spread-out items.
+randomizeAllItemSpawns();
+
 function buildEncodedMatch() {
   const matchState = buildMatchState();
   return {
@@ -1031,6 +1161,17 @@ function shallowEqualObject(a, b) {
   return true;
 }
 
+// Per-item equality for the power-up snapshot. Both sides are short arrays of
+// flat encoded objects, so an element-wise shallow compare is exact and cheap.
+function shallowEqualItemArray(a, b) {
+  if (a === b) return true;
+  if (!a || !b || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (!shallowEqualObject(a[i], b[i])) return false;
+  }
+  return true;
+}
+
 function cloneEncodedPlayersMap(currentPlayers) {
   return new Map(Array.from(currentPlayers.entries(), ([id, encoded]) => [id, { ...encoded }]));
 }
@@ -1043,6 +1184,7 @@ function getRecipientNetworkState(recipientId) {
       lastSentPlayerAt: new Map(),
       lastSentChicken: null,
       lastSentLootbox: null,
+      lastSentPowerUps: null,
       lastSentMatch: null,
       lastFullSnapshotAt: 0,
       lastMatchHeartbeatAt: 0
@@ -1061,7 +1203,7 @@ function forgetPlayerForAllRecipients(playerId) {
   }
 }
 
-function buildRecipientPayload(recipientId, currentPlayers, currentChicken, currentLootbox, currentMatch, now) {
+function buildRecipientPayload(recipientId, currentPlayers, currentChicken, currentLootbox, currentMatch, currentPowerUps, now) {
   const recipient = players[recipientId];
   if (!recipient) {
     return null;
@@ -1089,6 +1231,7 @@ function buildRecipientPayload(recipientId, currentPlayers, currentChicken, curr
     state.lastSentPlayerAt = new Map(Array.from(visiblePlayers.keys(), (id) => [id, now]));
     state.lastSentChicken = { ...currentChicken };
     state.lastSentLootbox = { ...currentLootbox };
+    state.lastSentPowerUps = currentPowerUps.map((item) => ({ ...item }));
     state.lastSentMatch = { ...currentMatch };
     state.lastFullSnapshotAt = now;
     state.lastMatchHeartbeatAt = now;
@@ -1099,6 +1242,7 @@ function buildRecipientPayload(recipientId, currentPlayers, currentChicken, curr
       players: fullPlayers,
       chicken: currentChicken,
       lootbox: currentLootbox,
+      items: currentPowerUps,
       match: currentMatch
     };
   }
@@ -1142,6 +1286,7 @@ function buildRecipientPayload(recipientId, currentPlayers, currentChicken, curr
 
   const chickenChanged = !shallowEqualObject(state.lastSentChicken, currentChicken);
   const lootboxChanged = !shallowEqualObject(state.lastSentLootbox, currentLootbox);
+  const powerUpsChanged = !shallowEqualItemArray(state.lastSentPowerUps, currentPowerUps);
   const matchChanged = !shallowEqualObject(state.lastSentMatch, currentMatch);
 
   if (changedPlayers.length > 0) {
@@ -1158,13 +1303,17 @@ function buildRecipientPayload(recipientId, currentPlayers, currentChicken, curr
     payload.lootbox = currentLootbox;
     state.lastSentLootbox = { ...currentLootbox };
   }
+  if (powerUpsChanged || shouldSendMatchHeartbeat) {
+    payload.items = currentPowerUps;
+    state.lastSentPowerUps = currentPowerUps.map((item) => ({ ...item }));
+  }
   if (matchChanged || shouldSendMatchHeartbeat) {
     payload.match = currentMatch;
     state.lastSentMatch = { ...currentMatch };
     state.lastMatchHeartbeatAt = now;
   }
 
-  if (!payload.players && !payload.removed && !payload.chicken && !payload.lootbox && !payload.match) {
+  if (!payload.players && !payload.removed && !payload.chicken && !payload.lootbox && !payload.items && !payload.match) {
     return null;
   }
 
@@ -1255,6 +1404,7 @@ function resetRoundForNextBatch() {
 
   resetChickenState();
   resetLootBoxState();
+  randomizeAllItemSpawns();
   matchRunning = false;
   matchTimeLeft = MATCH_DURATION_SECONDS;
   matchStartedThisRound = false;
@@ -1463,18 +1613,21 @@ gameWss.on('connection', (ws, req) => {
       }
 
       if (data.type === 'pickup_request') {
-        // Client-authoritative hold: item positions are client-side now, so the
-        // server trusts the client's claim and only records who is holding each
-        // objective item (for the end-of-match winner resolution). Last claim wins.
-        const itemId = typeof data.item_id === 'string' ? data.item_id : 'Chicken';
-        const item = itemId === 'LootBox' ? lootbox : chicken;
-        const emoji = itemId === 'LootBox' ? '📦' : '🥚';
+        // Server-authoritative hold. The client claims the grab, but the server
+        // owns who holds each item (power-ups, chicken, lootbox) and where it is.
+        // Last claim wins, so a player can snatch an item off another's back.
+        const itemId = typeof data.item_id === 'string' ? data.item_id : '';
+        const item = resolveItemById(itemId);
+        if (!item) {
+          return;
+        }
         if (item.isHeld && item.holderId === playerId) {
           return;
         }
         const previousHolder = item.holderId;
         item.isHeld = true;
         item.holderId = playerId;
+        const emoji = itemEmoji(itemId);
         if (previousHolder && previousHolder !== playerId) {
           console.log(`${emoji} ${itemId} stolen by ${playerId} from ${previousHolder}`);
         } else {
@@ -1482,15 +1635,38 @@ gameWss.on('connection', (ws, req) => {
         }
       }
 
-      if (data.type === 'drop_request') {
-        const itemId = typeof data.item_id === 'string' ? data.item_id : 'Chicken';
-        const item = itemId === 'LootBox' ? lootbox : chicken;
-        if (!item.isHeld || item.holderId !== playerId) {
+      if (data.type === 'use_request') {
+        // A carried power-up was used: it is consumed and re-rolled to a new
+        // random spot on the map. Only the current holder may use it, and only
+        // power-ups can be used (the chicken/lootbox are carried, never used).
+        const itemId = typeof data.item_id === 'string' ? data.item_id : '';
+        const item = resolveItemById(itemId);
+        if (!item || !POWER_UP_IDS.includes(itemId) || !item.isHeld || item.holderId !== playerId) {
           return;
         }
         item.isHeld = false;
         item.holderId = null;
-        console.log(`${itemId === 'LootBox' ? '📦' : '🥚'} ${itemId} dropped by ${playerId}`);
+        placeItemAtRandomSpawn(item);
+        console.log(`${itemEmoji(itemId)} ${itemId} used by ${playerId}`);
+      }
+
+      if (data.type === 'drop_request') {
+        // Dropped on death or on purpose: it lands where the server last saw the
+        // player, so every client sees it in the same spot.
+        const itemId = typeof data.item_id === 'string' ? data.item_id : '';
+        const item = resolveItemById(itemId);
+        if (!item || !item.isHeld || item.holderId !== playerId) {
+          return;
+        }
+        item.isHeld = false;
+        item.holderId = null;
+        item.x = player.x;
+        item.y = player.y;
+        item.z = player.z;
+        item.vx = 0;
+        item.vy = 0;
+        item.vz = 0;
+        console.log(`${itemEmoji(itemId)} ${itemId} dropped by ${playerId}`);
       }
 
       if (data.type === 'request_full_state') {
@@ -1524,20 +1700,9 @@ gameWss.on('connection', (ws, req) => {
       );
     }
 
-    if (chicken.holderId === playerId) {
-      chicken.isHeld = false;
-      chicken.holderId = null;
-      chicken.vx = 0;
-      chicken.vy = 0;
-      chicken.vz = 0;
-    }
-    if (lootbox.holderId === playerId) {
-      lootbox.isHeld = false;
-      lootbox.holderId = null;
-      lootbox.vx = 0;
-      lootbox.vy = 0;
-      lootbox.vz = 0;
-    }
+    // Drop anything this player was carrying where they were last seen, so the
+    // items stay in the world instead of vanishing with them.
+    dropHeldItemsAtPlayer(playerId);
     delete players[playerId];
     removePlayerFromCellIndex(playerId);
     recipientNetworkState.delete(playerId);
@@ -1699,6 +1864,7 @@ setInterval(() => {
         matchStartCountdown = -1;
         matchRunning = true;
         matchStartedThisRound = true;
+        randomizeAllItemSpawns();
       }
     } else if (getPlayerCount() >= currentMinPlayersToStart) {
       matchStartCountdown = MATCH_START_COUNTDOWN_SECONDS;
@@ -1710,6 +1876,7 @@ setInterval(() => {
   const currentPlayers = buildEncodedPlayersMap();
   const currentChicken = buildEncodedChicken();
   const currentLootbox = buildEncodedLootbox();
+  const currentPowerUps = buildEncodedPowerUps();
   const currentMatch = buildEncodedMatch();
 
   for (const client of gameWss.clients) {
@@ -1720,7 +1887,7 @@ setInterval(() => {
     if (!recipientId) {
       continue;
     }
-    const payload = buildRecipientPayload(recipientId, currentPlayers, currentChicken, currentLootbox, currentMatch, now);
+    const payload = buildRecipientPayload(recipientId, currentPlayers, currentChicken, currentLootbox, currentMatch, currentPowerUps, now);
     if (payload) {
       client.send(mpEncode(payload));
     }

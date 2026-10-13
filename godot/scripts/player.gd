@@ -1387,6 +1387,29 @@ func _drop_power_up_at_death() -> void:
 	item.global_position = global_position
 	item.drop(Vector3.ZERO)
 
+# The server-tracked id of the pickup the local player is carrying, or "".
+func _held_local_item_id() -> String:
+	if held_local_pickup == null or not is_instance_valid(held_local_pickup):
+		return ""
+	if held_local_pickup.has_method("server_item_id"):
+		return String(held_local_pickup.call("server_item_id"))
+	return ""
+
+# The server says another player now holds the item we were carrying (it was
+# snatched). Drop the local claim silently — no drop_request, the server already
+# decided who has it, and it will broadcast the item's new spot.
+func release_item_if_holding(item_id: String) -> void:
+	if held_local_pickup == null or not is_instance_valid(held_local_pickup):
+		return
+	if _held_local_item_id() != item_id:
+		return
+	var item := held_local_pickup
+	held_local_pickup = null
+	held_power_up_mode = LocalPickup.PowerUpMode.NONE
+	_update_hud_power_up()
+	if item.has_method("release_silently"):
+		item.call("release_silently")
+
 # Uses the held power-up pickup: it is consumed here and teleports to a random
 # far-away spot on the map instead of being dropped at the player's feet, then
 # its effect is applied.
@@ -1399,7 +1422,14 @@ func _use_held_power_up() -> void:
 	# running effect instead of flashing GRAB for a frame.
 	_activate_power_up(mode)
 	_update_hud_power_up()
-	if item != null and is_instance_valid(item) and item.has_method("consume_and_respawn"):
+	if item == null or not is_instance_valid(item):
+		return
+	# The SERVER owns where a used power-up reappears, so this only releases the
+	# hold and tells the server to re-roll; the new spot arrives via the item
+	# snapshot. Falls back to a local respawn for any unsynced pickup.
+	if item.has_method("consume_for_server"):
+		item.call("consume_for_server")
+	elif item.has_method("consume_and_respawn"):
 		item.call("consume_and_respawn", global_position)
 
 # Applies the one-shot effect for a consumed power-up. Modes without an effect

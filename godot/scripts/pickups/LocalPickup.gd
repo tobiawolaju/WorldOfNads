@@ -1,23 +1,25 @@
 extends RigidBody3D
 class_name LocalPickup
-## Client-side pickup item.
+## Pickup item: power-ups (p1..p5) and the objective items (chicken / lootbox).
 ##
-## Behaves like the chicken / lootbox holds (grab it when close, drop it any time)
-## and nothing about its position is sent to the server — every client owns its
-## own copy of the item at its own place in the scene.
+## The SERVER owns every item's spawn spot and who is carrying it. Clients mirror
+## the server position (apply_server_spawn) and hide a power-up while it is in
+## someone's inventory; the server re-rolls the spot when a power-up is used and
+## drops the item where its holder died or disconnected.
 ##
-## Pickups with the CHICKEN or LOOTBOX power_up_mode (the objective items) still
-## tell the server when the LOCAL player grabs or drops them, so the server knows
-## who is holding what for the end-of-match winner resolution. All other modes are
-## fully silent.
+## The local copy still drives the two things physics needs to feel right: a
+## carried item rides its holder (the local player's own copy is driven here, a
+## remote holder's copy by PlayerManager) and a dropped item falls and rests on
+## the terrain. Only the LOCAL holder reports grabs / drops / uses to the server,
+## which then mirrors the claim to everyone else.
 ##
-## Falling and resting are left entirely to the physics engine. The body is only
-## frozen while it is being carried; the moment it is dropped it is unfrozen and
+## Falling and resting are left to the physics engine. The body is frozen while it
+## is being carried or held remotely; the moment it is released it is unfrozen and
 ## Jolt simulates the fall, so the item lands on the terrain and stays there.
 ##
-## player.gd finds these through the "local_pickup_items" group and never sends a
-## pickup_request for them, so they must NOT be added to the "pickup_items" group
-## (that group was reserved for the old server-synced chicken and lootbox).
+## player.gd finds these through the "local_pickup_items" group. They must NOT be
+## added to the "pickup_items" group (that group was reserved for the old
+## server-synced chicken and lootbox).
 
 signal picked_up(item: RigidBody3D)
 signal dropped(item: RigidBody3D)
@@ -90,9 +92,22 @@ func is_objective_item() -> bool:
 	return objective_item_id() != ""
 
 
-# Tells the server this objective item was just grabbed (holding) or released.
-# Only copies held by the LOCAL player report anything — every client owns its
-# own copy, and only the local copy ever has a local holder.
+# The item id the server tracks this pickup under. Objective items report their
+# dedicated ids; the power-ups report their node name (p1..p5). Returns "" for
+# any pickup the server does not know about, so unsynced items stay silent.
+func server_item_id() -> String:
+	if is_objective_item():
+		return objective_item_id()
+	var pickup_name := String(name)
+	if pickup_name in ["p1", "p2", "p3", "p4", "p5"]:
+		return pickup_name
+	return ""
+
+
+# Tells the server this item was just grabbed (holding) or released. Every item
+# is server-authoritative now, so both power-ups and objective items report the
+# claim. Only copies held by the LOCAL player report anything — every client owns
+# its own copy, and only the local copy ever has a local holder.
 func _notify_server_hold(holding: bool, holder_node: Node3D = null) -> void:
 	# Never fall back to a freed holder reference: by the time a claim is over
 	# (drop / scene teardown / network loss) the claimant node may be gone.
@@ -103,15 +118,33 @@ func _notify_server_hold(holding: bool, holder_node: Node3D = null) -> void:
 		claimant = holder
 	if claimant == null or not claimant.is_in_group("local_player"):
 		return
-	if not is_objective_item():
+	var item_id := server_item_id()
+	if item_id == "":
 		return
 	var pm := get_tree().get_first_node_in_group("player_manager")
 	if pm == null or not (pm.has_method("notify_item_held") and pm.has_method("notify_item_dropped")):
 		return
 	if holding:
-		pm.call("notify_item_held", objective_item_id())
+		pm.call("notify_item_held", item_id)
 	else:
-		pm.call("notify_item_dropped", objective_item_id())
+		pm.call("notify_item_dropped", item_id)
+
+
+# Tells the server a carried power-up was USED, so it can re-roll a new spot.
+func _notify_server_used(holder_node: Node3D = null) -> void:
+	var claimant: Node3D = null
+	if holder_node != null and is_instance_valid(holder_node):
+		claimant = holder_node
+	elif is_instance_valid(holder):
+		claimant = holder
+	if claimant == null or not claimant.is_in_group("local_player"):
+		return
+	var item_id := server_item_id()
+	if item_id == "":
+		return
+	var pm := get_tree().get_first_node_in_group("player_manager")
+	if pm != null and pm.has_method("notify_item_used"):
+		pm.call("notify_item_used", item_id)
 
 ## Godot's default 3D gravity. GRAVITY_SCALE is derived from the player so the item
 ## falls at the same rate the player does.
@@ -147,6 +180,13 @@ const RESPAWN_GROUND_OFFSET: float = 1.0
 
 var is_held: bool = false
 var holder: Node3D = null
+# True while the SERVER says another player is carrying this item. Only the local
+# holder gets is_held; remote holders are tracked here so the node cannot be
+# grabbed locally and drops off the minimap while it rides someone else.
+var remote_held: bool = false
+# True between "the local player used this power-up" and the server handing back
+# the item's new spot. Blocks a re-grab at the old (consumed) position.
+var _awaiting_server_spawn: bool = false
 
 var _mesh: MeshInstance3D = null
 # Every mesh child of the pickup, so a while-held tint covers all of them. Each
@@ -236,11 +276,18 @@ func _held_tint_color() -> Color:
 
 # --- PLAYER.GD API ---
 func can_pick_up() -> bool:
-	return can_be_picked and not is_held
+	if not can_be_picked or is_held or _awaiting_server_spawn:
+		return false
+	# Objective items (chicken / lootbox) can be snatched off another player, so a
+	# remote hold does not block them. A carried power-up is "in inventory" and
+	# cannot be grabbed from its carrier.
+	if remote_held and not is_objective_item():
+		return false
+	return true
 
 
 func is_being_held() -> bool:
-	return is_held and is_instance_valid(holder)
+	return (is_held and is_instance_valid(holder)) or remote_held
 
 
 func pick_up(by: Node3D) -> bool:
@@ -316,6 +363,75 @@ func consume_and_respawn(from_position: Vector3) -> void:
 	# Same freed-holder guard as drop(): release claims nothing if the holder
 	# (e.g. local player) was already destroyed.
 	_notify_server_hold(false, released_by if is_instance_valid(released_by) else null)
+
+
+## Server-authoritative consume: the local player used this power-up. Unlike
+## consume_and_respawn() the new spot is chosen by the SERVER, so this only
+## releases the hold and hides the item until the server hands back a new
+## position (apply_server_spawn). No local random respawn is performed.
+func consume_for_server() -> void:
+	var released_by := holder
+	is_held = false
+	holder = null
+	_attach_node = null
+	remote_held = false
+	_awaiting_server_spawn = true
+	# Hidden and parked until the server assigns the new spot.
+	visible = false
+	_tint_mesh(Color.WHITE)
+	freeze = true
+	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+	emit_signal("dropped", self)
+	_notify_server_used(released_by if is_instance_valid(released_by) else null)
+
+
+## Applies a position chosen by the server. Used for match-start spawns,
+## respawns after a use, and drops (death / disconnect / manual). Seats the item
+## on the spot, cancels any pending consume, and makes it grabbable again.
+func apply_server_spawn(target: Vector3) -> void:
+	_awaiting_server_spawn = false
+	remote_held = false
+	visible = true
+	freeze = true
+	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	global_position = target
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+	# Unfreeze so physics can settle it onto the terrain at (or just below) the
+	# server's spot. The server re-sends the same spot for a while, and
+	# PlayerManager only re-seats on a change, so this will not fight itself.
+	freeze = false
+
+
+## Marks the item as carried by ANOTHER player (server says so). Freezes it in
+## place so physics cannot drag it, but leaves visibility to PlayerManager:
+## objective items still show (riding the holder), power-ups are hidden.
+func set_remote_held(value: bool) -> void:
+	remote_held = value
+	if value:
+		freeze = true
+		freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+		linear_velocity = Vector3.ZERO
+		angular_velocity = Vector3.ZERO
+	else:
+		freeze = false
+
+
+## Releases a local hold WITHOUT telling the server (used when the server says
+## the item was snatched by someone else). The node is hidden until the server
+## announces its new position.
+func release_silently() -> void:
+	is_held = false
+	holder = null
+	_attach_node = null
+	visible = false
+	_tint_mesh(Color.WHITE)
+	freeze = true
+	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
 
 
 # Picks a valid standing spot inside the minimap bounds, preferring one that is
