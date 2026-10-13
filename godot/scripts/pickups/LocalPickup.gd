@@ -205,8 +205,11 @@ func pick_up(by: Node3D) -> bool:
 		return false
 	holder = by
 	is_held = true
-	# Carried items are invisible; the HUD indicator is the only feedback.
-	visible = false
+	# Ordinary pickups hide while carried (the HUD indicator is the only
+	# feedback); objective items (chicken / lootbox) stay visible so the holder
+	# sees them riding on their back.
+	if not is_objective_item():
+		visible = false
 	# Frozen while carried so the player pose drives the item, not gravity.
 	freeze = true
 	linear_velocity = Vector3.ZERO

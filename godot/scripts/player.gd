@@ -1684,9 +1684,16 @@ func _update_hud_power_up() -> void:
 	var color: Color = Color.WHITE
 	var duration := 0.0
 	if _is_local_holding_pickup() and held_power_up_mode != LocalPickup.PowerUpMode.NONE:
-		label = str(held_local_pickup.call("power_up_label"))
-		color = held_local_pickup.call("power_up_color")
-		duration = _timed_duration_for(held_power_up_mode)
+		if _is_objective_item_mode(held_power_up_mode):
+			# Objective items (chicken / lootbox) are carried, never used: the
+			# Action button is a plain white DROP, with no effect ring.
+			label = "DROP"
+			color = Color.WHITE
+			duration = 0.0
+		else:
+			label = str(held_local_pickup.call("power_up_label"))
+			color = held_local_pickup.call("power_up_color")
+			duration = _timed_duration_for(held_power_up_mode)
 	buttons.call("show_power_up", label, color, duration)
 
 # How long the given power-up's effect runs once used, or 0 for pickups with no
