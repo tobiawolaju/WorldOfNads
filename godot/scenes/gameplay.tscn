@@ -199,7 +199,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.018854976, -0.009597778, -5
 shape = SubResource("BoxShape3D_rkx1j")
 
 [node name="Chicken" type="MeshInstance3D" parent="Chicken" unique_id=905862744]
-transform = Transform3D(1, 0, 0, 0, -8.742278e-08, -1, 0, 2, -4.371139e-08, 0.6, 0, 0.2)
+transform = Transform3D(1, 0, 0, 0, -8.742278e-08, -1, 0, 2, -4.371139e-08, 6.9308844, 1.175602, 0.20000005)
 cast_shadow = 0
 mesh = SubResource("ArrayMesh_cgvcs")
 surface_material_override/0 = SubResource("StandardMaterial3D_hpwea")
