@@ -267,9 +267,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -113.0
-offset_top = 46.0
-offset_right = 113.0
-offset_bottom = 92.0
+offset_top = 9.0
+offset_right = 112.99988
+offset_bottom = 55.000015
 grow_horizontal = 2
 texture = SubResource("AtlasTexture_cover")
 expand_mode = 1
@@ -279,9 +279,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -100.5
-offset_top = 60.0
-offset_right = 100.5
-offset_bottom = 88.0
+offset_top = 22.045
+offset_right = 100.49988
+offset_bottom = 50.045
 grow_horizontal = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
@@ -290,12 +290,13 @@ size_flags_vertical = 4
 layout_mode = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.44313726)
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "Searching for Server"
 horizontal_alignment = 1
 uppercase = true
 
 [node name="BoxContainer2" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1306771986]
+visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -317,6 +318,7 @@ theme_override_font_sizes/font_size = 12
 text = "...."
 
 [node name="BoxContainer3" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1509763072]
+visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -624,10 +626,14 @@ centered = false
 
 [node name="XPstream" type="Label" parent="." unique_id=2087879689]
 layout_mode = 1
-offset_left = 55.0
-offset_top = 119.270004
-offset_right = 192.0
-offset_bottom = 145.27
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -294.0
+offset_top = 110.0
+offset_right = -157.0
+offset_bottom = 139.0
+grow_horizontal = 0
 theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
@@ -637,6 +643,7 @@ theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
 theme_override_font_sizes/font_size = 25
 text = "Your Xp stream"
+horizontal_alignment = 2
 
 [node name="TextureRect2" type="TextureRect" parent="XPstream" unique_id=1808030459]
 modulate = Color(1, 1, 0, 1)
@@ -651,10 +658,14 @@ texture = ExtResource("21_gltyx")
 
 [node name="MONstream" type="Label" parent="." unique_id=366851244]
 layout_mode = 1
-offset_left = 55.0
-offset_top = 145.0
-offset_right = 209.0
-offset_bottom = 171.0
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -311.0
+offset_top = 80.0
+offset_right = -157.0
+offset_bottom = 106.0
+grow_horizontal = 0
 theme_override_colors/font_color = Color(0.8235294, 0, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
@@ -664,6 +675,7 @@ theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
 theme_override_font_sizes/font_size = 25
 text = "Your MON stream"
+horizontal_alignment = 2
 
 [node name="TextureRect2" type="TextureRect" parent="MONstream" unique_id=2005679997]
 custom_maximum_size = Vector2(25, 25)
@@ -677,10 +689,15 @@ texture = ExtResource("22_mgfyp")
 
 [node name="PrizePool" type="Label" parent="." unique_id=1341296255]
 layout_mode = 1
-offset_left = 55.0
-offset_top = 95.0
-offset_right = 189.0
-offset_bottom = 121.0
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -291.0
+offset_top = 51.0
+offset_right = -157.0
+offset_bottom = 127.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 1, 1, 0.50980395)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
@@ -689,8 +706,10 @@ theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
 theme_override_font_sizes/font_size = 25
 text = "Total MON pool"
+horizontal_alignment = 2
 
 [node name="TextureRect2" type="TextureRect" parent="PrizePool" unique_id=671757545]
+modulate = Color(1, 1, 1, 0.50980395)
 custom_maximum_size = Vector2(25, 25)
 layout_mode = 0
 offset_left = -30.0
