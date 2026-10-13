@@ -110,6 +110,25 @@ const cellOccupants = new Map();
 const backgroundJobs = [];
 let backgroundJobActive = false;
 
+// --- MATCH REWARDS (server-authoritative, off-chain for now) ---
+// The server owns reward accrual and pushes it to clients via reward_update.
+// XP is earned by PROXIMITY to the chicken (linear falloff out to
+// XP_CHICKEN_RADIUS, so hugging it pays the most). MON is earned only while
+// HOLDING the lootbox, streamed out of that match's lootbox pool.
+// The on-chain mint/payout step is NOT wired yet — this is the "fully on the
+// server first" stage; clients only display what the server computes.
+const XP_PER_SEC = 10;                 // XP/sec earned at point-blank chicken range
+const XP_CHICKEN_RADIUS = 8.0;         // how far "near the chicken" reaches (world units)
+const REWARD_TICK_INTERVAL_SEC = 1.0;  // accumulate once per second
+// Test economy: every match advertises a 1 MON lootbox pool and the holder
+// streams MON_PER_SEC while carrying the box. Swap these for the real match
+// prize / pool-derived rate once on-chain funding is wired (the on-chain
+// lootbox pool is what will actually pay out).
+const TOTAL_MON_POOL_PER_MATCH = 1.0;  // MON advertised for the match lootbox pool
+const MON_PER_SEC = 0.002;             // MON streamed per second while holding the lootbox
+const playerRewards = {};              // playerId -> { accumulatedXP, accumulatedMON, chickenHoldTime }
+let rewardAccumulator = 0.0;           // seconds since the last reward tick
+
 
 const chicken = {
   id: 'Chicken',
@@ -1387,6 +1406,56 @@ function resetLootBoxState() {
   lootbox.vz = 0;
 }
 
+// Accrues XP (proximity to the chicken) and MON (holding the lootbox) once a
+// second, then pushes each client its running totals. Runs only while the match
+// is live, so a single server tick is the single source of truth for rewards.
+function runRewardTick() {
+  // While the chicken is carried, "near the chicken" means near the CARRIER —
+  // chicken.x/z only holds the last place it was set down.
+  let chickenX = chicken.x;
+  let chickenZ = chicken.z;
+  if (chicken.isHeld && chicken.holderId && players[chicken.holderId]) {
+    chickenX = players[chicken.holderId].x;
+    chickenZ = players[chicken.holderId].z;
+  }
+
+  for (const pid of Object.keys(playerRewards)) {
+    const player = players[pid];
+    const reward = playerRewards[pid];
+    if (!player || !reward) continue;
+
+    // XP: the closer to the chicken, the faster it accumulates (0 at the edge).
+    const dx = chickenX - player.x;
+    const dz = chickenZ - player.z;
+    const distToChicken = Math.sqrt(dx * dx + dz * dz);
+    if (distToChicken <= XP_CHICKEN_RADIUS) {
+      const proximity = 1 - (distToChicken / XP_CHICKEN_RADIUS);
+      reward.accumulatedXP += XP_PER_SEC * proximity;
+      if (proximity >= 0.999) reward.chickenHoldTime += 1;
+    }
+
+    // MON: only the lootbox holder earns, streamed from the match's MON pool.
+    if (lootbox.isHeld && lootbox.holderId === pid) {
+      reward.accumulatedMON += MON_PER_SEC;
+    }
+  }
+
+  const poolTotal = TOTAL_MON_POOL_PER_MATCH;
+  for (const client of gameWss.clients) {
+    if (client.readyState !== 1) continue;
+    const pid = client.playerId;
+    const reward = pid ? playerRewards[pid] : null;
+    if (!reward) continue;
+    client.send(mpEncode({
+      type: 'reward_update',
+      xp: Math.floor(reward.accumulatedXP),
+      mon: parseFloat(reward.accumulatedMON.toFixed(6)),
+      pool: parseFloat(poolTotal.toFixed(6)),
+      holdTime: reward.chickenHoldTime
+    }));
+  }
+}
+
 function resetRoundForNextBatch() {
   isBatchResetting = true;
 
@@ -1399,6 +1468,10 @@ function resetRoundForNextBatch() {
   for (const id of Object.keys(players)) {
     delete players[id];
   }
+  for (const id of Object.keys(playerRewards)) {
+    delete playerRewards[id];
+  }
+  rewardAccumulator = 0.0;
   playerCellIndex.clear();
   cellOccupants.clear();
 
@@ -1505,6 +1578,7 @@ gameWss.on('connection', (ws, req) => {
       lastUpdateAt: Date.now()
     };
     updatePlayerCellIndex(playerId, players[playerId]);
+    playerRewards[playerId] = { accumulatedXP: 0, accumulatedMON: 0, chickenHoldTime: 0 };
 
     console.log(`🎮 Player connected: ${playerId} (${username}) skin=${resolvedSkin} xp=${xp}`);
     ws.playerId = playerId;
@@ -1533,6 +1607,7 @@ gameWss.on('connection', (ws, req) => {
       lastUpdateAt: Date.now()
     };
     updatePlayerCellIndex(playerId, players[playerId]);
+    playerRewards[playerId] = { accumulatedXP: 0, accumulatedMON: 0, chickenHoldTime: 0 };
     ws.playerId = playerId;
     ws.send(mpEncode({ type: 'connect', id: playerId, username, skin: resolvedSkin, xp: 0 }));
   });
@@ -1704,6 +1779,7 @@ gameWss.on('connection', (ws, req) => {
     // items stay in the world instead of vanishing with them.
     dropHeldItemsAtPlayer(playerId);
     delete players[playerId];
+    delete playerRewards[playerId];
     removePlayerFromCellIndex(playerId);
     recipientNetworkState.delete(playerId);
 
@@ -1834,8 +1910,25 @@ setInterval(() => {
     }
 
 
+    // Server-authoritative rewards: accrue once per second and push each client
+    // its running XP / MON totals.
+    rewardAccumulator += FIXED_DT;
+    if (rewardAccumulator >= REWARD_TICK_INTERVAL_SEC) {
+      rewardAccumulator = 0.0;
+      runRewardTick();
+    }
+
+
     if (matchTimeLeft <= 0) {
       const winner = resolveRoundWinner();
+
+      // Surface what each player banked this round (still off-chain — the mint /
+      // stream step lands in the next "on-chain" pass).
+      const rewardSummary = Object.entries(playerRewards)
+        .filter(([, r]) => r.accumulatedXP > 0 || r.accumulatedMON > 0)
+        .map(([pid, r]) => `${players[pid]?.username || pid}: ${Math.floor(r.accumulatedXP)} XP, ${r.accumulatedMON.toFixed(4)} MON`)
+        .join(' | ');
+      console.log(`[Rewards] Round totals: ${rewardSummary || 'none'}`);
 
       if (winner.winnerId) {
         const secondPart = winner.secondId ? `, ${winner.secondName} came 2nd` : '';

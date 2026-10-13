@@ -157,16 +157,12 @@ var _match_clock_anchor_time_left: float = 180.0
 static var local_base_xp: int = 0
 static var session_earned_xp: float = 0.0
 
-# --- CLIENT-SIDE REWARDS ---
-# The server no longer computes match rewards (they moved fully client-side for
-# now). These mirror the old server rates so the HUD XP / MON counters keep
-# working off locally-tracked distances and holds.
-const CLIENT_REWARD_TICK_INTERVAL: float = 1.0
-const CLIENT_XP_PER_SEC: float = 10.0
-const CLIENT_MON_PER_SEC: float = 0.002
-const CLIENT_MON_RADIUS: float = 8.0
+# --- MATCH REWARDS ---
+# Rewards are computed on the SERVER now (proximity to the chicken -> XP,
+# holding the lootbox -> MON) and pushed down via "reward_update". The client
+# only displays what the server sends, so there is no local accrual to
+# double-count.
 var session_earned_mon: float = 0.0
-var _client_reward_timer: float = 0.0
 
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live: bool = true
@@ -353,13 +349,6 @@ func _process(_delta: float):
 			if events_bridge == null or not is_instance_valid(events_bridge):
 				_resolve_events_bridge()
 			_update_match_ui()
-
-	# Client-authoritative reward tick: XP while holding the chicken, MON while
-	# standing near the lootbox. Only accrues during a live match.
-	_client_reward_timer += real_delta
-	if _client_reward_timer >= CLIENT_REWARD_TICK_INTERVAL:
-		_client_reward_timer = 0.0
-		_tick_client_rewards()
 
 	# Seat shared items: hide power-ups a remote player is carrying and weld an
 	# objective item onto a remote holder's back so it is visible to everyone.
@@ -697,39 +686,22 @@ func _receive_messages():
 			"reward_update":
 				var earned_xp := int(data.get("xp", 0))
 				var earned_mon := float(data.get("mon", 0.0))
+				var pool_total := float(data.get("pool", 0.0))
 				session_earned_xp = float(earned_xp)
-				var events_node = get_tree().get_first_node_in_group("events_bridge")
-				if events_node and events_node.has_method("update_xp_display"):
-					events_node.update_xp_display(earned_xp)
-				if events_node and events_node.has_method("update_mon_display"):
-					events_node.update_mon_display(earned_mon, 0.0)
+				session_earned_mon = earned_mon
+				var events_node = events_bridge
+				if events_node == null or not is_instance_valid(events_node):
+					events_node = get_tree().get_first_node_in_group("events_bridge")
+				if events_node != null:
+					if events_node.has_method("update_xp_display"):
+						events_node.call("update_xp_display", earned_xp)
+					if events_node.has_method("update_mon_display"):
+						events_node.call("update_mon_display", earned_mon, pool_total)
 
 
 # --- CLIENT-SIDE REWARDS ---
-# Computes XP / MON exactly like the old server reward tick, but locally: the
-# server stopped tracking rewards, so the HUD counters are driven from the
-# local hold state (chicken) and the local lootbox distance instead.
-func _tick_client_rewards() -> void:
-	if not connected or not match_is_running:
-		return
-	if player_id == "" or not players.has(player_id):
-		return
-	var events_node := events_bridge
-	if events_node == null or not is_instance_valid(events_node):
-		events_node = get_tree().get_first_node_in_group("events_bridge")
-	if is_local_player_holding_chicken():
-		session_earned_xp += CLIENT_XP_PER_SEC
-		if events_node != null and events_node.has_method("update_xp_display"):
-			events_node.call("update_xp_display", int(session_earned_xp))
-	var local_player: Node3D = players.get(player_id) as Node3D
-	var box: RigidBody3D = get_lootbox_node()
-	if local_player != null and box != null and is_instance_valid(box):
-		var dist := local_player.global_position.distance_to(box.global_position)
-		if dist <= CLIENT_MON_RADIUS:
-			var proximity := 1.0 - (dist / CLIENT_MON_RADIUS)
-			session_earned_mon += CLIENT_MON_PER_SEC * proximity
-			if events_node != null and events_node.has_method("update_mon_display"):
-				events_node.call("update_mon_display", session_earned_mon, 0.0)
+# Removed: reward accrual lives on the server now. The HUD is driven purely by
+# the server's "reward_update" messages (see the message handler above).
 
 
 # --- WORLD STATE UPDATE ---
