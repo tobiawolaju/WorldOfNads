@@ -368,13 +368,17 @@ func _refresh_pickup_targets() -> void:
 	_last_pickup_rescan_ms = now_ms
 
 	# One pointer per pickup currently in the world. Held/local items are skipped
-	# so a carried pickup stops showing up while it rides on the player.
+	# so a carried pickup stops showing up while it rides on the player. Objective
+	# items (chicken/lootbox) are skipped too: they have their own dedicated
+	# pointers, so a generic white pickup pointer would overlap them.
 	var current: Array[Node] = get_tree().get_nodes_in_group("local_pickup_items")
 	var seen := {}
 	for node in current:
 		if not node is Node3D or not is_instance_valid(node):
 			continue
 		if node.has_method("is_being_held") and node.is_being_held():
+			continue
+		if node.has_method("is_objective_item") and node.is_objective_item():
 			continue
 		seen[node.get_instance_id()] = node
 
