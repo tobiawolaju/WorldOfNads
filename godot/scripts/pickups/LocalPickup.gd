@@ -94,7 +94,13 @@ func is_objective_item() -> bool:
 # Only copies held by the LOCAL player report anything — every client owns its
 # own copy, and only the local copy ever has a local holder.
 func _notify_server_hold(holding: bool, holder_node: Node3D = null) -> void:
-	var claimant: Node3D = holder_node if holder_node != null else holder
+	# Never fall back to a freed holder reference: by the time a claim is over
+	# (drop / scene teardown / network loss) the claimant node may be gone.
+	var claimant: Node3D = null
+	if holder_node != null and is_instance_valid(holder_node):
+		claimant = holder_node
+	elif is_instance_valid(holder):
+		claimant = holder
 	if claimant == null or not claimant.is_in_group("local_player"):
 		return
 	if not is_objective_item():
@@ -280,7 +286,9 @@ func drop(impulse: Vector3 = Vector3.ZERO) -> void:
 	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
 	freeze = false
 	emit_signal("dropped", self)
-	_notify_server_hold(false, dropped_by)
+	# The holder may already be freed (player removed on network loss / scene
+	# teardown); passing it here crashes the typed call, so pass no claim then.
+	_notify_server_hold(false, dropped_by if is_instance_valid(dropped_by) else null)
 
 
 ## Called when the holder USES the power-up. Instead of dropping the item at the
@@ -305,7 +313,9 @@ func consume_and_respawn(from_position: Vector3) -> void:
 	angular_velocity = Vector3.ZERO
 	freeze = false
 	emit_signal("dropped", self)
-	_notify_server_hold(false, released_by)
+	# Same freed-holder guard as drop(): release claims nothing if the holder
+	# (e.g. local player) was already destroyed.
+	_notify_server_hold(false, released_by if is_instance_valid(released_by) else null)
 
 
 # Picks a valid standing spot inside the minimap bounds, preferring one that is
