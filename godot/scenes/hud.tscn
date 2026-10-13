@@ -624,10 +624,11 @@ texture = ExtResource("15_48y67")
 centered = false
 
 [node name="XPstream" type="Label" parent="." unique_id=2087879689]
-visible = false
 layout_mode = 1
-offset_right = 99.0
-offset_bottom = 19.0
+offset_left = 10.0
+offset_top = 21.0
+offset_right = 109.0
+offset_bottom = 40.0
 theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
@@ -638,10 +639,11 @@ theme_override_font_sizes/font_size = 18
 text = "Your Xp stream"
 
 [node name="MONstream" type="Label" parent="." unique_id=366851244]
-visible = false
 layout_mode = 1
-offset_right = 111.0
-offset_bottom = 21.0
+offset_left = 22.0
+offset_top = 40.0
+offset_right = 133.0
+offset_bottom = 61.0
 theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
@@ -652,9 +654,9 @@ theme_override_font_sizes/font_size = 18
 text = "Your MON stream"
 
 [node name="PrizePool" type="Label" parent="." unique_id=1341296255]
-visible = false
 layout_mode = 1
-offset_right = 96.0
+offset_left = 5.0
+offset_right = 101.0
 offset_bottom = 20.0
 theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
