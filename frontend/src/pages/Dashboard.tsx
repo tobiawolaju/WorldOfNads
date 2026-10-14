@@ -18,6 +18,7 @@ import {
   recordSponsorDailyUniquePlayer
 } from "./firebaseClient";
 import { trackMatchJoined } from "../lib/analyticsClient";
+import { requireInstall } from "../lib/installPrompt";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
 import { resolveGameSkinName, buildComboMap, resolveSkinAttachments, resolveSkinImageUrl } from "../lib/skinMapping";
 import { staticMatches } from "./staticMatches.js";
@@ -508,6 +509,7 @@ export default function Dashboard() {
 
   const handlePlayClick = useCallback(() => {
     if (!selectedMatch || !user) return;
+    if (requireInstall()) return;
 
     if (playButtonState === "idle") {
       prefetchLinks(["/godot/index.wasm", "/godot/index.pck"]);

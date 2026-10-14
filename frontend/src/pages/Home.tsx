@@ -6,6 +6,7 @@ import { FaDiscord } from "react-icons/fa";
 import Slide1 from "../components/Slide1";
 import Slide2 from "../components/Slide2";
 import Footer from "../components/Footer";
+import { requireInstall } from "../lib/installPrompt";
 
 const WaveText = React.memo(({ text }: { text: string }) => {
   const words = text.split(" ");
@@ -91,6 +92,7 @@ const Home: React.FC = () => {
 
   const handlePlay = (): void => {
     if (!ready) return;
+    if (requireInstall()) return;
     if (authenticated) {
       navigate("/dashboard");
     } else {

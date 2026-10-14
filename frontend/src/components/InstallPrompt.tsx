@@ -1,85 +1,22 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useSyncExternalStore } from "react";
+import {
+  isInstallGateOpen,
+  isIosDevice,
+  promptInstall,
+  subscribeInstallState,
+} from "../lib/installPrompt";
 import "./InstallPrompt.css";
 
-// Chromium's install prompt event. It is not part of the standard TS DOM types.
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-}
-
-// True once the site is already running as an installed app.
-const isStandalone = (): boolean =>
-  window.matchMedia("(display-mode: standalone)").matches ||
-  window.matchMedia("(display-mode: fullscreen)").matches ||
-  (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-
-// Phones and tablets only; desktop users install from the address bar.
-const isMobileDevice = (): boolean =>
-  window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-
-// iOS never fires `beforeinstallprompt`, so there we always fall back to manual
-// "Add to Home Screen" instructions. This covers every iOS browser, all of
-// which are WebKit under the hood.
-const isIosDevice = (): boolean => {
-  const ua = window.navigator.userAgent;
-  return (
-    /iPad|iPhone|iPod/.test(ua) ||
-    (window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1)
-  );
-};
-
+// Rendered globally, but only visible once `requireInstall()` has opened the
+// gate (i.e. the user tapped Play without the app installed). It is transparent
+// and covers the whole viewport, so the page stays visible underneath yet
+// cannot be scrolled or tapped until the app is installed.
 export const InstallPrompt: React.FC = () => {
-  const [visible, setVisible] = useState(false);
-  const [ios, setIos] = useState(false);
-  const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
+  const open = useSyncExternalStore(subscribeInstallState, isInstallGateOpen, () => false);
 
-  useEffect(() => {
-    if (isStandalone() || !isMobileDevice()) return;
+  if (!open) return null;
 
-    const onIos = isIosDevice();
-    setIos(onIos);
-
-    const handleBeforeInstall = (event: Event) => {
-      // Suppress the browser mini-infobar and show our own gate instead.
-      event.preventDefault();
-      deferredPromptRef.current = event as BeforeInstallPromptEvent;
-      setIos(false);
-      setVisible(true);
-    };
-
-    const handleInstalled = () => setVisible(false);
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
-    window.addEventListener("appinstalled", handleInstalled);
-
-    // Give iOS a moment before gating, so it doesn't land on top of the first
-    // paint.
-    let iosTimer: number | undefined;
-    if (onIos) {
-      iosTimer = window.setTimeout(() => setVisible(true), 2500);
-    }
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
-      window.removeEventListener("appinstalled", handleInstalled);
-      if (iosTimer !== undefined) window.clearTimeout(iosTimer);
-    };
-  }, []);
-
-  const handleInstall = useCallback(async () => {
-    const deferred = deferredPromptRef.current;
-    if (!deferred) return;
-    try {
-      await deferred.prompt();
-      const choice = await deferred.userChoice;
-      if (choice.outcome === "accepted") setVisible(false);
-    } catch {
-      /* ignore */
-    }
-    deferredPromptRef.current = null;
-  }, []);
-
-  if (!visible) return null;
+  const ios = isIosDevice();
 
   return (
     <div
@@ -111,7 +48,11 @@ export const InstallPrompt: React.FC = () => {
           </span>
         )}
         {!ios && (
-          <button type="button" className="install-prompt__cta" onClick={handleInstall}>
+          <button
+            type="button"
+            className="install-prompt__cta"
+            onClick={() => void promptInstall()}
+          >
             Install
           </button>
         )}

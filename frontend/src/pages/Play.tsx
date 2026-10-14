@@ -2,6 +2,12 @@ import React, { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { resolveGameSkinName } from "../lib/skinMapping";
 import { readGameQuality } from "../lib/gameQuality";
+import {
+  isAppInstalled,
+  isMobileDevice,
+  openInstallGate,
+  subscribeInstallState
+} from "../lib/installPrompt";
 
 const BACKEND_URL = import.meta.env.VITE_ANALYTICS_API_URL || "https://worldofnads.onrender.com";
 
@@ -46,9 +52,23 @@ const Play: React.FC = () => {
   const { user } = usePrivy();
   const username = getUsernameFromPrivy(user);
   const [loading, setLoading] = useState(true);
+  // Direct hits on /play still have to install first on mobile.
+  const [blocked, setBlocked] = useState(() => isMobileDevice() && !isAppInstalled());
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (blocked) openInstallGate();
+  }, [blocked]);
+
+  useEffect(
+    () =>
+      subscribeInstallState(() => {
+        if (isAppInstalled()) setBlocked(false);
+      }),
+    []
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined" || blocked) return;
 
     const redirectToGame = async () => {
       const params = new URLSearchParams(window.location.search);
@@ -96,7 +116,7 @@ const Play: React.FC = () => {
     };
 
     redirectToGame();
-  }, [username]);
+  }, [username, blocked]);
 
   if (loading) {
     return (
