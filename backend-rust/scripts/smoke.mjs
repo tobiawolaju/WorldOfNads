@@ -84,6 +84,14 @@ function decode(buf) {
   return { value, consumed: r.i, total: buf.length };
 }
 
+// Node's WebSocket hands back a Blob unless binaryType is set; accept all shapes.
+function toBuffer(data) {
+  if (typeof data === "string") return Buffer.from(data, "utf8");
+  if (data instanceof ArrayBuffer) return Buffer.from(data);
+  if (ArrayBuffer.isView(data)) return Buffer.from(data.buffer, data.byteOffset, data.byteLength);
+  throw new Error(`unsupported frame type: ${data?.constructor?.name ?? typeof data}`);
+}
+
 // --- selftest: prove the decoder works with no network ---
 if (process.argv.includes("--selftest")) {
   const parts = [
@@ -120,6 +128,7 @@ let failures = 0;
 
 await new Promise((resolve) => {
   const ws = new WebSocket(url);
+  ws.binaryType = "arraybuffer"; // Node defaults to Blob; we decode synchronously
   const seen = new Map();
 
   const finish = (code) => {
@@ -137,13 +146,14 @@ await new Promise((resolve) => {
   });
 
   ws.addEventListener("message", (event) => {
-    const buf = Buffer.from(event.data);
+    let buf;
     let frame;
     try {
+      buf = toBuffer(event.data);
       frame = decode(buf).value;
     } catch (err) {
       failures += 1;
-      console.log(`frame decode FAILED (${buf.length} bytes): ${err.message}`);
+      console.log(`frame decode FAILED (${buf ? buf.length : 0} bytes): ${err.message}`);
       return;
     }
     const type = frame && frame.type ? frame.type : "(no type)";
