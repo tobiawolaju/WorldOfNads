@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { initGoogleAnalytics } from "./lib/analyticsClient";
+import { initInstallPrompt } from "./lib/installPrompt";
 
 import { PrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
@@ -56,6 +57,7 @@ const monadTestnet = {
 
 initGoogleAnalytics();
 blockBrowserZoom();
+initInstallPrompt();
 
 // Register the service worker that makes the site installable as an app. It
 // never caches, so it only unlocks the native install prompt / WebAPK.
