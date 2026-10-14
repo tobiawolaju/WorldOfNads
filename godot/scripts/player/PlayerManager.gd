@@ -6,6 +6,10 @@ static var instance: PlayerManager
 
 # --- SERVER URLS ---
 const LIVE_URL: String = "wss://worldofnads.onrender.com"
+# Realtime room server used while connecting to "live". Points at the Rust room
+# server (Render) so the migration can be tested against production clients.
+# Set this back to LIVE_URL to talk to the Node room server instead.
+const ROOM_URL: String = "wss://wons-room-server.onrender.com"
 const LOCAL_URL: String = "ws://localhost:8080"
 const DEFAULT_SKIN_NAME: String = "s-default"
 const SKIN_SCENE_PATH: String = "res://scenes/skin.tscn"
@@ -286,7 +290,7 @@ func _reapply_skins() -> void:
 		_update_debug_skin()
 
 func _attempt_connection():
-	var base_url = LIVE_URL if is_connecting_to_live else LOCAL_URL
+	var base_url = ROOM_URL if is_connecting_to_live else LOCAL_URL
 	var url_to_try = _build_ws_url_with_username(base_url)
 	var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
 
@@ -460,7 +464,7 @@ func _start_reconnection():
 	_reconnect_dots = 0
 	_reconnect_dot_timer = 0.0
 	_reconnect_countdown = 0
-	_reconnect_target_url = LIVE_URL if is_connecting_to_live else LOCAL_URL
+	_reconnect_target_url = ROOM_URL if is_connecting_to_live else LOCAL_URL
 	_resolve_subtitle_label()
 	_update_subtitle_text("Disconnected! Check your internet.")
 	print("🔄 Auto-reconnect started")
@@ -514,7 +518,7 @@ func _attempt_reconnection():
 	if cur_state == WebSocketPeer.STATE_OPEN or cur_state == WebSocketPeer.STATE_CONNECTING:
 		return
 	if _reconnect_target_url == "":
-		_reconnect_target_url = LIVE_URL if is_connecting_to_live else LOCAL_URL
+		_reconnect_target_url = ROOM_URL if is_connecting_to_live else LOCAL_URL
 	var url = _build_ws_url_with_username(_reconnect_target_url)
 	var err = ws.connect_to_url(url)
 	if err != OK:

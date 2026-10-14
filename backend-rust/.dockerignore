@@ -1,0 +1,5 @@
+# Keep the Docker build context tiny — Render uploads this context on every build.
+target/
+.git/
+scripts/
+*.md
