@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { isStandalone } from "../lib/installPrompt";
 import "./FullscreenToggle.css";
 
 const getFullscreenElement = (): Element | null =>
@@ -7,6 +8,7 @@ const getFullscreenElement = (): Element | null =>
 export const FullscreenToggle: React.FC = () => {
   const [enabled, setEnabled] = useState(false);
   const [active, setActive] = useState(false);
+  const [isPwa, setIsPwa] = useState(isStandalone);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const dragRef = useRef<{
@@ -36,6 +38,35 @@ export const FullscreenToggle: React.FC = () => {
     };
   }, []);
 
+  // Installed PWAs already run windowed/fullscreen, so the toggle is redundant
+  // (and does nothing on iOS). Track display-mode switches so the button also
+  // disappears if the app is launched into an installed window mid-session.
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const update = () => setIsPwa(isStandalone());
+    update();
+    const queries = [
+      window.matchMedia("(display-mode: standalone)"),
+      window.matchMedia("(display-mode: fullscreen)"),
+    ];
+    queries.forEach((query) => {
+      if (typeof query.addEventListener === "function") {
+        query.addEventListener("change", update);
+      } else if (typeof query.addListener === "function") {
+        query.addListener(update);
+      }
+    });
+    return () => {
+      queries.forEach((query) => {
+        if (typeof query.removeEventListener === "function") {
+          query.removeEventListener("change", update);
+        } else if (typeof query.removeListener === "function") {
+          query.removeListener(update);
+        }
+      });
+    };
+  }, []);
+
   // Re-clamp the dragged position to the current viewport so the button
   // stays visible after rotating portrait -> landscape.
   useEffect(() => {
@@ -61,7 +92,7 @@ export const FullscreenToggle: React.FC = () => {
     };
   }, []);
 
-  if (!enabled || active) return null;
+  if (!enabled || active || isPwa) return null;
 
   const startDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
     const btn = btnRef.current;

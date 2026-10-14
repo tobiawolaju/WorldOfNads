@@ -286,10 +286,22 @@
           }
         });
 
+        const isStandaloneDisplay = () =>
+          (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+          (window.matchMedia && window.matchMedia("(display-mode: fullscreen)").matches) ||
+          window.navigator.standalone === true;
+
         const updateFullscreenButton = () => {
           if (revealTimer) {
             clearTimeout(revealTimer);
             revealTimer = null;
+          }
+
+          // The installed app already runs windowed/fullscreen, so the toggle
+          // is redundant there.
+          if (isStandaloneDisplay()) {
+            fullscreenBtn.hidden = true;
+            return;
           }
 
           if (document.fullscreenElement) {
