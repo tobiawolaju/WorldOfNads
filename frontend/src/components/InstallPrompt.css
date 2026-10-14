@@ -5,13 +5,11 @@
   inset: 0;
   z-index: 10000;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   padding: 1.5rem;
-  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));
   background: rgba(10, 8, 30, 0.75);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
   animation: install-prompt-fade 200ms ease both;
 }
 
