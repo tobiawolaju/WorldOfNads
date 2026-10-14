@@ -55,6 +55,14 @@ bash scripts/smoke.sh                                   # local binary
 bash scripts/smoke.sh ws://127.0.0.1:18080/?username=x  # anything already running
 ```
 
+Zero-install Node probe (Node 22+, no npm, no WSL/Docker needed) — great for checking
+a deployed instance from Windows:
+
+```bash
+node scripts/smoke.mjs --selftest                              # decoder check, no network
+node scripts/smoke.mjs wss://wons-room-server.onrender.com/?username=probe
+```
+
 Point the Godot client at it by using `LOCAL_URL` (`ws://localhost:8080`).
 
 ## Docker
