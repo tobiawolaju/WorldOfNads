@@ -2,6 +2,10 @@ extends Node
 class_name Events
 
 const LIVE_EVENTS_URL := "wss://worldofnads.onrender.com/events"
+# Events feed for the Rust room server, kept in step with PlayerManager.ROOM_URL
+# while the room server is under test — otherwise the game socket talks to Rust
+# while chat/event toasts still come from Node, and nothing lines up.
+const ROOM_EVENTS_URL := "wss://wons-room-server.onrender.com/events"
 const LOCAL_EVENTS_URL := "ws://localhost:8080/events"
 const GAMEOVER_SCENE := preload("res://scenes/gameover.tscn")
 const MAX_STATUS_LINES := 4
@@ -53,7 +57,7 @@ func _ready() -> void:
 	_cache_reward_colors()
 	_try_set_username_from_web_query()
 	tried_live = true
-	var err = ws.connect_to_url(LIVE_EVENTS_URL)
+	var err = ws.connect_to_url(ROOM_EVENTS_URL)
 	if err != OK:
 		_start_local_fallback("Could not start live events stream")
 	else:
