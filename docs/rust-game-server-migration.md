@@ -220,6 +220,42 @@ Port these behaviors 1:1 and assert equality against the Node server with a shar
 
 ---
 
+### Parity audit (source-verified against `backend/index.js`)
+
+`[x]` = ported and identical, `[ ]` = still to do.
+
+- [x] Grid/AOI: cell assignment (18 m cells), 7x7 replication window, deltas.
+- [x] Movement validation: `MAX_PLAYER_SPEED` (12), `MAX_PLAYER_VERTICAL_SPEED`
+      (36), `MAX_THROW_IMPULSE` clamps. Note `throw_x/y/z` are **ignored by Node too**
+      (velocities are only ever zeroed), so Rust ignoring them is parity, not drift.
+- [x] Inbound limits: `WS_MAX_MESSAGE_SIZE` (4096) + rate limit (60 per 1000 ms) —
+      enforced in `net.rs`.
+- [x] Heartbeat: ping every 30 s, plus `removed` broadcast on close.
+- [x] Match lifecycle: `minPlayersToStart`, 5 s countdown, 180 s timer, winner
+      resolution, 1 Hz reward tick, storm shrink cadence.
+- [x] Items: chicken/lootbox/p1–p5 pickup/drop/use, held-item cleanup on close.
+- [ ] Send backpressure: Node drops a client once
+      `bufferedAmount >= MAX_CLIENT_BUFFERED_BYTES` (512 KiB). **Rust uses an unbounded
+      outbound channel**, so one slow client can grow memory without limit. Fix first.
+- [ ] Rate-limit ban window (`RATE_LIMIT_BAN_DURATION_MS`, 60 s + IP ban).
+- [ ] Missed-pong termination (Node's `isAlive` sweep).
+- [ ] Session token verification: Node rejects with `1008 invalid_token`;
+      `parse_username` currently accepts any token.
+- [ ] Capacity rejection: Node closes `1008 match_full` at `currentMaxPlayers`.
+- [ ] Control-plane skin/xp: Node reads the Firebase profile + wallet; Rust uses the
+      `skin`/`skinId` query param and sends `xp: 0`.
+
+### Wire contract (audited against `backend/index.js`)
+
+| Message | Node | Rust | Status |
+|---|---|---|---|
+| `connect` | `{type,id,username,skin,xp}` | `ConnectMsg` | identical |
+| player | `{id,x,y,z,r,a,skin}` | `PlayerNet` | identical |
+| `state_full` | `{type,q,players(+u),chicken,lootbox,items,match}` | `StateFull` | identical |
+| `state_delta` | optional `players/removed/chicken/lootbox/items/match` | `StateDelta` | identical |
+| match | `{t,r,d,min,max,sr,pl,c}`, `max:null` when unset | `MatchNet` | identical |
+| constants | rates 20/15/6 Hz, 12/28 m, 2 s / 1 s, scales 100/1000 | `config.rs` | identical |
+
 ## 7. Control-plane API additions (Node)
 
 Internal, authenticated (HMAC/JWT with a shared secret), not public:
