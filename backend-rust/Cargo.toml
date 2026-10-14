@@ -1,0 +1,31 @@
+[package]
+name = "room-server"
+version = "0.1.0"
+edition = "2021"
+description = "World of Nads realtime arena room server (Rust). Wire-compatible with the Node game server."
+license = "ISC"
+
+[[bin]]
+name = "room-server"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync", "net", "signal"] }
+axum = { version = "0.7", features = ["ws"] }
+futures-util = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rmp-serde = "1"
+rand = "0.8"
+uuid = { version = "1", features = ["v4"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+
+[dev-dependencies]
+tokio-tungstenite = "0.24"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"

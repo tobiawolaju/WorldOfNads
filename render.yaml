@@ -1,0 +1,25 @@
+# Render Blueprint — Rust room server (Phase 1 of docs/rust-game-server-migration.md).
+#
+# Declares ONLY the new room server, so a Blueprint sync can never touch the
+# existing dashboard-configured Node backend (worldofnads.onrender.com).
+#
+# Deploy: Render dashboard -> Blueprints -> New Blueprint -> pick this repo.
+# Result: https://wons-room-server.onrender.com  (health check on /health)
+#
+# Create a Blueprint from this repo when this file is on the default branch.
+services:
+  - type: web
+    name: wons-room-server
+    runtime: docker
+    # free = 750 h/month. It sleeps after ~15 min without traffic, so the first
+    # websocket connect after a cold start takes ~30-60 s (or times out once).
+    # Switch to `starter` if test sessions hit reconnect timeouts.
+    plan: free
+    # Both paths are relative to the repo root. The context is the crate dir so
+    # godot/ and frontend/ are never sent to the Docker builder.
+    dockerfilePath: ./backend-rust/Dockerfile
+    dockerContext: ./backend-rust
+    healthCheckPath: /health
+    envVars:
+      - key: RUST_LOG
+        value: room_server=info
