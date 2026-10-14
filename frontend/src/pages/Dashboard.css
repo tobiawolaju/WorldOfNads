@@ -1311,10 +1311,6 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   /* Un-skew content while keeping the full image visible */
 }
 
-.store-card.unowned .store-card-image {
-  filter: grayscale(1);
-}
-
 .store-card-info {
   position: absolute;
   bottom: 0;
@@ -1364,35 +1360,6 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   }
 }
 
-/* Store tier badge */
-.store-tier {
-  display: inline-block;
-  font-size: 0.5rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0 6px;
-  border-radius: 2px;
-  line-height: 1.6;
-  margin-top: 2px;
-}
-
-.store-tier--common { background: #e0e0e0; color: #555; }
-.store-tier--rare { background: #cce5ff; color: #0044aa; }
-.store-tier--epic { background: #e8d5ff; color: #6622cc; }
-.store-tier--legendary { background: #fff3cc; color: #aa7700; }
-
-/* Store supply text */
-.store-supply {
-  font-size: 0.5rem !important;
-  color: #888 !important;
-  font-weight: 600 !important;
-  text-transform: none !important;
-  letter-spacing: 0.02em;
-  margin-top: 1px;
-  line-height: 1.4;
-}
-
 /* --- ITEM BADGES --- */
 .item-badge {
   font-size: 0.6rem;
@@ -1418,38 +1385,11 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
-/* Store Specific Badges */
-.badge-store {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  margin: 0;
-  z-index: 5;
-  background: #ffeb3b;
-  color: #000000;
-  border: none;
-  box-shadow: none;
-  font-size: 0.5rem;
-  letter-spacing: 0.03em;
-}
-
-.badge-new {
-  background: rgba(255, 235, 59, 0.95);
-  color: #000000;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-}
-
 .reward-item-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 4px;
-}
-
-.store-card-image {
-  position: relative;
-  /* Base for badge positioning */
-  overflow: hidden;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1492,18 +1432,5 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   .store-card-info p {
     color: #ffffff;
     text-shadow: none;
-  }
-
-  .store-supply {
-    color: #cccccc !important;
-  }
-
-  .store-tier--common { background: #444; color: #ccc; }
-  .store-tier--rare { background: #1a3355; color: #66aaff; }
-  .store-tier--epic { background: #331a55; color: #aa66ff; }
-  .store-tier--legendary { background: #554422; color: #ffcc44; }
-
-  .store-card.unowned .store-card-image {
-    filter: grayscale(1);
   }
 }
