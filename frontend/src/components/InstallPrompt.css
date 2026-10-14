@@ -79,8 +79,8 @@
   padding: 0.85rem 1rem;
   border: none;
   border-radius: 0.9rem;
-  background: var(--primary, #5b4fff);
-  color: #ffffff;
+  background: #ffd400;
+  color: #000000;
   font-size: 17px;
   font-weight: 700;
   cursor: pointer;
@@ -88,5 +88,5 @@
 }
 
 .install-prompt__cta:hover {
-  background: var(--primary-hover, #4a3ee6);
+  background: #ffe14d;
 }
