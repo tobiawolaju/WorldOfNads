@@ -111,20 +111,6 @@ const C_MAGENTA: Color = Color(0.627451, 0.0, 1.0, 1.0)
 const C_PIP_ON: Color = Color(0.99215686, 0.8784314, 0.2784314, 1.0)
 const C_PIP_OFF: Color = Color(0.72, 0.72, 0.72, 0.2)
 
-# .store-tier, under `prefers-color-scheme: dark` (the scheme this screen renders).
-const TIER_COLORS: Dictionary = {
-	"common": Color(0.26666667, 0.26666667, 0.26666667, 1.0),
-	"rare": Color(0.10196078, 0.2, 0.33333334, 1.0),
-	"epic": Color(0.2, 0.10196078, 0.33333334, 1.0),
-	"legendary": Color(0.33333334, 0.26666667, 0.13333334, 1.0),
-}
-const TIER_FONTS: Dictionary = {
-	"common": Color(0.8, 0.8, 0.8, 1.0),
-	"rare": Color(0.4, 0.6666667, 1.0, 1.0),
-	"epic": Color(0.6666667, 0.4, 1.0, 1.0),
-	"legendary": Color(1.0, 0.8, 0.26666667, 1.0),
-}
-
 const TAB_EVENTS: String = "events"
 const TAB_REWARDS: String = "rewards"
 const TAB_STORE: String = "store"
@@ -780,7 +766,7 @@ func _seed_local_store() -> void:
 		"id": "s-default",
 		"name": "Default Nad",
 		"price": "0 MON",
-		"image": "/skins_png/s-default.png",
+		"image": "/skins_png/1-2.png",
 		"tier": "common",
 		"required_xp": 0,
 		"max_supply": 0,
@@ -789,7 +775,7 @@ func _seed_local_store() -> void:
 		"id": "s-default-unshaded",
 		"name": "Default Nad (Flat)",
 		"price": "0 MON",
-		"image": "/skins_png/s-default.png",
+		"image": "/skins_png/1-2.png",
 		"tier": "common",
 		"required_xp": 0,
 		"max_supply": 0,
@@ -1233,7 +1219,6 @@ func _refresh_store() -> void:
 func _build_store_card(group: Dictionary) -> Control:
 	var item: Dictionary = group.get("pick", {})
 	var item_id: String = str(item.get("id", ""))
-	var tier: String = str(item.get("tier", "common"))
 	# Selection is group-level: the card stays selected while either edition is
 	# picked, and a card is "owned" when either edition is held.
 	var selected := _group_selected(group)
@@ -1277,29 +1262,11 @@ func _build_store_card(group: Dictionary) -> Control:
 	# sprite fills the card's height and the caption is laid over its bottom half.
 	var art := TextureRect.new()
 	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	art.texture = _skin_texture(item, not owned)
+	art.texture = _skin_texture(item)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(art)
-
-	# `.item-badge.badge-store` - the "new" flag, top-right, only while unowned.
-	if not owned:
-		var badge := Label.new()
-		badge.text = "NEW"
-		badge.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-		badge.offset_left = -3.0
-		badge.offset_top = 3.0
-		badge.offset_right = -3.0
-		badge.offset_bottom = 3.0
-		badge.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-		badge.grow_vertical = Control.GROW_DIRECTION_END
-		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		badge.add_theme_font_size_override("font_size", 3)
-		badge.add_theme_color_override("font_color", Color(0, 0, 0, 1))
-		badge.add_theme_stylebox_override("normal", _store_badge_style())
-		_apply_font(badge, FONT_UI)
-		card.add_child(badge)
 
 	# `.store-card-info` - the angled caption plate along the bottom edge. Its
 	# clip-path and gradient are pre-baked into store_info_plate.png; the node
@@ -1356,32 +1323,6 @@ func _build_store_card(group: Dictionary) -> Control:
 	price_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	_apply_font(price_label, FONT_UI)
 	caption.add_child(price_label)
-
-	if tier != "":
-		var tier_label := Label.new()
-		tier_label.text = tier.to_upper()
-		tier_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tier_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		tier_label.add_theme_font_size_override("font_size", 3)
-		tier_label.add_theme_color_override("font_color", TIER_FONTS.get(tier, Color.WHITE))
-		tier_label.add_theme_stylebox_override("normal", _tier_style(tier))
-		_apply_font(tier_label, FONT_UI)
-		caption.add_child(tier_label)
-
-	# `.xp-requirement` - "Lvl N required", shown only while the skin is unowned and
-	# the requirement is above zero.
-	var required_xp := int(item.get("required_xp", 0))
-	if required_xp > 0 and not owned:
-		var xp_label := Label.new()
-		xp_label.text = "Lvl %d required" % _level_for_xp(required_xp)
-		xp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		xp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		xp_label.clip_text = true
-		xp_label.add_theme_font_size_override("font_size", 3)
-		var xp_met := xp >= float(required_xp)
-		xp_label.add_theme_color_override("font_color", C_GOLD if xp_met else Color(1, 1, 1, 0.7))
-		_apply_font(xp_label, FONT_UI)
-		caption.add_child(xp_label)
 
 	card.gui_input.connect(_on_store_card_input.bind(item_id))
 	card.mouse_entered.connect(_on_store_card_enter.bind(card))
@@ -1762,7 +1703,7 @@ func _build_variant_button(item: Dictionary) -> Button:
 	image.offset_top = VARIANT_BORDER_WIDTH
 	image.offset_right = -VARIANT_BORDER_WIDTH
 	image.offset_bottom = -VARIANT_BORDER_WIDTH
-	image.texture = _skin_texture(item, false)
+	image.texture = _skin_texture(item)
 	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	image.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -2057,22 +1998,31 @@ func _displayed_skin_id() -> String:
 # ---------------------------------------------------------------- skin artwork
 
 func _skin_basename(item: Dictionary) -> String:
-	# getStoreImageUrl() falls back to /skins_png/<id>.png, and the API serves
-	# /skins_png/<file>.png, so both routes reduce to the same lookup here.
+	# Store artwork ships as one render per store *card*, named after the two
+	# catalog slots it covers (<lo>-<hi>.png): the default pair owns 1-2.png, then
+	# the numeric combos follow, their ids pairing as 2n+1 (shaded) / 2n+2
+	# (unshaded). Mirrors skinArtworkFileName() in frontend/src/lib/skinMapping.ts.
+	# The filename is derived from the id rather than the item's `image` so a
+	# stale document (or the API's /skins_png/<id>.png default) cannot point at
+	# artwork that is not in the folder.
+	var item_id := str(item.get("id", "")).strip_edges()
+	if item_id.is_valid_int() and item_id.to_int() >= 1:
+		var combo := floori((item_id.to_int() - 1) / 2.0)
+		var lo := 2 * (combo + 2) - 1
+		return "%d-%d" % [lo, lo + 1]
+	if item_id.replace("-unshaded", "").to_lower() == "s-default":
+		return "1-2"
+	# Named skin outside the catalog artwork folder: keep whatever it authored.
 	var image := str(item.get("image", ""))
 	if image != "":
 		var base := image.get_file().get_basename()
 		if base != "":
 			return base
-	return str(item.get("id", ""))
+	return item_id
 
 
-func _skin_texture(item: Dictionary, grayscale: bool) -> Texture2D:
+func _skin_texture(item: Dictionary) -> Texture2D:
 	var base := _skin_basename(item)
-	if grayscale:
-		var gray := _load_texture(SKIN_DIR + base + "_gray.png")
-		if gray != null:
-			return gray
 	return _load_texture(SKIN_DIR + base + ".png")
 
 
@@ -2212,42 +2162,6 @@ func _variant_style(active: bool) -> StyleBoxFlat:
 	style.content_margin_left = 0.0
 	style.content_margin_top = 0.0
 	style.content_margin_right = 0.0
-	style.content_margin_bottom = 0.0
-	return style
-
-
-func _badge_style(color: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = color
-	style.content_margin_left = 2.0
-	style.content_margin_right = 2.0
-	style.content_margin_top = 0.0
-	style.content_margin_bottom = 0.0
-	return style
-
-
-func _store_badge_style() -> StyleBoxFlat:
-	# .item-badge.badge-store: gold pill, full radius, 2px 8px padding. It sits in
-	# .store-card-image, which counter-skews the card, so it renders upright.
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(1.0, 0.92156863, 0.23137255, 1.0)
-	style.set_corner_radius_all(9)
-	style.content_margin_left = 3.0
-	style.content_margin_right = 3.0
-	style.content_margin_top = 0.0
-	style.content_margin_bottom = 0.0
-	return style
-
-
-func _tier_style(tier: String) -> StyleBoxFlat:
-	# .store-tier: 0 6px horizontal padding, 2px radius, line-height 1.6. At this
-	# scale the 6px padding folds down to a hairline either side of the text.
-	var style := StyleBoxFlat.new()
-	style.bg_color = TIER_COLORS.get(tier, Color(0, 0, 0, 0.5))
-	style.set_corner_radius_all(2)
-	style.content_margin_left = 2.0
-	style.content_margin_right = 2.0
-	style.content_margin_top = 0.0
 	style.content_margin_bottom = 0.0
 	return style
 

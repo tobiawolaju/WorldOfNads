@@ -19,7 +19,7 @@ import {
 } from "./firebaseClient";
 import { trackMatchJoined } from "../lib/analyticsClient";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
-import { resolveGameSkinName, buildComboMap, resolveSkinAttachments } from "../lib/skinMapping";
+import { resolveGameSkinName, buildComboMap, resolveSkinAttachments, resolveSkinImageUrl } from "../lib/skinMapping";
 import { staticMatches } from "./staticMatches.js";
 import storeItemsData from "../data/items.json";
 
@@ -109,7 +109,7 @@ const XP_ABI = [
 const LAUNCHER_API = import.meta.env.VITE_ANALYTICS_API_URL || "https://worldofnads.onrender.com";
 const LOCAL_ITEMS = storeItemsData as StoreItem[];
 
-const getStoreImageUrl = (item: StoreItem) => item.image || `/skins_png/${item.id}.png`;
+const getStoreImageUrl = (item: StoreItem) => resolveSkinImageUrl(item.id, item.image);
 
 /**
  * Group key for a store item: the combo it belongs to, so its shaded and
@@ -184,7 +184,7 @@ export default function Dashboard() {
           id: String(s.id || ''),
           name: s.name || 'Unknown',
           price: s.price || '0 MON',
-          image: s.image || `/skins_png/${s.id || ''}.png`,
+          image: resolveSkinImageUrl(String(s.id || ''), s.image),
           category: 'skins',
           description: s.description || `${s.name || 'Skin'} from the catalog.`,
           onChainId: s.onChainId ?? null,
@@ -243,7 +243,6 @@ export default function Dashboard() {
   const [tab, setTab] = useState<"events" | "rewards" | "store">("events");
   const [filter, setFilter] = useState<"upcoming" | "live" | "completed">("live");
   const [storeFilter, setStoreFilter] = useState<"all" | "common" | "rare" | "epic" | "legendary">("all");
-  const [supplyData, setSupplyData] = useState<Record<number, { minted: number; maxSupply: number }>>({});
 
   // Re-roll the shaded/flat variant shown for each skin every time the Store
   // tab opens, so the grid lists one card per skin (not both editions).
@@ -383,28 +382,19 @@ export default function Dashboard() {
           } catch { /* XP contract not deployed yet */ }
         }
 
-        // Load owned skins + supply data from on-chain
+        // Load owned skins from on-chain
         const skinsContractAddress = import.meta.env.VITE_SKINS_CONTRACT_ADDRESS;
         if (skinsContractAddress) {
           try {
             const skinsContract = new ethers.Contract(skinsContractAddress, SKINS_ABI, provider);
             const owned: number[] = [];
-            const supplies: Record<number, { minted: number; maxSupply: number }> = {};
             for (const item of storeItems) {
               if (item.onChainId) {
-                const [balance, skinData] = await Promise.all([
-                  skinsContract.balanceOf(address, item.onChainId),
-                  skinsContract.skins(item.onChainId)
-                ]);
+                const balance = await skinsContract.balanceOf(address, item.onChainId);
                 if (Number(balance) > 0) owned.push(item.onChainId);
-                supplies[item.onChainId] = {
-                  minted: Number(skinData.minted),
-                  maxSupply: Number(skinData.maxSupply)
-                };
               }
             }
             setOwnedSkinIds(owned);
-            setSupplyData(supplies);
           } catch { /* Skins contract not deployed yet */ }
         }
       } catch (error) {
@@ -965,37 +955,18 @@ export default function Dashboard() {
                       (g) => g.id === "s-default" || g.id === "s-default-unshaded" || (g.onChainId && ownedSkinIds.includes(g.onChainId))
                     );
                     const isSelected = group.items.some((g) => g.id === selectedStore);
-                    const itemSupply = item.onChainId ? supplyData[item.onChainId] : null;
                     return (
                     <div
                       key={group.key}
                       className={`store-card ${isOwned ? "owned" : "unowned"} ${isSelected ? "selected" : ""}`}
                       onClick={() => setSelectedStore(item.id)}
                     >
-                      <div className="store-card-image" style={{ backgroundImage: `url(${getStoreImageUrl(item)})` }}>
-                        {!isOwned && (
-                          <span className="item-badge badge-store">new</span>
-                        )}
-                        {item.badge && (
-                          <span className="item-badge badge-store badge-new">{item.badge}</span>
-                        )}
-                      </div>
+                      <div className="store-card-image" style={{ backgroundImage: `url(${getStoreImageUrl(item)})` }} />
                       <div className="store-card-info">
                         <h3>{skinBaseName(item.name)}</h3>
                         <p>
                           {isOwned ? "Owned" : item.price}
                         </p>
-                        {item.tier && (
-                          <span className={`store-tier store-tier--${item.tier}`}>{item.tier}</span>
-                        )}
-                        {itemSupply && (
-                          <p className="store-supply">{itemSupply.minted}/{itemSupply.maxSupply} minted</p>
-                        )}
-                        {item.requiredXP > 0 && !isOwned && (
-                          <p className={`xp-requirement ${xpBalance >= item.requiredXP ? "xp-met" : "xp-needed"}`}>
-                            Lvl {getLevelFromXP(item.requiredXP)} required
-                          </p>
-                        )}
                       </div>
                     </div>
                     );

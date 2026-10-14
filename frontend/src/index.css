@@ -253,9 +253,7 @@ select,
     .notif-badge,
     .notif-badge-text,
     .tab-notif-badge,
-    .tab-notif-badge-text,
-    .badge-store,
-    .badge-new {
+    .tab-notif-badge-text {
         color: #000000 !important;
     }
 
