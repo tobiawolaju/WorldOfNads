@@ -7,6 +7,7 @@ import BackgroundPattern from "./components/Background";
 import RainbowBeam from "./components/RainbowBeam";
 import TopNavbar from "./components/TopNavbar";
 import FullscreenToggle from "./components/FullscreenToggle";
+import InstallPrompt from "./components/InstallPrompt";
 
 // UI
 import { FullScreenLoader } from "./components/ui/fullscreen-loader";
@@ -275,6 +276,7 @@ const AppContent: React.FC = () => {
       <BackgroundPattern />
       <RainbowBeam />
       {!isHomeRoute && <FullscreenToggle />}
+      <InstallPrompt />
       <FullScreenLoader visible={showLoader} />
       <ToastContainer
         position="top-center"

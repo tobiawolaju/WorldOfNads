@@ -1,25 +1,38 @@
 {
+  "id": "/",
   "short_name": "WONs",
   "name": "World of Nads",
+  "description": "World of Nads — the on-chain party game. Grab power-ups, outrun the storm and become a Nad.",
   "icons": [
     {
-      "src": "logo.jpg",
-      "sizes": "64x64 32x32 24x24 16x16",
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/loadinglogo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16 32x32 48x48",
       "type": "image/x-icon"
-    },
-    {
-      "src": "logo.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo.png",
-      "type": "image/png",
-      "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["fullscreen", "standalone"],
   "theme_color": "#e795e7",
-  "background_color": "#ffffff"
+  "background_color": "#e795e7",
+  "categories": ["games", "entertainment"]
 }
