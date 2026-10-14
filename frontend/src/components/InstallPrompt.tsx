@@ -89,7 +89,7 @@ export const InstallPrompt: React.FC = () => {
       aria-label="Install World of Nads"
     >
       <div className="install-prompt__card">
-        <span className="install-prompt__title">Install World of Nads</span>
+        <span className="install-prompt__title">World of Nads</span>
         {ios ? (
           <span className="install-prompt__subtitle">
             Tap the Share icon
