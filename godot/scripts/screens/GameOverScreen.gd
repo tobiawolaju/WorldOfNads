@@ -5,6 +5,12 @@ const LEVEL_STEP_BASE := 10
 const RETURN_HOME_COUNTDOWN := 8
 const LOBBY_SCENE_PATH := "res://scenes/lobby.tscn"
 
+# Design palette shared with login.tscn / dshbord.tscn.
+const WIN_COLOR := Color(0.43137255, 0.32941177, 1.0, 1.0)
+const WIN_COLOR_ALT := Color(0.34509805, 0.23137255, 0.83137256, 1.0)
+const LOSE_COLOR := Color(0.9411765, 0.22352941, 0.45490196, 1.0)
+const LOSE_COLOR_ALT := Color(0.75686276, 0.14509805, 0.36078432, 1.0)
+
 
 
 @onready var color_bg: ColorRect = get_node_or_null("ColorBG") as ColorRect
@@ -13,9 +19,11 @@ const LOBBY_SCENE_PATH := "res://scenes/lobby.tscn"
 @onready var result_title: Label = get_node_or_null("ColorBG/Result/BoxContainer/Title") as Label
 @onready var result_subtitle: Label = get_node_or_null("ColorBG/Result/BoxContainer2/Subtitle") as Label
 @onready var result_details: Label = get_node_or_null("ColorBG/Result/BoxContainer3/Details") as Label
-@onready var progress_bar: ProgressBar = get_node_or_null("ColorBG/Result/BoxContainer4/Control/ProgressBar") as ProgressBar
-@onready var level_label: Label = get_node_or_null("ColorBG/Result/BoxContainer4/Control/ProgressBar/Level") as Label
-@onready var xp_label: Label = get_node_or_null("ColorBG/Result/BoxContainer4/Control/ProgressBar/XP") as Label
+@onready var result_card: Panel = get_node_or_null("ColorBG/Result/BoxContainer4/Control/ResultCard") as Panel
+@onready var progress_bar: ProgressBar = get_node_or_null("ColorBG/Result/BoxContainer4/Control/ResultCard/ProgressBar") as ProgressBar
+@onready var level_label: Label = get_node_or_null("ColorBG/Result/BoxContainer4/Control/ResultCard/Level") as Label
+@onready var xp_label: Label = get_node_or_null("ColorBG/Result/BoxContainer4/Control/ResultCard/XP") as Label
+@onready var xp_gain_label: Label = get_node_or_null("ColorBG/Result/BoxContainer4/Control/ResultCard/GainLabel") as Label
 @onready var return_home_label: Label = get_node_or_null("ColorBG/Result/BoxContainer4/Control/returnhome") as Label
 @onready var skip_button: Button = get_node_or_null("ColorBG/Result/BoxContainer4/Control/skiptimmer") as Button
 
@@ -44,11 +52,11 @@ func _ready() -> void:
 func _apply_result(did_win: bool) -> void:
 	if color_bg != null:
 		color_bg.visible = true
-		color_bg.color = Color(0.345, 0.146, 1.0, 1.0) if did_win else Color(1.0, 0.0, 0.0, 1.0)
+		color_bg.color = WIN_COLOR if did_win else LOSE_COLOR
 
 	if color_bg2 != null:
 		color_bg2.visible = true
-		color_bg2.color = Color(0.345, 0.146, 1.0, 1.0) if did_win else Color(1.0, 0.0, 0.0, 1.0)
+		color_bg2.color = WIN_COLOR_ALT if did_win else LOSE_COLOR_ALT
 
 	if result_panel != null:
 		result_panel.visible = true
@@ -67,20 +75,20 @@ func _apply_result(did_win: bool) -> void:
 
 
 
-	if return_home_label != null and color_bg != null:
-		return_home_label.add_theme_color_override("font_color", color_bg.color)
-
 	if progress_bar != null:
 		progress_bar.visible = false
 		progress_bar.value = 0.0
 
+	if result_card != null:
+		result_card.visible = false
+
 	if level_label != null:
 		level_label.visible = false
-		level_label.text = "Level 0"
+		level_label.text = "LEVEL 0"
 
 	if xp_label != null:
 		xp_label.visible = false
-		xp_label.text = "XP 0"
+		xp_label.text = "0 XP"
 
 	if return_home_label != null:
 		return_home_label.visible = false
@@ -181,8 +189,40 @@ func _play_xp_progression(earned_xp: int, starting_xp: int) -> void:
 	if progress_bar == null:
 		return
 
+	if result_card != null:
+		result_card.visible = true
+		result_card.modulate.a = 0.0
+		result_card.scale = Vector2.ONE * 0.92
+		result_card.pivot_offset = result_card.size * 0.5
+
 	progress_bar.visible = true
-	
+	progress_bar.value = 0.0
+
+	if level_label != null:
+		level_label.visible = true
+
+	if xp_label != null:
+		xp_label.visible = true
+
+	if xp_gain_label != null:
+		xp_gain_label.text = "+" + str(earned_xp) + " XP"
+		xp_gain_label.pivot_offset = xp_gain_label.size * 0.5
+		xp_gain_label.scale = Vector2.ONE * 0.5
+
+	# Reveal the result card before the numbers start ticking up.
+	if result_card != null:
+		if _timeline_tween != null:
+			_timeline_tween.kill()
+		_timeline_tween = create_tween()
+		_timeline_tween.set_parallel(true)
+		_timeline_tween.tween_property(result_card, "modulate:a", 1.0, 0.25).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		_timeline_tween.tween_property(result_card, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_timeline_tween.tween_property(xp_gain_label, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		await _timeline_tween.finished
+
+	if _returning:
+		return
+
 	var accumulated_total_xp := starting_xp
 	var current_level := _get_level_from_xp(accumulated_total_xp)
 	var xp_in_current_level := accumulated_total_xp - _get_xp_required_for_level(current_level)
@@ -192,12 +232,10 @@ func _play_xp_progression(earned_xp: int, starting_xp: int) -> void:
 	progress_bar.value = float(xp_in_current_level)
 
 	if level_label != null:
-		level_label.visible = true
-		level_label.text = "Level " + str(current_level)
+		level_label.text = "LEVEL " + str(current_level)
 
 	if xp_label != null:
-		xp_label.visible = true
-		xp_label.text = "XP " + str(accumulated_total_xp)
+		xp_label.text = str(accumulated_total_xp) + " XP"
 
 	var remaining_to_add := earned_xp
 
@@ -217,7 +255,7 @@ func _play_xp_progression(earned_xp: int, starting_xp: int) -> void:
 		xp_in_current_level += gain
 
 		if xp_label != null:
-			xp_label.text = "XP " + str(accumulated_total_xp)
+			xp_label.text = str(accumulated_total_xp) + " XP"
 
 		if xp_in_current_level >= level_requirement:
 			current_level += 1
@@ -226,8 +264,17 @@ func _play_xp_progression(earned_xp: int, starting_xp: int) -> void:
 			progress_bar.max_value = float(level_requirement)
 			progress_bar.value = 0.0
 			if level_label != null:
-				level_label.text = "Level " + str(current_level)
+				level_label.text = "LEVEL " + str(current_level)
+			_play_level_up_flash()
 			await get_tree().create_timer(0.08).timeout
+
+
+func _play_level_up_flash() -> void:
+	if result_card == null:
+		return
+	var flash := create_tween()
+	flash.tween_property(result_card, "modulate", Color(1.35, 1.3, 1.1, 1.0), 0.12)
+	flash.tween_property(result_card, "modulate", Color.WHITE, 0.22)
 
 func _get_level_from_xp(xp: int) -> int:
 	var lvl := 0
@@ -247,6 +294,9 @@ func _get_xp_required_for_level(level: int) -> int:
 
 
 func _show_return_home_phase() -> void:
+	if result_card != null:
+		result_card.visible = false
+
 	if progress_bar != null:
 		progress_bar.visible = false
 
