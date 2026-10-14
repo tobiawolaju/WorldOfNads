@@ -14,11 +14,18 @@
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
       ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
     }
   ],
   "rewrites": [
     {
-      "source": "/((?!godot|assets|api|favicon.ico|attachments).*)",
+      "source": "/((?!godot|assets|api|favicon.ico|attachments|manifest.json|sw.js).*)",
       "destination": "/"
     }
   ]

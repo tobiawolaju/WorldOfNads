@@ -57,6 +57,16 @@ const monadTestnet = {
 initGoogleAnalytics();
 blockBrowserZoom();
 
+// Register the service worker that makes the site installable as an app. It
+// never caches, so it only unlocks the native install prompt / WebAPK.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // Installing from the browser menu still works if this fails.
+    });
+  });
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <PrivyProvider

@@ -13,11 +13,18 @@
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
         { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
       ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
     }
   ],
   "rewrites": [
     {
-      "source": "/((?!godot|assets|api|favicon.ico|play.html|attachments).*)",
+      "source": "/((?!godot|assets|api|favicon.ico|play.html|attachments|manifest.json|sw.js).*)",
       "destination": "/"
     }
   ]
