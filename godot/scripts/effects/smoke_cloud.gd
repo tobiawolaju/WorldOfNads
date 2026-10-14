@@ -30,6 +30,11 @@ var _seed: int = 0
 var _age: float = 0.0
 var _particles: CPUParticles3D = null
 var _material: StandardMaterial3D = null
+## True on the throwaway cloud built for the warm-up (player.gd's
+## `_prewarm_smoke_cloud`). It is assembled exactly like a real cloud so its
+## material's shader variant compiles, but is kept fully transparent and never
+## expires on its own; the caller frees it once the shader has compiled.
+var _is_warmup: bool = false
 
 
 ## Called before the cloud is added to the tree. `cloud_radius` is the cloud's
@@ -39,8 +44,15 @@ func setup(cloud_radius: float, spawn_seed: int) -> void:
 	_seed = spawn_seed
 
 
+## Turns this cloud into a throwaway warm-up. Must be called before the cloud
+## enters the tree, since that is when its material is built.
+func set_warmup() -> void:
+	_is_warmup = true
+
+
 func _ready() -> void:
-	add_to_group("smoke_clouds")
+	if not _is_warmup:
+		add_to_group("smoke_clouds")
 	_build_particles()
 
 
@@ -83,7 +95,9 @@ func _build_particles() -> void:
 	_material.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	_material.billboard_keep_scale = true
 	_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	_material.albedo_color = SMOKE_COLOR
+	# Warm-up clouds stay fully transparent so they can never flash on screen
+	# while their shader compiles.
+	_material.albedo_color = Color(SMOKE_COLOR, 0.0) if _is_warmup else SMOKE_COLOR
 	_material.albedo_texture = _get_puff_texture()
 	# Multiply the sprite by the particle's colour so its alpha ramp fades puffs.
 	_material.vertex_color_use_as_albedo = true
@@ -140,6 +154,10 @@ func _build_particles() -> void:
 
 
 func _process(delta: float) -> void:
+	# Warm-up clouds exist only to make the shader compile; they are invisible
+	# and freed by their caller, so they never age or dissolve on their own.
+	if _is_warmup:
+		return
 	_age += delta
 	var fade := 1.0
 	if _age < FADE_IN:

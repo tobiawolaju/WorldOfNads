@@ -178,6 +178,9 @@ var _twin_world_offset: Vector3 = Vector3.ZERO
 var _smoke_drop_cooldown: float = 0.0
 ## Live smog clouds this player spawned, for the concurrent-cloud cap.
 var _smoke_clouds: Array = []
+## Set once the SMOG effect's sprite + shader have been warmed up, so respawns and
+## later matches in the same process don't pay to build them again.
+static var _smoke_prewarmed: bool = false
 ## Cached once; avoids a tree search every pickup/drop.
 var _cached_buttons_hud: Node = null
 ## HOOK punch: while true, the run/idle animation states stay suppressed and the
@@ -452,7 +455,13 @@ func _ready() -> void:
 			storm_damage_per_second = _storm_eye.damage_per_second
 	else:
 		print("Player: No StormEye found in group 'storm_eye', using defaults")
-	
+
+	# SMOG warm-up: build the smoke cloud's sprite + shader now (off the first
+	# drop). Only in matches (the lobby/preview has no storm), and only once per
+	# process, so a respawn or a later match does not repeat it.
+	if _storm_eye != null and not _smoke_prewarmed:
+		_prewarm_smoke_cloud.call_deferred()
+
 	_cached_viewport_size = get_viewport().get_visible_rect().size
 	_setup_anim_tree()
 	_play_anim("idle")
@@ -1656,6 +1665,43 @@ func _strip_decoy_physics(node: Node) -> void:
 # True while the SMOG effect's 8-second drop window is running.
 func _is_smoke_active() -> bool:
 	return _active_power_up_mode == LocalPickup.PowerUpMode.SMOKE_GRENADE and _active_power_up_remaining > 0.0
+
+
+# Builds one throwaway smoke cloud so the first real drop doesn't hitch. The
+# first cloud otherwise pays, on the frame Action is pressed, for generating its
+# 64x64 noise sprite and for compiling its particle material's shader variant.
+# Neither is huge alone, but together they read as a stutter right as the player
+# uses the power-up. Off-screen geometry is culled before its material compiles,
+# so the warm-up cloud is parked in front of the camera; it is kept fully
+# transparent, so nothing shows. One-shot per process.
+func _prewarm_smoke_cloud() -> void:
+	if _smoke_prewarmed:
+		return
+	if DisplayServer.get_name() == "headless":
+		return
+	var camera := _resolve_camera_node()
+	if camera == null:
+		return
+	var cloud := SMOKE_CLOUD_SCENE.instantiate() as Node3D
+	if cloud == null:
+		return
+	_smoke_prewarmed = true
+	cloud.call("setup", SMOKE_CLOUD_RADIUS, 1)
+	cloud.call("set_warmup")
+	var parent := get_tree().current_scene
+	if parent == null:
+		parent = get_parent()
+	if parent == null:
+		cloud.queue_free()
+		return
+	parent.add_child(cloud)
+	# Two metres in front of the camera: inside the frustum, so it is drawn.
+	cloud.global_position = camera.global_position - camera.global_transform.basis.z * 2.0
+	# Give the renderer a couple of drawn frames to compile the material, then drop it.
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	if is_instance_valid(cloud):
+		cloud.queue_free()
 
 
 # Drops a smog cloud at the player's feet, if the drop cooldown has elapsed.
