@@ -1,0 +1,26 @@
+name: rust-check
+
+# Compile-verifies the Rust room server in CI. Nobody runs Rust or Docker on a dev
+# machine for this project (see AGENTS.md: installs happen in CI/deploy), so this is
+# the compile check for backend-rust until it is built on the deploy target.
+on:
+  push:
+    paths:
+      - "backend-rust/**"
+      - ".github/workflows/rust-check.yml"
+  pull_request:
+    paths:
+      - "backend-rust/**"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      # --all-targets also compiles the unit tests and dev-dependencies.
+      - run: cargo check --all-targets
