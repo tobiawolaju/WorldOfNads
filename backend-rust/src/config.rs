@@ -30,6 +30,7 @@ pub const MAX_CLIENT_BUFFERED_BYTES: usize = 512 * 1024;
 pub const WS_RATE_LIMIT_WINDOW_MS: i64 = 1000;
 pub const WS_RATE_LIMIT_MAX_MESSAGES: u32 = 60;
 pub const WS_MAX_MESSAGE_SIZE: usize = 4096;
+pub const RATE_LIMIT_BAN_DURATION_MS: i64 = 60000;
 
 // Heartbeat sweep. Node pings each game socket every `GAME_HEARTBEAT_INTERVAL_MS` and
 // terminates any socket that missed the previous pong, so a client that disappears
