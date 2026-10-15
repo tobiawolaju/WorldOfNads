@@ -5,6 +5,7 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -136,6 +137,12 @@ impl AppState {
     }
 }
 
+static NEXT_CONN_ID: AtomicU64 = AtomicU64::new(1);
+
+fn next_conn_id() -> u64 {
+    NEXT_CONN_ID.fetch_add(1, Ordering::Relaxed)
+}
+
 pub fn router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/", get(ws_game))
@@ -208,40 +215,93 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
         }
     }
 
-    let player_id = uuid::Uuid::new_v4().to_string();
-
     let mut username = parse_username(&raw_username);
-    if username.is_empty() {
-        username = format!("player-{}", &player_id[..8]);
+    let resume_target = params
+        .get("resume")
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty());
+
+    let conn_id = next_conn_id();
+    let now = now_ms();
+    let mut player_id = String::new();
+    let mut resumed = false;
+
+    if let Some(ref target) = resume_target {
+        let ok = {
+            let mut room = state.room.lock().await;
+            room.resume_player(target, &username, &requested_skin, conn_id, now)
+        };
+        if ok {
+            player_id = target.clone();
+            resumed = true;
+        }
+    }
+
+    if !resumed {
+        player_id = uuid::Uuid::new_v4().to_string();
+        if username.is_empty() {
+            username = format!("player-{}", &player_id[..8]);
+        }
+        let (full, max) = {
+            let room = state.room.lock().await;
+            (room.player_count(), room.max_players)
+        };
+        if let Some(max) = max {
+            if full >= max {
+                tracing::info!("rejecting connection: room full ({}/{})", full, max);
+                let _ = socket
+                    .send(Message::Close(Some(CloseFrame {
+                        code: close_code::POLICY,
+                        reason: Cow::Borrowed("match_full"),
+                    })))
+                    .await;
+                return;
+            }
+        }
+        {
+            let mut room = state.room.lock().await;
+            room.add_player(&player_id, &username, &requested_skin, 0, conn_id);
+        }
+    }
+
+    {
+        let mut clients = state.clients.lock().await;
+        if let Some(previous) = clients.remove(&player_id) {
+            let _ = previous.send(Message::Close(None));
+        }
     }
 
     let (raw_tx, rx) = mpsc::unbounded_channel::<Message>();
     let queued = Arc::new(AtomicUsize::new(0));
     let tx = ClientTx::new(raw_tx, queued.clone());
 
-    {
+    let (connect_bytes, display_name, display_skin) = {
         let mut room = state.room.lock().await;
-        room.add_player(&player_id, &username, &requested_skin, 0);
         room.maybe_start_countdown();
-        let hello = encode(&ConnectMsg {
+        let (name, skin, xp) = room.player_identity(&player_id).unwrap_or_else(|| (username.clone(), requested_skin.clone(), 0));
+        let bytes = encode(&ConnectMsg {
             msg_type: "connect",
             id: player_id.clone(),
-            username: username.clone(),
-            skin: requested_skin.clone(),
-            xp: 0,
+            username: name.clone(),
+            skin: skin.clone(),
+            xp,
         });
-        tx.send(Message::Binary(hello));
-        tracing::info!(
-            "player connected: {} ({}) skin={}",
-            player_id,
-            username,
-            requested_skin
-        );
-    }
+        (bytes, name, skin)
+    };
+    let _ = tx.send(Message::Binary(connect_bytes));
     {
         let mut clients = state.clients.lock().await;
         clients.insert(player_id.clone(), tx.clone());
     }
+
+    tracing::info!(
+        "player {}: {} ({}) skin={}{}",
+        if resumed { "resumed" } else { "connected" },
+        player_id,
+        display_name,
+        display_skin,
+        if resumed { " [resume]" } else { "" }
+    );
 
     let (sender, mut receiver) = socket.split();
     let writer = tokio::spawn(drain(sender, rx, queued));
@@ -276,7 +336,7 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
                             tracing::warn!("oversized message from {}; closing", player_id);
                             break;
                         }
-                        handle_client_message(&state, &player_id, &bytes).await;
+                        handle_client_message(&state, &player_id, conn_id, &bytes).await;
                     }
                     // Only needed for peers that ping us; axum answers a received ping
                     // on its own, but queuing the pong keeps the reply on the same path
@@ -307,22 +367,27 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
 
     writer.abort();
 
-    {
+    let orphaned = {
         let mut clients = state.clients.lock().await;
         clients.remove(&player_id);
-    }
-
-    let removed = {
         let mut room = state.room.lock().await;
-        room.remove_player(&player_id, now_ms())
+        room.orphan_player(&player_id, conn_id, now_ms())
     };
-    if let Some(payload) = removed {
-        broadcast_bytes(&state, &payload).await;
+    if !orphaned {
+        let removed = {
+            let mut room = state.room.lock().await;
+            room.remove_player(&player_id, now_ms())
+        };
+        if let Some(payload) = removed {
+            broadcast_bytes(&state, &payload).await;
+        }
+        tracing::info!("player disconnected: {}", player_id);
+    } else {
+        tracing::info!("player disconnected, holding for resume: {}", player_id);
     }
-    tracing::info!("player disconnected: {}", player_id);
 }
 
-async fn handle_client_message(state: &Arc<AppState>, player_id: &str, bytes: &[u8]) {
+async fn handle_client_message(state: &Arc<AppState>, player_id: &str, conn_id: u64, bytes: &[u8]) {
     let data: Value = match rmp_serde::from_slice(bytes) {
         Ok(v) => v,
         Err(_) => return,
@@ -333,6 +398,9 @@ async fn handle_client_message(state: &Arc<AppState>, player_id: &str, bytes: &[
     };
 
     let mut room = state.room.lock().await;
+    if !room.owns_player(player_id, conn_id) {
+        return;
+    }
     match msg_type.as_str() {
         "update_state" => room.apply_update_state(player_id, &data),
         "pickup_request" => {

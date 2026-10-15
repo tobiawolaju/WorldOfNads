@@ -36,6 +36,13 @@ pub const WS_MAX_MESSAGE_SIZE: usize = 4096;
 // without a clean close does not linger as a frozen player.
 pub const GAME_HEARTBEAT_INTERVAL_MS: u64 = 30_000;
 
+// Reconnect grace. A dropped socket keeps its player for this long, so a client that
+// reconnects (Godot reconnects in ~4–9 s) can resume the same entity (same position,
+// same held items, same id) instead of arriving as a second player. While the player
+// is orphaned, their avatar is hidden from everyone and they are not counted in
+// `match.pl`. Node has no equivalent; this is a UX improvement for bad networks.
+pub const RECONNECT_GRACE_MS: i64 = 20_000;
+
 // Movement validation.
 pub const MAX_PLAYER_SPEED: f64 = 12.0;
 pub const MAX_PLAYER_VERTICAL_SPEED: f64 = 36.0;
