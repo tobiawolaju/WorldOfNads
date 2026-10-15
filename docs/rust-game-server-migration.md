@@ -208,8 +208,8 @@ Port these behaviors 1:1 and assert equality against the Node server with a shar
 - [ ] Movement validation: `MAX_PLAYER_SPEED`, `MAX_PLAYER_VERTICAL_SPEED`,
       `MAX_THROW_IMPULSE` clamps; rejected updates.
 - [ ] Inbound limits: `WS_MAX_MESSAGE_SIZE`, rate limit (`60/s`), ban window.
-- [ ] Send backpressure: drop if `bufferedAmount >= MAX_CLIENT_BUFFERED_BYTES`.
-- [ ] Heartbeat: ping 30s, terminate on missed pong, cleanup broadcasts `removed`.
+- [x] Send backpressure: skip a client whose queue exceeds `MAX_CLIENT_BUFFERED_BYTES`.
+- [x] Heartbeat: ping 30s, terminate on missed pong, cleanup broadcasts `removed`.
 - [ ] Match lifecycle: start at `minPlayersToStart`, countdown, timer, winner resolution,
       reward tick (1 Hz), storm shrink cadence.
 - [ ] Items: chicken pickup/drop, lootbox pickup/drop, throw impulse, held-item cleanup on
@@ -230,18 +230,26 @@ Port these behaviors 1:1 and assert equality against the Node server with a shar
       (velocities are only ever zeroed), so Rust ignoring them is parity, not drift.
 - [x] Inbound limits: `WS_MAX_MESSAGE_SIZE` (4096) + rate limit (60 per 1000 ms) —
       enforced in `net.rs`.
-- [x] Heartbeat: ping every 30 s, plus `removed` broadcast on close.
+- [x] Heartbeat: ping every 30 s with Node's `isAlive` sweep — a socket that misses the
+      previous pong is dropped, and the close path still broadcasts `removed`.
 - [x] Match lifecycle: `minPlayersToStart`, 5 s countdown, 180 s timer, winner
       resolution, 1 Hz reward tick, storm shrink cadence.
 - [x] Items: chicken/lootbox/p1–p5 pickup/drop/use, held-item cleanup on close.
-- [ ] Send backpressure: Node drops a client once
-      `bufferedAmount >= MAX_CLIENT_BUFFERED_BYTES` (512 KiB). **Rust uses an unbounded
-      outbound channel**, so one slow client can grow memory without limit. Fix first.
-- [ ] Rate-limit ban window (`RATE_LIMIT_BAN_DURATION_MS`, 60 s + IP ban).
-- [ ] Missed-pong termination (Node's `isAlive` sweep).
+- [x] Send backpressure: `ClientTx` holds a per-client byte budget and skips bulk frames
+      once `MAX_CLIENT_BUFFERED_BYTES` (512 KiB) is queued — Node's `bufferedAmount`
+      guard, with Node's semantics: *skip the frame, keep the session*, never a
+      disconnect. Control frames (ping/pong/close) bypass the budget so keepalives and
+      shutdown still land on a saturated socket. The `/events` feed uses the same guard,
+      and a subscriber's queue is released when its socket closes.
+- [x] Capacity rejection: same guard as Node (`playerCount() >= maxPlayers` → close at
+      connect). Node reads `currentMaxPlayers` from its matchmaker/DB; Rust reads
+      `MAX_PLAYERS` (unset or `unlimited` = Node's default of no cap).
+- [ ] Rate-limit ban window (`RATE_LIMIT_BAN_DURATION_MS`, 60 s + IP ban). Rust closes
+      the socket on the same 61st message but does not ban the peer address.
 - [ ] Session token verification: Node rejects with `1008 invalid_token`;
-      `parse_username` currently accepts any token.
-- [ ] Capacity rejection: Node closes `1008 match_full` at `currentMaxPlayers`.
+      `parse_username` currently accepts any token. Needs the shared session store.
+- [ ] Close codes: Rust drops the socket (client sees `1006`) where Node sends
+      `1008 rate_limited` / `1009 message_too_large`. `match_full` *is* sent as 1008.
 - [ ] Control-plane skin/xp: Node reads the Firebase profile + wallet; Rust uses the
       `skin`/`skinId` query param and sends `xp: 0`.
 
