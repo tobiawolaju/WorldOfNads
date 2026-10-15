@@ -31,6 +31,11 @@ pub const WS_RATE_LIMIT_WINDOW_MS: i64 = 1000;
 pub const WS_RATE_LIMIT_MAX_MESSAGES: u32 = 60;
 pub const WS_MAX_MESSAGE_SIZE: usize = 4096;
 
+// Heartbeat sweep. Node pings each game socket every `GAME_HEARTBEAT_INTERVAL_MS` and
+// terminates any socket that missed the previous pong, so a client that disappears
+// without a clean close does not linger as a frozen player.
+pub const GAME_HEARTBEAT_INTERVAL_MS: u64 = 30_000;
+
 // Movement validation.
 pub const MAX_PLAYER_SPEED: f64 = 12.0;
 pub const MAX_PLAYER_VERTICAL_SPEED: f64 = 36.0;
@@ -65,3 +70,27 @@ pub const ITEM_SPAWN_MARGIN: f64 = 4.0;
 pub const MAX_EVENT_HISTORY: usize = 100;
 
 pub const POWER_UP_IDS: [&str; 5] = ["p1", "p2", "p3", "p4", "p5"];
+
+/// Capacity of the room, mirroring Node's `currentMaxPlayers`.
+///
+/// `None` means unlimited, which is Node's default (`let currentMaxPlayers = null`).
+/// Set `MAX_PLAYERS=N` to reject further connections with a `1008 match_full` close
+/// (Node takes this value from its matchmaker/DB instead of the environment);
+/// `MAX_PLAYERS=unlimited`, or leaving it unset, keeps the room open.
+pub fn max_players() -> Option<usize> {
+    let raw = std::env::var("MAX_PLAYERS").ok()?;
+    let value = raw.trim();
+    if value.is_empty() || value.eq_ignore_ascii_case("unlimited") {
+        return None;
+    }
+    match value.parse::<usize>() {
+        Ok(parsed) if parsed > 0 => Some(parsed),
+        _ => {
+            tracing::warn!(
+                "ignoring invalid MAX_PLAYERS={:?} (expected a positive integer or \"unlimited\")",
+                raw
+            );
+            None
+        }
+    }
+}
