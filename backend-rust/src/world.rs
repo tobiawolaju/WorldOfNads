@@ -30,6 +30,8 @@ pub struct Player {
     pub xp: i64,
     pub last_update_ms: i64,
     pub cell_key: String,
+    pub conn_id: u64,
+    pub orphaned_at: Option<i64>,
     pub reward: Reward,
 }
 
@@ -170,7 +172,7 @@ impl Room {
     }
 
     pub fn player_count(&self) -> usize {
-        self.players.len()
+        self.players.values().filter(|p| p.orphaned_at.is_none()).count()
     }
 
     pub fn event_history_snapshot(&self) -> Value {
@@ -179,7 +181,7 @@ impl Room {
 
     // -- players -----------------------------------------------------------
 
-    pub fn add_player(&mut self, id: &str, username: &str, skin: &str, xp: i64) {
+    pub fn add_player(&mut self, id: &str, username: &str, skin: &str, xp: i64, conn_id: u64) {
         let player = Player {
             id: id.to_string(),
             username: username.to_string(),
@@ -192,6 +194,8 @@ impl Room {
             xp,
             last_update_ms: now_ms(),
             cell_key: String::new(),
+            conn_id,
+            orphaned_at: None,
             reward: Reward {
                 accumulated_xp: 0.0,
                 accumulated_mon: 0.0,
@@ -391,6 +395,50 @@ impl Room {
     }
 
     // -- client messages ---------------------------------------------------
+
+    pub fn owns_player(&self, id: &str, conn_id: u64) -> bool {
+        self.players.get(id).map(|p| p.orphaned_at.is_none() && p.conn_id == conn_id).unwrap_or(false)
+    }
+
+    pub fn orphan_player(&mut self, id: &str, conn_id: u64, now: i64) -> bool {
+        let owns = match self.players.get(id) {
+            Some(p) => p.orphaned_at.is_none() && p.conn_id == conn_id,
+            None => return false,
+        };
+        if !owns {
+            return false;
+        }
+        self.drop_held_items_at_player(id);
+        self.remove_from_cell_index(id);
+        if let Some(p) = self.players.get_mut(id) {
+            p.orphaned_at = Some(now + RECONNECT_GRACE_MS);
+            p.animation = "idle".to_string();
+        }
+        true
+    }
+
+    pub fn resume_player(&mut self, id: &str, username: &str, skin: &str, conn_id: u64, now: i64) -> bool {
+        match self.players.get_mut(id) {
+            Some(p) => {
+                if !username.is_empty() {
+                    p.username = username.to_string();
+                }
+                if !skin.is_empty() {
+                    p.skin = skin.to_string();
+                }
+                p.conn_id = conn_id;
+                p.orphaned_at = None;
+                p.last_update_ms = now;
+            }
+            None => return false,
+        }
+        self.update_player_cell_index(id);
+        true
+    }
+
+    pub fn player_identity(&self, id: &str) -> Option<(String, String, i64)> {
+        self.players.get(id).map(|p| (p.username.clone(), p.skin.clone(), p.xp))
+    }
 
     pub fn apply_update_state(&mut self, id: &str, data: &Value) {
         if !self.players.contains_key(id) {
@@ -635,6 +683,9 @@ impl Room {
         let ids: Vec<String> = self.players.keys().cloned().collect();
         for pid in ids {
             if let Some(player) = self.players.get_mut(&pid) {
+                if player.orphaned_at.is_some() {
+                    continue;
+                }
                 let dx = chicken_x - player.x;
                 let dz = chicken_z - player.z;
                 let dist = (dx * dx + dz * dz).sqrt();
@@ -788,6 +839,17 @@ impl Room {
             return out;
         }
 
+        // Expire orphaned players whose reconnect grace window has passed.
+        let expired: Vec<String> = self
+            .players
+            .values()
+            .filter(|p| p.orphaned_at.map(|t| t <= now).unwrap_or(false))
+            .map(|p| p.id.clone())
+            .collect();
+        for id in expired {
+            let _ = self.remove_player(&id, now);
+        }
+
         let current_players: HashMap<String, PlayerNet> = self
             .players
             .values()
@@ -801,7 +863,12 @@ impl Room {
             .collect();
         let current_match = self.build_encoded_match();
 
-        let recipient_ids: Vec<String> = self.players.keys().cloned().collect();
+        let recipient_ids: Vec<String> = self
+            .players
+            .values()
+            .filter(|p| p.orphaned_at.is_none())
+            .map(|p| p.id.clone())
+            .collect();
         let mut messages = std::mem::take(&mut self.pending_reward_msgs);
 
         for recipient_id in recipient_ids {
@@ -1093,8 +1160,8 @@ mod tests {
     #[test]
     fn full_snapshot_has_expected_shape() {
         let mut room = Room::new();
-        room.add_player("p1", "alice", "s-default", 0);
-        room.add_player("p2", "bob", "s-default", 0);
+        room.add_player("p1", "alice", "s-default", 0, 1);
+        room.add_player("p2", "bob", "s-default", 0, 2);
 
         let out = room.tick(1_000_000_000_000);
         let (_, bytes) = out.messages.iter().find(|(id, _)| id == "p1").unwrap();
@@ -1113,7 +1180,7 @@ mod tests {
     #[test]
     fn movement_is_clamped() {
         let mut room = Room::new();
-        room.add_player("p1", "alice", "s-default", 0);
+        room.add_player("p1", "alice", "s-default", 0, 1);
         let data = serde_json::json!({
             "type": "update_state",
             "qx": 100000, "qy": 0, "qz": 0, "qrot": 0, "anim_id": 1
@@ -1127,13 +1194,13 @@ mod tests {
     #[test]
     fn pickup_sets_authoritative_holder() {
         let mut room = Room::new();
-        room.add_player("p1", "alice", "s-default", 0);
+        room.add_player("p1", "alice", "s-default", 0, 1);
         room.pickup_request("p1", "Chicken");
         assert!(room.chicken.is_held);
         assert_eq!(room.chicken.holder_id.as_deref(), Some("p1"));
 
         // A second player can steal it (last claim wins).
-        room.add_player("p2", "bob", "s-default", 0);
+        room.add_player("p2", "bob", "s-default", 0, 2);
         room.pickup_request("p2", "Chicken");
         assert_eq!(room.chicken.holder_id.as_deref(), Some("p2"));
     }

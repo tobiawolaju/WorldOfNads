@@ -1736,13 +1736,20 @@ func _normalize_skin_name(raw_skin: String) -> String:
 	return key if key != "" else DEFAULT_SKIN_NAME
 
 func _build_ws_url_with_username(base_url: String) -> String:
-	if local_username == "":
-		return base_url
-	var joiner = "&" if base_url.find("?") != -1 else "?"
-	var skin_param := ""
+	var url := base_url
+	var sep := "&" if url.find("?") != -1 else "?"
+	var resume_id := player_id
+	if resume_id == "":
+		resume_id = _preserved_local_id
+	if resume_id != "":
+		url += "%sresume=%s" % [sep, resume_id.uri_encode()]
+		sep = "&"
+	if local_username != "":
+		url += "%susername=%s" % [sep, local_username.uri_encode()]
+		sep = "&"
 	if local_skin_name != "":
-		skin_param = "&skin=%s" % local_skin_name.uri_encode()
-	return "%s%susername=%s%s" % [base_url, joiner, local_username.uri_encode(), skin_param]
+		url += "%sskin=%s" % [sep, local_skin_name.uri_encode()]
+	return url
 
 func _resolve_server_username(data: Dictionary, fallback_id: String) -> String:
 	var candidate := str(data.get("u", data.get("username", ""))).strip_edges()
