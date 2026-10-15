@@ -150,7 +150,10 @@ impl Room {
             match_running: false,
             match_started_this_round: false,
             min_players_to_start: DEFAULT_MIN_PLAYERS_TO_START,
-            max_players: None,
+            // Node keeps one `currentMaxPlayers` for both the connect-time guard and
+            // `buildMatchState().maxPlayers`; read it once so the two stay in step.
+            // Unset or `unlimited` means no cap, which is Node's default.
+            max_players: max_players(),
             match_start_countdown: -1.0,
             storm_radius: STORM_START_RADIUS,
             storm_shrink_timer: 0.0,

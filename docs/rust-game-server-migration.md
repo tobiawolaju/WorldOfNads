@@ -242,8 +242,9 @@ Port these behaviors 1:1 and assert equality against the Node server with a shar
       shutdown still land on a saturated socket. The `/events` feed uses the same guard,
       and a subscriber's queue is released when its socket closes.
 - [x] Capacity rejection: same guard as Node (`playerCount() >= maxPlayers` → close at
-      connect). Node reads `currentMaxPlayers` from its matchmaker/DB; Rust reads
-      `MAX_PLAYERS` (unset or `unlimited` = Node's default of no cap).
+      connect), fed by the same value the room reports as `match.maxPlayers`. Node reads
+      `currentMaxPlayers` from its matchmaker/DB; Rust reads `MAX_PLAYERS` (unset or
+      `unlimited` = Node's default of no cap).
 - [ ] Rate-limit ban window (`RATE_LIMIT_BAN_DURATION_MS`, 60 s + IP ban). Rust closes
       the socket on the same 61st message but does not ban the peer address.
 - [ ] Session token verification: Node rejects with `1008 invalid_token`;

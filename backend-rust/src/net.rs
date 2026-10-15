@@ -185,14 +185,13 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
     let requested_skin = resolve_skin_name(&skin_param);
 
     // Node rejects the connection outright when the room is at capacity
-    // (`currentMaxPlayers !== null && getPlayerCount() >= currentMaxPlayers`) and tells
-    // the client why with a `1008 match_full` close. The cap is unlimited by default,
-    // matching Node.
-    if let Some(max_players) = max_players() {
-        let player_count = {
-            let room = state.room.lock().await;
-            room.player_count()
-        };
+    // (`currentMaxPlayers !== null && getPlayerCount() >= currentMaxPlayers`), using the
+    // same value it reports as `match.maxPlayers`.
+    let (player_count, max_players) = {
+        let room = state.room.lock().await;
+        (room.player_count(), room.max_players)
+    };
+    if let Some(max_players) = max_players {
         if player_count >= max_players {
             tracing::info!(
                 "rejecting connection: room full ({}/{} players)",
