@@ -206,6 +206,8 @@ var _ignored_local_player: Node = null
 var _local_player_exception_active: bool = false
 
 
+var _idle_tween: Tween = null
+
 func _ready() -> void:
 	add_to_group(GROUP)
 	# Run after the holder's AnimationTree and Skeleton3D, which both sit at the
@@ -240,6 +242,8 @@ func _ready() -> void:
 			_mesh_instances.append(child)
 			if child.material_override != null:
 				child.material_override = child.material_override.duplicate()
+	_apply_glow()
+	_start_idle_anim()
 
 
 func _find_mesh() -> MeshInstance3D:
@@ -538,11 +542,42 @@ func _ensure_local_player_exception() -> void:
 # physics step returned last frame's bone and the flag visibly trailed the player
 # at 30 Hz. Following once per rendered frame keeps it welded to the back with no
 # extra interpolation.
+
+func _start_idle_anim() -> void:
+	if _idle_tween != null and _idle_tween.is_valid():
+		_idle_tween.kill()
+	_idle_tween = create_tween()
+	_idle_tween.set_loops()
+	if _mesh != null:
+		_idle_tween.tween_property(_mesh, "position:y", mesh_offset_y + 0.12, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_idle_tween.tween_property(_mesh, "position:y", mesh_offset_y, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_idle_tween.tween_interval(0.4)
+
+func _apply_glow() -> void:
+	var c := power_up_color()
+	if is_objective_item():
+		c = c.lightened(0.25)
+	for mi in _mesh_instances:
+		if mi == null or not is_instance_valid(mi):
+			continue
+		var mat := mi.material_override
+		if mat is StandardMaterial3D:
+			mat.emission_enabled = true
+			mat.emission = c
+			mat.emission_energy_multiplier = 0.6
+			mat.emission_operator = BaseMaterial3D.EMISSION_OP_ADD
+
 func _process(_delta: float) -> void:
 	_ensure_local_player_exception()
 	if not is_held:
-		# Dropped: the engine owns the transform, nothing to drive.
+		if _mesh != null:
+			_mesh.rotate_y(_delta * 0.8)
+		if _idle_tween == null or not _idle_tween.is_valid():
+			_start_idle_anim()
 		return
+	if _idle_tween != null and _idle_tween.is_valid():
+		_idle_tween.kill()
+		_idle_tween = null
 	if not is_instance_valid(holder):
 		# Holder was removed (player left, scene changed) - release the item.
 		drop()

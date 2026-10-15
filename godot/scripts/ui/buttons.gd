@@ -39,6 +39,8 @@ var _held_color: Color = Color.WHITE
 ## How long the held pickup's effect would run (0 when it has no timed effect).
 ## While > 0 and no effect is running, the ring draws full as a "ready" signal.
 var _held_duration: float = 0.0
+var _held_active: bool = false
+var _hold_pulse: float = 0.0
 ## The TIMED power-up that is running, polled from the local player each frame.
 var _active: Dictionary = {}
 ## Last written caption, so identical frames don't re-set text/color overrides.
@@ -50,11 +52,15 @@ var _last_caption_color: Color = Color.WHITE
 ## `duration` is how long the held pickup's effect would run; while > 0 the HUD
 ## draws the countdown ring as a full "ready" ring while it is carried.
 func show_power_up(label: String, color: Color, duration: float = 0.0) -> void:
+	var became_active := (label != "" and _held_label == "")
 	_held_label = label
 	_held_color = color
 	_held_duration = duration
+	_held_active = (label != "")
 	_update_active_power_up()
 	_refresh_action_caption()
+	if became_active:
+		_pop_action()
 
 # The caption reflects the held power-up if there is one, otherwise the running
 # timed power-up, otherwise the authored default (GRAB).
@@ -230,6 +236,7 @@ func _ready() -> void:
 			_action_caption_default = _action_caption.text
 			_action_caption_default_color = _action_caption.get_theme_color("font_color")
 		_create_action_ring()
+		action_button.pivot_offset = action_button.size * 0.5
 
 # Builds the countdown ring and parents it to the Action button. Created in code
 # so hud.tscn needs no new node and the ring inherits the button's placement.
@@ -387,6 +394,21 @@ func _process(_delta: float) -> void:
 
 	_update_active_power_up()
 	_refresh_action_caption()
+
+	if action_button != null and _held_active and not _ring_active:
+		_hold_pulse += _delta * 3.0
+		var t := 0.4 + 0.2 * sin(_hold_pulse)
+		action_button.modulate = Color(_held_color.r, t, _held_color.b, t)
+	else:
+		if action_button != null:
+			action_button.modulate = Color.WHITE
+
+func _pop_action() -> void:
+	if action_button == null:
+		return
+	var tw := create_tween()
+	tw.tween_property(action_button, "scale", Vector2(1.08, 1.08), 0.05).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(action_button, "scale", Vector2.ONE, 0.08).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _reposition() -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
