@@ -743,19 +743,23 @@ func _handle_preview_pan(event: InputEventPanGesture) -> void:
 		get_viewport().set_input_as_handled()
 
 
-# `.lobby-bg img` is width:100% with a height derived from the source aspect, centred
-# vertically in the pane. Mirroring that here keeps the art from stretching.
+# Dashboard.css keeps the backdrop at a fixed shape: `.lobby-bg img` is width:100%
+# with `aspect-ratio: 1216 / 523` and `object-fit: cover`, so every match artwork
+# crops to lobbybg's own ratio instead of stretching or changing the height. This
+# mirrors that: the TextureRect is pinned to the same constant ratio and uses
+# STRETCH_KEEP_ASPECT_COVERED (set on the node) to crop its texture into it.
+const LOBBY_BG_ASPECT: float = 1216.0 / 523.0
+
 func _layout_lobby_bg() -> void:
 	if _lobby_bg == null:
 		return
 	var rect := _lobby_bg as TextureRect
+	if rect == null:
+		return
 	var preview_width := get_viewport().get_visible_rect().size.x * 0.65
 	if _preview_view != null and _preview_view.size.x > 0.0:
 		preview_width = _preview_view.size.x
-	if rect == null or rect.texture == null:
-		return
-	var tex := rect.texture
-	var height := preview_width * float(tex.get_height()) / float(maxi(tex.get_width(), 1))
+	var height := preview_width / LOBBY_BG_ASPECT
 	rect.offset_top = -height * 0.5
 	rect.offset_bottom = height * 0.5
 
