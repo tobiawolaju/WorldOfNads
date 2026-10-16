@@ -211,6 +211,18 @@ export function normalizeMatchRecord(match, fallbackKey = "") {
   const matchId = String(match?.matchId || fallbackKey || `match-${Date.now()}`);
   const prizeAmount = Number(match?.prizeAmount || 0);
 
+  // Player limits. The sponsor form sends a number for `minPlayersToStart` and
+  // either a number or `null` ("unlimited") for `maxPlayers`; these must survive the
+  // round-trip to Firebase because the room server reads them back per match.
+  const rawMin = Number(match?.minPlayersToStart);
+  const minPlayersToStart = Number.isFinite(rawMin) && rawMin > 0 ? Math.floor(rawMin) : 0;
+  const rawMax = match?.maxPlayers;
+  const normalizedMax = Number(rawMax);
+  const maxPlayers =
+    rawMax === null || rawMax === undefined || rawMax === "" || rawMax === "unlimited"
+      ? null
+      : (Number.isFinite(normalizedMax) && normalizedMax > 0 ? Math.floor(normalizedMax) : null);
+
   return {
     id: Number(match?.id || Date.now()),
     matchId,
@@ -226,6 +238,8 @@ export function normalizeMatchRecord(match, fallbackKey = "") {
     url: String(match?.url || ""),
     createdAt: String(match?.createdAt || new Date().toISOString()),
     startTime: Number(match?.startTime || 0),
+    minPlayersToStart,
+    maxPlayers,
     createdByWallet: String(match?.createdByWallet || ""),
     depositTxHash: String(match?.depositTxHash || ""),
     settleTxHash: String(match?.settleTxHash || ""),

@@ -499,6 +499,44 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // Internal control-plane endpoint for the Rust room server. It mirrors the
+  // allocated-match list so the room server can refuse to open an arena for a match
+  // id no host ever created. The payload is the same match data the app already
+  // reads publicly from Firebase; the shared secret just scopes the endpoint. When
+  // INTERNAL_SECRET is unset the endpoint stays open (dev convenience); set it on
+  // both services to require the header.
+  if (req.method === 'GET' && reqUrl.pathname === '/internal/matches') {
+    const secret = process.env.INTERNAL_SECRET || '';
+    const provided = String(req.headers['x-internal-secret'] || '');
+    if (secret && provided !== secret) {
+      sendJson(res, 403, { ok: false, error: 'forbidden' });
+      return;
+    }
+    try {
+      const all = await getAllMatches();
+      const matches = {};
+      for (const match of Object.values(all || {})) {
+        if (!match || !match.matchId) continue;
+        if (match.status === 'cancelled' || match.status === 'settled') continue;
+        const rawMin = Number(match.minPlayersToStart);
+        const rawMax = match.maxPlayers;
+        matches[match.matchId] = {
+          minPlayersToStart: Number.isFinite(rawMin) && rawMin > 0 ? Math.floor(rawMin) : 0,
+          maxPlayers:
+            rawMax === null || rawMax === undefined || rawMax === '' || rawMax === 'unlimited'
+              ? null
+              : (Number.isFinite(Number(rawMax)) ? Math.floor(Number(rawMax)) : null),
+          status: match.status || 'upcoming'
+        };
+      }
+      sendJson(res, 200, { matches });
+    } catch (error) {
+      console.error('[Internal] /internal/matches failed:', error);
+      sendJson(res, 500, { ok: false, error: 'failed to load matches' });
+    }
+    return;
+  }
+
   if (req.method === 'POST' && reqUrl.pathname === '/analytics/events') {
     try {
       const payload = await readJsonBody(req);

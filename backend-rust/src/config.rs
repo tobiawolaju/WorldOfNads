@@ -102,3 +102,40 @@ pub fn max_players() -> Option<usize> {
         }
     }
 }
+
+// ─── Allocated-match registry ───
+//
+// A room may only exist for a match a host actually created. Hosts create matches
+// in the control plane (sponsor dashboard -> Firebase); the Node backend mirrors
+// that list at `GET /internal/matches`, and this room server pulls it so that an
+// arbitrary `?room=<anything>` cannot spawn an arena. See `registry.rs`.
+
+/// Control-plane (Node) base URL the registry is mirrored from.
+pub fn control_plane_url() -> String {
+    std::env::var("CONTROL_PLANE_URL")
+        .ok()
+        .map(|v| v.trim().trim_end_matches('/').to_string())
+        .filter(|v| !v.is_empty())
+        .unwrap_or_else(|| "https://worldofnads.onrender.com".to_string())
+}
+
+/// Shared secret for the control plane's `/internal/*` endpoints. When the control
+/// plane leaves its own `INTERNAL_SECRET` unset it accepts any value, so an empty
+/// secret still works in development; set the same value on both services to lock
+/// the endpoint down.
+pub fn internal_secret() -> String {
+    std::env::var("INTERNAL_SECRET").unwrap_or_default()
+}
+
+/// How long a mirrored match-list snapshot is trusted before it is re-fetched.
+pub const MATCH_REGISTRY_TTL_MS: i64 = 15_000;
+
+/// When a `room` id is not an allocated match, `false` sends the client to the
+/// shared `default` room (so placeholder/casual matches keep working) and `true`
+/// rejects the connection with `1008 unknown_match`. Either way a non-existent
+/// match id can never spawn its own room.
+pub fn strict_rooms() -> bool {
+    std::env::var("STRICT_ROOMS")
+        .map(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
+        .unwrap_or(false)
+}

@@ -23,6 +23,7 @@ use tokio::sync::{mpsc, Mutex};
 use crate::config::*;
 use crate::auth::verify_session_token;
 use crate::protocol::*;
+use crate::registry::{MatchConfig, MatchRegistry};
 use crate::world::{sanitize_meta, Room};
 
 /// Frames that count against a client's byte budget. Control frames (ping/pong/close)
@@ -136,10 +137,17 @@ pub struct RoomHandle {
 }
 
 impl RoomHandle {
-    fn new(name: &str) -> Self {
+    fn new(name: &str, config: Option<MatchConfig>) -> Self {
+        let mut room = Room::new();
+        // A match room inherits the match's limits; the default room keeps the
+        // process-wide defaults from `Room::new`.
+        if let Some(config) = config {
+            room.min_players_to_start = config.min_players_to_start;
+            room.max_players = config.max_players;
+        }
         RoomHandle {
             name: name.to_string(),
-            room: Mutex::new(Room::new()),
+            room: Mutex::new(room),
             clients: Mutex::new(HashMap::new()),
             events_clients: Mutex::new(Vec::new()),
             last_active_ms: AtomicI64::new(now_ms()),
@@ -159,6 +167,8 @@ pub struct AppState {
     pub rooms: Mutex<HashMap<String, Arc<RoomHandle>>>,
     pub bans: Mutex<HashMap<String, i64>>,
     pub rate_limits: Mutex<HashMap<u64, RateLimitEntry>>,
+    /// Allocated-match mirror; a room is only created for an id found here.
+    pub registry: MatchRegistry,
 }
 
 #[derive(Clone)]
@@ -173,6 +183,7 @@ impl AppState {
             rooms: Mutex::new(HashMap::new()),
             bans: Mutex::new(HashMap::new()),
             rate_limits: Mutex::new(HashMap::new()),
+            registry: MatchRegistry::new(),
         }
     }
 }
@@ -193,8 +204,39 @@ fn sanitize_room_id(raw: &str) -> String {
     }
 }
 
+/// Resolve a requested room id to the room the client will actually join.
+///
+/// `default` always resolves to itself. Any other id is only honoured when it is an
+/// allocated match (present in the registry); otherwise the client is either sent to
+/// `default` or rejected, per `STRICT_ROOMS`. This is what stops an arbitrary
+/// `?room=<anything>` from spawning its own arena.
+///
+/// Returns `None` when the connection must be refused.
+async fn resolve_room(state: &Arc<AppState>, requested: &str) -> Option<(String, Option<MatchConfig>)> {
+    if requested == DEFAULT_ROOM {
+        return Some((DEFAULT_ROOM.to_string(), None));
+    }
+    if let Some(config) = state.registry.lookup(requested).await {
+        return Some((requested.to_string(), Some(config)));
+    }
+    if strict_rooms() {
+        tracing::info!("rejecting unallocated match id {:?}", requested);
+        return None;
+    }
+    tracing::warn!(
+        "match id {:?} is not allocated; routing to the {} room",
+        requested,
+        DEFAULT_ROOM
+    );
+    Some((DEFAULT_ROOM.to_string(), None))
+}
+
 /// Look up a room, creating (and spawning a tick task for) it on first use.
-async fn get_or_create_room(state: &Arc<AppState>, name: &str) -> Option<Arc<RoomHandle>> {
+async fn get_or_create_room(
+    state: &Arc<AppState>,
+    name: &str,
+    config: Option<MatchConfig>,
+) -> Option<Arc<RoomHandle>> {
     {
         let rooms = state.rooms.lock().await;
         if let Some(handle) = rooms.get(name) {
@@ -211,7 +253,7 @@ async fn get_or_create_room(state: &Arc<AppState>, name: &str) -> Option<Arc<Roo
         tracing::warn!("room limit reached ({}); rejecting room {}", MAX_ROOMS, name);
         return None;
     }
-    let handle = Arc::new(RoomHandle::new(name));
+    let handle = Arc::new(RoomHandle::new(name, config));
     rooms.insert(name.to_string(), handle.clone());
     drop(rooms);
 
@@ -373,14 +415,29 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
     // `room` is the canonical param; `match` is accepted too so the Godot client
     // (which already carries `?match=<id>`) can be pointed at a room without a
     // second parameter round-trip.
-    let room_id = sanitize_room_id(
+    let requested_room = sanitize_room_id(
         params
             .get("room")
             .or_else(|| params.get("match"))
             .map(|s| s.as_str())
             .unwrap_or(""),
     );
-    let handle = match get_or_create_room(&state, &room_id).await {
+    // Only an allocated match (or `default`) may open a room. `resolve_room` returns
+    // `None` for an unknown match id when `STRICT_ROOMS` is set; otherwise it routes
+    // the client to `default`, so an arbitrary `?room=` never spawns its own arena.
+    let (room_id, room_config) = match resolve_room(&state, &requested_room).await {
+        Some(resolved) => resolved,
+        None => {
+            let _ = socket
+                .send(Message::Close(Some(CloseFrame {
+                    code: close_code::POLICY,
+                    reason: Cow::Borrowed("unknown_match"),
+                })))
+                .await;
+            return;
+        }
+    };
+    let handle = match get_or_create_room(&state, &room_id, room_config).await {
         Some(handle) => handle,
         None => {
             tracing::warn!("rejecting connection: room capacity exhausted");
@@ -630,7 +687,11 @@ async fn handle_client_message(handle: &RoomHandle, player_id: &str, conn_id: u6
 }
 
 async fn handle_events(socket: WebSocket, state: Arc<AppState>, room_id: String) {
-    let handle = match get_or_create_room(&state, &room_id).await {
+    let (room_id, config) = match resolve_room(&state, &room_id).await {
+        Some(resolved) => resolved,
+        None => return,
+    };
+    let handle = match get_or_create_room(&state, &room_id, config).await {
         Some(handle) => handle,
         None => return,
     };

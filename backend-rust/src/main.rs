@@ -10,6 +10,7 @@ mod auth;
 mod config;
 mod net;
 mod protocol;
+mod registry;
 mod world;
 
 use std::net::SocketAddr;
@@ -28,6 +29,13 @@ async fn main() {
         .init();
 
     let state = Arc::new(AppState::new());
+
+    // Warm the allocated-match mirror in the background so a match-start burst finds a
+    // populated snapshot instead of every connect racing the very first fetch.
+    {
+        let warm_state = state.clone();
+        tokio::spawn(async move { warm_state.registry.warm().await });
+    }
 
     // Rooms are created lazily on first connect (see `get_or_create_room`), each with
     // its own tick task, so there is no global simulation loop to start here.

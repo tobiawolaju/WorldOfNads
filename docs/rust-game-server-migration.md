@@ -336,14 +336,33 @@ room cannot stall another, and a round reset closes only that room's clients.
 client derives the room from the match it is playing — the `?match=<id>` query that the
 web dashboard puts on the frame URL (`/play?match=...`), or the lobby hand-off
 (`selected_match_id`) on native — and appends `room=<id>` to the game socket. The events
-feed (`Events.gd`) subscribes to the same room, so chat/join toasts are per-match. A
-sponsor match created in `SpounsorDashbaord.jsx` (`buildMatchId`) therefore lands every
-participant in `room=match-<slug>-<ts>` automatically. With no match selected the client
-joins `default`, unchanged. Per-room config (match `minPlayersToStart`/`maxPlayers`) is
-**not** wired yet — the client does not carry those values, and Node has no creation-time
-hook; that needs a config channel. Still to do: an automated matchmaker that hands out
-room ids + a room registration/heartbeat endpoint. *Exit:* two rooms run concurrently on
-one VM, players never cross rooms, per-room reset.
+feed (`Events.gd`) subscribes to the same room, so chat/join toasts are per-match. With no
+match selected the client joins `default`, unchanged.
+
+**Only host-allocated matches may open a room.** A `?room=<id>` is not trusted on its own:
+the room server mirrors the control plane's list of *allocated* matches and refuses to
+spawn an arena for anything else, so a random client cannot conjure a match id.
+
+- Node exposes `GET /internal/matches` (shared secret `x-internal-secret`, matches
+  `INTERNAL_SECRET`), returning the Firebase `matches` map filtered to non-settled,
+  non-cancelled entries plus each match's `minPlayersToStart`/`maxPlayers`. Because only a
+  host (the `sponsor`-gated `SpounsorDashbaord`) can create a match, "present in Firebase"
+  *is* "allocated by a host".
+- The room server (`registry.rs`) mirrors that list: a lookup refreshes the snapshot when it
+  is stale (15 s TTL) or on a miss, and keeps the last good snapshot through a control-plane
+  outage so live matches survive. The mirror is in memory, so a Render cold start simply
+  re-fetches on the first join — no allocation is ever lost.
+- A match room inherits the match's limits: `min_players_to_start` gates the countdown and
+  `max_players` drives both the connect-time capacity guard and `match.maxPlayers`, so the
+  per-match player cap set in the sponsor form actually applies.
+- An unknown match id is routed to the shared `default` room (logged), so placeholder /
+  casual matches keep working while never getting their own arena. Set `STRICT_ROOMS=1` to
+  instead reject such a connection with `1008 unknown_match`.
+
+`minPlayersToStart`/`maxPlayers` are persisted to Firebase by the frontend normalizer
+(`firebaseClient.js`), which previously dropped them. Still to do: an automated matchmaker
+that hands out room ids + a room registration/heartbeat endpoint. *Exit:* two rooms run
+concurrently on one VM, players never cross rooms, per-room reset.
 
 **Phase 3 — Production cutover & settlement path.**
 Room → Node result POST → Firebase + on-chain settlement. Deploy rooms on the VM;
