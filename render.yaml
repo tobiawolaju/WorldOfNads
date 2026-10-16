@@ -28,8 +28,9 @@ services:
       # local/dev.
       - key: CONTROL_PLANE_URL
         value: https://worldofnads.onrender.com
-      # 0 (default) routes an unknown match id to the shared `default` room;
-      # 1 rejects it with `1008 unknown_match`. Uncomment to require exact matches.
+      # 0 (default) routes to `default` if the registry cannot verify a match id;
+      # 1 also rejects when the registry has no data. An id the registry *can* verify
+      # as unallocated is always refused.
       # - key: STRICT_ROOMS
       #   value: "1"
       # Set the SAME value here and on the Node backend to require the

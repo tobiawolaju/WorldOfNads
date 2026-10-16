@@ -355,9 +355,7 @@ spawn an arena for anything else, so a random client cannot conjure a match id.
 - A match room inherits the match's limits: `min_players_to_start` gates the countdown and
   `max_players` drives both the connect-time capacity guard and `match.maxPlayers`, so the
   per-match player cap set in the sponsor form actually applies.
-- An unknown match id is routed to the shared `default` room (logged), so placeholder /
-  casual matches keep working while never getting their own arena. Set `STRICT_ROOMS=1` to
-  instead reject such a connection with `1008 unknown_match`.
+- **Split routing:** an id the registry knows is unallocated is always refused. An id the registry cannot judge at all (no data yet — cold start, Node down) falls back to `default` unless `STRICT_ROOMS=1`, which rejects even in that case. This lets real matches start despite transient control-plane outages while still blocking random ids.
 
 `minPlayersToStart`/`maxPlayers` are persisted to Firebase by the frontend normalizer
 (`firebaseClient.js`), which previously dropped them. Still to do: an automated matchmaker

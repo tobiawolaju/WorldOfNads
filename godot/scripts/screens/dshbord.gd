@@ -30,6 +30,9 @@ extends Node3D
 # the radial dissolve, the halftone rim and the overlay into the artwork.
 
 const API_BASE: String = "https://worldofnads.onrender.com"
+# The shared training arena maps to the room server's `default` room rather than a
+# match id, because it is not a host-created match and must never be treated as one.
+const TRAINING_MATCH_ID: String = "default"
 const SKIN_SCENE: PackedScene = preload("res://scenes/skin.tscn")
 const LOBBY_SCENE: String = "res://scenes/lobby.tscn"
 
@@ -237,11 +240,15 @@ func _ready() -> void:
 	_connect_chrome()
 	_hide_scrollbars()
 	_seed_local_store()
-	matches = _build_static_matches()
+	# Start from the offline list (the always-playable training arena) so the dashboard
+	# is usable immediately, then replace it with the host-created matches from the
+	# control plane once GET /matches returns.
+	matches = _offline_matches()
 	selected_match_id = _fallback_match_id()
 
 	_spawn_preview_player()
 	_fetch_store_data()
+	_fetch_matches()
 
 	_refresh_all()
 	_setup_top_nav()
@@ -836,59 +843,75 @@ func _on_store_data_fetched(result: int, response_code: int, _headers: PackedStr
 
 # ---------------------------------------------------------------------- matches
 
-func _build_static_matches() -> Array[Dictionary]:
-	# Port of frontend/src/pages/staticMatches.js. The JS derives start times from
-	# Date.now(), so they are re-derived here against the system clock.
-	var now := float(Time.get_unix_time_from_system())
+func _offline_matches() -> Array[Dictionary]:
+	# What the dashboard shows until (or if) GET /matches succeeds. Only the shared
+	# training arena lives here; everything else comes from the control plane.
 	var out: Array[Dictionary] = []
-	out.append({
-		"match_id": "match-champions-cup",
-		"sponsor": "WONs Major",
-		"prize": "10K WONs",
-		"status": "upcoming",
-		"start_time": now + 172800.0,
-		"description": "The WONs Major Championship Cup. Winner takes home 10K WONs.",
-		"cta_mode": "countdown",
-	})
-	out.append({
-		"match_id": "match-training-lobby",
+	out.append(_training_match())
+	return out
+
+
+func _training_match() -> Dictionary:
+	return {
+		"match_id": TRAINING_MATCH_ID,
 		"sponsor": "Training Lobby",
 		"prize": "Practice",
 		"status": "live",
-		"start_time": now,
-		"description": "Training Lobby is open for warmup runs and should always be playable.",
+		"start_time": float(Time.get_unix_time_from_system()),
+		"description": "Shared warmup arena. Open to everyone and always playable.",
 		"cta_mode": "play",
-	})
-	out.append({
-		"match_id": "match-sunset-showdown",
-		"sponsor": "NadCity Arena",
-		"prize": "1.5K WONs",
-		"status": "live",
-		"start_time": now + 300.0,
-		"description": "Sunset Showdown at NadCity Arena. First to flag takes the 1.5K WONs pot.",
-		"cta_mode": "countdown",
-	})
-	out.append({
-		"match_id": "match-weekend-clash",
-		"sponsor": "Monad Labs",
-		"prize": "3K WONs",
-		"status": "live",
-		"start_time": now + 1800.0,
-		"description": "The Weekend Clash is live. Cash prizes for the top 3 flags planted.",
-		"cta_mode": "countdown",
-	})
-	out.append({
-		"match_id": "match-alpha-sprint",
-		"sponsor": "Alpha Sprint",
-		"prize": "500 WONs",
-		"status": "completed",
-		"start_time": now - 172800.0,
-		"description": "Alpha Sprint is done - check the leaderboard for the final standings.",
-		"cta_mode": "countdown",
-	})
-	# The frontend sorts the carousel by status order (upcoming, live, completed) and then
-	# by start time, so the matches above are appended in the order they should display.
-	return out
+	}
+
+
+func _normalize_api_match(entry: Dictionary) -> Dictionary:
+	return {
+		"match_id": str(entry.get("match_id", "")),
+		"sponsor": str(entry.get("sponsor", "Unknown Sponsor")),
+		"prize": str(entry.get("prize", "")),
+		"status": str(entry.get("status", "upcoming")),
+		"start_time": float(entry.get("start_time", 0.0)),
+		"description": str(entry.get("description", "")),
+		"cta_mode": str(entry.get("cta_mode", "")),
+	}
+
+
+func _fetch_matches() -> void:
+	var http := HTTPRequest.new()
+	add_child(http)
+	http.request_completed.connect(_on_matches_fetched.bind(http))
+	http.request("%s/matches" % API_BASE)
+
+
+func _on_matches_fetched(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest) -> void:
+	if http != null and is_instance_valid(http):
+		http.queue_free()
+
+	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		print("Dshbord: matches fetch failed (%d %d), keeping offline list." % [result, response_code])
+		return
+
+	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
+	if not (parsed is Dictionary) or parsed.get("ok") != true:
+		return
+	var api_matches: Variant = parsed.get("matches")
+	if not (api_matches is Array):
+		return
+
+	var previous_match := selected_match_id
+	var merged: Array[Dictionary] = []
+	for entry in api_matches:
+		if entry is Dictionary:
+			merged.append(_normalize_api_match(entry))
+	# The shared training arena sits after the real matches: the default selection
+	# prefers a real live match and only falls back to training when there is none.
+	merged.append(_training_match())
+
+	matches = merged
+	if previous_match != "" and previous_match != TRAINING_MATCH_ID and _match_exists(previous_match):
+		selected_match_id = previous_match
+	else:
+		selected_match_id = _fallback_match_id()
+	_refresh_all()
 
 
 func _match_exists(match_id: String) -> bool:

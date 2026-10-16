@@ -3,8 +3,9 @@
 //! A room may only exist for a match a host actually created. Hosts create matches
 //! through the sponsor dashboard into Firebase; the Node backend exposes that list
 //! at `GET /internal/matches` (behind a shared secret), and this registry mirrors
-//! it here. A `?room=<id>` that is not in the mirror never spawns its own arena —
-//! it either lands in the shared `default` room or is rejected (see `STRICT_ROOMS`).
+//! it here. A `?room=<id>` that is not in the mirror never spawns its own arena: an id
+//! the mirror knows is unallocated is refused, and an id it cannot judge (no data yet)
+//! falls back to `default` unless `STRICT_ROOMS` is set.
 //!
 //! The mirror is refreshed lazily: a lookup that finds the snapshot stale (or empty)
 //! re-fetches, and a lookup that misses forces one refresh so a match created a
@@ -33,6 +34,17 @@ pub struct MatchConfig {
     pub min_players_to_start: usize,
     /// `None` means unlimited, matching Node's `currentMaxPlayers === null`.
     pub max_players: Option<usize>,
+}
+
+/// Outcome of resolving a match id against the mirror.
+pub enum MatchLookup {
+    /// The id is an allocated match, with its limits.
+    Allocated(MatchConfig),
+    /// The mirror is populated but does not contain the id: an id no host created.
+    Missing,
+    /// The mirror holds no data (never synced, or the control plane is unreachable),
+    /// so the id cannot be judged either way.
+    Unverified,
 }
 
 #[derive(Default)]
@@ -76,15 +88,25 @@ impl MatchRegistry {
         }
     }
 
-    /// Config for `id`, or `None` if it is not an allocated match.
-    pub async fn lookup(&self, id: &str) -> Option<MatchConfig> {
+    /// Resolve `id`: its limits if allocated, or why it could not be confirmed.
+    pub async fn lookup(&self, id: &str) -> MatchLookup {
         self.refresh_if_stale().await;
         if let Some(cfg) = self.snapshot.lock().await.matches.get(id).cloned() {
-            return Some(cfg);
+            return MatchLookup::Allocated(cfg);
         }
         // A miss may be a match created since the last sync; force one refresh.
         self.refresh(true).await;
-        self.snapshot.lock().await.matches.get(id).cloned()
+        let snap = self.snapshot.lock().await;
+        if let Some(cfg) = snap.matches.get(id) {
+            return MatchLookup::Allocated(cfg.clone());
+        }
+        // Distinguish "we have a mirror and the id is not in it" from "we have no mirror
+        // to consult": only the former is a trustworthy rejection.
+        if snap.matches.is_empty() {
+            MatchLookup::Unverified
+        } else {
+            MatchLookup::Missing
+        }
     }
 
     /// Fetch once now (deduplicated), so a match-start burst finds a warm snapshot.
