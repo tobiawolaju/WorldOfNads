@@ -8,6 +8,7 @@ shader_type canvas_item;
 //   * transform: perspective(600px) rotateY(0) skewX(-5deg)
 //   * a mask-image radial-gradient dissolve (ellipse 84% 84% at 50% 50%,
 //     #000 0 74%, rgba(0,0,0,.5) 90%, transparent 100%)
+//   * a border-radius (10px) that rounds the overflow-hidden box clip
 //   * a ::before halftone dot grid (5px pitch, 1.6px ink, white 0.85, opacity
 //     .6 resting / .9 hovered) carrying its own radial rim mask
 //   * a ::after neon overlay (radial at top-left, rgba(0,0,0,.397) -> transparent
@@ -31,6 +32,17 @@ const float SKEW_TAN = -0.08748866;
 const float EDGE_RAMP = 0.84;
 const float DOT_PITCH = 5.0;
 const float DOT_INK = 1.6;
+// CSS `.match-card { border-radius }`, in the card's 330x220px source space.
+// Rounds the hard `overflow: hidden` box clip so the silhouette gets the same
+// soft corners the frontend now draws.
+const float CORNER_RADIUS = 10.0;
+
+// Signed distance to a rounded box centred on the origin. Negative inside,
+// positive outside; used instead of the rectangular box clip below.
+float sd_rounded_box(vec2 point, vec2 half_size, float radius) {
+	vec2 q = abs(point) - half_size + radius;
+	return min(max(q.x, q.y), 0.0) + length(max(q, vec2(0.0))) - radius;
+}
 
 float dissolve(float d) {
 	if (d <= 0.74) {
@@ -68,13 +80,15 @@ void fragment() {
 	// 165px half-width), so on its own it never reaches zero at the slot edges and
 	// the card would fill the whole axis-aligned slot with smeared edge pixels.
 	// Clipping in source space is what turns the silhouette into the scaled, sheared
-	// parallelogram the CSS draws. Derivatives give a pixel-wide anti-aliased edge.
+	// parallelogram the CSS draws. The box is rounded by CORNER_RADIUS so the
+	// silhouette picks up `.match-card`'s border-radius too. Derivatives give a
+	// pixel-wide anti-aliased edge.
 	vec2 p_ddx = dFdx(p);
 	vec2 p_ddy = dFdy(p);
 	float aa = 0.5 * (length(p_ddx) + length(p_ddy));
-	float box_x = smoothstep(-aa, aa, p.x) * (1.0 - smoothstep(css_size.x - aa, css_size.x + aa, p.x));
-	float box_y = smoothstep(-aa, aa, p.y) * (1.0 - smoothstep(css_size.y - aa, css_size.y + aa, p.y));
-	alpha *= box_x * box_y;
+	float box_sd = sd_rounded_box(rel, center, CORNER_RADIUS);
+	float box_clip = 1.0 - smoothstep(-aa, aa, box_sd);
+	alpha *= box_clip;
 
 	// background: url(...) cover / center.
 	vec2 src = vec2(textureSize(source_tex, 0));

@@ -1364,12 +1364,18 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
         ))}
       </Suspense>
 
+      {/* The framed distance is ~10; clamp zoom so the user can move in at most
+          ~2.5x (minDistance 4) and out at most ~1.6x (maxDistance 16). Without
+          this, OrbitControls defaults to 0..Infinity and the nad can be lost
+          entirely. Kept in step with ORBIT_ZOOM_MIN/ORBIT_ZOOM_MAX in dshbord.gd. */}
       <OrbitControls
         ref={controlsRef}
         target={[0, targetY, 0]}
         enableZoom={true}
         enablePan={false}
         enableRotate={true}
+        minDistance={4}
+        maxDistance={16}
         mouseButtons={{
           LEFT: THREE.MOUSE.ROTATE,
           MIDDLE: null as any,

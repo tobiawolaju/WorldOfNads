@@ -58,10 +58,10 @@ const DEFAULT_ENERGY: int = 4
 const PLAY_COUNTDOWN_SECONDS: float = 4.0
 
 # Preview orbit, ported from three's OrbitControls. ThreeScene.tsx mounts drei's
-# <OrbitControls> with every default except `target`, `enablePan={false}` and the
-# button map, and drei forces enableDamping, so these are that controller's own
-# numbers: dampingFactor 0.05, rotateSpeed 1, zoomSpeed 1, getZoomScale() = 0.95,
-# minDistance 0 / maxDistance Infinity, minPolarAngle 0 / maxPolarAngle PI.
+# <OrbitControls> with every default except `target`, `enablePan={false}`, the
+# button map and the zoom-distance clamp, and drei forces enableDamping, so these
+# are that controller's own numbers: dampingFactor 0.05, rotateSpeed 1, zoomSpeed
+# 1, getZoomScale() = 0.95, minPolarAngle 0 / maxPolarAngle PI.
 #
 # The damping is the part that actually reads as movement: input accumulates into
 # a delta that the camera chases at 5% per frame, so it lags the finger by a hair,
@@ -77,11 +77,14 @@ const ORBIT_WHEEL_ZOOM_STEP: float = 0.95
 # lets the camera swing just past the nad's core to look up from underneath; the
 # epsilon keeps that far enough from the poles that look_at() stays well defined.
 const ORBIT_PITCH_LIMIT: float = PI * 0.5 - 0.02
-# OrbitControls leaves both distances open. These only stop the camera from
-# collapsing to radius 0 (inside the nad, where the basis degenerates) or drifting
-# so far out that the preview is a speck.
-const ORBIT_ZOOM_MIN: float = 0.2
-const ORBIT_ZOOM_MAX: float = 6.0
+# OrbitControls leaves both distances open, so both ends are pinned here (and in
+# ThreeScene.tsx) to stop the camera collapsing into the nad or drifting until the
+# preview is a speck. The live distance is `_preview_base_distance / _preview_zoom`,
+# so zoom runs 0.625 (1.6x further than the framed distance) up to 2.5 (2.5x
+# closer), matching the frontend's minDistance 4 / maxDistance 16 around its ~10
+# framed distance.
+const ORBIT_ZOOM_MIN: float = 0.625
+const ORBIT_ZOOM_MAX: float = 2.5
 # InputEventPanGesture.delta is in pan units, not pixels; this is roughly how many
 # pixels one unit covers before the value is fed to the orbit.
 const ORBIT_PAN_UNITS_TO_PIXELS: float = 12.0
@@ -2231,6 +2234,10 @@ func _match_card_style(selected: bool) -> StyleBoxFlat:
 	style.expand_margin_right = -6.45
 	style.expand_margin_top = -4.3
 	style.expand_margin_bottom = -4.3
+	# Round the glow to the card's new border-radius. The shader rounds in the
+	# 330x220 source space (10px); the box here is the scaled 90% card in layout
+	# units, where that lands on ~4px.
+	style.set_corner_radius_all(4)
 	style.skew = Vector2(0.0872665, 0.0)
 	if selected:
 		style.shadow_color = Color(C_MAGENTA.r, C_MAGENTA.g, C_MAGENTA.b, 0.45)
