@@ -324,15 +324,26 @@ parity, not drift. Deployed for testing via Docker + Render (`render.yaml`), sel
 the client by `ROOM_URL`. *Remaining exit item:* drive it with `backend/bot.js` +
 `backend/zig-zag-bot.js` and diff state vs Node for the same inputs.
 
-**Phase 2 — Matchmaker + sharding. — multi-room done in the room server; matchmaker TBD.**
+**Phase 2 — Matchmaker + sharding. — match → room routing done; automated matchmaker TBD.**
 The room server now serves **N rooms per process**: `AppState` holds a map of
 `Arc<RoomHandle>` (each with its own simulation, clients, `/events` subscribers and tick
 task). A client selects its shard with the `room` query param (sanitized, defaults to
-`default`); rooms are created lazily, capped at 64, and empty non-default rooms are
-retired after 2 minutes idle. Per-room tick tasks mean one room cannot stall another, and
-a round reset closes only that room's clients. Still to do: the Node matchmaker that hands
-out `room` ids + a room registration/heartbeat endpoint. *Exit:* two rooms run
-concurrently on one VM, players never cross rooms, per-room reset.
+`default`; `match` is accepted as an alias) ; rooms are created lazily, capped at 64, and
+empty non-default rooms are retired after 2 minutes idle. Per-room tick tasks mean one
+room cannot stall another, and a round reset closes only that room's clients.
+
+**Special matches already get their own room, with no matchmaker required.** The Godot
+client derives the room from the match it is playing — the `?match=<id>` query that the
+web dashboard puts on the frame URL (`/play?match=...`), or the lobby hand-off
+(`selected_match_id`) on native — and appends `room=<id>` to the game socket. The events
+feed (`Events.gd`) subscribes to the same room, so chat/join toasts are per-match. A
+sponsor match created in `SpounsorDashbaord.jsx` (`buildMatchId`) therefore lands every
+participant in `room=match-<slug>-<ts>` automatically. With no match selected the client
+joins `default`, unchanged. Per-room config (match `minPlayersToStart`/`maxPlayers`) is
+**not** wired yet — the client does not carry those values, and Node has no creation-time
+hook; that needs a config channel. Still to do: an automated matchmaker that hands out
+room ids + a room registration/heartbeat endpoint. *Exit:* two rooms run concurrently on
+one VM, players never cross rooms, per-room reset.
 
 **Phase 3 — Production cutover & settlement path.**
 Room → Node result POST → Firebase + on-chain settlement. Deploy rooms on the VM;
