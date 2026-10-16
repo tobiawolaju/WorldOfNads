@@ -130,10 +130,11 @@ pub fn internal_secret() -> String {
 /// How long a mirrored match-list snapshot is trusted before it is re-fetched.
 pub const MATCH_REGISTRY_TTL_MS: i64 = 15_000;
 
-/// When a `room` id is not an allocated match, `false` sends the client to the
-/// shared `default` room (so placeholder/casual matches keep working) and `true`
-/// rejects the connection with `1008 unknown_match`. Either way a non-existent
-/// match id can never spawn its own room.
+/// When the registry cannot judge a `room` id at all (it holds no data yet — e.g. right
+/// after a cold start, or during a control-plane outage), `false` routes the client to
+/// the shared `default` room and `true` refuses the connection. An id the registry *can*
+/// judge and finds unallocated is always refused. Either way a non-existent match id can
+/// never spawn its own room.
 pub fn strict_rooms() -> bool {
     std::env::var("STRICT_ROOMS")
         .map(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes"))

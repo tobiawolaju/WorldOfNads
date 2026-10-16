@@ -23,7 +23,7 @@ use tokio::sync::{mpsc, Mutex};
 use crate::config::*;
 use crate::auth::verify_session_token;
 use crate::protocol::*;
-use crate::registry::{MatchConfig, MatchRegistry};
+use crate::registry::{MatchConfig, MatchLookup, MatchRegistry};
 use crate::world::{sanitize_meta, Room};
 
 /// Frames that count against a client's byte budget. Control frames (ping/pong/close)
@@ -207,28 +207,45 @@ fn sanitize_room_id(raw: &str) -> String {
 /// Resolve a requested room id to the room the client will actually join.
 ///
 /// `default` always resolves to itself. Any other id is only honoured when it is an
-/// allocated match (present in the registry); otherwise the client is either sent to
-/// `default` or rejected, per `STRICT_ROOMS`. This is what stops an arbitrary
-/// `?room=<anything>` from spawning its own arena.
+/// allocated match (present in the registry). An id the registry can judge and finds
+/// unallocated is refused; an id the registry cannot judge at all (no data yet — a cold
+/// start, or a control-plane outage) falls back to `default` unless `STRICT_ROOMS` is
+/// set. This is what stops an arbitrary `?room=<anything>` from spawning its own arena.
 ///
 /// Returns `None` when the connection must be refused.
 async fn resolve_room(state: &Arc<AppState>, requested: &str) -> Option<(String, Option<MatchConfig>)> {
     if requested == DEFAULT_ROOM {
         return Some((DEFAULT_ROOM.to_string(), None));
     }
-    if let Some(config) = state.registry.lookup(requested).await {
-        return Some((requested.to_string(), Some(config)));
+    match state.registry.lookup(requested).await {
+        MatchLookup::Allocated(config) => Some((requested.to_string(), Some(config))),
+        // The mirror is authoritative and says no host created this id: refuse it.
+        MatchLookup::Missing => {
+            tracing::warn!(
+                "match id {:?} is not an allocated match; refusing connection",
+                requested
+            );
+            None
+        }
+        // We could not consult the mirror. Fall back so matches stay playable through a
+        // cold start or a brief control-plane outage; STRICT_ROOMS refuses instead.
+        MatchLookup::Unverified => {
+            if strict_rooms() {
+                tracing::warn!(
+                    "match registry unavailable; refusing {:?} (STRICT_ROOMS)",
+                    requested
+                );
+                None
+            } else {
+                tracing::warn!(
+                    "match registry unavailable; routing {:?} to the {} room",
+                    requested,
+                    DEFAULT_ROOM
+                );
+                Some((DEFAULT_ROOM.to_string(), None))
+            }
+        }
     }
-    if strict_rooms() {
-        tracing::info!("rejecting unallocated match id {:?}", requested);
-        return None;
-    }
-    tracing::warn!(
-        "match id {:?} is not allocated; routing to the {} room",
-        requested,
-        DEFAULT_ROOM
-    );
-    Some((DEFAULT_ROOM.to_string(), None))
 }
 
 /// Look up a room, creating (and spawning a tick task for) it on first use.

@@ -538,6 +538,46 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // Public, read-only match list for clients that are not the React dashboard,
+  // notably the Godot in-app dashboard (which used to hardcode placeholder matches).
+  // Same source as /internal/matches — Firebase match data that is already public —
+  // so no secret. Shaped for direct consumption by the client.
+  if (req.method === 'GET' && reqUrl.pathname === '/matches') {
+    try {
+      const all = await getAllMatches();
+      const matches = [];
+      for (const match of Object.values(all || {})) {
+        if (!match || !match.matchId) continue;
+        if (match.status === 'cancelled' || match.status === 'settled') continue;
+        const rawMin = Number(match.minPlayersToStart);
+        const rawMax = match.maxPlayers;
+        matches.push({
+          match_id: String(match.matchId),
+          sponsor: String(match.sponsor || 'Unknown Sponsor'),
+          prize: String(match.prize || ''),
+          status: match.status || 'upcoming',
+          start_time: Number(match.startTime || 0),
+          description: String(match.description || ''),
+          cta_mode: String(match.ctaMode || ''),
+          min_players_to_start:
+            Number.isFinite(rawMin) && rawMin > 0 ? Math.floor(rawMin) : DEFAULT_MIN_PLAYERS_TO_START,
+          max_players:
+            rawMax === null || rawMax === undefined || rawMax === '' || rawMax === 'unlimited'
+              ? null
+              : (Number.isFinite(Number(rawMax)) ? Math.floor(Number(rawMax)) : null)
+        });
+      }
+      // Display order: live, then upcoming (soonest first), then everything else.
+      const rank = (status) => (status === 'live' ? 0 : status === 'upcoming' ? 1 : 2);
+      matches.sort((a, b) => rank(a.status) - rank(b.status) || a.start_time - b.start_time);
+      sendJson(res, 200, { ok: true, matches });
+    } catch (error) {
+      console.error('[Matches] /matches failed:', error);
+      sendJson(res, 500, { ok: false, error: 'failed to load matches' });
+    }
+    return;
+  }
+
   if (req.method === 'POST' && reqUrl.pathname === '/analytics/events') {
     try {
       const payload = await readJsonBody(req);
