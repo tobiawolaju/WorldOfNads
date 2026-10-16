@@ -521,7 +521,8 @@ const server = createServer(async (req, res) => {
         const rawMin = Number(match.minPlayersToStart);
         const rawMax = match.maxPlayers;
         matches[match.matchId] = {
-          minPlayersToStart: Number.isFinite(rawMin) && rawMin > 0 ? Math.floor(rawMin) : 0,
+          minPlayersToStart:
+            Number.isFinite(rawMin) && rawMin > 0 ? Math.floor(rawMin) : DEFAULT_MIN_PLAYERS_TO_START,
           maxPlayers:
             rawMax === null || rawMax === undefined || rawMax === '' || rawMax === 'unlimited'
               ? null
