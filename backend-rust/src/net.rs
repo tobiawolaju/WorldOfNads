@@ -11,6 +11,7 @@ use std::time::Duration;
 
 use axum::extract::ws::{close_code, CloseFrame, Message, WebSocket, WebSocketUpgrade};
 use axum::extract::{Query, State};
+use axum::http::HeaderMap;
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::Router;
@@ -125,6 +126,14 @@ pub struct AppState {
     pub room: Mutex<Room>,
     pub clients: Mutex<HashMap<String, ClientTx>>,
     pub events_clients: Mutex<Vec<ClientTx>>,
+    pub bans: Mutex<HashMap<String, i64>>,
+    pub rate_limits: Mutex<HashMap<u64, RateLimitEntry>>,
+}
+
+#[derive(Clone)]
+struct RateLimitEntry {
+    window_start: i64,
+    count: u32,
 }
 
 impl AppState {
@@ -133,6 +142,8 @@ impl AppState {
             room: Mutex::new(Room::new()),
             clients: Mutex::new(HashMap::new()),
             events_clients: Mutex::new(Vec::new()),
+            bans: Mutex::new(HashMap::new()),
+            rate_limits: Mutex::new(HashMap::new()),
         }
     }
 }
@@ -160,8 +171,9 @@ async fn ws_game(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
     Query(params): Query<HashMap<String, String>>,
+    headers: HeaderMap,
 ) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| handle_game(socket, state, params))
+    ws.on_upgrade(move |socket| handle_game(socket, state, params, headers))
 }
 
 async fn ws_events(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) -> impl IntoResponse {
@@ -182,7 +194,69 @@ fn parse_username(raw: &str) -> String {
     sanitize_username(raw)
 }
 
-async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMap<String, String>) {
+fn peer_ip(headers: &HeaderMap) -> String {
+    if let Some(v) = headers.get("x-forwarded-for") {
+        if let Ok(s) = v.to_str() {
+            if let Some(first) = s.split(',').next() {
+                let t = first.trim();
+                if !t.is_empty() {
+                    return t.to_string();
+                }
+            }
+        }
+    }
+    if let Some(v) = headers.get("x-real-ip") {
+        if let Ok(s) = v.to_str() {
+            let t = s.trim();
+            if !t.is_empty() {
+                return t.to_string();
+            }
+        }
+    }
+    "unknown".to_string()
+}
+
+async fn check_banned(state: &Arc<AppState>, ip: &str) -> bool {
+    let mut bans = state.bans.lock().await;
+    let now = now_ms();
+    match bans.get(ip) {
+        Some(exp) if *exp > now => true,
+        Some(_) => { bans.remove(ip); false }
+        None => false
+    }
+}
+
+async fn check_rate_limit(state: &Arc<AppState>, conn_id: u64, ip: &str) -> bool {
+    let now = now_ms();
+    let banned = {
+        let mut bans = state.bans.lock().await;
+        match bans.get(ip) {
+            Some(exp) if *exp > now => true,
+            Some(_) => { bans.remove(ip); false }
+            None => false
+        }
+    };
+    if banned {
+        return true;
+    }
+    let mut limits = state.rate_limits.lock().await;
+    let entry = limits.entry(conn_id).or_insert_with(|| RateLimitEntry { window_start: now, count: 0 });
+    if now - entry.window_start > WS_RATE_LIMIT_WINDOW_MS {
+        entry.window_start = now;
+        entry.count = 0;
+    }
+    entry.count += 1;
+    if entry.count > WS_RATE_LIMIT_MAX_MESSAGES {
+        let mut bans = state.bans.lock().await;
+        bans.insert(ip.to_string(), now + RATE_LIMIT_BAN_DURATION_MS);
+        tracing::warn!("rate limit exceeded; banning {} for {}ms", ip, RATE_LIMIT_BAN_DURATION_MS);
+        true
+    } else {
+        false
+    }
+}
+
+async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMap<String, String>, headers: HeaderMap) {
     let raw_username = params.get("username").cloned().unwrap_or_default();
     let skin_param = params
         .get("skin")
@@ -306,8 +380,6 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
     let (sender, mut receiver) = socket.split();
     let writer = tokio::spawn(drain(sender, rx, queued));
 
-    let mut window_start = now_ms();
-    let mut msg_count: u32 = 0;
     // Node's `isAlive` sweep: ping every interval, and terminate a socket that never
     // ponged the previous ping. Without it a client that vanishes without a clean close
     // (tab killed, network drop, proxy timeout) lingers in `players` and is broadcast to
@@ -322,18 +394,18 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
             incoming = receiver.next() => {
                 match incoming {
                     Some(Ok(Message::Binary(bytes))) => {
-                        let now = now_ms();
-                        if now - window_start > WS_RATE_LIMIT_WINDOW_MS {
-                            window_start = now;
-                            msg_count = 0;
-                        }
-                        msg_count += 1;
-                        if msg_count > WS_RATE_LIMIT_MAX_MESSAGES {
-                            tracing::warn!("rate limit exceeded by {}; closing", player_id);
+                        if bytes.len() > WS_MAX_MESSAGE_SIZE {
+                            let _ = tx.send(Message::Close(Some(CloseFrame {
+                                code: close_code::SIZE,
+                                reason: Cow::Borrowed("message_too_large"),
+                            })));
                             break;
                         }
-                        if bytes.len() > WS_MAX_MESSAGE_SIZE {
-                            tracing::warn!("oversized message from {}; closing", player_id);
+                        if check_rate_limit(&state, conn_id, &ip).await {
+                            let _ = tx.send(Message::Close(Some(CloseFrame {
+                                code: close_code::POLICY,
+                                reason: Cow::Borrowed("rate_limited"),
+                            })));
                             break;
                         }
                         handle_client_message(&state, &player_id, conn_id, &bytes).await;
@@ -370,6 +442,8 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
     let orphaned = {
         let mut clients = state.clients.lock().await;
         clients.remove(&player_id);
+        let mut rate_limits = state.rate_limits.lock().await;
+        rate_limits.remove(&conn_id);
         let mut room = state.room.lock().await;
         room.orphan_player(&player_id, conn_id, now_ms())
     };
