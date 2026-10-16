@@ -101,6 +101,10 @@ var local_username: String = ""
 # ?skin= on the URL, which is how the frontend's /play page enters the game.
 @export var selected_match_id: String = ""
 @export var selected_skin_id: String = ""
+# Which match (if any) this session belongs to. A non-empty value is sent to the
+# Rust room server as `?room=`, so a special match gets its own isolated room;
+# empty keeps the previous behaviour of joining the shared default room.
+var local_match_id: String = ""
 var local_skin_name: String = DEFAULT_SKIN_NAME
 var local_display_name: String = "player"
 var _skin_cycle_index: int = -1
@@ -196,6 +200,7 @@ func _ready():
 	add_to_group("player_manager")
 	_resolve_local_username()
 	_resolve_local_skin_name()
+	_resolve_local_match_id()
 	_pre_seed_from_session_storage()
 	_update_debug_skin()
 	_fetch_skin_data()
@@ -1698,6 +1703,21 @@ func _resolve_local_skin_name() -> void:
 	if skin_name != "":
 		local_skin_name = _normalize_skin_name(skin_name)
 
+# Resolve the match this session plays. On web the match id rides on the frame URL
+# (?match=...) for both entry paths — the React dashboard's /play?match=... and the
+# in-app dashboard, which rewrites the address bar before handing off. Native builds
+# have no URL to read, so they fall back to the lobby hand-off (`selected_match_id`).
+func _resolve_local_match_id() -> void:
+	if OS.has_feature("web"):
+		var raw_match = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('match') || ''")
+		if typeof(raw_match) == TYPE_STRING:
+			var match_id := str(raw_match).strip_edges()
+			if match_id != "":
+				local_match_id = match_id
+				return
+	if selected_match_id.strip_edges() != "":
+		local_match_id = selected_match_id.strip_edges()
+
 func _pre_seed_from_session_storage() -> void:
 	if not OS.has_feature("web"):
 		return
@@ -1749,6 +1769,12 @@ func _build_ws_url_with_username(base_url: String) -> String:
 		sep = "&"
 	if local_skin_name != "":
 		url += "%sskin=%s" % [sep, local_skin_name.uri_encode()]
+		sep = "&"
+	# Route a special match into its own room on the Rust room server. The id is
+	# URI-encoded here and sanitized server-side; with no match, no `room` is sent
+	# and the client lands in the default room, exactly as before.
+	if local_match_id != "":
+		url += "%sroom=%s" % [sep, local_match_id.uri_encode()]
 	return url
 
 func _resolve_server_username(data: Dictionary, fallback_id: String) -> String:

@@ -255,7 +255,16 @@ async fn ws_events(
     State(state): State<Arc<AppState>>,
     Query(params): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
-    let room_id = sanitize_room_id(params.get("room").map(|s| s.as_str()).unwrap_or(""));
+    // `room` is the canonical param; `match` is accepted too so the Godot client
+    // (which already carries `?match=<id>`) can be pointed at a room without a
+    // second parameter round-trip.
+    let room_id = sanitize_room_id(
+        params
+            .get("room")
+            .or_else(|| params.get("match"))
+            .map(|s| s.as_str())
+            .unwrap_or(""),
+    );
     ws.on_upgrade(move |socket| handle_events(socket, state, room_id))
 }
 
@@ -361,7 +370,16 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
 
     // Pick (or lazily create) the shard this client belongs to. One process serves many
     // rooms; a client never crosses rooms because every lookup below goes through `handle`.
-    let room_id = sanitize_room_id(params.get("room").map(|s| s.as_str()).unwrap_or(""));
+    // `room` is the canonical param; `match` is accepted too so the Godot client
+    // (which already carries `?match=<id>`) can be pointed at a room without a
+    // second parameter round-trip.
+    let room_id = sanitize_room_id(
+        params
+            .get("room")
+            .or_else(|| params.get("match"))
+            .map(|s| s.as_str())
+            .unwrap_or(""),
+    );
     let handle = match get_or_create_room(&state, &room_id).await {
         Some(handle) => handle,
         None => {

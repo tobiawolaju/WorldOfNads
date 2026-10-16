@@ -18,6 +18,10 @@ var ws := WebSocketPeer.new()
 var connected := false
 var tried_live := false
 var fallback_started := false
+# `?room=...` suffix for the events feed. The Rust room server keeps a per-room
+# feed, so a special match's chat/join toasts only line up when we subscribe to
+# the same room the game socket joined. Empty means the shared default room.
+var _room_query := ""
 
 var _username_locked := false
 var _actor_lines: Array[String] = []
@@ -56,8 +60,9 @@ func _ready() -> void:
 	_setup_debug_labels()
 	_cache_reward_colors()
 	_try_set_username_from_web_query()
+	_resolve_room_query()
 	tried_live = true
-	var err = ws.connect_to_url(ROOM_EVENTS_URL)
+	var err = ws.connect_to_url(ROOM_EVENTS_URL + _room_query)
 	if err != OK:
 		_start_local_fallback("Could not start live events stream")
 	else:
@@ -158,7 +163,7 @@ func _apply_label_color(color: Color, label: Label) -> void:
 func _start_local_fallback(reason: String) -> void:
 	fallback_started = true
 	_show_local_status(reason)
-	var err = ws.connect_to_url(LOCAL_EVENTS_URL)
+	var err = ws.connect_to_url(LOCAL_EVENTS_URL + _room_query)
 	if err != OK:
 		_show_local_status("Events offline", "system")
 
@@ -378,3 +383,16 @@ func _try_set_username_from_web_query() -> void:
 
 	_username_locked = true
 	set_local_username(parsed_username, true)
+
+# Keep the events subscription in step with PlayerManager: on web the selected
+# match is on the frame URL, so mirror the game socket's room here. Native builds
+# have no URL and subscribe to the default feed (they do not carry the match id).
+func _resolve_room_query() -> void:
+	if not OS.has_feature("web"):
+		return
+	var raw_match = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('match') || ''")
+	if typeof(raw_match) != TYPE_STRING:
+		return
+	var match_id := str(raw_match).strip_edges()
+	if match_id != "":
+		_room_query = "?room=%s" % match_id.uri_encode()
