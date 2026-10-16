@@ -5,6 +5,7 @@
 
 #![allow(dead_code)]
 
+mod auth;
 mod config;
 mod net;
 mod protocol;

@@ -21,6 +21,7 @@ use serde_json::Value;
 use tokio::sync::{mpsc, Mutex};
 
 use crate::config::*;
+use crate::auth::verify_session_token;
 use crate::protocol::*;
 use crate::world::{sanitize_meta, Room};
 
@@ -181,14 +182,19 @@ async fn ws_events(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) -> 
 }
 
 /// `username` query param is either `<token>:<username>` or a bare `<username>`.
-fn parse_username(raw: &str) -> String {
+fn parse_username_with_token(raw: &str, token: &mut Option<String>) -> String {
     let raw = raw.trim();
     if raw.is_empty() {
         return String::new();
     }
     if let Some(idx) = raw.find(':') {
         if idx > 0 {
-            return parse_username(&raw[idx + 1..]);
+            let token_part = &raw[..idx];
+            let name_part = &raw[idx + 1..];
+            if !token_part.is_empty() {
+                *token = Some(token_part.to_string());
+            }
+            return sanitize_username(name_part);
         }
     }
     sanitize_username(raw)
@@ -268,6 +274,20 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
     // Node rejects the connection outright when the room is at capacity
     // (`currentMaxPlayers !== null && getPlayerCount() >= currentMaxPlayers`), using the
     // same value it reports as `match.maxPlayers`.
+    if let Some(ref t) = token {
+        let valid = verify_session_token(t);
+        if !valid {
+            tracing::warn!("invalid session token; rejecting");
+            let _ = socket
+                .send(Message::Close(Some(CloseFrame {
+                    code: close_code::POLICY,
+                    reason: Cow::Borrowed("invalid_token"),
+                })))
+                .await;
+            return;
+        }
+    }
+
     let (player_count, max_players) = {
         let room = state.room.lock().await;
         (room.player_count(), room.max_players)
@@ -289,7 +309,8 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
         }
     }
 
-    let mut username = parse_username(&raw_username);
+    let mut token: Option<String> = None;
+    let mut username = parse_username_with_token(&raw_username, &mut token);
     let resume_target = params
         .get("resume")
         .map(|v| v.trim().to_string())
