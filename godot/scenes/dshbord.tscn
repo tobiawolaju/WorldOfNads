@@ -180,6 +180,7 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("7_lobby")
 expand_mode = 1
+stretch_mode = 6
 
 [node name="PreviewView" type="SubViewportContainer" parent="CanvasLayer" unique_id=355231441]
 anchors_preset = -1
