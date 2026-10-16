@@ -1,7 +1,8 @@
 //! World of Nads realtime arena room server (Rust).
 //!
-//! Phase 1 spike: one room, wire-compatible with the Node game server
-//! (`backend/index.js`). The Godot client connects unchanged.
+//! Serves many independent rooms from one process (`?room=<id>`, default `default`),
+//! each with its own simulation, clients, `/events` feed and tick task. Wire-compatible
+//! with the Node game server (`backend/index.js`) so the Godot client connects unchanged.
 
 #![allow(dead_code)]
 
@@ -15,7 +16,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use crate::config::PORT;
-use crate::net::{router, run_tick, AppState};
+use crate::net::{router, AppState};
 
 #[tokio::main]
 async fn main() {
@@ -28,9 +29,8 @@ async fn main() {
 
     let state = Arc::new(AppState::new());
 
-    let tick_state = state.clone();
-    tokio::spawn(async move { run_tick(tick_state).await });
-
+    // Rooms are created lazily on first connect (see `get_or_create_room`), each with
+    // its own tick task, so there is no global simulation loop to start here.
     let app = router(state);
     // Render (and most PaaS) convention: honor $PORT when present. The Dockerfile
     // also EXPOSEs 8080, so either detection method routes to the same port.

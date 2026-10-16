@@ -245,12 +245,16 @@ Port these behaviors 1:1 and assert equality against the Node server with a shar
       connect), fed by the same value the room reports as `match.maxPlayers`. Node reads
       `currentMaxPlayers` from its matchmaker/DB; Rust reads `MAX_PLAYERS` (unset or
       `unlimited` = Node's default of no cap).
-- [ ] Rate-limit ban window (`RATE_LIMIT_BAN_DURATION_MS`, 60 s + IP ban). Rust closes
-      the socket on the same 61st message but does not ban the peer address.
-- [ ] Session token verification: Node rejects with `1008 invalid_token`;
-      `parse_username` currently accepts any token. Needs the shared session store.
-- [ ] Close codes: Rust drops the socket (client sees `1006`) where Node sends
-      `1008 rate_limited` / `1009 message_too_large`. `match_full` *is* sent as 1008.
+- [x] Rate-limit ban window (`RATE_LIMIT_BAN_DURATION_MS`, 60 s + IP ban). The peer IP
+      is read from `X-Forwarded-For` (first hop) with an `X-Real-IP` fallback, so it is
+      the real client behind Render's proxy; the 61st message in a window bans the IP for
+      60 s and closes with `1008 rate_limited`.
+- [x] Session token verification: a `token:username` connect form is validated against an
+      in-process token store (30 min expiry) and rejected with `1008 invalid_token`
+      otherwise. Minting/sharing tokens with the control plane is still open (this is a
+      local store, not the Node issuer's).
+- [x] Close codes: `1009 message_too_large`, `1008 rate_limited`, `1008 invalid_token`,
+      `1008 match_full`, `1008 server_full` (room-count cap).
 - [ ] Control-plane skin/xp: Node reads the Firebase profile + wallet; Rust uses the
       `skin`/`skinId` query param and sends `xp: 0`.
 
@@ -320,9 +324,15 @@ parity, not drift. Deployed for testing via Docker + Render (`render.yaml`), sel
 the client by `ROOM_URL`. *Remaining exit item:* drive it with `backend/bot.js` +
 `backend/zig-zag-bot.js` and diff state vs Node for the same inputs.
 
-**Phase 2 — Matchmaker + sharding.**
-Node matchmaker + room registration/heartbeat; Rust runs N rooms; edge routes by room.
-*Exit:* two rooms run concurrently on one VM, players never cross rooms, per-room reset.
+**Phase 2 — Matchmaker + sharding. — multi-room done in the room server; matchmaker TBD.**
+The room server now serves **N rooms per process**: `AppState` holds a map of
+`Arc<RoomHandle>` (each with its own simulation, clients, `/events` subscribers and tick
+task). A client selects its shard with the `room` query param (sanitized, defaults to
+`default`); rooms are created lazily, capped at 64, and empty non-default rooms are
+retired after 2 minutes idle. Per-room tick tasks mean one room cannot stall another, and
+a round reset closes only that room's clients. Still to do: the Node matchmaker that hands
+out `room` ids + a room registration/heartbeat endpoint. *Exit:* two rooms run
+concurrently on one VM, players never cross rooms, per-room reset.
 
 **Phase 3 — Production cutover & settlement path.**
 Room → Node result POST → Firebase + on-chain settlement. Deploy rooms on the VM;
