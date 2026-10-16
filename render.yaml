@@ -23,3 +23,16 @@ services:
     envVars:
       - key: RUST_LOG
         value: room_server=info
+      # Node control plane the room server mirrors its allocated-match list from
+      # (GET /internal/matches). Defaults to the public API in code; override for
+      # local/dev.
+      - key: CONTROL_PLANE_URL
+        value: https://worldofnads.onrender.com
+      # 0 (default) routes an unknown match id to the shared `default` room;
+      # 1 rejects it with `1008 unknown_match`. Uncomment to require exact matches.
+      # - key: STRICT_ROOMS
+      #   value: "1"
+      # Set the SAME value here and on the Node backend to require the
+      # `x-internal-secret` header on GET /internal/matches.
+      # - key: INTERNAL_SECRET
+      #   sync: false
