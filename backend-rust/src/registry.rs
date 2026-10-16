@@ -18,7 +18,9 @@ use std::time::Duration;
 use serde::Deserialize;
 use tokio::sync::Mutex;
 
-use crate::config::{control_plane_url, internal_secret, MATCH_REGISTRY_TTL_MS};
+use crate::config::{
+    control_plane_url, internal_secret, DEFAULT_MIN_PLAYERS_TO_START, MATCH_REGISTRY_TTL_MS,
+};
 use crate::protocol::now_ms;
 
 /// Minimum spacing between control-plane fetches. Bounds how often a burst of room
@@ -169,7 +171,13 @@ impl MatchRegistry {
 
         let mut out = HashMap::with_capacity(body.matches.len());
         for (id, raw) in body.matches {
-            let min = raw.min_players_to_start.unwrap_or(0).max(0) as usize;
+            // A match that predates per-match limits (or omits them) falls back to the
+            // same default Node uses, not to 0, so a room never starts on one player.
+            let min = raw
+                .min_players_to_start
+                .filter(|v| *v > 0)
+                .map(|v| v as usize)
+                .unwrap_or(DEFAULT_MIN_PLAYERS_TO_START);
             let mut max = raw.max_players.filter(|v| *v > 0).map(|v| v as usize);
             // Never cap below the start threshold, mirroring Node's normalize.
             if let Some(m) = max {
