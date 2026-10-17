@@ -30,6 +30,16 @@ async fn main() {
 
     let state = Arc::new(AppState::new());
 
+    // Say up front whether the `token:username` handshake is actually enforced, since an
+    // unset secret silently downgrades it to "accept anything shaped like a token".
+    if crate::config::session_token_secret().is_some() {
+        tracing::info!("session tokens: verified against SESSION_TOKEN_SECRET");
+    } else {
+        tracing::warn!(
+            "SESSION_TOKEN_SECRET is unset; session tokens are accepted unverified"
+        );
+    }
+
     // Warm the allocated-match mirror in the background so a match-start burst finds a
     // populated snapshot instead of every connect racing the very first fetch.
     {

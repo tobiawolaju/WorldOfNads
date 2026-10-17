@@ -28,6 +28,14 @@ use crate::protocol::now_ms;
 /// lookups (e.g. someone probing random ids) can reach the control plane.
 const MIN_REFRESH_INTERVAL_MS: i64 = 2_000;
 
+/// How many times `warm()` fetches before giving up, sleeping 2 s, 4 s, 8 s, 16 s and
+/// 32 s between attempts.
+const WARM_ATTEMPTS: u32 = 5;
+
+/// Backoff after a 429 that carries no `Retry-After`. Long enough that `warm()`'s later
+/// attempts land after it rather than burning themselves against it.
+const RATE_LIMIT_BACKOFF_S: u64 = 30;
+
 /// Per-room simulation limits, taken from the match record.
 #[derive(Clone, Debug)]
 pub struct MatchConfig {
@@ -52,6 +60,9 @@ struct Snapshot {
     matches: HashMap<String, MatchConfig>,
     fetched_at_ms: i64,
     last_attempt_ms: i64,
+    /// Do not contact the control plane before this. Set when it answers 429, so a
+    /// throttled control plane is not hammered by every connect.
+    backoff_until_ms: i64,
 }
 
 pub struct MatchRegistry {
@@ -109,9 +120,23 @@ impl MatchRegistry {
         }
     }
 
-    /// Fetch once now (deduplicated), so a match-start burst finds a warm snapshot.
+    /// Fetch until the mirror has data, so a match-start burst finds a warm snapshot.
+    ///
+    /// A cold start that misses — a sleeping control plane, or a transient throttle —
+    /// would otherwise leave the mirror empty until some client asked for a non-default
+    /// room, which silently routes real matches to `default`. Keep trying instead.
     pub async fn warm(&self) {
-        self.refresh(true).await;
+        for attempt in 0..WARM_ATTEMPTS {
+            self.refresh(true).await;
+            if !self.snapshot.lock().await.matches.is_empty() {
+                return;
+            }
+            tokio::time::sleep(Duration::from_millis(2_000_u64 << attempt.min(4))).await;
+        }
+        tracing::warn!(
+            "match registry still empty after {} warm attempts; room ids fall back to `default`",
+            WARM_ATTEMPTS
+        );
     }
 
     async fn refresh_if_stale(&self) {
@@ -136,7 +161,10 @@ impl MatchRegistry {
             let mut snap = self.snapshot.lock().await;
             let fresh =
                 !snap.matches.is_empty() && now - snap.fetched_at_ms < MATCH_REGISTRY_TTL_MS;
-            if (fresh && !force) || now - snap.last_attempt_ms < MIN_REFRESH_INTERVAL_MS {
+            if now < snap.backoff_until_ms
+                || (fresh && !force)
+                || now - snap.last_attempt_ms < MIN_REFRESH_INTERVAL_MS
+            {
                 return;
             }
             snap.last_attempt_ms = now;
@@ -179,8 +207,30 @@ impl MatchRegistry {
                 return None;
             }
         };
-        if !response.status().is_success() {
-            tracing::warn!("match registry fetch returned {}", response.status());
+        let status = response.status();
+        if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+            // The control plane is throttling us (a free instance under sustained
+            // polling). Back off rather than hammering it: honour `Retry-After` when it
+            // sends one, otherwise wait out `RATE_LIMIT_BACKOFF_S`. The last good
+            // snapshot is kept throughout, so live matches stay joinable.
+            let retry_after = response
+                .headers()
+                .get(reqwest::header::RETRY_AFTER)
+                .and_then(|value| value.to_str().ok())
+                .and_then(|value| value.trim().parse::<u64>().ok())
+                .filter(|value| *value > 0)
+                .unwrap_or(RATE_LIMIT_BACKOFF_S);
+            let mut snap = self.snapshot.lock().await;
+            snap.backoff_until_ms = now_ms() + (retry_after as i64) * 1_000;
+            tracing::warn!(
+                "match registry rate-limited; backing off {}s (keeping {} cached match(es))",
+                retry_after,
+                snap.matches.len()
+            );
+            return None;
+        }
+        if !status.is_success() {
+            tracing::warn!("match registry fetch returned {}", status);
             return None;
         }
         let body: InternalMatchesResponse = match response.json().await {

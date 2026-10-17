@@ -127,8 +127,25 @@ pub fn internal_secret() -> String {
     std::env::var("INTERNAL_SECRET").unwrap_or_default()
 }
 
+/// Shared secret the control plane signs session tokens with. `None` means this side
+/// accepts any well-formed token (see `auth.rs`), matching how the control plane treats
+/// an unset `INTERNAL_SECRET`: play keeps working while the two services are not yet
+/// configured together. Set the same value on both services to actually enforce it.
+pub fn session_token_secret() -> Option<String> {
+    std::env::var("SESSION_TOKEN_SECRET")
+        .ok()
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())
+}
+
 /// How long a mirrored match-list snapshot is trusted before it is re-fetched.
-pub const MATCH_REGISTRY_TTL_MS: i64 = 15_000;
+///
+/// A short TTL means the control plane is polled constantly (15 s worked out at ~5.8k
+/// requests a day, which drew a 429 from the free instance). A join for an id the mirror
+/// does not know forces a refresh immediately regardless, so a freshly created match is
+/// still joinable within seconds; this only bounds how long a *limit change* takes to
+/// land.
+pub const MATCH_REGISTRY_TTL_MS: i64 = 60_000;
 
 /// When the registry cannot judge a `room` id at all (it holds no data yet — e.g. right
 /// after a cold start, or during a control-plane outage), `false` routes the client to

@@ -22,6 +22,10 @@ uuid = { version = "1", features = ["v4"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+# Session-token verification (see src/auth.rs): the control plane signs tokens with
+# HMAC-SHA256 and this side re-derives the same digest. Pure Rust, no C build step.
+hmac = "0.12"
+sha2 = "0.10"
 
 [dev-dependencies]
 tokio-tungstenite = "0.24"
