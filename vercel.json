@@ -25,7 +25,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!godot|assets|api|favicon.ico|attachments|manifest.json|sw.js).*)",
+      "source": "/((?!godot|assets|api|favicon.ico|attachments|manifest.json|sw.js|lobbybg).*)",
       "destination": "/"
     }
   ]
