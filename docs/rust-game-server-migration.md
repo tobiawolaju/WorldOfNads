@@ -249,10 +249,13 @@ Port these behaviors 1:1 and assert equality against the Node server with a shar
       is read from `X-Forwarded-For` (first hop) with an `X-Real-IP` fallback, so it is
       the real client behind Render's proxy; the 61st message in a window bans the IP for
       60 s and closes with `1008 rate_limited`.
-- [x] Session token verification: a `token:username` connect form is validated against an
-      in-process token store (30 min expiry) and rejected with `1008 invalid_token`
-      otherwise. Minting/sharing tokens with the control plane is still open (this is a
-      local store, not the Node issuer's).
+- [x] Session token verification: a `token:username` connect form is validated against
+      the signature the control plane minted it with (HMAC-SHA256 over the expiry, keyed
+      by `SESSION_TOKEN_SECRET`) and rejected with `1008 invalid_token` otherwise. Both
+      sides verify the same signature, so one token works across services and survives a
+      restart of either; with the secret unset on the room server it accepts tokens
+      unverified (warned at boot), mirroring how the control plane treats an unset
+      `INTERNAL_SECRET`.
 - [x] Close codes: `1009 message_too_large`, `1008 rate_limited`, `1008 invalid_token`,
       `1008 match_full`, `1008 server_full` (room-count cap).
 - [ ] Control-plane skin/xp: Node reads the Firebase profile + wallet; Rust uses the
@@ -416,6 +419,9 @@ You already have the two best assets for this:
 
 1. Room target size (players/room) and desired total concurrency target (defines VM sizing)?
 2. Should **skins/attachment resolution** move to Rust or stay in Node and be passed in?
-3. Identity of the session token: keep the current HMAC format or move to JWT/JWKS?
+3. ~~Identity of the session token: keep the current HMAC format or move to JWT/JWKS?~~
+   Settled: plain HMAC-SHA256 over the expiry, keyed by the shared `SESSION_TOKEN_SECRET`
+   (see `backend-rust/src/auth.rs`). JWT/JWKS buys nothing while the mint endpoint is
+   unauthenticated — revisit if the token starts carrying a real identity.
 4. Single VM initially, or multi-region from the start?
 5. Keep the `/events` feed in Node (proposed) — confirm.

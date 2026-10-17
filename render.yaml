@@ -23,6 +23,11 @@
       # as unallocated is always refused.
       # - key: STRICT_ROOMS
       #   value: "1"
+      # Set the SAME value here and on the Node backend so both accept the same
+      # session token: Node signs it, this service verifies the signature. Left
+      # unset, the room server accepts tokens unverified (logged at boot).
+      # - key: SESSION_TOKEN_SECRET
+      #   sync: false
       # Set the SAME value here and on the Node backend to require the
       # `x-internal-secret` header on GET /internal/matches.
       # - key: INTERNAL_SECRET

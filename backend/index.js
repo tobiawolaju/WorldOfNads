@@ -35,7 +35,12 @@ const POS_SCALE = 100; // centimeters
 const ROT_SCALE = 1000; // milliradians
 const MAX_CLIENT_BUFFERED_BYTES = 512 * 1024;
 
-const AUTH_TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'change-me-in-production-wons-' + randomUUID();
+// Shared with the Rust room server so both services accept the same token: this
+// service signs session tokens with it (see `createSessionToken`) and the room server
+// verifies the signature. Left empty, the room server accepts tokens unverified — play
+// keeps working, but the handshake no longer proves the token came from here. Set the
+// same value on both services to enforce it.
+const SESSION_TOKEN_SECRET = process.env.SESSION_TOKEN_SECRET || '';
 const WS_RATE_LIMIT_WINDOW_MS = 1000;
 const WS_RATE_LIMIT_MAX_MESSAGES = 60;
 const WS_MAX_MESSAGE_SIZE = 4096;
@@ -350,8 +355,18 @@ function isRateLimited(ws) {
   return false;
 }
 
+function signSessionExpiry(expiresAt) {
+  return createHmac('sha256', SESSION_TOKEN_SECRET).update(String(expiresAt)).digest('hex');
+}
+
 function createSessionToken(username) {
-  const token = randomUUID().replace(/-/g, '');
+  // `<expiresAt>.<hmac(expiresAt)>`. The token is deliberately free of `:` — the client
+  // sends it as `?username=<token>:<name>` and both servers split that on the first
+  // colon, so a colon inside the token would cut the handshake in the wrong place.
+  const expiresAt = Date.now() + SESSION_TOKEN_EXPIRY_MS;
+  const token = SESSION_TOKEN_SECRET
+    ? `${expiresAt}.${signSessionExpiry(expiresAt)}`
+    : randomUUID().replace(/-/g, '');
   sessionTokens.set(token, {
     username,
     createdAt: Date.now()
@@ -361,8 +376,28 @@ function createSessionToken(username) {
 
 function verifySessionToken(token) {
   const session = sessionTokens.get(token);
+  const now = Date.now();
+  if (SESSION_TOKEN_SECRET) {
+    // Signed token: check it the way the Rust room server does, so a client can carry
+    // one token across both services and through a restart of either.
+    const dot = token.indexOf('.');
+    const expiresAt = dot > 0 ? Number(token.slice(0, dot)) : NaN;
+    const signature = dot > 0 ? token.slice(dot + 1) : '';
+    const expected = Number.isFinite(expiresAt) ? signSessionExpiry(expiresAt) : '';
+    if (
+      expected === '' ||
+      signature.length !== expected.length ||
+      !timingSafeEqual(Buffer.from(signature, 'utf8'), Buffer.from(expected, 'utf8'))
+    ) {
+      return null;
+    }
+    if (now > expiresAt) return null;
+    // The signature is good; the in-memory map still supplies the username exactly as
+    // before, so a restart of this service still invalidates the session.
+    return session ? session.username : null;
+  }
   if (!session) return null;
-  if (Date.now() - session.createdAt > SESSION_TOKEN_EXPIRY_MS) {
+  if (now - session.createdAt > SESSION_TOKEN_EXPIRY_MS) {
     sessionTokens.delete(token);
     return null;
   }
