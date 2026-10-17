@@ -633,7 +633,20 @@ export default function Dashboard() {
 
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
   const [lobbyBg, setLobbyBg] = useState<string>(pickRandomLobbyBg(null));
+
+  // Preload lobby backgrounds so they're visible immediately on first swap.
   useEffect(() => {
+    try {
+      lobbyBackgrounds.forEach((p) => {
+        const img = new Image();
+        img.src = p;
+      });
+    } catch (e) {
+      // ignore preload failures
+    }
+  }, []);
+  useEffect(() => {
+    if (!selectedMatch) return;
     setLobbyBg((prev) => pickRandomLobbyBg(prev));
   }, [selectedMatch]);
   const normalizedSelectedStatus = normalizeMatchStatus(selectedMatchData?.status);
