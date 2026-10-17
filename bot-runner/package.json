@@ -1,0 +1,19 @@
+{
+  "name": "wons-bot-runner",
+  "version": "1.0.0",
+  "description": "HTTP-triggered bot swarm for load-testing the World of Nads room server",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@msgpack/msgpack": "^3.1.2",
+    "ws": "^8.18.3"
+  }
+}
