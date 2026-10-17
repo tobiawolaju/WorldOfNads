@@ -23,7 +23,7 @@ import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast"
 import { resolveGameSkinName, buildComboMap, resolveSkinAttachments, resolveSkinImageUrl } from "../lib/skinMapping";
 import { staticMatches } from "./staticMatches.js";
 import storeItemsData from "../data/items.json";
-import { pickRandomLobbyBg } from "../data/lobbyBackgrounds";
+import { lobbyBackgrounds, pickRandomLobbyBg } from "../data/lobbyBackgrounds";
 
 type Twitter = {
   username?: string;
@@ -645,6 +645,12 @@ export default function Dashboard() {
       // ignore preload failures
     }
   }, []);
+
+  // Also pick a new bg when matches finish loading so the first selected card shows it.
+  useEffect(() => {
+    if (showLoader) return;
+    setLobbyBg((prev) => pickRandomLobbyBg(prev));
+  }, [showLoader]);
   useEffect(() => {
     if (!selectedMatch) return;
     setLobbyBg((prev) => pickRandomLobbyBg(prev));
