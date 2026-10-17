@@ -1,13 +1,3 @@
-# Render Blueprint — Rust room server (Phase 1 of docs/rust-game-server-migration.md).
-#
-# Declares ONLY the new room server, so a Blueprint sync can never touch the
-# existing dashboard-configured Node backend (worldofnads.onrender.com).
-#
-# Deploy: Render dashboard -> Blueprints -> New Blueprint -> pick this repo.
-# Result: https://wons-room-server.onrender.com  (health check on /health)
-#
-# Create a Blueprint from this repo when this file is on the default branch.
-services:
   - type: web
     name: wons-room-server
     runtime: docker
@@ -37,3 +27,20 @@ services:
       # `x-internal-secret` header on GET /internal/matches.
       # - key: INTERNAL_SECRET
       #   sync: false
+
+  # Bot swarm for load-testing the Rust room server (phones can spawn bots via URL).
+  - type: web
+    name: wons-bot-runner
+    runtime: node
+    plan: free
+    rootDir: bot-runner
+    buildCommand: npm install
+    startCommand: node bot.js
+    healthCheckPath: /health
+    envVars:
+      - key: BOT_SERVER_URL
+        value: wss://wons-room-server.onrender.com
+      - key: BOT_MAX_COUNT
+        value: 300
+      - key: BOT_TICK_MS
+        value: 33
