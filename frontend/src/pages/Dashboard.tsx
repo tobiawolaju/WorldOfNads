@@ -23,6 +23,7 @@ import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast"
 import { resolveGameSkinName, buildComboMap, resolveSkinAttachments, resolveSkinImageUrl } from "../lib/skinMapping";
 import { staticMatches } from "./staticMatches.js";
 import storeItemsData from "../data/items.json";
+import { pickRandomLobbyBg } from "../data/lobbyBackgrounds";
 
 type Twitter = {
   username?: string;
@@ -631,6 +632,10 @@ export default function Dashboard() {
   }, [matches]);
 
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
+  const [lobbyBg, setLobbyBg] = useState<string>(pickRandomLobbyBg(null));
+  useEffect(() => {
+    setLobbyBg((prev) => pickRandomLobbyBg(prev));
+  }, [selectedMatch]);
   const normalizedSelectedStatus = normalizeMatchStatus(selectedMatchData?.status);
   const isLive = normalizedSelectedStatus === "live";
   const isTrainingLobby = selectedMatchData?.ctaMode === "play";
@@ -753,7 +758,7 @@ export default function Dashboard() {
         <div className={`left-3d-section ${equipFlash ? "shake" : ""}`}>
         {tab !== "store" && (
           <div className="lobby-bg">
-            <img src={selectedMatchData?.image || "/lobbybg.jpeg"} alt="" />
+            <img src={lobbyBg} alt="" />
           </div>
         )}
         <ThreeScene
