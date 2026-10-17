@@ -1,11 +1,18 @@
-const toStartTime = (dateTime) => Math.floor(new Date(dateTime).getTime() / 1000);
-const inMinutes = (m) => toStartTime(new Date(Date.now() + m * 60 * 1000));
-const inDays = (d) => toStartTime(new Date(Date.now() + d * 24 * 60 * 60 * 1000));
-
+// The dashboard's only placeholder card: the shared training lobby.
+//
+// It is deliberately NOT a match id. The room server only accepts rooms a host
+// allocated (it mirrors Firebase `matches`), so anything else — including every
+// demo id that used to live here (match-training-lobby, match-sunset-showdown,
+// match-weekend-clash, match-champions-cup, match-alpha-sprint) — is refused with
+// `1008 unknown_match`. Training instead passes `default`, the shared room, which
+// the server always allows and which never needs a match record.
+//
+// Everything else on the dashboard is a real allocated match, loaded from Firebase
+// in Dashboard.tsx and merged in over this list.
 export const staticMatches = [
   {
     id: 1,
-    matchId: "match-training-lobby",
+    matchId: "default",
     sponsor: "Training Lobby",
     prize: "Practice",
     prizeAmount: 0,
@@ -18,69 +25,5 @@ export const staticMatches = [
     description: "Training Lobby is open for warmup runs and should always be playable.",
     url: "",
     ctaMode: "play"
-  },
-  {
-    id: 2,
-    matchId: "match-sunset-showdown",
-    sponsor: "NadCity Arena",
-    prize: "1.5K WONs",
-    prizeAmount: 1500,
-    prizeToken: "WONs",
-    status: "live",
-    time: "Live",
-    date: new Date().toISOString().slice(0, 10),
-    startTime: inMinutes(5),
-    image: "/lobbybg.jpeg",
-    description: "Sunset Showdown at NadCity Arena. First to flag takes the 1.5K WONs pot.",
-    url: "",
-    ctaMode: "countdown"
-  },
-  {
-    id: 3,
-    matchId: "match-weekend-clash",
-    sponsor: "Monad Labs",
-    prize: "3K WONs",
-    prizeAmount: 3000,
-    prizeToken: "WONs",
-    status: "live",
-    time: "Live",
-    date: new Date().toISOString().slice(0, 10),
-    startTime: inMinutes(30),
-    image: "/lobbybg.jpeg",
-    description: "The Weekend Clash is live. Cash prizes for the top 3 flags planted.",
-    url: "",
-    ctaMode: "countdown"
-  },
-  {
-    id: 4,
-    matchId: "match-champions-cup",
-    sponsor: "WONs Major",
-    prize: "10K WONs",
-    prizeAmount: 10000,
-    prizeToken: "WONs",
-    status: "upcoming",
-    time: "Upcoming",
-    date: "",
-    startTime: inDays(2),
-    image: "/lobbybg.jpeg",
-    description: "The WONs Major Championship Cup. Winner takes home 10K WONs.",
-    url: "",
-    ctaMode: "countdown"
-  },
-  {
-    id: 7,
-    matchId: "match-alpha-sprint",
-    sponsor: "Alpha Sprint",
-    prize: "500 WONs",
-    prizeAmount: 500,
-    prizeToken: "WONs",
-    status: "completed",
-    time: "Completed",
-    date: "",
-    startTime: inDays(-2),
-    image: "/lobbybg.jpeg",
-    description: "Alpha Sprint is done — check the leaderboard for the final standings.",
-    url: "",
-    ctaMode: "countdown"
   }
 ];
