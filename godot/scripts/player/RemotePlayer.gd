@@ -35,7 +35,7 @@ func _setup_anim_tree() -> void:
 			if from_name != to_name:
 				var trans := AnimationNodeStateMachineTransition.new()
 				trans.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_SYNC
-				trans.xfade_time = 0.12
+				trans.xfade_time = 0.06 if to_name == "idle" else 0.12  # idle settles faster, like player.gd
 				state_machine.add_transition(from_name, to_name, trans)
 	anim_tree.tree_root = state_machine
 	anim_tree.active = true

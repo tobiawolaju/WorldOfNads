@@ -1111,22 +1111,6 @@ func _release_local_item_hold(item_id: String) -> void:
 		local.call("release_item_if_holding", item_id)
 
 
-# Back-of-the-holder offset for a carried item. The chicken and lootbox use their
-# own distances/heights so a carried item sits the way the holder sees it.
-func _build_item_hold_target(item_id: String, player_node: Node3D) -> Vector3:
-	var forward = -player_node.global_transform.basis.z
-	forward.y = 0.0
-	if forward.length_squared() < 0.0001:
-		forward = Vector3.FORWARD
-	else:
-		forward = forward.normalized()
-	var dist := LOOTBOX_HOLD_DISTANCE if item_id == "LootBox" else CHICKEN_HOLD_DISTANCE
-	var height := LOOTBOX_HOLD_HEIGHT if item_id == "LootBox" else CHICKEN_HOLD_HEIGHT
-	var target_pos = player_node.global_position + (forward * dist)
-	target_pos.y += height
-	return target_pos
-
-
 # Per-frame visual pass for items carried by OTHER players: power-ups are hidden,
 # objective items ride the holder's back (so everyone sees the chicken/lootbox).
 # The local holder is left alone — LocalPickup drives its own copy.
@@ -1143,10 +1127,14 @@ func _update_item_hold_visuals() -> void:
 		var is_objective := _is_objective_item_id(item_id)
 		var pnode := _get_player_node_by_id(holder)
 		if is_objective and pnode != null and is_instance_valid(pnode):
+			# Hand the holder over instead of posing the item from the holder's
+			# origin: LocalPickup then follows the holder's own back attachment
+			# (`Skeleton3D/Back/offset`), so every client sees the item in the same
+			# spot, moving with the animation. The old feet-relative offset is what
+			# made a carried item look like it floated above its holder.
 			if node.has_method("set_remote_held"):
-				node.call("set_remote_held", true)
+				node.call("set_remote_held", true, pnode)
 			node.visible = true
-			node.global_position = _build_item_hold_target(item_id, pnode)
 		else:
 			if node.has_method("set_remote_held"):
 				node.call("set_remote_held", true)
