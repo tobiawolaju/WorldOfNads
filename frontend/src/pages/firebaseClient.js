@@ -236,6 +236,10 @@ export function normalizeMatchRecord(match, fallbackKey = "") {
     image: String(match?.image || "/logo.jpg"),
     description: String(match?.description || ""),
     url: String(match?.url || ""),
+    // Sponsor-selected lobby backdrop (path under /lobbybg/). Empty on records
+    // created before the picker existed; the dashboard then derives a stable
+    // per-match image so the backdrop is never random.
+    lobbyBg: String(match?.lobbyBg || ""),
     createdAt: String(match?.createdAt || new Date().toISOString()),
     startTime: Number(match?.startTime || 0),
     minPlayersToStart,

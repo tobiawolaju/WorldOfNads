@@ -1,3 +1,5 @@
+import { DEFAULT_LOBBY_BG } from "../data/lobbyBackgrounds";
+
 // The dashboard's only placeholder card: the shared training lobby.
 //
 // It is deliberately NOT a match id. The room server only accepts rooms a host
@@ -22,6 +24,7 @@ export const staticMatches = [
     date: new Date().toISOString().slice(0, 10),
     startTime: Math.floor(Date.now() / 1000),
     image: "https://pbs.twimg.com/profile_images/1861739634428174336/26FzLLyr.jpg",
+    lobbyBg: DEFAULT_LOBBY_BG,
     description: "Training Lobby is open for warmup runs and should always be playable.",
     url: "",
     ctaMode: "play"

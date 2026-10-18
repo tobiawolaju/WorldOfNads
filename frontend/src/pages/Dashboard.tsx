@@ -23,7 +23,7 @@ import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast"
 import { resolveGameSkinName, buildComboMap, resolveSkinAttachments, resolveSkinImageUrl } from "../lib/skinMapping";
 import { staticMatches } from "./staticMatches.js";
 import storeItemsData from "../data/items.json";
-import { lobbyBackgrounds, pickRandomLobbyBg } from "../data/lobbyBackgrounds";
+import { FALLBACK_LOBBY_BG, lobbyBackgrounds, stableLobbyBgFor } from "../data/lobbyBackgrounds";
 
 type Twitter = {
   username?: string;
@@ -54,6 +54,7 @@ type Match = {
   startTime?: number; // Unix timestamp in seconds
   settleTxHash?: string;
   ctaMode?: "play" | "countdown";
+  lobbyBg?: string;
 };
 
 type RewardItem = {
@@ -632,7 +633,17 @@ export default function Dashboard() {
   }, [matches]);
 
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
-  const [lobbyBg, setLobbyBg] = useState<string>(pickRandomLobbyBg(null));
+  // The backdrop is the selected match's own choice, never a random roll. Older
+  // records have no `lobbyBg`; they fall back to a stable per-match hash (the same
+  // one backend/scripts/assignLobbyBackgrounds.js writes during backfill), so the
+  // image stays put instead of changing every time the card changes.
+  const lobbyBg = useMemo(
+    () =>
+      selectedMatchData?.lobbyBg ||
+      stableLobbyBgFor(selectedMatch) ||
+      FALLBACK_LOBBY_BG,
+    [selectedMatchData?.lobbyBg, selectedMatch]
+  );
 
   // Preload lobby backgrounds so they're visible immediately on first swap.
   useEffect(() => {
@@ -645,16 +656,6 @@ export default function Dashboard() {
       // ignore preload failures
     }
   }, []);
-
-  // Also pick a new bg when matches finish loading so the first selected card shows it.
-  useEffect(() => {
-    if (showLoader) return;
-    setLobbyBg((prev) => pickRandomLobbyBg(prev));
-  }, [showLoader]);
-  useEffect(() => {
-    if (!selectedMatch) return;
-    setLobbyBg((prev) => pickRandomLobbyBg(prev));
-  }, [selectedMatch]);
   const normalizedSelectedStatus = normalizeMatchStatus(selectedMatchData?.status);
   const isLive = normalizedSelectedStatus === "live";
   const isTrainingLobby = selectedMatchData?.ctaMode === "play";
