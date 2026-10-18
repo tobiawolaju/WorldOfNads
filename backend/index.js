@@ -594,6 +594,10 @@ const server = createServer(async (req, res) => {
           start_time: Number(match.startTime || 0),
           description: String(match.description || ''),
           cta_mode: String(match.ctaMode || ''),
+          // Godot dashboard can now honour the sponsor's chosen lobby backdrop.
+          // `lobby_bg` can be an empty string on older records; the client must
+          // fall back to a local default when absent.
+          lobby_bg: typeof match.lobbyBg === 'string' ? match.lobbyBg : '',
           min_players_to_start:
             Number.isFinite(rawMin) && rawMin > 0 ? Math.floor(rawMin) : DEFAULT_MIN_PLAYERS_TO_START,
           max_players:

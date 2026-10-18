@@ -867,6 +867,7 @@ func _training_match() -> Dictionary:
 		"start_time": float(Time.get_unix_time_from_system()),
 		"description": "Shared warmup arena. Open to everyone and always playable.",
 		"cta_mode": "play",
+		"lobby_bg": "",
 	}
 
 
@@ -879,6 +880,7 @@ func _normalize_api_match(entry: Dictionary) -> Dictionary:
 		"start_time": float(entry.get("start_time", 0.0)),
 		"description": str(entry.get("description", "")),
 		"cta_mode": str(entry.get("cta_mode", "")),
+		"lobby_bg": str(entry.get("lobby_bg", "")),
 	}
 
 
@@ -908,7 +910,11 @@ func _on_matches_fetched(result: int, response_code: int, _headers: PackedString
 	var merged: Array[Dictionary] = []
 	for entry in api_matches:
 		if entry is Dictionary:
-			merged.append(_normalize_api_match(entry))
+			var m := _normalize_api_match(entry)
+			var bg := str(entry.get("lobby_bg", ""))
+			if bg != "":
+				m["lobby_bg"] = bg
+			merged.append(m)
 	# The shared training arena sits after the real matches: the default selection
 	# prefers a real live match and only falls back to training when there is none.
 	merged.append(_training_match())
@@ -1049,7 +1055,14 @@ func _build_match_card(match: Dictionary) -> Control:
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var card_material := ShaderMaterial.new()
 	card_material.shader = MATCH_CARD_SHADER
-	card_material.set_shader_parameter("source_tex", MATCH_SRC)
+	var match_bg := str(match.get("lobby_bg", ""))
+	var card_tex: Texture2D = MATCH_SRC
+	if match_bg != "":
+		var bg_path2 := "res://assets/img/lobbybg/%s" % match_bg.get_file()
+		var loaded := _load_texture(bg_path2)
+		if loaded != null:
+			card_tex = loaded
+	card_material.set_shader_parameter("source_tex", card_tex)
 	card_material.set_shader_parameter("dot_opacity", 0.9 if selected else 0.6)
 	card_material.set_shader_parameter("neon_opacity", 1.0 if selected else 0.8)
 	card_material.set_shader_parameter("grayscale_amount", 1.0 if status == "completed" else 0.0)
@@ -1534,12 +1547,42 @@ func _bytes_are_png(data: PackedByteArray) -> bool:
 func _bytes_are_jpeg(data: PackedByteArray) -> bool:
 	return data.size() >= 3 and data[0] == 0xFF and data[1] == 0xD8 and data[2] == 0xFF
 
-func _bytes_are_webp(data: PackedByteArray) -> bool:
-	return (
-		data.size() >= 12
-		and data[0] == 0x52 and data[1] == 0x49 and data[2] == 0x46 and data[3] == 0x46
-		and data[8] == 0x57 and data[9] == 0x45 and data[10] == 0x42 and data[11] == 0x50
-	)
+func _load_remote_texture(path: String) -> Texture2D:
+	# Fetch a remote image (http(s)) and return an ImageTexture. Follows the same
+	# byte-sniffing logic as _load_profile_picture so we don't log engine errors
+	# on unsupported content types or failed decodes.
+	var http := HTTPRequest.new()
+	http.timeout = 10.0
+	add_child(http)
+	if http.request(path) != OK:
+		http.queue_free()
+		return null
+	var result: Array = await http.request_completed
+	http.queue_free()
+
+	var code := int(result[1])
+	if code != 200:
+		return null
+	var body: PackedByteArray = result[3]
+	if body.size() == 0:
+		return null
+	var image := Image.new()
+	var loaded := false
+	if _bytes_are_png(body):
+		loaded = image.load_png_from_buffer(body) == OK
+	elif _bytes_are_jpeg(body):
+		loaded = image.load_jpg_from_buffer(body) == OK
+	elif _bytes_are_webp(body):
+		loaded = image.load_webp_from_buffer(body) == OK
+	if not loaded:
+		return null
+	return ImageTexture.create_from_image(image)
+
+
+func _can_load_remote(path: String) -> bool:
+	if path.is_empty():
+		return false
+	return path.begins_with("http://") or path.begins_with("https://")
 
 # Public Monad RPC read, mirroring Dashboard.tsx's ethers getBalance. Display
 # only: the balance is never trusted for anything the game acts on.
@@ -1661,6 +1704,18 @@ func _refresh_skin_preview() -> void:
 	# while the preview pane is showing the gallery background.
 	if _lobby_bg != null:
 		_lobby_bg.visible = tab != TAB_STORE
+		# Also swap the big lobby backdrop texture to match the selected match
+		var rect := _lobby_bg as TextureRect
+		if rect != null:
+			var m := _selected_match()
+			var bg := str(m.get("lobby_bg", ""))
+			var tex := MATCH_SRC
+			if bg != "":
+				var bg_path2 := "res://assets/img/lobbybg/%s" % bg.get_file()
+				var loaded := _load_texture(bg_path2)
+				if loaded != null:
+					tex = loaded
+			rect.texture = tex
 	_build_skin_variants()
 	if not visible:
 		return
