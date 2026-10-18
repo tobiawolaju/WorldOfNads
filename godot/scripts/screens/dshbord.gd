@@ -867,7 +867,8 @@ func _training_match() -> Dictionary:
 		"start_time": float(Time.get_unix_time_from_system()),
 		"description": "Shared warmup arena. Open to everyone and always playable.",
 		"cta_mode": "play",
-		"lobby_bg": "",
+		# Same default the web dashboard pins on its Training card.
+		"lobby_bg": "/lobbybg/lobby (1).jpg",
 	}
 
 
@@ -1055,14 +1056,7 @@ func _build_match_card(match: Dictionary) -> Control:
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var card_material := ShaderMaterial.new()
 	card_material.shader = MATCH_CARD_SHADER
-	var match_bg := str(match.get("lobby_bg", ""))
-	var card_tex: Texture2D = MATCH_SRC
-	if match_bg != "":
-		var bg_path2 := "res://assets/img/lobbybg/%s" % match_bg.get_file()
-		var loaded := _load_texture(bg_path2)
-		if loaded != null:
-			card_tex = loaded
-	card_material.set_shader_parameter("source_tex", card_tex)
+	card_material.set_shader_parameter("source_tex", _lobby_bg_texture(match))
 	card_material.set_shader_parameter("dot_opacity", 0.9 if selected else 0.6)
 	card_material.set_shader_parameter("neon_opacity", 1.0 if selected else 0.8)
 	card_material.set_shader_parameter("grayscale_amount", 1.0 if status == "completed" else 0.0)
@@ -1547,42 +1541,13 @@ func _bytes_are_png(data: PackedByteArray) -> bool:
 func _bytes_are_jpeg(data: PackedByteArray) -> bool:
 	return data.size() >= 3 and data[0] == 0xFF and data[1] == 0xD8 and data[2] == 0xFF
 
-func _load_remote_texture(path: String) -> Texture2D:
-	# Fetch a remote image (http(s)) and return an ImageTexture. Follows the same
-	# byte-sniffing logic as _load_profile_picture so we don't log engine errors
-	# on unsupported content types or failed decodes.
-	var http := HTTPRequest.new()
-	http.timeout = 10.0
-	add_child(http)
-	if http.request(path) != OK:
-		http.queue_free()
-		return null
-	var result: Array = await http.request_completed
-	http.queue_free()
-
-	var code := int(result[1])
-	if code != 200:
-		return null
-	var body: PackedByteArray = result[3]
-	if body.size() == 0:
-		return null
-	var image := Image.new()
-	var loaded := false
-	if _bytes_are_png(body):
-		loaded = image.load_png_from_buffer(body) == OK
-	elif _bytes_are_jpeg(body):
-		loaded = image.load_jpg_from_buffer(body) == OK
-	elif _bytes_are_webp(body):
-		loaded = image.load_webp_from_buffer(body) == OK
-	if not loaded:
-		return null
-	return ImageTexture.create_from_image(image)
-
-
-func _can_load_remote(path: String) -> bool:
-	if path.is_empty():
+func _bytes_are_webp(data: PackedByteArray) -> bool:
+	if data.size() < 12:
 		return false
-	return path.begins_with("http://") or path.begins_with("https://")
+	return (
+		data[0] == 0x52 and data[1] == 0x49 and data[2] == 0x46 and data[3] == 0x46
+		and data[8] == 0x57 and data[9] == 0x45 and data[10] == 0x42 and data[11] == 0x50
+	)
 
 # Public Monad RPC read, mirroring Dashboard.tsx's ethers getBalance. Display
 # only: the balance is never trusted for anything the game acts on.
@@ -1704,18 +1669,11 @@ func _refresh_skin_preview() -> void:
 	# while the preview pane is showing the gallery background.
 	if _lobby_bg != null:
 		_lobby_bg.visible = tab != TAB_STORE
-		# Also swap the big lobby backdrop texture to match the selected match
+		# The big backdrop follows the selected match's chosen artwork, the same
+		# way Dashboard.tsx does.
 		var rect := _lobby_bg as TextureRect
 		if rect != null:
-			var m := _selected_match()
-			var bg := str(m.get("lobby_bg", ""))
-			var tex := MATCH_SRC
-			if bg != "":
-				var bg_path2 := "res://assets/img/lobbybg/%s" % bg.get_file()
-				var loaded := _load_texture(bg_path2)
-				if loaded != null:
-					tex = loaded
-			rect.texture = tex
+			rect.texture = _lobby_bg_texture(_selected_match())
 	_build_skin_variants()
 	if not visible:
 		return
@@ -2121,6 +2079,31 @@ func _load_texture(path: String) -> Texture2D:
 			texture = loaded as Texture2D
 	_texture_cache[path] = texture
 	return texture
+
+
+# The sponsor-picked lobby backdrop. The form stores `lobbyBg` on the match
+# record ("/lobbybg/lobby (7).jpg"), `GET /matches` forwards it as `lobby_bg`,
+# and each of the nine images is bundled at res://assets/img/lobbybg/<filename>
+# so this stays synchronous and works offline. A record with no stored choice
+# falls back to the same stable hash the web dashboard uses
+# (frontend/src/data/lobbyBackgrounds.js) - never a random image.
+const LOBBY_BG_COUNT := 9
+
+func _stable_lobby_bg(match_id: String) -> String:
+	if match_id.is_empty() or LOBBY_BG_COUNT <= 0:
+		return "lobby (1).jpg"
+	var h := 0
+	for i in match_id.length():
+		h = ((h * 31) + match_id.unicode_at(i)) & 0xFFFFFFFF
+	return "lobby (%d).jpg" % ((h % LOBBY_BG_COUNT) + 1)
+
+
+func _lobby_bg_texture(match: Dictionary) -> Texture2D:
+	var bg := str(match.get("lobby_bg", ""))
+	if bg.is_empty():
+		bg = _stable_lobby_bg(str(match.get("match_id", "")))
+	var texture := _load_texture("res://assets/img/lobbybg/%s" % bg.get_file())
+	return texture if texture != null else MATCH_SRC
 
 
 func _get_plate_gradient(completed: bool = false) -> GradientTexture2D:
