@@ -486,7 +486,7 @@ func _setup_anim_tree() -> void:
 			if from_name != to_name:
 				var trans := AnimationNodeStateMachineTransition.new()
 				trans.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_SYNC
-				trans.xfade_time = 0.12
+				trans.xfade_time = 0.06 if to_name == "idle" else 0.12  # idle settles faster; 0.12 s held the run cycle past the stop
 				state_machine.add_transition(from_name, to_name, trans)
 	anim_tree.tree_root = state_machine
 	anim_tree.active = true
@@ -1030,8 +1030,13 @@ func _physics_process(delta: float) -> void:
 	network_heartbeat_timer += real_delta
 	var tick_window := NETWORK_TICK_ACTIVE if net_active else NETWORK_TICK_IDLE
 	var force_heartbeat := network_heartbeat_timer >= NETWORK_HEARTBEAT
-	if network_tick_timer >= tick_window or force_heartbeat:
+	# An animation change is an event, not a periodic sample, so send it on this frame:
+	# the frame that flips to "idle" also clears `net_active`, which used to leave the
+	# stop transition sitting behind the 0.33 s idle window.
+	var anim_changed := _anim_state_dirty
+	if network_tick_timer >= tick_window or force_heartbeat or anim_changed:
 		_send_state_to_server(force_heartbeat)
+		_anim_state_dirty = false
 		network_tick_timer = 0.0
 		if force_heartbeat:
 			network_heartbeat_timer = 0.0
@@ -1043,6 +1048,12 @@ func _physics_process(delta: float) -> void:
 		_refresh_name_label()
 
 var _last_real_net_ms: float = 0.0
+# Set by _set_anim when the pose actually changes, so the send block in
+# _physics_process can emit it on that frame instead of waiting for the (much
+# slower) idle tick window. The frame that flips to "idle" is also the frame that
+# clears `net_active`, so without this the stop transition used to sit in the queue
+# for up to NETWORK_TICK_IDLE (0.33 s) and remote clients kept showing the run loop.
+var _anim_state_dirty: bool = false
 
 func _update_demo_agent(delta: float) -> void:
 	if _demo_should_recover():
@@ -2383,6 +2394,8 @@ func _set_anim(anim_name: String) -> void:
 	if current_animation == anim_name:
 		return
 	current_animation = anim_name
+	# Mark it so the next _physics_process sends it right away (see the send block).
+	_anim_state_dirty = true
 	_play_anim(anim_name)
 
 func _play_anim(anim_name: String) -> void:
@@ -2395,6 +2408,7 @@ func _start_slide(move_direction: Vector3, slide_from_touch: bool = false) -> vo
 	_slide_direction = move_direction.normalized()
 	_slide_camera_restore_active = slide_from_touch
 	current_animation = "runningslide"
+	_anim_state_dirty = true
 	_play_anim("runningslide")
 
 func _stop_slide() -> void:

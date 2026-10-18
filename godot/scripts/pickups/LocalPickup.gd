@@ -432,18 +432,36 @@ func _grounded_spawn_point(target: Vector3) -> Vector3:
 	return Vector3(target.x, point.y + SPAWN_DROP_HEIGHT, target.z)
 
 
-## Marks the item as carried by ANOTHER player (server says so). Freezes it in
-## place so physics cannot drag it, but leaves visibility to PlayerManager:
-## objective items still show (riding the holder), power-ups are hidden.
-func set_remote_held(value: bool) -> void:
+## Marks the item as carried by ANOTHER player (server says so). `by` is the remote
+## holder's node whenever the caller knows it: the copy then rides the SAME back
+## attachment the local holder uses (`Skeleton3D/Back/offset`), so it lands where the
+## item was authored to sit instead of on an offset measured from the holder's feet.
+## Without `by` the item is only frozen in place, which is all the hidden power-ups
+## need. Visibility stays with PlayerManager.
+func set_remote_held(value: bool, by: Node3D = null) -> void:
+	# Called every frame for as long as the item is carried, so bail out while
+	# nothing about the hold has actually changed (re-tinting each frame is waste).
+	if value == remote_held and (not value or by == holder):
+		return
 	remote_held = value
 	if value:
+		if not is_held:
+			holder = by
 		freeze = true
 		freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
 		linear_velocity = Vector3.ZERO
 		angular_velocity = Vector3.ZERO
+		# Objective items stay visible while carried, so they need the same carried
+		# tint their holder sees.
+		if is_objective_item():
+			_tint_mesh(_held_tint_color())
+		_resolve_attach_node()
 	else:
+		if not is_held:
+			holder = null
+			_attach_node = null
 		freeze = false
+		_tint_mesh(Color.WHITE)
 
 
 ## Releases a local hold WITHOUT telling the server (used when the server says
@@ -569,7 +587,9 @@ func _apply_glow() -> void:
 
 func _process(_delta: float) -> void:
 	_ensure_local_player_exception()
-	if not is_held:
+	# A free item spins and bobs where it lies; a carried one rides its holder, local
+	# or remote, so it must not spin.
+	if not is_held and not remote_held:
 		if _mesh != null:
 			_mesh.rotate_y(_delta * 0.8)
 		if _idle_tween == null or not _idle_tween.is_valid():
@@ -578,6 +598,9 @@ func _process(_delta: float) -> void:
 	if _idle_tween != null and _idle_tween.is_valid():
 		_idle_tween.kill()
 		_idle_tween = null
+		# The bob tween lifts the mesh up to 0.12 above its resting offset; killing it
+		# mid-flight would leave the item stuck that far off the holder's back.
+		_apply_mesh_offset()
 	if not is_instance_valid(holder):
 		# Holder was removed (player left, scene changed) - release the item.
 		drop()
