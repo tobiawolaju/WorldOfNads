@@ -8,12 +8,13 @@
   overflow: hidden;
 }
 
-/* Background image behind the 3D scene. The src is the selected match card's
-   artwork (see Dashboard.tsx), falling back to /lobbybg.jpeg when nothing is
-   selected. Every image is cropped (object-fit: cover) to lobbybg.jpeg's own
-   1216x523 ratio, so the backdrop keeps one constant shape instead of changing
-   height with each match's artwork. Width fills the scene, vertically centered,
-   with a 1:3:1 opacity gradient (top fades in, middle full, bottom fades out) */
+/* Background image behind the 3D scene. The src is the selected match's chosen
+   lobby backdrop (Dashboard.tsx -> lobbyBg), falling back to a stable per-match
+   image and then /lobbybg.jpeg. Every image is cropped (object-fit: cover) to
+   lobbybg.jpeg's own 1216x523 ratio, so the backdrop keeps one constant shape
+   instead of changing height with each match's artwork. Width fills the scene,
+   vertically centered, with a 1:3:1 opacity gradient (top fades in, middle full,
+   bottom fades out) */
 .lobby-bg {
   position: absolute;
   inset: 0;

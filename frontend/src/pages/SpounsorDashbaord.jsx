@@ -16,6 +16,7 @@ import {
 } from "./mockSponsorContract";
 import { trackMatchCreated, trackSponsorAdded, trackSponsorMatchCreated } from "../lib/analyticsClient";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
+import { DEFAULT_LOBBY_BG, lobbyBackgroundOptions } from "../data/lobbyBackgrounds";
 import "./SpounsorDashbaord.css";
 
 function buildMatchId(sponsor) {
@@ -101,6 +102,7 @@ const initialForm = {
   minPlayersToStart: "3",
   maxPlayers: "50",
   image: "/logo.jpg",
+  lobbyBg: DEFAULT_LOBBY_BG,
   description: "",
   url: ""
 };
@@ -261,6 +263,7 @@ export default function SpounsorDashbaord() {
         minPlayersToStart: minPlayersValue,
         maxPlayers: maxPlayersValue,
         image: form.image || "/logo.jpg",
+        lobbyBg: form.lobbyBg || DEFAULT_LOBBY_BG,
         description: form.description || `${form.sponsor} sponsored match`,
         url: form.url,
         createdAt: new Date().toISOString(),
@@ -474,6 +477,24 @@ export default function SpounsorDashbaord() {
                   <option value="unlimited">Unlimited</option>
                 </select>
               </label>
+              <div className="sponsor-modal__bg-picker">
+                Lobby Background
+                <div className="sponsor-modal__bg-grid">
+                  {lobbyBackgroundOptions.map((option) => (
+                    <button
+                      type="button"
+                      key={option.value}
+                      className={`sponsor-modal__bg-option ${form.lobbyBg === option.value ? "is-selected" : ""}`}
+                      onClick={() => setForm((current) => ({ ...current, lobbyBg: option.value }))}
+                      aria-pressed={form.lobbyBg === option.value}
+                      title={option.label}
+                    >
+                      <img src={option.value} alt={option.label} />
+                      <span>{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <label className="sponsor-modal__wide">
                 Description
                 <textarea name="description" rows="4" value={form.description} onChange={handleChange} />

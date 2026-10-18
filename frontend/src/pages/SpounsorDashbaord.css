@@ -297,6 +297,60 @@
   grid-column: 1 / -1;
 }
 
+/* Lobby backdrop picker. Each option previews the real image the dashboard will
+   use behind the 3D scene, cropped to lobbybg.jpeg's ratio like the dashboard. */
+.sponsor-modal__bg-picker {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.sponsor-modal__bg-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sponsor-modal__bg-option {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.sponsor-modal__bg-option img {
+  width: 100%;
+  aspect-ratio: 1216 / 523;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.sponsor-modal__bg-option span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+  text-align: center;
+}
+
+.sponsor-modal__bg-option:hover {
+  transform: translateY(-1px);
+}
+
+.sponsor-modal__bg-option.is-selected {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
 .sponsor-modal__hint {
   margin: 0;
   color: #555;
@@ -322,6 +376,10 @@
 
   .sponsor-modal__grid {
     grid-template-columns: 1fr;
+  }
+
+  .sponsor-modal__bg-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .sponsor-modal {
@@ -417,6 +475,20 @@
   }
   .sponsor-modal__token {
     color: #cdadff !important;
+  }
+  .sponsor-modal__bg-picker {
+    color: #ffffff !important;
+  }
+  .sponsor-modal__bg-option {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+  .sponsor-modal__bg-option span {
+    color: rgba(255, 255, 255, 0.75) !important;
+  }
+  .sponsor-modal__bg-option.is-selected {
+    border-color: #cdadff !important;
+    box-shadow: 0 0 0 2px rgba(205, 173, 255, 0.25) !important;
   }
   .sponsor-modal__hint {
     color: rgba(255, 255, 255, 0.6) !important;
