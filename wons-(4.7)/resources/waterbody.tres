@@ -1,0 +1,26 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://cmaqetwybrgcn"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pudo2"]
+render_priority = 1
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.75686276, 1, 0.3019608)
+grow = true
+grow_amount = 0.016
+stencil_mode = 3
+stencil_flags = 1
+stencil_compare = 5
+metadata/_stencil_owned = true
+
+[resource]
+next_pass = SubResource("StandardMaterial3D_pudo2")
+transparency = 1
+albedo_color = Color(0.8117647, 0.5921569, 0.8235294, 0.49411765)
+roughness = 0.0
+clearcoat_roughness = 0.0
+proximity_fade_enabled = true
+proximity_fade_distance = 0.05
+stencil_mode = 1
+stencil_flags = 2
+stencil_color = Color(1, 0.75686276, 1, 0.3019608)
+stencil_outline_thickness = 0.016

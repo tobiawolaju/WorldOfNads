@@ -1,0 +1,139 @@
+[gd_scene format=3 uid="uid://c4tgq356u6uij"]
+
+[ext_resource type="Script" uid="uid://g4sej37mjguw" path="res://scripts/lobby.gd" id="1_07nfq"]
+[ext_resource type="PackedScene" uid="uid://bjvhk14twbsb6" path="res://scenes/hud.tscn" id="1_o1atq"]
+[ext_resource type="PackedScene" uid="uid://bq3i1po3drd3s" path="res://scenes/skin.tscn" id="2_oipnb"]
+[ext_resource type="Script" uid="uid://guvxewi0bmto" path="res://scripts/map/StormEye.gd" id="3_ncsg4"]
+[ext_resource type="Environment" uid="uid://rpidr3omplr6" path="res://assets/resources/day.tres" id="4_ncsg4"]
+[ext_resource type="Environment" uid="uid://b1xdulwsbpnew" path="res://assets/resources/night.tres" id="5_07nfq"]
+[ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="5_omrgh"]
+[ext_resource type="Script" uid="uid://dyx5kfl7l30wf" path="res://scripts/lobbymanager.gd" id="7_yad6j"]
+[ext_resource type="PackedScene" uid="uid://bj27lnrpsa1wt" path="res://scenes/busyland.tscn" id="9_07nfq"]
+[ext_resource type="PackedScene" uid="uid://dud0j72gp62nr" path="res://scenes/props/enviroment/bus.tscn" id="11_m1sns"]
+[ext_resource type="PackedScene" uid="uid://ds74a1sw044u4" path="res://scenes/pickup.tscn" id="11_yad6j"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
+render_priority = 0
+shader = ExtResource("5_omrgh")
+shader_parameter/_color = Color(0.6509804, 0.32941177, 1, 1)
+shader_parameter/sphere_size = 2.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_07nfq"]
+top_radius = 1.0
+bottom_radius = 1.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_oipnb"]
+top_radius = 1.0
+bottom_radius = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_07nfq"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.8392157, 0.50980395, 0.9372549, 1)
+proximity_fade_enabled = true
+proximity_fade_distance = 15.0
+stencil_flags = 2
+stencil_color = Color(1, 1, 1, 1)
+stencil_outline_thickness = 0.034
+
+[node name="Lobby" type="Node3D" unique_id=932350279 node_paths=PackedStringArray("spawn_point")]
+script = ExtResource("1_07nfq")
+local_player_scene = ExtResource("2_oipnb")
+camera_node = NodePath("Player/Camera3D")
+spawn_point = NodePath("Player/myplayerswpanpoint")
+
+[node name="env" type="Node3D" parent="." unique_id=933934101 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
+script = ExtResource("3_ncsg4")
+world_env = NodePath("WorldEnvironment")
+light_normal = NodePath("day")
+light_storm = NodePath("night")
+camera = NodePath("../Player/Camera3D")
+cylinder_wall = NodePath("Cylinder")
+cylinder_border = NodePath("Cylinder2")
+normal_env = ExtResource("4_ncsg4")
+storm_env = ExtResource("5_07nfq")
+cylinder_radius = 18.0
+damage_per_second = 10.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=580568222]
+environment = ExtResource("4_ncsg4")
+
+[node name="day" type="DirectionalLight3D" parent="env" unique_id=978818535]
+transform = Transform3D(0.84941316, -2.3067738e-08, 0.5277283, -0.5277284, -3.7129027e-08, 0.8494131, 0, -0.99999994, -4.3711385e-08, 0, 34.18702, 0)
+directional_shadow_mode = 0
+
+[node name="night" type="DirectionalLight3D" parent="env" unique_id=1492364894]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
+visible = false
+light_color = Color(0.85490197, 0, 0.78431374, 1)
+light_energy = 0.2
+shadow_enabled = true
+sky_mode = 1
+
+[node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=874651139]
+transform = Transform3D(18, 0, 0, 0, 200, 0, 0, 0, 18, 0, 0, 0)
+material_override = SubResource("ShaderMaterial_ncsg4")
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_07nfq")
+
+[node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1546332868]
+transform = Transform3D(18, 0, 0, 0, 200, 0, 0, 0, 18, 0, 0, 0)
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_oipnb")
+surface_material_override/0 = SubResource("StandardMaterial3D_07nfq")
+
+[node name="Player" type="Node3D" parent="." unique_id=129729236 node_paths=PackedStringArray("status_label")]
+script = ExtResource("7_yad6j")
+status_label = NodePath("../Hud/CanvasLayer/BoxContainer/Node2/BoxContainer/Countdown")
+
+[node name="Camera3D" type="Camera3D" parent="Player" unique_id=548567096]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.016422, 10.749125)
+doppler_tracking = 1
+fov = 70.0
+far = 100.0
+
+[node name="myplayerswpanpoint" type="Node3D" parent="Player" unique_id=765824796]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.4717655, 1.0232358, -5.4464617)
+
+[node name="myplayerswpanpoint" type="Marker3D" parent="Player/myplayerswpanpoint" unique_id=1225670085]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4864397, 0)
+
+[node name="Timer" type="Timer" parent="Player" unique_id=1278349154]
+
+[node name="Hud" parent="." unique_id=861416889 instance=ExtResource("1_o1atq")]
+
+[node name="Level" parent="." unique_id=837639509 instance=ExtResource("9_07nfq")]
+
+[node name="Pickup1" parent="." unique_id=348478555 instance=ExtResource("11_yad6j")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.095271, 1.4365964, 0)
+power_up_mode = 1
+
+[node name="Pickup2" parent="." unique_id=47207438 instance=ExtResource("11_yad6j")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.095271, 1.4365964, -1)
+power_up_mode = 2
+
+[node name="Pickup3" parent="." unique_id=542460695 instance=ExtResource("11_yad6j")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.647236, 1.4365964, -0.26766753)
+power_up_mode = 3
+
+[node name="Pickup4" parent="." unique_id=1118312215 instance=ExtResource("11_yad6j")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -1.649298)
+power_up_mode = 4
+
+[node name="Pickup5" parent="." unique_id=408056980 instance=ExtResource("11_yad6j")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -2.2704427)
+power_up_mode = 5
+
+[node name="Bus" parent="." unique_id=1811375150 instance=ExtResource("11_m1sns")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 60, 0)
+
+[node name="bus" parent="Bus" index="1" unique_id=1872449115]
+cast_shadow = 0
+
+[node name="Parachute" parent="Bus" index="2" unique_id=1765568791]
+cast_shadow = 0
+
+[node name="Object_2" parent="Bus" index="4" unique_id=1403144337]
+cast_shadow = 0
+
+[editable path="Bus"]

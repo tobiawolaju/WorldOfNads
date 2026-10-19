@@ -1,0 +1,26 @@
+[gd_resource type="Environment" format=3 uid="uid://rpidr3omplr6"]
+
+[ext_resource type="Texture2D" uid="uid://dsxh7ntjr6iyj" path="res://assets/img/map/daysky_test.png" id="1_e565m"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_q60fs"]
+panorama = ExtResource("1_e565m")
+
+[sub_resource type="Sky" id="Sky_q60fs"]
+sky_material = SubResource("PanoramaSkyMaterial_q60fs")
+
+[resource]
+background_mode = 2
+sky = SubResource("Sky_q60fs")
+sky_rotation = Vector3(-0.12217305, 0, 1.5707964)
+ambient_light_source = 3
+ambient_light_color = Color(0.99999994, 0.27711537, 0.6970324, 1)
+ambient_light_energy = 16.0
+reflected_light_source = 2
+glow_intensity = 0.4
+glow_bloom = 0.4
+fog_enabled = true
+fog_mode = 1
+fog_light_color = Color(0.69803923, 0.74509805, 1, 1)
+fog_density = 0.8
+fog_sky_affect = 0.6
+fog_depth_end = 15.0
