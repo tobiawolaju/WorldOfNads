@@ -60,6 +60,8 @@ environment = ExtResource("4_ncsg4")
 
 [node name="day" type="DirectionalLight3D" parent="env" unique_id=978818535]
 transform = Transform3D(0.84941316, -2.3067738e-08, 0.5277283, -0.5277284, -3.7129027e-08, 0.8494131, 0, -0.99999994, -4.3711385e-08, 0, 34.18702, 0)
+light_energy = 0.2
+shadow_enabled = true
 directional_shadow_mode = 0
 
 [node name="night" type="DirectionalLight3D" parent="env" unique_id=1492364894]
@@ -103,6 +105,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4864397, 0)
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("1_o1atq")]
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("9_07nfq")]
+
+[node name="Level2" parent="." unique_id=1465468224 instance=ExtResource("9_07nfq")]
 
 [node name="Pickup1" parent="." unique_id=348478555 instance=ExtResource("11_yad6j")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.095271, 1.4365964, 0)

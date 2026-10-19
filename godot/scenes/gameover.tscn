@@ -22,21 +22,23 @@ skew = Vector2(0.14, 0)
 
 [sub_resource type="StyleBoxFlat" id="SB_bar_bg"]
 bg_color = Color(0.3019608, 0.23921569, 0.6392157, 0.6)
+skew = Vector2(0.12, 0)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(1, 1, 1, 0.2)
-skew = Vector2(0.12, 0)
 
 [sub_resource type="StyleBoxFlat" id="SB_bar_fill"]
 bg_color = Color(1, 0.84313726, 0, 1)
+skew = Vector2(0.12, 0)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(1, 1, 1, 0.54901963)
-skew = Vector2(0.12, 0)
+
+[sub_resource type="StyleBoxEmpty" id="SB_empty"]
 
 [sub_resource type="FontVariation" id="FV_button"]
 base_font = ExtResource("4_font1")
@@ -49,21 +51,6 @@ content_margin_right = 24.0
 content_margin_bottom = 0.0
 bg_color = Color(1, 0.84313726, 0, 1)
 skew = Vector2(0.24, 0)
-
-[sub_resource type="StyleBoxFlat" id="SB_button_hover"]
-content_margin_left = 24.0
-content_margin_top = 0.0
-content_margin_right = 24.0
-content_margin_bottom = 0.0
-bg_color = Color(1, 0.84313726, 0, 1)
-skew = Vector2(0.24, 0)
-border_width_left = 8
-border_width_top = 8
-border_width_right = 8
-border_width_bottom = 8
-border_color = Color(1, 1, 1, 0.407)
-
-[sub_resource type="StyleBoxEmpty" id="SB_empty"]
 
 [node name="Gameover" type="CanvasLayer" unique_id=1731812888]
 script = ExtResource("1_oy7qx")
@@ -88,8 +75,8 @@ offset_right = -185.30667
 offset_bottom = 0.032196045
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 rotation = 0.12217305
+mouse_filter = 2
 color = Color(0.34509805, 0.23137255, 0.83137256, 1)
 
 [node name="ColorBG" type="ColorRect" parent="." unique_id=1879387753]
@@ -206,12 +193,10 @@ theme_override_styles/panel = SubResource("SB_card")
 
 [node name="CardTitle" type="Label" parent="ColorBG/Result/BoxContainer4/Control/ResultCard" unique_id=1731812902]
 layout_mode = 1
-anchors_preset = 0
 offset_left = 24.0
 offset_top = 18.0
 offset_right = 224.0
 offset_bottom = 42.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.6)
 theme_override_fonts/font = ExtResource("3_mpnb7")
 theme_override_font_sizes/font_size = 16
@@ -228,7 +213,6 @@ offset_top = 12.0
 offset_right = -24.0
 offset_bottom = 46.0
 grow_horizontal = 0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.84313726, 0, 1)
 theme_override_fonts/font = ExtResource("3_mpnb7")
 theme_override_font_sizes/font_size = 30
@@ -260,7 +244,6 @@ offset_top = -50.0
 offset_right = 244.0
 offset_bottom = -18.0
 grow_vertical = 0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("3_mpnb7")
 theme_override_font_sizes/font_size = 22
@@ -280,7 +263,6 @@ offset_right = -24.0
 offset_bottom = -18.0
 grow_horizontal = 0
 grow_vertical = 0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.84313726, 0, 1)
 theme_override_fonts/font = ExtResource("3_mpnb7")
 theme_override_font_sizes/font_size = 22
@@ -296,6 +278,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+tooltip_text = "Skip countdown"
 theme_override_styles/normal = SubResource("SB_empty")
 theme_override_styles/normal_mirrored = SubResource("SB_empty")
 theme_override_styles/pressed = SubResource("SB_empty")
@@ -308,8 +291,6 @@ theme_override_styles/disabled = SubResource("SB_empty")
 theme_override_styles/disabled_mirrored = SubResource("SB_empty")
 theme_override_styles/focus = SubResource("SB_empty")
 flat = true
-text = ""
-tooltip_text = "Skip countdown"
 
 [node name="returnhome" type="Label" parent="ColorBG/Result/BoxContainer4/Control" unique_id=654873403]
 layout_mode = 1
@@ -324,7 +305,6 @@ offset_right = 130.0
 offset_bottom = 27.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0)
 theme_override_fonts/font = SubResource("FV_button")

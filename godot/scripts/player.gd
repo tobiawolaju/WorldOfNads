@@ -60,6 +60,21 @@ const MAX_SMOKE_CLOUDS: int = 6
 const SMOKE_CLOUD_SCENE := preload("res://scenes/smoke_cloud.tscn")
 ## Shared empty result from get_active_power_up(), so the idle case allocates nothing.
 const NO_ACTIVE_POWER_UP := {}
+## powerup.gdshader: an animated, additive glow drawn around the player for the
+## whole power-up usage window. It is a billboarded quad that wraps the character
+## (see _ensure_aura_node), so it reads as an aura surrounding the player instead
+## of an outline hugging its silhouette.
+const POWERUP_SHADER := preload("res://assets/shaders/powerup.gdshader")
+## Tint and strength pushed into the aura material; both are also tunable in
+## powerup.gdshader itself.
+const POWERUP_TINT := Color(1.0, 1.0, 1.0, 1.0)
+const POWERUP_AURA_PROGRESS: float = 1.0
+## World-space size (metres) of the aura quad. The character is ~1m tall, so this
+## leaves a visible band of glow all the way around it.
+const POWERUP_AURA_SIZE := Vector2(2.0, 2.0)
+## Local height the aura is centred on - the player's mid-body (the capsule sits
+## at y 0.2, spanning roughly -0.3..0.7).
+const POWERUP_AURA_HEIGHT: float = 0.25
 
 # --- STORM DAMAGE ---
 @export var storm_center: Vector2 = Vector2(0, 0)
@@ -163,6 +178,25 @@ var _active_power_up_mode: int = LocalPickup.PowerUpMode.NONE
 var _active_power_up_remaining: float = 0.0
 ## Total duration of the running timed power-up, for the HUD's progress ring.
 var _active_power_up_duration: float = 0.0
+## Shared powerup.gdshader material, built once (in _ready, with a lazy fallback)
+## and handed to the aura quad.
+var _powerup_material: ShaderMaterial = null
+## The billboarded quad the aura is drawn on. Built once, then shown/hidden and
+## re-aimed at the camera while an effect runs, so a later power-up never
+## reconstructs anything.
+var _powerup_aura: MeshInstance3D = null
+## True while the aura quad is showing.
+var _powerup_visual_active: bool = false
+## Camera the aura billboards towards, cached so the per-frame aim never has to
+## ask the viewport for it again.
+var _powerup_camera: Camera3D = null
+## Last (quad position, camera position) the aura was aimed with. Standing still
+## changes neither, so those frames skip the billboard write altogether.
+var _powerup_aim_from := Vector3.ZERO
+var _powerup_aim_at := Vector3.ZERO
+var _powerup_aim_valid: bool = false
+## One-shot per process: the aura shader has had a real drawn frame to compile.
+static var _powerup_prewarmed: bool = false
 ## Set when MEGA_LEAP (LEAP) is used; consumed in the next physics step to launch.
 var _mega_leap_pending: bool = false
 ## The TWIN decoy clone while the effect is running, or null.
@@ -469,6 +503,11 @@ func _ready() -> void:
 	_refresh_touch_joystick()
 	_connect_joystick_signals()
 	_update_global_player_shader_pos(true)
+	# Power-up aura warm-up: build the quad + material and give the shader one
+	# real drawn frame now, so the first pickup use neither allocates nor stutters
+	# on a shader compile. Same one-shot-per-process rule as the smoke cloud.
+	if _storm_eye != null and not _powerup_prewarmed:
+		_prewarm_powerup_aura.call_deferred()
 
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
@@ -682,6 +721,12 @@ func _physics_process(delta: float) -> void:
 				_despawn_twin_decoy()
 			_active_power_up_mode = LocalPickup.PowerUpMode.NONE
 			_active_power_up_duration = 0.0
+			# Put the original materials back now that usage time is over.
+			apply_powerup_visual(false)
+		else:
+			# Keep the aura aimed at the camera while the effect runs. Cheap:
+			# one visibility check and one look_at on the aura quad.
+			_maintain_powerup_visual()
 
 	if _smoke_drop_cooldown > 0.0:
 		_smoke_drop_cooldown = maxf(0.0, _smoke_drop_cooldown - delta)
@@ -1768,6 +1813,147 @@ func _start_timed_power_up(mode: int, duration: float) -> void:
 	_active_power_up_mode = mode
 	_active_power_up_duration = duration
 	_active_power_up_remaining = duration
+	# Wrap the player in the power-up aura for the whole usage window
+	# (idempotent: a replacement effect just keeps the aura on).
+	apply_powerup_visual(true)
+
+
+# --- POWER-UP VISUAL (aura) ---
+# Builds the shared powerup material once. Kept lazy-safe so it also works if
+# _ready has not run yet or the shader failed to preload at parse time.
+func _ensure_powerup_material() -> void:
+	if _powerup_material != null:
+		return
+	var shader := POWERUP_SHADER as Shader
+	if shader == null:
+		return
+	_powerup_material = ShaderMaterial.new()
+	_powerup_material.shader = shader
+	_powerup_material.set_shader_parameter("tint", POWERUP_TINT)
+	_powerup_material.set_shader_parameter("AuraProgres", POWERUP_AURA_PROGRESS)
+
+
+# Builds the aura quad once and parents it to the player. It is a separate,
+# billboarded MeshInstance3D rather than a pass on the body meshes: a glow that
+# wraps *around* the character cannot be produced by the character's own
+# geometry (that only ever gives an outline). It is named so SkinApplier's
+# MeshInstance3D sweep ignores it - that only matches body/cheek/crown/
+# attachment/eye names - and is shadow-less, so it never costs an extra pass.
+func _ensure_aura_node() -> MeshInstance3D:
+	if _powerup_aura != null and is_instance_valid(_powerup_aura):
+		return _powerup_aura
+	_ensure_powerup_material()
+	if _powerup_material == null:
+		return null
+	var quad := QuadMesh.new()
+	quad.size = POWERUP_AURA_SIZE
+	var aura := MeshInstance3D.new()
+	aura.name = "powerup_aura"
+	aura.mesh = quad
+	aura.material_override = _powerup_material
+	aura.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	aura.position = Vector3(0.0, POWERUP_AURA_HEIGHT, 0.0)
+	aura.visible = false
+	add_child(aura)
+	_powerup_aura = aura
+	return aura
+
+
+# Compiles the aura's shader on a throwaway frame, so the first real power-up
+# never eats the stall. Same trick as _prewarm_smoke_cloud: culled geometry never
+# compiles its material, so the quad is parked in front of the camera at zero
+# strength - drawn, but fully transparent, so nothing shows - given two drawn
+# frames, then put back on the player. One-shot per process.
+func _prewarm_powerup_aura() -> void:
+	if _powerup_prewarmed:
+		return
+	if DisplayServer.get_name() == "headless":
+		return
+	var aura := _ensure_aura_node()
+	if aura == null:
+		return
+	if not is_inside_tree():
+		return
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	_powerup_prewarmed = true
+	_powerup_camera = camera
+	_powerup_material.set_shader_parameter("AuraProgres", 0.0)
+	aura.visible = true
+	# Two metres in front of the camera: inside the frustum, so it is drawn.
+	aura.global_position = camera.global_position - camera.global_transform.basis.z * 2.0
+	aura.look_at(camera.global_position)
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	if not is_instance_valid(aura):
+		return
+	_powerup_material.set_shader_parameter("AuraProgres", POWERUP_AURA_PROGRESS)
+	# Put the quad back on the player; the next aim re-orients it.
+	aura.position = Vector3(0.0, POWERUP_AURA_HEIGHT, 0.0)
+	_powerup_aim_valid = false
+	if _powerup_visual_active:
+		_aim_aura_at_camera(true)
+	else:
+		aura.visible = false
+
+
+# Turns the aura on for the whole usage window and hides it again when the
+# effect ends. Entering/leaving only toggles `visible` - the quad and material
+# are built once, so a later power-up allocates nothing.
+func apply_powerup_visual(active: bool) -> void:
+	if active:
+		var aura := _ensure_aura_node()
+		if aura == null:
+			return
+		# A prewarm may still be holding the aura at zero strength.
+		_powerup_material.set_shader_parameter("AuraProgres", POWERUP_AURA_PROGRESS)
+		_powerup_visual_active = true
+		# Covers the (rare) case of a use landing mid-prewarm, while the quad is
+		# still parked in front of the camera.
+		aura.position = Vector3(0.0, POWERUP_AURA_HEIGHT, 0.0)
+		aura.visible = true
+		_aim_aura_at_camera(true)
+	else:
+		if not _powerup_visual_active:
+			return
+		_powerup_visual_active = false
+		if _powerup_aura != null and is_instance_valid(_powerup_aura):
+			_powerup_aura.visible = false
+
+
+# Re-aims the aura while the effect runs. Cheap by design: nothing here scans the
+# tree, and a frame where neither the player nor the camera moved skips even the
+# billboard write.
+func _maintain_powerup_visual() -> void:
+	if _powerup_visual_active:
+		_aim_aura_at_camera()
+
+
+# Faces the aura at the camera. look_at() points -Z at its target and the
+# QuadMesh normal is +Z, so the node's -Z is aimed away from the camera.
+func _aim_aura_at_camera(force: bool = false) -> void:
+	if _powerup_aura == null or not is_instance_valid(_powerup_aura):
+		return
+	if not is_inside_tree():
+		return
+	if _powerup_camera == null or not is_instance_valid(_powerup_camera):
+		_powerup_camera = get_viewport().get_camera_3d()
+	if _powerup_camera == null:
+		return
+	var aura_pos := _powerup_aura.global_position
+	var camera_pos := _powerup_camera.global_position
+	if not force and _powerup_aim_valid \
+			and aura_pos.is_equal_approx(_powerup_aim_from) \
+			and camera_pos.is_equal_approx(_powerup_aim_at):
+		return
+	var to_camera := camera_pos - aura_pos
+	if to_camera.length_squared() < 0.000001:
+		return
+	_powerup_aim_from = aura_pos
+	_powerup_aim_at = camera_pos
+	_powerup_aim_valid = true
+	_powerup_aura.look_at(aura_pos - to_camera, Vector3.UP)
 
 # HUD API: describes the running timed power-up, or an empty dictionary when none.
 func get_active_power_up() -> Dictionary:
