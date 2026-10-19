@@ -1,0 +1,798 @@
+[gd_scene format=3 uid="uid://bjvhk14twbsb6"]
+
+[ext_resource type="Script" uid="uid://c6tyww7p6v4bq" path="res://scripts/Events.gd" id="1_mphia"]
+[ext_resource type="Script" uid="uid://b5tvb8chtonxg" path="res://scripts/ui/minimap.gd" id="2_mphia"]
+[ext_resource type="Texture2D" uid="uid://mthb8icx6x1m" path="res://assets/img/white_circle1.png" id="2_white_circle"]
+[ext_resource type="FontFile" uid="uid://bqvrqx4a4joiu" path="res://assets/fonts/fortnite.otf" id="3_apjy4"]
+[ext_resource type="Texture2D" uid="uid://hdhbnox5e2d0" path="res://assets/img/point.webp" id="6_3swnk"]
+[ext_resource type="Texture2D" uid="uid://ccgocjs5rb0gf" path="res://assets/img/ui/point3.png" id="6_48y67"]
+[ext_resource type="Script" uid="uid://txqqdi5bw3hx" path="res://scripts/ui/jump_bar.gd" id="6_jump_bar"]
+[ext_resource type="Script" uid="uid://7xw4k7bx7fmy" path="res://scripts/ui/stamina_bar.gd" id="6_stamina_bar"]
+[ext_resource type="Script" uid="uid://smygpuu7lbkh" path="res://scripts/ui/compassbar.gd" id="7_mphia"]
+[ext_resource type="Script" uid="uid://cty6onrl4lub0" path="res://scripts/ui/fps_label.gd" id="8_mphia"]
+[ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/ui/joystick.gd" id="9_mphia"]
+[ext_resource type="Texture2D" uid="uid://dvgw48ivoojhm" path="res://assets/img/blank.png" id="9_qkknv"]
+[ext_resource type="Script" uid="uid://w2b7i7280yyw" path="res://scripts/ui/buttons.gd" id="10_mphia"]
+[ext_resource type="Texture2D" uid="uid://b7qle767pmjpp" path="res://assets/img/ui_atlas.png" id="10_ui_atlas"]
+[ext_resource type="Shader" uid="uid://cvsro6e0qyqwk" path="res://scenes/glasshud.gdshader" id="11_3swnk"]
+[ext_resource type="Script" uid="uid://bdgt65wb25puk" path="res://scripts/ui/textfx.gd" id="13_textfx"]
+[ext_resource type="Texture2D" uid="uid://c3u4jnw2frtwl" path="res://assets/img/ui/jump2x.png" id="14_3xg78"]
+[ext_resource type="FontFile" uid="uid://3ldunq2ayvi6" path="res://assets/fonts/Modak-Regular.ttf" id="14_48y67"]
+[ext_resource type="Script" uid="uid://ckvd68tol7hfn" path="res://scripts/ui/health_bar.gd" id="14_health_bar"]
+[ext_resource type="Texture2D" uid="uid://fr7y6xwyrjdh" path="res://assets/img/ui/slide.png" id="15_48y67"]
+[ext_resource type="Texture2D" uid="uid://b4672bxcnnqg3" path="res://assets/img/ui/jump1x.png" id="15_qpprf"]
+[ext_resource type="Script" uid="uid://dhnpfn43cfci0" path="res://scripts/ui/bus_path_overlay.gd" id="16_bus_path"]
+[ext_resource type="Texture2D" uid="uid://b1dshb0rdnrg1" path="res://assets/img/energy.png" id="21_gltyx"]
+[ext_resource type="Texture2D" uid="uid://ceofg5yk6faak" path="res://assets/img/gem.png" id="22_mgfyp"]
+[ext_resource type="Texture2D" uid="uid://ceofg5yk6lkbk" path="res://assets/img/mon.png" id="23_ptr5m"]
+
+[sub_resource type="Shader" id="Shader_storm"]
+code = "shader_type canvas_item;
+uniform vec2 storm_center = vec2(0.5);
+uniform float storm_radius = 0.25;
+
+void fragment() {
+	float dist = distance(UV, storm_center);
+	if (dist < storm_radius) {
+		COLOR = vec4(0.0);
+	} else {
+		COLOR = vec4(0.0, 0.0, 1.0, 0.5);
+	}
+}"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_storm"]
+shader = SubResource("Shader_storm")
+shader_parameter/storm_center = Vector2(0.5, 0.5)
+shader_parameter/storm_radius = 0.25
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cover"]
+atlas = ExtResource("10_ui_atlas")
+region = Rect2(0, 0, 400, 82)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_p3vpr"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_q62xx"]
+shader = ExtResource("11_3swnk")
+shader_parameter/brightness = 0.1
+shader_parameter/chromatic_shift_amount = 0.2
+shader_parameter/bend_amount = 0.4
+shader_parameter/blur_amount = 2.0
+shader_parameter/grain_amount = 0.05
+shader_parameter/curve_light_blend = 0.5
+shader_parameter/rim_light_blend = 0.8
+shader_parameter/shadow_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q62xx"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 70
+corner_radius_top_right = 70
+corner_radius_bottom_right = 70
+corner_radius_bottom_left = 70
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lle6q"]
+bg_color = Color(1, 1, 1, 0.9098039)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jji8u"]
+bg_color = Color(1, 1, 1, 0.47058824)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(1, 1, 1, 0)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ymhbd"]
+bg_color = Color(1, 1, 1, 0.47058824)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(1, 1, 1, 0.47058824)
+border_blend = true
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0m4u7"]
+bg_color = Color(0, 0, 0, 0.34117648)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uxdf7"]
+bg_color = Color(0.30816644, 0.63264525, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.29411766, 0, 0.69411767, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l0bqs"]
+bg_color = Color(1, 0, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.29411766, 0, 0.69411767, 1)
+
+[node name="Hud" type="Control" unique_id=861416889]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mphia")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=701090656]
+
+[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer" unique_id=569957497]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=802481236]
+
+[node name="Minimap" type="Control" parent="CanvasLayer/BoxContainer/Node2" unique_id=43787215 node_paths=PackedStringArray("background_texture", "minimap_container", "player_pointer", "chicken_pointer", "lootbox_pointer", "pickup_pointer", "storm_overlay", "bus_path_overlay")]
+custom_minimum_size = Vector2(60, 60)
+clip_contents = true
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -150.0
+offset_top = 32.0
+offset_right = -30.0
+offset_bottom = 152.0
+grow_horizontal = 0
+pivot_offset = Vector2(60, 60)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+script = ExtResource("2_mphia")
+background_texture = NodePath("MinimapBackground")
+minimap_container = NodePath(".")
+player_pointer = NodePath("Pointer")
+chicken_pointer = NodePath("ChickenPointer")
+lootbox_pointer = NodePath("LootBoxPointer")
+pickup_pointer = NodePath("PickupsPointer")
+storm_overlay = NodePath("StormOverlay")
+bus_path_overlay = NodePath("BusPath")
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=123456789]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.615686, 0.243137, 1, 1)
+
+[node name="MinimapBackground" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1650011523]
+custom_minimum_size = Vector2(120, 120)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="StormOverlay" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1030006368]
+z_index = 5
+material = SubResource("ShaderMaterial_storm")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_white_circle")
+expand_mode = 1
+
+[node name="BusPath" type="Control" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=-2095065429]
+z_index = 4
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("16_bus_path")
+
+[node name="Pointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1253168890]
+modulate = Color(1, 0, 1, 1)
+z_index = 10
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 0
+offset_left = 50.0
+offset_top = 49.0
+offset_right = 70.0
+offset_bottom = 69.0
+texture = ExtResource("6_3swnk")
+expand_mode = 1
+stretch_mode = 4
+flip_v = true
+
+[node name="ChickenPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1952187711]
+modulate = Color(1, 0.92156863, 0, 1)
+z_index = 11
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 0
+offset_left = 51.0
+offset_top = 68.0
+offset_right = 69.0
+offset_bottom = 88.0
+scale = Vector2(1, -1)
+texture = ExtResource("21_gltyx")
+expand_mode = 1
+stretch_mode = 4
+flip_v = true
+
+[node name="LootBoxPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=146359137]
+visible = false
+modulate = Color(0.5176471, 0.20392157, 0.8745098, 1)
+z_index = 11
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 0
+offset_left = 51.0
+offset_top = 51.0
+offset_right = 61.0
+offset_bottom = 61.0
+texture = ExtResource("22_mgfyp")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="PickupsPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=259660790]
+visible = false
+z_index = 11
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 0
+offset_left = 51.0
+offset_top = 51.0
+offset_right = 69.0
+offset_bottom = 69.0
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("6_48y67")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2" unique_id=248207393]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -113.0
+offset_top = 37.0
+offset_right = 112.99988
+offset_bottom = 90.0
+grow_horizontal = 2
+texture = SubResource("AtlasTexture_cover")
+expand_mode = 1
+
+[node name="BoxContainer" type="VBoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=2145997434]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.5
+offset_top = 54.0
+offset_right = 100.49988
+offset_bottom = 70.0
+grow_horizontal = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Countdown" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer" unique_id=1849541613]
+layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.44313726)
+theme_override_fonts/font = ExtResource("3_apjy4")
+theme_override_font_sizes/font_size = 16
+text = "Searching for Server"
+horizontal_alignment = 1
+uppercase = true
+
+[node name="BoxContainer2" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1306771986]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -41.570007
+offset_top = 158.0
+offset_right = -27.570007
+offset_bottom = 175.0
+grow_horizontal = 0
+size_flags_horizontal = 0
+size_flags_vertical = 4
+alignment = 2
+
+[node name="username" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer2" unique_id=229289726]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+theme_override_constants/shadow_outline_size = 0
+theme_override_font_sizes/font_size = 12
+text = "...."
+
+[node name="BoxContainer3" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1509763072]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -84.0
+offset_top = 176.0
+offset_right = -26.0
+offset_bottom = 194.0
+grow_horizontal = 0
+size_flags_horizontal = 0
+size_flags_vertical = 4
+alignment = 2
+
+[node name="status2" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=2089582472]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 1, 0, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+theme_override_font_sizes/font_size = 13
+text = "...."
+
+[node name="status" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=1931454316]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxTexture_p3vpr")
+text = "...."
+
+[node name="CompassBar" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2" unique_id=1476260550]
+modulate = Color(1, 1, 1, 0.6509804)
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -172.0
+offset_top = 18.0
+offset_right = 177.0
+offset_bottom = 36.0
+grow_horizontal = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+script = ExtResource("7_mphia")
+background_color = Color(0.050980393, 0.050980393, 0.050980393, 0)
+fade_color = Color(0, 0, 0, 0)
+north_label_color = Color(1, 1, 1, 1)
+
+[node name="subtitle" type="Label" parent="CanvasLayer/BoxContainer/Node2" unique_id=1792981601]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -78.5
+offset_top = -17.0
+offset_right = 78.5
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "Stand your Ground for 60s"
+
+[node name="FPSLabel" type="Label" parent="CanvasLayer" unique_id=2147483647]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -96.0
+offset_top = 10.0
+offset_right = -16.0
+offset_bottom = 30.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5411765)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 2
+script = ExtResource("8_mphia")
+
+[node name="debug" type="Label" parent="CanvasLayer" unique_id=1172499753]
+visible = false
+offset_right = 40.0
+offset_bottom = 23.0
+text = "loading
+"
+
+[node name="debug2" type="Label" parent="CanvasLayer" unique_id=1253793999]
+visible = false
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -24.5
+offset_right = 57.0
+offset_bottom = 24.5
+grow_vertical = 2
+text = "loading
+"
+
+[node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]
+
+[node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=203270884]
+position = Vector2(-152, -134)
+
+[node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=121289564]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -75.0
+offset_top = -75.0
+offset_right = 75.0
+offset_bottom = 75.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0)
+metadata/_edit_use_anchors_ = true
+
+[node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=420255833]
+scale = Vector2(1.1, 1.1)
+texture = ExtResource("9_qkknv")
+
+[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyBase" unique_id=1853570535]
+modulate = Color(1, 1, 1, 0.6313726)
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(130, 130)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -104.0
+offset_top = -104.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
+
+[node name="JoyLock" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=1534232310]
+position = Vector2(0, -90)
+
+[node name="JoyLock" type="Sprite2D" parent="Joystick/TouchJoyStick/JoyLock" unique_id=1518767299]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("9_qkknv")
+
+[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyLock/JoyLock" unique_id=379869769]
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(130, 130)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -104.0
+offset_top = -104.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
+
+[node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=661345483 node_paths=PackedStringArray("joy_lock")]
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("9_qkknv")
+script = ExtResource("9_mphia")
+auto_lock_hold_seconds = 0.0
+auto_lock_north_distance_multiplier = 4.0
+keep_locked_position_on_resize = false
+joy_lock = NodePath("../JoyLock")
+
+[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyKnob" unique_id=2054266225]
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(130, 130)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -104.0
+offset_top = -104.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
+
+[node name="Node3" type="Node" parent="." unique_id=1974703911]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="Node3" unique_id=279152189]
+
+[node name="buttons_holder" type="VBoxContainer" parent="Node3/CanvasLayer" unique_id=1960719911]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -192.59491
+offset_top = -168.0
+offset_right = -68.59491
+offset_bottom = -44.0
+grow_horizontal = 0
+grow_vertical = 0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="VBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer/buttons_holder" unique_id=1325327020 node_paths=PackedStringArray("action_button", "jump_button", "slide_button")]
+layout_mode = 2
+script = ExtResource("10_mphia")
+action_button = NodePath("Action")
+jump_button = NodePath("HBoxContainer/Jump")
+slide_button = NodePath("HBoxContainer/Slide")
+
+[node name="Action" type="Button" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer" unique_id=572465082]
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_jji8u")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_ymhbd")
+theme_override_styles/focus = SubResource("StyleBoxFlat_ymhbd")
+autowrap_trim_flags = 0
+icon_alignment = 1
+expand_icon = true
+
+[node name="action" type="Label" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/Action" unique_id=549436383]
+layout_mode = 0
+offset_left = -18.405092
+offset_top = -7.0
+offset_right = 61.18982
+offset_bottom = 207.0
+scale = Vector2(1.43, 0.87)
+theme_override_constants/line_spacing = -50
+theme_override_fonts/font = ExtResource("14_48y67")
+theme_override_font_sizes/font_size = 60
+text = "G
+R
+A
+B"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HBoxContainer" type="VBoxContainer" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer" unique_id=1406219590]
+layout_mode = 2
+alignment = 1
+
+[node name="Jump" type="Button" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" unique_id=258331812]
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/hover = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/focus = SubResource("StyleBoxFlat_lle6q")
+autowrap_trim_flags = 0
+icon_alignment = 1
+expand_icon = true
+
+[node name="Slide" type="Button" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" unique_id=849126213]
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/hover = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/focus = SubResource("StyleBoxFlat_lle6q")
+autowrap_trim_flags = 0
+icon_alignment = 1
+expand_icon = true
+
+[node name="Sprite2D" type="Sprite2D" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" unique_id=1038089062]
+position = Vector2(16.59491, 30)
+rotation = -0.37524578
+scale = Vector2(0.5, 0.442)
+texture = ExtResource("14_3xg78")
+centered = false
+script = ExtResource("6_jump_bar")
+single_jump_image = ExtResource("15_qpprf")
+double_jump_image = ExtResource("14_3xg78")
+
+[node name="Sprite2D2" type="Sprite2D" parent="Node3/CanvasLayer/buttons_holder/VBoxContainer/HBoxContainer" unique_id=1131521826]
+position = Vector2(21.59491, 109)
+scale = Vector2(0.5, 0.442)
+texture = ExtResource("15_48y67")
+centered = false
+
+[node name="XPstream" type="Label" parent="." unique_id=2087879689]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -294.0
+offset_top = 110.0
+offset_right = -157.0
+offset_bottom = 139.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.14901961)
+theme_override_constants/shadow_offset_x = -5
+theme_override_constants/shadow_offset_y = 5
+theme_override_constants/outline_size = 0
+theme_override_constants/shadow_outline_size = 0
+theme_override_fonts/font = ExtResource("3_apjy4")
+theme_override_font_sizes/font_size = 25
+text = "Your Xp stream"
+horizontal_alignment = 2
+
+[node name="TextureRect2" type="TextureRect" parent="XPstream" unique_id=1808030459]
+modulate = Color(1, 1, 0, 1)
+custom_maximum_size = Vector2(25, 25)
+layout_mode = 0
+offset_left = -30.0
+offset_top = 2.5
+offset_right = -5.0
+offset_bottom = 27.5
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("21_gltyx")
+
+[node name="MONstream" type="Label" parent="." unique_id=366851244]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -311.0
+offset_top = 80.0
+offset_right = -157.0
+offset_bottom = 106.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.4392157, 0.023529412, 0.99607843, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.14901961)
+theme_override_constants/shadow_offset_x = -5
+theme_override_constants/shadow_offset_y = 5
+theme_override_constants/outline_size = 0
+theme_override_constants/shadow_outline_size = 0
+theme_override_fonts/font = ExtResource("3_apjy4")
+theme_override_font_sizes/font_size = 25
+text = "Your MON stream"
+horizontal_alignment = 2
+
+[node name="TextureRect2" type="TextureRect" parent="MONstream" unique_id=2005679997]
+custom_maximum_size = Vector2(25, 25)
+layout_mode = 0
+offset_left = -30.0
+offset_top = 2.5
+offset_right = -5.0
+offset_bottom = 27.5
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("22_mgfyp")
+
+[node name="PrizePool" type="Label" parent="." unique_id=1341296255]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -291.0
+offset_top = 51.0
+offset_right = -157.0
+offset_bottom = 127.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 1, 1, 0.50980395)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.14901961)
+theme_override_constants/shadow_offset_x = -5
+theme_override_constants/shadow_offset_y = 5
+theme_override_constants/outline_size = 0
+theme_override_constants/shadow_outline_size = 0
+theme_override_fonts/font = ExtResource("3_apjy4")
+theme_override_font_sizes/font_size = 25
+text = "Total MON pool"
+horizontal_alignment = 2
+
+[node name="TextureRect2" type="TextureRect" parent="PrizePool" unique_id=671757545]
+modulate = Color(1, 1, 1, 0.50980395)
+custom_maximum_size = Vector2(25, 25)
+layout_mode = 0
+offset_left = -30.0
+offset_right = -5.0
+offset_bottom = 25.0
+texture = ExtResource("23_ptr5m")
+
+[node name="HealthBar" type="ProgressBar" parent="." unique_id=385514625]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -87.0
+offset_top = -81.0
+offset_right = 89.0
+offset_bottom = -74.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/background = SubResource("StyleBoxFlat_0m4u7")
+theme_override_styles/fill = SubResource("StyleBoxFlat_uxdf7")
+value = 100.0
+show_percentage = false
+script = ExtResource("14_health_bar")
+
+[node name="StaminaBar" type="ProgressBar" parent="." unique_id=285514625]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -87.0
+offset_top = -72.0
+offset_right = 89.0
+offset_bottom = -60.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/background = SubResource("StyleBoxFlat_0m4u7")
+theme_override_styles/fill = SubResource("StyleBoxFlat_l0bqs")
+value = 100.0
+show_percentage = false
+script = ExtResource("6_stamina_bar")
+
+[node name="shde" type="ColorRect" parent="." unique_id=1541956272]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 213.0
+offset_bottom = -214.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.43137255, 0.32941177, 1, 0.5)
+script = ExtResource("13_textfx")
+fade_out_delay = 5.5
+slide_offset = Vector2(0, 0)
+slide_offset_is_screen_fraction = true
+
+[node name="TextFX" type="Label" parent="." unique_id=221857681]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -98.0
+offset_top = -30.0
+offset_right = 98.0
+offset_bottom = 30.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("3_apjy4")
+theme_override_font_sizes/font_size = 100
+text = "Lanaland"
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("13_textfx")
+slide_duration = 1.1
+slide_offset = Vector2(-1, 0)
+slide_offset_is_screen_fraction = true

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cju3hcql78awk"]
+
+[ext_resource type="Script" uid="uid://cm102ggibitxb" path="res://tools/export_attachments.gd" id="1_662v8"]
+
+[node name="Run" type="Node2D" unique_id=1065719638]
+script = ExtResource("1_662v8")
