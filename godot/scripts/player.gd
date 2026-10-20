@@ -465,8 +465,13 @@ var _camera_ray_layer_set: bool = false
 var _cached_shader_player_pos: Vector3 = Vector3.INF
 var _cached_chicken_node: RigidBody3D = null
 var _cached_lootbox_node: RigidBody3D = null
+## How long to wait before re-scanning the "bus" group after a miss (see
+## _apply_bus_riding): one immediate lookup, then at most once a second.
+const BUS_LOOKUP_RETRY_MSEC: int = 1000
+
 var _bus_node: Node3D = null
 var _bus_last_pos: Vector3 = Vector3.ZERO
+var _bus_lookup_retry_at_msec: int = 0
 var _is_riding_bus: bool = false
 
 func _resolve_camera_node() -> Camera3D:
@@ -2441,7 +2446,16 @@ func _spring_vec3(current: Vector3, vel: Vector3, target: Vector3, sharpness: fl
 	return _spring_rv3
 
 func _apply_bus_riding() -> void:
+	if _bus_node != null and not is_instance_valid(_bus_node):
+		_bus_node = null
 	if _bus_node == null:
+		# A failed "does this map have a bus?" lookup only needs retrying
+		# occasionally; scanning the group every physics tick was pure waste on
+		# maps that never spawn one.
+		var now := Time.get_ticks_msec()
+		if now < _bus_lookup_retry_at_msec:
+			return
+		_bus_lookup_retry_at_msec = now + BUS_LOOKUP_RETRY_MSEC
 		_bus_node = get_tree().get_first_node_in_group("bus")
 		if _bus_node:
 			_bus_last_pos = _bus_node.global_position

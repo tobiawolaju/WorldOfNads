@@ -153,6 +153,13 @@ func _build_particles() -> void:
 	_particles = particles
 
 
+## How often the cloud-level fade uniform may be rewritten, in seconds. The fade
+## spans the whole lifetime, so 10 Hz is visually identical to every frame.
+const FADE_WRITE_INTERVAL: float = 0.1
+
+var _fade_write_accum: float = 0.0
+var _fade_written: bool = false
+
 func _process(delta: float) -> void:
 	# Warm-up clouds exist only to make the shader compile; they are invisible
 	# and freed by their caller, so they never age or dissolve on their own.
@@ -170,8 +177,14 @@ func _process(delta: float) -> void:
 
 	if _material != null:
 		# Cloud-level fade: the material is per-cloud, so tinting its alpha here
-		# fades the whole blob in/out on top of the per-particle fade.
-		_material.albedo_color = Color(SMOKE_COLOR, fade)
+		# fades the whole blob in/out on top of the per-particle fade. Written at
+		# most every FADE_WRITE_INTERVAL; the first write lands immediately so the
+		# cloud never pops in at the material's default alpha.
+		_fade_write_accum += delta
+		if not _fade_written or _fade_write_accum >= FADE_WRITE_INTERVAL:
+			_fade_written = true
+			_fade_write_accum = 0.0
+			_material.albedo_color = Color(SMOKE_COLOR, fade)
 
 	if _age >= LIFETIME:
 		queue_free()

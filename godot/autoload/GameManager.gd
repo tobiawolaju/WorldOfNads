@@ -21,7 +21,9 @@ func _ready() -> void:
 	# Force a responsive frame loop for the live 3D game (low_processor_mode is
 	# a battery-saver meant for static UI and throttles the frame rate hard).
 	#Engine.low_processor_mode = false
-	Engine.max_fps = 35
+	# The frame cap lives only in project.godot (run/max_fps=30) now. A runtime
+	# override here silently made the project setting meaningless, and 30 fps
+	# held on purpose keeps low-end devices steady instead of dipping.
 
 	get_tree().root.size_changed.connect(_on_root_size_changed)
 	_apply_3d_scale(_compute_3d_scale())

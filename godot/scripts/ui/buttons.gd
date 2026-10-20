@@ -44,10 +44,17 @@ var _held_color: Color = Color.WHITE
 ## While > 0 and no effect is running, the ring draws full as a "ready" signal.
 var _held_duration: float = 0.0
 ## The TIMED power-up that is running, polled from the local player each frame.
+## Shared with get_active_power_up() (player.gd) so the idle case, which is most
+## of the time, costs no dictionary allocation per frame.
+const EMPTY_POWER_UP: Dictionary = {}
+
 var _active: Dictionary = {}
 ## Last written caption, so identical frames don't re-set text/color overrides.
 var _last_caption_text: String = ""
 var _last_caption_color: Color = Color.WHITE
+## Cache for the vertically stacked caption form (see _refresh_action_caption).
+var _stacked_source_label: String = ""
+var _stacked_cache_text: String = ""
 
 ## Shows the currently held power-up on the Action button, or clears it when the
 ## label is empty. Called by player.gd whenever a pickup is grabbed or dropped.
@@ -68,7 +75,15 @@ func _refresh_action_caption() -> void:
 	if label == "" and not _active.is_empty():
 		label = str(_active.get("label", ""))
 		color = _active.get("color", color)
-	var text := _action_caption_default if label == "" else _stack_vertically(label)
+	# The stacked form depends only on the label, so cache it: rebuilding it
+	# every frame allocated a PackedStringArray for a caption that rarely changes.
+	var stacked := label
+	if label != "":
+		if label != _stacked_source_label:
+			_stacked_source_label = label
+			_stacked_cache_text = _stack_vertically(label)
+		stacked = _stacked_cache_text
+	var text := _action_caption_default if label == "" else stacked
 	var tint := _action_caption_default_color if label == "" else color
 	if text == _last_caption_text and tint == _last_caption_color:
 		return
@@ -86,7 +101,7 @@ func _refresh_action_caption() -> void:
 # should show: the depleting countdown of a running effect, or a full "ready"
 # ring while a pickup with a timed effect is being held.
 func _update_active_power_up() -> void:
-	_active = {}
+	_active = EMPTY_POWER_UP
 	if _cached_local_player != null \
 	and is_instance_valid(_cached_local_player) \
 	and _cached_local_player.has_method("get_active_power_up"):

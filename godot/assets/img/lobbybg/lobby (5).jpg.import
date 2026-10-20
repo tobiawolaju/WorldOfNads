@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bispqmnybg67y"
-path="res://.godot/imported/lobby (5).jpg-960d00fe917cf9e592ebdf3bbd7b805d.ctex"
+path.s3tc="res://.godot/imported/lobby (5).jpg-960d00fe917cf9e592ebdf3bbd7b805d.s3tc.ctex"
+path.etc2="res://.godot/imported/lobby (5).jpg-960d00fe917cf9e592ebdf3bbd7b805d.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/img/lobbybg/lobby (5).jpg"
-dest_files=["res://.godot/imported/lobby (5).jpg-960d00fe917cf9e592ebdf3bbd7b805d.ctex"]
+dest_files=["res://.godot/imported/lobby (5).jpg-960d00fe917cf9e592ebdf3bbd7b805d.s3tc.ctex", "res://.godot/imported/lobby (5).jpg-960d00fe917cf9e592ebdf3bbd7b805d.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/high_quality_mode=0
 compress/lossy_quality=0.7

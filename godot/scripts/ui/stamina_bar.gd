@@ -8,6 +8,14 @@ extends ProgressBar
 ## How long the fade in and out take, in seconds.
 const FADE_TIME: float = 0.25
 
+## The player's holding probes, listed once here: rebuilding this array inside
+## _process was a fresh allocation on the HUD's hottest path, every frame.
+const HOLD_PROBES: Array = [
+	&"_is_local_holding_chicken",
+	&"_is_local_holding_lootbox",
+	&"_is_local_holding_pickup",
+]
+
 var _cached_player: Node = null
 var _alpha: float = 0.0
 var _last_value: float = -1.0
@@ -37,13 +45,15 @@ func _process(delta: float) -> void:
 		value = stamina_value
 
 	var holding := false
-	for method in ["_is_local_holding_chicken", "_is_local_holding_lootbox", "_is_local_holding_pickup"]:
+	for method in HOLD_PROBES:
 		if _cached_player.has_method(method) and bool(_cached_player.call(method)):
 			holding = true
 			break
 
 	var target_alpha := 1.0 if holding else 0.0
-	if is_equal_approx(_alpha, target_alpha) and is_equal_approx(stamina_value, _last_value):
+	# Only the fade cares about state here, and the stamina compare was dead (the
+	# assignment above already synced _last_value), so alpha alone decides.
+	if is_equal_approx(_alpha, target_alpha):
 		return
 	_set_alpha(target_alpha, delta)
 

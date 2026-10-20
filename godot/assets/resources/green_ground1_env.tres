@@ -12,6 +12,7 @@ shader_parameter/grass_albedo = ExtResource("2_waary")
 shader_parameter/rock_albedo = ExtResource("2_waary")
 shader_parameter/snow_albedo = ExtResource("2_waary")
 shader_parameter/grass_patch_mask = ExtResource("3_skfi4")
+shader_parameter/shared_layer_textures = true
 shader_parameter/grass_start = -1.5
 shader_parameter/rock_start = 0.0
 shader_parameter/snow_start = 1.5

@@ -192,6 +192,13 @@ var connection_attempted: bool = false
 
 var _ui_update_timer: float = 0.0
 const UI_UPDATE_INTERVAL: float = 0.2
+
+# The remote-hold visual pass only needs to run when a hold actually changed, so
+# a dirty flag triggers it immediately plus a slow sweep catches a holder who
+# despawned between events — instead of rebuilding the pass every frame.
+var _item_hold_dirty: bool = true
+var _item_hold_sweep_timer: float = 0.0
+const ITEM_HOLD_SWEEP_INTERVAL: float = 1.0
 var _last_countdown_text: String = ""
 
 const API_BASE: String = "https://worldofnads.onrender.com"
@@ -382,7 +389,13 @@ func _process(_delta: float):
 
 	# Seat shared items: hide power-ups a remote player is carrying and weld an
 	# objective item onto a remote holder's back so it is visible to everyone.
-	_update_item_hold_visuals()
+	# Driven by a dirty flag (plus a slow sweep that catches despawned holders)
+	# rather than rebuilt every frame.
+	_item_hold_sweep_timer += real_delta
+	if _item_hold_dirty or _item_hold_sweep_timer >= ITEM_HOLD_SWEEP_INTERVAL:
+		_item_hold_dirty = false
+		_item_hold_sweep_timer = 0.0
+		_update_item_hold_visuals()
 
 	if not connection_attempted and not _reconnecting:
 		_apply_remote_interpolation()
@@ -840,11 +853,16 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 		# Visibility (NO RETURN)
 		node.visible = node.global_position.y <= 100
 
-	# Remove disconnected players only on full snapshots.
+	# Remove disconnected players only on full snapshots. Collected first:
+	# _remove_player() erases from `players`, and erasing while iterating the
+	# same dictionary skips entries, so a leaver could survive an entire snapshot.
 	if is_full:
+		var departed: Array[String] = []
 		for id in players:
 			if id != player_id and not received_ids.has(id):
-				_remove_player(id)
+				departed.append(id)
+		for id in departed:
+			_remove_player(id)
 
 
 # --- CHICKEN SYNC ---
@@ -959,6 +977,7 @@ func notify_item_held(item_id: String) -> void:
 	item_local_held = item_id
 	item_is_held[item_id] = true
 	item_holder[item_id] = player_id
+	_item_hold_dirty = true
 	if item_id == "Chicken":
 		chicken_is_held = true
 		chicken_holder_id = player_id
@@ -975,6 +994,7 @@ func notify_item_dropped(item_id: String) -> void:
 		item_local_held = ""
 	item_is_held[item_id] = false
 	item_holder[item_id] = ""
+	_item_hold_dirty = true
 	if item_id == "Chicken":
 		chicken_is_held = false
 		chicken_holder_id = ""
@@ -993,6 +1013,7 @@ func notify_item_used(item_id: String) -> void:
 		item_local_held = ""
 	item_is_held[item_id] = false
 	item_holder[item_id] = ""
+	_item_hold_dirty = true
 	_send_item_hold_message("use_request", item_id)
 
 
@@ -1039,8 +1060,11 @@ func _set_item_server_state(item_id: String, held: bool, holder: String, server_
 	if not _is_known_item_id(item_id):
 		return
 	var was_held := bool(item_is_held.get(item_id, false))
+	var was_holder := str(item_holder.get(item_id, ""))
 	item_is_held[item_id] = held
 	item_holder[item_id] = holder
+	if was_held != held or was_holder != holder:
+		_item_hold_dirty = true
 	if held:
 		if holder != player_id and item_local_held == item_id:
 			# Snatched off us: drop the local claim without echoing to the server.

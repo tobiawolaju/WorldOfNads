@@ -16,6 +16,10 @@ extends Sprite2D
 
 var _cached_player: Node = null
 
+## -1 until the first sample, then the last written state, so the texture is
+## only touched when the double-jump state actually flips.
+var _last_can_double: int = -1
+
 func _process(_delta: float) -> void:
 	if _cached_player == null or not is_instance_valid(_cached_player):
 		_cached_player = get_tree().get_first_node_in_group("local_player")
@@ -25,5 +29,8 @@ func _process(_delta: float) -> void:
 
 	var p := _cached_player
 	var can_double: bool = p.get("_double_jump_available") == true and p.get("_double_jump_used") != true
-
+	var sample := 1 if can_double else 0
+	if sample == _last_can_double:
+		return
+	_last_can_double = sample
 	texture = double_jump_image if can_double else single_jump_image
