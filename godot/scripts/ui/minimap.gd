@@ -405,7 +405,7 @@ func _make_pickup_pointer() -> TextureRect:
 	return ptr
 
 func _update_pickup_pointers() -> void:
-	for id in _pickup_targets.keys():
+	for id in _pickup_targets:  # iterating the dict directly yields keys, no copy
 		var node: Node3D = _pickup_targets[id]
 		var ptr: TextureRect = _pickup_pointers.get(id)
 		if not is_instance_valid(node) or not is_instance_valid(ptr):

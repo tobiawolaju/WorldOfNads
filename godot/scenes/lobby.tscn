@@ -106,8 +106,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4864397, 0)
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("9_07nfq")]
 
-[node name="Level2" parent="." unique_id=1465468224 instance=ExtResource("9_07nfq")]
-
 [node name="Pickup1" parent="." unique_id=348478555 instance=ExtResource("11_yad6j")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.095271, 1.4365964, 0)
 power_up_mode = 1

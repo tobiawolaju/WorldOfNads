@@ -104,6 +104,7 @@ shader_parameter/grass_albedo = ExtResource("2_ppgk2")
 shader_parameter/rock_albedo = ExtResource("7_2atol")
 shader_parameter/snow_albedo = ExtResource("8_k3pvx")
 shader_parameter/grass_patch_mask = ExtResource("3_2r41h")
+shader_parameter/shared_layer_textures = false
 shader_parameter/grass_start = 0.0
 shader_parameter/rock_start = 1.0
 shader_parameter/snow_start = 2.0
@@ -1052,6 +1053,8 @@ visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_u6siu")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Object_2" unique_id=603401176]
+script = ExtResource("26_dhman")
+trigger_padding = 0.5
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Object_2/StaticBody3D" unique_id=326250799]
 shape = SubResource("ConcavePolygonShape3D_62obg")
@@ -1063,6 +1066,8 @@ visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_u6siu")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Object_3" unique_id=1751087046]
+script = ExtResource("26_dhman")
+trigger_padding = 0.5
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Object_3/StaticBody3D" unique_id=504148775]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 2.220446e-16, 7.1054274e-15, 1, 0, 0, 0)
@@ -1075,6 +1080,8 @@ visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_u6siu")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Object_6" unique_id=477436515]
+script = ExtResource("26_dhman")
+trigger_padding = 0.5
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Object_6/StaticBody3D" unique_id=1221194785]
 shape = SubResource("ConcavePolygonShape3D_w52e2")
@@ -1086,6 +1093,7 @@ visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_u6siu")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Object_7" unique_id=1194760689]
+script = ExtResource("26_dhman")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Object_7/StaticBody3D" unique_id=1812608066]
 transform = Transform3D(1, 0, 0, 0, 1, 0, -3.5527137e-15, 1.7763568e-15, 1, 0, 0, 0)
@@ -1098,6 +1106,8 @@ visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_u6siu")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Object_8" unique_id=1798114274]
+script = ExtResource("26_dhman")
+trigger_padding = 0.5
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Object_8/StaticBody3D" unique_id=734180739]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 7.1054274e-15, 1, 0, 0, 0)
@@ -1110,6 +1120,8 @@ visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_u6siu")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Object_9" unique_id=1853556427]
+script = ExtResource("26_dhman")
+trigger_padding = 0.5
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Object_9/StaticBody3D" unique_id=595650388]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 2.220446e-16, 7.1054274e-15, 1, 0, 0, 0)
@@ -1129,6 +1141,7 @@ mesh = SubResource("ArrayMesh_u6siu")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Object_11" unique_id=240816563]
 script = ExtResource("26_dhman")
+trigger_padding = 0.5
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Object_11/StaticBody3D" unique_id=2104170606]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 2.220446e-16, 7.1054274e-15, 1, 0, 0, 0)

@@ -17,7 +17,10 @@ uniform float tooth_roundness : hint_range(0.01, 1.0) = 0.2;
 uniform float width : hint_range(0.01, 1.0) = 0.75;
 uniform float height : hint_range(0.01, 1.0) = 0.25;
 
-uniform int layers : hint_range(2, 32, 1) = 16;
+// Parallax depth steps for the mouth cavity. Materials override this (the player
+// skin uses 5); 8 here so a material that does not override still gets a cheap,
+// banding-free cavity instead of 16 loop iterations per face fragment.
+uniform int layers : hint_range(2, 32, 1) = 8;
 
 uniform float depth : hint_range(0.0, 1.0) = 0.25;
 uniform float taper : hint_range(0.1, 1.0) = 0.65;

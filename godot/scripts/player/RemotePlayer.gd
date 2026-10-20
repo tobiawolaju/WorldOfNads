@@ -8,7 +8,14 @@ var mesh_lod_enabled: bool = true
 
 var display_name: String = "" :
 	set(new_name):
-		display_name = new_name.strip_edges()
+		# World-state packets re-send every player's name ~20x/s; skipping the
+		# unchanged case keeps strip_edges() and the Label3D rewrite off the hot path.
+		if new_name == display_name:
+			return
+		var stripped := new_name.strip_edges()
+		if stripped == display_name:
+			return
+		display_name = stripped
 		_refresh_name_label()
 
 var current_animation: String = "idle"
@@ -99,8 +106,18 @@ func refresh_animation_state() -> void:
 	_apply_animation_state(current_animation)
 
 func _apply_animation_state(new_state: String) -> void:
+	# Re-activate here: LOD-off parks the tree (see _stop_all_animations), and
+	# travel() must land on a live tree or the avatar comes back in its old pose.
+	if anim_tree and not anim_tree.active:
+		anim_tree.active = true
 	_play_anim(new_state)
 
 func _stop_all_animations() -> void:
 	if anim_player:
 		anim_player.stop()
+	# Deactivating the AnimationTree is what actually stops the per-avatar cost:
+	# while inactive it stops evaluating its 6-state machine and re-posing the
+	# Skeleton3D every frame. Safe to park because PlayerManager disables mesh
+	# LOD in the same tick, so nothing visible depends on the pose by then.
+	if anim_tree:
+		anim_tree.active = false

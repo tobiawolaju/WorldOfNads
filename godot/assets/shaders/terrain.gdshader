@@ -19,6 +19,13 @@ uniform sampler2D snow_albedo : source_color;
 
 uniform sampler2D grass_patch_mask : source_color;
 
+// On when every layer slot points at the same texture (green_ground1_env.tres
+// sends all four at grass.png). The per-pixel band blends then mix a colour with
+// itself, so one triplanar call is reused for every slot: half the terrain's
+// texture fetches for a pixel-identical result. Leave off (default) for layered
+// terrain.
+uniform bool shared_layer_textures;
+
 
 //
 // =====================================
@@ -165,6 +172,22 @@ vec4 triplanar(
 }
 
 
+// Layer sample that reuses the shared colour when the slots are deduplicated.
+// shared_layer_textures is a uniform, so this is uniform control flow: the
+// skipped triplanar is not merely unexecuted, it is not issued at all.
+vec3 layer_albedo(
+	sampler2D tex,
+	vec3 pos,
+	vec3 normal,
+	vec3 shared_sample
+) {
+	if (shared_layer_textures) {
+		return shared_sample;
+	}
+	return triplanar(tex, pos, normal).rgb;
+}
+
+
 
 //
 // =====================================
@@ -201,6 +224,13 @@ void fragment() {
 	float h = world_pos.y;
 
 	vec3 n = normalize(world_normal);
+
+	// One triplanar call that serves every layer when the slots are
+	// deduplicated (shared_layer_textures); zero cost when they are not.
+	vec3 shared_rgb = vec3(0.0);
+	if (shared_layer_textures) {
+		shared_rgb = triplanar(grass_albedo, world_pos, n).rgb;
+	}
 
 	//
 	// =================================
@@ -248,17 +278,9 @@ void fragment() {
 			h
 		);
 
-		vec3 rock_rgb = triplanar(
-			rock_albedo,
-			world_pos,
-			n
-		).rgb;
+		vec3 rock_rgb = layer_albedo(rock_albedo, world_pos, n, shared_rgb);
 
-		vec3 snow_rgb = triplanar(
-			snow_albedo,
-			world_pos,
-			n
-		).rgb;
+		vec3 snow_rgb = layer_albedo(snow_albedo, world_pos, n, shared_rgb);
 
 		terrain = mix(
 			rock_rgb,
@@ -279,17 +301,9 @@ void fragment() {
 			h
 		);
 
-		vec3 grass_rgb = triplanar(
-			grass_albedo,
-			world_pos,
-			n
-		).rgb;
+		vec3 grass_rgb = layer_albedo(grass_albedo, world_pos, n, shared_rgb);
 
-		vec3 rock_rgb = triplanar(
-			rock_albedo,
-			world_pos,
-			n
-		).rgb;
+		vec3 rock_rgb = layer_albedo(rock_albedo, world_pos, n, shared_rgb);
 
 		terrain = mix(
 			grass_rgb,
@@ -310,17 +324,9 @@ void fragment() {
 			h
 		);
 
-		low_rgb = triplanar(
-			low_albedo,
-			world_pos,
-			n
-		).rgb;
+		low_rgb = layer_albedo(low_albedo, world_pos, n, shared_rgb);
 
-		vec3 grass_rgb = triplanar(
-			grass_albedo,
-			world_pos,
-			n
-		).rgb;
+		vec3 grass_rgb = layer_albedo(grass_albedo, world_pos, n, shared_rgb);
 
 		terrain = mix(
 			low_rgb,
@@ -388,11 +394,7 @@ void fragment() {
 
 		if (patch_mask > 0.0) {
 
-			vec3 rock_rgb = triplanar(
-				rock_albedo,
-				world_pos,
-				n
-			).rgb;
+			vec3 rock_rgb = layer_albedo(rock_albedo, world_pos, n, shared_rgb);
 
 			terrain = mix(
 				terrain,
@@ -408,11 +410,7 @@ void fragment() {
 
 	else {
 
-		low_rgb = triplanar(
-			low_albedo,
-			world_pos,
-			n
-		).rgb;
+		low_rgb = layer_albedo(low_albedo, world_pos, n, shared_rgb);
 
 		terrain = low_rgb;
 	}
@@ -427,11 +425,7 @@ void fragment() {
 
 		if (h >= grass_start) {
 
-			low_rgb = triplanar(
-				low_albedo,
-				world_pos,
-				n
-			).rgb;
+			low_rgb = layer_albedo(low_albedo, world_pos, n, shared_rgb);
 		}
 
 		terrain = mix(

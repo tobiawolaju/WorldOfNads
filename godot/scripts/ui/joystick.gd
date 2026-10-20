@@ -299,8 +299,12 @@ func _release_key(action: String):
 		keys_pressed[action] = false
 
 func _release_all_keys():
-	for key in keys_pressed.keys():
-		_release_key(key)
+	# Called every frame while the stick rests at center, so avoid the array that
+	# keys_pressed.keys() allocates and only touch keys that are actually down.
+	for key in keys_pressed:
+		if keys_pressed[key]:
+			Input.action_release(key)
+			keys_pressed[key] = false
 
 func _is_double_tap(tap_pos: Vector2) -> bool:
 	var now = Time.get_ticks_msec() / 1000.0

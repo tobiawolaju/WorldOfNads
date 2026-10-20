@@ -45,6 +45,8 @@ const COVER_COLOR := Color(0.43137255, 0.32941177, 1.0)
 
 var is_player_outside: bool = false
 var _check_accumulator: float = 0.0
+## Missing-ref warning is printed once instead of 10x/second forever.
+var _missing_refs_warned: bool = false
 var _last_real_storm_ms: float = 0.0
 var _warming_up: bool = false
 var _warmup_done: bool = false
@@ -104,7 +106,10 @@ func _process(_delta: float) -> void:
 
 	# Visual effects track CAMERA (what player sees)
 	if not camera or not world_env or not light_normal or not light_storm:
-		print("StormEye: Missing camera/world_env/lights")
+		# This runs on a 0.1 s throttle, so warn once instead of 10x/second.
+		if not _missing_refs_warned:
+			_missing_refs_warned = true
+			print("StormEye: Missing camera/world_env/lights")
 		return
 
 	var camera_pos_2d = Vector2(camera.global_position.x, camera.global_position.z)
