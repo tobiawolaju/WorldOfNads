@@ -944,6 +944,67 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   }
 }
 
+/* ====== Match card player count + icons ====== */
+/* Column wrapper so the player count can sit *under* the card. It carries the
+   data-id/data-status the carousel's scroll logic reads off carousel.children,
+   and the scroll snap, so the card itself can stay exactly as it was. */
+.match-card-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+}
+
+/* The card is no longer a flex item of the carousel row, so drop the row sizing
+   it used to carry - its own width/height still define it. */
+.match-card-item .match-card {
+  flex: 0 0 auto;
+}
+
+/* Player count under the card. Dark text: the page behind the carousel is white,
+   unlike the card artwork, so white would vanish here. */
+.match-card-players {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1;
+}
+
+/* Google Font icon as a white glyph in a black circle. */
+.match-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 100%;
+  background: #000000;
+  flex: 0 0 auto;
+}
+
+.match-icon-badge .material-symbols-rounded {
+  font-size: 15px;
+  line-height: 1;
+  color: #ffffff;
+}
+
+/* Heart badge, bottom-left ON the card. Counter-skewed to match the card's
+   skewX(-5deg) so the glyph stands upright. */
+.match-card-heart {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  transform: skewX(5deg);
+  pointer-events: none;
+}
+
 .grayscale-card {
   /* filter set per-status below */
 }
