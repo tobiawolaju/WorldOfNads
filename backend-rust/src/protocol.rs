@@ -84,6 +84,7 @@ pub fn anim_name_to_id(name: &str) -> Option<i64> {
         "runningjump" => Some(2),
         "falling" => Some(3),
         "runningslide" => Some(4),
+        "climb" => Some(5),
         _ => None,
     }
 }
@@ -94,17 +95,18 @@ pub fn anim_id_to_name(id: i64) -> &'static str {
         2 => "runningjump",
         3 => "falling",
         4 => "runningslide",
+        5 => "climb",
         _ => "idle",
     }
 }
 
-/// Node `normalizeAnimId`: prefer an explicit `anim_id` in 0..=4, else an
+/// Node `normalizeAnimId`: prefer an explicit `anim_id` in 0..=5, else an
 /// `animation` name, else idle.
 pub fn normalize_anim_id(data: &Value) -> i64 {
     if let Some(raw) = data.get("anim_id").and_then(|v| v.as_f64()) {
         if raw.is_finite() {
             let n = raw.floor() as i64;
-            if (0..=4).contains(&n) {
+            if (0..=5).contains(&n) {
                 return n;
             }
         }

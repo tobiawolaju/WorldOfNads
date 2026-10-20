@@ -25,7 +25,7 @@ func _ready() -> void:
 
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
-	var state_names := ["idle", "running", "runningjump", "falling", "runningslide"]
+	var state_names := ["idle", "running", "runningjump", "falling", "runningslide", "climb"]
 	for state_name in state_names:
 		var node := AnimationNodeAnimation.new()
 		node.animation = state_name

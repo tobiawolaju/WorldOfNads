@@ -70,14 +70,16 @@ const ANIM_NAME_TO_ID = Object.freeze({
   running: 1,
   runningjump: 2,
   falling: 3,
-  runningslide: 4
+  runningslide: 4,
+  climb: 5
 });
 const ANIM_ID_TO_NAME = Object.freeze({
   0: 'idle',
   1: 'running',
   2: 'runningjump',
   3: 'falling',
-  4: 'runningslide'
+  4: 'runningslide',
+  5: 'climb'
 });
 
 
