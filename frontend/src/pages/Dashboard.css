@@ -944,35 +944,37 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   }
 }
 
-/* ====== Match card player count + icons ====== */
-/* Column wrapper so the player count can sit *under* the card. It carries the
-   data-id/data-status the carousel's scroll logic reads off carousel.children,
-   and the scroll snap, so the card itself can stay exactly as it was. */
-.match-card-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex: 0 0 auto;
-  scroll-snap-align: center;
-}
-
-/* The card is no longer a flex item of the carousel row, so drop the row sizing
-   it used to carry - its own width/height still define it. */
-.match-card-item .match-card {
-  flex: 0 0 auto;
-}
-
-/* Player count under the card. Dark text: the page behind the carousel is white,
-   unlike the card artwork, so white would vanish here. */
-.match-card-players {
+/* ====== Match card likes + player count ====== */
+/* Stats row, bottom-left ON the card: a heart with its count, then a people icon
+   with its count. Counter-skewed to match the card's skewX(-5deg) so the row
+   stands upright, and inset from the corner because the card's radial mask fades
+   the exact corner out. */
+.match-card-stats {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  transform: skewX(5deg);
+  pointer-events: none;
   font-family: var(--font-inter), sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  color: #1a1a1a;
+  line-height: 1;
+  /* White on the card art, like the rest of the card copy. */
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
+}
+
+.match-stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.match-stat-count {
   line-height: 1;
 }
 
@@ -981,28 +983,25 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 100%;
   background: #000000;
   flex: 0 0 auto;
 }
 
 .match-icon-badge .material-symbols-rounded {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1;
   color: #ffffff;
+  /* Material Symbols Rounded is loaded with FILL as a range in index.html, so the
+     FILL axis is live here. Pin every axis so the outlined default is explicit. */
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* Heart badge, bottom-left ON the card. Counter-skewed to match the card's
-   skewX(-5deg) so the glyph stands upright. */
-.match-card-heart {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  z-index: 2;
-  transform: skewX(5deg);
-  pointer-events: none;
+/* Filled variant (the heart). */
+.match-icon-badge .material-symbols-rounded.is-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 .grayscale-card {
@@ -1100,7 +1099,9 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
 
 .match-card-content {
   background: linear-gradient(to top, rgba(160, 0, 255, 0.75) 0%, rgba(160, 0, 255, 0.3) 50%, transparent 100%);
-  padding: 20px 14px 10px;
+  /* The extra bottom padding keeps the centred sponsor/description text clear of
+     the likes + player-count row pinned to the card's bottom-left. */
+  padding: 20px 14px 40px;
 }
 
 /* Sponsor Title */

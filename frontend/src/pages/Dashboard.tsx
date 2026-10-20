@@ -57,19 +57,31 @@ type Match = {
   lobbyBg?: string;
 };
 
-// --- Match card player count (placeholder) ---
-// TODO: swap for the real player count once the match payload carries one. Until
-// then a stable hash of the match id keeps each card on the same dummy number
-// instead of reshuffling it on every render.
+// --- Match card counts (placeholders) ---
+// TODO: swap for the real likes / player counts once the match payload carries
+// them. Until then a stable hash of the match id keeps each card on the same
+// dummy numbers instead of reshuffling them on every render.
 const DUMMY_PLAYER_COUNTS = [37, 128, 363, 942, 1500, 3700, 12300, 37000];
+const DUMMY_HEART_COUNTS = [12, 48, 96, 240, 512, 1200, 3400, 8600];
 
-function dummyPlayerCount(match: Match): number {
-  const seed = `${match.matchId}-${match.id}`;
-  let hash = 0;
+function hashSeed(seed: string, salt: number): number {
+  let hash = salt >>> 0;
   for (let i = 0; i < seed.length; i += 1) {
     hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
   }
-  return DUMMY_PLAYER_COUNTS[hash % DUMMY_PLAYER_COUNTS.length];
+  return hash;
+}
+
+function matchSeed(match: Match): string {
+  return `${match.matchId}-${match.id}`;
+}
+
+function dummyPlayerCount(match: Match): number {
+  return DUMMY_PLAYER_COUNTS[hashSeed(matchSeed(match), 0) % DUMMY_PLAYER_COUNTS.length];
+}
+
+function dummyHeartCount(match: Match): number {
+  return DUMMY_HEART_COUNTS[hashSeed(matchSeed(match), 7) % DUMMY_HEART_COUNTS.length];
 }
 
 function formatPlayerCount(count: number): string {
@@ -930,57 +942,53 @@ export default function Dashboard() {
                 {orderedMatches.map((match) => (
                   <div
                     key={match.matchId}
-                    className="match-card-item"
                     data-id={match.matchId}
                     data-status={normalizeMatchStatus(match.status)}
+                    className={`match-card ${selectedMatch === match.matchId ? "selected" : ""} ${normalizeMatchStatus(match.status) === "completed" ? "grayscale-card" : ""}`}
+                    style={{ backgroundImage: `url(${match.image})` }}
+                    onClick={(event) => {
+                      const card = event.currentTarget;
+                      const carousel = carouselRef.current;
+                      if (!carousel) return;
+                      const target = card.offsetLeft - carousel.offsetWidth / 2 + card.offsetWidth / 2;
+                      carousel.scrollTo({ left: target, behavior: "smooth" });
+                      isManuallyScrolling.current = true;
+                      setSelectedMatch(match.matchId);
+                      setTimeout(() => {
+                        isManuallyScrolling.current = false;
+                      }, 600);
+                    }}
                   >
-                    <div
-                      data-id={match.matchId}
-                      data-status={normalizeMatchStatus(match.status)}
-                      className={`match-card ${selectedMatch === match.matchId ? "selected" : ""} ${normalizeMatchStatus(match.status) === "completed" ? "grayscale-card" : ""}`}
-                      style={{ backgroundImage: `url(${match.image})` }}
-                      onClick={(event) => {
-                        const card = event.currentTarget;
-                        const carousel = carouselRef.current;
-                        if (!carousel) return;
-                        const target = card.offsetLeft - carousel.offsetWidth / 2 + card.offsetWidth / 2;
-                        carousel.scrollTo({ left: target, behavior: "smooth" });
-                        isManuallyScrolling.current = true;
-                        setSelectedMatch(match.matchId);
-                        setTimeout(() => {
-                          isManuallyScrolling.current = false;
-                        }, 600);
-                      }}
-                    >
-                      {selectedMatch === match.matchId ? (
-                        <div className={`match-card-overlay selected-overlay status-${normalizeMatchStatus(match.status)}`}>
-                          <p className="match-reward">{match.prize}</p>
-                          <div className="match-card-content">
-                            <div className="match-details-inner">
-                              <p className="match-desc">{match.description}</p>
-                            </div>
+                    {selectedMatch === match.matchId ? (
+                      <div className={`match-card-overlay selected-overlay status-${normalizeMatchStatus(match.status)}`}>
+                        <p className="match-reward">{match.prize}</p>
+                        <div className="match-card-content">
+                          <div className="match-details-inner">
+                            <p className="match-desc">{match.description}</p>
                           </div>
                         </div>
-                      ) : (
-                        <div className="match-card-overlay">
-                          <p className="match-reward">{match.prize}</p>
-                          <div className="match-card-content">
-                            <h3 className="match-sponsor">{match.sponsor}</h3>
-                          </div>
+                      </div>
+                    ) : (
+                      <div className="match-card-overlay">
+                        <p className="match-reward">{match.prize}</p>
+                        <div className="match-card-content">
+                          <h3 className="match-sponsor">{match.sponsor}</h3>
                         </div>
-                      )}
-                      {/* Heart badge pinned to the card's bottom-left corner. */}
-                      <span className="match-icon-badge match-card-heart">
-                        <span className="material-symbols-rounded">favorite</span>
+                      </div>
+                    )}
+                    {/* Likes + player count, bottom-left ON the card. Dummy values for now. */}
+                    <div className="match-card-stats">
+                      <span className="match-stat">
+                        <span className="match-icon-badge">
+                          <span className="material-symbols-rounded is-filled">favorite</span>
+                        </span>
+                        <span className="match-stat-count">{formatPlayerCount(dummyHeartCount(match))}</span>
                       </span>
-                    </div>
-                    {/* Player count, under the card. Dummy values for now. */}
-                    <div className="match-card-players">
-                      <span className="match-icon-badge">
-                        <span className="material-symbols-rounded">group</span>
-                      </span>
-                      <span className="match-card-players-count">
-                        {formatPlayerCount(dummyPlayerCount(match))}
+                      <span className="match-stat">
+                        <span className="match-icon-badge">
+                          <span className="material-symbols-rounded">group</span>
+                        </span>
+                        <span className="match-stat-count">{formatPlayerCount(dummyPlayerCount(match))}</span>
                       </span>
                     </div>
                   </div>
