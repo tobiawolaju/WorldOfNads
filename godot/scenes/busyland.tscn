@@ -26,6 +26,7 @@
 [ext_resource type="Texture2D" uid="uid://r3pjywbflaie" path="res://assets/models/chain_link_fence_1.png" id="24_62obg"]
 [ext_resource type="Texture2D" uid="uid://5qw0a8kvh0oi" path="res://assets/models/chain_link_fence_2.png" id="25_vq17p"]
 [ext_resource type="Texture2D" uid="uid://356j3x3f7lru" path="res://assets/models/skibidi_toilet_template_0.png" id="26_62obg"]
+[ext_resource type="Script" uid="uid://d4e6jq6lwbeoo" path="res://scripts/environment/ClimbableSurface.gd" id="26_dhman"]
 [ext_resource type="Texture2D" uid="uid://dx4eva6t66mwx" path="res://assets/models/set_of_cardboard_boxes (1)_0.png" id="28_dhman"]
 [ext_resource type="Texture2D" uid="uid://b08kjyaaxthle" path="res://assets/models/set_of_cardboard_boxes (1)_1.png" id="29_t4to0"]
 [ext_resource type="Texture2D" uid="uid://b6kkcxf6hnggb" path="res://assets/models/set_of_cardboard_boxes (1)_2.png" id="30_tlgt0"]
@@ -1127,6 +1128,7 @@ visibility_range_fade_mode = 2
 mesh = SubResource("ArrayMesh_u6siu")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Object_11" unique_id=240816563]
+script = ExtResource("26_dhman")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Object_11/StaticBody3D" unique_id=2104170606]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 2.220446e-16, 7.1054274e-15, 1, 0, 0, 0)

@@ -42,7 +42,8 @@ const ANIM_ID_TO_NAME: Dictionary = {
 	1: "running",
 	2: "runningjump",
 	3: "falling",
-	4: "runningslide"
+	4: "runningslide",
+	5: "climb"
 }
 # Interpolation buffer. Delay sits slightly BELOW the server's per-player update
 # interval so render_time routinely reaches the newest snapshot; the gap is then

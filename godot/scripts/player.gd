@@ -136,12 +136,36 @@ const RESPAWN_DELAY: float = 2.0
 const LANDING_BOB_DURATION: float = 0.14
 ## How fast the landing FOV punch decays back to the base FOV (higher = shorter flash).
 const LANDING_FOV_DECAY: float = 14.0
+
+# --- CLIMBING (attachable surfaces: scripts/environment/ClimbableSurface.gd) ---
+## Up/down and sideways speed while attached to a surface (m/s).
+const CLIMB_SPEED: float = 2.6
+## How hard the capsule hugs the face while climbing, so move_and_slide keeps it
+## in contact with the surface instead of drifting off it (m/s toward the wall).
+const CLIMB_STICK_SPEED: float = 1.2
+## Horizontal push away from the face when jumping off a surface (m/s).
+const CLIMB_JUMP_AWAY_SPEED: float = 4.5
+## Horizontal push toward the face when a climb ends without a jump, so topping
+## out on a ledge steps onto it instead of dropping straight back down the face.
+const CLIMB_VAULT_SPEED: float = 3.0
+## How long the launch vector (jump-off / vault) owns horizontal velocity before
+## normal air control starts following input again.
+const CLIMB_PUSH_TIME: float = 0.18
+## Re-grab delay after letting go, so jumping off does not re-attach instantly
+## while the player is still standing inside the trigger volume.
+const CLIMB_REATTACH_COOLDOWN: float = 0.5
+## Yaw offset (rad) added to the mesh while climbing. The climb clip swings the
+## body the opposite way round from the run/idle clips, so the whole model needs
+## half a turn to keep the chest and hands on the wall.
+const CLIMB_MESH_YAW_OFFSET: float = PI
+
 const ANIM_NAME_TO_ID: Dictionary = {
 	"idle": 0,
 	"running": 1,
 	"runningjump": 2,
 	"falling": 3,
-	"runningslide": 4
+	"runningslide": 4,
+	"climb": 5
 }
 
 # --- INPUT VARIABLES ---
@@ -325,6 +349,16 @@ var _coyote_timer: float = 0.0
 var _double_jump_available: bool = false
 var _double_jump_used: bool = false
 var _double_jump_air_time: float = 0.0
+
+# --- CLIMB STATE (set by ClimbableSurface.gd, see the climb API near the bottom) ---
+var _is_climbing: bool = false
+var _climb_surface: Node3D = null
+## Outward normal of the face being climbed: horizontal, pointing back at the player.
+var _climb_normal: Vector3 = Vector3.ZERO
+## Counts down while a jump-off / vault vector is in charge of horizontal velocity.
+var _climb_push_timer: float = 0.0
+var _climb_reattach_cooldown: float = 0.0
+
 var stamina: float = STAMINA_MAX
 var _stamina_regen_timer: float = 0.0
 var _stamina_held_empty: bool = false
@@ -511,7 +545,7 @@ func _ready() -> void:
 
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
-	var state_names := ["idle", "running", "runningjump", "falling", "runningslide", "hook", "fall"]
+	var state_names := ["idle", "running", "runningjump", "falling", "runningslide", "hook", "fall", "climb"]
 	for state_name in state_names:
 		var node := AnimationNodeAnimation.new()
 		node.animation = state_name
@@ -589,6 +623,12 @@ func _refresh_name_label() -> void:
 
 func request_jump() -> void:
 	if not _is_movement_allowed():
+		return
+	if _is_climbing:
+		# Jumping while attached means "let go and push off the face". Flagged here
+		# and consumed on the next physics tick, where the launch vector, the face
+		# detach and the animation change all land together.
+		_jump_requested = true
 		return
 	_jump_buffer_timer = JUMP_BUFFER_TIME
 	if is_on_floor():
@@ -713,6 +753,10 @@ func _physics_process(delta: float) -> void:
 	_update_camera_zoom(delta)
 	_update_camera_collision_logic(delta)
 	_landing_bob_timer = maxf(0.0, _landing_bob_timer - delta)
+	# Climb timers tick here, before the climb branch can take over the frame, so
+	# the re-grab cooldown and the launch window always run down.
+	_climb_reattach_cooldown = maxf(0.0, _climb_reattach_cooldown - delta)
+	_climb_push_timer = maxf(0.0, _climb_push_timer - delta)
 	if _active_power_up_remaining > 0.0:
 		_active_power_up_remaining = maxf(0.0, _active_power_up_remaining - delta)
 		if _active_power_up_remaining <= 0.0:
@@ -763,6 +807,15 @@ func _physics_process(delta: float) -> void:
 	if input_strength > 0.0:
 		input_dir = input_dir.normalized() * input_strength
 	
+	# Anything that has to end the climb (death, a blocked match, the punch /
+	# near-death fall lock) is resolved before the climb branch claims the frame.
+	if _is_climbing and (_is_dead or _is_action_locked() or _is_riding_bus or not _is_movement_allowed()):
+		end_climb(_climb_surface, false)
+
+	if _is_climbing:
+		_physics_process_climb(delta, input_dir)
+		return
+
 	if movement_allowed and not _is_riding_bus and input_dir.length_squared() > 0.05 and touch_orbit_pending == Vector2.ZERO and joystick_orbit_pending == Vector2.ZERO:
 		# The orbit demand is a *relative* turn away from the current camera heading, not an
 		# absolute world yaw. Using an absolute target made the camera chase a heading that
@@ -926,26 +979,14 @@ func _physics_process(delta: float) -> void:
 			respawn_at_spawn_point()
 
 	# --- STORM DAMAGE (check every 0.1s) ---
-	# Skipped while dead: the dead body is about to respawn, and accumulating storm
-	# damage here would leave a leftover chunk that fires the instant they come back.
-	if not _is_dead:
-		_storm_check_timer += delta
-		if _storm_check_timer >= STORM_CHECK_INTERVAL:
-			_storm_check_timer = 0.0
-			_refresh_storm_zone()
-			var player_pos_2d := Vector2(global_position.x, global_position.z)
-			var dist := player_pos_2d.distance_to(storm_center)
-			if dist > storm_radius:
-				_storm_damage_accumulator += storm_damage_per_second * STORM_CHECK_INTERVAL
-				if _storm_damage_accumulator >= 1.0:
-					var dmg := int(_storm_damage_accumulator)
-					_storm_damage_accumulator -= dmg
-					take_damage(dmg, self)
-			else:
-				_storm_damage_accumulator = 0.0
+	_update_storm_damage(delta)
 
 	# --- MOMENTUM CALCULATION ---
-	if movement_allowed and not _is_action_locked():
+	if _climb_push_timer > 0.0:
+		# Launching off a climb surface: the away/vault vector owns horizontal
+		# velocity for its short window instead of being snapped to the input.
+		pass
+	elif movement_allowed and not _is_action_locked():
 		var target_vel = move_direction * speed_to_use
 
 		# [MOMENTUM UPDATE] If we are in the air, use max speed instantly (no acceleration)
@@ -1061,6 +1102,25 @@ func _physics_process(delta: float) -> void:
 	if current_animation == "runningjump" or current_animation == "falling" or current_animation == "runningslide":
 		net_active = true
 
+	# Only send network updates in gameplay (root is PlayerManager with WebSocket);
+	# the root check itself lives inside _frame_ticks.
+	_frame_ticks(net_active)
+
+var _last_real_net_ms: float = 0.0
+# Set by _set_anim when the pose actually changes, so the send block in
+# _physics_process can emit it on that frame instead of waiting for the (much
+# slower) idle tick window. The frame that flips to "idle" is also the frame that
+# clears `net_active`, so without this the stop transition used to sit in the queue
+# for up to NETWORK_TICK_IDLE (0.33 s) and remote clients kept showing the run loop.
+var _anim_state_dirty: bool = false
+
+# ---------------------------------------------------------------------------
+# Frame ticks
+# ---------------------------------------------------------------------------
+## Network send window + slow periodic ticks, extracted from _physics_process so
+## the climb branch (which bypasses the rest of the movement code) keeps the same
+## send cadence and keeps the shared player-position shader fed.
+func _frame_ticks(net_active: bool) -> void:
 	# Only send network updates in gameplay (root is PlayerManager with WebSocket)
 	if not (root and root.has_method("send_xp_update")):
 		net_active = false
@@ -1092,13 +1152,183 @@ func _physics_process(delta: float) -> void:
 		_update_global_player_shader_pos()
 		_refresh_name_label()
 
-var _last_real_net_ms: float = 0.0
-# Set by _set_anim when the pose actually changes, so the send block in
-# _physics_process can emit it on that frame instead of waiting for the (much
-# slower) idle tick window. The frame that flips to "idle" is also the frame that
-# clears `net_active`, so without this the stop transition used to sit in the queue
-# for up to NETWORK_TICK_IDLE (0.33 s) and remote clients kept showing the run loop.
-var _anim_state_dirty: bool = false
+## Ring-of-death damage tick, shared by the normal path and the climb branch so
+## hanging off a wall inside the storm does not make the player storm-proof.
+## Skipped while dead: the dead body is about to respawn, and accumulating storm
+## damage there would leave a leftover chunk that fires the instant they come back.
+func _update_storm_damage(delta: float) -> void:
+	if _is_dead:
+		return
+	_storm_check_timer += delta
+	if _storm_check_timer < STORM_CHECK_INTERVAL:
+		return
+	_storm_check_timer = 0.0
+	_refresh_storm_zone()
+	var player_pos_2d := Vector2(global_position.x, global_position.z)
+	var dist := player_pos_2d.distance_to(storm_center)
+	if dist > storm_radius:
+		_storm_damage_accumulator += storm_damage_per_second * STORM_CHECK_INTERVAL
+		if _storm_damage_accumulator >= 1.0:
+			var dmg := int(_storm_damage_accumulator)
+			_storm_damage_accumulator -= dmg
+			take_damage(dmg, self)
+	else:
+		_storm_damage_accumulator = 0.0
+
+# ---------------------------------------------------------------------------
+# Climb API (called by scripts/environment/ClimbableSurface.gd)
+# ---------------------------------------------------------------------------
+## Attach the local player to a climbable surface. `normal` is the surface's own
+## outward face normal (pointing back at the player); pass Vector3.ZERO and it is
+## worked out from where the player stands relative to the surface origin.
+func begin_climb(surface: Node3D, normal: Vector3 = Vector3.ZERO) -> void:
+	if not is_local or surface == null or _is_climbing:
+		return
+	# Refuse while dead, locked into a punch / near-death fall, sliding, riding the
+	# bus, during a blocked match, or during the re-grab delay after letting go.
+	if _is_dead or _is_action_locked() or _is_sliding or _is_riding_bus:
+		return
+	if not _is_movement_allowed() or _climb_reattach_cooldown > 0.0:
+		return
+
+	_is_climbing = true
+	_climb_surface = surface
+	_climb_normal = _resolve_climb_normal(surface, normal)
+	if _climb_normal.length_squared() < 0.0001:
+		# No climbable face here (nothing to stand against, or a floor-ish normal
+		# the caller already rejected): back out instead of attaching to a wall.
+		_is_climbing = false
+		_climb_surface = null
+		return
+
+	# Stop dead and square up to the face: climbing is a controlled attachment,
+	# not a slide down it. Jump/run pose leftovers are cleared so the climb loop
+	# starts from the model's rest pose.
+	velocity = Vector3.ZERO
+	velocity_y = 0.0
+	_stop_slide()
+	_slide_requested = false
+	_jump_requested = false
+	_jump_buffer_timer = 0.0
+	_coyote_timer = 0.0
+	_double_jump_available = false
+	_double_jump_used = false
+	_double_jump_air_time = 0.0
+	_squash_stretch_y = 1.0
+	_squash_stretch_velocity = 0.0
+	_squash_stretch_target = 1.0
+	_run_bounce_time = 0.0
+	_mesh_yaw_velocity = 0.0
+	mesh.position.y = 0.0
+	mesh.rotation.z = 0.0
+	mesh.scale = _base_scale
+	# Face the wall straight away; the run/idle yaw spring is bypassed while attached.
+	mesh.rotation.y = atan2(-_climb_normal.x, -_climb_normal.z) + CLIMB_MESH_YAW_OFFSET
+	# Airborne bookkeeping restarts from here, so detaching mid-wall is classified
+	# as a fall from the detach point instead of from the last time we touched floor.
+	_was_on_floor = false
+	_airborne_start_y = global_position.y
+	_last_world_y = global_position.y
+	_set_anim("climb")
+
+## Let go of the surface. `jump_off` launches away from the face (jump pressed),
+## `vault` nudges toward it so exiting over the top edge lands on the ledge.
+## `surface` is a guard: a body_exited from some other volume is ignored.
+func end_climb(surface: Node3D = null, jump_off: bool = false, vault: bool = false) -> void:
+	if not _is_climbing:
+		return
+	if surface != null and surface != _climb_surface:
+		return
+
+	_is_climbing = false
+	_climb_surface = null
+	_climb_reattach_cooldown = CLIMB_REATTACH_COOLDOWN
+	var normal := _climb_normal
+	_climb_normal = Vector3.ZERO
+
+	if jump_off:
+		# Push away from the face and hop off. The push owns horizontal velocity
+		# for CLIMB_PUSH_TIME so the first frames of air control cannot cancel it.
+		velocity = normal * CLIMB_JUMP_AWAY_SPEED
+		velocity_y = _current_jump_velocity()
+		_double_jump_available = false
+		_double_jump_used = false
+		_double_jump_air_time = 0.0
+		_climb_push_timer = CLIMB_PUSH_TIME
+	elif vault:
+		velocity.x = -normal.x * CLIMB_VAULT_SPEED
+		velocity.z = -normal.z * CLIMB_VAULT_SPEED
+		velocity.y = 0.0
+		velocity_y = 0.0
+		_climb_push_timer = CLIMB_PUSH_TIME
+	else:
+		# Simple let-go (out of the volume, or the climb was cancelled): gravity
+		# takes over on the next frame's normal path.
+		velocity.y = 0.0
+		velocity_y = 0.0
+
+## Outward normal of the face being climbed: horizontal, pointing back at the
+## player. Vector3.ZERO means "no climbable face here".
+func _resolve_climb_normal(surface: Node3D, normal: Vector3) -> Vector3:
+	normal.y = 0.0
+	if normal.length_squared() > 0.0001:
+		return normal.normalized()
+	# Straight line from the surface origin back out to the player.
+	var fallback := global_position - surface.global_position
+	fallback.y = 0.0
+	if fallback.length_squared() > 0.0001:
+		return fallback.normalized()
+	return Vector3.ZERO
+
+## One physics frame of climbing: look-around, jump-off, movement on the face and
+## the network send. Returns to _physics_process, which skips its normal path.
+func _physics_process_climb(delta: float, input_dir: Vector2) -> void:
+	# Camera look-around and follow keep working while attached; gravity, stamina,
+	# slide, momentum and _handle_animations are all bypassed on purpose.
+	_apply_touch_orbit()
+	_handle_camera_gamepad(delta)
+	_update_storm_damage(delta)
+	_slide_requested = false
+	_jump_buffer_timer = 0.0
+
+	# Jump (keyboard / touch button / gamepad A) = let go and push off the face.
+	var jump_joy_held := Input.is_joy_button_pressed(gamepad_index, JOY_BUTTON_A)
+	var jump_joy_just := jump_joy_held and not _prev_joy_a_pressed
+	_prev_joy_a_pressed = jump_joy_held
+	if Input.is_action_just_pressed("jump") or _jump_requested or jump_joy_just:
+		_jump_requested = false
+		end_climb(_climb_surface, true)
+		return
+
+	var normal := _climb_normal
+	var right := Vector3.UP.cross(normal)
+	if right.length_squared() < 0.0001:
+		right = Vector3.RIGHT
+	right = right.normalized()
+
+	# Forward/back (input_dir.y) climbs up and down the face, strafe (input_dir.x)
+	# shuffles sideways along it, and a constant hug toward the wall keeps the
+	# capsule in contact with the surface.
+	var horizontal := right * (input_dir.x * CLIMB_SPEED) - normal * CLIMB_STICK_SPEED
+	velocity.x = horizontal.x
+	velocity.z = horizontal.z
+	velocity.y = input_dir.y * CLIMB_SPEED
+	velocity_y = velocity.y
+
+	move_and_slide()
+
+	# Hold the face yaw and the climb loop; the run/idle yaw spring stays bypassed.
+	mesh.rotation.y = atan2(-normal.x, -normal.z) + CLIMB_MESH_YAW_OFFSET
+	_set_anim("climb")
+	_mirror_twin_decoy()
+
+	camera_is_airborne = not is_on_floor()
+	camera_is_moving = input_dir.length_squared() > 0.05
+	camera_retreat_axis = maxf(-input_dir.y, absf(input_dir.x))
+	_camera_base_target_prev = _camera_base_target_curr
+	_camera_base_target_curr = _camera_base_target()
+
+	_frame_ticks(input_dir.length_squared() > 0.0025)
 
 func _update_demo_agent(delta: float) -> void:
 	if _demo_should_recover():
@@ -2498,6 +2728,11 @@ func _is_action_locked() -> bool:
 
 func _handle_animations(move_dir: Vector3) -> void:
 	if not is_local: return
+	if _is_climbing:
+		# Attached to a surface: the climb loop owns the pose. The climb branch in
+		# _physics_process normally sets this; the guard covers any other caller.
+		_set_anim("climb")
+		return
 	if _is_punching:
 		# Hold the punch animation; the run/idle logic below must not override it.
 		_set_anim("hook")
