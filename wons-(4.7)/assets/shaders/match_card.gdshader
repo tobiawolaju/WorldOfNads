@@ -27,6 +27,13 @@ uniform float neon_opacity : hint_range(0.0, 1.0) = 0.8;
 uniform float grayscale_amount : hint_range(0.0, 1.0) = 0.0;
 uniform float brightness_amount : hint_range(0.0, 2.0) = 1.0;
 
+// `.match-card { border: 2px solid ... }`. The frontend flips the frame per theme -
+// purple on its white light-mode page, white on the dark one - and this screen only
+// ever renders the dark scheme, so the default here is white and dshbord.gd leaves it
+// alone. Width stays in CSS px so the shear and the dissolve carry it like the rest.
+uniform vec4 frame_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+const float FRAME_WIDTH = 2.0;
+
 // tan(-5deg). CSS skewX(-5deg) maps pre -> post as x' = x + SKEW_TAN * y.
 const float SKEW_TAN = -0.08748866;
 const float EDGE_RAMP = 0.84;
@@ -101,6 +108,15 @@ void fragment() {
 		uv.y = (uv.y - 0.5) * (src_aspect / box_aspect) + 0.5;
 	}
 	vec3 base = texture(source_tex, clamp(uv, vec2(0.0), vec2(1.0))).rgb;
+
+	// `.match-card` border, painted before the halftone and the neon so those two
+	// layers treat it as backdrop exactly like border-vs-::before in the CSS. The
+	// ring is the outermost FRAME_WIDTH px of the rounded box in the card's own
+	// pre-transform space, so the shear and the border-radius come for free and
+	// `alpha` (dissolve + box clip) fades it at the corners with the artwork.
+	float ring = abs(box_sd + FRAME_WIDTH * 0.5) - FRAME_WIDTH * 0.5;
+	float frame = 1.0 - smoothstep(-aa, aa, ring);
+	base = mix(base, frame_color.rgb, frame * frame_color.a);
 
 	// ::before halftone dots, confined to the rim by its own radial mask and by
 	// the card dissolve.

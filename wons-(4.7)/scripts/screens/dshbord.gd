@@ -40,6 +40,11 @@ const FONT_UI: Font = preload("res://assets/fonts/font1.ttf")
 const FONT_TAB: Font = preload("res://assets/fonts/font2.ttf")
 const MATCH_SRC: Texture2D = preload("res://assets/img/lobbybg.jpeg")
 const MATCH_CARD_SHADER: Shader = preload("res://assets/shaders/match_card.gdshader")
+# Match-card stat glyphs (filled heart, filled people). The Godot project ships no
+# icon font, so both silhouettes live in one shader and `shape` picks which to draw.
+const MATCH_STAT_ICON_SHADER: Shader = preload("res://assets/shaders/match_stat_icon.gdshader")
+const STAT_SHAPE_HEART: int = 0
+const STAT_SHAPE_PEOPLE: int = 1
 const STORE_PLATE: Texture2D = preload("res://assets/img/store_info_plate.png")
 const SKIN_DIR: String = "res://assets/img/skins/"
 # Flatten filter for the shaded/flat toggle's flat square, ported from
@@ -124,6 +129,14 @@ const TAB_STORE: String = "store"
 const EVENT_STATUSES := ["upcoming", "live", "completed"]
 const STORE_TIERS := ["all", "common", "rare", "epic", "legendary"]
 const DEFAULT_OWNED_IDS := ["s-default", "s-default-unshaded"]
+
+# Match-card stat counts. Placeholders until the match payload carries real likes and
+# player counts: the same pools and the same salted-hash idea as Dashboard.tsx, so a
+# card keeps its numbers instead of reshuffling on every rebuild. The web seed is
+# `matchId-contractId`; the Godot match dict has no contract id, so match_id alone is
+# the seed and the two screens may pick different pools for the same card.
+const DUMMY_PLAYER_COUNTS := [37, 128, 363, 942, 1500, 3700, 12300, 37000]
+const DUMMY_HEART_COUNTS := [12, 48, 96, 240, 512, 1200, 3400, 8600]
 
 # The shaded/flat toggle square. `.skin-preview__variant` is a 36px artwork
 # (`object-fit: cover`) inside a 2px border, so the button is 40px before the
@@ -1115,7 +1128,10 @@ func _build_match_card(match: Dictionary) -> Control:
 	padding.add_theme_constant_override("margin_left", 5)
 	padding.add_theme_constant_override("margin_top", 7)
 	padding.add_theme_constant_override("margin_right", 5)
-	padding.add_theme_constant_override("margin_bottom", 5)
+	# `.match-card-content` bottom padding went 10px -> 40px in Dashboard.css so the
+	# centred sponsor/description clears the likes + player-count row; 40 * 0.9 *
+	# 129/330 = 14.07 into this layout.
+	padding.add_theme_constant_override("margin_bottom", 14)
 	plate.add_child(padding)
 
 	var content := VBoxContainer.new()
@@ -1156,10 +1172,75 @@ func _build_match_card(match: Dictionary) -> Control:
 		_apply_font(sponsor, FONT_UI)
 		content.add_child(sponsor)
 
+	# `.match-card-stats` - likes + player count, bottom-left ON the card. Ported from
+	# Dashboard.tsx: the filled heart with its count, then the filled people glyph with
+	# its count. It draws over the purple plate and under nothing else, so it is added
+	# last. `.match-card-overlay` counter-skews the card and so does the stats row's own
+	# `skewX(5deg)`, so it stays upright here too.
+	var stats := HBoxContainer.new()
+	stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# `.match-card-stats { gap: 10px }` -> 10 * 0.9 * 129/330 = 3.52.
+	stats.add_theme_constant_override("separation", 4)
+	stats.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	# `left: 10px; bottom: 10px` measured in the 0.9-scaled overlay, so both land at
+	# 5% of the slot plus 10 * 0.9 * 129/330 - the same inset the prize pill uses.
+	stats.offset_left = 9.97
+	stats.offset_bottom = -7.82
+	stats.grow_horizontal = Control.GROW_DIRECTION_END
+	stats.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	card.add_child(stats)
+	stats.add_child(_build_match_stat(STAT_SHAPE_HEART, _dummy_heart_count(match)))
+	stats.add_child(_build_match_stat(STAT_SHAPE_PEOPLE, _dummy_player_count(match)))
+
 	card.gui_input.connect(_on_match_card_input.bind(match_id))
 	card.mouse_entered.connect(_on_match_card_enter.bind(card))
 	card.mouse_exited.connect(_on_match_card_exit.bind(card))
 	return card
+
+
+func _build_match_stat(shape: int, count: int) -> HBoxContainer:
+	# One `.match-stat`: a black circle holding the white glyph, then the count.
+	var stat := HBoxContainer.new()
+	stat.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# `.match-stat { gap: 5px }` -> 1.76.
+	stat.add_theme_constant_override("separation", 2)
+
+	# `.match-icon-badge` - 22px, `border-radius: 100%`, black.
+	var badge := Panel.new()
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.custom_minimum_size = Vector2(7.7, 7.7)
+	badge.add_theme_stylebox_override("panel", _match_stat_badge_style())
+	stat.add_child(badge)
+
+	# The glyph itself. A Material Symbols glyph at 14px inside the 22px badge leaves
+	# 4px a side, so the icon box is inset by 4 * 0.9 * 129/330 = 1.4 on every edge.
+	# It is a shader rather than a font because the project ships no icon font: see
+	# assets/shaders/match_stat_icon.gdshader.
+	var glyph := ColorRect.new()
+	glyph.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	glyph.offset_left = 1.4
+	glyph.offset_top = 1.4
+	glyph.offset_right = -1.4
+	glyph.offset_bottom = -1.4
+	glyph.color = Color(1, 1, 1, 1)
+	glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var glyph_material := ShaderMaterial.new()
+	glyph_material.shader = MATCH_STAT_ICON_SHADER
+	glyph_material.set_shader_parameter("shape", shape)
+	glyph.material = glyph_material
+	badge.add_child(glyph)
+
+	# `.match-stat-count` - 0.72rem / 600, white. It stays white on a completed card:
+	# the CSS `.grayscale-card` text rule covers the sponsor, reward and details only.
+	var label := Label.new()
+	label.text = _format_player_count(count)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 4)
+	label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	_apply_font(label, FONT_UI)
+	stat.add_child(label)
+	return stat
 
 
 func _on_match_card_input(event: InputEvent, match_id: String) -> void:
@@ -2180,6 +2261,43 @@ func _format_countdown(remaining_seconds: float) -> String:
 	return "%d:%02d" % [minutes, seconds]
 
 
+# --- Match card counts (placeholders) ----------------------------------------
+# Ported from Dashboard.tsx. See DUMMY_PLAYER_COUNTS for why the seed is match_id.
+
+
+func _match_hash_seed(seed: String, salt: int) -> int:
+	# `hash * 31 + charCode` masked back to 32 bits, standing in for the TSX
+	# helper's `>>> 0` (GDScript ints are 64-bit, so the mask does that job).
+	var h := salt & 0xFFFFFFFF
+	for i in seed.length():
+		h = (h * 31 + seed.unicode_at(i)) & 0xFFFFFFFF
+	return h
+
+
+func _dummy_player_count(match: Dictionary) -> int:
+	var seed := str(match.get("match_id", ""))
+	return int(DUMMY_PLAYER_COUNTS[_match_hash_seed(seed, 0) % DUMMY_PLAYER_COUNTS.size()])
+
+
+func _dummy_heart_count(match: Dictionary) -> int:
+	var seed := str(match.get("match_id", ""))
+	return int(DUMMY_HEART_COUNTS[_match_hash_seed(seed, 7) % DUMMY_HEART_COUNTS.size()])
+
+
+func _format_player_count(count: int) -> String:
+	# formatPlayerCount(): under 1000 verbatim, one decimal up to 10k (dropping a
+	# trailing .0), whole thousands above that.
+	if count < 1000:
+		return str(count)
+	var thousands := float(count) / 1000.0
+	if thousands >= 10.0:
+		return "%dk" % int(round(thousands))
+	var tenths := round(thousands * 10.0) / 10.0
+	if is_equal_approx(tenths, round(tenths)):
+		return "%dk" % int(round(tenths))
+	return "%sk" % tenths
+
+
 func _set_tab_active(button: Button, active: bool) -> void:
 	if button == null:
 		return
@@ -2260,9 +2378,24 @@ func _prize_style() -> StyleBoxFlat:
 	return style
 
 
+func _match_stat_badge_style() -> StyleBoxFlat:
+	# `.match-icon-badge`: a 22px black circle (`border-radius: 100%`) behind the
+	# white glyph. 7.7 layout units across, so a 4px radius rounds it.
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 1)
+	style.set_corner_radius_all(4)
+	style.content_margin_left = 0.0
+	style.content_margin_top = 0.0
+	style.content_margin_right = 0.0
+	style.content_margin_bottom = 0.0
+	return style
+
+
 func _match_card_style(selected: bool) -> StyleBoxFlat:
-	# .match-card draws no box of its own - the artwork is the card - so this only
-	# carries the selected card's purple glow. The scale and skew live in the
+	# .match-card draws no box of its own - the artwork is the card, and the white
+	# frame `.match-card` now carries is drawn by the match-card shader (it has to
+	# sit over the art, and it has to dissolve with it). So this only carries the
+	# selected card's purple glow. The scale and skew live in the
 	# match-card shader, not here. The glow therefore has to be inset to the
 	# visible 90% card (5% a side) and sheared to match, or it wraps the full
 	# layout slot and reads as a rectangle around a smaller, slanted card.
