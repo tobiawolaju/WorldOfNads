@@ -893,13 +893,16 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   min-height: 220px;
   max-height: 220px;
   border-radius: 10px;
-  /* Halftone edge. The card used to be closed by a hard 6px white border; now the
-     edge belongs to the card itself. --dot-pitch is the grid spacing, --dot-ink the
-     dot radius, and --edge-ramp how far the dissolve reaches in from the rim. */
+  /* Halftone edge. --dot-pitch is the grid spacing, --dot-ink the dot radius, and
+     --edge-ramp how far the dissolve reaches in from the rim. The dissolve thins the
+     card's own rim, so the frame below lives on the card and reads through it: solid
+     along every edge, softer where the corners dissolve. */
   --dot-pitch: 5px;
   --dot-ink: 1.6px;
   --edge-ramp: 84%;
-  border: none;
+  /* Theme frame: purple on the white light-mode page, white on the purple (dark)
+     page - see the dark-mode override at the end of this file. */
+  border: 2px solid var(--primary);
   position: relative;
   overflow: hidden;
   /* Dissolves the old hard rectangle. Kept deliberately shallow so the artwork stays
@@ -995,12 +998,7 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   line-height: 1;
   color: #ffffff;
   /* Material Symbols Rounded is loaded with FILL as a range in index.html, so the
-     FILL axis is live here. Pin every axis so the outlined default is explicit. */
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
-
-/* Filled variant (the heart). */
-.match-icon-badge .material-symbols-rounded.is-filled {
+     FILL axis is live here. Both badges (heart, people) use the filled variants. */
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
@@ -1035,12 +1033,11 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
 
 .match-card.selected {
   transform: perspective(600px) rotateY(-6deg) translateY(4px) skewX(-5deg);
-  /* Dropped the old 4px #1a1a1a ring and the 6px white inset ring. The halftone edge
-     is the only frame now, so selected reads as a soft lift plus the purple glow. */
+  /* The old 4px #1a1a1a ring and the 6px white inset ring are gone. The card keeps
+     its theme frame, and selected reads as a soft lift plus the purple glow. */
   box-shadow:
     0 18px 44px rgba(0, 0, 0, 0.45),
     0 0 60px rgba(160, 0, 255, 0.4);
-  border: none;
   opacity: 1;
 }
 
@@ -1502,5 +1499,10 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   .store-card-info p {
     color: #ffffff;
     text-shadow: none;
+  }
+
+  /* Match cards sit on the purple dark background, so their frame flips to white. */
+  .match-card {
+    border-color: #ffffff;
   }
 }

@@ -980,7 +980,7 @@ export default function Dashboard() {
                     <div className="match-card-stats">
                       <span className="match-stat">
                         <span className="match-icon-badge">
-                          <span className="material-symbols-rounded is-filled">favorite</span>
+                          <span className="material-symbols-rounded">favorite</span>
                         </span>
                         <span className="match-stat-count">{formatPlayerCount(dummyHeartCount(match))}</span>
                       </span>
