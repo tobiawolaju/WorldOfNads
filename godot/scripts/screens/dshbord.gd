@@ -2286,15 +2286,16 @@ func _dummy_heart_count(match: Dictionary) -> int:
 
 func _format_player_count(count: int) -> String:
 	# formatPlayerCount(): under 1000 verbatim, one decimal up to 10k (dropping a
-	# trailing .0), whole thousands above that.
+	# trailing .0), whole thousands above that. `roundf` (not the Variant-returning
+	# `round`) so both `:=` declarations keep a static type.
 	if count < 1000:
 		return str(count)
 	var thousands := float(count) / 1000.0
 	if thousands >= 10.0:
-		return "%dk" % int(round(thousands))
-	var tenths := round(thousands * 10.0) / 10.0
-	if is_equal_approx(tenths, round(tenths)):
-		return "%dk" % int(round(tenths))
+		return "%dk" % int(roundf(thousands))
+	var tenths := roundf(thousands * 10.0) / 10.0
+	if is_equal_approx(tenths, roundf(tenths)):
+		return "%dk" % int(roundf(tenths))
 	return "%sk" % tenths
 
 
