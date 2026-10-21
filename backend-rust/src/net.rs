@@ -4,7 +4,7 @@
 
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicI64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicUsize, Ordering};
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use std::time::Duration;
@@ -21,6 +21,7 @@ use serde_json::{json, Value};
 use tokio::sync::{mpsc, Mutex};
 
 use crate::config::*;
+use crate::logs;
 use crate::auth::verify_session_token;
 use crate::protocol::*;
 use crate::registry::{MatchConfig, MatchLookup, MatchRegistry};
@@ -50,13 +51,52 @@ fn frame_len(msg: &Message) -> usize {
 /// guarantee, with the same "skip the frame, keep the session" semantics.
 #[derive(Clone)]
 struct ClientTx {
+    /// State frames (text/binary). These are budgeted.
     tx: mpsc::UnboundedSender<Message>,
+    /// Control frames (ping/pong/close). These travel on their own channel so they
+    /// never wait behind a backlog of state deltas: the round-end close has to
+    /// reach the client even while the socket is busy carrying game state.
+    ctrl: mpsc::UnboundedSender<Message>,
     queued: Arc<AtomicUsize>,
+    /// What the writer task is doing right now (see `/debug/rooms`).
+    stats: Arc<WriterStats>,
+}
+
+/// What a client's writer task is doing, for the diagnostics endpoint.
+///
+/// The interesting distinction is "the close was never queued" versus "the close
+/// was queued but the writer never got to it": `frames_sent`/`closes_written`
+/// say whether anything was written after the round ended, and `write_in_flight`
+/// plus `write_started_ms` say whether the writer was stuck inside a write.
+#[derive(Default)]
+struct WriterStats {
+    /// Frames successfully handed to the socket.
+    frames_sent: AtomicU64,
+    /// Bytes successfully handed to the socket.
+    bytes_sent: AtomicU64,
+    /// Control frames successfully handed to the socket (pings, pongs, closes).
+    control_sent: AtomicU64,
+    /// Set while the writer is inside a socket write.
+    write_in_flight: AtomicBool,
+    /// When the in-flight write started (0 when idle).
+    write_started_ms: AtomicI64,
+    /// When the last frame was handed to the socket.
+    last_sent_ms: AtomicI64,
 }
 
 impl ClientTx {
-    fn new(tx: mpsc::UnboundedSender<Message>, queued: Arc<AtomicUsize>) -> Self {
-        Self { tx, queued }
+    fn new(
+        tx: mpsc::UnboundedSender<Message>,
+        ctrl: mpsc::UnboundedSender<Message>,
+        queued: Arc<AtomicUsize>,
+        stats: Arc<WriterStats>,
+    ) -> Self {
+        Self {
+            tx,
+            ctrl,
+            queued,
+            stats,
+        }
     }
 
     /// Reserve `len` bytes of the budget, or report that the client is backed up.
@@ -86,7 +126,13 @@ impl ClientTx {
         if bulk && !self.reserve(len) {
             return false;
         }
-        if self.tx.send(msg).is_err() {
+        // Control frames take the priority channel, state frames the data channel.
+        let sent = if bulk {
+            self.tx.send(msg)
+        } else {
+            self.ctrl.send(msg)
+        };
+        if sent.is_err() {
             if bulk {
                 self.queued.fetch_sub(len, Ordering::Relaxed);
             }
@@ -96,7 +142,7 @@ impl ClientTx {
     }
 
     fn is_closed(&self) -> bool {
-        self.tx.is_closed()
+        self.tx.is_closed() || self.ctrl.is_closed()
     }
 
     /// Bytes handed to the writer task that have not been flushed yet.
@@ -109,7 +155,18 @@ impl ClientTx {
     }
 }
 
+/// Which queue a frame came from. Used by the writer to give control frames
+/// priority over the state backlog.
+enum Picked {
+    Ctrl(Option<Message>),
+    Data(Option<Message>),
+}
+
 /// Drain a client's queue into its socket, returning budget as frames flush out.
+///
+/// Control frames (ping/pong/close) are read from a separate channel and always
+/// win: a close queued at the end of a round must not sit behind a backlog of
+/// state deltas, and a keepalive must not either.
 ///
 /// The counters are diagnostics only (see `/debug/rooms`): `drain_exits` counts the
 /// writer tasks that stopped, `drain_write_errors` the ones that failed to hand a
@@ -119,24 +176,80 @@ impl ClientTx {
 async fn drain(
     mut sender: SplitSink<WebSocket, Message>,
     mut rx: mpsc::UnboundedReceiver<Message>,
+    mut ctrl_rx: mpsc::UnboundedReceiver<Message>,
     queued: Arc<AtomicUsize>,
+    stats: Arc<WriterStats>,
+    label: String,
     drain_exits: Arc<AtomicU64>,
     drain_write_errors: Arc<AtomicU64>,
 ) {
-    while let Some(msg) = rx.recv().await {
+    // Control frames (ping/pong/close) travel on their own channel so a close
+    // queued at the end of a round never waits behind a backlog of state deltas.
+    let mut ctrl_open = true;
+    loop {
+        let msg = if ctrl_open {
+            let picked = tokio::select! {
+                // `biased` so a queued close or keepalive is never overtaken by state.
+                biased;
+                ctrl = ctrl_rx.recv() => Picked::Ctrl(ctrl),
+                msg = rx.recv() => Picked::Data(msg),
+            };
+            match picked {
+                Picked::Ctrl(Some(msg)) => Some(msg),
+                // The control channel is closed, so the client is gone: fall back
+                // to the data channel and stop watching the control one.
+                Picked::Ctrl(None) => {
+                    ctrl_open = false;
+                    continue;
+                }
+                Picked::Data(msg) => msg,
+            }
+        } else {
+            rx.recv().await
+        };
+        let Some(msg) = msg else { break };
         let bulk = is_bulk(&msg);
         let len = frame_len(&msg);
+        let closing = match &msg {
+            Message::Close(_) => true,
+            _ => false,
+        };
+        stats.write_in_flight.store(true, Ordering::Relaxed);
+        stats.write_started_ms.store(now_ms(), Ordering::Relaxed);
         if sender.send(msg).await.is_err() {
             // The socket is gone; the connection is being torn down, so the budget
             // for whatever is still queued no longer matters.
             drain_write_errors.fetch_add(1, Ordering::Relaxed);
+            logs::push(format!("writer {}: write failed, dropping connection", label));
             break;
         }
+        stats.write_in_flight.store(false, Ordering::Relaxed);
+        stats.last_sent_ms.store(now_ms(), Ordering::Relaxed);
+        stats.frames_sent.fetch_add(1, Ordering::Relaxed);
+        stats.bytes_sent.fetch_add(len as u64, Ordering::Relaxed);
         if bulk {
             queued.fetch_sub(len, Ordering::Relaxed);
+        } else {
+            stats.control_sent.fetch_add(1, Ordering::Relaxed);
+        }
+        if closing {
+            // The close frame is out; tungstenite refuses anything after it, so
+            // stop here instead of burning the remaining backlog on write errors.
+            logs::push(format!("writer {}: close frame written", label));
+            break;
         }
     }
+    stats.write_in_flight.store(false, Ordering::Relaxed);
+    // Nothing more will be written on this socket, so the backlog no longer
+    // counts against the budget.
+    queued.store(0, Ordering::Relaxed);
     drain_exits.fetch_add(1, Ordering::Relaxed);
+    logs::push(format!(
+        "writer {}: exited after {} frames ({} control)",
+        label,
+        stats.frames_sent.load(Ordering::Relaxed),
+        stats.control_sent.load(Ordering::Relaxed)
+    ));
 }
 
 /// One shardable arena: its own simulation, its own clients, its own `/events` feed.
@@ -164,6 +277,10 @@ pub struct RoomHandle {
     pub drain_exits: Arc<AtomicU64>,
     /// How many writer tasks failed to hand a frame to the socket.
     pub drain_write_errors: Arc<AtomicU64>,
+    /// The writer tasks of the clients that connected to this room, newest last.
+    /// Kept after the client map is cleared so a round's close can still be
+    /// inspected afterwards.
+    pub writers: Mutex<Vec<(String, Arc<WriterStats>)>>,
 }
 
 impl RoomHandle {
@@ -186,6 +303,20 @@ impl RoomHandle {
             close_all_queued: Arc::new(AtomicU64::new(0)),
             drain_exits: Arc::new(AtomicU64::new(0)),
             drain_write_errors: Arc::new(AtomicU64::new(0)),
+            writers: Mutex::new(Vec::new()),
+        }
+    }
+
+    /// Remember a client's writer task so it can still be inspected after the
+    /// client map is cleared (which is what the round-end close does).
+    fn remember_writer(&self, player_id: &str, stats: &Arc<WriterStats>) {
+        let mut writers = self.writers.try_lock();
+        if let Ok(mut writers) = writers {
+            // Keep the history short: only the most recent writers matter.
+            if writers.len() >= 16 {
+                writers.remove(0);
+            }
+            writers.push((player_id.to_string(), stats.clone()));
         }
     }
 }
@@ -328,6 +459,7 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/events", get(ws_events))
         .route("/health", get(health))
         .route("/debug/rooms", get(debug_rooms))
+        .route("/debug/logs", get(debug_logs))
         .fallback(get(ws_game))
         .with_state(state)
 }
@@ -388,10 +520,34 @@ async fn debug_rooms(State(state): State<Arc<AppState>>) -> String {
                         "id": id,
                         "writer_alive": !tx.is_closed(),
                         "queued_bytes": tx.queued_bytes(),
+                        "frames_sent": tx.stats.frames_sent.load(Ordering::Relaxed),
+                        "control_sent": tx.stats.control_sent.load(Ordering::Relaxed),
+                        "write_in_flight": tx.stats.write_in_flight.load(Ordering::Relaxed),
                     })
                 })
                 .collect();
             json!({ "count": clients.len(), "clients": list })
+        };
+        // The writer tasks of every client that connected to this room, including
+        // the ones whose map entry was removed by the round-end close.
+        let writer_view = {
+            let writers = handle.writers.lock().await;
+            let now = now_ms();
+            let list: Vec<Value> = writers
+                .iter()
+                .map(|(id, stats)| {
+                    json!({
+                        "id": id,
+                        "frames_sent": stats.frames_sent.load(Ordering::Relaxed),
+                        "bytes_sent": stats.bytes_sent.load(Ordering::Relaxed),
+                        "control_sent": stats.control_sent.load(Ordering::Relaxed),
+                        "write_in_flight": stats.write_in_flight.load(Ordering::Relaxed),
+                        "write_started_ms": stats.write_started_ms.load(Ordering::Relaxed),
+                        "idle_ms": now - stats.last_sent_ms.load(Ordering::Relaxed),
+                    })
+                })
+                .collect();
+            json!({ "writers": list })
         };
 
         let mut view = json!({
@@ -404,9 +560,17 @@ async fn debug_rooms(State(state): State<Arc<AppState>>) -> String {
         });
         merge(&mut view, &room_view);
         merge(&mut view, &client_view);
+        merge(&mut view, &writer_view);
         rooms_out.push(view);
     }
     json!({ "rooms": rooms_out }).to_string()
+}
+
+/// The server's own short log of recent events (connects, round ends, writer
+/// failures, disconnects). Render does not expose the container logs through an
+/// API, so this is the only way to see the timeline of a live instance.
+async fn debug_logs() -> String {
+    json!({ "lines": logs::snapshot() }).to_string()
 }
 
 /// Merge a JSON object into another one (shallow, string keys).
@@ -646,8 +810,10 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
     }
 
     let (raw_tx, rx) = mpsc::unbounded_channel::<Message>();
+    let (ctrl_tx, ctrl_rx) = mpsc::unbounded_channel::<Message>();
     let queued = Arc::new(AtomicUsize::new(0));
-    let tx = ClientTx::new(raw_tx, queued.clone());
+    let writer_stats = Arc::new(WriterStats::default());
+    let tx = ClientTx::new(raw_tx, ctrl_tx, queued.clone(), writer_stats.clone());
 
     let (connect_bytes, display_name, display_skin) = {
         let mut room = handle.room.lock().await;
@@ -667,8 +833,13 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
         let mut clients = handle.clients.lock().await;
         clients.insert(player_id.clone(), tx.clone());
     }
+    handle.remember_writer(&player_id, &writer_stats);
     handle.last_active_ms.store(now_ms(), Ordering::Relaxed);
 
+    logs::push(format!(
+        "client connected: {} name={} room={}",
+        player_id, display_name, handle.name
+    ));
     tracing::info!(
         "player {}: {} ({}) skin={} room={}{}",
         if resumed { "resumed" } else { "connected" },
@@ -683,7 +854,10 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
     let writer = tokio::spawn(drain(
         sender,
         rx,
+        ctrl_rx,
         queued,
+        writer_stats,
+        player_id.clone(),
         handle.drain_exits.clone(),
         handle.drain_write_errors.clone(),
     ));
@@ -739,14 +913,17 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
                     // close `ws.terminate()` performs; the cleanup after the loop still
                     // runs, so the player is removed and everyone is told.
                     tracing::info!("no pong from {}; terminating stale socket", player_id);
+                    logs::push(format!("heartbeat: no pong from {}; terminating", player_id));
                     break;
                 }
                 alive = false;
                 tx.send(Message::Ping(Vec::new()));
+                logs::push(format!("heartbeat: ping sent to {}", player_id));
             }
         }
     }
 
+    logs::push(format!("client {}: read loop ended", player_id));
     writer.abort();
 
     {
@@ -770,8 +947,10 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
             broadcast_bytes(&handle, &payload).await;
         }
         tracing::info!("player disconnected: {} (room {})", player_id, handle.name);
+        logs::push(format!("client disconnected: {}", player_id));
     } else {
         tracing::info!("player disconnected, holding for resume: {} (room {})", player_id, handle.name);
+        logs::push(format!("client disconnected (held for resume): {}", player_id));
     }
     handle.last_active_ms.store(now_ms(), Ordering::Relaxed);
 }
@@ -793,6 +972,7 @@ async fn handle_client_message(handle: &RoomHandle, player_id: &str, conn_id: u6
     match msg_type.as_str() {
         "update_state" => room.apply_update_state(player_id, &data),
         "pickup_request" => {
+            logs::push(format!("client {}: pickup_request", player_id));
             if let Some(item_id) = data.get("item_id").and_then(|v| v.as_str()) {
                 room.pickup_request(player_id, item_id, now_ms());
             }
@@ -803,6 +983,7 @@ async fn handle_client_message(handle: &RoomHandle, player_id: &str, conn_id: u6
             }
         }
         "drop_request" => {
+            logs::push(format!("client {}: drop_request", player_id));
             if let Some(item_id) = data.get("item_id").and_then(|v| v.as_str()) {
                 room.drop_request(player_id, item_id, now_ms());
             }
@@ -816,6 +997,7 @@ async fn handle_client_message(handle: &RoomHandle, player_id: &str, conn_id: u6
                 .chars()
                 .take(40)
                 .collect();
+            logs::push(format!("client {}: client_event {}", player_id, event_type));
             let message =
                 sanitize_message(data.get("message").and_then(|v| v.as_str()).unwrap_or(""));
             if !message.is_empty() {
@@ -842,8 +1024,10 @@ async fn handle_events(socket: WebSocket, state: Arc<AppState>, room_id: String)
     };
 
     let (raw_tx, rx) = mpsc::unbounded_channel::<Message>();
+    let (ctrl_tx, ctrl_rx) = mpsc::unbounded_channel::<Message>();
     let queued = Arc::new(AtomicUsize::new(0));
-    let tx = ClientTx::new(raw_tx, queued.clone());
+    let writer_stats = Arc::new(WriterStats::default());
+    let tx = ClientTx::new(raw_tx, ctrl_tx, queued.clone(), writer_stats.clone());
 
     let snapshot = {
         let room = handle.room.lock().await;
@@ -860,7 +1044,10 @@ async fn handle_events(socket: WebSocket, state: Arc<AppState>, room_id: String)
     let writer = tokio::spawn(drain(
         sender,
         rx,
+        ctrl_rx,
         queued,
+        writer_stats,
+        format!("events-{}", room_id),
         handle.drain_exits.clone(),
         handle.drain_write_errors.clone(),
     ));
@@ -929,6 +1116,11 @@ async fn close_all(handle: &RoomHandle) {
     }
     handle.close_all_queued.store(queued, Ordering::Relaxed);
     clients.clear();
+    logs::push(format!(
+        "close_all: {} clients connected, {} closes queued",
+        handle.close_all_clients.load(Ordering::Relaxed),
+        queued
+    ));
 }
 
 /// Drive one room's simulation loop. Each room gets its own task (and its own fixed-rate
@@ -952,6 +1144,7 @@ pub async fn run_room_tick(state: Arc<AppState>, handle: Arc<RoomHandle>) {
         }
         if output.close_all {
             tracing::info!("room {}: round finished: closing all clients", handle.name);
+            logs::push(format!("room {}: round finished, closing all clients", handle.name));
             close_all(&handle).await;
         }
 
