@@ -385,14 +385,16 @@ impl Room {
             if !matches_holder {
                 continue;
             }
-            if let Some(item) = self.item_mut(&id) {
-                // Chicken holder dies/disconnects -> reset their accumulated possession.
-                if id == "Chicken" {
-                    if let Some(holder) = self.players.get_mut(holder_id) {
-                        holder.accumulated_possession = 0.0;
-                        holder.is_current_holder = false;
-                    }
+            // Chicken holder dies/disconnects -> reset their accumulated possession.
+            // (Players and items are separate fields, but the item borrow must end
+            // before touching players, so do the player reset first.)
+            if id == "Chicken" {
+                if let Some(holder) = self.players.get_mut(holder_id) {
+                    holder.accumulated_possession = 0.0;
+                    holder.is_current_holder = false;
                 }
+            }
+            if let Some(item) = self.item_mut(&id) {
                 item.is_held = false;
                 item.holder_id = None;
                 if holder_exists {
@@ -538,7 +540,7 @@ impl Room {
     pub fn pickup_request(&mut self, id: &str, item_id: &str) {
         let id = id.to_string();
         // First, get the item and check if it's already held by this player.
-        let (prev_holder_id, already_held_by_this_player) = {
+        let prev_holder_id = {
             let item = match self.item_mut(item_id) {
                 Some(item) => item,
                 None => return,
@@ -546,7 +548,7 @@ impl Room {
             if item.is_held && item.holder_id.as_deref() == Some(id.as_str()) {
                 return;
             }
-            (item.holder_id.clone(), false)
+            item.holder_id.clone()
         };
 
         // Handle chicken holder transfer - update previous holder.
@@ -854,7 +856,7 @@ impl Room {
         self.reset_round_for_next_batch(now);
     }
 
-    fn finish_round(&mut self, _now: i64) {
+    fn finish_round(&mut self, now: i64) {
         // Buzzer resolution: global timer expired.
         let (holder_id, holder_name, holder_possession) = if self.chicken.is_held {
             if let Some(holder) = self
@@ -916,7 +918,9 @@ impl Room {
                 };
                 // Winner for event purposes is the holder (they have the chicken).
                 // But we record the split in meta for the client.
-                (Some(h_id), holder_name, json!({
+                // Build meta first: json! only borrows its operands, so the moves
+                // below are safe.
+                let split_meta = json!({
                     "split": true,
                     "holderId": h_id,
                     "holderName": holder_name,
@@ -926,7 +930,8 @@ impl Room {
                     "progressName": best_name,
                     "progressTime": progress_time,
                     "progressShare": progress_share,
-                }))
+                });
+                (Some(h_id), holder_name, split_meta)
             }
             (Some(h_id), None) => {
                 // Holder exists but no other eligible player with possession.
