@@ -64,8 +64,9 @@ const STEAL_RADIUS = 2.0;
 const MAX_THROW_IMPULSE = 8.0;
 const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 1.195;
-const MATCH_DURATION_SECONDS = 180.0;
+const MATCH_DURATION_SECONDS = 300.0;
 const DEFAULT_MIN_PLAYERS_TO_START = 2;
+const VICTORY_POSSESSION_SECONDS = 60.0;
 const ANIM_NAME_TO_ID = Object.freeze({
   idle: 0,
   running: 1,
@@ -1287,6 +1288,11 @@ function dropHeldItemsAtPlayer(itemHolderId) {
   }
   for (const item of items) {
     if (item.holderId !== itemHolderId) continue;
+    // Chicken holder disconnects -> reset their accumulated possession.
+    if (item.id === 'Chicken' && playerRewards[itemHolderId]) {
+      playerRewards[itemHolderId].accumulatedPossession = 0;
+      playerRewards[itemHolderId].isCurrentHolder = false;
+    }
     item.isHeld = false;
     item.holderId = null;
     if (holder) {
@@ -1597,6 +1603,16 @@ function runRewardTick() {
       if (proximity >= 0.999) reward.chickenHoldTime += 1;
     }
 
+    // NEW: Only the current chicken holder accumulates possession time.
+    if (reward.isCurrentHolder) {
+      reward.accumulatedPossession += FIXED_DT;
+      // Instant victory check: first to 60 seconds wins.
+      if (reward.accumulatedPossession >= VICTORY_POSSESSION_SECONDS) {
+        finishRoundWithInstantVictory(pid);
+        return;
+      }
+    }
+
     // MON: only the lootbox holder earns, streamed from the match's MON pool.
     if (lootbox.isHeld && lootbox.holderId === pid) {
       reward.accumulatedMON += MON_PER_SEC;
@@ -1614,7 +1630,9 @@ function runRewardTick() {
       xp: Math.floor(reward.accumulatedXP),
       mon: parseFloat(reward.accumulatedMON.toFixed(6)),
       pool: parseFloat(poolTotal.toFixed(6)),
-      holdTime: reward.chickenHoldTime
+      holdTime: reward.chickenHoldTime,
+      possessionTime: Math.floor(reward.accumulatedPossession),
+      victoryTarget: VICTORY_POSSESSION_SECONDS
     }));
   }
 }
@@ -1741,7 +1759,7 @@ gameWss.on('connection', (ws, req) => {
       lastUpdateAt: Date.now()
     };
     updatePlayerCellIndex(playerId, players[playerId]);
-    playerRewards[playerId] = { accumulatedXP: 0, accumulatedMON: 0, chickenHoldTime: 0 };
+    playerRewards[playerId] = { accumulatedXP: 0, accumulatedMON: 0, chickenHoldTime: 0, accumulatedPossession: 0, isCurrentHolder: false };
 
     console.log(`🎮 Player connected: ${playerId} (${username}) skin=${resolvedSkin} xp=${xp}`);
     ws.playerId = playerId;
@@ -1770,7 +1788,7 @@ gameWss.on('connection', (ws, req) => {
       lastUpdateAt: Date.now()
     };
     updatePlayerCellIndex(playerId, players[playerId]);
-    playerRewards[playerId] = { accumulatedXP: 0, accumulatedMON: 0, chickenHoldTime: 0 };
+    playerRewards[playerId] = { accumulatedXP: 0, accumulatedMON: 0, chickenHoldTime: 0, accumulatedPossession: 0, isCurrentHolder: false };
     ws.playerId = playerId;
     ws.send(mpEncode({ type: 'connect', id: playerId, username, skin: resolvedSkin, xp: 0 }));
   });
@@ -1794,6 +1812,19 @@ gameWss.on('connection', (ws, req) => {
         const cleanMessage = sanitizeMessage(data.message);
         if (cleanMessage !== '') {
           publishEvent(eventType, cleanMessage, playerId, sanitizeMeta(data.meta));
+        }
+        // Handle player elimination (death/respawn) -> reset possession time.
+        if (eventType === 'eliminated') {
+          if (playerRewards[playerId]) {
+            playerRewards[playerId].accumulatedPossession = 0;
+            if (playerRewards[playerId].isCurrentHolder) {
+              playerRewards[playerId].isCurrentHolder = false;
+              if (chicken.isHeld && chicken.holderId === playerId) {
+                chicken.isHeld = false;
+                chicken.holderId = null;
+              }
+            }
+          }
         }
       }
 
@@ -1863,6 +1894,15 @@ gameWss.on('connection', (ws, req) => {
           return;
         }
         const previousHolder = item.holderId;
+        // Chicken holder transfer: stop previous, start new.
+        if (itemId === 'Chicken') {
+          if (previousHolder && playerRewards[previousHolder]) {
+            playerRewards[previousHolder].isCurrentHolder = false;
+          }
+          if (playerRewards[playerId]) {
+            playerRewards[playerId].isCurrentHolder = true;
+          }
+        }
         item.isHeld = true;
         item.holderId = playerId;
         const emoji = itemEmoji(itemId);
@@ -1895,6 +1935,10 @@ gameWss.on('connection', (ws, req) => {
         const item = resolveItemById(itemId);
         if (!item || !item.isHeld || item.holderId !== playerId) {
           return;
+        }
+        // Chicken holder drop.
+        if (itemId === 'Chicken' && playerRewards[playerId]) {
+          playerRewards[playerId].isCurrentHolder = false;
         }
         item.isHeld = false;
         item.holderId = null;
@@ -2082,36 +2126,164 @@ setInterval(() => {
     }
 
 
-    if (matchTimeLeft <= 0) {
-      const winner = resolveRoundWinner();
+    // NEW: Instant victory when a player reaches 60s possession.
+function finishRoundWithInstantVictory(victorId) {
+  const victor = players[victorId];
+  const victorName = victor ? victor.username || `player-${victorId.slice(0, 8)}` : 'Unknown';
 
-      // Surface what each player banked this round (still off-chain — the mint /
-      // stream step lands in the next "on-chain" pass).
-      const rewardSummary = Object.entries(playerRewards)
-        .filter(([, r]) => r.accumulatedXP > 0 || r.accumulatedMON > 0)
-        .map(([pid, r]) => `${players[pid]?.username || pid}: ${Math.floor(r.accumulatedXP)} XP, ${r.accumulatedMON.toFixed(4)} MON`)
-        .join(' | ');
-      console.log(`[Rewards] Round totals: ${rewardSummary || 'none'}`);
+  publishEvent('match_winner', `${victorName} reached 60s possession and wins!`, victorId, {
+    winnerId: victorId,
+    winnerName: victorName,
+    secondId: '',
+    secondName: '',
+    victoryType: 'instant', // 60s possession reached
+  });
+  resetRoundForNextBatch();
+}
 
-      if (winner.winnerId) {
-        const secondPart = winner.secondId ? `, ${winner.secondName} came 2nd` : '';
-        publishEvent('match_winner', `${winner.winnerName} won the round${secondPart}`, winner.winnerId, {
-          winnerId: winner.winnerId,
-          winnerName: winner.winnerName,
-          secondId: winner.secondId || '',
-          secondName: winner.secondName || ''
-        });
-      } else {
-        const secondPart = winner.secondId ? `, ${winner.secondName} came 2nd` : '';
-        publishEvent('match_winner', `No winner this round${secondPart}`, '', {
-          winnerId: null,
-          winnerName: 'No one',
-          secondId: winner.secondId || '',
-          secondName: winner.secondName || ''
-        });
+// NEW: Buzzer resolution when global timer expires.
+function resolveBuzzerWinner() {
+  // Current chicken holder.
+  let holderId = null;
+  let holderName = 'No one';
+  let holderPossession = 0;
+  if (chicken.isHeld && chicken.holderId && players[chicken.holderId]) {
+    holderId = chicken.holderId;
+    holderName = players[holderId].username || `player-${holderId.slice(0, 8)}`;
+    holderPossession = Math.floor(playerRewards[holderId]?.accumulatedPossession || 0);
+  }
+
+  // Find eligible player with highest accumulated possession.
+  let bestId = null;
+  let bestName = 'No one';
+  let bestPossession = 0;
+  for (const pid of Object.keys(players)) {
+    const player = players[pid];
+    const reward = playerRewards[pid];
+    if (!player || !reward) continue;
+    // In a full implementation, we'd check if player is eliminated.
+    // For now, all connected players are eligible.
+    const possession = Math.floor(reward.accumulatedPossession || 0);
+    if (possession > bestPossession) {
+      bestPossession = possession;
+      bestId = pid;
+      bestName = player.username || `player-${pid.slice(0, 8)}`;
+    } else if (possession === bestPossession && possession > 0) {
+      // Deterministic tie-break: lower player id wins.
+      if (bestId && pid < bestId) {
+        bestId = pid;
+        bestName = player.username || `player-${pid.slice(0, 8)}`;
       }
-      resetRoundForNextBatch();
     }
+  }
+
+  // Determine winner and split.
+  if (holderId && bestId && holderId === bestId) {
+    // Current holder is also highest-progress player.
+    return {
+      winnerId: holderId,
+      winnerName: holderName,
+      split: false,
+      holderShare: 1.0,
+      progressShare: 0.0,
+      victoryType: 'buzzer'
+    };
+  } else if (holderId && bestId) {
+    // Different players: split reward proportionally.
+    const holderTime = holderPossession;
+    const progressTime = bestPossession;
+    const total = holderTime + progressTime;
+    const holderShare = total > 0 ? holderTime / total : 0.5;
+    const progressShare = total > 0 ? progressTime / total : 0.5;
+    return {
+      winnerId: holderId, // Event winner is the holder (has the chicken).
+      winnerName: holderName,
+      split: true,
+      holderId,
+      holderName,
+      holderTime,
+      holderShare,
+      progressId: bestId,
+      progressName: bestName,
+      progressTime,
+      progressShare,
+      victoryType: 'buzzer'
+    };
+  } else if (holderId) {
+    // Holder exists but no other eligible player with possession.
+    return {
+      winnerId: holderId,
+      winnerName: holderName,
+      split: false,
+      holderShare: 1.0,
+      progressShare: 0.0,
+      victoryType: 'buzzer'
+    };
+  } else if (bestId) {
+    // No current holder; best possession player wins.
+    return {
+      winnerId: bestId,
+      winnerName: bestName,
+      split: false,
+      holderShare: 0.0,
+      progressShare: 1.0,
+      victoryType: 'buzzer'
+    };
+  } else {
+    // No holder, no eligible player with possession.
+    // Deterministic fallback: first player by id.
+    let fallbackId = null;
+    let fallbackName = 'No one';
+    const playerIds = Object.keys(players).sort();
+    for (const pid of playerIds) {
+      if (players[pid]) {
+        fallbackId = pid;
+        fallbackName = players[pid].username || `player-${pid.slice(0, 8)}`;
+        break;
+      }
+    }
+    return {
+      winnerId: fallbackId,
+      winnerName: fallbackName,
+      split: false,
+      holderShare: 0.0,
+      progressShare: 0.0,
+      fallback: true,
+      victoryType: 'buzzer'
+    };
+  }
+}
+
+if (matchTimeLeft <= 0) {
+  // If instant victory already finished the round, don't double-resolve.
+  if (isBatchResetting) {
+    return;
+  }
+
+  const result = resolveBuzzerWinner();
+
+  // Surface what each player banked this round.
+  const rewardSummary = Object.entries(playerRewards)
+    .filter(([, r]) => r.accumulatedXP > 0 || r.accumulatedMON > 0)
+    .map(([pid, r]) => `${players[pid]?.username || pid}: ${Math.floor(r.accumulatedXP)} XP, ${r.accumulatedMON.toFixed(4)} MON`)
+    .join(' | ');
+  console.log(`[Rewards] Round totals: ${rewardSummary || 'none'}`);
+
+  if (result.winnerId) {
+    const meta = { ...result };
+    meta.winnerId = result.winnerId;
+    meta.winnerName = result.winnerName;
+    publishEvent('match_winner', `${result.winnerName} won the match`, result.winnerId, meta);
+  } else {
+    publishEvent('match_winner', 'No winner this match', '', {
+      winnerId: null,
+      winnerName: 'No one',
+      victoryType: 'buzzer',
+      split: false,
+    });
+  }
+  resetRoundForNextBatch();
+}
   } else if (!matchStartedThisRound) {
     matchTimeLeft = MATCH_DURATION_SECONDS;
     if (matchStartCountdown >= 0) {

@@ -217,6 +217,10 @@ pub struct RewardUpdate {
     pub pool: f64,
     #[serde(rename = "holdTime")]
     pub hold_time: i64,
+    #[serde(rename = "possessionTime")]
+    pub possession_time: i64,
+    #[serde(rename = "victoryTarget")]
+    pub victory_target: i64,
 }
 
 // ---------------------------------------------------------------------------

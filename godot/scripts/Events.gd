@@ -39,6 +39,10 @@ var _navigated_to_gameover := false
 @onready var _debug_label: Label
 @onready var _debug2_label: Label
 
+# Possession progress UI (created programmatically).
+var possession_progress_bar: ProgressBar = null
+var possession_label: Label = null
+
 # --- REWARD COUNTER JUICE ---
 # When the XP / MON stream counters tick up we punch the label: a quick scale
 # pop plus a white flash that fades back to the label's normal colour. This
@@ -130,6 +134,88 @@ func update_mon_display(earned_mon: float, pool_remaining: float) -> void:
 		else:
 			prize_pool_label.text = "%d MON pool" % int(pool_remaining)
 
+func update_possession_display(possession_seconds: int, victory_target: int) -> void:
+	# Create possession progress UI if not exists.
+	if possession_progress_bar == null:
+		_create_possession_ui()
+	if possession_progress_bar:
+		possession_progress_bar.max_value = float(victory_target)
+		possession_progress_bar.value = float(possession_seconds)
+		var pct = float(possession_seconds) / float(victory_target) * 100.0 if victory_target > 0 else 0.0
+		if possession_label:
+			possession_label.text = "Chicken: %ds / %ds (%.0f%%)" % [possession_seconds, victory_target, pct]
+		# Visual feedback when close to victory.
+		if possession_seconds >= victory_target - 5 and possession_seconds < victory_target:
+			possession_progress_bar.add_theme_color_override("fill_color", Color(1.0, 0.8, 0.0, 1.0))  # Yellow warning
+		elif possession_seconds >= victory_target:
+			possession_progress_bar.add_theme_color_override("fill_color", Color(0.0, 1.0, 0.5, 1.0))  # Green victory
+		else:
+			possession_progress_bar.add_theme_color_override("fill_color", Color(0.98, 0.8, 0.3, 1.0))  # Normal gold
+
+# --- POSSESSION UI CREATION ---
+func _create_possession_ui() -> void:
+	var canvas = get_node_or_null("CanvasLayer")
+	if canvas == null:
+		return
+	
+	# Container for possession UI at top-center.
+	var container = HBoxContainer.new()
+	container.name = "PossessionUI"
+	container.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	container.offset_left = -150
+	container.offset_top = 10
+	container.offset_right = 150
+	container.offset_bottom = 50
+	container.add_theme_constant_override("separation", 8)
+	canvas.add_child(container)
+	
+	# Label.
+	possession_label = Label.new()
+	possession_label.text = "Chicken: 0s / 60s"
+	possession_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	possession_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	possession_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	possession_label.add_theme_constant_override("outline_size", 2)
+	possession_label.add_theme_font_size_override("font_size", 16)
+	container.add_child(possession_label)
+	
+	# Progress bar.
+	possession_progress_bar = ProgressBar.new()
+	possession_progress_bar.min_value = 0.0
+	possession_progress_bar.max_value = 60.0
+	possession_progress_bar.value = 0.0
+	possession_progress_bar.custom_minimum_size = Vector2(200, 20)
+	possession_progress_bar.theme_override_styles = {
+		"background": StyleBoxFlat.new(),
+		"fill": StyleBoxFlat.new(),
+	}
+	# Style the progress bar.
+	var bg_style = StyleBoxFlat.new()
+	bg_style.bg_color = Color(0, 0, 0, 0.5)
+	bg_style.corner_radius_top_left = 4
+	bg_style.corner_radius_top_right = 4
+	bg_style.corner_radius_bottom_left = 4
+	bg_style.corner_radius_bottom_right = 4
+	var fill_style = StyleBoxFlat.new()
+	fill_style.bg_color = Color(0.98, 0.8, 0.3, 1.0)  # Gold
+	fill_style.corner_radius_top_left = 4
+	fill_style.corner_radius_top_right = 4
+	fill_style.corner_radius_bottom_left = 4
+	fill_style.corner_radius_bottom_right = 4
+	possession_progress_bar.add_theme_stylebox_override("background", bg_style)
+	possession_progress_bar.add_theme_stylebox_override("fill", fill_style)
+	container.add_child(possession_progress_bar)
+	
+	# Target label.
+	var target_label = Label.new()
+	target_label.text = "WIN at 60s"
+	target_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	target_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	target_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	target_label.add_theme_constant_override("outline_size", 1)
+	target_label.add_theme_font_size_override("font_size", 12)
+	container.add_child(target_label)
+
 # --- REWARD COUNTER JUICE HELPERS ---
 
 func _cache_reward_colors() -> void:
@@ -211,6 +297,8 @@ func _handle_match_winner_event(event_data: Dictionary) -> void:
 
 	var winner_id := str(event_data.get("playerId", "")).strip_edges()
 	var winner_name := ""
+	var victory_type := "legacy"
+	var split_info: Dictionary = {}
 
 	if event_data.has("meta") and typeof(event_data["meta"]) == TYPE_DICTIONARY:
 		var meta := event_data["meta"] as Dictionary
@@ -218,11 +306,25 @@ func _handle_match_winner_event(event_data: Dictionary) -> void:
 		if meta_winner_id != "":
 			winner_id = meta_winner_id
 		winner_name = str(meta.get("winnerName", "")).strip_edges()
+		victory_type = str(meta.get("victoryType", "legacy"))
+		# Extract split info for buzzer resolution.
+		if meta.has("split") and meta["split"] == true:
+			split_info["split"] = true
+			split_info["holderId"] = str(meta.get("holderId", ""))
+			split_info["holderName"] = str(meta.get("holderName", ""))
+			split_info["holderTime"] = int(meta.get("holderTime", 0))
+			split_info["holderShare"] = float(meta.get("holderShare", 0.5))
+			split_info["progressId"] = str(meta.get("progressId", ""))
+			split_info["progressName"] = str(meta.get("progressName", ""))
+			split_info["progressTime"] = int(meta.get("progressTime", 0))
+			split_info["progressShare"] = float(meta.get("progressShare", 0.5))
 
 	var did_win := winner_id != "" and winner_id == _local_player_id
 	get_tree().set_meta("match_result_won", did_win)
 	get_tree().set_meta("match_result_winner_id", winner_id)
 	get_tree().set_meta("match_result_winner_name", winner_name)
+	get_tree().set_meta("match_result_victory_type", victory_type)
+	get_tree().set_meta("match_result_split_info", split_info)
 	_navigated_to_gameover = true
 	_show_gameover_overlay()
 

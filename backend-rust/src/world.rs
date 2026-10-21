@@ -33,6 +33,9 @@ pub struct Player {
     pub conn_id: u64,
     pub orphaned_at: Option<i64>,
     pub reward: Reward,
+    // New possession-time tracking (authoritative on server).
+    pub accumulated_possession: f64,     // Total seconds this player has held the chicken.
+    pub is_current_holder: bool,         // Whether this player currently holds the chicken.
 }
 
 #[derive(Clone)]
@@ -201,6 +204,8 @@ impl Room {
                 accumulated_mon: 0.0,
                 chicken_hold_time: 0,
             },
+            accumulated_possession: 0.0,
+            is_current_holder: false,
         };
         self.players.insert(id.to_string(), player);
         self.update_player_cell_index(id);
@@ -380,6 +385,13 @@ impl Room {
                 continue;
             }
             if let Some(item) = self.item_mut(&id) {
+                // Chicken holder dies/disconnects -> reset their accumulated possession.
+                if id == "Chicken" {
+                    if let Some(holder) = self.players.get_mut(holder_id) {
+                        holder.accumulated_possession = 0.0;
+                        holder.is_current_holder = false;
+                    }
+                }
                 item.is_held = false;
                 item.holder_id = None;
                 if holder_exists {
@@ -528,6 +540,19 @@ impl Room {
             if item.is_held && item.holder_id.as_deref() == Some(id.as_str()) {
                 return;
             }
+            // Handle chicken holder transfer.
+            if item_id == "Chicken" {
+                // Stop accumulation for previous holder (if any).
+                if let Some(prev_holder_id) = item.holder_id.clone() {
+                    if let Some(prev) = self.players.get_mut(&prev_holder_id) {
+                        prev.is_current_holder = false;
+                    }
+                }
+                // Start accumulation for new holder.
+                if let Some(new_holder) = self.players.get_mut(&id) {
+                    new_holder.is_current_holder = true;
+                }
+            }
             item.is_held = true;
             item.holder_id = Some(id);
         }
@@ -565,6 +590,12 @@ impl Room {
             return;
         }
         if let Some(item) = self.item_mut(item_id) {
+            // Handle chicken holder drop.
+            if item_id == "Chicken" {
+                if let Some(holder) = self.players.get_mut(id) {
+                    holder.is_current_holder = false;
+                }
+            }
             item.is_held = false;
             item.holder_id = None;
             item.x = px;
@@ -573,6 +604,21 @@ impl Room {
             item.vx = 0.0;
             item.vy = 0.0;
             item.vz = 0.0;
+        }
+    }
+
+    /// Called when a player is eliminated (dies and respawns).
+    /// Resets their accumulated possession time to zero per the new rules.
+    pub fn handle_player_eliminated(&mut self, player_id: &str) {
+        if let Some(player) = self.players.get_mut(player_id) {
+            player.accumulated_possession = 0.0;
+            // If they were holding the chicken, drop it.
+            if player.is_current_holder {
+                player.is_current_holder = false;
+                if self.chicken.is_held && self.chicken.holder_id.as_deref() == Some(player_id) {
+                    self.reset_chicken_state();
+                }
+            }
         }
     }
 
@@ -641,10 +687,13 @@ impl Room {
             self.reward_accumulator += FIXED_DT;
             if self.reward_accumulator >= REWARD_TICK_INTERVAL_SEC {
                 self.reward_accumulator = 0.0;
-                self.run_reward_tick();
+                self.run_reward_tick(now);
             }
 
-            if self.match_time_left <= 0.0 {
+            // Only check global timeout if the match hasn't already ended via instant victory.
+            // The instant victory path calls finish_round_with_instant_victory which sets
+            // pending_close_all = true, so we can check that flag.
+            if self.match_time_left <= 0.0 && !self.pending_close_all {
                 self.finish_round(now);
             }
         } else if !self.match_started_this_round {
@@ -663,7 +712,7 @@ impl Room {
         }
     }
 
-    fn run_reward_tick(&mut self) {
+    fn run_reward_tick(&mut self, now: i64) {
         let (chicken_x, chicken_z) = if self.chicken.is_held {
             match self
                 .chicken
@@ -696,6 +745,15 @@ impl Room {
                         player.reward.chicken_hold_time += 1;
                     }
                 }
+                // NEW: Only the current chicken holder accumulates possession time.
+                if player.is_current_holder {
+                    player.accumulated_possession += FIXED_DT;
+                    // Instant victory check: first to 60 seconds wins.
+                    if player.accumulated_possession >= VICTORY_POSSESSION_SECONDS {
+                        self.finish_round_with_instant_victory(now, &pid);
+                        return;
+                    }
+                }
                 if lootbox_held && lootbox_holder.as_deref() == Some(pid.as_str()) {
                     player.reward.accumulated_mon += MON_PER_SEC;
                 }
@@ -712,6 +770,9 @@ impl Room {
                 mon: round6(reward.accumulated_mon),
                 pool,
                 hold_time: reward.chicken_hold_time,
+                // New fields for possession progress HUD.
+                possession_time: self.players[&pid].accumulated_possession.floor() as i64,
+                victory_target: VICTORY_POSSESSION_SECONDS as i64,
             };
             self.pending_reward_msgs.push((pid, encode(&msg)));
         }
@@ -749,30 +810,160 @@ impl Room {
         (winner_id, winner_name, second_id, second_name)
     }
 
+    /// Called when a player reaches 60s possession time — instant victory.
+    fn finish_round_with_instant_victory(&mut self, now: i64, victor_id: &str) {
+        let victor_name = self
+            .players
+            .get(victor_id)
+            .map(|p| p.username.clone())
+            .unwrap_or_else(|| "Unknown".to_string());
+
+        let meta = json!({
+            "winnerId": victor_id,
+            "winnerName": victor_name,
+            "secondId": Value::Null,
+            "secondName": "",
+            "victoryType": "instant", // 60s possession reached
+        });
+        self.publish_event(
+            "match_winner",
+            &format!("{} reached 60s possession and wins!", victor_name),
+            victor_id,
+            &meta,
+        );
+
+        self.reset_round_for_next_batch(now);
+    }
+
     fn finish_round(&mut self, now: i64) {
-        let (winner_id, winner_name, second_id, second_name) = self.resolve_round_winner();
-        let second_part = if second_name.is_empty() {
-            String::new()
+        // Buzzer resolution: global timer expired.
+        let (holder_id, holder_name, holder_possession) = if self.chicken.is_held {
+            if let Some(holder) = self
+                .chicken
+                .holder_id
+                .as_ref()
+                .and_then(|h| self.players.get(h))
+            {
+                (Some(holder.id.clone()), holder.username.clone(), holder.accumulated_possession)
+            } else {
+                (None, "No one".to_string(), 0.0)
+            }
         } else {
-            format!(", {} came 2nd", second_name)
+            (None, "No one".to_string(), 0.0)
+        };
+
+        // Find eligible player with highest accumulated possession.
+        let mut best_id = None;
+        let mut best_name = "No one".to_string();
+        let mut best_possession = 0.0;
+
+        for player in self.players.values() {
+            if player.orphaned_at.is_some() {
+                continue; // Eliminated players are not eligible.
+            }
+            if player.accumulated_possession > best_possession {
+                best_possession = player.accumulated_possession;
+                best_id = Some(player.id.clone());
+                best_name = player.username.clone();
+            } else if player.accumulated_possession == best_possession && best_possession > 0.0 {
+                // Deterministic tie-break: lower player id wins (stable ordering).
+                if let Some(ref current_best) = best_id {
+                    if player.id < *current_best {
+                        best_id = Some(player.id.clone());
+                        best_name = player.username.clone();
+                    }
+                }
+            }
+        }
+
+        let (winner_id, winner_name, split_meta) = match (holder_id.clone(), best_id.clone()) {
+            (Some(h_id), Some(b_id)) if h_id == b_id => {
+                // Current holder is also the highest-progress player.
+                (Some(h_id), holder_name, json!({
+                    "split": false,
+                    "holderShare": 1.0,
+                    "progressShare": 0.0,
+                }))
+            }
+            (Some(h_id), Some(b_id)) => {
+                // Different players: split reward proportionally to accumulated possession.
+                let holder_time = holder_possession;
+                let progress_time = best_possession;
+                let total = holder_time + progress_time;
+                let (holder_share, progress_share) = if total > 0.0 {
+                    (holder_time / total, progress_time / total)
+                } else {
+                    (0.5, 0.5) // Safe fallback if both zero.
+                };
+                // Winner for event purposes is the holder (they have the chicken).
+                // But we record the split in meta for the client.
+                (Some(h_id), holder_name, json!({
+                    "split": true,
+                    "holderId": h_id,
+                    "holderName": holder_name,
+                    "holderTime": holder_time,
+                    "holderShare": holder_share,
+                    "progressId": b_id,
+                    "progressName": best_name,
+                    "progressTime": progress_time,
+                    "progressShare": progress_share,
+                }))
+            }
+            (Some(h_id), None) => {
+                // Holder exists but no other eligible player with possession.
+                // Holder wins 100%.
+                (Some(h_id), holder_name, json!({
+                    "split": false,
+                    "holderShare": 1.0,
+                    "progressShare": 0.0,
+                }))
+            }
+            (None, Some(b_id)) => {
+                // No current holder; best possession player wins.
+                (Some(b_id), best_name, json!({
+                    "split": false,
+                    "holderShare": 0.0,
+                    "progressShare": 1.0,
+                }))
+            }
+            (None, None) => {
+                // No holder, no eligible player with possession.
+                // Deterministic fallback: first player by id (stable ordering).
+                let mut fallback_id = None;
+                let mut fallback_name = "No one".to_string();
+                let mut player_ids: Vec<String> = self.players.keys().cloned().collect();
+                player_ids.sort();
+                if let Some(id) = player_ids.first() {
+                    if let Some(p) = self.players.get(id) {
+                        if p.orphaned_at.is_none() {
+                            fallback_id = Some(p.id.clone());
+                            fallback_name = p.username.clone();
+                        }
+                    }
+                }
+                (fallback_id, fallback_name, json!({
+                    "split": false,
+                    "holderShare": 0.0,
+                    "progressShare": 0.0,
+                    "fallback": true,
+                }))
+            }
         };
 
         if let Some(ref wid) = winner_id {
-            let message = format!("{} won the round{}", winner_name, second_part);
-            let meta = json!({
-                "winnerId": winner_id,
-                "winnerName": winner_name,
-                "secondId": second_id,
-                "secondName": second_name,
-            });
+            let message = format!("{} won the match", winner_name);
+            let mut meta = split_meta;
+            meta["winnerId"] = json!(wid);
+            meta["winnerName"] = json!(winner_name);
+            meta["victoryType"] = json!("buzzer");
             self.publish_event("match_winner", &message, wid, &meta);
         } else {
-            let message = format!("No winner this round{}", second_part);
-            let meta = json!({
+            let message = "No winner this match".to_string();
+            let mut meta = json!({
                 "winnerId": Value::Null,
                 "winnerName": "No one",
-                "secondId": second_id,
-                "secondName": second_name,
+                "victoryType": "buzzer",
+                "split": false,
             });
             self.publish_event("match_winner", &message, "", &meta);
         }

@@ -12,7 +12,6 @@ const LOSE_COLOR := Color(0.9411765, 0.22352941, 0.45490196, 1.0)
 const LOSE_COLOR_ALT := Color(0.75686276, 0.14509805, 0.36078432, 1.0)
 
 
-
 @onready var color_bg: ColorRect = get_node_or_null("ColorBG") as ColorRect
 @onready var color_bg2: ColorRect = get_node_or_null("ColorBG2") as ColorRect
 @onready var result_panel: VBoxContainer = get_node_or_null("ColorBG/Result") as VBoxContainer
@@ -42,14 +41,21 @@ func _ready() -> void:
 		skip_button.pressed.connect(_force_return_to_lobby)
 
 	var did_win := false
+	var victory_type := "unknown"
+	var split_info: Dictionary = {}
+	
 	if get_tree().has_meta("match_result_won"):
 		did_win = bool(get_tree().get_meta("match_result_won"))
+	if get_tree().has_meta("match_result_victory_type"):
+		victory_type = str(get_tree().get_meta("match_result_victory_type"))
+	if get_tree().has_meta("match_result_split_info"):
+		split_info = get_tree().get_meta("match_result_split_info")
 
-	_apply_result(did_win)
+	_apply_result(did_win, victory_type, split_info)
 	call_deferred("_play_sequence")
 
 
-func _apply_result(did_win: bool) -> void:
+func _apply_result(did_win: bool, victory_type: String = "legacy", split_info: Dictionary = {}) -> void:
 	if color_bg != null:
 		color_bg.visible = true
 		color_bg.color = WIN_COLOR if did_win else LOSE_COLOR
@@ -61,18 +67,66 @@ func _apply_result(did_win: bool) -> void:
 	if result_panel != null:
 		result_panel.visible = true
 
+	# Victory type specific messaging.
+	var title_text = "Congratulations"
+	var subtitle_text = "You won"
+	var details_text = "You outplayed other nads"
+	
+	match victory_type:
+		"instant":
+			title_text = "VICTORY!"
+			subtitle_text = "60s Possession Reached"
+			details_text = "You held the chicken for 60 seconds and won instantly!"
+		"buzzer":
+			if split_info.get("split", false):
+				title_text = "Match Ended"
+				subtitle_text = "Reward Split"
+				var holder_name = split_info.get("holderName", "Holder")
+				var progress_name = split_info.get("progressName", "Progress Leader")
+				var holder_pct = int(split_info.get("holderShare", 0.5) * 100)
+				var progress_pct = int(split_info.get("progressShare", 0.5) * 100)
+				if did_win:
+					details_text = "%s held the chicken (%d%%); %s had most possession (%d%%)" % [holder_name, holder_pct, progress_name, progress_pct]
+				else:
+					details_text = "Reward split between chicken holder and possession leader."
+			elif did_win:
+				title_text = "Congratulations"
+				subtitle_text = "Buzzer Victory"
+				details_text = "You won when time expired!"
+			else:
+				title_text = "Time's Up"
+				subtitle_text = "You didn't win"
+				details_text = "The match ended before you could win."
+		"legacy":
+			if did_win:
+				title_text = "Congratulations"
+				subtitle_text = "You won"
+				details_text = "You outplayed other nads"
+			else:
+				title_text = "You almost made it"
+				subtitle_text = "You tried"
+				details_text = "You got outplayed"
+		_:  # fallback
+			if did_win:
+				title_text = "Congratulations"
+				subtitle_text = "You won"
+				details_text = "You won the match"
+			else:
+				title_text = "Match Over"
+				subtitle_text = "No victory"
+				details_text = ""
+
 	if result_title != null:
-		result_title.text = "Congratulations" if did_win else "You almost made it"
+		result_title.text = title_text
 		result_title.add_theme_color_override("font_color", Color.WHITE)
 
 	if result_subtitle != null:
-		result_subtitle.text = "You won" if did_win else "You tried"
+		result_subtitle.text = subtitle_text
 		result_subtitle.add_theme_color_override("font_color", Color.WHITE)
 
 	if result_details != null:
-		result_details.text = "You outplayed other nads" if did_win else "You got outplayed"
+		result_details.text = details_text
 		result_details.add_theme_color_override("font_color", Color.WHITE)
-
 
 
 	if progress_bar != null:
@@ -89,6 +143,10 @@ func _apply_result(did_win: bool) -> void:
 	if xp_label != null:
 		xp_label.visible = false
 		xp_label.text = "0 XP"
+
+	if xp_gain_label != null:
+		xp_gain_label.visible = false
+		xp_gain_label.text = ""
 
 	if return_home_label != null:
 		return_home_label.visible = false
@@ -276,6 +334,7 @@ func _play_level_up_flash() -> void:
 	flash.tween_property(result_card, "modulate", Color(1.35, 1.3, 1.1, 1.0), 0.12)
 	flash.tween_property(result_card, "modulate", Color.WHITE, 0.22)
 
+
 func _get_level_from_xp(xp: int) -> int:
 	var lvl := 0
 	var req := _get_segment_requirement(lvl)
@@ -285,6 +344,7 @@ func _get_level_from_xp(xp: int) -> int:
 		lvl += 1
 		req = _get_segment_requirement(lvl)
 	return lvl
+
 
 func _get_xp_required_for_level(level: int) -> int:
 	var total := 0
@@ -305,6 +365,9 @@ func _show_return_home_phase() -> void:
 
 	if xp_label != null:
 		xp_label.visible = false
+
+	if xp_gain_label != null:
+		xp_gain_label.visible = false
 
 	if return_home_label != null:
 		countdown_time = RETURN_HOME_COUNTDOWN

@@ -698,6 +698,10 @@ async fn handle_client_message(handle: &RoomHandle, player_id: &str, conn_id: u6
                 let meta = sanitize_meta(data.get("meta"));
                 room.publish_event(&event_type, &message, player_id, &meta);
             }
+            // Handle player elimination (death/respawn) -> reset possession time.
+            if event_type == "eliminated" {
+                room.handle_player_eliminated(player_id);
+            }
         }
         _ => {}
     }

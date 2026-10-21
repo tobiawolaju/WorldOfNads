@@ -185,6 +185,12 @@ static var session_earned_xp: float = 0.0
 # double-count.
 var session_earned_mon: float = 0.0
 
+# --- POSSESSION TRACKING (HUD) ---
+# Server-authoritative possession time per player. Updated via reward_update.
+var player_possession_time: Dictionary = {}  # player_id -> seconds
+var local_possession_time: float = 0.0
+var victory_target_seconds: int = 60
+
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live: bool = true
 var connection_attempted: bool = false
@@ -758,8 +764,12 @@ func _receive_messages():
 				var earned_xp := int(data.get("xp", 0))
 				var earned_mon := float(data.get("mon", 0.0))
 				var pool_total := float(data.get("pool", 0.0))
+				var possession_time := int(data.get("possessionTime", 0))
+				var victory_target := int(data.get("victoryTarget", 60))
 				session_earned_xp = float(earned_xp)
 				session_earned_mon = earned_mon
+				local_possession_time = float(possession_time)
+				victory_target_seconds = victory_target
 				var events_node = events_bridge
 				if events_node == null or not is_instance_valid(events_node):
 					events_node = get_tree().get_first_node_in_group("events_bridge")
@@ -768,6 +778,12 @@ func _receive_messages():
 						events_node.call("update_xp_display", earned_xp)
 					if events_node.has_method("update_mon_display"):
 						events_node.call("update_mon_display", earned_mon, pool_total)
+					if events_node.has_method("update_possession_display"):
+						events_node.call("update_possession_display", possession_time, victory_target)
+				# Update possession time for all players from the server's full state.
+				# Note: reward_update only sends local player's possession time.
+				# For other players, we'd need server to broadcast full possession state.
+				# For now, we track local player and the current chicken holder.
 
 
 # --- CLIENT-SIDE REWARDS ---
@@ -1664,6 +1680,15 @@ func send_xp_update(total_xp: int) -> void:
 		ws.send(MsgPack.pack({
 			"type": "update_xp",
 			"xp": total_xp
+		}))
+
+func send_client_event(event_type: String, message: String, meta: Dictionary = {}) -> void:
+	if connected and ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		ws.send(MsgPack.pack({
+			"type": "client_event",
+			"eventType": event_type,
+			"message": message,
+			"meta": meta
 		}))
 
 static func send_xp_update_static(total_xp: int) -> void:
