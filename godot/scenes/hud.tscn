@@ -103,9 +103,11 @@ corner_radius_bottom_left = 50
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0m4u7"]
 bg_color = Color(0, 0, 0, 0.34117648)
+skew = Vector2(1, 0)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uxdf7"]
-bg_color = Color(0.30816644, 0.63264525, 1, 1)
+bg_color = Color(0.30980393, 1, 0, 1)
+skew = Vector2(1, 0)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -114,6 +116,7 @@ border_color = Color(0.29411766, 0, 0.69411767, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l0bqs"]
 bg_color = Color(1, 0, 1, 1)
+skew = Vector2(1, 0)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -137,7 +140,7 @@ offset_bottom = 40.0
 
 [node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=802481236]
 
-[node name="Minimap" type="Control" parent="CanvasLayer/BoxContainer/Node2" unique_id=43787215 node_paths=PackedStringArray("background_texture", "minimap_container", "player_pointer", "chicken_pointer", "lootbox_pointer", "pickup_pointer", "storm_overlay", "bus_path_overlay")]
+[node name="Minimap" type="Control" parent="CanvasLayer/BoxContainer/Node2" unique_id=43787215 node_paths=PackedStringArray("background_texture", "minimap_container", "player_pointer", "chicken_pointer", "lootbox_pointer", "pickup_pointer", "storm_overlay", "bus_path_overlay", "shade_overlay")]
 custom_minimum_size = Vector2(60, 60)
 clip_contents = true
 layout_mode = 3
@@ -161,6 +164,7 @@ lootbox_pointer = NodePath("LootBoxPointer")
 pickup_pointer = NodePath("PickupsPointer")
 storm_overlay = NodePath("StormOverlay")
 bus_path_overlay = NodePath("BusPath")
+shade_overlay = NodePath("../../../../shde")
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=123456789]
 layout_mode = 1
@@ -627,22 +631,22 @@ centered = false
 
 [node name="XPstream" type="Label" parent="." unique_id=2087879689]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -294.0
-offset_top = 110.0
-offset_right = -157.0
-offset_bottom = 139.0
-grow_horizontal = 0
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 36.0
+offset_top = -29.0
+offset_right = 119.0
+offset_bottom = -13.0
+grow_vertical = 0
 theme_override_colors/font_color = Color(1, 1, 0, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.14901961)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.09803922)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
 theme_override_constants/outline_size = 0
 theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 15
 text = "Your Xp stream"
 horizontal_alignment = 2
 
@@ -720,16 +724,13 @@ texture = ExtResource("23_ptr5m")
 
 [node name="HealthBar" type="ProgressBar" parent="." unique_id=385514625]
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
+anchors_preset = 2
 anchor_top = 1.0
-anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -87.0
-offset_top = -81.0
-offset_right = 89.0
-offset_bottom = -74.0
-grow_horizontal = 2
+offset_left = 38.0
+offset_top = -38.0
+offset_right = 214.0
+offset_bottom = -31.0
 grow_vertical = 0
 theme_override_styles/background = SubResource("StyleBoxFlat_0m4u7")
 theme_override_styles/fill = SubResource("StyleBoxFlat_uxdf7")
@@ -739,16 +740,13 @@ script = ExtResource("14_health_bar")
 
 [node name="StaminaBar" type="ProgressBar" parent="." unique_id=285514625]
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
+anchors_preset = 2
 anchor_top = 1.0
-anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -87.0
-offset_top = -72.0
-offset_right = 89.0
-offset_bottom = -60.0
-grow_horizontal = 2
+offset_left = 41.0
+offset_top = -50.0
+offset_right = 217.0
+offset_bottom = -43.0
 grow_vertical = 0
 theme_override_styles/background = SubResource("StyleBoxFlat_0m4u7")
 theme_override_styles/fill = SubResource("StyleBoxFlat_l0bqs")
@@ -757,15 +755,15 @@ show_percentage = false
 script = ExtResource("6_stamina_bar")
 
 [node name="shde" type="ColorRect" parent="." unique_id=1541956272]
+visible = false
+material = SubResource("ShaderMaterial_q62xx")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 213.0
-offset_bottom = -214.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.43137255, 0.32941177, 1, 0.5)
+color = Color(1, 1, 1, 0.078431375)
 script = ExtResource("13_textfx")
 fade_out_delay = 5.5
 slide_offset = Vector2(0, 0)
@@ -784,12 +782,12 @@ offset_right = 98.0
 offset_bottom = 30.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
 theme_override_constants/outline_size = 2
 theme_override_fonts/font = ExtResource("3_apjy4")
 theme_override_font_sizes/font_size = 100
-text = "Lanaland"
+text = "Junk Beach"
 horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("13_textfx")

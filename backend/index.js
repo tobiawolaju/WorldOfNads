@@ -18,6 +18,7 @@ import {
   refreshSession,
   startDeviceLogin
 } from './authService.js';
+import { linkWalletKey, mintSkinForAccount } from './walletService.js';
 
 const PORT = process.env.PORT || 8080;
 const BROADCAST_RATE = 20;
@@ -677,6 +678,48 @@ const server = createServer(async (req, res) => {
   // appending a combo to skinCombos.json lights it up everywhere at once.
   if (req.method === 'GET' && reqUrl.pathname === '/api/skin-combos') {
     sendJson(res, 200, { ok: true, combos: loadCombos(), defaults: loadDefaults() });
+    return;
+  }
+
+  // ─── NATIVE WALLET LINK + MINT ───
+  // WONsSkins.mintSkin mints to msg.sender, so an in-app mint has to be signed
+  // by the player's own key. The key is linked once (encrypted at rest, see
+  // walletService.js); POST /api/skins/mint then signs and broadcasts with it.
+  // Both endpoints require a WON session; neither ever returns the key.
+  if (req.method === 'POST' && reqUrl.pathname === '/api/wallet/link') {
+    const auth = await getAuthenticatedSession({ authorizationHeader: req.headers.authorization });
+    if (!auth.ok) {
+      sendJson(res, auth.status, { ok: false, error: auth.error });
+      return;
+    }
+    const body = await readOptionalJsonBody(req);
+    const result = await linkWalletKey({
+      username: auth.payload?.user?.username,
+      walletAddress: auth.payload?.user?.wallet_address,
+      privateKey: body?.private_key
+    });
+    sendJson(res, result.status, result.ok
+      ? { ok: true, ...result.payload }
+      : { ok: false, error: result.error, ...(result.payload || {}) });
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/api/skins/mint') {
+    const auth = await getAuthenticatedSession({ authorizationHeader: req.headers.authorization });
+    if (!auth.ok) {
+      sendJson(res, auth.status, { ok: false, error: auth.error });
+      return;
+    }
+    const body = await readOptionalJsonBody(req);
+    const result = await mintSkinForAccount({
+      username: auth.payload?.user?.username,
+      walletAddress: auth.payload?.user?.wallet_address,
+      skinId: body?.skin_id,
+      amount: body?.amount
+    });
+    sendJson(res, result.status, result.ok
+      ? { ok: true, ...result.payload }
+      : { ok: false, error: result.error, ...(result.payload || {}) });
     return;
   }
 

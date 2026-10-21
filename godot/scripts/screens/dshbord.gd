@@ -239,6 +239,14 @@ var selected_store_id: String = ""
 # instead of both shaded/unshaded editions (Dashboard.tsx storeVariantPicks).
 var _store_variant_picks: Dictionary = {}
 
+# In-app minting: the backend signs mintSkin with the linked player key, so
+# these two requests are the whole client-side flow (see walletService.js).
+var _mint_in_flight: bool = false
+var _wallet_link_dialog: PanelContainer = null
+var _wallet_link_input: LineEdit = null
+var _wallet_link_status: Label = null
+var _pending_mint_skin_id: String = ""
+
 var energy: int = DEFAULT_ENERGY
 var xp: float = 0.0
 # Human-formatted MON balance, or empty until the RPC call returns.
@@ -841,6 +849,9 @@ func _on_store_data_fetched(result: int, response_code: int, _headers: PackedStr
 		var skin_id: String = str(skin.get("id", ""))
 		if skin_id == "":
 			continue
+		# On-chain id from the skins API; 0 means the item is local-only and
+		# cannot be minted (the default-loadout entries).
+		var on_chain: Variant = skin.get("onChainId")
 		by_id[skin_id] = {
 			"id": skin_id,
 			"name": str(skin.get("name", "Unknown")),
@@ -849,6 +860,7 @@ func _on_store_data_fetched(result: int, response_code: int, _headers: PackedStr
 			"tier": str(skin.get("tier", "common")).to_lower(),
 			"required_xp": int(skin.get("requiredXP", 0)),
 			"max_supply": int(skin.get("maxSupply", 0)),
+			"on_chain_id": int(on_chain) if (on_chain is int or on_chain is float) else 0,
 		}
 
 	SkinApplier.seed_from_api(api_skins)
@@ -2062,8 +2074,10 @@ func _refresh_footer() -> void:
 
 	if _mint_button != null:
 		_mint_button.visible = true
-		_mint_button.disabled = not owned and xp < required_xp
-		if owned:
+		_mint_button.disabled = _mint_in_flight or (not owned and xp < required_xp)
+		if _mint_in_flight:
+			_mint_button.text = "MINTING..."
+		elif owned:
 			_mint_button.text = "EQUIP"
 		elif xp >= required_xp:
 			_mint_button.text = "MINT"
@@ -2077,14 +2091,193 @@ func _refresh_footer() -> void:
 
 func _on_mint_pressed() -> void:
 	var item := _selected_store_item()
-	if item.is_empty():
+	if item.is_empty() or _mint_in_flight:
 		return
 	if _is_owned(item):
 		_equip_selected_skin()
 		return
-	# Minting is an on-chain transaction and is out of scope for the Godot port;
-	# the button stays disabled until XP meets the requirement.
+	if int(item.get("on_chain_id", 0)) <= 0:
+		# Local-only items (default loadout) are not on-chain mintable.
+		return
+	_start_mint(str(item.get("id", "")))
+
+
+func _start_mint(skin_id: String) -> void:
+	_mint_in_flight = true
+	if _mint_button != null:
+		_mint_button.disabled = true
+		_mint_button.text = "MINTING..."
+	_run_mint_request(skin_id)
+
+
+func _run_mint_request(skin_id: String) -> void:
+	# The backend re-checks supply and XP, signs mintSkin with the linked
+	# player key, and returns the tx hash. The wallet pays price + gas.
+	var response: Dictionary = await AuthManager.request(
+		HTTPClient.METHOD_POST,
+		"/api/skins/mint",
+		{"skin_id": skin_id, "amount": 1}
+	)
+	if int(response.get("__status", 0)) == 200 and response.get("ok", false):
+		if not owned_ids.has(skin_id):
+			owned_ids.append(skin_id)
+		_mint_in_flight = false
+		_refresh_all()
+		return
+
+	_mint_in_flight = false
+	var error_code := str(response.get("error", "mint_failed"))
+	print("Dshbord: mint failed (%s)" % error_code)
+	if error_code == "wallet_not_linked":
+		# First mint on this account: link the key once, then retry.
+		_open_wallet_link_dialog(skin_id)
+		return
+	_refresh_footer()
+	_flash_mint_error(_mint_error_text(error_code))
+
+
+func _mint_error_text(code: String) -> String:
+	match code:
+		"supply_exhausted":
+			return "SOLD OUT"
+		"insufficient_xp":
+			return "NEED MORE XP"
+		"mint_cooldown":
+			return "ONE MOMENT"
+		"not_on_chain":
+			return "NOT MINTABLE"
+		_:
+			return "MINT FAILED"
+
+
+func _flash_mint_error(text: String) -> void:
+	if _mint_button == null:
+		return
+	_mint_button.text = text
 	_mint_button.disabled = true
+	await get_tree().create_timer(2.5).timeout
+	_refresh_footer()
+
+
+# ------------------------------------------------------------- wallet link
+
+func _open_wallet_link_dialog(skin_id: String) -> void:
+	_pending_mint_skin_id = skin_id
+	if _wallet_link_dialog != null:
+		_wallet_link_dialog.visible = true
+		if _wallet_link_status != null:
+			_wallet_link_status.text = "Paste your exported wallet key to enable minting."
+		return
+
+	var layer := get_node_or_null("CanvasLayer") as CanvasLayer
+	if layer == null:
+		return
+
+	var panel := PanelContainer.new()
+	panel.name = "WalletLinkDialog"
+	panel.custom_minimum_size = Vector2(420, 0)
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	panel.add_child(column)
+
+	var title := Label.new()
+	title.text = "LINK WALLET"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(title)
+
+	var body := Label.new()
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.text = "Minting is an on-chain purchase, so it must be signed by your wallet. Paste your wallet's private key once (export it from the web dashboard via Export Wallet). It is sent over HTTPS, stored encrypted on the server, and used only to sign mints for this account."
+	body.modulate = Color(1, 1, 1, 0.7)
+	column.add_child(body)
+
+	_wallet_link_input = LineEdit.new()
+	_wallet_link_input.secret = true
+	_wallet_link_input.placeholder_text = "0x… private key"
+	_wallet_link_input.text_changed.connect(func(_text: String) -> void:
+		if _wallet_link_status != null:
+			_wallet_link_status.text = "")
+	column.add_child(_wallet_link_input)
+
+	_wallet_link_status = Label.new()
+	_wallet_link_status.text = ""
+	_wallet_link_status.modulate = Color(1, 0.6, 0.6)
+	_wallet_link_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(_wallet_link_status)
+
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 12)
+	column.add_child(buttons)
+
+	var cancel := Button.new()
+	cancel.text = "CANCEL"
+	cancel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel.pressed.connect(_close_wallet_link_dialog)
+	buttons.add_child(cancel)
+
+	var link := Button.new()
+	link.text = "LINK & MINT"
+	link.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	link.pressed.connect(_on_wallet_link_submitted)
+	buttons.add_child(link)
+
+	layer.add_child(panel)
+	_wallet_link_dialog = panel
+	_wallet_link_input.grab_focus()
+
+
+func _close_wallet_link_dialog() -> void:
+	_pending_mint_skin_id = ""
+	if _wallet_link_input != null:
+		_wallet_link_input.text = ""
+	if _wallet_link_dialog != null:
+		_wallet_link_dialog.visible = false
+	_refresh_footer()
+
+
+func _on_wallet_link_submitted() -> void:
+	if _wallet_link_input == null or _wallet_link_status == null:
+		return
+	var key := _wallet_link_input.text.strip_edges()
+	if key.is_empty():
+		_wallet_link_status.text = "Paste your exported private key first."
+		return
+	_wallet_link_status.text = "Linking wallet..."
+	var response: Dictionary = await AuthManager.request(
+		HTTPClient.METHOD_POST,
+		"/api/wallet/link",
+		{"private_key": key}
+	)
+	# The key only ever lives in this one request; clear the field no matter
+	# what happens next.
+	_wallet_link_input.text = ""
+	if int(response.get("__status", 0)) == 200 and response.get("ok", false):
+		var skin_id := _pending_mint_skin_id
+		_pending_mint_skin_id = ""
+		if _wallet_link_dialog != null:
+			_wallet_link_dialog.visible = false
+		if not skin_id.is_empty():
+			_start_mint(skin_id)
+		return
+	_wallet_link_status.text = _wallet_link_error_text(str(response.get("error", "")))
+
+
+func _wallet_link_error_text(code: String) -> String:
+	match code:
+		"key_wallet_mismatch":
+			return "That key belongs to a different wallet than this account."
+		"invalid_private_key", "private_key_required":
+			return "That doesn't look like a private key."
+		"no_wallet_on_account":
+			return "This account has no wallet yet. Log in on the web first."
+		"mint_cooldown":
+			return "One moment — a mint just started."
+		_:
+			return "Linking failed. Try again."
 
 
 func _on_equip_pressed() -> void:

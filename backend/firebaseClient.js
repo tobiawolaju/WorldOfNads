@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, get, update } from "firebase/database";
+import { getDatabase, ref, get, update, set } from "firebase/database";
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -26,6 +26,20 @@ export async function getPlayerWallet(username) {
         return data.ethAddress || data.wallet || null;
     }
     return null;
+}
+
+// Player signing keys for native-initiated mints. The blob is AES-GCM
+// ciphertext produced by walletService.js — never plaintext, and never sent
+// back to a client once stored.
+export async function getWalletKey(username) {
+    if (!username) return null;
+    const snapshot = await get(ref(db, `walletKeys/${username}`));
+    return snapshot.exists() ? snapshot.val() : null;
+}
+
+export async function saveWalletKey(username, record) {
+    if (!username) return;
+    await set(ref(db, `walletKeys/${username}`), record);
 }
 
 export async function findActiveMatch() {
