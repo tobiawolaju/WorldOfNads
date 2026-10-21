@@ -1,6 +1,6 @@
 import { useMemo, useCallback, useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useExportWallet } from '@privy-io/react-auth';
 import { showSuccessToast } from './ui/custom-toast';
 import { getPrimaryWalletAddress, getProfilePictureFromPrivy, getUsernameFromPrivy, fetchUserRoles } from '../pages/firebaseClient';
 import {
@@ -35,6 +35,9 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { ready, authenticated, user, logout } = usePrivy();
+  // Privy's export flow is the only supported way to read an embedded wallet's
+  // private key; the native app needs it once to link minting to the backend.
+  const { exportWallet } = useExportWallet();
 
   const isHome = location.pathname === '/';
 
@@ -180,6 +183,17 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
                     onClick={() => handleMenuAction(() => navigate("/sponsor"))}
                   >
                     Host Match
+                  </button>
+                )}
+                {shortAddress && (
+                  <button
+                    type="button"
+                    className="user-menu__item"
+                    role="menuitem"
+                    title="Show your wallet's private key so you can paste it into the app once, to enable minting from the native app."
+                    onClick={() => handleMenuAction(() => exportWallet())}
+                  >
+                    Export Wallet
                   </button>
                 )}
                 <div className="user-menu__group">

@@ -326,3 +326,43 @@ export async function getSkinBalance(address, skinId) {
         return 0;
     }
 }
+
+// Signs mintSkin with a *player's* key. WONsSkins.mintSkin mints to msg.sender
+// and gates on msg.sender's own XP balance, so the transaction has to come from
+// the player's own wallet — the authority wallet cannot mint on their behalf.
+// The caller (walletService) is responsible for key custody and auth.
+export async function mintSkinWithKey(privateKey, skinId, amount) {
+    try {
+        const signer = new ethers.Wallet(privateKey, provider);
+        const player = await signer.getAddress();
+        const skins = getSkins().connect(signer);
+        const data = await skins.skins(skinId);
+        if (!data.exists) return { success: false, error: "skin_not_found" };
+
+        const qty = BigInt(amount);
+        // Same bounds the contract enforces, checked up front so failures come
+        // back as clean errors instead of a reverted estimateGas.
+        if (data.minted + qty > data.maxSupply) {
+            return { success: false, error: "supply_exhausted", minted: Number(data.minted), maxSupply: Number(data.maxSupply) };
+        }
+        if (data.requiredXP > 0n) {
+            const xpBalance = await getXP().balanceOf(player);
+            if (xpBalance < data.requiredXP) {
+                return {
+                    success: false,
+                    error: "insufficient_xp",
+                    required_xp: ethers.formatEther(data.requiredXP),
+                    xp: ethers.formatEther(xpBalance)
+                };
+            }
+        }
+        const value = data.mintPrice * qty;
+        const gasEstimate = await skins.mintSkin.estimateGas(skinId, qty, { value });
+        const tx = await skins.mintSkin(skinId, qty, { value, gasLimit: (gasEstimate * 120n) / 100n });
+        const receipt = await tx.wait();
+        return { success: true, txHash: tx.hash, blockNumber: receipt.blockNumber };
+    } catch (error) {
+        console.error(`[Onchain] mintSkinWithKey failed for skin ${skinId}:`, error.message);
+        return { success: false, error: "mint_failed", detail: error.message };
+    }
+}

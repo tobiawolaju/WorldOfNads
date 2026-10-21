@@ -68,6 +68,12 @@ var _original_anchors: Vector4
 var _original_offsets: Vector4
 var _original_z_index: int
 
+## Fullscreen "shade": the shde ColorRect in the HUD fades in behind the map
+## while it is expanded, and fades back out when the map is closed.
+@export var shade_overlay: CanvasItem
+@export var shade_fade_duration: float = 0.4
+var _shade_tween: Tween = null
+
 func _ready() -> void:
 	# Initialize with snapshot from GameManager
 	if background_texture:
@@ -105,6 +111,7 @@ func _toggle_fullscreen() -> void:
 		# Reset background for full view
 		background_texture.position = Vector2.ZERO
 		background_texture.size = minimap_container.size
+		_fade_shade(true)
 	else:
 		minimap_container.z_index = _original_z_index
 		minimap_container.anchor_left = _original_anchors.x
@@ -115,7 +122,23 @@ func _toggle_fullscreen() -> void:
 		minimap_container.offset_top = _original_offsets.y
 		minimap_container.offset_right = _original_offsets.z
 		minimap_container.offset_bottom = _original_offsets.w
+		_fade_shade(false)
 	_update_bus_path_overlay()
+
+func _fade_shade(show: bool) -> void:
+	if shade_overlay == null or not is_instance_valid(shade_overlay):
+		return
+	if _shade_tween and is_instance_valid(_shade_tween):
+		_shade_tween.kill()
+	shade_overlay.visible = true
+	_shade_tween = create_tween()
+	if show:
+		shade_overlay.modulate.a = 0.0
+		_shade_tween.tween_property(shade_overlay, "modulate:a", 1.0, shade_fade_duration)
+	else:
+		shade_overlay.modulate.a = 1.0
+		_shade_tween.tween_property(shade_overlay, "modulate:a", 0.0, shade_fade_duration)
+		_shade_tween.finished.connect(func(): shade_overlay.visible = false)
 
 func _update_fullscreen_layout() -> void:
 	var viewport_size = get_viewport().get_visible_rect().size
