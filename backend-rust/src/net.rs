@@ -17,7 +17,7 @@ use axum::routing::get;
 use axum::Router;
 use futures_util::stream::SplitSink;
 use futures_util::{SinkExt, StreamExt};
-use serde_json::Value;
+use serde_json::{json, Value};
 use tokio::sync::{mpsc, Mutex};
 
 use crate::config::*;
@@ -99,16 +99,29 @@ impl ClientTx {
         self.tx.is_closed()
     }
 
+    /// Bytes handed to the writer task that have not been flushed yet.
+    fn queued_bytes(&self) -> usize {
+        self.queued.load(Ordering::Relaxed)
+    }
+
     fn same_channel(&self, other: &Self) -> bool {
         self.tx.same_channel(&other.tx)
     }
 }
 
 /// Drain a client's queue into its socket, returning budget as frames flush out.
+///
+/// The counters are diagnostics only (see `/debug/rooms`): `drain_exits` counts the
+/// writer tasks that stopped, `drain_write_errors` the ones that failed to hand a
+/// frame to the socket. A writer that dies before the round-end close is queued
+/// silently swallows that close, so both numbers are needed to tell "the close was
+/// never queued" apart from "the close was queued into a dead socket".
 async fn drain(
     mut sender: SplitSink<WebSocket, Message>,
     mut rx: mpsc::UnboundedReceiver<Message>,
     queued: Arc<AtomicUsize>,
+    drain_exits: Arc<AtomicU64>,
+    drain_write_errors: Arc<AtomicU64>,
 ) {
     while let Some(msg) = rx.recv().await {
         let bulk = is_bulk(&msg);
@@ -116,12 +129,14 @@ async fn drain(
         if sender.send(msg).await.is_err() {
             // The socket is gone; the connection is being torn down, so the budget
             // for whatever is still queued no longer matters.
+            drain_write_errors.fetch_add(1, Ordering::Relaxed);
             break;
         }
         if bulk {
             queued.fetch_sub(len, Ordering::Relaxed);
         }
     }
+    drain_exits.fetch_add(1, Ordering::Relaxed);
 }
 
 /// One shardable arena: its own simulation, its own clients, its own `/events` feed.
@@ -134,6 +149,20 @@ pub struct RoomHandle {
     pub events_clients: Mutex<Vec<ClientTx>>,
     /// Last time a player connected or left; drives idle-room cleanup.
     pub last_active_ms: AtomicI64,
+    // Diagnostics, surfaced by `/debug/rooms`. Render does not expose the container
+    // logs through an API, so these counters are the only way to see on a live
+    // instance whether the round-end close was queued and whether the writer tasks
+    // were still alive when it was.
+    /// How many times the room asked every client to close.
+    pub close_all_calls: AtomicU64,
+    /// How many clients were connected when `close_all` ran.
+    pub close_all_clients: AtomicU64,
+    /// How many close frames were queued into a client channel.
+    pub close_all_queued: AtomicU64,
+    /// How many writer tasks stopped (socket gone or queue drained).
+    pub drain_exits: AtomicU64,
+    /// How many writer tasks failed to hand a frame to the socket.
+    pub drain_write_errors: AtomicU64,
 }
 
 impl RoomHandle {
@@ -151,6 +180,11 @@ impl RoomHandle {
             clients: Mutex::new(HashMap::new()),
             events_clients: Mutex::new(Vec::new()),
             last_active_ms: AtomicI64::new(now_ms()),
+            close_all_calls: AtomicU64::new(0),
+            close_all_clients: AtomicU64::new(0),
+            close_all_queued: AtomicU64::new(0),
+            drain_exits: AtomicU64::new(0),
+            drain_write_errors: AtomicU64::new(0),
         }
     }
 }
@@ -292,6 +326,7 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/", get(ws_game))
         .route("/events", get(ws_events))
         .route("/health", get(health))
+        .route("/debug/rooms", get(debug_rooms))
         .fallback(get(ws_game))
         .with_state(state)
 }
@@ -302,6 +337,84 @@ pub fn router(state: Arc<AppState>) -> Router {
 async fn health() -> String {
     let commit = std::env::var("RENDER_GIT_COMMIT").unwrap_or_else(|_| "unknown".to_string());
     format!("Server is alive and healthy!\ncommit: {}\n", commit)
+}
+
+/// Live diagnostics for the room server.
+///
+/// Render does not expose the container logs through an API, so this endpoint is the
+/// only way to inspect a live instance: which rooms exist, who holds the chicken and
+/// how much possession they have banked, whether the writer tasks are still alive,
+/// and whether the round-end close was actually queued to the clients.
+///
+/// It exposes no secrets (ids, names and counters only) but it is not authenticated,
+/// so it is a diagnostics tool for the operator - not something to expose publicly.
+async fn debug_rooms(State(state): State<Arc<AppState>>) -> String {
+    let mut rooms_out: Vec<Value> = Vec::new();
+    let rooms = state.rooms.lock().await;
+    for (name, handle) in rooms.iter() {
+        // The room state is copied out before the client map is locked: the two locks
+        // are never held in the opposite order anywhere else, but keeping the nesting
+        // one-directional removes the question entirely.
+        let room_view = {
+            let room = handle.room.lock().await;
+            let players: Vec<Value> = room
+                .players
+                .values()
+                .map(|p| {
+                    json!({
+                        "id": p.id,
+                        "name": p.username,
+                        "holder": p.is_current_holder,
+                        "possession_s": p.accumulated_possession,
+                        "orphaned": p.orphaned_at.is_some(),
+                    })
+                })
+                .collect();
+            json!({
+                "players": players,
+                "match_running": room.match_running,
+                "match_time_left": room.match_time_left,
+                "pending_close_all": room.pending_close_all,
+                "chicken_holder": room.chicken.holder_id,
+            })
+        };
+        let client_view = {
+            let clients = handle.clients.lock().await;
+            let list: Vec<Value> = clients
+                .iter()
+                .map(|(id, tx)| {
+                    json!({
+                        "id": id,
+                        "writer_alive": !tx.is_closed(),
+                        "queued_bytes": tx.queued_bytes(),
+                    })
+                })
+                .collect();
+            json!({ "count": clients.len(), "clients": list })
+        };
+
+        let mut view = json!({
+            "room": name,
+            "close_all_calls": handle.close_all_calls.load(Ordering::Relaxed),
+            "close_all_clients": handle.close_all_clients.load(Ordering::Relaxed),
+            "close_all_queued": handle.close_all_queued.load(Ordering::Relaxed),
+            "drain_exits": handle.drain_exits.load(Ordering::Relaxed),
+            "drain_write_errors": handle.drain_write_errors.load(Ordering::Relaxed),
+        });
+        merge(&mut view, &room_view);
+        merge(&mut view, &client_view);
+        rooms_out.push(view);
+    }
+    json!({ "rooms": rooms_out }).to_string()
+}
+
+/// Merge a JSON object into another one (shallow, string keys).
+fn merge(target: &mut Value, extra: &Value) {
+    if let (Some(target), Some(extra)) = (target.as_object_mut(), extra.as_object()) {
+        for (key, value) in extra {
+            target.insert(key.clone(), value.clone());
+        }
+    }
 }
 
 async fn ws_game(
@@ -566,7 +679,13 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
     );
 
     let (sender, mut receiver) = socket.split();
-    let writer = tokio::spawn(drain(sender, rx, queued));
+    let writer = tokio::spawn(drain(
+        sender,
+        rx,
+        queued,
+        handle.drain_exits.clone(),
+        handle.drain_write_errors.clone(),
+    ));
 
     let ip = peer_ip(&headers);
 
@@ -737,7 +856,13 @@ async fn handle_events(socket: WebSocket, state: Arc<AppState>, room_id: String)
     }
 
     let (sender, mut receiver) = socket.split();
-    let writer = tokio::spawn(drain(sender, rx, queued));
+    let writer = tokio::spawn(drain(
+        sender,
+        rx,
+        queued,
+        handle.drain_exits.clone(),
+        handle.drain_write_errors.clone(),
+    ));
 
     while let Some(incoming) = receiver.next().await {
         if incoming.is_err() {
@@ -785,15 +910,23 @@ async fn broadcast_events(handle: &RoomHandle, events: Vec<String>) {
 
 async fn close_all(handle: &RoomHandle) {
     let mut clients = handle.clients.lock().await;
+    handle.close_all_calls.fetch_add(1, Ordering::Relaxed);
+    handle
+        .close_all_clients
+        .store(clients.len() as u64, Ordering::Relaxed);
+    let mut queued = 0u64;
     for tx in clients.values() {
         // Node closes the round with code 1000 and the reason `round_finished`
         // (`backend/index.js`: `client.close(1000, 'round_finished')`), so the
         // Godot client sees the same thing it saw against the Node server.
-        tx.send(Message::Close(Some(CloseFrame {
+        if tx.send(Message::Close(Some(CloseFrame {
             code: close_code::NORMAL,
             reason: Cow::Borrowed("round_finished"),
-        })));
+        }))) {
+            queued += 1;
+        }
     }
+    handle.close_all_queued.store(queued, Ordering::Relaxed);
     clients.clear();
 }
 
@@ -851,8 +984,42 @@ pub async fn run_room_tick(state: Arc<AppState>, handle: Arc<RoomHandle>) {
 mod tests {
     use super::*;
     use futures_util::StreamExt;
+    use tokio::net::TcpStream;
     use tokio_tungstenite::connect_async;
     use tokio_tungstenite::tungstenite::Message as WsMessage;
+    use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
+
+    type TestSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
+
+    /// Read frames until the server closes the socket; return the close frame.
+    async fn wait_for_close(socket: &mut TestSocket, timeout: Duration) -> Option<(u16, String)> {
+        let deadline = tokio::time::Instant::now() + timeout;
+        while tokio::time::Instant::now() < deadline {
+            match tokio::time::timeout(timeout, socket.next()).await {
+                Ok(Some(Ok(WsMessage::Close(frame)))) => {
+                    return frame.map(|f| (u16::from(f.code), f.reason.to_string()));
+                }
+                Ok(Some(Ok(_))) => continue,
+                Ok(Some(Err(err))) => panic!("websocket error while waiting for close: {}", err),
+                Ok(None) => return None,
+                Err(_) => return None,
+            }
+        }
+        None
+    }
+
+    /// The server greets every game socket with the msgpack `connect` frame.
+    async fn expect_connect(socket: &mut TestSocket) {
+        let first = tokio::time::timeout(Duration::from_secs(5), socket.next())
+            .await
+            .expect("connect frame timeout")
+            .expect("the socket ended early")
+            .expect("websocket error");
+        assert!(
+            matches!(first, WsMessage::Binary(_)),
+            "expected the msgpack connect frame"
+        );
+    }
 
     /// A finished round must actually reach the client as a close frame.
     ///
@@ -926,5 +1093,95 @@ mod tests {
             }
         }
         assert!(closed, "the client must receive a close frame when the round ends");
+    }
+
+    /// The whole round-end path, end to end.
+    ///
+    /// The test above covers `close_all` in isolation. This one drives the real
+    /// path: two clients join, the room starts a match, a player banks enough
+    /// possession to win it, and the room tick must then close BOTH sockets with
+    /// Node's code and reason. A close that is only queued but never reaches the
+    /// socket (a dead writer task, a saturated queue) is invisible to the unit
+    /// test, so this is the regression that actually matters for the client.
+    #[tokio::test]
+    async fn a_won_round_closes_every_connected_client() {
+        let state = Arc::new(AppState::new());
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let app = router(state.clone());
+        tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
+
+        let (mut alpha, _) = connect_async(format!(
+            "ws://{}/?room=default&username=alpha&skin=s-default",
+            addr
+        ))
+        .await
+        .expect("alpha must connect");
+        let (mut bravo, _) = connect_async(format!(
+            "ws://{}/?room=default&username=bravo&skin=s-default",
+            addr
+        ))
+        .await
+        .expect("bravo must connect");
+        expect_connect(&mut alpha).await;
+        expect_connect(&mut bravo).await;
+
+        let handle = {
+            let rooms = state.rooms.lock().await;
+            rooms.get(DEFAULT_ROOM).cloned().expect("room handle")
+        };
+
+        // Two players, then the start countdown, then the match.
+        let mut started = false;
+        for _ in 0..600 {
+            {
+                let room = handle.room.lock().await;
+                if room.match_running && room.player_count() >= 2 {
+                    started = true;
+                }
+            }
+            if started {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+        assert!(started, "the match must start once two players are in the room");
+
+        // Bank almost a full minute of possession for one player; the next reward
+        // tick pushes it over the 60 second victory line.
+        {
+            let mut room = handle.room.lock().await;
+            let pid = room.players.keys().next().cloned().expect("a player");
+            let player = room.players.get_mut(&pid).expect("the player");
+            player.is_current_holder = true;
+            player.accumulated_possession = 59.5;
+            player.possession_since_ms = Some(now_ms());
+            room.chicken.is_held = true;
+            room.chicken.holder_id = Some(pid);
+        }
+
+        // Both sockets must be closed by the server.
+        let (code, reason) = wait_for_close(&mut alpha, Duration::from_secs(30))
+            .await
+            .expect("alpha must be closed when the round ends");
+        assert_eq!(code, 1000);
+        assert_eq!(reason, "round_finished");
+        let (code, reason) = wait_for_close(&mut bravo, Duration::from_secs(30))
+            .await
+            .expect("bravo must be closed when the round ends");
+        assert_eq!(code, 1000);
+        assert_eq!(reason, "round_finished");
+
+        // And the close must have been queued to every connected client.
+        assert_eq!(handle.close_all_calls.load(Ordering::Relaxed), 1);
+        assert_eq!(handle.close_all_clients.load(Ordering::Relaxed), 2);
+        assert_eq!(handle.close_all_queued.load(Ordering::Relaxed), 2);
+        assert_eq!(
+            handle.drain_write_errors.load(Ordering::Relaxed),
+            0,
+            "no writer task may fail to hand the close to the socket"
+        );
     }
 }
