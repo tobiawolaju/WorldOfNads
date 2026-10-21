@@ -865,7 +865,7 @@ impl Room {
                 .as_ref()
                 .and_then(|h| self.players.get(h))
             {
-                (Some(holder.id.clone()), holder.username.clone(), holder.accumulated_possession)
+                (Some(holder.id.clone()), holder.username.clone(), holder.accumulated_possession.floor())
             } else {
                 (None, "No one".to_string(), 0.0)
             }
@@ -882,11 +882,14 @@ impl Room {
             if player.orphaned_at.is_some() {
                 continue; // Eliminated players are not eligible.
             }
-            if player.accumulated_possession > best_possession {
-                best_possession = player.accumulated_possession;
+            // Whole seconds only, so the Rust and Node servers compute the exact
+            // same split shares for the same match.
+            let possession = player.accumulated_possession.floor();
+            if possession > best_possession {
+                best_possession = possession;
                 best_id = Some(player.id.clone());
                 best_name = player.username.clone();
-            } else if player.accumulated_possession == best_possession && best_possession > 0.0 {
+            } else if possession == best_possession && best_possession > 0.0 {
                 // Deterministic tie-break: lower player id wins (stable ordering).
                 if let Some(ref current_best) = best_id {
                     if player.id < *current_best {
@@ -983,7 +986,7 @@ impl Room {
             self.publish_event("match_winner", &message, wid, &meta);
         } else {
             let message = "No winner this match".to_string();
-            let mut meta = json!({
+            let meta = json!({
                 "winnerId": Value::Null,
                 "winnerName": "No one",
                 "victoryType": "buzzer",
