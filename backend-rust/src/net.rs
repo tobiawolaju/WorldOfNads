@@ -670,7 +670,7 @@ async fn handle_client_message(handle: &RoomHandle, player_id: &str, conn_id: u6
         "update_state" => room.apply_update_state(player_id, &data),
         "pickup_request" => {
             if let Some(item_id) = data.get("item_id").and_then(|v| v.as_str()) {
-                room.pickup_request(player_id, item_id);
+                room.pickup_request(player_id, item_id, now_ms());
             }
         }
         "use_request" => {
@@ -680,7 +680,7 @@ async fn handle_client_message(handle: &RoomHandle, player_id: &str, conn_id: u6
         }
         "drop_request" => {
             if let Some(item_id) = data.get("item_id").and_then(|v| v.as_str()) {
-                room.drop_request(player_id, item_id);
+                room.drop_request(player_id, item_id, now_ms());
             }
         }
         "request_full_state" => room.request_full_state(player_id),
@@ -782,7 +782,13 @@ async fn broadcast_events(handle: &RoomHandle, events: Vec<String>) {
 async fn close_all(handle: &RoomHandle) {
     let mut clients = handle.clients.lock().await;
     for tx in clients.values() {
-        tx.send(Message::Close(None));
+        // Node closes the round with code 1000 and the reason `round_finished`
+        // (`backend/index.js`: `client.close(1000, 'round_finished')`), so the
+        // Godot client sees the same thing it saw against the Node server.
+        tx.send(Message::Close(Some(CloseFrame {
+            code: close_code::NORMAL,
+            reason: Cow::Borrowed("round_finished"),
+        })));
     }
     clients.clear();
 }
@@ -834,5 +840,87 @@ pub async fn run_room_tick(state: Arc<AppState>, handle: Arc<RoomHandle>) {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use futures_util::StreamExt;
+    use tokio_tungstenite::connect_async;
+    use tokio_tungstenite::tungstenite::Message as WsMessage;
+
+    /// A finished round must actually reach the client as a close frame.
+    ///
+    /// Node closes every game socket with code 1000 and the reason
+    /// `round_finished` when the round ends, and the Godot client relies on
+    /// that to leave the finished round instead of sitting in a ghost session
+    /// with a socket the server no longer knows about.
+    #[tokio::test]
+    async fn closing_the_room_reaches_the_client_as_a_close_frame() {
+        let state = Arc::new(AppState::new());
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let app = router(state.clone());
+        tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
+
+        let (mut socket, _) = connect_async(format!(
+            "ws://{}/?room=default&username=tester&skin=s-default",
+            addr
+        ))
+        .await
+        .expect("the client must connect");
+
+        // The server greets with the msgpack `connect` frame.
+        let first = tokio::time::timeout(Duration::from_secs(5), socket.next())
+            .await
+            .expect("connect frame timeout")
+            .expect("the socket ended early")
+            .expect("websocket error");
+        assert!(
+            matches!(first, WsMessage::Binary(_)),
+            "expected the msgpack connect frame"
+        );
+
+        let handle = {
+            let rooms = state.rooms.lock().await;
+            rooms.get(DEFAULT_ROOM).cloned().expect("room handle")
+        };
+
+        // Wait until the client is registered in the room's client map.
+        let mut registered = false;
+        for _ in 0..200 {
+            if !handle.clients.lock().await.is_empty() {
+                registered = true;
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        assert!(registered, "the client must be registered in the room");
+
+        close_all(&handle).await;
+
+        // The client must see the close frame, with Node's code and reason.
+        let mut closed = false;
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+        while tokio::time::Instant::now() < deadline {
+            match tokio::time::timeout(Duration::from_secs(2), socket.next()).await {
+                Ok(Some(Ok(WsMessage::Close(frame)))) => {
+                    if let Some(frame) = frame {
+                        assert_eq!(u16::from(frame.code), 1000);
+                        assert_eq!(frame.reason, "round_finished");
+                    }
+                    closed = true;
+                    break;
+                }
+                Ok(Some(Ok(_))) => continue,
+                Ok(Some(Err(err))) => panic!("websocket error while waiting for close: {}", err),
+                Ok(None) => break,
+                Err(_) => continue,
+            }
+        }
+        assert!(closed, "the client must receive a close frame when the round ends");
     }
 }

@@ -1,8 +1,8 @@
 name: rust-check
 
-# Compile-verifies the Rust room server in CI. Nobody runs Rust or Docker on a dev
-# machine for this project (see AGENTS.md: installs happen in CI/deploy), so this is
-# the compile check for backend-rust until it is built on the deploy target.
+# Compile-verifies and unit-tests the Rust room server in CI. Nobody runs Rust or Docker
+# on a dev machine for this project (see AGENTS.md: installs happen in CI/deploy), so this
+# is the check for backend-rust until it is built on the deploy target.
 on:
   push:
     paths:
@@ -24,3 +24,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       # --all-targets also compiles the unit tests and dev-dependencies.
       - run: cargo check --all-targets
+      # The win condition (60s possession -> instant win, buzzer split) and the
+      # round-end close are covered by unit tests, so CI is where they are proven.
+      - run: cargo test --all-targets
