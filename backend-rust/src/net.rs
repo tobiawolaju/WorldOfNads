@@ -152,17 +152,18 @@ pub struct RoomHandle {
     // Diagnostics, surfaced by `/debug/rooms`. Render does not expose the container
     // logs through an API, so these counters are the only way to see on a live
     // instance whether the round-end close was queued and whether the writer tasks
-    // were still alive when it was.
+    // were still alive when it was. They are `Arc`s because the writer task needs
+    // its own handle on the ones it updates.
     /// How many times the room asked every client to close.
-    pub close_all_calls: AtomicU64,
+    pub close_all_calls: Arc<AtomicU64>,
     /// How many clients were connected when `close_all` ran.
-    pub close_all_clients: AtomicU64,
+    pub close_all_clients: Arc<AtomicU64>,
     /// How many close frames were queued into a client channel.
-    pub close_all_queued: AtomicU64,
+    pub close_all_queued: Arc<AtomicU64>,
     /// How many writer tasks stopped (socket gone or queue drained).
-    pub drain_exits: AtomicU64,
+    pub drain_exits: Arc<AtomicU64>,
     /// How many writer tasks failed to hand a frame to the socket.
-    pub drain_write_errors: AtomicU64,
+    pub drain_write_errors: Arc<AtomicU64>,
 }
 
 impl RoomHandle {
@@ -180,11 +181,11 @@ impl RoomHandle {
             clients: Mutex::new(HashMap::new()),
             events_clients: Mutex::new(Vec::new()),
             last_active_ms: AtomicI64::new(now_ms()),
-            close_all_calls: AtomicU64::new(0),
-            close_all_clients: AtomicU64::new(0),
-            close_all_queued: AtomicU64::new(0),
-            drain_exits: AtomicU64::new(0),
-            drain_write_errors: AtomicU64::new(0),
+            close_all_calls: Arc::new(AtomicU64::new(0)),
+            close_all_clients: Arc::new(AtomicU64::new(0)),
+            close_all_queued: Arc::new(AtomicU64::new(0)),
+            drain_exits: Arc::new(AtomicU64::new(0)),
+            drain_write_errors: Arc::new(AtomicU64::new(0)),
         }
     }
 }

@@ -23,7 +23,23 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       # --all-targets also compiles the unit tests and dev-dependencies.
-      - run: cargo check --all-targets
+      #
+      # The step output is piped through `tee` and the compiler errors are echoed as
+      # `::error::` lines: GitHub turns those into check annotations, which are
+      # readable through the API. The raw log is only downloadable with repository
+      # admin rights, so without this a failing build is a black box here.
+      - name: Run cargo check --all-targets
+        run: |
+          rc=0
+          cargo check --all-targets 2>&1 | tee check.log || rc=${PIPESTATUS[0]}
+          grep -E '^(error|error\[|  -->)' check.log | head -40 | sed 's/^/::error::/' || true
+          exit $rc
       # The win condition (60s possession -> instant win, buzzer split) and the
       # round-end close are covered by unit tests, so CI is where they are proven.
-      - run: cargo test --all-targets
+      - name: Run cargo test --all-targets
+        run: |
+          rc=0
+          cargo test --all-targets 2>&1 | tee test.log || rc=${PIPESTATUS[0]}
+          grep -E '(^error|^test .* FAILED|panicked at|^failures:)' test.log | head -40 | sed 's/^/::error::/' || true
+          exit $rc
+
