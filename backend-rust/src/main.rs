@@ -8,6 +8,7 @@
 
 mod auth;
 mod config;
+mod logs;
 mod net;
 mod protocol;
 mod registry;
