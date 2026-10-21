@@ -835,7 +835,7 @@ impl Room {
         self.reset_round_for_next_batch(now);
     }
 
-    fn finish_round(&mut self, now: i64) {
+    fn finish_round(&mut self, _now: i64) {
         // Buzzer resolution: global timer expired.
         let (holder_id, holder_name, holder_possession) = if self.chicken.is_held {
             if let Some(holder) = self
