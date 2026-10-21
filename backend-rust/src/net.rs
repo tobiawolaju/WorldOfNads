@@ -296,8 +296,12 @@ pub fn router(state: Arc<AppState>) -> Router {
         .with_state(state)
 }
 
-async fn health() -> &'static str {
-    "Server is alive and healthy!\n"
+/// Liveness probe. The first line is kept byte-identical to the old response so
+/// existing checks keep working; the commit tells us which build is actually
+/// serving (Render injects `RENDER_GIT_COMMIT`).
+async fn health() -> String {
+    let commit = std::env::var("RENDER_GIT_COMMIT").unwrap_or_else(|_| "unknown".to_string());
+    format!("Server is alive and healthy!\ncommit: {}\n", commit)
 }
 
 async fn ws_game(
