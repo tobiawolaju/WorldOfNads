@@ -537,23 +537,33 @@ impl Room {
 
     pub fn pickup_request(&mut self, id: &str, item_id: &str) {
         let id = id.to_string();
-        if let Some(item) = self.item_mut(item_id) {
+        // First, get the item and check if it's already held by this player.
+        let (prev_holder_id, already_held_by_this_player) = {
+            let item = match self.item_mut(item_id) {
+                Some(item) => item,
+                None => return,
+            };
             if item.is_held && item.holder_id.as_deref() == Some(id.as_str()) {
                 return;
             }
-            // Handle chicken holder transfer.
-            if item_id == "Chicken" {
-                // Stop accumulation for previous holder (if any).
-                if let Some(prev_holder_id) = item.holder_id.clone() {
-                    if let Some(prev) = self.players.get_mut(&prev_holder_id) {
-                        prev.is_current_holder = false;
-                    }
-                }
-                // Start accumulation for new holder.
-                if let Some(new_holder) = self.players.get_mut(&id) {
-                    new_holder.is_current_holder = true;
+            (item.holder_id.clone(), false)
+        };
+
+        // Handle chicken holder transfer - update previous holder.
+        if item_id == "Chicken" {
+            if let Some(prev_holder_id) = prev_holder_id {
+                if let Some(prev) = self.players.get_mut(&prev_holder_id) {
+                    prev.is_current_holder = false;
                 }
             }
+            // Start accumulation for new holder.
+            if let Some(new_holder) = self.players.get_mut(&id) {
+                new_holder.is_current_holder = true;
+            }
+        }
+
+        // Now update the item state.
+        if let Some(item) = self.item_mut(item_id) {
             item.is_held = true;
             item.holder_id = Some(id);
         }
@@ -583,20 +593,28 @@ impl Room {
             Some(p) => (p.x, p.y, p.z),
             None => return,
         };
-        let allowed = self
-            .item_mut(item_id)
-            .map(|item| item.is_held && item.holder_id.as_deref() == Some(id))
-            .unwrap_or(false);
+        
+        // Check if allowed first (without holding the item mutably).
+        let allowed = {
+            let item = match self.item_mut(item_id) {
+                Some(item) => item,
+                None => return,
+            };
+            item.is_held && item.holder_id.as_deref() == Some(id)
+        };
         if !allowed {
             return;
         }
-        if let Some(item) = self.item_mut(item_id) {
-            // Handle chicken holder drop.
-            if item_id == "Chicken" {
-                if let Some(holder) = self.players.get_mut(id) {
-                    holder.is_current_holder = false;
-                }
+
+        // Handle chicken holder drop - update player state.
+        if item_id == "Chicken" {
+            if let Some(holder) = self.players.get_mut(id) {
+                holder.is_current_holder = false;
             }
+        }
+
+        // Now update the item state.
+        if let Some(item) = self.item_mut(item_id) {
             item.is_held = false;
             item.holder_id = None;
             item.x = px;
