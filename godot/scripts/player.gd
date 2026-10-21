@@ -2321,6 +2321,10 @@ func respawn_at_spawn_point() -> void:
 	if not _is_dead:
 		return
 	
+	# Notify server of elimination (death) so it resets possession time.
+	if root and root.has_method("send_client_event"):
+		root.call("send_client_event", "eliminated", "Player eliminated", {})
+	
 	# Reset health
 	health = MAX_HEALTH
 	_health_regen_timer = 0.0

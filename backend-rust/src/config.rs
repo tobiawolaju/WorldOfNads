@@ -52,9 +52,12 @@ pub const CHICKEN_GRAVITY: f64 = 14.0;
 pub const FLOOR_Y: f64 = 1.195;
 
 // Match.
-pub const MATCH_DURATION_SECONDS: f64 = 180.0;
+pub const MATCH_DURATION_SECONDS: f64 = 300.0;
 pub const DEFAULT_MIN_PLAYERS_TO_START: usize = 2;
 pub const MATCH_START_COUNTDOWN_SECONDS: f64 = 5.0;
+
+// Victory condition.
+pub const VICTORY_POSSESSION_SECONDS: f64 = 60.0;
 
 // Storm.
 pub const STORM_START_RADIUS: f64 = 20.0;
