@@ -1292,6 +1292,7 @@ function dropHeldItemsAtPlayer(itemHolderId) {
     if (item.id === 'Chicken' && playerRewards[itemHolderId]) {
       playerRewards[itemHolderId].accumulatedPossession = 0;
       playerRewards[itemHolderId].isCurrentHolder = false;
+      playerRewards[itemHolderId].possessionSinceMs = null;
     }
     item.isHeld = false;
     item.holderId = null;
@@ -1578,7 +1579,38 @@ function resetLootBoxState() {
 // Accrues XP (proximity to the chicken) and MON (holding the lootbox) once a
 // second, then pushes each client its running totals. Runs only while the match
 // is live, so a single server tick is the single source of truth for rewards.
+// Credits the chicken holder with the REAL time that passed since the last
+// accounting point. Possession follows the wall clock, not the 20 Hz simulation
+// step: the reward tick only fires once per second, so adding FIXED_DT per tick
+// would make a "60 second" hold take 20 real minutes.
+function creditPossession(playerId, now) {
+  const reward = playerRewards[playerId];
+  if (!reward) return;
+  if (reward.possessionSinceMs !== null && reward.possessionSinceMs !== undefined) {
+    const dt = (now - reward.possessionSinceMs) / 1000;
+    if (dt > 0) reward.accumulatedPossession += dt;
+  }
+  reward.possessionSinceMs = null;
+}
+
+// Accrues XP (proximity to the chicken) and MON (holding the lootbox) once a
+// second, then pushes each client its running totals. Runs only while the match
+// is live, so a single server tick is the single source of truth for rewards.
 function runRewardTick() {
+  const tickNow = Date.now();
+  // Credit the chicken holder with the REAL time that passed since the last
+  // accounting point. The reward tick only fires once per second, so crediting
+  // FIXED_DT (the 20 Hz simulation step) here would run the possession clock
+  // 20x too slow.
+  for (const pid of Object.keys(playerRewards)) {
+    const reward = playerRewards[pid];
+    if (!reward || !reward.isCurrentHolder) continue;
+    if (reward.possessionSinceMs !== null && reward.possessionSinceMs !== undefined) {
+      const dt = (tickNow - reward.possessionSinceMs) / 1000;
+      if (dt > 0) reward.accumulatedPossession += dt;
+    }
+    reward.possessionSinceMs = tickNow;
+  }
   // While the chicken is carried, "near the chicken" means near the CARRIER —
   // chicken.x/z only holds the last place it was set down.
   let chickenX = chicken.x;
@@ -1604,8 +1636,8 @@ function runRewardTick() {
     }
 
     // NEW: Only the current chicken holder accumulates possession time.
+    // The time itself was credited above, in real seconds.
     if (reward.isCurrentHolder) {
-      reward.accumulatedPossession += FIXED_DT;
       // Instant victory check: first to 60 seconds wins.
       if (reward.accumulatedPossession >= VICTORY_POSSESSION_SECONDS) {
         finishRoundWithInstantVictory(pid);
@@ -1759,7 +1791,7 @@ gameWss.on('connection', (ws, req) => {
       lastUpdateAt: Date.now()
     };
     updatePlayerCellIndex(playerId, players[playerId]);
-    playerRewards[playerId] = { accumulatedXP: 0, accumulatedMON: 0, chickenHoldTime: 0, accumulatedPossession: 0, isCurrentHolder: false };
+    playerRewards[playerId] = { accumulatedXP: 0, accumulatedMON: 0, chickenHoldTime: 0, accumulatedPossession: 0, isCurrentHolder: false, possessionSinceMs: null };
 
     console.log(`🎮 Player connected: ${playerId} (${username}) skin=${resolvedSkin} xp=${xp}`);
     ws.playerId = playerId;
@@ -1788,7 +1820,7 @@ gameWss.on('connection', (ws, req) => {
       lastUpdateAt: Date.now()
     };
     updatePlayerCellIndex(playerId, players[playerId]);
-    playerRewards[playerId] = { accumulatedXP: 0, accumulatedMON: 0, chickenHoldTime: 0, accumulatedPossession: 0, isCurrentHolder: false };
+    playerRewards[playerId] = { accumulatedXP: 0, accumulatedMON: 0, chickenHoldTime: 0, accumulatedPossession: 0, isCurrentHolder: false, possessionSinceMs: null };
     ws.playerId = playerId;
     ws.send(mpEncode({ type: 'connect', id: playerId, username, skin: resolvedSkin, xp: 0 }));
   });
@@ -1817,6 +1849,7 @@ gameWss.on('connection', (ws, req) => {
         if (eventType === 'eliminated') {
           if (playerRewards[playerId]) {
             playerRewards[playerId].accumulatedPossession = 0;
+            playerRewards[playerId].possessionSinceMs = null;
             if (playerRewards[playerId].isCurrentHolder) {
               playerRewards[playerId].isCurrentHolder = false;
               if (chicken.isHeld && chicken.holderId === playerId) {
@@ -1896,11 +1929,15 @@ gameWss.on('connection', (ws, req) => {
         const previousHolder = item.holderId;
         // Chicken holder transfer: stop previous, start new.
         if (itemId === 'Chicken') {
+          const now = Date.now();
           if (previousHolder && playerRewards[previousHolder]) {
+            // Credit the previous holder for the time they actually held it.
+            creditPossession(previousHolder, now);
             playerRewards[previousHolder].isCurrentHolder = false;
           }
           if (playerRewards[playerId]) {
             playerRewards[playerId].isCurrentHolder = true;
+            playerRewards[playerId].possessionSinceMs = now;
           }
         }
         item.isHeld = true;
@@ -1938,7 +1975,11 @@ gameWss.on('connection', (ws, req) => {
         }
         // Chicken holder drop.
         if (itemId === 'Chicken' && playerRewards[playerId]) {
+          // The holder keeps the time they already earned; only the running part
+          // is settled here.
+          creditPossession(playerId, Date.now());
           playerRewards[playerId].isCurrentHolder = false;
+          playerRewards[playerId].possessionSinceMs = null;
         }
         item.isHeld = false;
         item.holderId = null;
@@ -2150,6 +2191,9 @@ function resolveBuzzerWinner() {
   if (chicken.isHeld && chicken.holderId && players[chicken.holderId]) {
     holderId = chicken.holderId;
     holderName = players[holderId].username || `player-${holderId.slice(0, 8)}`;
+    // Settle the running part of the holder's possession first so the split is
+    // based on the most accurate totals.
+    creditPossession(holderId, Date.now());
     holderPossession = Math.floor(playerRewards[holderId]?.accumulatedPossession || 0);
   }
 
@@ -2293,6 +2337,13 @@ if (matchTimeLeft <= 0) {
         matchRunning = true;
         matchStartedThisRound = true;
         randomizeAllItemSpawns();
+        // The chicken is re-spawned at match start, so nobody holds it. Clear the
+        // holder flags: a player who grabbed the chicken during the countdown
+        // would otherwise keep accruing possession without actually holding it.
+        for (const pid of Object.keys(playerRewards)) {
+          playerRewards[pid].isCurrentHolder = false;
+          playerRewards[pid].possessionSinceMs = null;
+        }
       }
     } else if (getPlayerCount() >= currentMinPlayersToStart) {
       matchStartCountdown = MATCH_START_COUNTDOWN_SECONDS;

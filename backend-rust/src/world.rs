@@ -37,6 +37,11 @@ pub struct Player {
     // New possession-time tracking (authoritative on server).
     pub accumulated_possession: f64,     // Total seconds this player has held the chicken.
     pub is_current_holder: bool,         // Whether this player currently holds the chicken.
+    // Wall-clock (ms) of the last possession accounting point while holding the
+    // chicken. Possession follows REAL time, not the 20 Hz simulation step: the
+    // reward tick only fires once per second, so crediting `FIXED_DT` per tick
+    // would make a "60 second" hold take 20 real minutes.
+    pub possession_since_ms: Option<i64>,
 }
 
 #[derive(Clone)]
@@ -207,6 +212,7 @@ impl Room {
             },
             accumulated_possession: 0.0,
             is_current_holder: false,
+            possession_since_ms: None,
         };
         self.players.insert(id.to_string(), player);
         self.update_player_cell_index(id);
@@ -392,6 +398,7 @@ impl Room {
                 if let Some(holder) = self.players.get_mut(holder_id) {
                     holder.accumulated_possession = 0.0;
                     holder.is_current_holder = false;
+                    holder.possession_since_ms = None;
                 }
             }
             if let Some(item) = self.item_mut(&id) {
@@ -410,6 +417,22 @@ impl Room {
     }
 
     // -- client messages ---------------------------------------------------
+
+    /// Credits the chicken holder with the REAL time that passed since the last
+    /// accounting point (the reward tick runs once per second, but the wall clock
+    /// is what the "60 seconds of possession" victory rule has to follow).
+    ///
+    /// The credit is applied on every reward tick and whenever the chicken
+    /// changes hands, so the accumulated total is never off by more than a tick.
+    fn credit_possession(&mut self, player_id: &str, now: i64) {
+        if let Some(player) = self.players.get_mut(player_id) {
+            if let Some(since) = player.possession_since_ms.take() {
+                if now > since {
+                    player.accumulated_possession += (now - since) as f64 / 1000.0;
+                }
+            }
+        }
+    }
 
     pub fn owns_player(&self, id: &str, conn_id: u64) -> bool {
         self.players.get(id).map(|p| p.orphaned_at.is_none() && p.conn_id == conn_id).unwrap_or(false)
@@ -553,7 +576,10 @@ impl Room {
 
         // Handle chicken holder transfer - update previous holder.
         if item_id == "Chicken" {
+            let now = now_ms();
             if let Some(prev_holder_id) = prev_holder_id {
+                // Credit the previous holder for the time they actually held it.
+                self.credit_possession(&prev_holder_id, now);
                 if let Some(prev) = self.players.get_mut(&prev_holder_id) {
                     prev.is_current_holder = false;
                 }
@@ -561,6 +587,7 @@ impl Room {
             // Start accumulation for new holder.
             if let Some(new_holder) = self.players.get_mut(&id) {
                 new_holder.is_current_holder = true;
+                new_holder.possession_since_ms = Some(now);
             }
         }
 
@@ -610,8 +637,13 @@ impl Room {
 
         // Handle chicken holder drop - update player state.
         if item_id == "Chicken" {
+            let now = now_ms();
+            // The holder keeps the time they already earned; only the running
+            // part is settled here.
+            self.credit_possession(id, now);
             if let Some(holder) = self.players.get_mut(id) {
                 holder.is_current_holder = false;
+                holder.possession_since_ms = None;
             }
         }
 
@@ -633,6 +665,7 @@ impl Room {
     pub fn handle_player_eliminated(&mut self, player_id: &str) {
         if let Some(player) = self.players.get_mut(player_id) {
             player.accumulated_possession = 0.0;
+            player.possession_since_ms = None;
             // If they were holding the chicken, drop it.
             if player.is_current_holder {
                 player.is_current_holder = false;
@@ -726,6 +759,17 @@ impl Room {
                     self.match_running = true;
                     self.match_started_this_round = true;
                     self.randomize_all_item_spawns();
+                    // The chicken is re-spawned at match start, so nobody holds it.
+                    // Clear the holder flags: a player who grabbed the chicken
+                    // during the countdown would otherwise keep accruing
+                    // possession without actually holding it.
+                    let ids: Vec<String> = self.players.keys().cloned().collect();
+                    for pid in ids {
+                        if let Some(player) = self.players.get_mut(&pid) {
+                            player.is_current_holder = false;
+                            player.possession_since_ms = None;
+                        }
+                    }
                 }
             } else if self.player_count() >= self.min_players_to_start {
                 self.match_start_countdown = MATCH_START_COUNTDOWN_SECONDS;
@@ -734,6 +778,26 @@ impl Room {
     }
 
     fn run_reward_tick(&mut self, now: i64) {
+        // Credit the chicken holder with the REAL time that passed since the
+        // last accounting point. The reward tick only fires once per second, so
+        // crediting `FIXED_DT` (the 20 Hz simulation step) here would run the
+        // possession clock 20x too slow.
+        {
+            let ids: Vec<String> = self.players.keys().cloned().collect();
+            for pid in ids {
+                if let Some(player) = self.players.get_mut(&pid) {
+                    if player.is_current_holder {
+                        if let Some(since) = player.possession_since_ms.take() {
+                            if now > since {
+                                player.accumulated_possession += (now - since) as f64 / 1000.0;
+                            }
+                        }
+                        player.possession_since_ms = Some(now);
+                    }
+                }
+            }
+        }
+
         let (chicken_x, chicken_z) = if self.chicken.is_held {
             match self
                 .chicken
@@ -767,8 +831,8 @@ impl Room {
                     }
                 }
                 // NEW: Only the current chicken holder accumulates possession time.
+                // The time itself was credited above, in real seconds.
                 if player.is_current_holder {
-                    player.accumulated_possession += FIXED_DT;
                     // Instant victory check: first to 60 seconds wins.
                     if player.accumulated_possession >= VICTORY_POSSESSION_SECONDS {
                         self.finish_round_with_instant_victory(now, &pid);
@@ -858,6 +922,11 @@ impl Room {
 
     fn finish_round(&mut self, now: i64) {
         // Buzzer resolution: global timer expired.
+        // Settle the running part of the current holder's possession first so the
+        // split is based on the most accurate totals.
+        if let Some(holder_id) = self.chicken.holder_id.clone() {
+            self.credit_possession(&holder_id, now);
+        }
         let (holder_id, holder_name, holder_possession) = if self.chicken.is_held {
             if let Some(holder) = self
                 .chicken
