@@ -560,7 +560,7 @@ impl Room {
         self.update_player_cell_index(id);
     }
 
-    pub fn pickup_request(&mut self, id: &str, item_id: &str) {
+    pub fn pickup_request(&mut self, id: &str, item_id: &str, now: i64) {
         let id = id.to_string();
         // First, get the item and check if it's already held by this player.
         let prev_holder_id = {
@@ -576,7 +576,6 @@ impl Room {
 
         // Handle chicken holder transfer - update previous holder.
         if item_id == "Chicken" {
-            let now = now_ms();
             if let Some(prev_holder_id) = prev_holder_id {
                 // Credit the previous holder for the time they actually held it.
                 self.credit_possession(&prev_holder_id, now);
@@ -617,7 +616,7 @@ impl Room {
         }
     }
 
-    pub fn drop_request(&mut self, id: &str, item_id: &str) {
+    pub fn drop_request(&mut self, id: &str, item_id: &str, now: i64) {
         let (px, py, pz) = match self.players.get(id) {
             Some(p) => (p.x, p.y, p.z),
             None => return,
@@ -637,7 +636,6 @@ impl Room {
 
         // Handle chicken holder drop - update player state.
         if item_id == "Chicken" {
-            let now = now_ms();
             // The holder keeps the time they already earned; only the running
             // part is settled here.
             self.credit_possession(id, now);
@@ -1482,13 +1480,175 @@ mod tests {
     fn pickup_sets_authoritative_holder() {
         let mut room = Room::new();
         room.add_player("p1", "alice", "s-default", 0, 1);
-        room.pickup_request("p1", "Chicken");
+        room.pickup_request("p1", "Chicken", 1_000_000_000_000);
         assert!(room.chicken.is_held);
         assert_eq!(room.chicken.holder_id.as_deref(), Some("p1"));
 
         // A second player can steal it (last claim wins).
         room.add_player("p2", "bob", "s-default", 0, 2);
-        room.pickup_request("p2", "Chicken");
+        room.pickup_request("p2", "Chicken", 1_000_000_000_000);
         assert_eq!(room.chicken.holder_id.as_deref(), Some("p2"));
+    }
+
+    // -- win condition ----------------------------------------------------
+
+    /// A room with two players and a live match.
+    fn live_room() -> Room {
+        let mut room = Room::new();
+        room.add_player("p1", "alice", "s-default", 0, 1);
+        room.add_player("p2", "bob", "s-default", 0, 2);
+        room.match_running = true;
+        room.match_started_this_round = true;
+        room.match_start_countdown = -1.0;
+        room.match_time_left = MATCH_DURATION_SECONDS;
+        room
+    }
+
+    /// Advance the room by `seconds` of simulated time at the 20 Hz simulation
+    /// rate, with the wall clock advancing in lockstep. The possession clock
+    /// follows the wall clock, not the simulation step, so the two must be
+    /// driven together here.
+    fn advance(room: &mut Room, seconds: f64, now: &mut i64) -> TickOutput {
+        let steps = (seconds * BROADCAST_RATE as f64).round() as i64;
+        let mut out = TickOutput::default();
+        for _ in 0..steps {
+            *now += 1000 / BROADCAST_RATE as i64;
+            out = room.tick(*now);
+            if out.close_all {
+                break;
+            }
+        }
+        out
+    }
+
+    fn winner_meta(room: &Room) -> Value {
+        let winner = room
+            .event_history
+            .iter()
+            .rev()
+            .find(|e| e["eventType"] == "match_winner")
+            .expect("a match_winner event must be published");
+        // `Value::clone` explicitly: `winner["meta"].clone()` would clone the
+        // reference, not the value.
+        Value::clone(&winner["meta"])
+    }
+
+    #[test]
+    fn possession_accrues_in_wall_clock_seconds() {
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p1", "Chicken", now);
+        advance(&mut room, 5.0, &mut now);
+
+        let held = room.players.get("p1").unwrap().accumulated_possession;
+        // 5 seconds of holding must buy ~5 seconds of possession: the reward
+        // tick fires once per second, so crediting the 20 Hz simulation step
+        // here would run the clock 20x too slow.
+        assert!(
+            (held - 5.0).abs() < 1.0,
+            "5s of holding accrued {}s of possession",
+            held
+        );
+    }
+
+    #[test]
+    fn instant_victory_fires_at_sixty_seconds_and_closes_the_round() {
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p1", "Chicken", now);
+        let out = advance(&mut room, 65.0, &mut now);
+
+        assert!(out.close_all, "the round must be closed after the victory");
+        let meta = winner_meta(&room);
+        assert_eq!(meta["victoryType"], "instant");
+        assert_eq!(meta["winnerName"], "alice");
+        assert_eq!(meta["winnerId"], "p1");
+    }
+
+    #[test]
+    fn dropping_the_chicken_freezes_possession_and_re_pickup_resumes_it() {
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p1", "Chicken", now);
+        advance(&mut room, 3.0, &mut now);
+        let held = room.players.get("p1").unwrap().accumulated_possession;
+        assert!((held - 3.0).abs() < 1.0, "held={}", held);
+
+        // Dropping keeps the time already earned but stops the clock.
+        room.drop_request("p1", "Chicken", now);
+        advance(&mut room, 5.0, &mut now);
+        let frozen = room.players.get("p1").unwrap().accumulated_possession;
+        assert!(
+            (frozen - held).abs() < 0.5,
+            "possession must not grow while the chicken is dropped: {} vs {}",
+            frozen,
+            held
+        );
+
+        // Picking it up again continues from the same total.
+        room.pickup_request("p1", "Chicken", now);
+        advance(&mut room, 2.0, &mut now);
+        let resumed = room.players.get("p1").unwrap().accumulated_possession;
+        assert!(
+            resumed > frozen + 1.0 && resumed < frozen + 3.0,
+            "re-pickup must resume the same clock: {} (frozen {})",
+            resumed,
+            frozen
+        );
+    }
+
+    #[test]
+    fn death_resets_accumulated_possession() {
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p1", "Chicken", now);
+        advance(&mut room, 5.0, &mut now);
+        assert!(room.players.get("p1").unwrap().accumulated_possession > 4.0);
+
+        room.handle_player_eliminated("p1");
+        let player = room.players.get("p1").unwrap();
+        assert_eq!(player.accumulated_possession, 0.0);
+        assert!(!player.is_current_holder);
+        assert!(
+            !room.chicken.is_held,
+            "the chicken must be released when its holder dies"
+        );
+    }
+
+    #[test]
+    fn buzzer_splits_the_reward_between_the_holder_and_the_progress_leader() {
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        // Alice holds the chicken for 40s, then Bob takes over.
+        room.pickup_request("p1", "Chicken", now);
+        advance(&mut room, 40.0, &mut now);
+        room.drop_request("p1", "Chicken", now);
+        room.pickup_request("p2", "Chicken", now);
+        advance(&mut room, 10.0, &mut now);
+
+        // Expire the global match timer.
+        room.match_time_left = 0.0;
+        let out = room.tick(now);
+        assert!(out.close_all, "the buzzer must close the round");
+
+        let meta = winner_meta(&room);
+        assert_eq!(meta["victoryType"], "buzzer");
+        assert_eq!(meta["split"], true);
+        assert_eq!(meta["holderName"], "bob");
+        assert_eq!(meta["progressName"], "alice");
+        let holder_share = meta["holderShare"].as_f64().unwrap();
+        let progress_share = meta["progressShare"].as_f64().unwrap();
+        assert!(
+            (holder_share + progress_share - 1.0).abs() < 1e-9,
+            "the shares must sum to 1: {} + {}",
+            holder_share,
+            progress_share
+        );
+        assert!(
+            holder_share < progress_share,
+            "alice accumulated more possession time: {} vs {}",
+            holder_share,
+            progress_share
+        );
     }
 }
