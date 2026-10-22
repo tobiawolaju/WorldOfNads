@@ -25,6 +25,7 @@ use crate::logs;
 use crate::auth::verify_session_token;
 use crate::protocol::*;
 use crate::registry::{MatchConfig, MatchLookup, MatchRegistry};
+use crate::settlement;
 use crate::world::{sanitize_meta, Room};
 
 /// Frames that count against a client's byte budget. Control frames (ping/pong/close)
@@ -1216,6 +1217,21 @@ pub async fn run_room_tick(state: Arc<AppState>, handle: Arc<RoomHandle>) {
         }
         if !output.events.is_empty() {
             broadcast_events(&handle, output.events).await;
+        }
+        if let Some(result) = output.settlement {
+            let room_name = handle.name.clone();
+            // Never await the report inside the tick: the control plane can be slow
+            // or down, and the round must keep its cadence either way. The task
+            // retries on its own and logs the failure to `/debug/logs`.
+            tokio::spawn(async move {
+                if let Err(err) = settlement::report_round_result(&room_name, result).await {
+                    tracing::warn!(
+                        room = %room_name,
+                        "round result was not reported: {}",
+                        err.message
+                    );
+                }
+            });
         }
         if output.close_all {
             tracing::info!("room {}: round finished: closing all clients", handle.name);

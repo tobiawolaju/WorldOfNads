@@ -94,10 +94,28 @@ type RewardItem = {
   id: string;
   username: string;
   amount: string;
+  amountMon: number;
   source: string;
-  category: "earned" | "gifted";
-  date: string;
+  category: "earned" | "gifted" | "lootbox";
+  kind?: "prize" | "lootbox";
+  date?: string;
+  createdAt?: string;
+  matchId?: string;
+  txHash?: string | null;
+  pending?: boolean;
 };
+
+/** Renders a reward timestamp, tolerating the legacy `date` / ISO strings. */
+function formatRewardDate(value?: string): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
+}
 
 type SkinConfig = {
   attachmentShape?: "box" | "cone" | "sphere" | "cylinder" | "torus";
@@ -332,6 +350,7 @@ export default function Dashboard() {
 
   const [matches, setMatches] = useState<Match[]>(staticMatches as Match[]);
   const [rewards, setRewards] = useState<RewardItem[]>([]);
+  const [rewardsError, setRewardsError] = useState("");
   const [playButtonState, setPlayButtonState] = useState<"idle" | "counting">("idle");
   const [elapsedTime, setElapsedTime] = useState(0);
   const [nowMs, setNowMs] = useState(Date.now());
@@ -481,17 +500,52 @@ export default function Dashboard() {
   useEffect(() => {
     const loadRewards = async () => {
       if (!authenticated || !user) return;
+      setRewardsError("");
       try {
         const username = getUsernameFromPrivy(user);
         const liveRewards = await fetchUserRewards(username);
-        setRewards(liveRewards as RewardItem[]);
+        const normalized: RewardItem[] = (liveRewards || [])
+          .map((reward: any) => {
+            const amountMon = Number(
+              reward?.amountMon ?? parseFloat(String(reward?.amount || "0"))
+            );
+            return {
+              ...reward,
+              id: String(reward?.id || ""),
+              username: String(reward?.username || ""),
+              amount: String(reward?.amount || ""),
+              amountMon: Number.isFinite(amountMon) ? amountMon : 0,
+              source: String(reward?.source || "WorldOfNads"),
+              category: reward?.category === "gifted" ? "gifted" :
+                reward?.category === "lootbox" || reward?.kind === "lootbox" ? "lootbox" : "earned",
+              date: reward?.createdAt || reward?.date || "",
+              txHash: reward?.txHash || null,
+              pending: Boolean(reward?.pending)
+            };
+          })
+          .filter((reward) => reward.id && reward.amountMon > 0)
+          .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+        setRewards(normalized);
       } catch (error: any) {
         console.error("Failed to fetch rewards", error);
+        setRewardsError("Could not load your rewards right now. Try again in a moment.");
       }
     };
 
     loadRewards();
   }, [authenticated, user]);
+
+  const rewardSummary = useMemo(() => {
+    const totalMon = rewards.reduce((sum, reward) => sum + reward.amountMon, 0);
+    const pendingRewards = rewards.filter((reward) => reward.pending);
+    const pendingMon = pendingRewards.reduce((sum, reward) => sum + reward.amountMon, 0);
+    return {
+      totalMon,
+      count: rewards.length,
+      pendingCount: pendingRewards.length,
+      pendingMon
+    };
+  }, [rewards]);
 
   useEffect(() => {
     setShowLoader(!ready);
@@ -998,28 +1052,70 @@ export default function Dashboard() {
 
             {tab === "rewards" && (
               <div className="reward-list">
-                {rewards.length === 0 ? (
+                {rewardsError ? (
+                  <div className="reward-empty">{rewardsError}</div>
+                ) : rewards.length === 0 ? (
                   <div className="reward-empty">
                     No rewards yet. Join a match to win some.
                   </div>
                 ) : (
-                  rewards
-                    .map((reward) => (
+                  <>
+                    <div className="reward-summary">
+                      <div>
+                        <div className="reward-summary-total">{rewardSummary.totalMon.toFixed(2)} MON</div>
+                        <div className="reward-summary-label">
+                          across {rewardSummary.count} {rewardSummary.count === 1 ? "reward" : "rewards"}
+                        </div>
+                      </div>
+                      {rewardSummary.pendingCount > 0 && (
+                        <div className="reward-summary-pending">
+                          {rewardSummary.pendingMon.toFixed(2)} MON awaiting payout
+                        </div>
+                      )}
+                    </div>
+                    {rewards.map((reward) => (
                       <div
                         key={reward.id}
                         className={`reward-item ${selectedReward === reward.id ? "selected" : ""}`}
                         onClick={() => setSelectedReward(reward.id)}
                       >
-                        <div className="reward-item-icon">🏆</div>
+                        <div className="reward-item-icon">
+                          {reward.kind === "lootbox" || reward.category === "lootbox" ? "📦" : "🏆"}
+                        </div>
                         <div className="reward-item-text">
                           <div className="reward-item-header">
-                            <strong>{reward.username}</strong>
+                            <strong>
+                              {reward.kind === "lootbox" || reward.category === "lootbox"
+                                ? "Lootbox pool"
+                                : "Match prize"}
+                            </strong>
                             <span className={`item-badge badge-${reward.category}`}>{reward.category}</span>
+                            {reward.pending && <span className="item-badge badge-pending">pending</span>}
                           </div>
-                          <div>won <span>{reward.amount}</span> from {reward.source}</div>
+                          <div className="reward-amount-line">
+                            <span className="reward-amount">{reward.amount}</span>
+                            <div className="reward-source">from {reward.source}</div>
+                          </div>
+                          <div className="reward-meta">
+                            {formatRewardDate(reward.date) && (
+                              <span>{formatRewardDate(reward.date)}</span>
+                            )}
+                            {reward.matchId && <span>{reward.matchId}</span>}
+                            {reward.txHash && (
+                              <a
+                                href={`https://testnet.monadexplorer.com/tx/${reward.txHash}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                view tx ↗
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    ))
+                    ))}
+                  </>
                 )}
               </div>
             )}

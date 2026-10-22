@@ -10,6 +10,7 @@ use serde_json::{json, Value};
 
 use crate::config::*;
 use crate::protocol::*;
+use crate::settlement::{PlayerRef, PlayerResult, RoundResult, Share, Split, Winner};
 
 #[derive(Clone)]
 pub struct Reward {
@@ -108,6 +109,9 @@ pub struct TickOutput {
     /// Ready-to-send JSON strings for the `/events` feed.
     pub events: Vec<String>,
     pub close_all: bool,
+    /// The result of a round that ended during this tick, ready to be reported to
+    /// the control plane. `None` on every other tick.
+    pub settlement: Option<RoundResult>,
 }
 
 pub struct Room {
@@ -137,6 +141,12 @@ pub struct Room {
     pub reward_accumulator: f64,
     pub batch_reset_until_ms: i64,
     pub pending_close_all: bool,
+    /// The round result captured at the moment the round ended.
+    ///
+    /// It has to be captured *before* `reset_round_for_next_batch` clears the
+    /// players: possession totals, XP and the lootbox holder all live on the
+    /// players. The tick hands it to the caller once, then it is `None` again.
+    pub pending_settlement: Option<RoundResult>,
 }
 
 impl Room {
@@ -175,6 +185,7 @@ impl Room {
             reward_accumulator: 0.0,
             batch_reset_until_ms: 0,
             pending_close_all: false,
+            pending_settlement: None,
         };
         room.randomize_all_item_spawns();
         room
@@ -895,6 +906,123 @@ impl Room {
         (winner_id, winner_name, second_id, second_name)
     }
 
+    /// The lootbox holder at this instant, if it is being carried.
+    fn lootbox_holder(&self) -> Option<PlayerRef> {
+        if !self.lootbox.is_held {
+            return None;
+        }
+        self.lootbox
+            .holder_id
+            .as_ref()
+            .and_then(|id| self.players.get(id))
+            .map(|player| PlayerRef {
+                player_id: player.id.clone(),
+                player_name: player.username.clone(),
+            })
+    }
+
+    /// Every live player's totals for the round, ordered possession-first with a
+    /// stable id tie-break so the same round always produces the same report.
+    fn settlement_players(&self) -> Vec<PlayerResult> {
+        let mut players: Vec<PlayerResult> = self
+            .players
+            .values()
+            .filter(|player| player.orphaned_at.is_none())
+            .map(|player| PlayerResult {
+                player_id: player.id.clone(),
+                player_name: player.username.clone(),
+                possession_seconds: player.accumulated_possession.floor(),
+                xp: player.reward.accumulated_xp.floor(),
+                mon: round6(player.reward.accumulated_mon),
+            })
+            .collect();
+        players.sort_by(|left, right| {
+            right
+                .possession_seconds
+                .partial_cmp(&left.possession_seconds)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| left.player_id.cmp(&right.player_id))
+        });
+        players
+    }
+
+    /// Build the result the control plane settles from.
+    ///
+    /// Shares are derived from the *same* `meta` that was published to the
+    /// clients, so the ledger and the result screen can never disagree. A round
+    /// without a holder/progress pair (instant victory, deterministic fallback)
+    /// collapses to a single 100% share for the winner.
+    fn build_round_result(
+        &self,
+        now: i64,
+        reason: &str,
+        winner_id: Option<&str>,
+        winner_name: &str,
+        meta: &Value,
+    ) -> RoundResult {
+        let possession_of = |id: &str| -> f64 {
+            self.players
+                .get(id)
+                .map(|player| player.accumulated_possession.floor())
+                .unwrap_or(0.0)
+        };
+
+        let mut shares = Vec::new();
+        for (id_key, name_key, time_key, share_key) in [
+            ("holderId", "holderName", "holderTime", "holderShare"),
+            ("progressId", "progressName", "progressTime", "progressShare"),
+        ] {
+            let id = meta.get(id_key).and_then(Value::as_str).unwrap_or("");
+            if id.is_empty() {
+                continue;
+            }
+            let share = meta.get(share_key).and_then(Value::as_f64).unwrap_or(0.0);
+            if share <= 0.0 {
+                continue;
+            }
+            shares.push(Share {
+                player_id: id.to_string(),
+                player_name: meta
+                    .get(name_key)
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string(),
+                seconds: meta
+                    .get(time_key)
+                    .and_then(Value::as_f64)
+                    .unwrap_or_else(|| possession_of(id)),
+                share,
+            });
+        }
+
+        if shares.is_empty() {
+            if let Some(id) = winner_id {
+                shares.push(Share {
+                    player_id: id.to_string(),
+                    player_name: winner_name.to_string(),
+                    seconds: possession_of(id),
+                    share: 1.0,
+                });
+            }
+        }
+
+        RoundResult {
+            reason: reason.to_string(),
+            ended_at: now,
+            winner: winner_id.map(|id| Winner {
+                player_id: id.to_string(),
+                player_name: winner_name.to_string(),
+                possession_seconds: possession_of(id),
+            }),
+            split: Split {
+                is_split: shares.len() > 1,
+                shares,
+            },
+            players: self.settlement_players(),
+            lootbox_holder: self.lootbox_holder(),
+        }
+    }
+
     /// Called when a player reaches 60s possession time — instant victory.
     fn finish_round_with_instant_victory(&mut self, now: i64, victor_id: &str) {
         let victor_name = self
@@ -916,6 +1044,10 @@ impl Room {
             victor_id,
             &meta,
         );
+
+        // Capture the result before the batch reset clears the players.
+        self.pending_settlement =
+            Some(self.build_round_result(now, "instant", Some(victor_id), &victor_name, &meta));
 
         self.reset_round_for_next_batch(now);
     }
@@ -1075,6 +1207,17 @@ impl Room {
             }
         };
 
+        // Capture the reportable result before the players are cleared. The split
+        // is read back from the same `meta` the clients received, so the ledger
+        // and the result screen cannot disagree.
+        self.pending_settlement = Some(self.build_round_result(
+            now,
+            "buzzer",
+            winner_id.as_deref(),
+            &winner_name,
+            &split_meta,
+        ));
+
         if let Some(ref wid) = winner_id {
             let message = format!("{} won the match", winner_name);
             let mut meta = split_meta;
@@ -1148,6 +1291,9 @@ impl Room {
 
         let mut out = TickOutput::default();
         out.events = std::mem::take(&mut self.pending_events);
+        // Taken before the `pending_close_all` early return: a finished round sets
+        // both flags on the same tick, and the result must still reach the caller.
+        out.settlement = self.pending_settlement.take();
 
         if self.pending_close_all {
             self.pending_close_all = false;
@@ -1828,5 +1974,108 @@ mod tests {
         );
         assert_eq!(meta["holderName"], "");
         assert_eq!(meta["holderTime"], 0);
+    }
+
+    // -- settlement -------------------------------------------------------
+
+    /// The buzzer result carries the same split the clients were shown, so the
+    /// ledger and the result screen cannot disagree.
+    #[test]
+    fn the_buzzer_result_is_captured_for_the_control_plane() {
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p1", "Chicken", now);
+        advance(&mut room, 40.0, &mut now);
+        room.drop_request("p1", "Chicken", now);
+        room.pickup_request("p2", "Chicken", now);
+        advance(&mut room, 10.0, &mut now);
+
+        room.match_time_left = 0.0;
+        let out = room.tick(now);
+
+        let meta = winner_meta(&room);
+        let result = out.settlement.expect("the buzzer must produce a settlement");
+        assert_eq!(result.reason, "buzzer");
+        assert_eq!(result.ended_at, now);
+        assert!(result.split.is_split);
+        assert_eq!(result.split.shares.len(), 2);
+
+        let holder = &result.split.shares[0];
+        let progress = &result.split.shares[1];
+        assert_eq!(holder.player_id, "p2");
+        assert_eq!(progress.player_id, "p1");
+        assert_eq!(
+            holder.share,
+            meta["holderShare"].as_f64().unwrap(),
+            "the report must reuse the published holder share"
+        );
+        assert_eq!(
+            progress.share,
+            meta["progressShare"].as_f64().unwrap(),
+            "the report must reuse the published progress share"
+        );
+        assert!(
+            (holder.share + progress.share - 1.0).abs() < 1e-9,
+            "the shares must sum to 1"
+        );
+
+        let winner = result.winner.expect("the holder must be the winner");
+        assert_eq!(winner.player_id, "p2");
+        assert!(winner.possession_seconds >= 9.0, "got {}", winner.possession_seconds);
+
+        // Every player's round totals travel with the result, most possession first.
+        assert_eq!(result.players.len(), 2);
+        assert_eq!(result.players[0].player_id, "p1");
+        assert!(result.players[0].possession_seconds >= 39.0);
+        assert!(result.players[0].xp > 0.0, "proximity XP must be reported");
+
+        // The result is handed out exactly once.
+        assert!(room.tick(now).settlement.is_none());
+    }
+
+    /// An instant victory is a single-winner round: one 100% share.
+    #[test]
+    fn the_instant_victory_result_is_captured_for_the_control_plane() {
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p1", "Chicken", now);
+        let out = advance(&mut room, 65.0, &mut now);
+
+        let result = out
+            .settlement
+            .expect("the instant victory must produce a settlement");
+        assert_eq!(result.reason, "instant");
+        assert!(!result.split.is_split);
+        assert_eq!(result.split.shares.len(), 1);
+        assert_eq!(result.split.shares[0].player_id, "p1");
+        assert_eq!(result.split.shares[0].share, 1.0);
+
+        let winner = result.winner.expect("there must be a winner");
+        assert_eq!(winner.player_name, "alice");
+        assert!(
+            winner.possession_seconds >= 60.0,
+            "the victor must have at least 60s, got {}",
+            winner.possession_seconds
+        );
+    }
+
+    /// The lootbox holder at the buzzer is part of the result (it is who the
+    /// lootbox pool pays out to).
+    #[test]
+    fn the_settlement_names_the_lootbox_holder() {
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p2", "LootBox", now);
+        advance(&mut room, 5.0, &mut now);
+
+        room.match_time_left = 0.0;
+        let out = room.tick(now);
+
+        let result = out.settlement.expect("the buzzer must produce a settlement");
+        let holder = result
+            .lootbox_holder
+            .expect("the lootbox holder must be reported");
+        assert_eq!(holder.player_id, "p2");
+        assert_eq!(holder.player_name, "bob");
     }
 }

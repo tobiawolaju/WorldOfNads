@@ -5,7 +5,12 @@ dotenv.config();
 const MATCH_ENGINE_ABI = [
     "function createSponsoredMatch(bytes32 matchId, address prizeToken, uint256 totalPrize, uint32 expectedParticipants, uint64 startTime, string winnerTokenURI, string participationTokenURI, string matchMetadataURI) external payable",
     "function settleMatch(bytes32 matchId, address winner, address[] calldata participants, address lootBoxFinalHolder, uint256 gasCompensation) external",
+    "function settleMatchSplit(bytes32 matchId, address[] calldata winners, uint16[] calldata sharesBps, address[] calldata participants, address lootBoxFinalHolder) external",
     "function cancelSponsoredMatch(bytes32 matchId) external",
+    "function refundExpired(bytes32 matchId) external",
+    "function settleDeadlineOf(bytes32 matchId) external view returns (uint64)",
+    "function totalEscrowed(address token) external view returns (uint256)",
+    "function withdrawSurplus(address token) external",
     "function getMatch(bytes32 matchId) external view returns (address sponsor, address prizeToken, uint256 winnerPrize, uint256 lootBoxPool, uint256 winnerTokenId, uint256 participationTokenId, uint32 expectedParticipants, uint64 createdAt, uint64 startTime, uint64 settledAt, bool settled, bool cancelled, string matchMetadataURI)"
 ];
 
@@ -213,6 +218,32 @@ export async function getPoolValue(matchIdStr) {
     }
 }
 
+/**
+ * Reads the escrow record for a match. Returns null when the match was never
+ * created on-chain (the standard case for matches hosted before the escrow was
+ * wired), which tells the settlement layer to keep the payout off-chain.
+ */
+export async function getMatchOnchain(matchIdStr) {
+    try {
+        const data = await getMatchEngine().getMatch(toBytes32(matchIdStr));
+        // `createdAt` is 0 for an unknown match id.
+        if (!data || Number(data.createdAt) === 0) return null;
+        return {
+            sponsor: data.sponsor,
+            prizeToken: data.prizeToken,
+            winnerPrizeMon: Number(ethers.formatEther(data.winnerPrize)),
+            lootBoxPoolMon: Number(ethers.formatEther(data.lootBoxPool)),
+            settled: Boolean(data.settled),
+            cancelled: Boolean(data.cancelled),
+            startTime: Number(data.startTime),
+            settledAt: Number(data.settledAt)
+        };
+    } catch (error) {
+        console.error(`[Onchain] getMatch failed:`, error.message);
+        return null;
+    }
+}
+
 export async function getSkinData(skinId) {
     try {
         const skins = getSkins();
@@ -253,14 +284,61 @@ export async function getAllSkins() {
 
 export async function contractWithdraw(contractAddress) {
     try {
-        const contract = new ethers.Contract(contractAddress, [
-            "function withdraw() external"
-        ], wallet);
-        const tx = await contract.withdraw({ gasLimit: 100000 });
+        // `withdraw()` used to drain the whole balance, which is how the escrow
+        // went 9 MON short. V2 can only take the surplus.
+        const isMatchEngine =
+            String(contractAddress).toLowerCase() ===
+            String(process.env.MATCH_ENGINE_ADDRESS || '').toLowerCase();
+        const contract = isMatchEngine
+            ? new ethers.Contract(contractAddress, ["function withdrawSurplus(address token) external"], wallet)
+            : new ethers.Contract(contractAddress, ["function withdrawSurplus() external"], wallet);
+        const tx = isMatchEngine
+            ? await contract.withdrawSurplus("0x0000000000000000000000000000000000000000", { gasLimit: 150000 })
+            : await contract.withdrawSurplus({ gasLimit: 150000 });
         await tx.wait();
         return { success: true, txHash: tx.hash };
     } catch (error) {
         console.error(`[Onchain] withdraw failed for ${contractAddress}:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Pays a round whose prize is shared between several winners.
+ *
+ * The V1 engine only had `settleMatch`, so split rounds were recorded off-chain
+ * and never paid. V2 adds `settleMatchSplit`; against a V1 address this fails
+ * with "not a function", which the settlement layer reports as
+ * `split_awaiting_payout` rather than retrying forever.
+ */
+export async function settleMatchSplitOnchain(matchIdStr, winners, sharesBps, participantAddresses, lootBoxFinalHolder) {
+    try {
+        const matchIdBytes = toBytes32(matchIdStr);
+        const matchEngine = getMatchEngine();
+        const uniqueParticipants = [...new Set(participantAddresses.filter(a => !!a))];
+        const finalHolder = lootBoxFinalHolder || winners[0];
+
+        const gasEstimate = await matchEngine.settleMatchSplit.estimateGas(
+            matchIdBytes,
+            winners,
+            sharesBps,
+            uniqueParticipants,
+            finalHolder
+        );
+        const gasLimit = (gasEstimate * 120n / 100n) > 600000n ? (gasEstimate * 120n / 100n) : 600000n;
+
+        const tx = await matchEngine.settleMatchSplit(
+            matchIdBytes,
+            winners,
+            sharesBps,
+            uniqueParticipants,
+            finalHolder,
+            { gasLimit }
+        );
+        await tx.wait();
+        return { success: true, txHash: tx.hash };
+    } catch (error) {
+        console.error(`[Onchain] settleMatchSplit failed:`, error.message);
         return { success: false, error: error.message };
     }
 }

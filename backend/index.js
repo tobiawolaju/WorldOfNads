@@ -2,8 +2,9 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
-import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin } from './firebaseClient.js';
-import { settleMatchOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec } from './contractClient.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward } from './firebaseClient.js';
+import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain } from './contractClient.js';
+import { settleRound } from './settlement.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 import { refreshAllUserPfps } from './refreshUserPfps.js';
 import { attachmentsForId, loadCombos, loadDefaults } from './skinIndex.js';
@@ -513,6 +514,49 @@ async function readJsonBody(req) {
   });
 }
 
+/**
+ * Side effects the settlement flow needs. Kept in one object so the settlement
+ * logic itself stays free of Firebase/ethers imports and is unit-testable.
+ */
+const settlementDeps = {
+  getMatch: getMatchRecord,
+  getOnchainMatch,
+  getPlayerWallet,
+  saveReward,
+  patchReward,
+  creditPlayerResult,
+  updateMatchRecord,
+  settleOnchain: (request) =>
+    settleMatchOnchain(
+      request.matchId,
+      request.winnerWallet,
+      request.participants,
+      request.lootHolderWallet || request.winnerWallet
+    ),
+  settleOnchainSplit: async (request) => {
+    const result = await settleMatchSplitOnchain(
+      request.matchId,
+      request.winners,
+      request.sharesBps,
+      request.participants,
+      request.lootHolderWallet || request.winners[0]
+    );
+    // A V1 engine has no `settleMatchSplit`: report it as unsupported so the
+    // settlement is recorded as "awaiting payout" instead of failing forever.
+    if (!result.success && /is not a function|not a function|CALL_EXCEPTION|missing argument/i.test(result.error || '')) {
+      return { ...result, unsupported: true };
+    }
+    return result;
+  },
+  log: (message, meta) => {
+    if (meta) {
+      console.log(`[Settlement] ${message}`, meta);
+    } else {
+      console.log(`[Settlement] ${message}`);
+    }
+  }
+};
+
 const server = createServer(async (req, res) => {
   const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
@@ -578,6 +622,43 @@ const server = createServer(async (req, res) => {
     } catch (error) {
       console.error('[Internal] /internal/matches failed:', error);
       sendJson(res, 500, { ok: false, error: 'failed to load matches' });
+    }
+    return;
+  }
+
+  // Internal settlement endpoint for the room server. A finished round arrives
+  // here once; this turns the result into the ledger (rewards + player totals)
+  // and, for a single-winner round, pays the escrow. Idempotent per match id, so
+  // the room server can retry without paying twice.
+  const resultRoute = req.method === 'POST'
+    ? reqUrl.pathname.match(/^\/internal\/matches\/([^/]+)\/result$/)
+    : null;
+  if (resultRoute) {
+    const secret = process.env.INTERNAL_SECRET || '';
+    const provided = String(req.headers['x-internal-secret'] || '');
+    if (secret && provided !== secret) {
+      sendJson(res, 403, { ok: false, error: 'forbidden' });
+      return;
+    }
+
+    let report;
+    try {
+      report = await readJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { ok: false, status: 'invalid', error: 'the body must be valid JSON' });
+      return;
+    }
+
+    try {
+      const result = await settleRound({
+        matchId: decodeURIComponent(resultRoute[1]),
+        report,
+        deps: settlementDeps
+      });
+      sendJson(res, result.httpStatus, { ok: result.httpStatus === 200, ...result });
+    } catch (error) {
+      console.error('[Internal] settlement failed:', error);
+      sendJson(res, 500, { ok: false, status: 'error', error: 'settlement failed' });
     }
     return;
   }

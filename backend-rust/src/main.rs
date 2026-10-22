@@ -12,6 +12,7 @@ mod logs;
 mod net;
 mod protocol;
 mod registry;
+mod settlement;
 mod world;
 
 use std::net::SocketAddr;

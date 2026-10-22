@@ -95,6 +95,52 @@ export async function updateMatchStatus(matchId, status) {
     await update(matchRef, { status });
 }
 
+export async function getMatchRecord(matchId) {
+    if (!matchId) return null;
+    const snapshot = await get(ref(db, `matches/${matchId}`));
+    return snapshot.exists() ? snapshot.val() : null;
+}
+
+/** Patches a match record. The match id is the database key, not a field. */
+export async function updateMatchRecord(matchId, patch) {
+    if (!matchId) return;
+    await update(ref(db, `matches/${matchId}`), patch);
+}
+
+function round6(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? Math.round(n * 1e6) / 1e6 : 0;
+}
+
+/**
+ * Applies a finished-round result to one player's persistent totals.
+ *
+ * Idempotent per match: `users/<name>/settledMatches/<matchId>` marks a player
+ * as credited, so a retried settlement report can never double-credit wins,
+ * prize money or XP. Unknown usernames are skipped instead of creating a junk
+ * `Anon` record in the users table.
+ */
+export async function creditPlayerResult(username, { matchId, win = 0, wonMon = 0, xp = 0 } = {}) {
+    if (!username || !matchId) return { credited: false, reason: 'missing_identity' };
+    const userRef = ref(db, `users/${username}`);
+    const snapshot = await get(userRef);
+    if (!snapshot.exists()) return { credited: false, reason: 'unknown_user' };
+
+    const user = snapshot.val() || {};
+    const settled = user.settledMatches || {};
+    if (settled[matchId]) return { credited: false, reason: 'already_credited' };
+
+    const patch = {};
+    patch[`users/${username}/won`] = Number(user.won || 0) + Number(win || 0);
+    patch[`users/${username}/wonMon`] = round6(Number(user.wonMon || 0) + Number(wonMon || 0));
+    patch[`users/${username}/xp`] = Math.round(Number(user.xp || 0) + Number(xp || 0));
+    patch[`users/${username}/settledMatches/${matchId}`] = true;
+    patch[`users/${username}/lastSettledAt`] = new Date().toISOString();
+
+    await update(ref(db), patch);
+    return { credited: true };
+}
+
 export async function updateUserRoles(username, roles) {
     if (!username) return;
     const userRef = ref(db, `users/${username}`);
@@ -102,15 +148,26 @@ export async function updateUserRoles(username, roles) {
     console.log(`[Firebase] Roles updated for ${username}:`, roles);
 }
 
-export async function saveReward(rewardData) {
-    const rewardId = `reward-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const rewardRef = ref(db, `rewards/${rewardId}`);
+/**
+ * Writes one reward row. Pass an explicit `rewardId` for idempotent writes: a
+ * retried settlement overwrites the same row instead of duplicating it.
+ */
+export async function saveReward(rewardData, rewardId = null) {
+    const id = rewardId || `reward-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const rewardRef = ref(db, `rewards/${id}`);
     await update(rewardRef, {
         ...rewardData,
-        id: rewardId,
-        createdAt: new Date().toISOString()
+        id,
+        createdAt: rewardData.createdAt || new Date().toISOString()
     });
     console.log(`[Firebase] Reward saved for ${rewardData.username}: ${rewardData.amount}`);
+    return id;
+}
+
+/** Patches a reward row (used to attach a tx hash once the escrow payout lands). */
+export async function patchReward(rewardId, patch) {
+    if (!rewardId) return;
+    await update(ref(db, `rewards/${rewardId}`), patch);
 }
 
 export async function getPlayerProfile(username) {

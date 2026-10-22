@@ -88,6 +88,37 @@ contract WONsSkins is ERC1155, Ownable, ReentrancyGuard {
         emit SkinBurned(skinId, msg.sender, amount);
     }
 
+    /**
+     * Burns exactly BURN_RATE common skins and mints one rare skin.
+     *
+     * This is the rule the store advertises. It used to be a dead promise:
+     * `burnSkins` destroyed the tokens and paid nothing back, and the only way
+     * to get a rare was an owner-only mint. The rare handed out is the first
+     * one with supply left, which keeps the outcome deterministic instead of
+     * depending on a block variable the caller could grind.
+     */
+    function burnForRare(uint256[] calldata tokenIds) external nonReentrant {
+        if (tokenIds.length != BURN_RATE) revert InsufficientBurnQuantity();
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            Skin storage burned = skins[tokenIds[i]];
+            if (!burned.exists) revert InvalidSkin();
+            if (burned.tier != Tier.Common) revert BurnNotAllowed();
+
+            _burn(msg.sender, tokenIds[i], 1);
+            emit SkinBurned(tokenIds[i], msg.sender, 1);
+        }
+
+        uint256 rareSkinId = _findAvailableSkin(Tier.Rare);
+        if (rareSkinId == 0) revert SupplyExhausted();
+
+        Skin storage rareSkin = skins[rareSkinId];
+        rareSkin.minted += 1;
+        _mint(msg.sender, rareSkinId, 1, "");
+
+        emit SkinMinted(rareSkinId, msg.sender, 1);
+    }
+
     function mintRareFromBurn(address to) external onlyOwner nonReentrant {
         uint256 rareSkinId = _findAvailableSkin(Tier.Rare);
         if (rareSkinId == 0) revert SupplyExhausted();

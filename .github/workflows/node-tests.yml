@@ -1,0 +1,27 @@
+name: node-tests
+
+# Unit tests for the parts of the Node control plane that can run without any
+# installed dependencies. `backend/settlement.js` is deliberately dependency-free
+# (Firebase/ethers are injected), so this proves the payout maths and the
+# idempotency of the settlement flow without an `npm install` (see AGENTS.md:
+# installs belong to the deployment environment, not to a dev machine).
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/node-tests.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+  workflow_dispatch:
+
+jobs:
+  settlement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Run settlement tests
+        run: node --test backend/settlement.test.js
