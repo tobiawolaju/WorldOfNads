@@ -196,6 +196,13 @@ const VARIANT_BORDER_WIDTH: int = 2
 
 var _preview_player: Node3D = null
 var _skin_applier: SkinApplier = SkinApplier.new()
+# Hold this key to show the preview nad's skin parts that sit outside the
+# regular look (the shirt, the wig and the glove). Releasing it puts them back
+# exactly as they were.
+const REVEAL_KEY: int = KEY_C
+# True while the reveal key is held, so the handler acts on the press/release
+# edges only and the key-repeat events cannot overwrite the "before" state.
+var _preview_hidden_extras_revealed: bool = false
 # 3D preview camera state. `_preview_base_distance` is the auto-framed distance from
 # `_frame_preview_camera()`; the live distance is that divided by `_preview_zoom`, and
 # the camera is placed on a sphere around `_preview_target` by the orbit angles.
@@ -617,6 +624,31 @@ func _update_preview_camera(delta: float = 0.0) -> void:
 
 
 # ----------------------------------------------------------- preview touch/mouse
+
+# The preview nad wears the same skin.tscn as the game, so the reveal key works
+# here too: holding it shows the parts that ship outside the regular look (the
+# shirt, the wig and the glove) and paints the nad's skin in the reveal colour
+# while the skin is being inspected, and releasing it puts them back.
+# _input rather than _unhandled_input, because the wallet-link
+# field can hold the keyboard focus and would swallow the key.
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and (event as InputEventKey).keycode == REVEAL_KEY:
+		_set_preview_hidden_extras_revealed((event as InputEventKey).pressed)
+
+
+# Shows or hides again the preview nad's hidden skin parts and paints its
+# skin in the reveal colour. The flag guards the edges: the key-repeat events
+# that arrive while the key is held must not re-save the "before" state, or
+# the release would restore the revealed state instead of the original one.
+func _set_preview_hidden_extras_revealed(revealed: bool) -> void:
+	if revealed == _preview_hidden_extras_revealed:
+		return
+	_preview_hidden_extras_revealed = revealed
+	if _preview_player == null:
+		return
+	SkinApplier.set_hidden_extras_visible(_preview_player, revealed)
+	SkinApplier.set_reveal_tint(_preview_player, revealed)
+
 
 # The preview pane has no interactive chrome of its own (the stat pills and skin
 # captions are not focusable), so unhandled input over its rect is free to drive the
