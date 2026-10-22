@@ -44,6 +44,17 @@ pub const GAME_HEARTBEAT_INTERVAL_MS: u64 = 30_000;
 // `match.pl`. Node has no equivalent; this is a UX improvement for bad networks.
 pub const RECONNECT_GRACE_MS: i64 = 20_000;
 
+// How long the server waits for a client to close its own socket after the round
+// ended before the socket is dropped anyway.
+//
+// The round-end notice travels as an ordinary data frame, because an HTTP edge
+// proxy (Render's) terminates the WebSocket session itself: a server-sent close
+// frame never reaches the client, so the client would sit in a finished round
+// until the proxy timed the connection out. The notice tells the client to close
+// its side (a client-sent close frame does get through), and this grace period is
+// the fallback for a client that ignores the notice.
+pub const ROUND_END_GRACE_MS: u64 = 2_000;
+
 // Movement validation.
 pub const MAX_PLAYER_SPEED: f64 = 12.0;
 pub const MAX_PLAYER_VERTICAL_SPEED: f64 = 36.0;

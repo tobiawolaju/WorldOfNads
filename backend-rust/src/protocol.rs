@@ -208,6 +208,19 @@ pub struct ConnectMsg {
     pub xp: i64,
 }
 
+/// The round-end notice.
+///
+/// Node ends a round with a WebSocket close frame (`backend/index.js`:
+/// `client.close(1000, 'round_finished')`). An HTTP edge proxy in front of the
+/// room server terminates the WebSocket session itself and swallows that frame,
+/// so the round end is also announced as an ordinary data frame. The Godot
+/// client closes its own socket when it sees this message.
+#[derive(Serialize)]
+pub struct RoundFinishedMsg {
+    #[serde(rename = "type")]
+    pub msg_type: &'static str,
+}
+
 #[derive(Serialize)]
 pub struct RewardUpdate {
     #[serde(rename = "type")]

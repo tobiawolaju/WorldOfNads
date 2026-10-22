@@ -351,6 +351,10 @@ const RECONNECT_INITIAL_DELAY: float = 1.0
 const RECONNECT_GRACE_TIME: float = 0.5
 const RECONNECT_COUNTDOWN_STEPS: int = 3
 var _waiting_for_connect: bool = false
+# Set when the server tells us the round ended. The server also sends a WebSocket
+# close frame, but an HTTP edge proxy can swallow that, so the round end is also
+# announced as an ordinary data frame. We close our side so the round ends cleanly.
+var _round_finished: bool = false
 
 # Liveness watchdog: the server only broadcasts while a match runs, so if we are
 # in a match and hear nothing for this long the link has silently died. A silent
@@ -430,10 +434,16 @@ func _process(_delta: float):
 
 	elif state == WebSocketPeer.STATE_CLOSED:
 		if connected:
-			print("❌ Disconnected from server.")
+			var round_over := _round_finished
+			_round_finished = false
+			if round_over:
+				# Expected teardown at the end of a round: reconnect for the next one.
+				print("🔄 Round over, reconnecting for the next round.")
+			else:
+				print("❌ Disconnected from server.")
 			connected = false
 			connection_attempted = false
-			_start_reconnection()
+			_start_reconnection(round_over)
 		elif not _reconnecting and is_connecting_to_live:
 			print("❌ Live server connection failed.")
 			_start_reconnection()
@@ -478,7 +488,7 @@ func _on_fallback_timer_timeout():
 	_attempt_connection()
 
 # --- RECONNECTION ---
-func _start_reconnection():
+func _start_reconnection(round_over: bool = false):
 	if _reconnecting:
 		return
 	_reconnecting = true
@@ -491,7 +501,10 @@ func _start_reconnection():
 	_reconnect_countdown = 0
 	_reconnect_target_url = ROOM_URL if is_connecting_to_live else LOCAL_URL
 	_resolve_subtitle_label()
-	_update_subtitle_text("Disconnected! Check your internet.")
+	if round_over:
+		_update_subtitle_text("Round over! Connecting to the next round...")
+	else:
+		_update_subtitle_text("Disconnected! Check your internet.")
 	print("🔄 Auto-reconnect started")
 
 func _update_reconnection(real_delta: float):
@@ -723,6 +736,14 @@ func _receive_messages():
 					print("✅ Received connect after reconnect, resyncing...")
 					call_deferred("_resync_after_reconnect")
 
+			"round_finished":
+				# The server ended the round. It also sends a WebSocket close frame
+				# with the reason "round_finished", but a proxy between us and the
+				# server can swallow that frame, so the round end is announced as
+				# ordinary data as well. Closing our side ends the round cleanly.
+				_round_finished = true
+				print("🏁 Round finished; closing the game socket.")
+				ws.close()
 			"state":
 				if data.has("players"):
 					_update_world_state(data["players"], true, false)

@@ -1674,6 +1674,11 @@ function resetRoundForNextBatch() {
 
   gameWss.clients.forEach((client) => {
     if (client.readyState === 1) {
+      // The round-end notice travels as an ordinary data frame: an HTTP edge
+      // proxy (Render's) terminates the WebSocket session itself and swallows
+      // the server's close frame, so the client would never learn that the
+      // round ended. The Godot client closes its own socket when it sees this.
+      client.send(mpEncode({ type: 'round_finished' }));
       client.close(1000, 'round_finished');
     }
   });
