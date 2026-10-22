@@ -299,7 +299,10 @@ static func _apply_skin(player: Node3D, skin_name: String, tint: Color) -> void:
 
 	for mi in meshes:
 		if String(mi.name).begins_with("eye"):
-			_tint_eye(mi, data)
+			if is_reveal_tinted(player):
+				_tint_eye_reveal(mi)
+			else:
+				_tint_eye(mi, data)
 			continue
 		var mat: Material = _material_for_name(material_set, mi.name)
 		if mat != null:
@@ -388,6 +391,20 @@ static func set_reveal_tint(player: Node3D, enabled: bool) -> void:
 	var restore := str(player.get_meta(REVEAL_TINT_SKIN_META, DEFAULT_SKIN))
 	player.remove_meta(REVEAL_TINT_SKIN_META)
 	_apply_skin(player, restore, NO_TINT)
+	# Restore eye shaders explicitly in case _tint_eye didn't catch up
+	for c in player.find_children("*", "MeshInstance3D", true):
+		if c is MeshInstance3D and String(c.name).begins_with("eye"):
+			var mi := c as MeshInstance3D
+			var mat := mi.material_override as ShaderMaterial
+			if mat == null and mi.get_surface_override_material_count() > 0:
+				mat = mi.get_surface_override_material(0) as ShaderMaterial
+			if mat != null:
+				if mat.has_meta("_skin_orig_eye_color"):
+					mat.set_shader_parameter("eye_color", mat.get_meta("_skin_orig_eye_color"))
+					mat.remove_meta("_skin_orig_eye_color")
+				if mat.has_meta("_skin_orig_pupil_color"):
+					mat.set_shader_parameter("pupil_color", mat.get_meta("_skin_orig_pupil_color"))
+					mat.remove_meta("_skin_orig_pupil_color")
 
 # True while this player wears the reveal tint.
 static func is_reveal_tinted(player: Node3D) -> bool:
@@ -472,17 +489,40 @@ static func _unshaded_attachment_material(authored: Material) -> StandardMateria
 # flat sphere. Instead the skin's eye colour is pushed into the existing ShaderMaterial as
 # a uniform, which keeps the dot intact.
 static func _tint_eye(mesh: MeshInstance3D, data: Dictionary) -> void:
-	var palette: Dictionary = data.get("palette", {})
-	if palette.is_empty() or not palette.has("eye"):
-		return
-	var color := _c(palette["eye"])
-
 	var shader_mat := mesh.material_override as ShaderMaterial
 	if shader_mat == null and mesh.get_surface_override_material_count() > 0:
 		shader_mat = mesh.get_surface_override_material(0) as ShaderMaterial
 	if shader_mat == null:
 		return
+	# Restore originals if they were changed by reveal
+	if shader_mat.has_meta("_skin_orig_eye_color"):
+		shader_mat.set_shader_parameter("eye_color", shader_mat.get_meta("_skin_orig_eye_color"))
+		shader_mat.remove_meta("_skin_orig_eye_color")
+	if shader_mat.has_meta("_skin_orig_pupil_color"):
+		shader_mat.set_shader_parameter("pupil_color", shader_mat.get_meta("_skin_orig_pupil_color"))
+		shader_mat.remove_meta("_skin_orig_pupil_color")
+	var palette: Dictionary = data.get("palette", {})
+	if palette.is_empty() or not palette.has("eye"):
+		return
+	var color := _c(palette["eye"])
 	shader_mat.set_shader_parameter("eye_color", color)
+
+# While the C-key reveal is active, make the eyes black with a white pupil.
+static func _tint_eye_reveal(mesh: MeshInstance3D) -> void:
+	var shader_mat := mesh.material_override as ShaderMaterial
+	if shader_mat == null and mesh.get_surface_override_material_count() > 0:
+		shader_mat = mesh.get_surface_override_material(0) as ShaderMaterial
+	if shader_mat == null:
+		return
+	if not shader_mat.has_meta("_skin_orig_eye_color"):
+		var ec = shader_mat.get_shader_parameter("eye_color")
+		var pc = shader_mat.get_shader_parameter("pupil_color")
+		if ec is Color:
+			shader_mat.set_meta("_skin_orig_eye_color", ec)
+		if pc is Color:
+			shader_mat.set_meta("_skin_orig_pupil_color", pc)
+	shader_mat.set_shader_parameter("eye_color", Color(0, 0, 0))
+	shader_mat.set_shader_parameter("pupil_color", Color(1, 1, 1))
 
 static func _get_material_set(skin_name: String, data: Dictionary, tinted: bool = false) -> Dictionary:
 	# The tinted variant gets its own cache slot, so the reveal colour never

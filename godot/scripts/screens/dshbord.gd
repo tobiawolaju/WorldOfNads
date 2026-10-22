@@ -197,11 +197,11 @@ const VARIANT_BORDER_WIDTH: int = 2
 var _preview_player: Node3D = null
 var _skin_applier: SkinApplier = SkinApplier.new()
 # Hold this key to show the preview nad's skin parts that sit outside the
-# regular look (the shirt, the wig and the glove). Releasing it puts them back
-# exactly as they were.
-const REVEAL_KEY: int = KEY_C
-# True while the reveal key is held, so the handler acts on the press/release
-# edges only and the key-repeat events cannot overwrite the "before" state.
+# regular look (the shirt, the wig and the glove). Toggled by the "chog"
+# input action.
+
+# True while the reveal action is active, so the handler acts on press edges only
+# and key-repeat events cannot overwrite the "before" state.
 var _preview_hidden_extras_revealed: bool = false
 # 3D preview camera state. `_preview_base_distance` is the auto-framed distance from
 # `_frame_preview_camera()`; the live distance is that divided by `_preview_zoom`, and
@@ -632,8 +632,8 @@ func _update_preview_camera(delta: float = 0.0) -> void:
 # _input rather than _unhandled_input, because the wallet-link
 # field can hold the keyboard focus and would swallow the key.
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and (event as InputEventKey).keycode == REVEAL_KEY:
-		_set_preview_hidden_extras_revealed((event as InputEventKey).pressed)
+	if event.is_action_pressed("chog"):
+		_set_preview_hidden_extras_revealed(not _preview_hidden_extras_revealed)
 
 
 # Shows or hides again the preview nad's hidden skin parts and paints its

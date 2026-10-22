@@ -528,8 +528,8 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -192.59491
-offset_top = -168.0
+offset_left = -232.59491
+offset_top = -208.0
 offset_right = -68.59491
 offset_bottom = -44.0
 grow_horizontal = 0
@@ -628,6 +628,33 @@ position = Vector2(21.59491, 109)
 scale = Vector2(0.5, 0.442)
 texture = ExtResource("15_48y67")
 centered = false
+
+[node name="Chog" type="Button" parent="Node3/CanvasLayer" unique_id=217485803]
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(80, 80)
+custom_maximum_size = Vector2(50, 50)
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -286.0
+offset_top = -65.0
+offset_right = -236.0
+offset_bottom = -15.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/icon_max_width = 35
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/hover = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_lle6q")
+theme_override_styles/focus = SubResource("StyleBoxFlat_lle6q")
+autowrap_trim_flags = 0
+icon_alignment = 1
+expand_icon = true
 
 [node name="XPstream" type="Label" parent="." unique_id=2087879689]
 layout_mode = 1
@@ -786,8 +813,9 @@ theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
 theme_override_constants/outline_size = 2
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 100
-text = "Junk Beach"
+theme_override_font_sizes/font_size = 130
+text = "Monad
+Trenches"
 horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("13_textfx")
