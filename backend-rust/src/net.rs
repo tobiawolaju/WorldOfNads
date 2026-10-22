@@ -18,7 +18,7 @@ use axum::Router;
 use futures_util::stream::SplitSink;
 use futures_util::{SinkExt, StreamExt};
 use serde_json::{json, Value};
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::{mpsc, Mutex, Notify};
 
 use crate::config::*;
 use crate::logs;
@@ -60,6 +60,10 @@ struct ClientTx {
     queued: Arc<AtomicUsize>,
     /// What the writer task is doing right now (see `/debug/rooms`).
     stats: Arc<WriterStats>,
+    /// Woken when the server wants this connection gone (the round ended). The
+    /// reader task watches it so the socket is dropped even when the client never
+    /// sees the close frame.
+    shutdown: Arc<Notify>,
 }
 
 /// What a client's writer task is doing, for the diagnostics endpoint.
@@ -90,12 +94,14 @@ impl ClientTx {
         ctrl: mpsc::UnboundedSender<Message>,
         queued: Arc<AtomicUsize>,
         stats: Arc<WriterStats>,
+        shutdown: Arc<Notify>,
     ) -> Self {
         Self {
             tx,
             ctrl,
             queued,
             stats,
+            shutdown,
         }
     }
 
@@ -133,6 +139,27 @@ impl ClientTx {
             self.ctrl.send(msg)
         };
         if sent.is_err() {
+            if bulk {
+                self.queued.fetch_sub(len, Ordering::Relaxed);
+            }
+            return false;
+        }
+        true
+    }
+
+    /// Send a frame on the control channel, whatever its type.
+    ///
+    /// The round-end notice and the close frame have to arrive in that order and
+    /// ahead of the state backlog, so both go on the control channel. Bulk frames
+    /// still count against the byte budget, because the writer task gives the
+    /// budget back when it flushes them.
+    fn send_control(&self, msg: Message) -> bool {
+        let bulk = is_bulk(&msg);
+        let len = frame_len(&msg);
+        if bulk && !self.reserve(len) {
+            return false;
+        }
+        if self.ctrl.send(msg).is_err() {
             if bulk {
                 self.queued.fetch_sub(len, Ordering::Relaxed);
             }
@@ -813,7 +840,16 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
     let (ctrl_tx, ctrl_rx) = mpsc::unbounded_channel::<Message>();
     let queued = Arc::new(AtomicUsize::new(0));
     let writer_stats = Arc::new(WriterStats::default());
-    let tx = ClientTx::new(raw_tx, ctrl_tx, queued.clone(), writer_stats.clone());
+    // Woken when the round ends, so this socket is closed even if the client
+    // never answers the round-end notice.
+    let shutdown = Arc::new(Notify::new());
+    let tx = ClientTx::new(
+        raw_tx,
+        ctrl_tx,
+        queued.clone(),
+        writer_stats.clone(),
+        shutdown.clone(),
+    );
 
     let (connect_bytes, display_name, display_skin) = {
         let mut room = handle.room.lock().await;
@@ -919,6 +955,15 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
                 alive = false;
                 tx.send(Message::Ping(Vec::new()));
                 logs::push(format!("heartbeat: ping sent to {}", player_id));
+            }
+            _ = shutdown.notified() => {
+                // The round ended. The client got a `round_finished` notice and was
+                // asked to close its own socket; give it a moment to do so, then drop
+                // the socket anyway so a client that ignores the notice cannot keep a
+                // finished round alive.
+                logs::push(format!("client {}: round ended, closing socket", player_id));
+                tokio::time::sleep(Duration::from_millis(ROUND_END_GRACE_MS)).await;
+                break;
             }
         }
     }
@@ -1027,7 +1072,16 @@ async fn handle_events(socket: WebSocket, state: Arc<AppState>, room_id: String)
     let (ctrl_tx, ctrl_rx) = mpsc::unbounded_channel::<Message>();
     let queued = Arc::new(AtomicUsize::new(0));
     let writer_stats = Arc::new(WriterStats::default());
-    let tx = ClientTx::new(raw_tx, ctrl_tx, queued.clone(), writer_stats.clone());
+    // The events feed is never closed by the room, so it never needs a shutdown
+    // signal; it still takes one to keep the two connection kinds identical.
+    let shutdown = Arc::new(Notify::new());
+    let tx = ClientTx::new(
+        raw_tx,
+        ctrl_tx,
+        queued.clone(),
+        writer_stats.clone(),
+        shutdown.clone(),
+    );
 
     let snapshot = {
         let room = handle.room.lock().await;
@@ -1103,16 +1157,37 @@ async fn close_all(handle: &RoomHandle) {
         .close_all_clients
         .store(clients.len() as u64, Ordering::Relaxed);
     let mut queued = 0u64;
+    // The notice travels as an ordinary msgpack data frame, like every other
+    // frame on the game socket. It is the only part of the round-end teardown
+    // that is guaranteed to reach the client: an HTTP edge proxy terminates the
+    // WebSocket session itself, so a server-sent close frame is swallowed at the
+    // edge and the client never learns that the round ended. The Godot client
+    // closes its own socket when it sees this notice (a client-sent close frame
+    // does get through the proxy), which ends the round cleanly.
+    let notice = encode(&RoundFinishedMsg {
+        msg_type: "round_finished",
+    });
     for tx in clients.values() {
+        let mut sent = false;
+        if tx.send_control(Message::Binary(notice.clone())) {
+            sent = true;
+        }
         // Node closes the round with code 1000 and the reason `round_finished`
         // (`backend/index.js`: `client.close(1000, 'round_finished')`), so the
-        // Godot client sees the same thing it saw against the Node server.
-        if tx.send(Message::Close(Some(CloseFrame {
+        // Godot client sees the same thing it saw against the Node server. This
+        // frame is best effort: it works for a direct connection, and it is
+        // swallowed by an edge proxy that terminates the session itself.
+        if tx.send_control(Message::Close(Some(CloseFrame {
             code: close_code::NORMAL,
             reason: Cow::Borrowed("round_finished"),
         }))) {
+            sent = true;
+        }
+        if sent {
             queued += 1;
         }
+        // Make sure the socket goes away even if the client never answers.
+        tx.shutdown.notify_one();
     }
     handle.close_all_queued.store(queued, Ordering::Relaxed);
     clients.clear();
@@ -1286,6 +1361,74 @@ mod tests {
                 Err(_) => continue,
             }
         }
+        assert!(closed, "the client must receive a close frame when the round ends");
+    }
+
+    /// The round-end notice must reach the client as ordinary data.
+    ///
+    /// The close frame alone is not enough: an HTTP edge proxy in front of the
+    /// room server (Render's) terminates the WebSocket session itself and
+    /// swallows the server's close frame, so the client would never learn that
+    /// the round ended. The notice is a normal msgpack data frame, so it travels
+    /// like every other frame and the client can close its own socket.
+    #[tokio::test]
+    async fn the_round_end_notice_reaches_the_client_as_a_data_frame() {
+        let state = Arc::new(AppState::new());
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let app = router(state.clone());
+        tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
+
+        let (mut socket, _) = connect_async(format!(
+            "ws://{}/?room=default&username=tester&skin=s-default",
+            addr
+        ))
+        .await
+        .expect("the client must connect");
+
+        expect_connect(&mut socket).await;
+
+        let handle = {
+            let rooms = state.rooms.lock().await;
+            rooms.get(DEFAULT_ROOM).cloned().expect("room handle")
+        };
+
+        let mut registered = false;
+        for _ in 0..200 {
+            if !handle.clients.lock().await.is_empty() {
+                registered = true;
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        assert!(registered, "the client must be registered in the room");
+
+        close_all(&handle).await;
+
+        let mut notice_seen = false;
+        let mut closed = false;
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+        while tokio::time::Instant::now() < deadline {
+            match tokio::time::timeout(Duration::from_secs(2), socket.next()).await {
+                Ok(Some(Ok(WsMessage::Binary(bytes)))) => {
+                    let decoded: Value = rmp_serde::from_slice(&bytes).expect("msgpack notice");
+                    if decoded.get("type").and_then(|v| v.as_str()) == Some("round_finished") {
+                        notice_seen = true;
+                    }
+                }
+                Ok(Some(Ok(WsMessage::Close(_)))) => {
+                    closed = true;
+                    break;
+                }
+                Ok(Some(Ok(_))) => continue,
+                Ok(Some(Err(err))) => panic!("websocket error while waiting for close: {}", err),
+                Ok(None) => break,
+                Err(_) => continue,
+            }
+        }
+        assert!(notice_seen, "the client must receive the round-end notice as data");
         assert!(closed, "the client must receive a close frame when the round ends");
     }
 
