@@ -330,8 +330,8 @@ impl Room {
         None
     }
 
-    fn place_item_at_random_spawn(item: &mut Item) {
-        let (x, y, z, rot) = random_item_spawn_point();
+    fn place_item_at_random_spawn(item: &mut Item, storm_radius: f64) {
+        let (x, y, z, rot) = random_item_spawn_point(storm_radius);
         item.x = x;
         item.y = y;
         item.z = z;
@@ -342,19 +342,20 @@ impl Room {
     }
 
     fn randomize_all_item_spawns(&mut self) {
+        let storm_radius = self.storm_radius;
         for id in POWER_UP_IDS {
             if let Some(item) = self.power_ups.get_mut(id) {
                 item.is_held = false;
                 item.holder_id = None;
-                Self::place_item_at_random_spawn(item);
+                Self::place_item_at_random_spawn(item, storm_radius);
             }
         }
         self.chicken.is_held = false;
         self.chicken.holder_id = None;
-        Self::place_item_at_random_spawn(&mut self.chicken);
+        Self::place_item_at_random_spawn(&mut self.chicken, storm_radius);
         self.lootbox.is_held = false;
         self.lootbox.holder_id = None;
-        Self::place_item_at_random_spawn(&mut self.lootbox);
+        Self::place_item_at_random_spawn(&mut self.lootbox, storm_radius);
     }
 
     fn reset_chicken_state(&mut self) {
@@ -609,10 +610,11 @@ impl Room {
         if !allowed {
             return;
         }
+        let storm_radius = self.storm_radius;
         if let Some(item) = self.power_ups.get_mut(item_id) {
             item.is_held = false;
             item.holder_id = None;
-            Self::place_item_at_random_spawn(item);
+            Self::place_item_at_random_spawn(item, storm_radius);
         }
     }
 
@@ -1251,13 +1253,29 @@ fn encode_item(item: &Item) -> ItemNet {
     }
 }
 
-fn random_item_spawn_point() -> (f64, f64, f64, f64) {
+/// Radius that item spawns are drawn from for the storm's current size.
+///
+/// The storm is a circle centred on the origin that starts at STORM_START_RADIUS
+/// and only shrinks, so every spawn has to stay inside the *current* circle or it
+/// lands where players take storm damage (that is how the chicken ended up at the
+/// far edge of the map). `ITEM_SPAWN_MARGIN` of clearance keeps it off the wall,
+/// and the floor stops a closed-in storm from stacking every item on one point.
+fn item_spawn_radius(storm_radius: f64) -> f64 {
+    let safe = storm_radius.min(STORM_START_RADIUS) - ITEM_SPAWN_MARGIN;
+    safe.clamp(ITEM_SPAWN_MIN_RADIUS, ITEM_SPAWN_RADIUS)
+}
+
+fn random_item_spawn_point(storm_radius: f64) -> (f64, f64, f64, f64) {
     let mut rng = rand::thread_rng();
-    let half = (ARENA_HALF_SIZE - ITEM_SPAWN_MARGIN).max(1.0);
+    let radius = item_spawn_radius(storm_radius);
+    // sqrt(u) instead of u keeps the disc uniform; without it everything would
+    // bunch up around the centre.
+    let distance = radius * rng.gen::<f64>().sqrt();
+    let angle = rng.gen_range(0.0..(std::f64::consts::PI * 2.0));
     (
-        rng.gen_range(-half..half),
+        distance * angle.cos(),
         FLOOR_Y,
-        rng.gen_range(-half..half),
+        distance * angle.sin(),
         rng.gen_range(0.0..(std::f64::consts::PI * 2.0)),
     )
 }
@@ -1560,6 +1578,66 @@ mod tests {
         // `Value::clone` explicitly: `winner["meta"].clone()` would clone the
         // reference, not the value.
         Value::clone(&winner["meta"])
+    }
+
+    // -- item spawns ------------------------------------------------------
+
+    /// Every item the round starts with: the chicken, the lootbox and the five
+    /// power-ups, as (id, x, z).
+    fn item_spots(room: &Room) -> Vec<(String, f64, f64)> {
+        let mut spots = vec![
+            ("Chicken".to_string(), room.chicken.x, room.chicken.z),
+            ("LootBox".to_string(), room.lootbox.x, room.lootbox.z),
+        ];
+        for (id, item) in room.power_ups.iter() {
+            spots.push((id.clone(), item.x, item.z));
+        }
+        spots
+    }
+
+    #[test]
+    fn items_spawn_inside_the_storm_circle_not_at_the_map_corners() {
+        // The map is a 70x70 square but the storm is a 20 m circle around the
+        // origin, so sampling the square could drop the chicken at a corner ~49 m
+        // out - far outside the safe zone, where it is unreachable without taking
+        // storm damage. Spawns must stay in the circle with a margin to spare.
+        assert!(
+            (item_spawn_radius(STORM_START_RADIUS) - ITEM_SPAWN_RADIUS).abs() < 1e-9,
+            "an unshrunk storm must leave ITEM_SPAWN_RADIUS of room"
+        );
+
+        let mut room = live_room();
+        for round in 0..200 {
+            room.randomize_all_item_spawns();
+            for (id, x, z) in item_spots(&room) {
+                let distance = (x * x + z * z).sqrt();
+                assert!(
+                    distance <= ITEM_SPAWN_RADIUS + 1e-9,
+                    "round {round}: {id} spawned {distance:.2} m from the centre, \
+                     outside the {ITEM_SPAWN_RADIUS} m safe circle"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn item_respawns_follow_the_storm_as_it_shrinks() {
+        // An item used mid-round respawns inside the *current* storm, so it is
+        // still reachable after the circle has closed in.
+        assert!((item_spawn_radius(8.0) - 4.0).abs() < 1e-9);
+        assert!((item_spawn_radius(STORM_MIN_RADIUS) - ITEM_SPAWN_MIN_RADIUS).abs() < 1e-9);
+        assert!((item_spawn_radius(1_000.0) - ITEM_SPAWN_RADIUS).abs() < 1e-9);
+
+        let mut room = live_room();
+        room.storm_radius = 8.0;
+        room.randomize_all_item_spawns();
+        for (id, x, z) in item_spots(&room) {
+            let distance = (x * x + z * z).sqrt();
+            assert!(
+                distance <= 4.0 + 1e-9,
+                "{id} spawned {distance:.2} m out with an 8 m storm"
+            );
+        }
     }
 
     #[test]

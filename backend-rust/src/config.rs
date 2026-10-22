@@ -85,8 +85,21 @@ pub const TOTAL_MON_POOL_PER_MATCH: f64 = 1.0;
 pub const MON_PER_SEC: f64 = 0.002;
 
 // Item spawns.
+//
+// Items are scattered inside the storm, not across the whole square map. The
+// storm is a circle around the origin that starts at STORM_START_RADIUS and only
+// ever shrinks, while ARENA_HALF_SIZE describes the square the client minimap
+// covers (+/-35). Sampling the square put a corner spawn (up to ~49 from the
+// centre) far outside the 20 m safe zone, so the chicken could land somewhere
+// nobody could stand without taking storm damage. Spawns are drawn from
+// ITEM_SPAWN_RADIUS (the starting circle less a margin of clearance) instead, and
+// further clamped to the storm's current radius as it shrinks.
 pub const ARENA_HALF_SIZE: f64 = 35.0;
 pub const ITEM_SPAWN_MARGIN: f64 = 4.0;
+pub const ITEM_SPAWN_RADIUS: f64 = STORM_START_RADIUS - ITEM_SPAWN_MARGIN;
+// Floor for the shrink clamp, so a storm that has closed to STORM_MIN_RADIUS
+// still spreads respawns over a couple of metres instead of stacking them.
+pub const ITEM_SPAWN_MIN_RADIUS: f64 = 1.0;
 
 // Events feed.
 pub const MAX_EVENT_HISTORY: usize = 100;
