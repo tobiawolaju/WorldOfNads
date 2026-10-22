@@ -1212,6 +1212,13 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
   const MOBILE_LIFT = 0.5;
   const DESKTOP_LIFT = 0.45;
 
+  // The preview is pinned at the closest distance the orbit controls used to
+  // allow (the old minDistance 4: 2.5x closer than the ~10 framed distance,
+  // i.e. ORBIT_ZOOM_MAX in dshbord.gd). Zoom is switched off, so neither the
+  // wheel nor a two-finger pinch dollies any more - the nad always reads at
+  // this size and only the orbit angle changes.
+  const LOCKED_ZOOM_DISTANCE = 4;
+
   const getCameraLift = () =>
     window.innerWidth < 768 && window.innerHeight > window.innerWidth
       ? MOBILE_LIFT
@@ -1224,6 +1231,17 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
   const [targetY, setTargetY] = useState(() =>
     (window.innerWidth < 768 ? 1.4 : 1.5) + getCameraLift()
   );
+
+  // Camera position at the locked distance. The orbit direction is still the
+  // framed one (camera above and in front of the target), only its length is
+  // pinned, so the close-up keeps the same three-quarter view. Memoised so r3f
+  // does not re-apply it on unrelated re-renders and undo an orbit drag.
+  const cameraPosition = useMemo(() => {
+    const dir = new THREE.Vector3(0, cameraLift - targetY, cameraZ);
+    if (dir.lengthSq() === 0) dir.set(0, 0, 1);
+    dir.normalize().multiplyScalar(LOCKED_ZOOM_DISTANCE);
+    return [dir.x, targetY + dir.y, dir.z] as [number, number, number];
+  }, [cameraLift, cameraZ, targetY]);
 
   // Force the orbit target on the controls so a fresh load always frames
   // the scene the same way (props-only application can get skipped with
@@ -1327,7 +1345,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
   return (
     <Canvas
       dpr={[1, 1.35]}
-      camera={{ position: [0, cameraLift, cameraZ] }}
+      camera={{ position: cameraPosition }}
       frameloop="demand"
       gl={{ alpha: true, powerPreference: "high-performance", antialias: true }}
       style={{ background: "none", pointerEvents: "auto" }}
@@ -1364,18 +1382,19 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
         ))}
       </Suspense>
 
-      {/* The framed distance is ~10; clamp zoom so the user can move in at most
-          ~2.5x (minDistance 4) and out at most ~1.6x (maxDistance 16). Without
-          this, OrbitControls defaults to 0..Infinity and the nad can be lost
-          entirely. Kept in step with ORBIT_ZOOM_MIN/ORBIT_ZOOM_MAX in dshbord.gd. */}
+      {/* Zoom is locked: the camera sits at LOCKED_ZOOM_DISTANCE (the closest
+          pinch-in value, 2.5x the framed distance) and enableZoom is off, so
+          wheel and two-finger pinch no longer dolly. min/maxDistance are both
+          set to the same value so the clamp holds even if something else tries
+          to move the camera in. Rotate and pan are unchanged. */}
       <OrbitControls
         ref={controlsRef}
         target={[0, targetY, 0]}
-        enableZoom={true}
+        enableZoom={false}
         enablePan={false}
         enableRotate={true}
-        minDistance={4}
-        maxDistance={16}
+        minDistance={LOCKED_ZOOM_DISTANCE}
+        maxDistance={LOCKED_ZOOM_DISTANCE}
         mouseButtons={{
           LEFT: THREE.MOUSE.ROTATE,
           MIDDLE: null as any,
