@@ -2227,6 +2227,9 @@ function resolveBuzzerWinner() {
   }
 
   // Determine winner and split.
+  // Every outcome carries the holder and progress identity/time, so the client
+  // (and the on-chain settlement) can render the buzzer screen without having
+  // to guess who held the chicken.
   if (holderId && bestId && holderId === bestId) {
     // Current holder is also highest-progress player.
     return {
@@ -2235,6 +2238,12 @@ function resolveBuzzerWinner() {
       split: false,
       holderShare: 1.0,
       progressShare: 0.0,
+      holderId,
+      holderName,
+      holderTime: holderPossession,
+      progressId: bestId,
+      progressName: bestName,
+      progressTime: bestPossession,
       victoryType: 'buzzer'
     };
   } else if (holderId && bestId) {
@@ -2266,6 +2275,12 @@ function resolveBuzzerWinner() {
       split: false,
       holderShare: 1.0,
       progressShare: 0.0,
+      holderId,
+      holderName,
+      holderTime: holderPossession,
+      progressId: '',
+      progressName: '',
+      progressTime: 0,
       victoryType: 'buzzer'
     };
   } else if (bestId) {
@@ -2276,6 +2291,12 @@ function resolveBuzzerWinner() {
       split: false,
       holderShare: 0.0,
       progressShare: 1.0,
+      holderId: '',
+      holderName: '',
+      holderTime: 0,
+      progressId: bestId,
+      progressName: bestName,
+      progressTime: bestPossession,
       victoryType: 'buzzer'
     };
   } else {
@@ -2298,6 +2319,12 @@ function resolveBuzzerWinner() {
       holderShare: 0.0,
       progressShare: 0.0,
       fallback: true,
+      holderId: '',
+      holderName: '',
+      holderTime: 0,
+      progressId: '',
+      progressName: '',
+      progressTime: 0,
       victoryType: 'buzzer'
     };
   }
