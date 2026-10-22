@@ -103,6 +103,7 @@ const MATCH_START_COUNTDOWN_SECONDS = 5;
 let matchStartCountdown = -1; // -1 = not counting down; >0 = counting to start
 
 // Storm radius (server-authoritative)
+const STORM_START_RADIUS = 20.0;
 let stormRadius = 20.0;
 const STORM_SHRINK_INTERVAL = 20.0;
 const STORM_SHRINK_DURATION = 5.0;
@@ -188,9 +189,13 @@ const DEFAULT_LOOTBOX_STATE = {
 const POWER_UP_IDS = ['p1', 'p2', 'p3', 'p4', 'p5'];
 
 // Whole-map random spawn bounds. The client minimap is 70x70 centred on the
-// origin, so spawns stay inside +/- ARENA_HALF_SIZE with an edge margin.
+// origin; ARENA_HALF_SIZE is that square's half width and stays the hard outer
+// bound. Spawns are actually drawn from inside the storm (see itemSpawnRadius)
+// because the storm is a circle that is much smaller than the square.
 const ARENA_HALF_SIZE = 35.0;
 const ITEM_SPAWN_MARGIN = 4.0;
+const ITEM_SPAWN_RADIUS = Math.min(STORM_START_RADIUS, ARENA_HALF_SIZE) - ITEM_SPAWN_MARGIN;
+const ITEM_SPAWN_MIN_RADIUS = 1.0;
 
 const powerUps = {};
 for (const id of POWER_UP_IDS) {
@@ -1223,12 +1228,25 @@ function buildEncodedPowerUps() {
   return list;
 }
 
+// Radius item spawns are drawn from for the storm's current size. The storm is a
+// circle centred on the origin that starts at STORM_START_RADIUS and only shrinks,
+// so sampling the whole square map could put an item at a corner ~49m out - well
+// outside the safe zone, where the chicken could not be picked up without taking
+// storm damage. Mirrors item_spawn_radius() in backend-rust/src/world.rs.
+function itemSpawnRadius() {
+  const safe = Math.min(stormRadius, STORM_START_RADIUS) - ITEM_SPAWN_MARGIN;
+  return Math.min(Math.max(safe, ITEM_SPAWN_MIN_RADIUS), ITEM_SPAWN_RADIUS);
+}
+
 function randomItemSpawnPoint() {
-  const half = Math.max(ARENA_HALF_SIZE - ITEM_SPAWN_MARGIN, 1.0);
+  const radius = itemSpawnRadius();
+  // sqrt keeps the disc uniform instead of bunching around the centre.
+  const distance = radius * Math.sqrt(Math.random());
+  const angle = Math.random() * Math.PI * 2;
   return {
-    x: (Math.random() * 2 - 1) * half,
+    x: distance * Math.cos(angle),
     y: FLOOR_Y,
-    z: (Math.random() * 2 - 1) * half,
+    z: distance * Math.sin(angle),
     rotationY: Math.random() * Math.PI * 2
   };
 }
