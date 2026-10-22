@@ -226,12 +226,71 @@ const ATTACHMENT_SLOTS: Array[String] = [
 	"Skeleton3D/Back/offset",
 ]
 
+# The skin.tscn parts that sit outside the regular look: the shirt, the wig
+# and the glove. All three ship switched off in the scene. Holding the reveal
+# key shows them - see set_hidden_extras_visible().
+const HIDDEN_EXTRA_NODES: Array[String] = [
+	"Skeleton3D/shirt",
+	"Skeleton3D/wigs",
+	"Skeleton3D/glove",
+]
+
+# Meta key holding the visibility each hidden extra had before the reveal was
+# switched on, so releasing the key puts every one of them back exactly where
+# it was instead of guessing.
+const HIDDEN_EXTRAS_STATE_META := "_skin_hidden_extras_state"
+
+# The colour the character's skin takes while the reveal key is held
+# (#a600ff).
+const REVEAL_TINT := Color(0.6509804, 0.0, 1.0, 1.0)
+
+# The colour the top piece of the body takes while the reveal is held
+# (#ffffe8). It is the mesh Skeleton3D/body_00 - the cube that sits on top of
+# the body - and it keeps a light colour of its own, so the reveal reads as a
+# lit-up hat on a purple body instead of one flat silhouette.
+const REVEAL_TOP_COLOR := Color(1.0, 1.0, 0.9098039, 1.0)
+
+# How much the cheeks are lightened against the reveal colour, so the face
+# keeps the two-tone read the stock skins have.
+const REVEAL_CHEEK_LIGHTEN: float = 0.25
+
+# "No tint": the reveal colour is fully opaque, so a zero alpha can only mean
+# the untinted skin.
+const NO_TINT := Color(0.0, 0.0, 0.0, 0.0)
+
+# Meta key telling the applier that this player wears the reveal tint, so a
+# later apply_skin keeps the tint on instead of dropping it.
+const REVEAL_TINT_ACTIVE_META := "_skin_reveal_tint_active"
+
+# Meta key holding the skin the player wore before the reveal tint went on,
+# so releasing the key puts that exact skin back.
+const REVEAL_TINT_SKIN_META := "_skin_reveal_tint_skin"
+
 func apply_skin(player: Node3D, skin_name: String) -> void:
+	# While the reveal tint is on, the skin is painted in the reveal colour and
+	# the skin to go back to when the tint comes off is remembered. A skin
+	# change in the middle of the reveal therefore neither drops the tint nor
+	# loses the skin the release returns to.
+	if is_reveal_tinted(player):
+		player.set_meta(REVEAL_TINT_SKIN_META, skin_name)
+		_apply_skin(player, skin_name, REVEAL_TINT)
+		return
+	_apply_skin(player, skin_name, NO_TINT)
+
+# The one place a skin is actually put on a player. `tint` paints the
+# character's skin in that colour (NO_TINT leaves it alone); everything else -
+# the shader, the attachments, the crown - is taken from the skin data, so a
+# tinted skin still reads as the same skin, just in another colour.
+static func _apply_skin(player: Node3D, skin_name: String, tint: Color) -> void:
 	var data := get_skin_data(skin_name)
 	if data.is_empty():
 		return
 
-	var material_set := _get_material_set(skin_name, data)
+	var tinted := tint.a > 0.0
+	if tinted:
+		data = _tinted_data(data, tint)
+
+	var material_set := _get_material_set(skin_name, data, tinted)
 
 	var meshes: Array[MeshInstance3D] = []
 	for c in player.find_children("*", "MeshInstance3D", true):
@@ -276,6 +335,87 @@ static func _apply_attachments(player: Node3D, data: Dictionary) -> void:
 			if child is Node3D:
 				child.visible = String(child.name) in wanted
 				_apply_attachment_shader(child, shader_type)
+
+# Shows (and hides again) the skin.tscn parts that sit outside the regular
+# look: the shirt, the wig and the glove. The visibility each of them had
+# before the reveal is remembered on the player node, so switching the reveal
+# back off restores exactly that state: a part that was already visible stays
+# visible, one that was hidden goes back into hiding. Nothing else is touched,
+# so every part keeps its authored placement and material.
+static func set_hidden_extras_visible(player: Node3D, visible_now: bool) -> void:
+	if player == null:
+		return
+	if visible_now:
+		var saved: Array = []
+		for path in HIDDEN_EXTRA_NODES:
+			var node := player.get_node_or_null(path) as Node3D
+			saved.append(node.visible if node != null else false)
+		player.set_meta(HIDDEN_EXTRAS_STATE_META, saved)
+		for path in HIDDEN_EXTRA_NODES:
+			var node := player.get_node_or_null(path) as Node3D
+			if node != null:
+				node.visible = true
+		return
+	var saved: Variant = player.get_meta(HIDDEN_EXTRAS_STATE_META, null)
+	for i in range(HIDDEN_EXTRA_NODES.size()):
+		var node := player.get_node_or_null(HIDDEN_EXTRA_NODES[i]) as Node3D
+		if node == null:
+			continue
+		if saved is Array and i < saved.size():
+			node.visible = bool(saved[i])
+		else:
+			node.visible = false
+	player.remove_meta(HIDDEN_EXTRAS_STATE_META)
+
+# Turns the reveal tint on or off for a player. While it is on, the
+# character's skin is painted in REVEAL_TINT; the skin the player wore before
+# is remembered, so switching the tint off puts that exact skin back. Only the
+# skin colour changes - the shader, the crown and the attachments stay exactly
+# as the skin itself has them.
+static func set_reveal_tint(player: Node3D, enabled: bool) -> void:
+	if player == null:
+		return
+	if enabled:
+		if is_reveal_tinted(player):
+			return
+		player.set_meta(REVEAL_TINT_SKIN_META, str(player.get_meta(APPLIED_SKIN_META, DEFAULT_SKIN)))
+		player.set_meta(REVEAL_TINT_ACTIVE_META, true)
+		_apply_skin(player, str(player.get_meta(REVEAL_TINT_SKIN_META)), REVEAL_TINT)
+		return
+	if not is_reveal_tinted(player):
+		return
+	player.set_meta(REVEAL_TINT_ACTIVE_META, false)
+	var restore := str(player.get_meta(REVEAL_TINT_SKIN_META, DEFAULT_SKIN))
+	player.remove_meta(REVEAL_TINT_SKIN_META)
+	_apply_skin(player, restore, NO_TINT)
+
+# True while this player wears the reveal tint.
+static func is_reveal_tinted(player: Node3D) -> bool:
+	if player == null:
+		return false
+	return bool(player.get_meta(REVEAL_TINT_ACTIVE_META, false))
+
+# Paints a skin's palette in the reveal colour. The skin data is copied
+# first, so the shared fallback configs and the cached API entries are never
+# mutated. The palette entries map onto the meshes one by one (see
+# _material_for_name): "body" is Skeleton3D/body_00, the top piece, which
+# takes REVEAL_TOP_COLOR; "body_alt" is Skeleton3D/body_01, the body itself,
+# which takes the reveal colour; the cheek keeps a lighter shade of that
+# colour, the way the stock skins do, so the face still reads as a face.
+static func _tinted_data(data: Dictionary, tint: Color) -> Dictionary:
+	var copy := data.duplicate()
+	var palette: Variant = data.get("palette", null)
+	if palette is Dictionary:
+		var painted := (palette as Dictionary).duplicate()
+		painted["body"] = _rgba(REVEAL_TOP_COLOR)
+		painted["body_alt"] = _rgba(tint)
+		painted["cheek"] = _rgba(tint.lightened(REVEAL_CHEEK_LIGHTEN))
+		copy["palette"] = painted
+	return copy
+
+# The palette format the skin configs use: a plain [r, g, b, a] array.
+static func _rgba(color: Color) -> Array:
+	return [color.r, color.g, color.b, color.a]
 
 # Attachments follow the skin's shading decision. The unshaded edition draws
 # the body flat with a black outline pass (see _body_material), so hats/duck
@@ -344,13 +484,17 @@ static func _tint_eye(mesh: MeshInstance3D, data: Dictionary) -> void:
 		return
 	shader_mat.set_shader_parameter("eye_color", color)
 
-static func _get_material_set(skin_name: String, data: Dictionary) -> Dictionary:
-	if _skin_material_sets.has(skin_name):
-		return _skin_material_sets[skin_name]
+static func _get_material_set(skin_name: String, data: Dictionary, tinted: bool = false) -> Dictionary:
+	# The tinted variant gets its own cache slot, so the reveal colour never
+	# leaks into the plain skin and the plain skin never washes the reveal
+	# colour out.
+	var cache_key := skin_name + ("|reveal" if tinted else "")
+	if _skin_material_sets.has(cache_key):
+		return _skin_material_sets[cache_key]
 	if _skin_material_sets.size() >= MAX_MATERIAL_CACHE:
 		_skin_material_sets.clear()
 	var material_set := _build_material_set(data)
-	_skin_material_sets[skin_name] = material_set
+	_skin_material_sets[cache_key] = material_set
 	return material_set
 
 static func _build_material_set(data: Dictionary) -> Dictionary:

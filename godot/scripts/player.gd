@@ -171,6 +171,17 @@ const ANIM_NAME_TO_ID: Dictionary = {
 # --- INPUT VARIABLES ---
 var gamepad_index: int = 0
 
+## Hold this key to show the skin parts that sit outside the regular look (the
+## shirt, the wig and the glove) and to paint the character's skin in the
+## reveal colour. Releasing it puts every one of them back exactly as it was.
+## See SkinApplier.set_hidden_extras_visible() and SkinApplier.set_reveal_tint().
+const REVEAL_KEY: int = KEY_C
+
+## True while the reveal key is held. The flag makes the handler act on the
+## press/release edges only, so the key-repeat events that arrive while the
+## key is down cannot overwrite the "before" state the reveal restores.
+var _hidden_extras_revealed: bool = false
+
 ## HOOK punch: how long the punch plays when the HOOK power-up is used. Read from
 ## the hook animation's own length when available; this is the fallback.
 const HOOK_FALLBACK_DURATION: float = 2.4
@@ -548,6 +559,11 @@ func _ready() -> void:
 	if _storm_eye != null and not _powerup_prewarmed:
 		_prewarm_powerup_aura.call_deferred()
 
+	# The reveal key may already be down when this player spawns (the scene
+	# changed while it was held), so the extras follow the key itself and not
+	# only the key events this node happened to see.
+	call_deferred("_reveal_if_key_held")
+
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
 	var state_names := ["idle", "running", "runningjump", "falling", "runningslide", "hook", "fall", "climb"]
@@ -695,6 +711,13 @@ func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
 
+	# --- REVEAL KEY (hold) ---
+	# Shows the skin.tscn parts that ship outside the regular look (the shirt,
+	# the wig and the glove) and paints the character's skin in the reveal
+	# colour; releasing the key puts both back exactly as they were.
+	if event is InputEventKey and (event as InputEventKey).keycode == REVEAL_KEY:
+		_set_hidden_extras_revealed((event as InputEventKey).pressed)
+
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			# Dead zone along the screen edges so system gestures / accidental touches
@@ -734,6 +757,31 @@ func _input(event: InputEvent) -> void:
 	# --- 2. PICKUP CONTROLS ---
 	if _is_movement_allowed() and event.is_action_pressed("pickup"):
 		_perform_pickup_request()
+
+# Shows or hides again the skin parts that sit outside the regular look (the
+# shirt, the wig and the glove) and paints the character's skin in the reveal
+# colour while the key is held. SkinApplier remembers the state each part had
+# before the reveal and the skin the player wore, so switching it back off
+# restores that state instead of a hard-coded one. The flag guards the edges:
+# the key-repeat events that arrive while the key is held must not re-save the
+# "before" state, or the release would restore the revealed state instead of
+# the original one.
+func _set_hidden_extras_revealed(revealed: bool) -> void:
+	if revealed == _hidden_extras_revealed:
+		return
+	_hidden_extras_revealed = revealed
+	SkinApplier.set_hidden_extras_visible(self, revealed)
+	SkinApplier.set_reveal_tint(self, revealed)
+
+# Reveals the extras and the reveal colour when the reveal key is already held
+# as this player spawns. Deferred from _ready, because the spawn code only
+# marks the local player as local right after it enters the tree - so the flag
+# is only known a frame later, and the remote players must not be touched.
+func _reveal_if_key_held() -> void:
+	if not is_local:
+		return
+	if Input.is_key_pressed(REVEAL_KEY):
+		_set_hidden_extras_revealed(true)
 
 # Invisible dead zone along all four screen edges. Any touch that STARTS here is
 # ignored entirely (no orbit, no slide, no joystick) because OS/browser gestures

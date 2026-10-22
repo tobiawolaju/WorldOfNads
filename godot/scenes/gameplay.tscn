@@ -60,6 +60,7 @@ environment = ExtResource("10_nt65e")
 [node name="day" type="DirectionalLight3D" parent="env" unique_id=14538735]
 transform = Transform3D(0.84941316, -2.3067738e-08, 0.5277283, -0.5277284, -3.7129027e-08, 0.8494131, 0, -0.99999994, -4.3711385e-08, 0, 34.18702, 0)
 visible = false
+light_energy = 0.2
 shadow_enabled = true
 directional_shadow_mode = 0
 
