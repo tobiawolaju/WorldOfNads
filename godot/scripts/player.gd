@@ -171,15 +171,14 @@ const ANIM_NAME_TO_ID: Dictionary = {
 # --- INPUT VARIABLES ---
 var gamepad_index: int = 0
 
-## Hold this key to show the skin parts that sit outside the regular look (the
-## shirt, the wig and the glove) and to paint the character's skin in the
-## reveal colour. Releasing it puts every one of them back exactly as it was.
-## See SkinApplier.set_hidden_extras_visible() and SkinApplier.set_reveal_tint().
-const REVEAL_KEY: int = KEY_C
+## Toggle the skin parts that sit outside the regular look (the shirt, the wig
+## and the glove) and paint the character's skin in the reveal colour with the
+## "chog" input action. See SkinApplier.set_hidden_extras_visible() and
+## SkinApplier.set_reveal_tint().
 
-## True while the reveal key is held. The flag makes the handler act on the
-## press/release edges only, so the key-repeat events that arrive while the
-## key is down cannot overwrite the "before" state the reveal restores.
+## True while the reveal action is active. The flag makes the handler act on the
+## press edges only, so key-repeat events cannot overwrite the "before" state
+## the reveal restores.
 var _hidden_extras_revealed: bool = false
 
 ## HOOK punch: how long the punch plays when the HOOK power-up is used. Read from
@@ -711,12 +710,10 @@ func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
 
-	# --- REVEAL KEY (hold) ---
-	# Shows the skin.tscn parts that ship outside the regular look (the shirt,
-	# the wig and the glove) and paints the character's skin in the reveal
-	# colour; releasing the key puts both back exactly as they were.
-	if event is InputEventKey and (event as InputEventKey).keycode == REVEAL_KEY:
-		_set_hidden_extras_revealed((event as InputEventKey).pressed)
+	# --- REVEAL ACTION (toggle) ---
+	# Toggles the hidden skin parts and reveal tint on/off via the "chog" input action.
+	if event.is_action_pressed("chog"):
+		_set_hidden_extras_revealed(not _hidden_extras_revealed)
 
 	if event is InputEventScreenTouch:
 		if event.pressed:
@@ -780,7 +777,7 @@ func _set_hidden_extras_revealed(revealed: bool) -> void:
 func _reveal_if_key_held() -> void:
 	if not is_local:
 		return
-	if Input.is_key_pressed(REVEAL_KEY):
+	if Input.is_action_pressed("chog"):
 		_set_hidden_extras_revealed(true)
 
 # Invisible dead zone along all four screen edges. Any touch that STARTS here is
