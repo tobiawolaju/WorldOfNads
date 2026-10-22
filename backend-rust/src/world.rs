@@ -970,11 +970,20 @@ impl Room {
         let (winner_id, winner_name, split_meta) = match (holder_id.clone(), best_id.clone()) {
             (Some(h_id), Some(b_id)) if h_id == b_id => {
                 // Current holder is also the highest-progress player.
-                (Some(h_id), holder_name, json!({
+                // `json!` only borrows its operands, so the meta is built before
+                // the ids/names are moved into the tuple.
+                let meta = json!({
                     "split": false,
                     "holderShare": 1.0,
                     "progressShare": 0.0,
-                }))
+                    "holderId": h_id,
+                    "holderName": holder_name,
+                    "holderTime": holder_possession,
+                    "progressId": b_id,
+                    "progressName": best_name,
+                    "progressTime": best_possession,
+                });
+                (Some(h_id), holder_name, meta)
             }
             (Some(h_id), Some(b_id)) => {
                 // Different players: split reward proportionally to accumulated possession.
@@ -1006,19 +1015,33 @@ impl Room {
             (Some(h_id), None) => {
                 // Holder exists but no other eligible player with possession.
                 // Holder wins 100%.
-                (Some(h_id), holder_name, json!({
+                let meta = json!({
                     "split": false,
                     "holderShare": 1.0,
                     "progressShare": 0.0,
-                }))
+                    "holderId": h_id,
+                    "holderName": holder_name,
+                    "holderTime": holder_possession,
+                    "progressId": "",
+                    "progressName": "",
+                    "progressTime": 0,
+                });
+                (Some(h_id), holder_name, meta)
             }
             (None, Some(b_id)) => {
                 // No current holder; best possession player wins.
-                (Some(b_id), best_name, json!({
+                let meta = json!({
                     "split": false,
                     "holderShare": 0.0,
                     "progressShare": 1.0,
-                }))
+                    "holderId": "",
+                    "holderName": "",
+                    "holderTime": 0,
+                    "progressId": b_id,
+                    "progressName": best_name,
+                    "progressTime": best_possession,
+                });
+                (Some(b_id), best_name, meta)
             }
             (None, None) => {
                 // No holder, no eligible player with possession.
@@ -1040,6 +1063,12 @@ impl Room {
                     "holderShare": 0.0,
                     "progressShare": 0.0,
                     "fallback": true,
+                    "holderId": "",
+                    "holderName": "",
+                    "holderTime": 0,
+                    "progressId": "",
+                    "progressName": "",
+                    "progressTime": 0,
                 }))
             }
         };
@@ -1650,5 +1679,76 @@ mod tests {
             holder_share,
             progress_share
         );
+    }
+
+    /// The buzzer meta always names the holder and the progress leader.
+    ///
+    /// The client renders the buzzer screen from these fields, and the on-chain
+    /// settlement needs the times, so every outcome has to carry them - not
+    /// only the split one.
+    #[test]
+    fn the_buzzer_meta_always_names_the_holder_and_the_progress_leader() {
+        // Alice holds the chicken the whole time: she is both the holder and
+        // the progress leader, so the reward is not split.
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p1", "Chicken", now);
+        advance(&mut room, 20.0, &mut now);
+
+        room.match_time_left = 0.0;
+        let out = room.tick(now);
+        assert!(out.close_all, "the buzzer must close the round");
+
+        let meta = winner_meta(&room);
+        assert_eq!(meta["victoryType"], "buzzer");
+        assert_eq!(meta["split"], false);
+        assert_eq!(meta["holderShare"], 1.0);
+        assert_eq!(meta["progressShare"], 0.0);
+        assert_eq!(meta["holderName"], "alice");
+        assert_eq!(meta["progressName"], "alice");
+        let holder_time = meta["holderTime"].as_f64().unwrap();
+        let progress_time = meta["progressTime"].as_f64().unwrap();
+        assert!(
+            (holder_time - 20.0).abs() < 1.5,
+            "the holder time should be about 20s, got {}",
+            holder_time
+        );
+        assert!(
+            (progress_time - 20.0).abs() < 1.5,
+            "the progress time should be about 20s, got {}",
+            progress_time
+        );
+    }
+
+    /// Without a holder, the progress leader wins and is still named.
+    #[test]
+    fn the_buzzer_meta_names_the_progress_leader_without_a_holder() {
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        // Alice accumulates possession and then drops the chicken, so nobody
+        // holds it when the timer expires.
+        room.pickup_request("p1", "Chicken", now);
+        advance(&mut room, 15.0, &mut now);
+        room.drop_request("p1", "Chicken", now);
+
+        room.match_time_left = 0.0;
+        let out = room.tick(now);
+        assert!(out.close_all, "the buzzer must close the round");
+
+        let meta = winner_meta(&room);
+        assert_eq!(meta["victoryType"], "buzzer");
+        assert_eq!(meta["split"], false);
+        assert_eq!(meta["holderShare"], 0.0);
+        assert_eq!(meta["progressShare"], 1.0);
+        assert_eq!(meta["winnerName"], "alice");
+        assert_eq!(meta["progressName"], "alice");
+        let progress_time = meta["progressTime"].as_f64().unwrap();
+        assert!(
+            (progress_time - 15.0).abs() < 1.5,
+            "the progress time should be about 15s, got {}",
+            progress_time
+        );
+        assert_eq!(meta["holderName"], "");
+        assert_eq!(meta["holderTime"], 0);
     }
 }
