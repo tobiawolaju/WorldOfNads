@@ -93,6 +93,9 @@ contract WONsMatchEngineTest is Test {
 
         uint256 winnerBalanceBefore = winner.balance;
 
+        // Matches can only be settled after their start time.
+        vm.warp(block.timestamp + 1 hours + 1);
+
         address[] memory participants = new address[](2);
         participants[0] = winner;
         participants[1] = player2;
@@ -123,6 +126,9 @@ contract WONsMatchEngineTest is Test {
         );
 
         uint256 holderBalanceBefore = lootBoxFinalHolder.balance;
+
+        // Matches can only be settled after their start time.
+        vm.warp(block.timestamp + 1 hours + 1);
 
         address[] memory participants = new address[](2);
         participants[0] = winner;
@@ -166,6 +172,8 @@ contract WONsMatchEngineTest is Test {
         assertEq(cfg.lootBoxPool, expectedLootBoxPool, "loot box pool check");
 
         // Settle
+        vm.warp(block.timestamp + 1 hours + 1);
+
         address[] memory participants = new address[](3);
         participants[0] = winner;
         participants[1] = player2;

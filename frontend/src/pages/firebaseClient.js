@@ -297,6 +297,8 @@ export async function fetchUsersFromFirebase() {
   return Object.entries(data).map(([key, value]) => ({
     username: value?.username || key,
     won: Number(value?.won || 0),
+    wonMon: Number(value?.wonMon || 0),
+    xp: Number(value?.xp || 0),
     projects: Array.isArray(value?.projects) ? value.projects : [],
     profilePictureUrl: value?.profilePictureUrl || value?.pfp || "",
     twitterUsername: value?.twitterUsername || null,

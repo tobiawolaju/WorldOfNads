@@ -1320,6 +1320,90 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   font-weight: bold;
 }
 
+/* Summary + metadata added when settlement started writing real rewards. */
+.reward-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  background: rgba(144, 124, 255, 0.12);
+  border: 1px solid rgba(144, 124, 255, 0.35);
+  border-radius: 12px;
+}
+
+.reward-summary-total {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #907cff;
+}
+
+.reward-summary-label {
+  font-size: 0.75rem;
+  color: var(--foreground-muted);
+}
+
+.reward-summary-pending {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #8b7500;
+  text-align: right;
+}
+
+.reward-amount-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reward-amount {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.reward-source {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--foreground-muted);
+}
+
+.reward-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: var(--foreground-muted);
+}
+
+.reward-meta span {
+  color: var(--foreground-muted);
+  font-weight: 500;
+}
+
+.reward-meta a {
+  color: #907cff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.reward-meta a:hover {
+  text-decoration: underline;
+}
+
+.badge-lootbox {
+  background: rgba(120, 180, 255, 0.15);
+  color: #1b5fa8;
+  border: 1px solid rgba(120, 180, 255, 0.3);
+}
+
+.badge-pending {
+  background: rgba(255, 193, 7, 0.18);
+  color: #8b7500;
+  border: 1px solid rgba(255, 193, 7, 0.4);
+}
+
 /* Store Section */
 .store-grid {
   display: grid;

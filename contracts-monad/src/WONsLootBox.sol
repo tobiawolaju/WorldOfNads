@@ -13,12 +13,18 @@ contract WONsLootBox is Ownable, ReentrancyGuard {
     error PoolNotSettled();
     error AlreadySettled();
     error EmptyClaim();
+    error InvalidAmount();
+    error NothingToWithdraw();
 
     uint256 public constant GAS_PER_STEAL = 0.001 ether;
     uint256 public constant STREAM_BATCH_LIMIT = 50;
 
     address public matchEngine;
     address public trustedCaller;
+
+    /// Sum of every unsettled pool. `withdrawSurplus` can only take balance
+    /// above this, so a funded pool can never be swept out from under a match.
+    uint256 public totalPooled;
 
     struct Pool {
         uint256 remainingValue;
@@ -59,7 +65,9 @@ contract WONsLootBox is Ownable, ReentrancyGuard {
 
     function fundPool(bytes32 matchId, uint256 amount) external payable onlyMatchEngine {
         if (pools[matchId].remainingValue > 0) revert PoolExists();
+        if (msg.value != amount) revert InvalidAmount();
         pools[matchId] = Pool({ remainingValue: amount, finalHolder: address(0), settled: false });
+        totalPooled += amount;
         emit PoolFunded(matchId, amount);
     }
 
@@ -69,6 +77,7 @@ contract WONsLootBox is Ownable, ReentrancyGuard {
         if (amount > pool.remainingValue) amount = pool.remainingValue;
         if (amount == 0) return;
         pool.remainingValue -= amount;
+        totalPooled -= amount;
         (bool success, ) = payable(player).call{value: amount}("");
         require(success, "Transfer failed");
         emit MONStreamed(matchId, player, amount, pool.remainingValue);
@@ -84,6 +93,7 @@ contract WONsLootBox is Ownable, ReentrancyGuard {
             if (amount > pool.remainingValue) amount = pool.remainingValue;
             if (amount == 0) break;
             pool.remainingValue -= amount;
+            totalPooled -= amount;
             (bool success, ) = payable(players[i]).call{value: amount}("");
             if (success) {
                 emit MONStreamed(matchId, players[i], amount, pool.remainingValue);
@@ -96,23 +106,26 @@ contract WONsLootBox is Ownable, ReentrancyGuard {
         if (pool.remainingValue == 0) revert PoolDepleted();
         uint256 gasCost = GAS_PER_STEAL;
         if (gasCost >= pool.remainingValue) {
+            totalPooled -= pool.remainingValue;
             pool.remainingValue = 0;
             emit LootBoxStolen(matchId, newHolder, 0);
             return;
         }
         pool.remainingValue -= gasCost;
+        totalPooled -= gasCost;
         pool.finalHolder = newHolder;
         emit LootBoxStolen(matchId, newHolder, pool.remainingValue);
     }
 
     function settle(bytes32 matchId, address finalHolder) external onlyMatchEngine {
         Pool storage pool = pools[matchId];
-        if (pool.remainingValue == 0 && pool.settled) revert AlreadySettled();
+        if (pool.settled) revert AlreadySettled();
         uint256 payout = pool.remainingValue;
         pool.remainingValue = 0;
         pool.finalHolder = finalHolder;
         pool.settled = true;
         if (payout > 0) {
+            totalPooled -= payout;
             (bool success, ) = payable(finalHolder).call{value: payout}("");
             require(success, "Transfer failed");
         }
@@ -125,6 +138,7 @@ contract WONsLootBox is Ownable, ReentrancyGuard {
         pool.remainingValue = 0;
         pool.settled = true;
         if (amount > 0) {
+            totalPooled -= amount;
             (bool success, ) = payable(to).call{value: amount}("");
             require(success, "Transfer failed");
         }
@@ -135,12 +149,12 @@ contract WONsLootBox is Ownable, ReentrancyGuard {
         return pools[matchId].remainingValue;
     }
 
-    function withdraw() external onlyOwner nonReentrant {
+    /// Withdraws only the balance that is not backing an unsettled pool.
+    function withdrawSurplus() external onlyOwner nonReentrant {
         uint256 balance = address(this).balance;
-        if (balance > 0) {
-            (bool success, ) = payable(owner()).call{value: balance}("");
-            require(success, "Transfer failed");
-        }
+        if (balance <= totalPooled) revert NothingToWithdraw();
+        (bool success, ) = payable(owner()).call{value: balance - totalPooled}("");
+        require(success, "Transfer failed");
     }
 
     receive() external payable {}

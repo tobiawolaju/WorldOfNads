@@ -19,6 +19,8 @@ type Project = {
 type User = {
   username: string;
   won: number;
+  wonMon: number;
+  xp: number;
   projects: string[];
   pfp: string;
 };
@@ -40,6 +42,33 @@ function getAvatarUrl(username: string): string {
 
 function getProjectLogoFallback(projectName: string): string {
   return `https://api.dicebear.com/9.x/identicon/svg?seed=project-${encodeURIComponent(projectName)}&backgroundColor=ffffff`;
+}
+
+/**
+ * Ranks players by match wins, then by MON won, then by name.
+ *
+ * Rendering the raw Firebase object order (the previous behaviour) made the
+ * "#1" badge meaningless. Records are deduped by name because wallet-keyed
+ * users without a username all fall back to "Anon".
+ */
+function rankUsers(users: User[]): User[] {
+  const byName = new Map<string, User>();
+  users.forEach((user) => {
+    const username = (user.username || "Anon").trim() || "Anon";
+    const current = byName.get(username);
+    const better =
+      !current ||
+      user.won > current.won ||
+      (user.won === current.won && user.wonMon > current.wonMon) ||
+      (user.won === current.won && user.wonMon === current.wonMon && user.xp > current.xp);
+    if (better) byName.set(username, { ...user, username });
+  });
+
+  return Array.from(byName.values()).sort((a, b) => {
+    if (b.won !== a.won) return b.won - a.won;
+    if (b.wonMon !== a.wonMon) return b.wonMon - a.wonMon;
+    return a.username.localeCompare(b.username);
+  });
 }
 
 const Leaderboard: React.FC = () => {
@@ -71,6 +100,8 @@ const Leaderboard: React.FC = () => {
           return {
             username: String(user.username || "Anon"),
             won: Number(user.won || 0),
+            wonMon: Number(user.wonMon || 0),
+            xp: Number(user.xp || 0),
             projects: Array.isArray(user.projects) ? user.projects : [],
             pfp
           };
@@ -94,8 +125,8 @@ const Leaderboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setCurrentPage(1); // Reset to first page when filter changes
-  }, [selectedProject]);
+    setCurrentPage(1); // Reset to first page when the filter or the search changes
+  }, [selectedProject, searchTerm]);
 
   const filteredProjects = useMemo(() =>
     projects.filter((p) =>
@@ -103,15 +134,27 @@ const Leaderboard: React.FC = () => {
     ), [projects, searchTerm]);
 
   const filteredUsers = useMemo(() => {
-    if (!selectedProject) return allUsers;
-    const activeUsers = sponsorUsers[selectedProject] || [];
-    return activeUsers
-      .map((username) => {
-        const match = allUsers.find((user) => user.username === username);
-        if (match) return match;
-        return { username, won: 0, projects: [], pfp: "" };
-      });
-  }, [allUsers, selectedProject, sponsorUsers]);
+    const term = searchTerm.trim().toLowerCase();
+    const base = selectedProject
+      ? (sponsorUsers[selectedProject] || []).map((username) => {
+          const match = allUsers.find((user) => user.username === username);
+          return match || { username, won: 0, wonMon: 0, xp: 0, projects: [], pfp: "" };
+        })
+      : allUsers;
+
+    const searched = term
+      ? base.filter((user) => user.username.toLowerCase().includes(term))
+      : base;
+
+    return rankUsers(searched);
+  }, [allUsers, selectedProject, sponsorUsers, searchTerm]);
+
+  useEffect(() => {
+    // A saved page can point past the end after data changes (or a search narrows
+    // the list); clamp instead of showing an empty page.
+    const pages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
+    if (currentPage > pages) setCurrentPage(pages);
+  }, [filteredUsers.length, currentPage]);
 
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
@@ -163,7 +206,7 @@ const Leaderboard: React.FC = () => {
       <div className="search-wrapper">
         <input
           type="text"
-          placeholder="Search for a project..."
+          placeholder="Search for a project or player..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="partner-search"
@@ -230,6 +273,9 @@ const Leaderboard: React.FC = () => {
               ? `${selectedProject} Players (last ${TREND_DAYS} days)`
               : "Global Rankings"}
           </h2>
+          <p className="text-inline-light" style={{ fontSize: "0.8rem", margin: "0 0 8px" }}>
+            Ranked by match wins, then MON won.
+          </p>
           {filteredUsers.length === 0 ? (
             <p className="text-inline-light">No users yet.</p>
           ) : (
@@ -241,7 +287,10 @@ const Leaderboard: React.FC = () => {
                     <img src={user.pfp || getAvatarUrl(user.username)} alt={user.username} className="user-pfp" />
                     <span className="username">{user.username}</span>
                   </div>
-                  <span className="won">{user.won} WON</span>
+                  <span className="won">
+                    {user.won} {user.won === 1 ? "win" : "wins"}
+                    {user.wonMon > 0 ? ` · ${user.wonMon.toFixed(2)} MON` : ""}
+                  </span>
                 </li>
               ))}
             </ul>
