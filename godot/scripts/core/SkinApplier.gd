@@ -226,10 +226,6 @@ const ATTACHMENT_SLOTS: Array[String] = [
 	"Skeleton3D/Back/offset",
 ]
 
-# Meta key holding visibility state for skin attachments (slot children) before
-# reveal hides them, so restoring returns them to the skin's layout.
-const ATTACHMENTS_STATE_META := "_skin_attachments_state"
-
 # The skin.tscn parts that sit outside the regular look: the shirt, the wig
 # and the glove. All three ship switched off in the scene. Holding the reveal
 # key shows them - see set_hidden_extras_visible().
@@ -271,13 +267,14 @@ const REVEAL_TINT_ACTIVE_META := "_skin_reveal_tint_active"
 const REVEAL_TINT_SKIN_META := "_skin_reveal_tint_skin"
 
 func apply_skin(player: Node3D, skin_name: String) -> void:
-	# While the reveal tint is on, the skin is painted in the reveal colour and
-	# the skin to go back to when the tint comes off is remembered. A skin
-	# change in the middle of the reveal therefore neither drops the tint nor
-	# loses the skin the release returns to.
+	# While the reveal tint is on, the player is dressed in the default shaded
+	# skin painted in the reveal colour (that skin wears no attachments, so the
+	# reveal always reads the same way) and the skin to go back to when the tint
+	# comes off is remembered. A skin change in the middle of the reveal
+	# therefore neither drops the tint nor loses the skin the release returns to.
 	if is_reveal_tinted(player):
 		player.set_meta(REVEAL_TINT_SKIN_META, skin_name)
-		_apply_skin(player, skin_name, REVEAL_TINT)
+		_apply_skin(player, DEFAULT_SKIN, REVEAL_TINT)
 		return
 	_apply_skin(player, skin_name, NO_TINT)
 
@@ -349,6 +346,14 @@ static func _apply_attachments(player: Node3D, data: Dictionary) -> void:
 # back off restores exactly that state: a part that was already visible stays
 # visible, one that was hidden goes back into hiding. Nothing else is touched,
 # so every part keeps its authored placement and material.
+# Shows (and hides again) the skin.tscn parts that sit outside the regular
+# look: the shirt, the wig and the glove. The visibility each of them had
+# before the reveal is remembered on the player node, so switching the reveal
+# back off restores exactly that state: a part that was already visible stays
+# visible, one that was hidden goes back into hiding. Nothing else is touched,
+# so every part keeps its authored placement and material. Attachments are not
+# handled here: the reveal dresses the player in the default skin, which wears
+# none of them (see set_reveal_tint).
 static func set_hidden_extras_visible(player: Node3D, visible_now: bool) -> void:
 	if player == null:
 		return
@@ -362,26 +367,6 @@ static func set_hidden_extras_visible(player: Node3D, visible_now: bool) -> void
 			var node := player.get_node_or_null(path) as Node3D
 			if node != null:
 				node.visible = true
-		# Hide all other attachments (skins wear them; chog reveals extras + tint)
-		var saved_atts: Array = []
-		for slot_path in ATTACHMENT_SLOTS:
-			var slot := player.get_node_or_null(slot_path) as Node3D
-			if slot == null:
-				saved_atts.append([])
-				continue
-			var slot_state: Array = []
-			for child in slot.get_children():
-				if child is Node3D:
-					slot_state.append({"node": child.name, "visible": child.visible})
-			saved_atts.append(slot_state)
-		player.set_meta(ATTACHMENTS_STATE_META, saved_atts)
-		for slot_path in ATTACHMENT_SLOTS:
-			var slot := player.get_node_or_null(slot_path) as Node3D
-			if slot == null:
-				continue
-			for child in slot.get_children():
-				if child is Node3D:
-					child.visible = false
 		return
 	var saved: Variant = player.get_meta(HIDDEN_EXTRAS_STATE_META, null)
 	for i in range(HIDDEN_EXTRA_NODES.size()):
@@ -393,31 +378,13 @@ static func set_hidden_extras_visible(player: Node3D, visible_now: bool) -> void
 		else:
 			node.visible = false
 	player.remove_meta(HIDDEN_EXTRAS_STATE_META)
-	var saved_atts: Variant = player.get_meta(ATTACHMENTS_STATE_META, null)
-	if saved_atts is Array:
-		for i in range(saved_atts.size()):
-			if i >= ATTACHMENT_SLOTS.size():
-				break
-			var slot_state: Variant = saved_atts[i]
-			if not slot_state is Array:
-				continue
-			var slot := player.get_node_or_null(ATTACHMENT_SLOTS[i]) as Node3D
-			if slot == null:
-				continue
-			var by_name: Dictionary = {}
-			for entry in slot_state:
-				if entry is Dictionary and entry.has("node"):
-					by_name[str(entry["node"])] = bool(entry.get("visible", false))
-			for child in slot.get_children():
-				if child is Node3D and by_name.has(child.name):
-					child.visible = by_name[child.name]
-	player.remove_meta(ATTACHMENTS_STATE_META)
 
-# Turns the reveal tint on or off for a player. While it is on, the
-# character's skin is painted in REVEAL_TINT; the skin the player wore before
-# is remembered, so switching the tint off puts that exact skin back. Only the
-# skin colour changes - the shader, the crown and the attachments stay exactly
-# as the skin itself has them.
+# Turns the reveal tint on or off for a player. While it is on, the player is
+# dressed in the DEFAULT shaded skin painted in REVEAL_TINT (the default skin
+# wears no attachments, so every other skin's hat/duck/back item disappears and
+# the reveal look is the same on everyone) and the skin the player wore before
+# is remembered, so switching the tint off puts that exact skin, attachments and
+# all, back.
 static func set_reveal_tint(player: Node3D, enabled: bool) -> void:
 	if player == null:
 		return
@@ -426,7 +393,7 @@ static func set_reveal_tint(player: Node3D, enabled: bool) -> void:
 			return
 		player.set_meta(REVEAL_TINT_SKIN_META, str(player.get_meta(APPLIED_SKIN_META, DEFAULT_SKIN)))
 		player.set_meta(REVEAL_TINT_ACTIVE_META, true)
-		_apply_skin(player, str(player.get_meta(REVEAL_TINT_SKIN_META)), REVEAL_TINT)
+		_apply_skin(player, DEFAULT_SKIN, REVEAL_TINT)
 		return
 	if not is_reveal_tinted(player):
 		return
