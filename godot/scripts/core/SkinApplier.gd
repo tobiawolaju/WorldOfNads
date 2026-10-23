@@ -226,6 +226,10 @@ const ATTACHMENT_SLOTS: Array[String] = [
 	"Skeleton3D/Back/offset",
 ]
 
+# Meta key holding visibility state for skin attachments (slot children) before
+# reveal hides them, so restoring returns them to the skin's layout.
+const ATTACHMENTS_STATE_META := "_skin_attachments_state"
+
 # The skin.tscn parts that sit outside the regular look: the shirt, the wig
 # and the glove. All three ship switched off in the scene. Holding the reveal
 # key shows them - see set_hidden_extras_visible().
@@ -358,6 +362,26 @@ static func set_hidden_extras_visible(player: Node3D, visible_now: bool) -> void
 			var node := player.get_node_or_null(path) as Node3D
 			if node != null:
 				node.visible = true
+		# Hide all other attachments (skins wear them; chog reveals extras + tint)
+		var saved_atts: Array = []
+		for slot_path in ATTACHMENT_SLOTS:
+			var slot := player.get_node_or_null(slot_path) as Node3D
+			if slot == null:
+				saved_atts.append([])
+				continue
+			var slot_state: Array = []
+			for child in slot.get_children():
+				if child is Node3D:
+					slot_state.append({"node": child.name, "visible": child.visible})
+			saved_atts.append(slot_state)
+		player.set_meta(ATTACHMENTS_STATE_META, saved_atts)
+		for slot_path in ATTACHMENT_SLOTS:
+			var slot := player.get_node_or_null(slot_path) as Node3D
+			if slot == null:
+				continue
+			for child in slot.get_children():
+				if child is Node3D:
+					child.visible = false
 		return
 	var saved: Variant = player.get_meta(HIDDEN_EXTRAS_STATE_META, null)
 	for i in range(HIDDEN_EXTRA_NODES.size()):
@@ -369,6 +393,25 @@ static func set_hidden_extras_visible(player: Node3D, visible_now: bool) -> void
 		else:
 			node.visible = false
 	player.remove_meta(HIDDEN_EXTRAS_STATE_META)
+	var saved_atts: Variant = player.get_meta(ATTACHMENTS_STATE_META, null)
+	if saved_atts is Array:
+		for i in range(saved_atts.size()):
+			if i >= ATTACHMENT_SLOTS.size():
+				break
+			var slot_state: Variant = saved_atts[i]
+			if not slot_state is Array:
+				continue
+			var slot := player.get_node_or_null(ATTACHMENT_SLOTS[i]) as Node3D
+			if slot == null:
+				continue
+			var by_name: Dictionary = {}
+			for entry in slot_state:
+				if entry is Dictionary and entry.has("node"):
+					by_name[str(entry["node"])] = bool(entry.get("visible", false))
+			for child in slot.get_children():
+				if child is Node3D and by_name.has(child.name):
+					child.visible = by_name[child.name]
+	player.remove_meta(ATTACHMENTS_STATE_META)
 
 # Turns the reveal tint on or off for a player. While it is on, the
 # character's skin is painted in REVEAL_TINT; the skin the player wore before
