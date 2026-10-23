@@ -239,12 +239,22 @@ const AppContent: React.FC = () => {
       const username = getUsernameFromPrivy(user);
       trackSessionStarted({ userId: user.id, metadata: { username } });
 
+      // `beforeunload` is unreliable on mobile and when a tab is discarded in
+      // the background; `pagehide` covers those. Only the first of the two is
+      // sent, so a session never reports two different durations.
+      let reported = false;
       const handleUnload = () => {
+        if (reported) return;
+        reported = true;
         trackSessionEnded({ userId: user.id, metadata: { username } });
       };
 
       window.addEventListener("beforeunload", handleUnload);
-      unlisten = () => window.removeEventListener("beforeunload", handleUnload);
+      window.addEventListener("pagehide", handleUnload);
+      unlisten = () => {
+        window.removeEventListener("beforeunload", handleUnload);
+        window.removeEventListener("pagehide", handleUnload);
+      };
     })();
 
     return () => unlisten?.();

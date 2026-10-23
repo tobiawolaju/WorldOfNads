@@ -75,7 +75,12 @@ function sendEvent(payload, useBeacon = false) {
   const body = JSON.stringify(payload);
 
   if (useBeacon && navigator?.sendBeacon) {
-    const blob = new Blob([body], { type: "application/json" });
+    // `application/json` is not a CORS-safelisted content type: a cross-origin
+    // beacon cannot preflight, so the browser silently dropped every
+    // `session_ended` (the API lives on Render, the app on Vercel). `text/plain`
+    // is safelisted, and the backend parses the body as JSON regardless of the
+    // declared type.
+    const blob = new Blob([body], { type: "text/plain;charset=UTF-8" });
     return navigator.sendBeacon(buildUrl("/analytics/events"), blob);
   }
 

@@ -28,15 +28,30 @@ function formatPercent(value: number) {
   return `${formatNumber(value, 1)}%`;
 }
 
+function formatMon(value: number) {
+  if (!Number.isFinite(value)) return "0 MON";
+  return `${formatNumber(value, 2)} MON`;
+}
+
 type SeriesPoint = { date: string; value: number };
 
 type AnalyticsSummary = {
+  range?: {
+    start: string;
+    end: string;
+    startDay: string;
+    endDay: string;
+    days: number;
+  };
   overview: {
     dailyActiveUsers: number;
     totalUsers: number;
     matchesToday: number;
     totalRewardsDistributed: number;
     totalSponsors: number;
+    matchesInRange?: number;
+    activeUsersInRange?: number;
+    pendingRewards?: number;
   };
   growthMetrics: {
     dailyUserGrowthRate: number;
@@ -50,6 +65,8 @@ type AnalyticsSummary = {
     totalUsers: number;
     newUsersPerDay: number;
     uniqueUsersPerDay: number;
+    newUsersInRange?: number;
+    activeUsersInRange?: number;
   };
   gameMetrics: {
     matchesCreatedPerDay: number;
@@ -58,12 +75,16 @@ type AnalyticsSummary = {
     averagePlayersPerMatch: number;
     matchCompletionRate: number;
     matchesPerUser: number;
+    matchesCreatedInRange?: number;
+    matchesPlayedInRange?: number;
+    playersTracked?: number;
   };
   economyMetrics: {
     totalRewardsDistributed: number;
     rewardsDistributedPerDay: number;
     averageRewardPerMatch: number;
     totalRewardVolume: number;
+    pendingRewards?: number;
     topWinningPlayers: Array<{ user_id: string; total: number }>;
   };
   sponsorMetrics: {
@@ -77,6 +98,7 @@ type AnalyticsSummary = {
     returningUsers: number;
     newUsers: number;
     gamesPlayedPerUser: number;
+    pairedSessions?: number;
     playerRetention: {
       day1: number;
       day7: number;
@@ -112,18 +134,38 @@ type AnalyticsSeries = {
   };
 };
 
+function MetricCard({
+  title,
+  value,
+  hint
+}: {
+  title: string;
+  value: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <div className="analytics-card">
+      <h3>{title}</h3>
+      <p>{value}</p>
+      {hint ? <small className="analytics-card__hint">{hint}</small> : null}
+    </div>
+  );
+}
+
 function ChartCard({
   title,
   labels,
   values,
   color = "#2f855a",
-  type = "line"
+  type = "line",
+  percent = false
 }: {
   title: string;
   labels: string[];
   values: number[];
   color?: string;
   type?: "line" | "bar";
+  percent?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
@@ -161,7 +203,10 @@ function ChartCard({
             ticks: { maxTicksLimit: 6 }
           },
           y: {
-            beginAtZero: true
+            beginAtZero: true,
+            ...(percent
+              ? { max: 100, ticks: { callback: (value: string | number) => `${value}%` } }
+              : {})
           }
         }
       }
@@ -172,7 +217,7 @@ function ChartCard({
         chartRef.current.destroy();
       }
     };
-  }, [labels, values, color, title, type]);
+  }, [labels, values, color, title, type, percent]);
 
   return (
     <div className="analytics-card chart-card">
@@ -206,16 +251,35 @@ export default function AdminAnalytics() {
     setLoading(true);
     setError("");
     try {
-      const summaryRes = await fetch(buildUrl(`/analytics/summary?start=${startDate}&end=${endDate}`));
-      const summaryData = await summaryRes.json();
-      const seriesRes = await fetch(buildUrl(`/analytics/timeseries?start=${startDate}&end=${endDate}`));
-      const seriesData = await seriesRes.json();
+      // `ok` used to be ignored, so a 404 (the API URL not configured) or a 500
+      // was parsed as JSON, threw somewhere else, and surfaced as "no data".
+      const [summaryRes, seriesRes] = await Promise.all([
+        fetch(buildUrl(`/analytics/summary?start=${startDate}&end=${endDate}`), { cache: "no-store" }),
+        fetch(buildUrl(`/analytics/timeseries?start=${startDate}&end=${endDate}`), { cache: "no-store" })
+      ]);
+
+      if (!summaryRes.ok || !seriesRes.ok) {
+        throw new Error(
+          `The analytics API answered ${summaryRes.status} and ${seriesRes.status}.`
+        );
+      }
+
+      const summaryData = (await summaryRes.json()) as AnalyticsSummary;
+      const seriesData = (await seriesRes.json()) as AnalyticsSeries;
+
+      if (!summaryData?.overview || !seriesData?.series) {
+        throw new Error("The analytics API returned an unexpected shape.");
+      }
+
       setSummary(summaryData);
       setSeries(seriesData);
-    } catch {
-      const msg = "Failed to load analytics data.";
+    } catch (err) {
+      const msg =
+        err instanceof Error && err.message
+          ? `Failed to load analytics data. ${err.message}`
+          : "Failed to load analytics data.";
       setError(msg);
-      showErrorToast(msg);
+      showErrorToast("Failed to load analytics data.");
     } finally {
       setLoading(false);
     }
@@ -228,6 +292,9 @@ export default function AdminAnalytics() {
   const handleExport = async (format: "csv" | "json") => {
     try {
       const response = await fetch(buildUrl(`/analytics/export?format=${format}&start=${startDate}&end=${endDate}`));
+      if (!response.ok) {
+        throw new Error(`The export endpoint answered ${response.status}.`);
+      }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -248,15 +315,31 @@ export default function AdminAnalytics() {
   if (!summary || !series) {
     return (
       <div className="analytics-loading">
-        <p className={loading ? "text-inline-accent" : undefined}>
-          {loading ? "Loading analytics..." : "No analytics data yet."}
-        </p>
-        {error ? <span className="analytics-auth__error">{error}</span> : null}
+        {error ? (
+          <div className="analytics-empty">
+            <p className="analytics-auth__error">{error}</p>
+            <button onClick={loadAnalytics} disabled={loading}>
+              {loading ? "Retrying..." : "Retry"}
+            </button>
+          </div>
+        ) : (
+          <p className="text-inline-accent">{loading ? "Loading analytics..." : "No analytics data yet."}</p>
+        )}
       </div>
     );
   }
 
   const chartLabels = series.series.dailyActiveUsers.map((point) => point.date);
+  const rangeStart = summary.range?.startDay ?? startDate;
+  const rangeEnd = summary.range?.endDay ?? endDate;
+  const rangeDays = summary.range?.days ?? chartLabels.length;
+
+  const activeInRange = summary.userMetrics.activeUsersInRange ?? summary.overview.activeUsersInRange ?? 0;
+  const newInRange = summary.userMetrics.newUsersInRange ?? summary.engagementMetrics.newUsers;
+  const matchesInRange = summary.gameMetrics.matchesCreatedInRange ?? summary.overview.matchesInRange ?? 0;
+  const matchesPlayed = summary.gameMetrics.matchesPlayedInRange ?? summary.gameMetrics.matchesCompleted;
+  const pendingRewards = summary.economyMetrics.pendingRewards ?? summary.overview.pendingRewards ?? 0;
+  const pairedSessions = summary.engagementMetrics.pairedSessions ?? 0;
 
   return (
     <div className="analytics-page">
@@ -264,7 +347,13 @@ export default function AdminAnalytics() {
         <div>
           <p className="analytics-eyebrow">World Of Nads</p>
           <h1>Analytics Dashboard</h1>
-          <p className="analytics-subtext">Traction, growth, engagement, and economy insights.</p>
+          <p className="analytics-subtext">
+            Traction, growth, engagement, and economy insights.
+          </p>
+          <p className="analytics-subtext analytics-range">
+            {rangeStart} → {rangeEnd} · {rangeDays} {rangeDays === 1 ? "day" : "days"} · UTC days ·
+            users, matches and rewards are read from their records, activity from the event log.
+          </p>
         </div>
         <div className="analytics-actions">
           <div className="date-range">
@@ -289,44 +378,45 @@ export default function AdminAnalytics() {
       <section className="analytics-section">
         <h2>Overview</h2>
         <div className="analytics-grid">
-          <div className="analytics-card">
-            <h3>Daily Active Users</h3>
-            <p>{formatNumber(summary.overview.dailyActiveUsers)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Total Users</h3>
-            <p>{formatNumber(summary.overview.totalUsers)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Matches Today</h3>
-            <p>{formatNumber(summary.overview.matchesToday)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Total Rewards Distributed</h3>
-            <p>{formatNumber(summary.overview.totalRewardsDistributed, 2)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Total Sponsors</h3>
-            <p>{formatNumber(summary.overview.totalSponsors)}</p>
-          </div>
+          <MetricCard
+            title="Active Users"
+            value={formatNumber(summary.overview.dailyActiveUsers)}
+            hint={`on ${rangeEnd}`}
+          />
+          <MetricCard
+            title="Active Users (range)"
+            value={formatNumber(activeInRange)}
+            hint={`any activity between ${rangeStart} and ${rangeEnd}`}
+          />
+          <MetricCard
+            title="Registered Users"
+            value={formatNumber(summary.overview.totalUsers)}
+            hint="one per person, de-duplicated by Privy id"
+          />
+          <MetricCard
+            title="Matches Created"
+            value={formatNumber(matchesInRange)}
+            hint="in the selected range"
+          />
+          <MetricCard
+            title="Rewards Paid"
+            value={formatMon(summary.overview.totalRewardsDistributed)}
+            hint="settled reward rows in the range"
+          />
+          <MetricCard
+            title="Sponsors"
+            value={formatNumber(summary.overview.totalSponsors)}
+            hint="all time"
+          />
         </div>
       </section>
 
       <section className="analytics-section">
         <h2>Growth</h2>
         <div className="analytics-grid">
-          <div className="analytics-card">
-            <h3>Daily User Growth Rate</h3>
-            <p>{formatPercent(summary.growthMetrics.dailyUserGrowthRate)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Weekly Growth Rate</h3>
-            <p>{formatPercent(summary.growthMetrics.weeklyGrowthRate)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Match Creation Growth Rate</h3>
-            <p>{formatPercent(summary.growthMetrics.matchCreationGrowthRate)}</p>
-          </div>
+          <MetricCard title="Daily User Growth Rate" value={formatPercent(summary.growthMetrics.dailyUserGrowthRate)} hint={`${rangeEnd} vs the day before`} />
+          <MetricCard title="Weekly Growth Rate" value={formatPercent(summary.growthMetrics.weeklyGrowthRate)} hint="last 7 days vs the 7 before" />
+          <MetricCard title="Match Creation Growth Rate" value={formatPercent(summary.growthMetrics.matchCreationGrowthRate)} hint="last 7 days vs the 7 before" />
         </div>
         <div className="analytics-grid charts-grid">
           <ChartCard
@@ -336,7 +426,7 @@ export default function AdminAnalytics() {
             color="#ff7ab6"
           />
           <ChartCard
-            title="User Growth"
+            title="Registered Users (cumulative)"
             labels={chartLabels}
             values={series.series.userGrowth.map((point) => point.value)}
             color="#ff7ab6"
@@ -347,56 +437,28 @@ export default function AdminAnalytics() {
       <section className="analytics-section">
         <h2>Users</h2>
         <div className="analytics-grid">
-          <div className="analytics-card">
-            <h3>DAU</h3>
-            <p>{formatNumber(summary.userMetrics.dau)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>WAU</h3>
-            <p>{formatNumber(summary.userMetrics.wau)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>MAU</h3>
-            <p>{formatNumber(summary.userMetrics.mau)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>New Users Per Day</h3>
-            <p>{formatNumber(summary.userMetrics.newUsersPerDay)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Unique Users Per Day</h3>
-            <p>{formatNumber(summary.userMetrics.uniqueUsersPerDay)}</p>
-          </div>
+          <MetricCard title="DAU" value={formatNumber(summary.userMetrics.dau)} hint={`active on ${rangeEnd}`} />
+          <MetricCard title="WAU" value={formatNumber(summary.userMetrics.wau)} hint="last 7 days of the range" />
+          <MetricCard title="MAU" value={formatNumber(summary.userMetrics.mau)} hint="last 30 days of the range" />
+          <MetricCard title="New Users (range)" value={formatNumber(newInRange)} hint="first seen in the range" />
+          <MetricCard title="New Users" value={formatNumber(summary.userMetrics.newUsersPerDay)} hint={`first seen on ${rangeEnd}`} />
+          <MetricCard title="Returning Users" value={formatNumber(summary.engagementMetrics.returningUsers)} hint="active in the range, first seen before it" />
         </div>
       </section>
 
       <section className="analytics-section">
         <h2>Matches</h2>
         <div className="analytics-grid">
-          <div className="analytics-card">
-            <h3>Matches Created Per Day</h3>
-            <p>{formatNumber(summary.gameMetrics.matchesCreatedPerDay)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Matches Completed</h3>
-            <p>{formatNumber(summary.gameMetrics.matchesCompleted)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Matches Currently Active</h3>
-            <p>{formatNumber(summary.gameMetrics.matchesCurrentlyActive)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Average Players Per Match</h3>
-            <p>{formatNumber(summary.gameMetrics.averagePlayersPerMatch, 1)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Match Completion Rate</h3>
-            <p>{formatPercent(summary.gameMetrics.matchCompletionRate)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Matches Per User</h3>
-            <p>{formatNumber(summary.gameMetrics.matchesPerUser, 2)}</p>
-          </div>
+          <MetricCard title="Matches Created" value={formatNumber(matchesInRange)} hint="in the range, from match records" />
+          <MetricCard title="Matches Played" value={formatNumber(matchesPlayed)} hint="started in the range and not cancelled" />
+          <MetricCard title="Live Now" value={formatNumber(summary.gameMetrics.matchesCurrentlyActive)} hint="inside the 300 s round window" />
+          <MetricCard
+            title="Average Players Per Match"
+            value={formatNumber(summary.gameMetrics.averagePlayersPerMatch, 1)}
+            hint={`from join events, training lobby excluded${summary.gameMetrics.playersTracked ? ` · ${summary.gameMetrics.playersTracked} players tracked` : ""}`}
+          />
+          <MetricCard title="Match Completion Rate" value={formatPercent(summary.gameMetrics.matchCompletionRate)} hint="played ÷ started in the range" />
+          <MetricCard title="Matches Per User" value={formatNumber(summary.gameMetrics.matchesPerUser, 2)} hint="matches joined by the players who joined them" />
         </div>
         <div className="analytics-grid charts-grid">
           <ChartCard
@@ -406,7 +468,7 @@ export default function AdminAnalytics() {
             color="#ff7ab6"
           />
           <ChartCard
-            title="Matches Per User"
+            title="Matches Per Active User"
             labels={chartLabels}
             values={series.series.matchesPerUser.map((point) => point.value)}
             color="#ff7ab6"
@@ -417,26 +479,15 @@ export default function AdminAnalytics() {
       <section className="analytics-section">
         <h2>Economy</h2>
         <div className="analytics-grid">
-          <div className="analytics-card">
-            <h3>Total Rewards Distributed</h3>
-            <p>{formatNumber(summary.economyMetrics.totalRewardsDistributed, 2)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Rewards Distributed Per Day</h3>
-            <p>{formatNumber(summary.economyMetrics.rewardsDistributedPerDay, 2)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Average Reward Per Match</h3>
-            <p>{formatNumber(summary.economyMetrics.averageRewardPerMatch, 2)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Total Reward Volume</h3>
-            <p>{formatNumber(summary.economyMetrics.totalRewardVolume, 2)}</p>
-          </div>
+          <MetricCard title="Rewards Paid (range)" value={formatMon(summary.economyMetrics.totalRewardsDistributed)} hint="from the rewards ledger" />
+          <MetricCard title="Rewards Paid" value={formatMon(summary.economyMetrics.rewardsDistributedPerDay)} hint={`on ${rangeEnd}`} />
+          <MetricCard title="Average Reward Per Match" value={formatMon(summary.economyMetrics.averageRewardPerMatch)} hint="only matches that paid out" />
+          <MetricCard title="Prize Pool Escrowed" value={formatMon(summary.economyMetrics.totalRewardVolume)} hint="prizes of matches created in the range" />
+          <MetricCard title="Pending Rewards" value={formatMon(pendingRewards)} hint="written but not yet settled" />
         </div>
         <div className="analytics-grid charts-grid">
           <ChartCard
-            title="Rewards Distributed Per Day"
+            title="Rewards Paid Per Day (MON)"
             labels={chartLabels}
             values={series.series.rewardsDistributed.map((point) => point.value)}
             color="#ff7ab6"
@@ -447,15 +498,15 @@ export default function AdminAnalytics() {
           <div className="analytics-table">
             <div className="analytics-table__row analytics-table__row--head">
               <span>Player</span>
-              <span>Total Rewards</span>
+              <span>Rewards</span>
             </div>
             {summary.economyMetrics.topWinningPlayers.length === 0 ? (
-              <div className="analytics-table__empty">No reward data yet.</div>
+              <div className="analytics-table__empty">No rewards paid in this range.</div>
             ) : (
               summary.economyMetrics.topWinningPlayers.map((player) => (
                 <div className="analytics-table__row" key={player.user_id}>
                   <span>{player.user_id}</span>
-                  <span>{formatNumber(player.total, 2)}</span>
+                  <span>{formatMon(player.total)}</span>
                 </div>
               ))
             )}
@@ -466,26 +517,14 @@ export default function AdminAnalytics() {
       <section className="analytics-section">
         <h2>Sponsors</h2>
         <div className="analytics-grid">
-          <div className="analytics-card">
-            <h3>Total Sponsors</h3>
-            <p>{formatNumber(summary.sponsorMetrics.totalSponsors)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Matches Sponsored</h3>
-            <p>{formatNumber(summary.sponsorMetrics.matchesSponsored)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Sponsor Funding Volume</h3>
-            <p>{formatNumber(summary.sponsorMetrics.sponsorFundingVolume, 2)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Average Sponsor Value</h3>
-            <p>{formatNumber(summary.sponsorMetrics.averageSponsorValue, 2)}</p>
-          </div>
+          <MetricCard title="Sponsors" value={formatNumber(summary.sponsorMetrics.totalSponsors)} hint="all time, from match records" />
+          <MetricCard title="Matches Sponsored" value={formatNumber(summary.sponsorMetrics.matchesSponsored)} hint="created in the range" />
+          <MetricCard title="Sponsor Funding" value={formatMon(summary.sponsorMetrics.sponsorFundingVolume)} hint="prizes escrowed in the range" />
+          <MetricCard title="Average Sponsor Value" value={formatMon(summary.sponsorMetrics.averageSponsorValue)} hint="per sponsor active in the range" />
         </div>
         <div className="analytics-grid charts-grid">
           <ChartCard
-            title="Sponsor Growth"
+            title="Sponsors (cumulative)"
             labels={chartLabels}
             values={series.series.sponsorGrowth.map((point) => point.value)}
             color="#ff7ab6"
@@ -496,30 +535,23 @@ export default function AdminAnalytics() {
       <section className="analytics-section">
         <h2>Engagement</h2>
         <div className="analytics-grid">
-          <div className="analytics-card">
-            <h3>Average Session Duration (sec)</h3>
-            <p>{formatNumber(summary.engagementMetrics.averageSessionDuration, 1)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Returning Users</h3>
-            <p>{formatNumber(summary.engagementMetrics.returningUsers)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>New Users</h3>
-            <p>{formatNumber(summary.engagementMetrics.newUsers)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Games Played Per User</h3>
-            <p>{formatNumber(summary.engagementMetrics.gamesPlayedPerUser, 2)}</p>
-          </div>
+          <MetricCard
+            title="Average Session Duration"
+            value={pairedSessions ? `${formatNumber(summary.engagementMetrics.averageSessionDuration, 1)} s` : "—"}
+            hint={pairedSessions ? `from ${formatNumber(pairedSessions)} completed sessions` : "no session has reported an end yet"}
+          />
+          <MetricCard title="Returning Users" value={formatNumber(summary.engagementMetrics.returningUsers)} hint="active in the range, first seen before it" />
+          <MetricCard title="New Users" value={formatNumber(newInRange)} hint="first seen in the range" />
+          <MetricCard title="Matches Played Per Active User" value={formatNumber(summary.engagementMetrics.gamesPlayedPerUser, 2)} hint="played matches ÷ active users in the range" />
         </div>
         <div className="analytics-grid charts-grid">
           <ChartCard
-            title="Retention"
+            title="Retention (all-time cohorts)"
             labels={["Day 1", "Day 7", "Day 30"]}
             values={[series.retention.day1, series.retention.day7, series.retention.day30]}
             color="#ff7ab6"
             type="bar"
+            percent
           />
         </div>
       </section>
@@ -527,42 +559,15 @@ export default function AdminAnalytics() {
       <section className="analytics-section">
         <h2>Grant Metrics</h2>
         <div className="analytics-grid">
-          <div className="analytics-card">
-            <h3>Daily Active Users</h3>
-            <p>{formatNumber(summary.grantMetrics.dailyActiveUsers)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Total Users</h3>
-            <p>{formatNumber(summary.grantMetrics.totalUsers)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Total Matches Played</h3>
-            <p>{formatNumber(summary.grantMetrics.totalMatchesPlayed)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Total Rewards Distributed</h3>
-            <p>{formatNumber(summary.grantMetrics.totalRewardsDistributed, 2)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Number of Sponsors</h3>
-            <p>{formatNumber(summary.grantMetrics.numberOfSponsors)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Average Matches per User</h3>
-            <p>{formatNumber(summary.grantMetrics.averageMatchesPerUser, 2)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>User Growth Rate</h3>
-            <p>{formatPercent(summary.grantMetrics.userGrowthRate)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Match Growth Rate</h3>
-            <p>{formatPercent(summary.grantMetrics.matchGrowthRate)}</p>
-          </div>
-          <div className="analytics-card">
-            <h3>Day 7 Retention</h3>
-            <p>{formatPercent(summary.grantMetrics.day7Retention)}</p>
-          </div>
+          <MetricCard title="Daily Active Users" value={formatNumber(summary.grantMetrics.dailyActiveUsers)} hint={`on ${rangeEnd}`} />
+          <MetricCard title="Total Users" value={formatNumber(summary.grantMetrics.totalUsers)} hint="registered accounts" />
+          <MetricCard title="Total Matches Played" value={formatNumber(summary.grantMetrics.totalMatchesPlayed)} hint="in the range" />
+          <MetricCard title="Total Rewards Distributed" value={formatMon(summary.grantMetrics.totalRewardsDistributed)} hint="in the range" />
+          <MetricCard title="Number of Sponsors" value={formatNumber(summary.grantMetrics.numberOfSponsors)} hint="all time" />
+          <MetricCard title="Average Matches per User" value={formatNumber(summary.grantMetrics.averageMatchesPerUser, 2)} hint="matches joined per joined player" />
+          <MetricCard title="User Growth Rate" value={formatPercent(summary.grantMetrics.userGrowthRate)} hint="day over day" />
+          <MetricCard title="Match Growth Rate" value={formatPercent(summary.grantMetrics.matchGrowthRate)} hint="week over week" />
+          <MetricCard title="Day 7 Retention" value={formatPercent(summary.grantMetrics.day7Retention)} hint="all-time cohorts" />
         </div>
       </section>
     </div>

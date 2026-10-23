@@ -815,33 +815,48 @@ const server = createServer(async (req, res) => {
   }
 
   if (req.method === 'GET' && reqUrl.pathname === '/analytics/summary') {
-    const summary = await getAnalyticsSummary({
-      start: reqUrl.searchParams.get('start'),
-      end: reqUrl.searchParams.get('end')
-    });
-    sendJson(res, 200, summary);
+    try {
+      const summary = await getAnalyticsSummary({
+        start: reqUrl.searchParams.get('start'),
+        end: reqUrl.searchParams.get('end')
+      });
+      sendJson(res, 200, summary);
+    } catch (error) {
+      console.error('[Analytics] /analytics/summary failed:', error);
+      sendJson(res, 500, { ok: false, error: 'failed to load analytics' });
+    }
     return;
   }
 
   if (req.method === 'GET' && reqUrl.pathname === '/analytics/timeseries') {
-    const data = await getAnalyticsTimeseries({
-      start: reqUrl.searchParams.get('start'),
-      end: reqUrl.searchParams.get('end')
-    });
-    sendJson(res, 200, data);
+    try {
+      const data = await getAnalyticsTimeseries({
+        start: reqUrl.searchParams.get('start'),
+        end: reqUrl.searchParams.get('end')
+      });
+      sendJson(res, 200, data);
+    } catch (error) {
+      console.error('[Analytics] /analytics/timeseries failed:', error);
+      sendJson(res, 500, { ok: false, error: 'failed to load analytics' });
+    }
     return;
   }
 
   if (req.method === 'GET' && reqUrl.pathname === '/analytics/export') {
-    const format = reqUrl.searchParams.get('format') || 'json';
-    const exportData = await exportAnalyticsEvents({
-      format,
-      start: reqUrl.searchParams.get('start'),
-      end: reqUrl.searchParams.get('end')
-    });
-    setCors(res);
-    res.writeHead(200, { 'Content-Type': exportData.contentType });
-    res.end(exportData.body);
+    try {
+      const format = reqUrl.searchParams.get('format') || 'json';
+      const exportData = await exportAnalyticsEvents({
+        format,
+        start: reqUrl.searchParams.get('start'),
+        end: reqUrl.searchParams.get('end')
+      });
+      setCors(res);
+      res.writeHead(200, { 'Content-Type': exportData.contentType });
+      res.end(exportData.body);
+    } catch (error) {
+      console.error('[Analytics] /analytics/export failed:', error);
+      sendJson(res, 500, { ok: false, error: 'failed to export analytics' });
+    }
     return;
   }
 
