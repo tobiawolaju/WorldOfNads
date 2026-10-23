@@ -5,6 +5,7 @@ const BOTTOM_MARGIN := 217.5
 const PORTRAIT_RATIO := 1.4
 
 @export var action_button: Button
+@export var chog_button: Button
 @export var jump_button: Button
 @export var slide_button: Button
 
@@ -284,6 +285,7 @@ func _input(event: InputEvent) -> void:
 		if touch.pressed:
 			for entry in [
 				[action_button, &"pickup"],
+				[chog_button, &"chog"],
 				[jump_button, &"jump"],
 				[slide_button, &"slide"]
 			]:
@@ -382,6 +384,8 @@ func _get_button(action_name: StringName) -> Button:
 	match action_name:
 		&"pickup":
 			return action_button
+		&"chog":
+			return chog_button
 		&"jump":
 			return jump_button
 		&"slide":

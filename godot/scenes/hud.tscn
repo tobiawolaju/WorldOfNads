@@ -4,10 +4,12 @@
 [ext_resource type="Script" uid="uid://b5tvb8chtonxg" path="res://scripts/ui/minimap.gd" id="2_mphia"]
 [ext_resource type="Texture2D" uid="uid://mthb8icx6x1m" path="res://assets/img/white_circle1.png" id="2_white_circle"]
 [ext_resource type="FontFile" uid="uid://bqvrqx4a4joiu" path="res://assets/fonts/fortnite.otf" id="3_apjy4"]
-[ext_resource type="Texture2D" uid="uid://hdhbnox5e2d0" path="res://assets/img/point.webp" id="6_3swnk"]
+[ext_resource type="Texture2D" uid="uid://brklv5y7posn8" path="res://assets/img/point.png" id="5_mgfyp"]
 [ext_resource type="Texture2D" uid="uid://ccgocjs5rb0gf" path="res://assets/img/ui/point3.png" id="6_48y67"]
+[ext_resource type="Texture2D" uid="uid://0n1vyqerl0u" path="res://assets/img/chick.png" id="6_gltyx"]
 [ext_resource type="Script" uid="uid://txqqdi5bw3hx" path="res://scripts/ui/jump_bar.gd" id="6_jump_bar"]
 [ext_resource type="Script" uid="uid://7xw4k7bx7fmy" path="res://scripts/ui/stamina_bar.gd" id="6_stamina_bar"]
+[ext_resource type="Texture2D" uid="uid://d2ks727tnx5ej" path="res://assets/img/loot.png" id="7_mgfyp"]
 [ext_resource type="Script" uid="uid://smygpuu7lbkh" path="res://scripts/ui/compassbar.gd" id="7_mphia"]
 [ext_resource type="Script" uid="uid://cty6onrl4lub0" path="res://scripts/ui/fps_label.gd" id="8_mphia"]
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/ui/joystick.gd" id="9_mphia"]
@@ -211,7 +213,6 @@ mouse_filter = 2
 script = ExtResource("16_bus_path")
 
 [node name="Pointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1253168890]
-modulate = Color(1, 0, 1, 1)
 z_index = 10
 custom_minimum_size = Vector2(20, 20)
 layout_mode = 0
@@ -219,42 +220,40 @@ offset_left = 50.0
 offset_top = 49.0
 offset_right = 70.0
 offset_bottom = 69.0
-texture = ExtResource("6_3swnk")
+texture = ExtResource("5_mgfyp")
 expand_mode = 1
 stretch_mode = 4
 flip_v = true
 
 [node name="ChickenPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1952187711]
-modulate = Color(1, 0.92156863, 0, 1)
+visible = false
 z_index = 11
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 0
 offset_left = 51.0
 offset_top = 68.0
 offset_right = 69.0
-offset_bottom = 88.0
+offset_bottom = 86.0
 scale = Vector2(1, -1)
-texture = ExtResource("21_gltyx")
+texture = ExtResource("6_gltyx")
 expand_mode = 1
 stretch_mode = 4
 flip_v = true
 
 [node name="LootBoxPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=146359137]
 visible = false
-modulate = Color(0.5176471, 0.20392157, 0.8745098, 1)
 z_index = 11
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 0
 offset_left = 51.0
-offset_top = 51.0
-offset_right = 61.0
-offset_bottom = 61.0
-texture = ExtResource("22_mgfyp")
+offset_top = 50.0
+offset_right = 69.0
+offset_bottom = 68.0
+texture = ExtResource("7_mgfyp")
 expand_mode = 1
 stretch_mode = 4
 
 [node name="PickupsPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=259660790]
-visible = false
 z_index = 11
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 0
@@ -537,10 +536,11 @@ grow_vertical = 0
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="VBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer/buttons_holder" unique_id=1325327020 node_paths=PackedStringArray("action_button", "jump_button", "slide_button")]
+[node name="VBoxContainer" type="HBoxContainer" parent="Node3/CanvasLayer/buttons_holder" unique_id=1325327020 node_paths=PackedStringArray("action_button", "chog_button", "jump_button", "slide_button")]
 layout_mode = 2
 script = ExtResource("10_mphia")
 action_button = NodePath("Action")
+chog_button = NodePath("../../Chog")
 jump_button = NodePath("HBoxContainer/Jump")
 slide_button = NodePath("HBoxContainer/Slide")
 
@@ -638,10 +638,10 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -286.0
-offset_top = -65.0
-offset_right = -236.0
-offset_bottom = -15.0
+offset_left = -291.0
+offset_top = -71.0
+offset_right = -241.0
+offset_bottom = -21.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_filter = 2
