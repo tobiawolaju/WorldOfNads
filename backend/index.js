@@ -3,7 +3,7 @@ import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
 import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward } from './firebaseClient.js';
-import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain } from './contractClient.js';
+import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain, getContractStatus } from './contractClient.js';
 import { settleRound } from './settlement.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 import { refreshAllUserPfps } from './refreshUserPfps.js';
@@ -586,6 +586,21 @@ const server = createServer(async (req, res) => {
       type: 'events_snapshot',
       events: eventHistory
     }));
+    return;
+  }
+
+  // Read-only wiring probe. Answers "is this deploy pointed at the same escrow
+  // pair the app shows, and is it the V2 pair?" with public chain data only.
+  // Exists because a wrong `MATCH_ENGINE_ADDRESS` is otherwise invisible until a
+  // round ends and the payout fails.
+  if (req.method === 'GET' && reqUrl.pathname === '/health/contracts') {
+    try {
+      const status = await getContractStatus();
+      sendJson(res, 200, { ok: true, ...status });
+    } catch (error) {
+      console.error('[Health] contract probe failed:', error);
+      sendJson(res, 500, { ok: false, error: 'the contract probe failed' });
+    }
     return;
   }
 

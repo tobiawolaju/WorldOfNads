@@ -22,7 +22,9 @@ const XP_ABI = [
 const LOOTBOX_ABI = [
     "function batchStream(bytes32 matchId, address[] calldata players, uint256[] calldata amounts) external",
     "function steal(bytes32 matchId, address newHolder) external",
-    "function getPoolValue(bytes32 matchId) external view returns (uint256)"
+    "function getPoolValue(bytes32 matchId) external view returns (uint256)",
+    "function totalPooled() external view returns (uint256)",
+    "function withdrawSurplus() external"
 ];
 
 const SKINS_ABI = [
@@ -243,6 +245,60 @@ export async function getMatchOnchain(matchIdStr) {
         startTime: Number(data.startTime),
         settledAt: Number(data.settledAt)
     };
+}
+
+/**
+ * Read-only wiring probe for the deployed escrow pair.
+ *
+ * The settlement path is only correct when this service and the frontend point
+ * at the *same* engine/lootbox, and only the V2 pair can pay a split or protect
+ * the escrow. Everything returned here is public chain data, so the control
+ * plane can expose it to prove a deploy is wired up instead of guessing.
+ */
+export async function getContractStatus() {
+    const status = {
+        rpcUrl: process.env.MN_RPC_URL || 'https://testnet-rpc.monad.xyz',
+        addresses: {
+            matchEngine: process.env.MATCH_ENGINE_ADDRESS || null,
+            lootBox: process.env.LOOTBOX_ADDRESS || null,
+            xpToken: process.env.XP_TOKEN_ADDRESS || null,
+            skins: process.env.SKINS_ADDRESS || null
+        },
+        chainReachable: false,
+        // V2-only reads: a V1 address has neither, which is how this tells the
+        // two pairs apart without trusting a hardcoded address.
+        escrowGuard: false,
+        lootBoxGuard: false,
+        totalEscrowedMon: null,
+        lootBoxPooledMon: null,
+        error: null
+    };
+
+    try {
+        await provider.getBlockNumber();
+        status.chainReachable = true;
+    } catch (error) {
+        status.error = `rpc: ${error.message}`;
+        return status;
+    }
+
+    try {
+        const escrowed = await getMatchEngine().totalEscrowed(ethers.ZeroAddress);
+        status.escrowGuard = true;
+        status.totalEscrowedMon = ethers.formatEther(escrowed);
+    } catch (error) {
+        status.error = `matchEngine: ${error.message}`;
+    }
+
+    try {
+        const pooled = await getLootBox().totalPooled();
+        status.lootBoxGuard = true;
+        status.lootBoxPooledMon = ethers.formatEther(pooled);
+    } catch (error) {
+        status.error = `${status.error ? `${status.error}; ` : ''}lootBox: ${error.message}`;
+    }
+
+    return status;
 }
 
 export async function getSkinData(skinId) {
