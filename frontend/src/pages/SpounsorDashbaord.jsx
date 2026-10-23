@@ -15,6 +15,7 @@ import {
   cancelSponsorMatchOnchain
 } from "./mockSponsorContract";
 import { trackMatchCreated, trackSponsorAdded, trackSponsorMatchCreated } from "../lib/analyticsClient";
+import { displayMatchStatus } from "../lib/matchStatus";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
 import { DEFAULT_LOBBY_BG, lobbyBackgroundOptions } from "../data/lobbyBackgrounds";
 import "./SpounsorDashbaord.css";
@@ -312,6 +313,15 @@ export default function SpounsorDashbaord() {
   };
 
   const handleCancelMatch = async (matchId) => {
+    // A stored `upcoming` can lag reality (the status worker only runs while
+    // the control plane is awake). Cancelling after kickoff would pull the
+    // prize out from under the players, so re-check against the clock.
+    const target = [...matches, ...allMatches].find((m) => m.matchId === matchId);
+    if (!target || displayMatchStatus(target, Date.now()) !== "upcoming") {
+      showErrorToast("This match has already started — it can no longer be cancelled.");
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to cancel this match and refund the prize?")) return;
 
     setIsSubmitting(true);
@@ -394,7 +404,7 @@ export default function SpounsorDashbaord() {
               <span>{match.prize}</span>
               <span className="sponsor-dashboard__match-id">{match.matchId}</span>
               <div className="sponsor-dashboard__actions">
-                {match.status === "upcoming" && match.createdByWallet === walletAddress && (
+                {displayMatchStatus(match, Date.now()) === "upcoming" && match.createdByWallet === walletAddress && (
                   <button
                     className="sponsor-dashboard__cancel-btn"
                     onClick={() => handleCancelMatch(match.matchId)}

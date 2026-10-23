@@ -158,6 +158,16 @@
   animation: none !important;
 }
 
+/* CANCELLED — refunded events: same treatment as completed, so a card whose
+   round never happened cannot read as active. */
+.arena-card-cancelled .arena-logo {
+  filter: grayscale(100%);
+  border-color: #adb5bd;
+  box-shadow: none !important;
+  animation: none !important;
+  opacity: 0.6;
+}
+
 /* Shared style for all status badges */
 .arena-status {
   display: inline-block;
@@ -186,6 +196,13 @@
 .arena-status-completed {
   background: #6c757d;
   opacity: 0.8;
+}
+
+/* CANCELLED = muted red: the event was called off / refunded */
+.arena-status-cancelled {
+  background: #dc35451f;
+  color: #dc3545;
+  opacity: 0.9;
 }
 
 .search-wrapper {
@@ -296,5 +313,9 @@
   .arena-status-completed {
     background: rgba(255, 255, 255, 0.2) !important;
     color: rgba(255, 255, 255, 0.6) !important;
+  }
+  .arena-status-cancelled {
+    color: #f87171 !important;
+    background: rgba(248, 113, 113, 0.15) !important;
   }
 }
