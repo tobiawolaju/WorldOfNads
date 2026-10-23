@@ -103,5 +103,24 @@ out; switch `plan:` to `starter` if that gets annoying.
 ## Configuration
 
 Constants mirror `backend/index.js` and live in `src/config.rs`. The listen port
-honors `$PORT` (Render/PaaS convention) and otherwise defaults to 8080. Room id,
-control-plane URL and a shared session secret arrive in Phase 2.
+honors `$PORT` (Render/PaaS convention) and otherwise defaults to 8080.
+
+Two env vars tie this service to the control plane, and each must hold the **same
+value on both services**:
+
+| variable | used for | half-set failure |
+|---|---|---|
+| `CONTROL_PLANE_URL` | base URL for `GET /internal/matches` and the settlement POST | defaults to the public API |
+| `INTERNAL_SECRET` | `x-internal-secret` on both internal routes | control plane set, this unset → 403 on the registry and on settlement: rooms fall back to `default` and escrowed matches stay unsettled until `refundExpired` |
+| `SESSION_TOKEN_SECRET` | verifies the `<expiresAt>.<hmac>` token on connect (`src/auth.rs`) | set here but not on the control plane → every web player is rejected with `1008 invalid_token`; set on neither → any token is accepted, so clients can skip the control plane |
+
+For local runs, export them in the shell before `cargo run` (the crate reads the
+process environment, not `backend/.env`):
+
+```bash
+export INTERNAL_SECRET=... SESSION_TOKEN_SECRET=...
+```
+
+When `INTERNAL_SECRET` is unset on the control plane its internal routes accept
+anonymous requests — including the settlement route that pays the escrow — so
+only leave it unset on a throwaway deployment.
