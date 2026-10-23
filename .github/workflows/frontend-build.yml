@@ -1,0 +1,31 @@
+name: frontend-build
+
+# The web dashboard is the surface the leaderboard and the Rewards tab live in.
+# Vercel builds it from `npm run build`, which only runs Vite, so a broken import
+# or a bad JSX tree would silently fail the deploy instead of the commit. This
+# job runs the same build in CI so a red check is visible on the commit itself.
+on:
+  push:
+    paths:
+      - "frontend/**"
+      - "package.json"
+      - ".github/workflows/frontend-build.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "package.json"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # Same workspace install Vercel does (the lockfile lives in frontend/).
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Build
+        run: npm run build
