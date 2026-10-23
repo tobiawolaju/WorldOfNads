@@ -339,7 +339,7 @@ impl RoomHandle {
     /// Remember a client's writer task so it can still be inspected after the
     /// client map is cleared (which is what the round-end close does).
     fn remember_writer(&self, player_id: &str, stats: &Arc<WriterStats>) {
-        let mut writers = self.writers.try_lock();
+        let writers = self.writers.try_lock();
         if let Ok(mut writers) = writers {
             // Keep the history short: only the most recent writers matter.
             if writers.len() >= 16 {

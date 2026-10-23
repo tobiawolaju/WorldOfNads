@@ -615,10 +615,11 @@ impl Room {
         };
 
         // Handle chicken holder transfer - update previous holder.
-        if item_id == "Chicken" {            if let Some(prev_holder_id) = prev_holder_id {
+        if item_id == "Chicken" {
+            if let Some(prev_holder) = prev_holder_id.as_deref() {
                 // Credit the previous holder for the time they actually held it.
-                self.credit_possession(&prev_holder_id, now);
-                if let Some(prev) = self.players.get_mut(&prev_holder_id) {
+                self.credit_possession(prev_holder, now);
+                if let Some(prev) = self.players.get_mut(prev_holder) {
                     prev.is_current_holder = false;
                 }
             }
