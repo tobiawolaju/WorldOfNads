@@ -280,6 +280,23 @@ export async function settleRound({ matchId, report, deps }) {
     // `payOnchainSplit`, which cannot split a pool between one wallet.
     const isSplit = prizePayouts.length > 1;
 
+    // The escrow pays the lootbox pool to the final holder, but falls back to the
+    // first prize winner when that player has no wallet to receive it. Credit
+    // whoever actually receives it, so the ledger never claims money nobody got.
+    const lootRow = ledger.payouts.find((payout) => payout.kind === 'lootbox');
+    if (lootRow && !(await deps.getPlayerWallet(lootRow.playerName))) {
+        const fallback = prizePayouts[0];
+        if (fallback) {
+            log('the lootbox holder has no wallet; the escrow pays the pool to the winner', {
+                matchId,
+                holder: lootRow.playerName,
+                winner: fallback.playerName
+            });
+            lootRow.playerId = fallback.playerId;
+            lootRow.playerName = fallback.playerName;
+        }
+    }
+
     // ---- 1. Ledger. Written before anything touches the chain. -------------
     const rewardIds = [];
     for (const payout of ledger.payouts) {
@@ -437,17 +454,25 @@ export async function settleRound({ matchId, report, deps }) {
 
 /**
  * Resolves the wallets of everyone in the round, plus any extra address that
- * must be included (the winner). The contract caps the list at 64 entries.
+ * must be included (the winner). Deduped case-insensitively: the same person
+ * playing on two profiles would otherwise be listed twice, and the contract
+ * caps the list at 64 entries.
  */
 async function participantWallets(report, extra, deps) {
     const participants = [];
-    for (const address of extra) {
-        if (address && !participants.includes(address)) participants.push(address);
-    }
+    const seen = new Set();
+    const add = (address) => {
+        if (!address) return;
+        const key = String(address).toLowerCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        participants.push(address);
+    };
+
+    for (const address of extra) add(address);
     for (const player of report.players) {
-        const wallet = await deps.getPlayerWallet(player.playerName);
-        if (wallet && !participants.includes(wallet)) participants.push(wallet);
         if (participants.length >= MAX_PARTICIPANTS) break;
+        add(await deps.getPlayerWallet(player.playerName));
     }
     return participants;
 }
@@ -457,29 +482,35 @@ async function participantWallets(report, extra, deps) {
  *
  * `sharesBps` must add up to exactly 10000. The shares come from the round
  * report, so any rounding dust goes to the first winner instead of being lost.
+ *
+ * Two usernames can resolve to one wallet (the same player on two profiles).
+ * The escrow rejects duplicate winners, so their shares are merged first.
  */
 async function payOnchainSplit(matchId, prizePayouts, report, deps) {
     if (!prizePayouts || prizePayouts.length < 2) {
         return { success: false, error: 'a split needs at least two prize winners' };
     }
 
-    const winners = [];
-    const sharesBps = [];
-    let totalBps = 0;
-
+    const byWallet = new Map();
     for (const payout of prizePayouts) {
         const wallet = await deps.getPlayerWallet(payout.playerName);
         if (!wallet) {
             return { success: false, error: `no wallet for ${payout.playerName}` };
         }
-        const bps = Math.floor(payout.share * 10000);
-        winners.push(wallet);
-        sharesBps.push(bps);
-        totalBps += bps;
+        const key = String(wallet).toLowerCase();
+        const entry = byWallet.get(key) || { wallet, bps: 0 };
+        entry.bps += Math.floor(payout.share * 10000);
+        byWallet.set(key, entry);
     }
-    if (totalBps !== 10000) {
-        sharesBps[0] += 10000 - totalBps;
+
+    const winners = Array.from(byWallet.values()).map((entry) => entry.wallet);
+    const sharesBps = Array.from(byWallet.values()).map((entry) => entry.bps);
+    if (winners.length === 0) {
+        return { success: false, error: 'a split needs at least one payable winner' };
     }
+
+    const totalBps = sharesBps.reduce((sum, bps) => sum + bps, 0);
+    sharesBps[0] += 10000 - totalBps;
 
     const participants = await participantWallets(report, winners, deps);
     const lootHolderWallet = report.lootboxHolder
@@ -492,7 +523,9 @@ async function payOnchainSplit(matchId, prizePayouts, report, deps) {
         sharesBps,
         participants,
         lootHolderName: report.lootboxHolder?.playerName || null,
-        lootHolderWallet: lootHolderWallet || null
+        // Mirrors the escrow's own fallback, so the ledger and the chain agree on
+        // who receives the pool when the holder has no wallet.
+        lootHolderWallet: lootHolderWallet || winners[0]
     });
 }
 
@@ -523,6 +556,7 @@ async function payOnchain(matchId, prizePayout, report, deps) {
         winnerWallet,
         participants,
         lootHolderName: report.lootboxHolder?.playerName || null,
-        lootHolderWallet: lootHolderWallet || null
+        // Mirrors the escrow's own fallback (see payOnchainSplit).
+        lootHolderWallet: lootHolderWallet || winnerWallet
     });
 }
