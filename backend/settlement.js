@@ -34,6 +34,9 @@ export const STATUS = Object.freeze({
     SPLIT_AWAITING_PAYOUT: 'split_awaiting_payout',
     OFFCHAIN_ONLY: 'offchain_only',
     ONCHAIN_FAILED: 'onchain_failed',
+    // The escrow could not be read, so the result is in the ledger but the match
+    // is not credited: the reporter retries and the chain leg finishes then.
+    CHAIN_UNAVAILABLE: 'chain_unavailable',
     NO_PAYOUT: 'no_payout'
 });
 
@@ -217,7 +220,23 @@ export async function settleRound({ matchId, report, deps }) {
         return { httpStatus: 200, status: 'already_settled', matchId, reason: 'cancelled' };
     }
 
-    const onchain = await deps.getOnchainMatch(matchId);
+    // A failed *read* must not look like "this match was never escrowed": that
+    // would record `offchain_only` while the prize still sits in the escrow. The
+    // ledger is still written (the players are owed the money), but the match is
+    // left uncredited and the room server is told to retry so the chain leg can
+    // finish on a later attempt.
+    let onchain = null;
+    let chainReadError = null;
+    try {
+        onchain = await deps.getOnchainMatch(matchId);
+    } catch (error) {
+        chainReadError = error?.message || String(error);
+        log('the escrow could not be read; writing the ledger and asking for a retry', {
+            matchId,
+            error: chainReadError
+        });
+    }
+
     if (onchain && onchain.settled) {
         log('settlement skipped: the escrow is already settled', { matchId });
         return { httpStatus: 200, status: 'already_settled', matchId, reason: 'settled_onchain' };
@@ -232,25 +251,34 @@ export async function settleRound({ matchId, report, deps }) {
 
     if (ledger.payouts.length === 0) {
         const settlement = {
-            status: STATUS.NO_PAYOUT,
-            credited: true,
+            status: chainReadError ? STATUS.CHAIN_UNAVAILABLE : STATUS.NO_PAYOUT,
+            credited: !chainReadError,
             reason: report.reason,
             settledAt,
+            error: chainReadError,
             payouts: []
         };
         await deps.updateMatchRecord(matchId, {
-            status: 'settled',
+            status: chainReadError ? 'settling' : 'settled',
             settledAt,
             result: report,
             settlement
         });
         log('settlement finished with no payout', { matchId });
-        return { httpStatus: 200, status: STATUS.NO_PAYOUT, matchId, settlement };
+        return {
+            httpStatus: chainReadError ? 503 : 200,
+            status: settlement.status,
+            matchId,
+            settlement
+        };
     }
 
     const winner = report.winner || null;
     const prizePayouts = ledger.payouts.filter((payout) => payout.kind === 'prize');
-    const isSplit = report.split.shares.length > 1;
+    // A split is a round with more than one paid winner. Counting raw shares
+    // instead would treat a second zero-share entry as a split and then fail in
+    // `payOnchainSplit`, which cannot split a pool between one wallet.
+    const isSplit = prizePayouts.length > 1;
 
     // ---- 1. Ledger. Written before anything touches the chain. -------------
     const rewardIds = [];
@@ -305,7 +333,10 @@ export async function settleRound({ matchId, report, deps }) {
     let txHash = null;
     let chainError = null;
 
-    if (onchain) {
+    if (chainReadError) {
+        chainStatus = STATUS.CHAIN_UNAVAILABLE;
+        chainError = chainReadError;
+    } else if (onchain) {
         if (isSplit) {
             try {
                 const result = await payOnchainSplit(matchId, prizePayouts, report, deps);
@@ -353,7 +384,11 @@ export async function settleRound({ matchId, report, deps }) {
         }
     }
 
-    const pending = chainStatus === STATUS.SPLIT_AWAITING_PAYOUT || chainStatus === STATUS.ONCHAIN_FAILED;
+    const chainUnavailable = chainStatus === STATUS.CHAIN_UNAVAILABLE;
+    const pending =
+        chainUnavailable ||
+        chainStatus === STATUS.SPLIT_AWAITING_PAYOUT ||
+        chainStatus === STATUS.ONCHAIN_FAILED;
     if (pending || txHash) {
         for (const id of rewardIds) {
             const patch = { pending };
@@ -363,9 +398,11 @@ export async function settleRound({ matchId, report, deps }) {
     }
 
     // ---- 4. Match record. `credited` flips last so a crash re-runs safely. --
+    // `credited` stays false when the escrow could not be read, so a retried
+    // report re-runs this whole flow instead of treating the match as done.
     const settlement = {
         status: chainStatus,
-        credited: true,
+        credited: !chainUnavailable,
         reason: report.reason,
         settledAt,
         grossMon: ledger.grossMon,
@@ -379,7 +416,7 @@ export async function settleRound({ matchId, report, deps }) {
         error: chainError
     };
     await deps.updateMatchRecord(matchId, {
-        status: 'settled',
+        status: chainUnavailable ? 'settling' : 'settled',
         settledAt,
         result: report,
         settlement,
@@ -393,7 +430,9 @@ export async function settleRound({ matchId, report, deps }) {
         winners: prizePayouts.length
     });
 
-    return { httpStatus: 200, status: chainStatus, matchId, settlement };
+    // 503 tells the room server to retry: the ledger is durable, the chain leg is not done.
+    const httpStatus = chainUnavailable ? 503 : 200;
+    return { httpStatus, status: chainStatus, matchId, settlement, ...(chainError ? { error: chainError } : {}) };
 }
 
 /**

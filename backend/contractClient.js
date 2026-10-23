@@ -219,29 +219,30 @@ export async function getPoolValue(matchIdStr) {
 }
 
 /**
- * Reads the escrow record for a match. Returns null when the match was never
- * created on-chain (the standard case for matches hosted before the escrow was
- * wired), which tells the settlement layer to keep the payout off-chain.
+ * Reads the escrow record for a match.
+ *
+ * Returns null when the match was never created on-chain (the standard case for
+ * matches hosted before the escrow was wired), which tells the settlement layer
+ * to keep the payout off-chain.
+ *
+ * Throws when the chain could not be read at all. That distinction matters: a
+ * read failure must never be recorded as "this match has no escrow", which would
+ * leave the prize stranded while the ledger claims the round is settled.
  */
 export async function getMatchOnchain(matchIdStr) {
-    try {
-        const data = await getMatchEngine().getMatch(toBytes32(matchIdStr));
-        // `createdAt` is 0 for an unknown match id.
-        if (!data || Number(data.createdAt) === 0) return null;
-        return {
-            sponsor: data.sponsor,
-            prizeToken: data.prizeToken,
-            winnerPrizeMon: Number(ethers.formatEther(data.winnerPrize)),
-            lootBoxPoolMon: Number(ethers.formatEther(data.lootBoxPool)),
-            settled: Boolean(data.settled),
-            cancelled: Boolean(data.cancelled),
-            startTime: Number(data.startTime),
-            settledAt: Number(data.settledAt)
-        };
-    } catch (error) {
-        console.error(`[Onchain] getMatch failed:`, error.message);
-        return null;
-    }
+    const data = await getMatchEngine().getMatch(toBytes32(matchIdStr));
+    // `createdAt` is 0 for an unknown match id.
+    if (!data || Number(data.createdAt) === 0) return null;
+    return {
+        sponsor: data.sponsor,
+        prizeToken: data.prizeToken,
+        winnerPrizeMon: Number(ethers.formatEther(data.winnerPrize)),
+        lootBoxPoolMon: Number(ethers.formatEther(data.lootBoxPool)),
+        settled: Boolean(data.settled),
+        cancelled: Boolean(data.cancelled),
+        startTime: Number(data.startTime),
+        settledAt: Number(data.settledAt)
+    };
 }
 
 export async function getSkinData(skinId) {

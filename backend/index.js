@@ -520,7 +520,9 @@ async function readJsonBody(req) {
  */
 const settlementDeps = {
   getMatch: getMatchRecord,
-  getOnchainMatch,
+  // `getMatchOnchain` is the ethers reader; the settlement layer names it after
+  // what it returns. It throws when the escrow cannot be read (see settlement.js).
+  getOnchainMatch: getMatchOnchain,
   getPlayerWallet,
   saveReward,
   patchReward,

@@ -422,3 +422,73 @@ test('a winner without a wallet keeps the ledger and reports the chain failure',
     assert.equal(state.rewards.size, 2);
     assert.match(state.match.settlement.error, /no wallet for the winner/);
 });
+
+test('an unreadable escrow keeps the ledger, stays uncredited and asks for a retry', async () => {
+    const { deps, state } = makeDeps({ match: MATCH, onchain: ONCHAIN });
+    deps.getOnchainMatch = async () => {
+        throw new Error('rpc unavailable');
+    };
+
+    const result = await settleRound({ matchId: MATCH.matchId, report: SINGLE_REPORT, deps });
+
+    // A read failure must not be mistaken for "this match was never escrowed".
+    assert.equal(result.httpStatus, 503);
+    assert.equal(result.status, STATUS.CHAIN_UNAVAILABLE);
+    assert.equal(state.chainCalls.length, 0, 'the escrow must not be touched blind');
+
+    // The players are still owed the money, so the ledger is written...
+    assert.equal(state.rewards.size, 2);
+    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).amountMon, 7.2);
+    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).pending, true);
+
+    // ...but the match stays open for the retry, and wins are credited once.
+    assert.equal(state.match.settlement.credited, false);
+    assert.equal(state.match.status, 'settling');
+    assert.equal(state.users.get('alice').won, 1);
+});
+
+test('the retry after an unreadable escrow finishes the chain leg without duplicating', async () => {
+    const { deps, state } = makeDeps({ match: MATCH, onchain: ONCHAIN });
+    let failing = true;
+    deps.getOnchainMatch = async () => {
+        if (failing) throw new Error('rpc unavailable');
+        return ONCHAIN;
+    };
+
+    const first = await settleRound({ matchId: MATCH.matchId, report: SINGLE_REPORT, deps });
+    assert.equal(first.httpStatus, 503);
+
+    failing = false;
+    const second = await settleRound({ matchId: MATCH.matchId, report: SINGLE_REPORT, deps });
+
+    assert.equal(second.httpStatus, 200);
+    assert.equal(second.status, STATUS.SETTLED_ONCHAIN);
+    assert.equal(state.rewards.size, 2, 'the retry must not add reward rows');
+    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).pending, false);
+    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).txHash, '0xtx');
+    assert.equal(state.chainCalls.length, 1, 'the escrow is paid exactly once');
+    assert.deepEqual(state.users.get('alice'), { won: 1, wonMon: 7.2, xp: 400 });
+    assert.equal(state.match.settlement.credited, true);
+});
+
+test('a zero-share sibling does not turn a single winner into a split', async () => {
+    const { deps, state } = makeDeps({ match: MATCH, onchain: ONCHAIN });
+    const report = {
+        ...SINGLE_REPORT,
+        split: {
+            isSplit: true,
+            shares: [
+                { playerId: 'p1', playerName: 'alice', seconds: 40, share: 1 },
+                { playerId: 'p2', playerName: 'bob', seconds: 0, share: 0 }
+            ]
+        }
+    };
+
+    const result = await settleRound({ matchId: MATCH.matchId, report, deps });
+
+    assert.equal(result.status, STATUS.SETTLED_ONCHAIN);
+    assert.equal(state.splitChainCalls.length, 0);
+    assert.equal(state.chainCalls.length, 1);
+    assert.equal(state.chainCalls[0].winnerName, 'alice');
+    assert.equal(state.rewards.has(rewardIdFor(MATCH.matchId, 'bob')), false);
+});
