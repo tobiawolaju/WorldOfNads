@@ -74,7 +74,7 @@ The "Almost Winning" XP System: Retention is built on the WONsXP system. Even if
 
 The Chicken: One chicken spawns somewhere on the map at match start. Five possible spawn locations rotate unpredictably. Holding the chicken does three things simultaneously. First, it drains your stamina -- the longer you hold, the slower you become, preventing camping. Second, it earns you XP that streams toward your onchain account as a soulbound token. Third, the player holding the chicken when the timer reaches zero wins the prize pool.
 
-The Loot Box: Separate from the chicken, a loot box drops on the map mid-match with its own value. It can be stolen by any player who reaches it. Every time the loot box changes ownership it costs gas, deducted from the box's value. On Monad that gas cost is approximately $0.001 per transfer. On Solana approximately $0.00025. The box survives hundreds of steals while shrinking visibly. The HUD shows the loot box's current value live, creating a real-time economic decision: fight now and drain the box, or wait and steal at the right moment.
+The Loot Box: Separate from the chicken, a loot box drops on the map mid-match with its own value. It can be stolen by any player who reaches it. While it is carried it streams MON to its holder; the remainder at the final bell goes to whoever still holds it. Every time the loot box changes ownership it costs gas, deducted from the box's value. On Monad that gas cost is approximately $0.001 per transfer. On Solana approximately $0.00025. The box survives hundreds of steals while shrinking visibly. The HUD shows the loot box's current value live, creating a real-time economic decision: fight now and drain the box, or wait and steal at the right moment.
 
 The HUD -- Watching Money Move
 During a match the heads-up display shows:
@@ -167,7 +167,7 @@ WHAT IS IN PROGRESS
 FPS optimisation: Target 45fps minimum on mid-range Android. Viewport scaling, WASM SIMD, shadow reduction, visibility culling, batched physics at 30hz.
 Skybox replacement: Eliminating current cloud rendering artifacts.
 Mint contract: Skin minting on Monad testnet live. Full onchain minting at mainnet.
-Loot box steal onchain: The onchain steal() function exists in contractClient but is not yet wired into the live game loop. Currently steals are resolved off-chain by the server.
+Loot box steal onchain: steal() and batchStream() are now wired into settlement. Before a match settles, the server replays every steal (each burns 0.001 MON out of the box) and pays each holder the MON they streamed while carrying it; settle() then pays what is left to the final holder. The calls are batched at match end rather than sent per second during play.
 Per-second XP streaming: XP is currently minted in a single batch at match end. Per-second commit batching is designed and pending implementation.
 
 WHAT IS PLANNED FOR V1 COMPLETION
@@ -217,7 +217,7 @@ LAYER 3: ON-CHAIN SETTLEMENT (MONAD / SOLANA)
 The settlement layer lives onchain. On Monad today, four contracts handle the complete match lifecycle:
 
 WONsMatchEngine -- Creates and settles sponsored matches. Sponsor calls createSponsoredMatch which locks the prize pool. The backend calls settleMatch with the winner address and participant list. The contract pays the winner (80%), distributes to loot box (20%), and mints ERC-1155 winner/participation NFTs.
-WONsLootBox -- Holds the loot box prize pool. Supports fundPool, streamMON (award MON to chicken holders), batchStream, steal (redirect stream on chicken steal, deducts 0.001 MON gas), settle (distribute remaining to final holder), drainPool.
+WONsLootBox -- Holds the loot box prize pool. Supports fundPool, streamMON (pay the current box holder), batchStream, steal (redirect the stream when the box is stolen, deducts 0.001 MON gas), settle (distribute remaining to final holder), drainPool.
 WONsXP -- Soulbound ERC-20 XP token. Only the backend (trusted minter) can mint XP. Non-transferable by design. XP gates skin purchases.
 WONsSkins -- ERC-1155 skin marketplace. Create skin (admin), mint skin (player, XP + MON gated), burn skins (common tier only, 2 minimum, triggers rare mint from reserve).
 

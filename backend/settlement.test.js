@@ -9,7 +9,9 @@ import assert from 'node:assert/strict';
 
 import {
     buildPayouts,
+    LOOTBOX_STEAL_COST_MON,
     parsePrizeMon,
+    reconcileLootBox,
     rewardIdFor,
     round6,
     settleRound,
@@ -20,15 +22,18 @@ import {
 const addressOf = (name) =>
     `0x${Buffer.from(name).toString('hex').padEnd(40, '0').slice(0, 40)}`;
 
-function makeDeps({ match, onchain = null, chain = null, chainSplit = null } = {}) {
+function makeDeps({ match, onchain = null, chain = null, chainSplit = null, steal = null, stream = null } = {}) {
     const state = {
         match: match ? { ...match } : null,
         onchain,
         rewards: new Map(),
         users: new Map(),
-        credited: new Set(),
+        credits: new Map(),
         chainCalls: [],
         splitChainCalls: [],
+        stealCalls: [],
+        streamCalls: [],
+        streamedRows: [],
         logs: []
     };
 
@@ -45,13 +50,25 @@ function makeDeps({ match, onchain = null, chain = null, chainSplit = null } = {
         },
         creditPlayerResult: async (name, credit) => {
             const key = `${name}:${credit.matchId}`;
-            if (state.credited.has(key)) return { credited: false, reason: 'already_credited' };
-            state.credited.add(key);
+            const previous = state.credits.get(key);
+            const delta = {
+                win: Number(credit.win || 0) - Number(previous?.win || 0),
+                wonMon: round6(Number(credit.wonMon || 0) - Number(previous?.wonMon || 0)),
+                xp: Math.round(Number(credit.xp || 0) - Number(previous?.xp || 0))
+            };
+            if (previous && delta.win === 0 && delta.wonMon === 0 && delta.xp === 0) {
+                return { credited: false, reason: 'already_credited' };
+            }
+            state.credits.set(key, {
+                win: Number(credit.win || 0),
+                wonMon: round6(credit.wonMon),
+                xp: Math.round(Number(credit.xp || 0))
+            });
             const current = state.users.get(name) || { won: 0, wonMon: 0, xp: 0 };
             state.users.set(name, {
-                won: current.won + credit.win,
-                wonMon: round6(current.wonMon + credit.wonMon),
-                xp: current.xp + credit.xp
+                won: current.won + delta.win,
+                wonMon: round6(current.wonMon + delta.wonMon),
+                xp: current.xp + delta.xp
             });
             return { credited: true };
         },
@@ -65,6 +82,25 @@ function makeDeps({ match, onchain = null, chain = null, chainSplit = null } = {
         settleOnchainSplit: async (request) => {
             state.splitChainCalls.push(request);
             return chainSplit || { success: true, txHash: '0xtx-split' };
+        },
+        stealLootBox: async (request) => {
+            state.stealCalls.push(request);
+            return steal || { success: true, txHash: `0xsteal-${state.stealCalls.length}` };
+        },
+        streamLootBox: async (request) => {
+            state.streamCalls.push(request);
+            const outcome = stream || { success: true, txHash: `0xstream-${state.streamCalls.length}` };
+            // Only a successful batch moved money out of the box.
+            if (outcome.success) state.streamedRows.push(...request.rows);
+            return outcome;
+        },
+        // Mirrors WONsLootBox: the pool loses a burn per steal and whatever it
+        // streamed, so the clamp in reconcileLootBox is exercised for real.
+        getLootBoxPool: async () => {
+            const pool = Number(onchain?.lootBoxPoolMon) || 0;
+            const burned = state.stealCalls.length * LOOTBOX_STEAL_COST_MON;
+            const streamed = state.streamedRows.reduce((sum, row) => sum + row.amountMon, 0);
+            return round6(Math.max(0, pool - burned - streamed));
         },
         log: (message, meta) => {
             state.logs.push({ message, meta });
@@ -237,20 +273,26 @@ test('a single-winner round credits the ledger, the players and the escrow', asy
     assert.equal(result.httpStatus, 200);
     assert.equal(result.status, STATUS.SETTLED_ONCHAIN);
 
-    // Ledger
-    assert.equal(state.rewards.size, 2);
+    // Ledger: the stream rows are real earnings paid out of the box while it was
+    // carried, so the lootbox row is only what is left after them.
+    assert.equal(state.rewards.size, 4);
     const alice = state.rewards.get(rewardIdFor(MATCH.matchId, 'alice'));
+    const aliceStream = state.rewards.get(rewardIdFor(MATCH.matchId, 'alice', 'stream'));
     const bob = state.rewards.get(rewardIdFor(MATCH.matchId, 'bob', 'lootbox'));
+    const bobStream = state.rewards.get(rewardIdFor(MATCH.matchId, 'bob', 'stream'));
     assert.equal(alice.amountMon, 7.2);
     assert.equal(alice.amount, '7.2000 MON');
     assert.equal(alice.txHash, '0xtx');
     assert.equal(alice.pending, false);
-    assert.equal(bob.amountMon, 1.8);
+    assert.equal(aliceStream.amountMon, 0.5);
+    assert.equal(aliceStream.category, 'earned');
+    assert.equal(bobStream.amountMon, 0.25);
+    assert.equal(bob.amountMon, 1.05);
     assert.equal(bob.category, 'lootbox');
 
     // Leaderboard totals: the winner counts a win, both count MON won and XP.
-    assert.deepEqual(state.users.get('alice'), { won: 1, wonMon: 7.2, xp: 400 });
-    assert.deepEqual(state.users.get('bob'), { won: 0, wonMon: 1.8, xp: 100 });
+    assert.deepEqual(state.users.get('alice'), { won: 1, wonMon: 7.7, xp: 400 });
+    assert.deepEqual(state.users.get('bob'), { won: 0, wonMon: 1.3, xp: 100 });
 
     // Escrow: one call, winner first, unique participants.
     assert.equal(state.chainCalls.length, 1);
@@ -284,20 +326,22 @@ test('a split round pays each winner its share through settleMatchSplit', async 
     assert.equal(call.participants.length, 2);
     assert.equal(call.lootHolderWallet, addressOf('bob'));
 
-    assert.equal(state.rewards.size, 3);
+    assert.equal(state.rewards.size, 5);
     const alice = state.rewards.get(rewardIdFor(MATCH.matchId, 'alice'));
     const bobPrize = state.rewards.get(rewardIdFor(MATCH.matchId, 'bob'));
     const bobLoot = state.rewards.get(rewardIdFor(MATCH.matchId, 'bob', 'lootbox'));
     assert.equal(alice.amountMon, 1.44);
     assert.equal(bobPrize.amountMon, 5.76);
-    assert.equal(bobLoot.amountMon, 1.8);
+    assert.equal(bobLoot.amountMon, 1.05);
+    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'bob', 'stream')).amountMon, 0.5);
+    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice', 'stream')).amountMon, 0.25);
     assert.equal(alice.txHash, '0xtx-split');
     assert.equal(alice.pending, false);
 
     // The holder is the round's winner even with the smaller share.
     assert.equal(state.users.get('alice').won, 1);
     assert.equal(state.users.get('bob').won, 0);
-    assert.equal(state.users.get('bob').wonMon, 7.56);
+    assert.equal(state.users.get('bob').wonMon, 7.31);
 
     assert.equal(state.match.settlement.status, STATUS.SETTLED_ONCHAIN);
     assert.equal(state.match.settlement.txHash, '0xtx-split');
@@ -312,7 +356,7 @@ test('a split against an escrow without settleMatchSplit stays pending', async (
     const result = await settleRound({ matchId: MATCH.matchId, report: SPLIT_REPORT, deps });
 
     assert.equal(result.status, STATUS.SPLIT_AWAITING_PAYOUT);
-    assert.equal(state.rewards.size, 3);
+    assert.equal(state.rewards.size, 5);
     assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).pending, true);
     assert.equal(state.match.settlement.txHash, null);
     assert.equal(state.users.get('alice').won, 1);
@@ -340,7 +384,7 @@ test('a failed escrow call still writes the ledger', async () => {
     const result = await settleRound({ matchId: MATCH.matchId, report: SINGLE_REPORT, deps });
 
     assert.equal(result.status, STATUS.ONCHAIN_FAILED);
-    assert.equal(state.rewards.size, 2);
+    assert.equal(state.rewards.size, 4);
     assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).pending, true);
     assert.equal(state.match.settlement.error, 'execution reverted');
     assert.equal(state.users.get('alice').won, 1);
@@ -382,9 +426,9 @@ test('a retried report is a no-op, so nobody is paid twice', async () => {
     assert.equal(second.httpStatus, 200);
     assert.equal(second.status, 'already_settled');
 
-    assert.equal(state.rewards.size, 2, 'the retry must not add reward rows');
+    assert.equal(state.rewards.size, 4, 'the retry must not add reward rows');
     assert.equal(state.chainCalls.length, 1, 'the retry must not pay the escrow twice');
-    assert.deepEqual(state.users.get('alice'), { won: 1, wonMon: 7.2, xp: 400 });
+    assert.deepEqual(state.users.get('alice'), { won: 1, wonMon: 7.7, xp: 400 });
 });
 
 test('a cancelled match is never paid', async () => {
@@ -419,7 +463,7 @@ test('a winner without a wallet keeps the ledger and reports the chain failure',
 
     assert.equal(result.status, STATUS.ONCHAIN_FAILED);
     assert.equal(state.chainCalls.length, 0);
-    assert.equal(state.rewards.size, 2);
+    assert.equal(state.rewards.size, 3);
     assert.match(state.match.settlement.error, /no wallet for the winner/);
 });
 
@@ -463,11 +507,10 @@ test('the retry after an unreadable escrow finishes the chain leg without duplic
 
     assert.equal(second.httpStatus, 200);
     assert.equal(second.status, STATUS.SETTLED_ONCHAIN);
-    assert.equal(state.rewards.size, 2, 'the retry must not add reward rows');
-    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).pending, false);
+    assert.equal(state.rewards.size, 4, 'the retry must not add reward rows');    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).pending, false);
     assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).txHash, '0xtx');
     assert.equal(state.chainCalls.length, 1, 'the escrow is paid exactly once');
-    assert.deepEqual(state.users.get('alice'), { won: 1, wonMon: 7.2, xp: 400 });
+    assert.deepEqual(state.users.get('alice'), { won: 1, wonMon: 7.7, xp: 400 });
     assert.equal(state.match.settlement.credited, true);
 });
 
@@ -508,8 +551,9 @@ test('two winners on one wallet are merged before the escrow is called', async (
     assert.deepEqual(call.winners, [shared]);
     assert.deepEqual(call.sharesBps, [10000]);
     assert.equal(call.participants.length, 1, 'the shared wallet is listed once');
-    // Both players still get their own ledger row (two prizes + the lootbox).
-    assert.equal(state.rewards.size, 3);
+    // Both players still get their own ledger row (two prizes, two streams and
+    // the lootbox remainder).
+    assert.equal(state.rewards.size, 5);
 });
 
 test('the participant list keeps every wallet once, whatever the case', async () => {
@@ -535,7 +579,88 @@ test('the lootbox pool is credited to the winner when the holder has no wallet',
     assert.equal(result.status, STATUS.SETTLED_ONCHAIN);
     assert.equal(state.chainCalls[0].lootHolderWallet, addressOf('alice'));
     assert.equal(state.rewards.has(rewardIdFor(MATCH.matchId, 'bob', 'lootbox')), false);
-    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice', 'lootbox')).amountMon, 1.8);
+    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice', 'lootbox')).amountMon, 1.3);
     // And the winner's totals match what the chain paid.
     assert.deepEqual(state.users.get('alice'), { won: 1, wonMon: 9, xp: 400 });
+});
+
+// -- lootbox economy (Whitepaper 5.4) -------------------------------------
+
+test('a box nobody picked up pays the winner, matching the escrow fallback', async () => {
+    const { deps, state } = makeDeps({ match: MATCH, onchain: ONCHAIN });
+    const report = { ...SINGLE_REPORT, players: [], lootboxHolder: null };
+
+    const result = await settleRound({ matchId: MATCH.matchId, report, deps });
+
+    assert.equal(result.httpStatus, 200);
+    const row = state.rewards.get(rewardIdFor(MATCH.matchId, 'alice', 'lootbox'));
+    assert.equal(row.amountMon, 1.8);
+    assert.equal(state.chainCalls[0].lootHolderWallet, addressOf('alice'));
+});
+
+test('every steal burns gas out of the box before the holder is paid', async () => {
+    const { deps, state } = makeDeps({ match: MATCH, onchain: ONCHAIN });
+    const report = { ...SINGLE_REPORT, lootboxSteals: 2 };
+
+    const result = await settleRound({ matchId: MATCH.matchId, report, deps });
+
+    assert.equal(result.status, STATUS.SETTLED_ONCHAIN);
+    assert.equal(state.stealCalls.length, 2, 'each steal is replayed on-chain');
+
+    // 1.8 pool - 2 * 0.001 gas - 0.5 - 0.25 streamed = 1.048 for the holder.
+    const box = state.match.settlement.box;
+    assert.equal(box.burnedMon, 0.002);
+    assert.equal(box.remainingMon, 1.048);
+    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'bob', 'lootbox')).amountMon, 1.048);
+
+    // The ledger still accounts for the whole pool: payouts + burns = 9 MON.
+    const paid = state.match.settlement.payouts.reduce((sum, payout) => sum + payout.amountMon, 0);
+    assert.equal(round6(paid + box.burnedMon), 9);
+});
+
+test('a failed stream writes nothing and the retry does not replay the steals', async () => {
+    const { deps, state } = makeDeps({ match: MATCH, onchain: ONCHAIN });
+    const report = { ...SINGLE_REPORT, lootboxSteals: 1 };
+    const healthyStream = deps.streamLootBox;
+    deps.streamLootBox = async (request) => {
+        state.streamCalls.push(request);
+        return { success: false, error: 'rpc down' };
+    };
+
+    const first = await settleRound({ matchId: MATCH.matchId, report, deps });
+    assert.equal(first.httpStatus, 503);
+    assert.equal(state.rewards.size, 0, 'no ledger until the box is reconciled');
+    assert.equal(state.match.settlement.credited, false);
+    assert.equal(state.match.settlement.box.appliedSteals, 1, 'progress is kept');
+
+    deps.streamLootBox = healthyStream;
+    const second = await settleRound({ matchId: MATCH.matchId, report, deps });
+
+    assert.equal(second.httpStatus, 200);
+    assert.equal(state.stealCalls.length, 1, 'the steal is replayed once, not twice');
+    assert.equal(state.match.settlement.box.appliedSteals, 1);
+    assert.equal(state.match.settlement.box.streamed.length, 2, 'both holders paid once');
+    assert.equal(state.rewards.size, 4);
+});
+
+test('the box can never stream more than it holds', async () => {
+    const { deps, state } = makeDeps({ match: MATCH, onchain: ONCHAIN });
+    const report = {
+        ...SINGLE_REPORT,
+        players: [
+            { playerId: 'p1', playerName: 'alice', possessionSeconds: 40, xp: 400, mon: 1.5 },
+            { playerId: 'p2', playerName: 'bob', possessionSeconds: 10, xp: 100, mon: 1.5 }
+        ]
+    };
+
+    const result = await settleRound({ matchId: MATCH.matchId, report, deps });
+
+    assert.equal(result.httpStatus, 200);
+    const rows = state.match.settlement.box.streamed;
+    assert.equal(round6(rows.reduce((sum, row) => sum + row.amountMon, 0)), 1.8);
+    assert.equal(rows[0].amountMon, 1.5);
+    assert.equal(rows[1].amountMon, 0.3);
+    assert.equal(state.rewards.has(rewardIdFor(MATCH.matchId, 'bob', 'lootbox')), false);
+    assert.equal(state.users.get('alice').wonMon, 8.7);
+    assert.equal(state.users.get('bob').wonMon, 0.3);
 });

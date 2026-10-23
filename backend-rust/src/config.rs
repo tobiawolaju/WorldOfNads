@@ -81,6 +81,24 @@ pub const STORM_MIN_RADIUS: f64 = 3.0;
 pub const XP_PER_SEC: f64 = 10.0;
 pub const XP_CHICKEN_RADIUS: f64 = 8.0;
 pub const REWARD_TICK_INTERVAL_SEC: f64 = 1.0;
+
+// Lootbox economy (Whitepaper 5.4).
+//
+// The box is not a trophy handed to the last holder: it is a pot that pays out
+// while the round runs. Whichever player carries it streams MON out of it, and
+// every time it changes hands the steal burns GAS_PER_STEAL out of it. Whatever
+// is left when the bell rings goes to the final holder. That is what makes the
+// HUD value fall in real time, and what turns "fight now or steal later" into a
+// decision.
+//
+/// Share of the pool a single holder would stream if they held it for the whole
+/// round. The remainder (plus whatever the clock does not consume) is the final
+/// holder's settle payout, so the box is never fully drained by streaming.
+pub const MON_STREAM_POOL_SHARE: f64 = 0.6;
+/// What one steal burns from the box, in MON. Mirrors
+/// `WONsLootBox.GAS_PER_STEAL` (0.001 ether) so the HUD's live value matches
+/// what the contract will actually pay.
+pub const LOOTBOX_STEAL_COST_MON: f64 = 0.001;
 // The MON stream is not configured here any more: it is derived from the
 // match's real lootbox pool (see `world::mon_stream_per_sec`), so a room with no
 // prize streams nothing instead of inventing one.

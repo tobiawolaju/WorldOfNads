@@ -24,6 +24,7 @@ const LOOTBOX_ABI = [
     "function steal(bytes32 matchId, address newHolder) external",
     "function getPoolValue(bytes32 matchId) external view returns (uint256)",
     "function totalPooled() external view returns (uint256)",
+    "function trustedCaller() external view returns (address)",
     "function withdrawSurplus() external"
 ];
 
@@ -186,7 +187,9 @@ export async function batchStreamMON(matchIdStr, playerAddresses, amounts) {
             return ethers.parseUnits(str, 18);
         });
 
-        const tx = await lootBox.batchStream(matchIdBytes, playerAddresses, amountWei, { gasLimit: 300000 });
+        // Up to STREAM_BATCH_LIMIT (50) payouts in one call, so the limit has to
+        // cover 50 value transfers, not just the accounting loop.
+        const tx = await lootBox.batchStream(matchIdBytes, playerAddresses, amountWei, { gasLimit: 2500000 });
         await tx.wait();
         return { success: true, txHash: tx.hash };
     } catch (error) {
@@ -199,13 +202,29 @@ export async function lootBoxSteal(matchIdStr, newHolder) {
     try {
         const matchIdBytes = toBytes32(matchIdStr);
         const lootBox = getLootBox();
-        const tx = await lootBox.steal(matchIdBytes, newHolder, { gasLimit: 100000 });
+        // The address only labels the event; `settle` overwrites finalHolder. The
+        // trusted caller is a safe placeholder when the holder has no wallet.
+        const holder = newHolder || wallet.address;
+        const tx = await lootBox.steal(matchIdBytes, holder, { gasLimit: 100000 });
         await tx.wait();
         return { success: true, txHash: tx.hash };
     } catch (error) {
         console.error(`[Onchain] lootBoxSteal failed:`, error.message);
         return { success: false, error: error.message };
     }
+}
+
+/**
+ * Reads the box's remaining value in MON for a match.
+ *
+ * Unlike `getPoolValue` this throws when the chain cannot be read: settlement
+ * uses it to decide what the final holder is paid, and a swallowed failure would
+ * look like a drained box (a 0 payout the ledger would then record as fact).
+ */
+export async function getLootBoxPoolOnchain(matchIdStr) {
+    const matchIdBytes = toBytes32(matchIdStr);
+    const value = await getLootBox().getPoolValue(matchIdBytes);
+    return Number(ethers.formatEther(value));
 }
 
 export async function getPoolValue(matchIdStr) {
@@ -271,6 +290,13 @@ export async function getContractStatus() {
         lootBoxGuard: false,
         totalEscrowedMon: null,
         lootBoxPooledMon: null,
+        // Settlement signs with TRUSTED_AUTHORITY_PRIVATE_KEY; the lootbox only
+        // lets that address stream or steal. If they differ, streams and steals
+        // revert and the box never pays out, so expose the check instead of
+        // discovering it mid-match.
+        signer: wallet.address,
+        lootBoxTrustedCaller: null,
+        trustedCallerMatchesSigner: null,
         error: null
     };
 
@@ -296,6 +322,15 @@ export async function getContractStatus() {
         status.lootBoxPooledMon = ethers.formatEther(pooled);
     } catch (error) {
         status.error = `${status.error ? `${status.error}; ` : ''}lootBox: ${error.message}`;
+    }
+
+    try {
+        const trusted = await getLootBox().trustedCaller();
+        status.lootBoxTrustedCaller = trusted;
+        status.trustedCallerMatchesSigner =
+            Boolean(status.signer) && String(trusted).toLowerCase() === String(status.signer).toLowerCase();
+    } catch (error) {
+        status.error = `${status.error ? `${status.error}; ` : ''}trustedCaller: ${error.message}`;
     }
 
     return status;

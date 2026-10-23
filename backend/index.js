@@ -3,7 +3,7 @@ import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
 import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward } from './firebaseClient.js';
-import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain, getContractStatus } from './contractClient.js';
+import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, lootBoxSteal, getLootBoxPoolOnchain, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain, getContractStatus } from './contractClient.js';
 import { settleRound, parsePrizeMon, round6, LOOTBOX_POOL_SHARE } from './settlement.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 import { refreshAllUserPfps } from './refreshUserPfps.js';
@@ -131,11 +131,15 @@ let backgroundJobActive = false;
 const XP_PER_SEC = 10;                 // XP/sec earned at point-blank chicken range
 const XP_CHICKEN_RADIUS = 8.0;         // how far "near the chicken" reaches (world units)
 const REWARD_TICK_INTERVAL_SEC = 1.0;  // accumulate once per second
-// The MON stream is the match's real lootbox pool spread over the round, so the
-// HUD number and the escrow agree. It is set from the active match record (see
-// `updateMatchLimitsFromActiveMatch`); a room with no match has no pool and
-// streams nothing instead of advertising a prize that will never be paid.
+// The MON stream is real money out of the match's lootbox: holders earn it while
+// they carry the box, and the control plane commits it on-chain at settlement.
+// `MON_STREAM_POOL_SHARE` of the pool streams out over a full round; the rest
+// stays in the box for whoever holds it at the bell, minus a gas burn per steal.
+// Both values mirror backend-rust/src/config.rs and WONsLootBox.
 let activeLootBoxPoolMon = 0.0;
+let activeLootBoxSteals = 0;
+const MON_STREAM_POOL_SHARE = 0.6;
+const LOOTBOX_STEAL_COST_MON = 0.001;
 const playerRewards = {};              // playerId -> { accumulatedXP, accumulatedMON, chickenHoldTime }
 let rewardAccumulator = 0.0;           // seconds since the last reward tick
 
@@ -549,6 +553,30 @@ const settlementDeps = {
     }
     return result;
   },
+  // Whitepaper 5.4: replay each steal (burns GAS_PER_STEAL out of the box) so the
+  // live HUD value and the contract agree. The holder address only labels the
+  // event; `settle` overwrites it with the real final holder.
+  stealLootBox: async ({ matchId, holderName }) => {
+    const wallet = holderName ? await getPlayerWallet(holderName) : null;
+    return lootBoxSteal(matchId, wallet || undefined);
+  },
+  // Pay the holders the MON they streamed while carrying the box.
+  streamLootBox: async ({ matchId, rows }) => {
+    const addresses = [];
+    const amounts = [];
+    for (const row of rows) {
+      const wallet = await getPlayerWallet(row.playerName);
+      if (!wallet) continue;
+      addresses.push(wallet);
+      // toFixed(6) keeps parseUnits from choking on float noise.
+      amounts.push(Number(row.amountMon).toFixed(6));
+    }
+    if (addresses.length === 0) return { success: true, txHash: null };
+    return batchStreamMON(matchId, addresses, amounts);
+  },
+  // The box's remaining value is the settle payout, so a failed read must throw
+  // rather than report 0 (which would look like a drained box).
+  getLootBoxPool: (matchId) => getLootBoxPoolOnchain(matchId),
   log: (message, meta) => {
     if (meta) {
       console.log(`[Settlement] ${message}`, meta);
@@ -1383,6 +1411,8 @@ function randomizeAllItemSpawns() {
   lootbox.isHeld = false;
   lootbox.holderId = null;
   placeItemAtRandomSpawn(lootbox);
+  // A fresh round starts with an untouched box.
+  activeLootBoxSteals = 0;
 }
 
 // Resolves a client item id to the authoritative item object. Power-ups, the
@@ -1769,15 +1799,32 @@ function runRewardTick() {
     }
 
     // MON: only the lootbox holder earns, streamed from the match's real pool.
-    // The stream is an estimate, not the payout (the escrow pays the whole pool
-    // to the final holder), so it is spread over the round and capped at the pool.
+    // The holder is actually paid this on-chain at settlement, so it is capped at
+    // what the box still holds (pool minus the gas each steal burned).
     if (lootbox.isHeld && lootbox.holderId === pid && activeLootBoxPoolMon > 0) {
-      const monPerSec = activeLootBoxPoolMon / MATCH_DURATION_SECONDS;
-      reward.accumulatedMON = Math.min(activeLootBoxPoolMon, reward.accumulatedMON + monPerSec);
+      const liveValue = Math.max(
+        0,
+        activeLootBoxPoolMon - activeLootBoxSteals * LOOTBOX_STEAL_COST_MON
+      );
+      const monPerSec = (activeLootBoxPoolMon * MON_STREAM_POOL_SHARE) / MATCH_DURATION_SECONDS;
+      reward.accumulatedMON = Math.min(liveValue, reward.accumulatedMON + monPerSec);
     }
   }
 
-  const poolTotal = activeLootBoxPoolMon;
+  // The HUD shows the box's live value: what is left after the streams and the
+  // steal burns. That is exactly what `settle` will pay the final holder.
+  const streamedMon = Object.values(playerRewards).reduce(
+    (sum, reward) => sum + reward.accumulatedMON,
+    0
+  );
+  const poolTotal = Math.max(
+    0,
+    round6(
+      activeLootBoxPoolMon -
+        streamedMon -
+        activeLootBoxSteals * LOOTBOX_STEAL_COST_MON
+    )
+  );
   for (const client of gameWss.clients) {
     if (client.readyState !== 1) continue;
     const pid = client.playerId;
@@ -2073,6 +2120,11 @@ gameWss.on('connection', (ws, req) => {
         }
         item.isHeld = true;
         item.holderId = playerId;
+        // A lootbox taken off another player is a steal: it burns gas out of the
+        // box (Whitepaper 5.4). Picking it up off the ground is not.
+        if (itemId === 'LootBox' && previousHolder && previousHolder !== playerId) {
+          activeLootBoxSteals += 1;
+        }
         const emoji = itemEmoji(itemId);
         if (previousHolder && previousHolder !== playerId) {
           console.log(`${emoji} ${itemId} stolen by ${playerId} from ${previousHolder}`);

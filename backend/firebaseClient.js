@@ -120,6 +120,18 @@ function round6(value) {
  * prize money or XP. Unknown usernames are skipped instead of creating a junk
  * `Anon` record in the users table.
  */
+/**
+ * Credits a player's persistent totals for one match.
+ *
+ * The marker stored under `users/<name>/settledMatches/<matchId>` keeps the
+ * amounts that were credited, not just a flag, so a retried settlement can apply
+ * the difference instead of silently keeping the first (possibly estimated)
+ * numbers. The lootbox is settled first and its stream rows only exist once the
+ * chain leg has run, so the retry after a chain outage must be able to top up.
+ *
+ * Markers written by older builds are the boolean `true`; those have no amounts
+ * to diff against and stay final.
+ */
 export async function creditPlayerResult(username, { matchId, win = 0, wonMon = 0, xp = 0 } = {}) {
     if (!username || !matchId) return { credited: false, reason: 'missing_identity' };
     const userRef = ref(db, `users/${username}`);
@@ -128,17 +140,32 @@ export async function creditPlayerResult(username, { matchId, win = 0, wonMon = 
 
     const user = snapshot.val() || {};
     const settled = user.settledMatches || {};
-    if (settled[matchId]) return { credited: false, reason: 'already_credited' };
+    const marker = settled[matchId];
+    if (marker && typeof marker !== 'object') {
+        return { credited: false, reason: 'already_credited' };
+    }
+
+    const previous = marker && typeof marker === 'object' ? marker : { win: 0, wonMon: 0, xp: 0 };
+    const deltaWin = Number(win || 0) - Number(previous.win || 0);
+    const deltaMon = round6(Number(wonMon || 0) - Number(previous.wonMon || 0));
+    const deltaXp = Math.round(Number(xp || 0) - Number(previous.xp || 0));
+    if (marker && deltaWin === 0 && deltaMon === 0 && deltaXp === 0) {
+        return { credited: false, reason: 'already_credited' };
+    }
 
     const patch = {};
-    patch[`users/${username}/won`] = Number(user.won || 0) + Number(win || 0);
-    patch[`users/${username}/wonMon`] = round6(Number(user.wonMon || 0) + Number(wonMon || 0));
-    patch[`users/${username}/xp`] = Math.round(Number(user.xp || 0) + Number(xp || 0));
-    patch[`users/${username}/settledMatches/${matchId}`] = true;
+    patch[`users/${username}/won`] = Math.max(0, Number(user.won || 0) + deltaWin);
+    patch[`users/${username}/wonMon`] = Math.max(0, round6(Number(user.wonMon || 0) + deltaMon));
+    patch[`users/${username}/xp`] = Math.max(0, Math.round(Number(user.xp || 0) + deltaXp));
+    patch[`users/${username}/settledMatches/${matchId}`] = {
+        win: Number(win || 0),
+        wonMon: round6(wonMon),
+        xp: Math.round(Number(xp || 0))
+    };
     patch[`users/${username}/lastSettledAt`] = new Date().toISOString();
 
     await update(ref(db), patch);
-    return { credited: true };
+    return { credited: true, deltaMon };
 }
 
 export async function updateUserRoles(username, roles) {

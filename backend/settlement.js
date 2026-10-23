@@ -9,6 +9,10 @@
 //   3. the match record's result + settlement status (`matches/<id>`),
 //   4. an on-chain payout when the round has exactly one prize winner.
 //
+// The lootbox is settled first: its holders were paid MON while they carried it
+// (Whitepaper 5.4), so those rows exist before the pool's remainder is handed to
+// the final holder. See `reconcileLootBox`.
+//
 // The order matters: the ledger is written first, so a chain outage can never
 // lose a result. Every write is idempotent per match id, so the room server's
 // retries cannot double-credit anyone.
@@ -27,6 +31,11 @@ export const PRIZE_LOOTBOX_SHARE = 0.2;
 export const WINNER_POOL_SHARE = (1 - FEE_SHARE) * PRIZE_WINNER_SHARE; // 0.72
 /** Share of the gross prize the deployed contract puts in the lootbox pool. */
 export const LOOTBOX_POOL_SHARE = (1 - FEE_SHARE) * PRIZE_LOOTBOX_SHARE; // 0.18
+
+/** WONsLootBox.GAS_PER_STEAL: what one steal burns out of the box. */
+export const LOOTBOX_STEAL_COST_MON = 0.001;
+/** WONsLootBox.STREAM_BATCH_LIMIT: the most players one `batchStream` can pay. */
+const STREAM_BATCH_LIMIT = 50;
 
 /** Statuses a settled match can end in. */
 export const STATUS = Object.freeze({
@@ -126,6 +135,12 @@ export function validateReport(report) {
             return 'the lootbox holder needs a playerId';
         }
     }
+    if (report.lootboxSteals !== undefined) {
+        const steals = Number(report.lootboxSteals);
+        if (!Number.isFinite(steals) || steals < 0) {
+            return 'lootboxSteals must be a non-negative number';
+        }
+    }
     if (report.endedAt !== undefined && !Number.isFinite(Number(report.endedAt))) {
         return 'endedAt must be a number';
     }
@@ -139,8 +154,13 @@ export function validateReport(report) {
  * the only source that knows what the contract will actually pay. Matches that
  * were never escrowed fall back to the contract's published shares of the gross
  * prize so their ledger still adds up.
+ *
+ * `box` is the reconciled lootbox (see `reconcileLootBox`): the MON each holder
+ * already streamed out of it on-chain, and what is left for the final holder.
+ * Without it the whole pool is credited to the holder, which is the off-chain
+ * behaviour (no escrow, no stream, nobody to pay early).
  */
-export function buildPayouts({ match, report, onchain }) {
+export function buildPayouts({ match, report, onchain, box }) {
     const grossMon = parsePrizeMon(match);
     const winnerPoolMon =
         onchain && Number(onchain.winnerPrizeMon) > 0
@@ -163,18 +183,195 @@ export function buildPayouts({ match, report, onchain }) {
         });
     }
 
-    if (report.lootboxHolder && lootBoxPoolMon > 0) {
+    // Whitepaper 5.4: the box pays while the round runs. These are the amounts
+    // the holders earned and were paid on-chain, so they are ledger entries in
+    // their own right - not part of the settle payout.
+    for (const row of Array.isArray(box?.streamed) ? box.streamed : []) {
+        if (!(Number(row.amountMon) > 0)) continue;
+        payouts.push({
+            kind: 'stream',
+            playerId: row.playerId,
+            playerName: row.playerName,
+            share: 0,
+            amountMon: round6(row.amountMon)
+        });
+    }
+
+    // What is left in the box after the streams and the steal burns is what
+    // `settle` pays. The recipient is the final holder, or - matching the
+    // escrow's own fallback - the first prize winner when nobody held the box.
+    const lootBoxPayoutMon =
+        box && box.done ? round6(Number(box.remainingMon) || 0) : lootBoxPoolMon;
+    const firstPrize = payouts.find((payout) => payout.kind === 'prize');
+    const lootRecipient =
+        report.lootboxHolder ||
+        (firstPrize ? { playerId: firstPrize.playerId, playerName: firstPrize.playerName } : null);
+
+    if (lootRecipient && lootBoxPayoutMon > 0) {
         payouts.push({
             kind: 'lootbox',
-            playerId: report.lootboxHolder.playerId,
-            playerName: report.lootboxHolder.playerName,
+            playerId: lootRecipient.playerId,
+            playerName: lootRecipient.playerName,
             share: 1,
-            amountMon: lootBoxPoolMon
+            amountMon: lootBoxPayoutMon
         });
     }
 
     const totalMon = round6(payouts.reduce((sum, payout) => sum + payout.amountMon, 0));
-    return { grossMon, winnerPoolMon, lootBoxPoolMon, payouts, totalMon };
+    return {
+        grossMon,
+        winnerPoolMon,
+        lootBoxPoolMon,
+        lootBoxPayoutMon,
+        payouts,
+        totalMon
+    };
+}
+
+/**
+ * Brings the lootbox up to date on-chain before the match settles.
+ *
+ * The round report says who held the box and for how long (`players[].mon`) and
+ * how often it changed hands (`lootboxSteals`). This replays both against
+ * `WONsLootBox`: every steal burns `GAS_PER_STEAL`, every holder is paid their
+ * stream, and whatever is left is what `settle` will hand the final holder.
+ *
+ * Progress is persisted in `settlement.box`, so a retried report never pays a
+ * stream twice: already-applied steals and already-paid holders are skipped.
+ * Returns `{ done: true, ... }` on success and `{ error }` when the chain leg
+ * could not finish - the caller then leaves the match uncredited to be retried.
+ */
+export async function reconcileLootBox({ matchId, report, poolMon, previous, deps, log = () => {} }) {
+    const pool = round6(Number(poolMon) || 0);
+    if (!(pool > 0)) {
+        // No escrow behind the box (never funded, or no prize): nothing to stream.
+        return {
+            done: true,
+            skipped: true,
+            poolMon: 0,
+            steals: 0,
+            appliedSteals: 0,
+            burnedMon: 0,
+            streamed: [],
+            remainingMon: 0,
+            txHashes: []
+        };
+    }
+    if (previous && previous.done) return previous;
+
+    let box;
+    if (previous && previous.done === false) {
+        // Resume where the failed attempt stopped. The error itself is not part of
+        // the progress (and `undefined` cannot be written to Firebase).
+        const { error: _previousError, ...resumed } = previous;
+        box = {
+            ...resumed,
+            streamed: Array.isArray(previous.streamed)
+                ? previous.streamed.map((row) => ({ ...row }))
+                : [],
+            txHashes: Array.isArray(previous.txHashes) ? [...previous.txHashes] : []
+        };
+    } else {
+        box = {
+            done: false,
+            poolMon: pool,
+            steals: 0,
+            appliedSteals: 0,
+            burnedMon: 0,
+            streamed: [],
+            remainingMon: pool,
+            txHashes: []
+        };
+    }
+
+    const save = async () => {
+        await deps.updateMatchRecord(matchId, { settlement: { box } });
+    };
+
+    // 1. Replay the steals. Each one burns GAS_PER_STEAL, and the box cannot
+    //    burn more than it holds.
+    const steals = Math.max(0, Math.floor(Number(report?.lootboxSteals) || 0));
+    box.steals = steals;
+    const affordable = Math.floor(round6(pool / LOOTBOX_STEAL_COST_MON) + 1e-9);
+    const target = Math.min(steals, affordable);
+    while (box.appliedSteals < target) {
+        const result = await deps.stealLootBox({
+            matchId,
+            holderName: report?.lootboxHolder?.playerName || null
+        });
+        if (!result || !result.success) {
+            return { ...box, error: result?.error || 'the steal could not be replayed on-chain' };
+        }
+        box.appliedSteals += 1;
+        box.burnedMon = round6(box.appliedSteals * LOOTBOX_STEAL_COST_MON);
+        if (result.txHash) box.txHashes.push(result.txHash);
+        await save();
+    }
+
+    // 2. Pay the stream. Amounts are clamped to what the box still holds, in
+    //    report order, so the batch can never try to pay out more than the pool.
+    const alreadyPaid = new Set(box.streamed.map((row) => String(row.playerName).toLowerCase()));
+    const seen = new Set(alreadyPaid);
+    let left = round6(Math.max(0, pool - box.burnedMon));
+    for (const row of box.streamed) left = round6(left - (Number(row.amountMon) || 0));
+
+    const pending = [];
+    for (const player of Array.isArray(report?.players) ? report.players : []) {
+        if (box.streamed.length + pending.length >= STREAM_BATCH_LIMIT) break;
+        const name = String(player?.playerName || '');
+        const key = name.toLowerCase();
+        if (!key || seen.has(key)) continue;
+        const amount = round6(Number(player.mon) || 0);
+        if (!(amount > 0)) continue;
+        // Nobody can be paid without a wallet. Their MON stays in the box and is
+        // settled to the final holder instead of disappearing.
+        const wallet = await deps.getPlayerWallet(name);
+        if (!wallet) continue;
+        seen.add(key);
+        const clamped = round6(Math.min(amount, left));
+        if (!(clamped > 0)) break;
+        pending.push({ playerId: player.playerId, playerName: name, amountMon: clamped });
+        left = round6(left - clamped);
+    }
+
+    if (pending.length > 0) {
+        const result = await deps.streamLootBox({ matchId, rows: pending });
+        if (!result || !result.success) {
+            return { ...box, error: result?.error || 'the lootbox stream could not be paid on-chain' };
+        }
+        if (result.txHash) box.txHashes.push(result.txHash);
+        box.streamed.push(...pending);
+        await save();
+    }
+
+    // 3. The contract is the truth for what is left: that is exactly what
+    //    `settle` pays the final holder.
+    let remaining;
+    try {
+        remaining = round6(Number(await deps.getLootBoxPool(matchId)));
+    } catch (error) {
+        return { ...box, error: error?.message || String(error) };
+    }
+    const expected = round6(
+        Math.max(
+            0,
+            pool -
+                box.burnedMon -
+                box.streamed.reduce((sum, row) => sum + (Number(row.amountMon) || 0), 0)
+        )
+    );
+    box.remainingMon = round6(Math.min(Math.max(0, remaining), expected));
+    box.done = true;
+    delete box.error;
+    await save();
+    log('the lootbox was reconciled on-chain', {
+        matchId,
+        poolMon: box.poolMon,
+        burnedMon: box.burnedMon,
+        streamed: box.streamed.length,
+        remainingMon: box.remainingMon
+    });
+    return box;
 }
 
 /** Reward rows are keyed by match + player + kind so a retry overwrites, never duplicates. */
@@ -246,7 +443,43 @@ export async function settleRound({ matchId, report, deps }) {
         return { httpStatus: 200, status: 'already_settled', matchId, reason: 'cancelled_onchain' };
     }
 
-    const ledger = buildPayouts({ match, report, onchain });
+    // The box is the only part of the payout that moves while the round runs:
+    // holders stream MON out of it and every steal burns gas out of it. Reconcile
+    // it first, because the ledger has to say what was really paid, and because
+    // the settle call pays whatever the box has left.
+    let box = null;
+    if (onchain && !chainReadError) {
+        const previousBox = match.settlement && match.settlement.box ? match.settlement.box : null;
+        box = await reconcileLootBox({
+            matchId,
+            report,
+            poolMon: onchain.lootBoxPoolMon,
+            previous: previousBox,
+            deps,
+            log
+        });
+        if (box.error) {
+            // Streams and steals are real money: without a reconciled box the
+            // ledger cannot say who was paid, so nothing is credited and the room
+            // server retries. Progress is kept in `settlement.box`.
+            log('the lootbox could not be reconciled; asking for a retry', {
+                matchId,
+                error: box.error
+            });
+            await deps.updateMatchRecord(matchId, {
+                status: 'settling',
+                settlement: { status: STATUS.CHAIN_UNAVAILABLE, credited: false, box }
+            });
+            return {
+                httpStatus: 503,
+                status: STATUS.CHAIN_UNAVAILABLE,
+                matchId,
+                error: box.error
+            };
+        }
+    }
+
+    const ledger = buildPayouts({ match, report, onchain, box });
     const settledAt = new Date().toISOString();
 
     if (ledger.payouts.length === 0) {
@@ -425,12 +658,14 @@ export async function settleRound({ matchId, report, deps }) {
         grossMon: ledger.grossMon,
         winnerPoolMon: ledger.winnerPoolMon,
         lootBoxPoolMon: ledger.lootBoxPoolMon,
+        lootBoxPayoutMon: ledger.lootBoxPayoutMon,
         totalMon: ledger.totalMon,
         payouts: ledger.payouts,
         rewardIds,
         winsCredited,
         txHash,
-        error: chainError
+        error: chainError,
+        box
     };
     await deps.updateMatchRecord(matchId, {
         status: chainUnavailable ? 'settling' : 'settled',

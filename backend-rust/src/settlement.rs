@@ -95,6 +95,10 @@ pub struct RoundResult {
     pub players: Vec<PlayerResult>,
     /// Who was carrying the lootbox when the round ended.
     pub lootbox_holder: Option<PlayerRef>,
+    /// How many times the lootbox changed hands during the round. Each steal
+    /// burns `GAS_PER_STEAL` out of the pool on-chain, so the control plane
+    /// needs the count to reconcile the box before it settles the match.
+    pub lootbox_steals: u32,
 }
 
 /// The body posted to the control plane.
@@ -359,6 +363,7 @@ mod tests {
                     player_id: "p2".to_string(),
                     player_name: "bob".to_string(),
                 }),
+                lootbox_steals: 3,
             },
         }
     }
