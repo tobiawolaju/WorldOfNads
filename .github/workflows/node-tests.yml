@@ -23,5 +23,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - name: Run settlement tests
-        run: node --test backend/settlement.test.js
+      - name: Run settlement and analytics tests
+        run: node --test backend/settlement.test.js backend/analytics.test.js

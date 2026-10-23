@@ -633,6 +633,7 @@ export function computeAnalyticsReport({
       returningUsers,
       newUsers: newUsersInRange,
       gamesPlayedPerUser,
+      pairedSessions: sessionDurations.length,
       playerRetention: {
         day1: retentionPct.day1,
         day7: retentionPct.day7,
