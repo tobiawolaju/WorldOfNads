@@ -21,6 +21,7 @@ import { trackMatchJoined } from "../lib/analyticsClient";
 import { requireInstall } from "../lib/installPrompt";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
 import { resolveGameSkinName, buildComboMap, resolveSkinAttachments, resolveSkinImageUrl } from "../lib/skinMapping";
+import { displayMatchStatus, type DisplayMatchStatus } from "../lib/matchStatus";
 import { staticMatches } from "./staticMatches.js";
 import storeItemsData from "../data/items.json";
 import { FALLBACK_LOBBY_BG, lobbyBackgrounds, stableLobbyBgFor } from "../data/lobbyBackgrounds";
@@ -706,18 +707,23 @@ export default function Dashboard() {
     (acc) => acc.type === "wallet" && acc.chainType === "ethereum"
   ) || []) as Wallet[];
 
-  const normalizeMatchStatus = (status: Match["status"] | string) =>
-    status === "settled" ? "completed" : status;
+  // A card's group is the stored status reconciled with the clock, so a match
+  // whose worker flip never landed cannot keep advertising "live" hours after
+  // its round ended (see lib/matchStatus). `ctaMode: "play"` is exempt.
+  const statusOf = (match: Match | null | undefined): DisplayMatchStatus =>
+    displayMatchStatus(match, nowMs);
 
-  const statusOrder: Array<"upcoming" | "live" | "completed"> = ["upcoming", "live", "completed"];
+  // Cancelled/refunded events sort last: they are over, and they must never be
+  // picked as the card the carousel opens on.
+  const statusOrder: DisplayMatchStatus[] = ["upcoming", "live", "completed", "cancelled"];
   const orderedMatches = useMemo(() => {
     return [...matches].sort((a, b) => {
-      const aRank = statusOrder.indexOf(normalizeMatchStatus(a.status) as "upcoming" | "live" | "completed");
-      const bRank = statusOrder.indexOf(normalizeMatchStatus(b.status) as "upcoming" | "live" | "completed");
+      const aRank = statusOrder.indexOf(statusOf(a));
+      const bRank = statusOrder.indexOf(statusOf(b));
       if (aRank !== bRank) return aRank - bRank;
       return (a.startTime || 0) - (b.startTime || 0);
     });
-  }, [matches]);
+  }, [matches, nowMs]);
 
   const selectedMatchData = matches.find((match) => match.matchId === selectedMatch) || null;
   // The backdrop is the selected match's own choice, never a random roll. Older
@@ -743,22 +749,26 @@ export default function Dashboard() {
       // ignore preload failures
     }
   }, []);
-  const normalizedSelectedStatus = normalizeMatchStatus(selectedMatchData?.status);
+  const normalizedSelectedStatus = statusOf(selectedMatchData);
   const isLive = normalizedSelectedStatus === "live";
   const isTrainingLobby = selectedMatchData?.ctaMode === "play";
   const countdownRemainingMs = selectedMatchData?.startTime
     ? selectedMatchData.startTime * 1000 - nowMs
     : 0;
   const isInCountdown = Boolean(
-    !isTrainingLobby && selectedMatchData?.startTime && countdownRemainingMs > 0
+    !isTrainingLobby &&
+      normalizedSelectedStatus !== "cancelled" &&
+      normalizedSelectedStatus !== "completed" &&
+      selectedMatchData?.startTime &&
+      countdownRemainingMs > 0
   );
   const isStartTimeReached = selectedMatchData?.startTime
     ? nowMs >= selectedMatchData.startTime * 1000
     : true;
   const canPlay = isTrainingLobby || ((isLive || (normalizedSelectedStatus === "upcoming" && isStartTimeReached)) && isStartTimeReached);
   const getFallbackMatch = useCallback(() =>
-    orderedMatches.find((match) => normalizeMatchStatus(match.status) === filter) || orderedMatches[0] || null,
-    [orderedMatches, filter]
+    orderedMatches.find((match) => statusOf(match) === filter) || orderedMatches[0] || null,
+    [orderedMatches, filter, nowMs]
   );
 
   const updateSelectedCard = useCallback(() => {
@@ -781,8 +791,10 @@ export default function Dashboard() {
 
     if (closest && (closest as HTMLElement).dataset.id) {
       setSelectedMatch(String((closest as HTMLElement).dataset.id));
-      const closestStatus = (closest as HTMLElement).dataset.status as "upcoming" | "live" | "completed" | undefined;
-      if (closestStatus && closestStatus !== filter) {
+      const closestStatus = (closest as HTMLElement).dataset.status as DisplayMatchStatus | undefined;
+      // Cancelled cards are not one of the three filter groups; scrolling past
+      // one must not hijack the active tab.
+      if (closestStatus && closestStatus !== "cancelled" && closestStatus !== filter) {
         setFilter(closestStatus);
       }
     }
@@ -795,12 +807,12 @@ export default function Dashboard() {
     const fallbackMatch = getFallbackMatch();
     if (!fallbackMatch) return;
 
-    const fallbackStatus = normalizeMatchStatus(fallbackMatch.status);
-    if (fallbackStatus !== filter) {
+    const fallbackStatus = statusOf(fallbackMatch);
+    if (fallbackStatus !== "cancelled" && fallbackStatus !== filter) {
       setFilter(fallbackStatus);
     }
     setSelectedMatch(fallbackMatch.matchId);
-  }, [tab, selectedMatch, matches, orderedMatches, filter]);
+  }, [tab, selectedMatch, matches, orderedMatches, filter, nowMs]);
 
   useEffect(() => {
     const el = carouselRef.current;
@@ -993,12 +1005,15 @@ export default function Dashboard() {
           <div className="matches-wrapper">
             {tab === "events" && (
               <div className="matches-carousel" ref={carouselRef}>
-                {orderedMatches.map((match) => (
+                {orderedMatches.map((match) => {
+                  const cardStatus = statusOf(match);
+                  const isOver = cardStatus === "completed" || cardStatus === "cancelled";
+                  return (
                   <div
                     key={match.matchId}
                     data-id={match.matchId}
-                    data-status={normalizeMatchStatus(match.status)}
-                    className={`match-card ${selectedMatch === match.matchId ? "selected" : ""} ${normalizeMatchStatus(match.status) === "completed" ? "grayscale-card" : ""}`}
+                    data-status={cardStatus}
+                    className={`match-card ${selectedMatch === match.matchId ? "selected" : ""} ${isOver ? "grayscale-card" : ""}`}
                     style={{ backgroundImage: `url(${match.image})` }}
                     onClick={(event) => {
                       const card = event.currentTarget;
@@ -1014,7 +1029,7 @@ export default function Dashboard() {
                     }}
                   >
                     {selectedMatch === match.matchId ? (
-                      <div className={`match-card-overlay selected-overlay status-${normalizeMatchStatus(match.status)}`}>
+                      <div className={`match-card-overlay selected-overlay status-${cardStatus}`}>
                         <p className="match-reward">{match.prize}</p>
                         <div className="match-card-content">
                           <div className="match-details-inner">
@@ -1046,7 +1061,8 @@ export default function Dashboard() {
                       </span>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -1174,11 +1190,13 @@ export default function Dashboard() {
             <span>{elapsedTime.toFixed(1)}s Cancel</span>
           ) : (
             <span>
-              {isTrainingLobby || (!isInCountdown && normalizedSelectedStatus !== "completed")
-                ? "READY!"
+              {normalizedSelectedStatus === "cancelled"
+                ? "Cancelled"
                 : isInCountdown
                   ? <><span className="countdown-label">Starts in: </span>{formatCountdown(selectedMatchData.startTime)}</>
-                  : "Not Live"}
+                  : isTrainingLobby || isLive || normalizedSelectedStatus === "upcoming"
+                    ? "READY!"
+                    : "Not Live"}
             </span>
           )}
         </button>

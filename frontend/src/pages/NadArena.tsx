@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./NadArena.css";
 // @ts-ignore
 import { fetchMatchesFromFirebase } from "./firebaseClient";
+import { displayMatchStatus, type DisplayMatchStatus } from "../lib/matchStatus";
 import Footer from "../components/Footer";
 
 type MatchRecord = {
@@ -13,6 +14,8 @@ type MatchRecord = {
   status?: string;
   date?: string;
   time?: string;
+  startTime?: number;
+  ctaMode?: string;
   image?: string;
   url?: string;
   prize?: string;
@@ -25,7 +28,7 @@ type ProjectCard = {
   name: string;
   tagline: string;
   description: string;
-  stage: "live" | "upcoming" | "completed";
+  stage: DisplayMatchStatus;
   launchDate: string;
   xHandle: string;
   logo: string;
@@ -38,7 +41,8 @@ const DEFAULT_LOGO = "/logo.jpg";
 function NadArena() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all"); // 'all', 'upcoming', 'live', 'completed'
-  const [projects, setProjects] = useState<ProjectCard[]>([]);
+  const [matches, setMatches] = useState<MatchRecord[]>([]);
+  const [nowMs, setNowMs] = useState(Date.now());
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -47,9 +51,8 @@ function NadArena() {
       setLoading(true);
       setLoadError("");
       try {
-        const matches = await fetchMatchesFromFirebase();
-        const normalized = (matches as MatchRecord[]).map((match) => mapMatchToProject(match));
-        setProjects(normalized);
+        const records = await fetchMatchesFromFirebase();
+        setMatches(records as MatchRecord[]);
       } catch (error) {
         console.error("Failed to load matches", error);
         setLoadError("Failed to load matches.");
@@ -61,11 +64,29 @@ function NadArena() {
     loadMatches();
   }, []);
 
+  // Cards must age on their own: a stored `status` whose worker flip never
+  // landed used to keep a finished event at "live"/"upcoming" for as long as
+  // the tab was open.
+  useEffect(() => {
+    const ticker = setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => clearInterval(ticker);
+  }, []);
+
+  const projects = useMemo(
+    () => matches.map((match) => mapMatchToProject(match, nowMs)),
+    [matches, nowMs]
+  );
+
   const filteredProjects = useMemo(() =>
     projects
       .filter((project) => {
         if (filterStatus === "all") {
           return true;
+        }
+        // Refunded/cancelled events are over: the page keeps its three tabs, so
+        // they belong under Completed while still carrying a "cancelled" badge.
+        if (filterStatus === "completed") {
+          return project.stage === "completed" || project.stage === "cancelled";
         }
         return project.stage === filterStatus;
       })
@@ -78,6 +99,7 @@ function NadArena() {
       live: "arena-status-live",
       upcoming: "arena-status-upcoming",
       completed: "arena-status-completed",
+      cancelled: "arena-status-cancelled",
     } as const;
 
     return (
@@ -209,9 +231,9 @@ function NadArena() {
   );
 }
 
-function mapMatchToProject(match: MatchRecord): ProjectCard {
+function mapMatchToProject(match: MatchRecord, nowMs: number): ProjectCard {
   const name = (match.sponsor || "Unknown Sponsor").trim();
-  const status = normalizeStage(match.status);
+  const status = displayMatchStatus(match, nowMs);
   const url = String(match.url || "").trim();
   const handle = deriveHandle(url, name);
 
@@ -221,23 +243,16 @@ function mapMatchToProject(match: MatchRecord): ProjectCard {
     tagline: match.prize ? `Prize: ${match.prize}` : "Sponsored match",
     description: match.description || "New sponsored match from World of Nads.",
     stage: status,
-    launchDate: status === "live" ? "Live Now" : status === "completed" ? "Completed" : "Upcoming",
+    launchDate:
+      status === "live" ? "Live Now"
+        : status === "completed" ? "Completed"
+          : status === "cancelled" ? "Cancelled"
+            : "Upcoming",
     xHandle: handle,
     logo: match.image || DEFAULT_LOGO,
     url,
     settleTxHash: match.settleTxHash
   };
-}
-
-function normalizeStage(status?: string): "live" | "upcoming" | "completed" {
-  const normalized = String(status || "upcoming").toLowerCase();
-  if (normalized === "settled" || normalized === "completed") {
-    return "completed";
-  }
-  if (normalized === "live" || normalized === "upcoming") {
-    return normalized;
-  }
-  return "upcoming";
 }
 
 function deriveHandle(url: string, fallback: string): string {

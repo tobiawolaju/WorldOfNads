@@ -66,6 +66,45 @@ const MAX_THROW_IMPULSE = 8.0;
 const CHICKEN_GRAVITY = 14.0;
 const FLOOR_Y = 1.195;
 const MATCH_DURATION_SECONDS = 300.0;
+// A match card is shown for the round plus this much slack after it ends; the
+// status worker uses the same window when it flips live -> completed.
+const MATCH_END_BUFFER_SECONDS = 60;
+// How early a match starts reading as live: the status worker's lead.
+const MATCH_LIVE_LEAD_SECONDS = 300;
+
+/**
+ * Status to *display* for a match record, reconciled with the clock.
+ *
+ * The worker at the bottom of this file owns the stored `status`, but it can
+ * only run while the service is awake. Cards kept advertising "upcoming"/"live"
+ * for days after the round when that flip never landed, so readers derive the
+ * state the same way the worker would have. Terminal statuses win over the
+ * clock; `cancelled` is returned as-is (callers that do not expect it already
+ * filter those records out).
+ */
+function deriveMatchStatus(match, nowSeconds = Math.floor(Date.now() / 1000)) {
+  const status = String(match?.status || '').trim().toLowerCase();
+  if (status === 'cancelled' || status === 'canceled' || status === 'refunded') {
+    return 'cancelled';
+  }
+  if (status === 'settled' || status === 'completed' || status === 'finished') {
+    return 'completed';
+  }
+  // The shared training lobby is not a round: it never starts and never ends.
+  if (match?.ctaMode === 'play') return 'live';
+
+  const startTime = Number(match?.startTime);
+  if (!Number.isFinite(startTime) || startTime <= 0) {
+    return status === 'live' || status === 'upcoming' ? status : 'upcoming';
+  }
+  if (nowSeconds >= startTime + MATCH_DURATION_SECONDS + MATCH_END_BUFFER_SECONDS) {
+    return 'completed';
+  }
+  if (nowSeconds >= startTime - MATCH_LIVE_LEAD_SECONDS) {
+    return 'live';
+  }
+  return 'upcoming';
+}
 const DEFAULT_MIN_PLAYERS_TO_START = 2;
 const VICTORY_POSSESSION_SECONDS = 60.0;
 const ANIM_NAME_TO_ID = Object.freeze({
@@ -718,16 +757,22 @@ const server = createServer(async (req, res) => {
     try {
       const all = await getAllMatches();
       const matches = [];
+      const nowSeconds = Math.floor(Date.now() / 1000);
       for (const match of Object.values(all || {})) {
         if (!match || !match.matchId) continue;
         if (match.status === 'cancelled' || match.status === 'settled') continue;
+        const displayStatus = deriveMatchStatus(match, nowSeconds);
+        if (displayStatus === 'cancelled') continue;
         const rawMin = Number(match.minPlayersToStart);
         const rawMax = match.maxPlayers;
         matches.push({
           match_id: String(match.matchId),
           sponsor: String(match.sponsor || 'Unknown Sponsor'),
           prize: String(match.prize || ''),
-          status: match.status || 'upcoming',
+          // The Godot dashboard renders this verbatim, so it gets the clock-
+          // derived value rather than a stored one the worker may not have
+          // refreshed yet (see deriveMatchStatus).
+          status: displayStatus,
           start_time: Number(match.startTime || 0),
           description: String(match.description || ''),
           cta_mode: String(match.ctaMode || ''),

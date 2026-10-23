@@ -1006,7 +1006,8 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   /* filter set per-status below */
 }
 
-.match-card[data-status="completed"] {
+.match-card[data-status="completed"],
+.match-card[data-status="cancelled"] {
   filter: grayscale(100%) brightness(0.7);
 }
 
