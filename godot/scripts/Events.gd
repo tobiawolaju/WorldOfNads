@@ -117,8 +117,19 @@ func update_xp_display(total_xp: int) -> void:
 		_last_xp_shown = total_xp
 
 func update_mon_display(earned_mon: float, pool_remaining: float) -> void:
+	if pool_remaining <= 0.0:
+		# A room without a match (the shared practice lobby) has no escrow behind
+		# it, so it has no prize pool. Say so instead of streaming MON that will
+		# never be paid out.
+		if mon_stream_label:
+			mon_stream_label.text = ""
+			_last_mon_shown = -1.0
+		if prize_pool_label:
+			prize_pool_label.text = "No prize pool"
+		return
 	if mon_stream_label:
-		# 3 decimals so the lootbox stream (0.002 MON/sec) is visible ticking up.
+		# 3 decimals so the lootbox stream (a few thousandths per second) is
+		# visible ticking up.
 		mon_stream_label.text = "+ %.3f MON" % earned_mon
 		if _last_mon_shown >= 0.0 and earned_mon > _last_mon_shown + 0.0005:
 			_mon_pop_tween = _play_reward_pop(mon_stream_label, _mon_base_color, _mon_pop_tween)
@@ -131,8 +142,11 @@ func update_mon_display(earned_mon: float, pool_remaining: float) -> void:
 				prize_pool_label.text = "%dk MON pool" % int(k_val)
 			else:
 				prize_pool_label.text = "%.1fk MON pool" % k_val
-		else:
+		elif pool_remaining >= 100.0 or is_equal_approx(pool_remaining, round(pool_remaining)):
 			prize_pool_label.text = "%d MON pool" % int(pool_remaining)
+		else:
+			# The pool is 0.18 x the prize, so it usually has cents: show them.
+			prize_pool_label.text = "%.2f MON pool" % pool_remaining
 
 func update_possession_display(possession_seconds: int, victory_target: int) -> void:
 	# Create possession progress UI if not exists.

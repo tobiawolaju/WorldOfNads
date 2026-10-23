@@ -81,8 +81,9 @@ pub const STORM_MIN_RADIUS: f64 = 3.0;
 pub const XP_PER_SEC: f64 = 10.0;
 pub const XP_CHICKEN_RADIUS: f64 = 8.0;
 pub const REWARD_TICK_INTERVAL_SEC: f64 = 1.0;
-pub const TOTAL_MON_POOL_PER_MATCH: f64 = 1.0;
-pub const MON_PER_SEC: f64 = 0.002;
+// The MON stream is not configured here any more: it is derived from the
+// match's real lootbox pool (see `world::mon_stream_per_sec`), so a room with no
+// prize streams nothing instead of inventing one.
 
 // Item spawns.
 //

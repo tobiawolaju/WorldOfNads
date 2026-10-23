@@ -4,7 +4,7 @@ import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
 import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward } from './firebaseClient.js';
 import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain, getContractStatus } from './contractClient.js';
-import { settleRound } from './settlement.js';
+import { settleRound, parsePrizeMon, round6, LOOTBOX_POOL_SHARE } from './settlement.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
 import { refreshAllUserPfps } from './refreshUserPfps.js';
 import { attachmentsForId, loadCombos, loadDefaults } from './skinIndex.js';
@@ -131,12 +131,11 @@ let backgroundJobActive = false;
 const XP_PER_SEC = 10;                 // XP/sec earned at point-blank chicken range
 const XP_CHICKEN_RADIUS = 8.0;         // how far "near the chicken" reaches (world units)
 const REWARD_TICK_INTERVAL_SEC = 1.0;  // accumulate once per second
-// Test economy: every match advertises a 1 MON lootbox pool and the holder
-// streams MON_PER_SEC while carrying the box. Swap these for the real match
-// prize / pool-derived rate once on-chain funding is wired (the on-chain
-// lootbox pool is what will actually pay out).
-const TOTAL_MON_POOL_PER_MATCH = 1.0;  // MON advertised for the match lootbox pool
-const MON_PER_SEC = 0.002;             // MON streamed per second while holding the lootbox
+// The MON stream is the match's real lootbox pool spread over the round, so the
+// HUD number and the escrow agree. It is set from the active match record (see
+// `updateMatchLimitsFromActiveMatch`); a room with no match has no pool and
+// streams nothing instead of advertising a prize that will never be paid.
+let activeLootBoxPoolMon = 0.0;
 const playerRewards = {};              // playerId -> { accumulatedXP, accumulatedMON, chickenHoldTime }
 let rewardAccumulator = 0.0;           // seconds since the last reward tick
 
@@ -632,6 +631,9 @@ const server = createServer(async (req, res) => {
             rawMax === null || rawMax === undefined || rawMax === '' || rawMax === 'unlimited'
               ? null
               : (Number.isFinite(Number(rawMax)) ? Math.floor(Number(rawMax)) : null),
+          // The room server streams this pool in the HUD, so it must be the pool
+          // the escrow will pay (0.18 x the gross prize), not a placeholder.
+          lootBoxPoolMon: round6(parsePrizeMon(match) * LOOTBOX_POOL_SHARE),
           status: match.status || 'upcoming'
         };
       }
@@ -1212,6 +1214,8 @@ function updateMatchLimitsFromActiveMatch(activeMatch) {
   if (!activeMatch) {
     currentMinPlayersToStart = DEFAULT_MIN_PLAYERS_TO_START;
     currentMaxPlayers = null;
+    // No match, no escrow: practice rooms stream no MON.
+    activeLootBoxPoolMon = 0.0;
     return;
   }
 
@@ -1225,6 +1229,9 @@ function updateMatchLimitsFromActiveMatch(activeMatch) {
     const normalizedMax = Math.max(1, Math.floor(maxPlayers));
     currentMaxPlayers = normalizedMax < currentMinPlayersToStart ? currentMinPlayersToStart : normalizedMax;
   }
+  // 0.18 x the gross prize, the same split the escrow applies, so the streamed
+  // pool is what the winner's lootbox holder will actually be paid.
+  activeLootBoxPoolMon = round6(parsePrizeMon(activeMatch) * LOOTBOX_POOL_SHARE);
 }
 
 function selectMatchForLimits(matchesMap) {
@@ -1761,13 +1768,16 @@ function runRewardTick() {
       }
     }
 
-    // MON: only the lootbox holder earns, streamed from the match's MON pool.
-    if (lootbox.isHeld && lootbox.holderId === pid) {
-      reward.accumulatedMON += MON_PER_SEC;
+    // MON: only the lootbox holder earns, streamed from the match's real pool.
+    // The stream is an estimate, not the payout (the escrow pays the whole pool
+    // to the final holder), so it is spread over the round and capped at the pool.
+    if (lootbox.isHeld && lootbox.holderId === pid && activeLootBoxPoolMon > 0) {
+      const monPerSec = activeLootBoxPoolMon / MATCH_DURATION_SECONDS;
+      reward.accumulatedMON = Math.min(activeLootBoxPoolMon, reward.accumulatedMON + monPerSec);
     }
   }
 
-  const poolTotal = TOTAL_MON_POOL_PER_MATCH;
+  const poolTotal = activeLootBoxPoolMon;
   for (const client of gameWss.clients) {
     if (client.readyState !== 1) continue;
     const pid = client.playerId;

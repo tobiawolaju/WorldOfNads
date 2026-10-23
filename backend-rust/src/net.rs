@@ -319,6 +319,7 @@ impl RoomHandle {
         if let Some(config) = config {
             room.min_players_to_start = config.min_players_to_start;
             room.max_players = config.max_players;
+            room.loot_box_pool_mon = config.loot_box_pool_mon;
         }
         RoomHandle {
             name: name.to_string(),

@@ -12,6 +12,19 @@ use crate::config::*;
 use crate::protocol::*;
 use crate::settlement::{PlayerRef, PlayerResult, RoundResult, Share, Split, Winner};
 
+/// MON per second the lootbox stream shows for a given pool.
+///
+/// The stream is an estimate, not the payout: the escrow pays the whole pool to
+/// whoever holds the box when the round ends. Spreading the pool across the
+/// round keeps the HUD number comparable to the prize ("hold it the whole round
+/// and you would see the pool"), and a room with no pool streams nothing at all.
+pub fn mon_stream_per_sec(pool_mon: f64) -> f64 {
+    if !pool_mon.is_finite() || pool_mon <= 0.0 {
+        return 0.0;
+    }
+    pool_mon / MATCH_DURATION_SECONDS
+}
+
 #[derive(Clone)]
 pub struct Reward {
     pub accumulated_xp: f64,
@@ -131,6 +144,14 @@ pub struct Room {
     pub match_started_this_round: bool,
     pub min_players_to_start: usize,
     pub max_players: Option<usize>,
+    /// The lootbox pool this room's match actually pays out, in MON.
+    ///
+    /// Comes from the match record (0.18 x the gross prize, the same split the
+    /// escrow applies). A room with no match — the shared training lobby, or the
+    /// `default` room a client falls back to — has no escrow and therefore no
+    /// pool: it streams nothing and the HUD says so, instead of advertising a
+    /// prize that will never be paid.
+    pub loot_box_pool_mon: f64,
     pub match_start_countdown: f64,
     pub storm_radius: f64,
     pub storm_shrink_timer: f64,
@@ -175,6 +196,7 @@ impl Room {
             // `buildMatchState().maxPlayers`; read it once so the two stay in step.
             // Unset or `unlimited` means no cap, which is Node's default.
             max_players: max_players(),
+            loot_box_pool_mon: 0.0,
             match_start_countdown: -1.0,
             storm_radius: STORM_START_RADIUS,
             storm_shrink_timer: 0.0,
@@ -824,6 +846,10 @@ impl Room {
         };
         let lootbox_held = self.lootbox.is_held;
         let lootbox_holder = self.lootbox.holder_id.clone();
+        // Read the pool once per tick: the stream is the match's real pool spread
+        // over the round, and a room with no match (pool 0) streams nothing.
+        let mon_pool = self.loot_box_pool_mon;
+        let mon_rate = mon_stream_per_sec(mon_pool);
 
         let ids: Vec<String> = self.players.keys().cloned().collect();
         for pid in ids {
@@ -851,12 +877,19 @@ impl Room {
                     }
                 }
                 if lootbox_held && lootbox_holder.as_deref() == Some(pid.as_str()) {
-                    player.reward.accumulated_mon += MON_PER_SEC;
+                    // The stream is a live estimate of the match's real lootbox
+                    // pool, spread over the round: holding it for the full 300 s
+                    // adds up to exactly the pool the escrow pays. Capped so a
+                    // paused clock can never show more than the box is worth.
+                    if mon_rate > 0.0 {
+                        player.reward.accumulated_mon =
+                            (player.reward.accumulated_mon + mon_rate).min(mon_pool);
+                    }
                 }
             }
         }
 
-        let pool = round6(TOTAL_MON_POOL_PER_MATCH);
+        let pool = round6(mon_pool);
         let ids: Vec<String> = self.players.keys().cloned().collect();
         for pid in ids {
             let reward = &self.players[&pid].reward;
@@ -1802,6 +1835,46 @@ mod tests {
             "5s of holding accrued {}s of possession",
             held
         );
+    }
+
+    #[test]
+    fn the_lootbox_stream_comes_from_the_match_pool_and_never_exceeds_it() {
+        let mut room = live_room();
+        room.loot_box_pool_mon = 1.8;
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p1", "LootBox", now);
+        advance(&mut room, 10.0, &mut now);
+
+        // The pool is spread over the round: 1.8 / 300 = 0.006 MON per second.
+        let earned = room.players.get("p1").unwrap().reward.accumulated_mon;
+        assert!(
+            (earned - 0.06).abs() < 0.02,
+            "10 s of holding streamed {earned} MON, expected ~0.06"
+        );
+
+        // Even if the pool is smaller than what was already streamed, the HUD
+        // must never claim more than the escrow will pay.
+        room.loot_box_pool_mon = 0.05;
+        advance(&mut room, 30.0, &mut now);
+        let capped = room.players.get("p1").unwrap().reward.accumulated_mon;
+        assert!(
+            capped <= 0.05 + 1e-9,
+            "the stream exceeded the pool: {capped}"
+        );
+    }
+
+    #[test]
+    fn a_room_without_a_match_streams_no_mon() {
+        // The shared practice lobby has no match record and no escrow, so it has
+        // no pool to stream. It must not invent one.
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p1", "LootBox", now);
+        advance(&mut room, 10.0, &mut now);
+
+        assert_eq!(room.players.get("p1").unwrap().reward.accumulated_mon, 0.0);
+        assert_eq!(mon_stream_per_sec(0.0), 0.0);
+        assert!((mon_stream_per_sec(1.8) - 0.006).abs() < 1e-12);
     }
 
     #[test]
