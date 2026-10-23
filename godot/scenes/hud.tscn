@@ -814,8 +814,8 @@ theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
 theme_override_constants/outline_size = 2
 theme_override_fonts/font = ExtResource("3_apjy4")
 theme_override_font_sizes/font_size = 130
-text = "Monad
-Trenches"
+text = "Junk 
+Beach"
 horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("13_textfx")

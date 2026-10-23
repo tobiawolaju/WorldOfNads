@@ -235,6 +235,7 @@ func _ready() -> void:
 	can_sleep = true
 	_mesh = _find_mesh()
 	_apply_mesh_offset()
+	_apply_mode_visual()
 	# Copy the materials so a tint never mutates the shared scene sub-resource
 	# (every pickup instance references the same StandardMaterial3D otherwise).
 	for child in get_children():
@@ -251,6 +252,32 @@ func _find_mesh() -> MeshInstance3D:
 		if child is MeshInstance3D:
 			return child
 	return null
+
+
+# True for the modes that are carried and used as a power-up (everything except
+# NONE and the two objective items).
+func is_power_up_item() -> bool:
+	match power_up_mode:
+		PowerUpMode.SPEED_BURST, PowerUpMode.TWIN, PowerUpMode.SMOKE_GRENADE, \
+		PowerUpMode.HOOK, PowerUpMode.MEGA_LEAP:
+			return true
+	return false
+
+
+# Shows the one authored model that belongs to this pickup's mode in pickup.tscn:
+# "chick" for the objective chicken, "loot" for the objective lootbox and
+# "powerup" for any of the five power-ups. The other two stay hidden, including
+# for NONE pickups.
+func _apply_mode_visual() -> void:
+	var chick_visual := get_node_or_null("chick") as Node3D
+	var loot_visual := get_node_or_null("loot") as Node3D
+	var powerup_visual := get_node_or_null("powerup") as Node3D
+	if chick_visual != null:
+		chick_visual.visible = power_up_mode == PowerUpMode.CHICKEN
+	if loot_visual != null:
+		loot_visual.visible = power_up_mode == PowerUpMode.LOOTBOX
+	if powerup_visual != null:
+		powerup_visual.visible = is_power_up_item()
 
 
 func _apply_mesh_offset() -> void:
