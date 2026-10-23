@@ -687,7 +687,9 @@ func _perform_pickup_request() -> void:
 	if _is_hook_active():
 		_start_punch()
 		return
-	if _is_local_holding_pickup():
+	# A held power-up counts as "carried" even without a pickup instance (the
+	# reveal action can grant one directly), so the Action button uses it too.
+	if _is_local_holding_pickup() or held_power_up_mode != LocalPickup.PowerUpMode.NONE:
 		# A held power-up is USED, not dropped: it vanishes and recycles to a
 		# random far-away spot on the map (effects are not implemented yet).
 		# Objective items (chicken / lootbox) and plain NONE-mode pickups are
@@ -714,6 +716,8 @@ func _input(event: InputEvent) -> void:
 	# Toggles the hidden skin parts and reveal tint on/off via the "chog" input action.
 	if event.is_action_pressed("chog"):
 		_set_hidden_extras_revealed(not _hidden_extras_revealed)
+		if _hidden_extras_revealed and is_local:
+			_maybe_grant_random_powerup_on_reveal()
 
 	if event is InputEventScreenTouch:
 		if event.pressed:
@@ -817,6 +821,8 @@ func _physics_process(delta: float) -> void:
 			_active_power_up_duration = 0.0
 			# Put the original materials back now that usage time is over.
 			apply_powerup_visual(false)
+			if is_local and _hidden_extras_revealed:
+				_set_hidden_extras_revealed(false)
 		else:
 			# Keep the aura aimed at the camera while the effect runs. Cheap:
 			# one visibility check and one look_at on the aura quad.
@@ -1673,8 +1679,9 @@ func _find_nearest_local_pickup() -> RigidBody3D:
 
 # LocalPickup items are never sent to the server, they are grabbed client side only.
 func _try_pickup_local() -> bool:
-	# One carried item at a time: holding anything blocks another pickup.
-	if _is_local_holding_pickup():
+	# One carried item at a time: holding anything blocks another pickup. A
+	# reveal-granted power-up has no pickup instance, so its mode is checked too.
+	if _is_local_holding_pickup() or held_power_up_mode != LocalPickup.PowerUpMode.NONE:
 		return false
 	var now := Time.get_ticks_msec()
 	if now - last_pickup_request_ms < PICKUP_REQUEST_COOLDOWN_MS:
@@ -2256,7 +2263,7 @@ func _update_hud_power_up() -> void:
 	var label := ""
 	var color: Color = Color.WHITE
 	var duration := 0.0
-	if _is_local_holding_pickup() and held_power_up_mode != LocalPickup.PowerUpMode.NONE:
+	if held_power_up_mode != LocalPickup.PowerUpMode.NONE:
 		if _is_objective_item_mode(held_power_up_mode):
 			# Objective items (chicken / lootbox) are carried, never used: the
 			# Action button is a plain white DROP, with no effect ring.
@@ -2264,8 +2271,12 @@ func _update_hud_power_up() -> void:
 			color = Color.WHITE
 			duration = 0.0
 		else:
-			label = str(held_local_pickup.call("power_up_label"))
-			color = held_local_pickup.call("power_up_color")
+			if held_local_pickup != null and is_instance_valid(held_local_pickup) and held_local_pickup.has_method("power_up_label"):
+				label = str(held_local_pickup.call("power_up_label"))
+				color = held_local_pickup.call("power_up_color")
+			else:
+				label = LocalPickup.POWER_UP_LABELS.get(held_power_up_mode, "")
+				color = LocalPickup.POWER_UP_COLORS.get(held_power_up_mode, Color.WHITE)
 			duration = _timed_duration_for(held_power_up_mode)
 	buttons.call("show_power_up", label, color, duration)
 
@@ -2284,6 +2295,28 @@ func _timed_duration_for(mode: int) -> float:
 		LocalPickup.PowerUpMode.HOOK:
 			return HOOK_DURATION
 	return 0.0
+
+
+func _maybe_grant_random_powerup_on_reveal() -> void:
+	if not is_local:
+		return
+	if _active_power_up_mode != LocalPickup.PowerUpMode.NONE and _active_power_up_remaining > 0.0:
+		return
+	if held_power_up_mode != LocalPickup.PowerUpMode.NONE:
+		return
+	var pool: Array = [
+		LocalPickup.PowerUpMode.SPEED_BURST,
+		LocalPickup.PowerUpMode.TWIN,
+		LocalPickup.PowerUpMode.SMOKE_GRENADE,
+		LocalPickup.PowerUpMode.HOOK,
+		LocalPickup.PowerUpMode.MEGA_LEAP,
+	]
+	if pool.is_empty():
+		return
+	pool.shuffle()
+	var chosen: int = pool[0]
+	held_power_up_mode = chosen
+	_update_hud_power_up()
 
 # Finds the HUD node that owns the Action button (buttons.gd). Only scanned once.
 func _find_buttons_hud() -> Node:
