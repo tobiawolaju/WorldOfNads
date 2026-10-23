@@ -33,6 +33,10 @@ const API_BASE: String = "https://worldofnads.onrender.com"
 # The shared training arena maps to the room server's `default` room rather than a
 # match id, because it is not a host-created match and must never be treated as one.
 const TRAINING_MATCH_ID: String = "default"
+# The second permanent room. Like training it has no Firebase match record, entry fee
+# or prize pool, but it is a room of its own: the room server always accepts it
+# (`CHOG_ROOM` in backend-rust/src/net.rs).
+const CHOG_MATCH_ID: String = "match-chog-world-order"
 const SKIN_SCENE: PackedScene = preload("res://scenes/skin.tscn")
 const LOBBY_SCENE: String = "res://scenes/lobby.tscn"
 
@@ -908,10 +912,11 @@ func _on_store_data_fetched(result: int, response_code: int, _headers: PackedStr
 # ---------------------------------------------------------------------- matches
 
 func _offline_matches() -> Array[Dictionary]:
-	# What the dashboard shows until (or if) GET /matches succeeds. Only the shared
-	# training arena lives here; everything else comes from the control plane.
+	# What the dashboard shows until (or if) GET /matches succeeds. Only the
+	# permanent rooms live here; everything else comes from the control plane.
 	var out: Array[Dictionary] = []
 	out.append(_training_match())
+	out.append(_chog_match())
 	return out
 
 
@@ -929,6 +934,23 @@ func _training_match() -> Dictionary:
 	}
 
 
+func _chog_match() -> Dictionary:
+	return {
+		"match_id": CHOG_MATCH_ID,
+		"sponsor": "Chog World Order",
+		"prize": "Free play",
+		"status": "live",
+		"start_time": float(Time.get_unix_time_from_system()),
+		"description": "Chog World Order is always open. No entry fee, no prize pool - drop in and hold the point.",
+		"cta_mode": "play",
+		# The web dashboard gives this room a card image and a different lobby
+		# backdrop. `image` feeds the match-card shader; `lobby_bg` is the scene
+		# behind the 3D preview.
+		"image": "/lobbybg/chogcard.jpg",
+		"lobby_bg": "/lobbybg/chogbg.jpg",
+	}
+
+
 func _normalize_api_match(entry: Dictionary) -> Dictionary:
 	return {
 		"match_id": str(entry.get("match_id", "")),
@@ -938,6 +960,7 @@ func _normalize_api_match(entry: Dictionary) -> Dictionary:
 		"start_time": float(entry.get("start_time", 0.0)),
 		"description": str(entry.get("description", "")),
 		"cta_mode": str(entry.get("cta_mode", "")),
+		"image": str(entry.get("image", "")),
 		"lobby_bg": str(entry.get("lobby_bg", "")),
 	}
 
@@ -973,9 +996,11 @@ func _on_matches_fetched(result: int, response_code: int, _headers: PackedString
 			if bg != "":
 				m["lobby_bg"] = bg
 			merged.append(m)
-	# The shared training arena sits after the real matches: the default selection
-	# prefers a real live match and only falls back to training when there is none.
+	# The shared training arena and Chog World Order sit after the real matches: the
+	# default selection prefers a real live match and only falls back to a permanent
+	# room when there is none.
 	merged.append(_training_match())
+	merged.append(_chog_match())
 
 	matches = merged
 	if previous_match != "" and previous_match != TRAINING_MATCH_ID and _match_exists(previous_match):
@@ -1113,7 +1138,7 @@ func _build_match_card(match: Dictionary) -> Control:
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var card_material := ShaderMaterial.new()
 	card_material.shader = MATCH_CARD_SHADER
-	card_material.set_shader_parameter("source_tex", _lobby_bg_texture(match))
+	card_material.set_shader_parameter("source_tex", _card_texture(match))
 	card_material.set_shader_parameter("dot_opacity", 0.9 if selected else 0.6)
 	card_material.set_shader_parameter("neon_opacity", 1.0 if selected else 0.8)
 	card_material.set_shader_parameter("grayscale_amount", 1.0 if status == "completed" else 0.0)
@@ -2410,6 +2435,18 @@ func _lobby_bg_texture(match: Dictionary) -> Texture2D:
 		bg = _stable_lobby_bg(str(match.get("match_id", "")))
 	var texture := _load_texture("res://assets/img/lobbybg/%s" % bg.get_file())
 	return texture if texture != null else MATCH_SRC
+
+
+# The match-card shader's artwork. It is the record's `image` when it has one
+# (the web dashboard's card image), otherwise the lobby backdrop, which is what
+# every card used before card art and backdrop could differ.
+func _card_texture(match: Dictionary) -> Texture2D:
+	var image := str(match.get("image", ""))
+	if not image.is_empty():
+		var card := _load_texture("res://assets/img/lobbybg/%s" % image.get_file())
+		if card != null:
+			return card
+	return _lobby_bg_texture(match)
 
 
 func _get_plate_gradient(completed: bool = false) -> GradientTexture2D:

@@ -37,8 +37,8 @@ function normaliseStatus(status?: string | null): string {
  * start time is still ahead), and a record without a usable `startTime` keeps
  * the stored value because there is nothing to compare against.
  *
- * The shared training lobby (`ctaMode: "play"`) is not a round at all — it has
- * no start and never ends — so it always reads live.
+ * The always-open rooms (`ctaMode: "play"`) are not rounds at all — they have
+ * no start and never end — so they always read live.
  */
 export function displayMatchStatus(
   match: { status?: string | null; startTime?: number | string | null; ctaMode?: string | null } | null | undefined,

@@ -745,6 +745,12 @@ export default function Dashboard() {
         const img = new Image();
         img.src = p;
       });
+      // Permanent rooms pin their own card art / backdrop, which is not part of the
+      // rotating sponsor picker, so warm those too.
+      ["/lobbybg/chogcard.jpg", "/lobbybg/chogbg.jpg"].forEach((p) => {
+        const img = new Image();
+        img.src = p;
+      });
     } catch (e) {
       // ignore preload failures
     }

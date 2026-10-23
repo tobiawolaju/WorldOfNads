@@ -41,8 +41,18 @@ export const ACTIVE_EVENT_TYPES = [
 export const MATCH_LIVE_WINDOW_SECONDS = 360;
 const DAY_MS = 86400000;
 
-const TRAINING_LOBBY_NAMES = new Set(['training lobby', 'training-lobby', 'default']);
-const NOT_A_SPONSOR = new Set(['training lobby', 'training-lobby', 'default', '']);
+// Rooms that are always open: the shared training lobby (`default`) and Chog World
+// Order. Neither has a match record, entry fee or prize pool, so joining one is
+// practice rather than playing a match, and neither name is a sponsor.
+const PRACTICE_ROOM_NAMES = new Set([
+  'training lobby',
+  'training-lobby',
+  'default',
+  'chog world order',
+  'chog-world-order',
+  'match-chog-world-order',
+]);
+const NOT_A_SPONSOR = new Set([...PRACTICE_ROOM_NAMES, '']);
 
 function round6(value) {
   const n = Number(value);
@@ -66,13 +76,13 @@ function dayOf(value) {
   return t === null ? null : new Date(t).toISOString().slice(0, 10);
 }
 
-function isTrainingLobby(matchId, sponsorId) {
+function isPracticeRoom(matchId, sponsorId) {
   const id = typeof matchId === 'string' ? matchId.trim().toLowerCase() : '';
   const sponsor = typeof sponsorId === 'string' ? sponsorId.trim().toLowerCase() : '';
-  if (TRAINING_LOBBY_NAMES.has(id)) return true;
+  if (PRACTICE_ROOM_NAMES.has(id)) return true;
   if (id.startsWith('match-training-lobby') || id.startsWith('training-lobby')) return true;
   // The join events the Godot client sends carry the lobby name as `sponsor_id`.
-  return TRAINING_LOBBY_NAMES.has(sponsor) && id.startsWith('match-');
+  return PRACTICE_ROOM_NAMES.has(sponsor) && id.startsWith('match-');
 }
 
 export function parseDateInput(input, defaultValue, isEnd = false) {
@@ -404,11 +414,11 @@ export function computeAnalyticsReport({
     ? sessionDurations.reduce((sum, value) => sum + value, 0) / sessionDurations.length
     : 0;
 
-  // ---- Participation (joins, training lobby excluded) ---------------------
+  // ---- Participation (joins, practice rooms excluded) ---------------------
   const joinPairs = new Map(); // matchId -> Set(identity)
   for (const event of list) {
     if (event.event_type !== 'match_joined') continue;
-    if (isTrainingLobby(event.match_id, event.sponsor_id)) continue;
+    if (isPracticeRoom(event.match_id, event.sponsor_id)) continue;
     const t = timeOf(event.timestamp);
     if (!inRangeTime(t)) continue;
     const person = directory.keyOf(event);
@@ -529,7 +539,7 @@ export function computeAnalyticsReport({
   const joinsByDay = new Map();
   for (const event of list) {
     if (event.event_type !== 'match_joined') continue;
-    if (isTrainingLobby(event.match_id, event.sponsor_id)) continue;
+    if (isPracticeRoom(event.match_id, event.sponsor_id)) continue;
     const day = dayOf(event.timestamp);
     if (!inRangeDay(day)) continue;
     const person = directory.keyOf(event);
