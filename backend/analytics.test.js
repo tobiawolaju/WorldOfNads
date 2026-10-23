@@ -274,4 +274,10 @@ test('the range defaults to the last 30 days and survives a start after the end'
   const { summary } = report({ start: undefined, end: undefined });
   assert.equal(summary.range.endDay, '2026-10-20');
   assert.equal(summary.range.startDay, '2026-09-20');
+
+  const withHistory = report({
+    events: [event({ timestamp: '2026-10-03T09:00:00.000Z' })],
+    matches: { a: match({ createdAt: '2026-06-01T10:00:00.000Z' }) }
+  });
+  assert.equal(withHistory.summary.range.dataStartDay, '2026-06-01', 'the "all time" button needs the first day there is data');
 });
