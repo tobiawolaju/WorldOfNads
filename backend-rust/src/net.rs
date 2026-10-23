@@ -1220,19 +1220,11 @@ pub async fn run_room_tick(state: Arc<AppState>, handle: Arc<RoomHandle>) {
             broadcast_events(&handle, output.events).await;
         }
         if let Some(result) = output.settlement {
-            let room_name = handle.name.clone();
-            // Never await the report inside the tick: the control plane can be slow
-            // or down, and the round must keep its cadence either way. The task
-            // retries on its own and logs the failure to `/debug/logs`.
-            tokio::spawn(async move {
-                if let Err(err) = settlement::report_round_result(&room_name, result).await {
-                    tracing::warn!(
-                        room = %room_name,
-                        "round result was not reported: {}",
-                        err.message
-                    );
-                }
-            });
+            // Never await the report inside the tick: the result goes into the
+            // outbox, which retries until the control plane accepts it (see
+            // settlement.rs). A sleeping or redeploying control plane therefore
+            // costs delay, not the round.
+            settlement::queue_round_result(handle.name.clone(), result);
         }
         if output.close_all {
             tracing::info!("room {}: round finished: closing all clients", handle.name);

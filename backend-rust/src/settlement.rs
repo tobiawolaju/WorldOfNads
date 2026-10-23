@@ -7,27 +7,37 @@
 //! the prize on-chain.
 //!
 //! The report is deliberately *not* awaited by the tick: a round end must never
-//! stall the simulation, so the post runs in its own task and retries a couple of
-//! times before giving up. Nothing is lost when it fails - the result stays in the
-//! room's event history and the control plane can be re-fed by hand.
+//! stall the simulation, so the result is handed to an in-process outbox that
+//! retries it until the control plane accepts it. A result is only ever dropped
+//! when the control plane rejects it permanently (a 4xx: a malformed payload or a
+//! wrong `INTERNAL_SECRET`), and then the full payload is written to
+//! `/debug/logs` so the round can still be re-posted by hand.
+//!
+//! The backlog is in memory only, so a redeploy or a crash of this process still
+//! loses whatever is queued. What it does buy is the far more common failure: the
+//! control plane sleeping, restarting or redeploying for a few minutes while this
+//! process keeps running.
 
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::OnceLock;
 use std::time::Duration;
 
 use serde::Serialize;
+use tokio::sync::mpsc;
 
 use crate::config::{control_plane_url, internal_secret};
 use crate::logs;
 
-/// How many times a report is attempted before it is given up on.
-///
-/// The control plane answers 503 when it cannot read the escrow: that keeps the
-/// result in its ledger but leaves the chain leg for a retry, so the window has
-/// to be wide enough to ride out a short RPC wobble (~14 s in total).
-const REPORT_ATTEMPTS: usize = 4;
 /// Timeout of a single report request.
 const REPORT_TIMEOUT_S: u64 = 10;
-/// Base pause between two attempts (grows with the attempt number).
-const REPORT_BACKOFF_S: u64 = 2;
+/// Pause before the first retry of a report the control plane could not take.
+/// Doubles per round up to [`OUTBOX_MAX_DELAY_S`].
+const OUTBOX_FIRST_DELAY_S: u64 = 10;
+/// Upper bound on the wait between two rounds of retries.
+const OUTBOX_MAX_DELAY_S: u64 = 120;
+/// How many unreported rounds are held. An unbounded queue would be a memory
+/// leak during a long outage; this is far more rounds than a free instance sees.
+const OUTBOX_CAPACITY: usize = 64;
 
 /// A player as it appears in the round result.
 #[derive(Clone, Debug, Serialize)]
@@ -138,77 +148,171 @@ impl ReportError {
     }
 }
 
-/// Post the result of a round to the control plane.
-///
-/// Never blocks the caller for long and never panics: a failed report is logged
-/// into the ring buffer so it can be seen at `/debug/logs`.
-pub async fn report_round_result(room: &str, result: RoundResult) -> Result<ReportOutcome, ReportError> {
-    let url = format!("{}/internal/matches/{}/result", control_plane_url(), room);
-    let body = ResultReport {
-        match_id: room.to_string(),
-        room: room.to_string(),
-        result,
-    };
+/// A finished round waiting to be accepted by the control plane.
+struct PendingReport {
+    room: String,
+    result: RoundResult,
+}
 
+/// The outbox sender, created on the first round that needs reporting.
+static OUTBOX: OnceLock<mpsc::UnboundedSender<PendingReport>> = OnceLock::new();
+/// How many reports are queued or in flight, so the backlog stays bounded.
+static OUTBOX_DEPTH: AtomicUsize = AtomicUsize::new(0);
+
+/// Hand a finished round to the outbox.
+///
+/// Returns immediately: the tick loop must keep its cadence whether or not the
+/// control plane is reachable. The worker retries until the report is accepted.
+pub fn queue_round_result(room: String, result: RoundResult) {
+    if OUTBOX_DEPTH.fetch_add(1, Ordering::Relaxed) >= OUTBOX_CAPACITY {
+        OUTBOX_DEPTH.fetch_sub(1, Ordering::Relaxed);
+        logs::push(format!(
+            "room {room}: settlement backlog is full ({OUTBOX_CAPACITY} rounds); this result was NOT queued"
+        ));
+        tracing::error!(room = %room, "settlement backlog full, dropping the round result");
+        return;
+    }
+
+    let sender = OUTBOX.get_or_init(|| {
+        let (tx, rx) = mpsc::unbounded_channel();
+        tokio::spawn(outbox_worker(rx));
+        tx
+    });
+
+    if sender.send(PendingReport { room: room.clone(), result }).is_err() {
+        OUTBOX_DEPTH.fetch_sub(1, Ordering::Relaxed);
+        logs::push(format!(
+            "room {room}: the settlement worker is gone; this result was NOT queued"
+        ));
+    }
+}
+
+/// Drain the outbox one round at a time, oldest first.
+///
+/// Serial is deliberate: a backlog only exists while the control plane is
+/// unreachable, and then every job is aimed at the same failing endpoint.
+async fn outbox_worker(mut rx: mpsc::UnboundedReceiver<PendingReport>) {
     let client = match reqwest::Client::builder()
         .timeout(Duration::from_secs(REPORT_TIMEOUT_S))
         .build()
     {
         Ok(client) => client,
         Err(err) => {
-            return Err(ReportError::permanent(format!(
-                "could not build the http client: {err}"
-            )))
+            // No http client at all: keep the results in the queue so nothing is
+            // lost, and say so. This cannot really happen, but it must not panic.
+            tracing::error!("could not build the settlement http client: {err}");
+            logs::push(format!(
+                "settlement: could not build the http client ({err}); results stay queued"
+            ));
+            while let Some(job) = rx.recv().await {
+                OUTBOX_DEPTH.fetch_sub(1, Ordering::Relaxed);
+                tracing::error!(room = %job.room, "dropping round result: no http client");
+            }
+            return;
         }
     };
     let secret = internal_secret();
 
-    let mut last: Option<ReportError> = None;
-    for attempt in 1..=REPORT_ATTEMPTS {
-        match post_once(&client, &url, &secret, &body).await {
-            Ok(outcome) => {
-                match outcome {
-                    ReportOutcome::Settled => {
-                        logs::push(format!(
-                            "room {room}: round result reported to the control plane"
-                        ));
-                    }
-                    ReportOutcome::NothingToSettle => {
-                        logs::push(format!(
-                            "room {room}: no match record for this room, nothing to settle"
-                        ));
-                    }
-                }
-                return Ok(outcome);
-            }
+    while let Some(job) = rx.recv().await {
+        let body = ResultReport {
+            match_id: job.room.clone(),
+            room: job.room.clone(),
+            result: job.result,
+        };
+        let url = format!("{}/internal/matches/{}/result", control_plane_url(), body.room);
+
+        let outcome = deliver(
+            &body,
+            &client,
+            &url,
+            &secret,
+            Duration::from_secs(OUTBOX_FIRST_DELAY_S),
+            usize::MAX,
+        )
+        .await;
+
+        match outcome {
+            Ok(ReportOutcome::Settled) => logs::push(format!(
+                "room {}: round result reported to the control plane",
+                job.room
+            )),
+            Ok(ReportOutcome::NothingToSettle) => logs::push(format!(
+                "room {}: no match record for this room, nothing to settle",
+                job.room
+            )),
             Err(err) => {
+                // Permanent: a malformed payload or a wrong shared secret. Keep the
+                // whole report so it can be re-posted by hand once the cause is fixed.
+                let payload = serde_json::to_string(&body)
+                    .unwrap_or_else(|_| "<the payload could not be serialised>".to_string());
                 logs::push(format!(
-                    "room {room}: result report attempt {attempt}/{REPORT_ATTEMPTS} failed: {}",
-                    err.message
+                    "room {}: round result NOT settled ({}). Re-post with: \
+                     curl -X POST {url} -H 'content-type: application/json' \
+                     -H 'x-internal-secret: <INTERNAL_SECRET>' -d '{payload}'",
+                    job.room, err.message
                 ));
+                tracing::error!(
+                    room = %job.room,
+                    "round result rejected permanently: {}",
+                    err.message
+                );
+            }
+        }
+        OUTBOX_DEPTH.fetch_sub(1, Ordering::Relaxed);
+    }
+}
+
+/// Post one report until it is accepted, backing off between rounds.
+///
+/// `max_rounds` exists for tests; the worker passes [`usize::MAX`].
+pub(crate) async fn deliver(
+    body: &ResultReport,
+    client: &reqwest::Client,
+    url: &str,
+    secret: &str,
+    first_delay: Duration,
+    max_rounds: usize,
+) -> Result<ReportOutcome, ReportError> {
+    let mut round = 0usize;
+    loop {
+        round += 1;
+        match post_once(client, url, secret, body).await {
+            Ok(outcome) => return Ok(outcome),
+            Err(err) => {
+                // 4xx (other than 404, handled as NothingToSettle) means the request
+                // itself is wrong; repeating it would only repeat the mistake.
+                if !err.retryable || round >= max_rounds {
+                    return Err(err);
+                }
+                if round == 1 || round % 10 == 0 {
+                    logs::push(format!(
+                        "room {}: report still failing after {round} attempt(s): {}",
+                        body.room, err.message
+                    ));
+                }
                 tracing::warn!(
-                    room = %room,
-                    attempt,
+                    room = %body.room,
+                    round,
                     "round result report failed: {}",
                     err.message
                 );
-                if !err.retryable {
-                    return Err(err);
-                }
-                last = Some(err);
-                if attempt < REPORT_ATTEMPTS {
-                    tokio::time::sleep(Duration::from_secs(REPORT_BACKOFF_S * attempt as u64)).await;
-                }
+                tokio::time::sleep(next_delay(first_delay, round)).await;
             }
         }
     }
+}
 
-    Err(last.unwrap_or_else(|| ReportError::permanent("the result report failed")))
+/// Exponential backoff: `first`, `2x`, `4x`, ... capped at [`OUTBOX_MAX_DELAY_S`].
+fn next_delay(first: Duration, round: usize) -> Duration {
+    let doublings = round.saturating_sub(1).min(8) as u32;
+    first
+        .saturating_mul(1u32 << doublings)
+        .min(Duration::from_secs(OUTBOX_MAX_DELAY_S))
 }
 
 /// Post the result once.
 ///
-/// Split out of [`report_round_result`] so a test can point it at a local server
+/// Split out of the retry loop so a test can point it at a local server
 /// instead of the live control plane.
 pub async fn post_once(
     client: &reqwest::Client,
@@ -321,6 +425,45 @@ mod tests {
             axum::serve(listener, app).await.unwrap();
         });
         (format!("http://{addr}"), state)
+    }
+
+    /// A control plane that refuses the first `failures` requests with `failure`
+    /// and then accepts, counting how many requests it saw.
+    #[derive(Clone)]
+    struct CountingState {
+        seen: Arc<AtomicUsize>,
+        failures: usize,
+        failure: axum::http::StatusCode,
+    }
+
+    async fn counting(State(state): State<CountingState>) -> axum::http::StatusCode {
+        let n = state.seen.fetch_add(1, Ordering::SeqCst) + 1;
+        if n <= state.failures {
+            state.failure
+        } else {
+            axum::http::StatusCode::OK
+        }
+    }
+
+    async fn spawn_counting_server(
+        failures: usize,
+        failure: axum::http::StatusCode,
+    ) -> (String, Arc<AtomicUsize>) {
+        let seen = Arc::new(AtomicUsize::new(0));
+        let state = CountingState {
+            seen: seen.clone(),
+            failures,
+            failure,
+        };
+        let app = Router::new()
+            .route("/internal/matches/:match_id/result", post(counting))
+            .with_state(state);
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
+        });
+        (format!("http://{addr}"), seen)
     }
 
     fn sample_report() -> ResultReport {
@@ -439,5 +582,67 @@ mod tests {
         .unwrap_err();
 
         assert!(!err.retryable, "a rejected request must not be retried");
+    }
+
+    #[tokio::test]
+    async fn a_report_the_control_plane_cannot_take_yet_is_retried_until_it_can() {
+        let (base, seen) =
+            spawn_counting_server(2, axum::http::StatusCode::SERVICE_UNAVAILABLE).await;
+        let client = reqwest::Client::new();
+        let body = sample_report();
+
+        let outcome = deliver(
+            &body,
+            &client,
+            &format!("{base}/internal/matches/match-42/result"),
+            "s3cret",
+            Duration::from_millis(5),
+            5,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(outcome, ReportOutcome::Settled);
+        assert_eq!(
+            seen.load(Ordering::SeqCst),
+            3,
+            "two refusals, then the accepted post"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_permanently_rejected_report_is_not_retried() {
+        let (base, seen) =
+            spawn_counting_server(usize::MAX, axum::http::StatusCode::FORBIDDEN).await;
+        let client = reqwest::Client::new();
+
+        let err = deliver(
+            &sample_report(),
+            &client,
+            &format!("{base}/internal/matches/match-42/result"),
+            "wrong",
+            Duration::from_millis(5),
+            6,
+        )
+        .await
+        .unwrap_err();
+
+        assert!(!err.retryable, "a 403 is a configuration error, not a wobble");
+        assert_eq!(seen.load(Ordering::SeqCst), 1, "a permanent rejection is final");
+    }
+
+    #[test]
+    fn the_outbox_backoff_grows_and_caps() {
+        let first = Duration::from_secs(10);
+        assert_eq!(next_delay(first, 1), Duration::from_secs(10));
+        assert_eq!(next_delay(first, 2), Duration::from_secs(20));
+        assert_eq!(next_delay(first, 3), Duration::from_secs(40));
+        assert_eq!(next_delay(first, 4), Duration::from_secs(80));
+        assert_eq!(
+            next_delay(first, 5),
+            Duration::from_secs(120),
+            "the wait is capped at two minutes"
+        );
+        assert_eq!(next_delay(first, 99), Duration::from_secs(120));
     }
 }
