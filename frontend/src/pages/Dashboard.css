@@ -209,7 +209,7 @@
    stay legible on both the white and the #6553c7 page background. */
 .stat-rail {
   --pill-fg: var(--foreground);
-  --pill-level: #5b4fff;
+  --pill-level: #eab308;
   --pill-energy: #ca8a04;
   --pill-mon: #a21caf;
 
@@ -230,7 +230,7 @@
 @media (prefers-color-scheme: dark) {
   .stat-rail {
     --pill-fg: #ffffff;
-    --pill-level: #cdadff;
+    --pill-level: #ffd700;
     --pill-energy: #fde047;
     --pill-mon: #e879f9;
   }
@@ -305,13 +305,19 @@
   height: 18px;
 }
 
+/* The level number is the one value players read at a glance, so it sits in
+   yellow, runs at the pill's own skew instead of being straightened, and is a
+   step larger than the energy/MON values. */
 .stat-pill--level .stat-pill__label {
-  font-size: 9px;
+  font-size: 10px;
+  transform: none;
 }
 
 .stat-pill--level .stat-pill__value {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 900;
+  color: var(--pill-level);
+  transform: none;
 }
 
 .stat-pips {
@@ -366,11 +372,11 @@
   }
 
   .stat-pill--level .stat-pill__label {
-    font-size: 5.85px;
+    font-size: 6.5px;
   }
 
   .stat-pill--level .stat-pill__value {
-    font-size: 9.1px;
+    font-size: 10.4px;
   }
 }
 
