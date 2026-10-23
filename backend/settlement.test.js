@@ -492,3 +492,50 @@ test('a zero-share sibling does not turn a single winner into a split', async ()
     assert.equal(state.chainCalls[0].winnerName, 'alice');
     assert.equal(state.rewards.has(rewardIdFor(MATCH.matchId, 'bob')), false);
 });
+
+test('two winners on one wallet are merged before the escrow is called', async () => {
+    const { deps, state } = makeDeps({ match: MATCH, onchain: ONCHAIN });
+    const shared = '0x1111111111111111111111111111111111111111';
+    deps.getPlayerWallet = async (name) =>
+        name === 'alice' || name === 'bob' ? shared : addressOf(name);
+
+    const result = await settleRound({ matchId: MATCH.matchId, report: SPLIT_REPORT, deps });
+
+    assert.equal(result.status, STATUS.SETTLED_ONCHAIN);
+    assert.equal(state.splitChainCalls.length, 1);
+    const call = state.splitChainCalls[0];
+    // The escrow rejects duplicate winners, so the two shares are folded into one.
+    assert.deepEqual(call.winners, [shared]);
+    assert.deepEqual(call.sharesBps, [10000]);
+    assert.equal(call.participants.length, 1, 'the shared wallet is listed once');
+    // Both players still get their own ledger row (two prizes + the lootbox).
+    assert.equal(state.rewards.size, 3);
+});
+
+test('the participant list keeps every wallet once, whatever the case', async () => {
+    const { deps, state } = makeDeps({ match: MATCH, onchain: ONCHAIN });
+    deps.getPlayerWallet = async (name) =>
+        name === 'alice'
+            ? '0xAbCd000000000000000000000000000000001234'
+            : '0xabcd000000000000000000000000000000001234';
+
+    await settleRound({ matchId: MATCH.matchId, report: SINGLE_REPORT, deps });
+
+    assert.equal(state.chainCalls.length, 1);
+    assert.equal(state.chainCalls[0].participants.length, 1);
+});
+
+test('the lootbox pool is credited to the winner when the holder has no wallet', async () => {
+    const { deps, state } = makeDeps({ match: MATCH, onchain: ONCHAIN });
+    // bob holds the box but cannot receive it; the escrow pays the pool to alice.
+    deps.getPlayerWallet = async (name) => (name === 'bob' ? null : addressOf(name));
+
+    const result = await settleRound({ matchId: MATCH.matchId, report: SINGLE_REPORT, deps });
+
+    assert.equal(result.status, STATUS.SETTLED_ONCHAIN);
+    assert.equal(state.chainCalls[0].lootHolderWallet, addressOf('alice'));
+    assert.equal(state.rewards.has(rewardIdFor(MATCH.matchId, 'bob', 'lootbox')), false);
+    assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice', 'lootbox')).amountMon, 1.8);
+    // And the winner's totals match what the chain paid.
+    assert.deepEqual(state.users.get('alice'), { won: 1, wonMon: 9, xp: 400 });
+});
