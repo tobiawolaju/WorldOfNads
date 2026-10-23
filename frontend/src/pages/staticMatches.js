@@ -1,13 +1,14 @@
 import { DEFAULT_LOBBY_BG } from "../data/lobbyBackgrounds";
 
-// The dashboard's only placeholder card: the shared training lobby.
+// The dashboard's always-open cards: the shared training lobby and Chog World
+// Order. Neither is an allocated match, so neither has a Firebase `matches/<id>`
+// record, an entry fee or a prize pool.
 //
-// It is deliberately NOT a match id. The room server only accepts rooms a host
-// allocated (it mirrors Firebase `matches`), so anything else — including every
-// demo id that used to live here (match-training-lobby, match-sunset-showdown,
-// match-weekend-clash, match-champions-cup, match-alpha-sprint) — is refused with
-// `1008 unknown_match`. Training instead passes `default`, the shared room, which
-// the server always allows and which never needs a match record.
+// `default` is the shared room the room server has always allowed and which
+// never needs a match record. Chog World Order is the second permanent room
+// (`backend-rust/src/net.rs`: `CHOG_ROOM`), accepted without a record for the
+// same reason. Every other id must be an allocated match: the room server reads
+// the control plane's registry and refuses anything it does not find.
 //
 // Everything else on the dashboard is a real allocated match, loaded from Firebase
 // in Dashboard.tsx and merged in over this list.
@@ -26,6 +27,25 @@ export const staticMatches = [
     image: "https://pbs.twimg.com/profile_images/1861739634428174336/26FzLLyr.jpg",
     lobbyBg: DEFAULT_LOBBY_BG,
     description: "Training Lobby is open for warmup runs and should always be playable.",
+    url: "",
+    ctaMode: "play"
+  },
+  {
+    id: 2,
+    matchId: "match-chog-world-order",
+    sponsor: "Chog World Order",
+    prize: "Free play",
+    prizeAmount: 0,
+    prizeToken: "WONs",
+    status: "live",
+    time: "Open",
+    date: new Date().toISOString().slice(0, 10),
+    // One second after the training card so the carousel still opens on Training
+    // when both permanent rooms are live.
+    startTime: Math.floor(Date.now() / 1000) + 1,
+    image: "/lobbybg/chogcard.jpg",
+    lobbyBg: "/lobbybg/chogbg.jpg",
+    description: "Chog World Order is always open. No entry fee, no prize pool — drop in and hold the point.",
     url: "",
     ctaMode: "play"
   }

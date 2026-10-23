@@ -469,7 +469,7 @@ export default function AdminAnalytics() {
           <MetricCard
             title="Average Players Per Match"
             value={formatNumber(summary.gameMetrics.averagePlayersPerMatch, 1)}
-            hint={`from join events, training lobby excluded${summary.gameMetrics.playersTracked ? ` · ${summary.gameMetrics.playersTracked} players tracked` : ""}`}
+            hint={`from join events, practice rooms excluded${summary.gameMetrics.playersTracked ? ` · ${summary.gameMetrics.playersTracked} players tracked` : ""}`}
           />
           <MetricCard title="Match Completion Rate" value={formatPercent(summary.gameMetrics.matchCompletionRate)} hint="played ÷ started in the range" />
           <MetricCard title="Matches Per User" value={formatNumber(summary.gameMetrics.matchesPerUser, 2)} hint="matches joined by the players who joined them" />

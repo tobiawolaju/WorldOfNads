@@ -354,9 +354,18 @@ impl RoomHandle {
 /// number of live rooms is capped to keep an abusive client from allocating unbounded
 /// simulation state.
 pub const DEFAULT_ROOM: &str = "default";
+/// The second permanent room: "Chog World Order". Like `default` it exists without a
+/// match record, entry fee or prize pool, so the control plane never allocates it.
+pub const CHOG_ROOM: &str = "match-chog-world-order";
 const MAX_ROOMS: usize = 64;
-/// An empty non-default room is dropped after this long so churn does not leak rooms.
+/// An empty non-permanent room is dropped after this long so churn does not leak rooms.
 const ROOM_IDLE_TTL_MS: i64 = 120_000;
+
+/// Rooms that are always open. They are the only ids that skip the allocated-match
+/// registry, and the only rooms the idle reaper keeps alive when empty.
+pub fn is_permanent_room(name: &str) -> bool {
+    name == DEFAULT_ROOM || name == CHOG_ROOM
+}
 
 pub struct AppState {
     pub rooms: Mutex<HashMap<String, Arc<RoomHandle>>>,
@@ -401,16 +410,17 @@ fn sanitize_room_id(raw: &str) -> String {
 
 /// Resolve a requested room id to the room the client will actually join.
 ///
-/// `default` always resolves to itself. Any other id is only honoured when it is an
-/// allocated match (present in the registry). An id the registry can judge and finds
-/// unallocated is refused; an id the registry cannot judge at all (no data yet — a cold
-/// start, or a control-plane outage) falls back to `default` unless `STRICT_ROOMS` is
-/// set. This is what stops an arbitrary `?room=<anything>` from spawning its own arena.
+/// Permanent rooms (`default`, `match-chog-world-order`) always resolve to themselves.
+/// Any other id is only honoured when it is an allocated match (present in the
+/// registry). An id the registry can judge and finds unallocated is refused; an id the
+/// registry cannot judge at all (no data yet — a cold start, or a control-plane outage)
+/// falls back to `default` unless `STRICT_ROOMS` is set. This is what stops an
+/// arbitrary `?room=<anything>` from spawning its own arena.
 ///
 /// Returns `None` when the connection must be refused.
 async fn resolve_room(state: &Arc<AppState>, requested: &str) -> Option<(String, Option<MatchConfig>)> {
-    if requested == DEFAULT_ROOM {
-        return Some((DEFAULT_ROOM.to_string(), None));
+    if is_permanent_room(requested) {
+        return Some((requested.to_string(), None));
     }
     match state.registry.lookup(requested).await {
         MatchLookup::Allocated(config) => Some((requested.to_string(), Some(config))),
@@ -750,9 +760,10 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
             .map(|s| s.as_str())
             .unwrap_or(""),
     );
-    // Only an allocated match (or `default`) may open a room. `resolve_room` returns
-    // `None` for an unknown match id when `STRICT_ROOMS` is set; otherwise it routes
-    // the client to `default`, so an arbitrary `?room=` never spawns its own arena.
+    // Only a permanent room or an allocated match may open a room. `resolve_room`
+    // returns `None` for an unknown match id when `STRICT_ROOMS` is set; otherwise it
+    // routes the client to `default`, so an arbitrary `?room=` never spawns its own
+    // arena.
     let (room_id, room_config) = match resolve_room(&state, &requested_room).await {
         Some(resolved) => resolved,
         None => {
@@ -1232,10 +1243,11 @@ pub async fn run_room_tick(state: Arc<AppState>, handle: Arc<RoomHandle>) {
             close_all(&handle).await;
         }
 
-        // Retire empty non-default rooms so client churn cannot leak simulation state.
-        // `players` still holds orphans until their grace expires, which the tick above
-        // reaps, so `is_empty()` only becomes true once a room is genuinely idle.
-        if handle.name != DEFAULT_ROOM {
+        // Retire empty non-permanent rooms so client churn cannot leak simulation
+        // state. `players` still holds orphans until their grace expires, which the
+        // tick above reaps, so `is_empty()` only becomes true once a room is
+        // genuinely idle.
+        if !is_permanent_room(&handle.name) {
             let empty = {
                 let room = handle.room.lock().await;
                 room.players.is_empty()
@@ -1268,6 +1280,14 @@ mod tests {
     use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
     type TestSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
+
+    #[test]
+    fn permanent_rooms_need_no_match_record() {
+        assert!(is_permanent_room(DEFAULT_ROOM));
+        assert!(is_permanent_room(CHOG_ROOM));
+        assert_eq!(sanitize_room_id(CHOG_ROOM), CHOG_ROOM);
+        assert!(!is_permanent_room("match-unknown-room"));
+    }
 
     /// Read frames until the server closes the socket; return the close frame.
     async fn wait_for_close(socket: &mut TestSocket, timeout: Duration) -> Option<(u16, String)> {

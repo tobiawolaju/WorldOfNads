@@ -122,6 +122,26 @@ test('training-lobby joins are not matches played with other people', () => {
   assert.equal(summary.gameMetrics.matchesPerUser, 0.5, 'one match between two players');
 });
 
+test('chog world order joins are practice, not matches played', () => {
+  const users = {
+    alice: { username: 'alice', privyId: 'did:privy:a' },
+    bob: { username: 'bob', privyId: 'did:privy:b' }
+  };
+  const joins = [
+    event({ event_type: 'match_joined', match_id: 'match-a', sponsor_id: 'Alice' }),
+    event({ event_type: 'match_joined', match_id: 'match-a', sponsor_id: 'Alice', user_id: 'did:privy:b', metadata: { username: 'bob' } }),
+    ...Array.from({ length: 12 }, () =>
+      event({ event_type: 'match_joined', match_id: 'match-chog-world-order', sponsor_id: 'Chog World Order' })
+    )
+  ];
+
+  const { summary } = report({ users, matches: { a: match() }, events: joins });
+
+  assert.equal(summary.gameMetrics.averagePlayersPerMatch, 2, 'only the real match has players');
+  assert.equal(summary.gameMetrics.playersTracked, 2);
+  assert.equal(summary.gameMetrics.matchesPerUser, 0.5, 'one real match between two players');
+});
+
 test('a match is live because the clock says so, not because a stale record says live', () => {
   const nowSeconds = NOW / 1000;
   const { summary } = report({
