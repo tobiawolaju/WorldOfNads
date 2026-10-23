@@ -19,7 +19,11 @@ use crate::config::{control_plane_url, internal_secret};
 use crate::logs;
 
 /// How many times a report is attempted before it is given up on.
-const REPORT_ATTEMPTS: usize = 3;
+///
+/// The control plane answers 503 when it cannot read the escrow: that keeps the
+/// result in its ledger but leaves the chain leg for a retry, so the window has
+/// to be wide enough to ride out a short RPC wobble (~14 s in total).
+const REPORT_ATTEMPTS: usize = 4;
 /// Timeout of a single report request.
 const REPORT_TIMEOUT_S: u64 = 10;
 /// Base pause between two attempts (grows with the attempt number).
