@@ -42,6 +42,9 @@ pub struct MatchConfig {
     pub min_players_to_start: usize,
     /// `None` means unlimited, matching Node's `currentMaxPlayers === null`.
     pub max_players: Option<usize>,
+    /// The match's lootbox pool in MON, as the escrow will pay it. 0 when the
+    /// record carries no prize.
+    pub loot_box_pool_mon: f64,
 }
 
 /// Outcome of resolving a match id against the mirror.
@@ -84,6 +87,8 @@ struct RawMatchConfig {
     min_players_to_start: Option<i64>,
     #[serde(rename = "maxPlayers", default)]
     max_players: Option<i64>,
+    #[serde(rename = "lootBoxPoolMon", default)]
+    loot_box_pool_mon: Option<f64>,
 }
 
 impl MatchRegistry {
@@ -257,11 +262,18 @@ impl MatchRegistry {
                     max = Some(min);
                 }
             }
+            // A missing, negative or non-finite pool means "no prize to stream",
+            // never a made-up one.
+            let pool = raw
+                .loot_box_pool_mon
+                .filter(|v| v.is_finite() && *v > 0.0)
+                .unwrap_or(0.0);
             out.insert(
                 id,
                 MatchConfig {
                     min_players_to_start: min,
                     max_players: max,
+                    loot_box_pool_mon: pool,
                 },
             );
         }
