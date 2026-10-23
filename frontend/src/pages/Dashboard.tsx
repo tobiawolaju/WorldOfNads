@@ -97,7 +97,7 @@ type RewardItem = {
   amountMon: number;
   source: string;
   category: "earned" | "gifted" | "lootbox";
-  kind?: "prize" | "lootbox";
+  kind?: "prize" | "lootbox" | "stream";
   date?: string;
   createdAt?: string;
   matchId?: string;
@@ -1080,14 +1080,20 @@ export default function Dashboard() {
                         onClick={() => setSelectedReward(reward.id)}
                       >
                         <div className="reward-item-icon">
-                          {reward.kind === "lootbox" || reward.category === "lootbox" ? "📦" : "🏆"}
+                          {reward.kind === "lootbox" || reward.category === "lootbox"
+                            ? "📦"
+                            : reward.kind === "stream"
+                              ? "⏱️"
+                              : "🏆"}
                         </div>
                         <div className="reward-item-text">
                           <div className="reward-item-header">
                             <strong>
                               {reward.kind === "lootbox" || reward.category === "lootbox"
                                 ? "Lootbox pool"
-                                : "Match prize"}
+                                : reward.kind === "stream"
+                                  ? "Lootbox stream"
+                                  : "Match prize"}
                             </strong>
                             <span className={`item-badge badge-${reward.category}`}>{reward.category}</span>
                             {reward.pending && <span className="item-badge badge-pending">pending</span>}

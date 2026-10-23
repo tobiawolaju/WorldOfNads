@@ -14,15 +14,16 @@ use crate::settlement::{PlayerRef, PlayerResult, RoundResult, Share, Split, Winn
 
 /// MON per second the lootbox stream shows for a given pool.
 ///
-/// The stream is an estimate, not the payout: the escrow pays the whole pool to
-/// whoever holds the box when the round ends. Spreading the pool across the
-/// round keeps the HUD number comparable to the prize ("hold it the whole round
-/// and you would see the pool"), and a room with no pool streams nothing at all.
+/// The stream is real money, not a pace indicator: the holder earns this and the
+/// control plane commits it on-chain (`batchStream`) before the match settles.
+/// `MON_STREAM_POOL_SHARE` of the pool streams out over a full round; the rest
+/// stays in the box for whoever holds it at the bell, so a single camper cannot
+/// drain the whole pot and the settle payout still means something.
 pub fn mon_stream_per_sec(pool_mon: f64) -> f64 {
     if !pool_mon.is_finite() || pool_mon <= 0.0 {
         return 0.0;
     }
-    pool_mon / MATCH_DURATION_SECONDS
+    pool_mon * MON_STREAM_POOL_SHARE / MATCH_DURATION_SECONDS
 }
 
 #[derive(Clone)]
@@ -152,6 +153,10 @@ pub struct Room {
     /// pool: it streams nothing and the HUD says so, instead of advertising a
     /// prize that will never be paid.
     pub loot_box_pool_mon: f64,
+    /// How many times the lootbox has changed hands this round. Every steal
+    /// burns `LOOTBOX_STEAL_COST_MON` out of the pool (Whitepaper 5.4) and is
+    /// replayed on-chain by the control plane at settlement.
+    pub lootbox_steals: u32,
     pub match_start_countdown: f64,
     pub storm_radius: f64,
     pub storm_shrink_timer: f64,
@@ -197,6 +202,7 @@ impl Room {
             // Unset or `unlimited` means no cap, which is Node's default.
             max_players: max_players(),
             loot_box_pool_mon: 0.0,
+            lootbox_steals: 0,
             match_start_countdown: -1.0,
             storm_radius: STORM_START_RADIUS,
             storm_shrink_timer: 0.0,
@@ -609,8 +615,7 @@ impl Room {
         };
 
         // Handle chicken holder transfer - update previous holder.
-        if item_id == "Chicken" {
-            if let Some(prev_holder_id) = prev_holder_id {
+        if item_id == "Chicken" {            if let Some(prev_holder_id) = prev_holder_id {
                 // Credit the previous holder for the time they actually held it.
                 self.credit_possession(&prev_holder_id, now);
                 if let Some(prev) = self.players.get_mut(&prev_holder_id) {
@@ -622,6 +627,13 @@ impl Room {
                 new_holder.is_current_holder = true;
                 new_holder.possession_since_ms = Some(now);
             }
+        }
+
+        // A lootbox taken from another player is a steal: the stream follows the
+        // new holder and the box loses `LOOTBOX_STEAL_COST_MON` (Whitepaper 5.4).
+        // Picking the box off the ground after a drop is not a steal.
+        if item_id == "LootBox" && prev_holder_id.is_some() {
+            self.lootbox_steals = self.lootbox_steals.saturating_add(1);
         }
 
         // Now update the item state.
@@ -792,6 +804,8 @@ impl Room {
                     self.match_running = true;
                     self.match_started_this_round = true;
                     self.randomize_all_item_spawns();
+                    // A fresh round starts with an untouched box: no steals yet.
+                    self.lootbox_steals = 0;
                     // The chicken is re-spawned at match start, so nobody holds it.
                     // Clear the holder flags: a player who grabbed the chicken
                     // during the countdown would otherwise keep accruing
@@ -877,19 +891,30 @@ impl Room {
                     }
                 }
                 if lootbox_held && lootbox_holder.as_deref() == Some(pid.as_str()) {
-                    // The stream is a live estimate of the match's real lootbox
-                    // pool, spread over the round: holding it for the full 300 s
-                    // adds up to exactly the pool the escrow pays. Capped so a
-                    // paused clock can never show more than the box is worth.
+                    // The holder earns real MON out of the box: the control plane
+                    // commits these amounts on-chain at settlement. Streaming is
+                    // capped at the box value and the steals burned so far, so the
+                    // HUD never promises money the contract no longer holds.
                     if mon_rate > 0.0 {
+                        let live_value = (mon_pool
+                            - self.lootbox_steals as f64 * LOOTBOX_STEAL_COST_MON)
+                            .max(0.0);
                         player.reward.accumulated_mon =
-                            (player.reward.accumulated_mon + mon_rate).min(mon_pool);
+                            (player.reward.accumulated_mon + mon_rate).min(live_value);
                     }
                 }
             }
         }
 
-        let pool = round6(mon_pool);
+        // What the HUD shows is the box's live value, not the starting pool: the
+        // stream pays holders out of it and every steal burns gas out of it.
+        let streamed: f64 = self
+            .players
+            .values()
+            .map(|player| player.reward.accumulated_mon)
+            .sum();
+        let burned = self.lootbox_steals as f64 * LOOTBOX_STEAL_COST_MON;
+        let pool = round6((mon_pool - streamed - burned).max(0.0));
         let ids: Vec<String> = self.players.keys().cloned().collect();
         for pid in ids {
             let reward = &self.players[&pid].reward;
@@ -1053,6 +1078,7 @@ impl Room {
             },
             players: self.settlement_players(),
             lootbox_holder: self.lootbox_holder(),
+            lootbox_steals: self.lootbox_steals,
         }
     }
 
@@ -1285,6 +1311,7 @@ impl Room {
         self.reset_chicken_state();
         self.reset_lootbox_state();
         self.randomize_all_item_spawns();
+        self.lootbox_steals = 0;
 
         self.match_running = false;
         self.match_time_left = MATCH_DURATION_SECONDS;
@@ -1845,22 +1872,64 @@ mod tests {
         room.pickup_request("p1", "LootBox", now);
         advance(&mut room, 10.0, &mut now);
 
-        // The pool is spread over the round: 1.8 / 300 = 0.006 MON per second.
+        // 60% of a 1.8 MON box streams over the 300 s round: 0.0036 MON/s.
         let earned = room.players.get("p1").unwrap().reward.accumulated_mon;
         assert!(
-            (earned - 0.06).abs() < 0.02,
-            "10 s of holding streamed {earned} MON, expected ~0.06"
+            (earned - 0.036).abs() < 0.01,
+            "10 s of holding streamed {earned} MON, expected ~0.036"
         );
 
-        // Even if the pool is smaller than what was already streamed, the HUD
-        // must never claim more than the escrow will pay.
-        room.loot_box_pool_mon = 0.05;
+        // Even if the box is worth less than what was already streamed, the HUD
+        // must never claim more than the contract will pay.
+        room.loot_box_pool_mon = 0.02;
         advance(&mut room, 30.0, &mut now);
         let capped = room.players.get("p1").unwrap().reward.accumulated_mon;
         assert!(
-            capped <= 0.05 + 1e-9,
-            "the stream exceeded the pool: {capped}"
+            capped <= 0.02 + 1e-9,
+            "the stream exceeded the box value: {capped}"
         );
+    }
+
+    #[test]
+    fn a_steal_burns_gas_from_the_box_and_is_reported_for_settlement() {
+        // Whitepaper 5.4: every ownership change burns GAS_PER_STEAL out of the
+        // box, and the stream follows the new holder.
+        let mut room = live_room();
+        room.loot_box_pool_mon = 1.8;
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p1", "LootBox", now);
+        advance(&mut room, 5.0, &mut now);
+        room.pickup_request("p2", "LootBox", now);
+        advance(&mut room, 5.0, &mut now);
+
+        assert_eq!(room.lootbox_steals, 1, "p2 taking the box was a steal");
+        // What p1 already earned stays earned; p2 starts streaming from the steal.
+        let p1 = room.players.get("p1").unwrap().reward.accumulated_mon;
+        let p2 = room.players.get("p2").unwrap().reward.accumulated_mon;
+        assert!(p1 > 0.0, "the first holder streamed nothing");
+        assert!(p2 > 0.0, "the stream did not follow the new holder");
+
+        room.match_time_left = 0.0;
+        let out = room.tick(now);
+        let result = out.settlement.expect("the buzzer must produce a settlement");
+        assert_eq!(result.lootbox_steals, 1);
+        assert_eq!(
+            result
+                .lootbox_holder
+                .expect("holder must be reported")
+                .player_id,
+            "p2"
+        );
+    }
+
+    #[test]
+    fn picking_a_dropped_box_up_again_is_not_a_steal() {
+        let mut room = live_room();
+        let mut now = 1_000_000_000_000i64;
+        room.pickup_request("p1", "LootBox", now);
+        room.drop_request("p1", "LootBox", now);
+        room.pickup_request("p2", "LootBox", now);
+        assert_eq!(room.lootbox_steals, 0);
     }
 
     #[test]
@@ -1874,7 +1943,7 @@ mod tests {
 
         assert_eq!(room.players.get("p1").unwrap().reward.accumulated_mon, 0.0);
         assert_eq!(mon_stream_per_sec(0.0), 0.0);
-        assert!((mon_stream_per_sec(1.8) - 0.006).abs() < 1e-12);
+        assert!((mon_stream_per_sec(1.8) - 0.0036).abs() < 1e-12);
     }
 
     #[test]
