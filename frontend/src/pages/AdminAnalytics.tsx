@@ -42,6 +42,7 @@ type AnalyticsSummary = {
     startDay: string;
     endDay: string;
     days: number;
+    dataStartDay?: string;
   };
   overview: {
     dailyActiveUsers: number;
@@ -247,15 +248,15 @@ export default function AdminAnalytics() {
   const [startDate, setStartDate] = useState(defaultDates.start);
   const [endDate, setEndDate] = useState(defaultDates.end);
 
-  const loadAnalytics = async () => {
+  const loadAnalytics = async (from = startDate, to = endDate) => {
     setLoading(true);
     setError("");
     try {
       // `ok` used to be ignored, so a 404 (the API URL not configured) or a 500
       // was parsed as JSON, threw somewhere else, and surfaced as "no data".
       const [summaryRes, seriesRes] = await Promise.all([
-        fetch(buildUrl(`/analytics/summary?start=${startDate}&end=${endDate}`), { cache: "no-store" }),
-        fetch(buildUrl(`/analytics/timeseries?start=${startDate}&end=${endDate}`), { cache: "no-store" })
+        fetch(buildUrl(`/analytics/summary?start=${from}&end=${to}`), { cache: "no-store" }),
+        fetch(buildUrl(`/analytics/timeseries?start=${from}&end=${to}`), { cache: "no-store" })
       ]);
 
       if (!summaryRes.ok || !seriesRes.ok) {
@@ -318,7 +319,7 @@ export default function AdminAnalytics() {
         {error ? (
           <div className="analytics-empty">
             <p className="analytics-auth__error">{error}</p>
-            <button onClick={loadAnalytics} disabled={loading}>
+            <button onClick={() => loadAnalytics()} disabled={loading}>
               {loading ? "Retrying..." : "Retry"}
             </button>
           </div>
@@ -365,9 +366,22 @@ export default function AdminAnalytics() {
               End
               <input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
             </label>
-            <button onClick={loadAnalytics} disabled={loading}>
+            <button onClick={() => loadAnalytics()} disabled={loading}>
               {loading ? "Refreshing..." : "Apply"}
             </button>
+            {summary.range?.dataStartDay ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const from = summary.range?.dataStartDay ?? startDate;
+                  setStartDate(from);
+                  loadAnalytics(from, endDate);
+                }}
+                disabled={loading}
+              >
+                All time
+              </button>
+            ) : null}
           </div>
           <div className="export-actions">
             <button onClick={() => handleExport("csv")}>Export CSV</button>

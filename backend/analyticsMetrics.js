@@ -283,6 +283,18 @@ export function computeAnalyticsReport({
   const list = Array.isArray(events) ? events.filter((event) => event && typeof event === 'object') : [];
   const directory = buildDirectory(users);
 
+  // The earliest day there is any data for, so "all time" is a real range
+  // instead of a guess (and does not build a chart with thousands of empty days).
+  let dataStartDay = startDay;
+  for (const event of list) {
+    const day = dayOf(event.timestamp);
+    if (day && day < dataStartDay) dataStartDay = day;
+  }
+  for (const match of Object.values(matches || {})) {
+    const day = dayOf(match?.createdAt);
+    if (day && day < dataStartDay) dataStartDay = day;
+  }
+
   // ---- Activity -----------------------------------------------------------
   // One pass builds: who was seen, when they were first seen, which days each
   // person was active, and which people were active on each day.
@@ -573,7 +585,8 @@ export function computeAnalyticsReport({
       end: endIso,
       startDay,
       endDay,
-      days: days.length
+      days: days.length,
+      dataStartDay
     },
     overview: {
       dailyActiveUsers: dau,
