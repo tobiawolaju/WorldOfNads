@@ -191,7 +191,7 @@ test('the prize can be read from the number or the label', () => {
 
 // -- payout maths ---------------------------------------------------------
 
-test('a single winner takes the whole winner pool and the lootbox holder the pool', () => {
+test('the winner takes the winner pool and the box splits into streams plus a remainder', () => {
     const { payouts, totalMon, winnerPoolMon, lootBoxPoolMon } = buildPayouts({
         match: MATCH,
         report: SINGLE_REPORT,
@@ -200,12 +200,16 @@ test('a single winner takes the whole winner pool and the lootbox holder the poo
 
     assert.equal(winnerPoolMon, 7.2);
     assert.equal(lootBoxPoolMon, 1.8);
-    assert.equal(payouts.length, 2);
+    assert.equal(payouts.length, 4);
     assert.deepEqual(
         payouts.map((p) => [p.kind, p.playerName, p.amountMon]),
         [
             ['prize', 'alice', 7.2],
-            ['lootbox', 'bob', 1.8]
+            // 0.5 + 0.25 streamed out of the box while it was carried...
+            ['stream', 'alice', 0.5],
+            ['stream', 'bob', 0.25],
+            // ...leaving the final holder what is left.
+            ['lootbox', 'bob', 1.05]
         ]
     );
     assert.equal(totalMon, 9);
@@ -232,7 +236,15 @@ test('a match that was never escrowed uses the contract shares of the gross priz
     assert.equal(winnerPoolMon, 3.6);
     assert.equal(lootBoxPoolMon, 0.9);
     assert.equal(payouts[0].amountMon, 3.6);
-    assert.equal(payouts[1].amountMon, 0.9);
+    // The 0.9 box is split the way the HUD showed it: 0.5 + 0.25 streamed, 0.15
+    // left for the final holder.
+    const byKind = (kind) => payouts.filter((p) => p.kind === kind);
+    assert.equal(byKind('stream').length, 2);
+    assert.equal(byKind('lootbox')[0].amountMon, 0.15);
+    assert.equal(
+        round6(payouts.reduce((sum, payout) => sum + payout.amountMon, 0)),
+        4.5
+    );
 });
 
 test('reward ids are deterministic so a retry overwrites instead of duplicating', () => {
@@ -396,7 +408,7 @@ test('a match with no escrow is settled off-chain only', async () => {
 
     assert.equal(result.status, STATUS.OFFCHAIN_ONLY);
     assert.equal(state.chainCalls.length, 0);
-    assert.equal(state.rewards.size, 2);
+    assert.equal(state.rewards.size, 4);
     assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).amountMon, 7.2);
 });
 
@@ -481,7 +493,7 @@ test('an unreadable escrow keeps the ledger, stays uncredited and asks for a ret
     assert.equal(state.chainCalls.length, 0, 'the escrow must not be touched blind');
 
     // The players are still owed the money, so the ledger is written...
-    assert.equal(state.rewards.size, 2);
+    assert.equal(state.rewards.size, 4);
     assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).amountMon, 7.2);
     assert.equal(state.rewards.get(rewardIdFor(MATCH.matchId, 'alice')).pending, true);
 

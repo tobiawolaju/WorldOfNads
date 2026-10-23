@@ -184,9 +184,38 @@ export function buildPayouts({ match, report, onchain, box }) {
     }
 
     // Whitepaper 5.4: the box pays while the round runs. These are the amounts
-    // the holders earned and were paid on-chain, so they are ledger entries in
-    // their own right - not part of the settle payout.
-    for (const row of Array.isArray(box?.streamed) ? box.streamed : []) {
+    // the holders earned, so they are ledger entries in their own right - not
+    // part of the settle payout.
+    let streamedRows = [];
+    let lootBoxPayoutMon = lootBoxPoolMon;
+    if (box && box.done) {
+        // On-chain: the reconciled numbers are the truth.
+        streamedRows = Array.isArray(box.streamed) ? box.streamed : [];
+        lootBoxPayoutMon = round6(Number(box.remainingMon) || 0);
+    } else {
+        // No escrow to reconcile (never funded, or the chain read failed). Mirror
+        // the same split the HUD showed so the ledger and the game agree.
+        const steals = Math.max(0, Math.floor(Number(report.lootboxSteals) || 0));
+        const burned = round6(Math.min(lootBoxPoolMon, steals * LOOTBOX_STEAL_COST_MON));
+        let left = round6(Math.max(0, lootBoxPoolMon - burned));
+        const seen = new Set();
+        for (const player of Array.isArray(report.players) ? report.players : []) {
+            const key = String(player?.playerName || '').toLowerCase();
+            if (!key || seen.has(key)) continue;
+            const amount = round6(Math.min(Number(player.mon) || 0, left));
+            if (!(amount > 0)) continue;
+            seen.add(key);
+            streamedRows.push({
+                playerId: player.playerId,
+                playerName: player.playerName,
+                amountMon: amount
+            });
+            left = round6(left - amount);
+        }
+        lootBoxPayoutMon = left;
+    }
+
+    for (const row of streamedRows) {
         if (!(Number(row.amountMon) > 0)) continue;
         payouts.push({
             kind: 'stream',
@@ -200,8 +229,6 @@ export function buildPayouts({ match, report, onchain, box }) {
     // What is left in the box after the streams and the steal burns is what
     // `settle` pays. The recipient is the final holder, or - matching the
     // escrow's own fallback - the first prize winner when nobody held the box.
-    const lootBoxPayoutMon =
-        box && box.done ? round6(Number(box.remainingMon) || 0) : lootBoxPoolMon;
     const firstPrize = payouts.find((payout) => payout.kind === 'prize');
     const lootRecipient =
         report.lootboxHolder ||
