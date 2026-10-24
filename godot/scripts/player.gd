@@ -168,6 +168,17 @@ const ANIM_NAME_TO_ID: Dictionary = {
 	"climb": 5
 }
 
+# --- CHOG GENESIS GATE ---
+## Backend endpoint that verifies the authenticated wallet on Monad mainnet.
+const CHOG_OWNERSHIP_PATH: String = "/api/nft/chog-genesis/ownership"
+## Retry delay after a failed/unknown ownership check.
+const CHOG_OWNERSHIP_RETRY_MS: int = 30000
+## sessionStorage key the React /play hand-off writes the Privy access token to.
+const CHOG_WEB_TOKEN_KEY: String = "wons_privy_token"
+## How often the gate re-evaluates whether a check is needed. Cheap: it only
+## performs a request when the TTL lapsed, the account changed or a retry is due.
+const CHOG_GATE_POLL_INTERVAL: float = 5.0
+
 # --- INPUT VARIABLES ---
 var gamepad_index: int = 0
 
@@ -180,6 +191,19 @@ var gamepad_index: int = 0
 ## press edges only, so key-repeat events cannot overwrite the "before" state
 ## the reveal restores.
 var _hidden_extras_revealed: bool = false
+
+## Deny-by-default Chog Genesis eligibility. Only a fresh ELIGIBLE verdict from
+## the backend, for the current account, inside a CHOG room authorises the input.
+var _chog_eligibility := ChogEligibility.new()
+var _chog_check_in_flight: bool = false
+## Identity the in-flight request was sent for (see _chog_identity_key()).
+var _chog_check_identity: String = ""
+var _chog_next_check_at_ms: int = 0
+var _chog_gate_poll: float = 0.0
+var _dev_cheat_unlocked: bool = false
+var _dev_cheat_buffer: String = ""
+var _dev_cheat_last_time: int = 0
+
 
 ## HOOK punch: how long the punch plays when the HOOK power-up is used. Read from
 ## the hook animation's own length when available; this is the fallback.
@@ -295,7 +319,7 @@ var _critical_fall_timer: float = 0.0
 @export var joystick_orbit_invert_y: bool = false
 @export var touch_edge_ignore_margin: float = 32.0 # Ignore touches that START within this many px of a screen edge
 @export var low_pitch_ease_speed: float = 2.5 # While moving below the movement pitch mark, ease pitch up to it (0 = off)
-@export var movement_pitch_raise_fraction: float = 0.142857 # While moving, raise the pitch floor to min_pitch + this fraction of the pitch range (1/7 ≈ 14.3%: a -0.4..1 range raises the floor from -0.4 to -0.2)
+@export var movement_pitch_raise_fraction: float = 0.25 # While moving, raise the orbital pitch floor to min_pitch + this fraction of the pitch range (1/4: a -0.4..1 range raises the floor from -0.4 to -0.05, almost level, so the camera cannot dip under the map while running)
 @export var swipe_down_threshold: float = 20.0
 @export var swipe_up_threshold: float = 70.0
 @export var swipe_x_tolerance: float = 80.0
@@ -562,6 +586,9 @@ func _ready() -> void:
 	# changed while it was held), so the extras follow the key itself and not
 	# only the key events this node happened to see.
 	call_deferred("_reveal_if_key_held")
+	# `root`/`is_local` are assigned after add_child(), so the Chog gate starts
+	# on the next idle frame, when the room and the local flag are known.
+	call_deferred("_init_chog_gate")
 
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
@@ -632,6 +659,13 @@ func _process(delta: float) -> void:
 	if not is_local:
 		return
 	_update_camera_visual(delta)
+	# Re-evaluate the CHOG gate periodically. `_refresh_chog_eligibility` is a
+	# no-op unless a check is actually due, so this never hits the network per
+	# frame.
+	_chog_gate_poll -= delta
+	if _chog_gate_poll <= 0.0:
+		_chog_gate_poll = CHOG_GATE_POLL_INTERVAL
+		_refresh_chog_eligibility()
 
 func _refresh_name_label() -> void:
 	if not name_label:
@@ -712,12 +746,36 @@ func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
 
-	# --- REVEAL ACTION (toggle) ---
-	# Toggles the hidden skin parts and reveal tint on/off via the "chog" input action.
+	if event is InputEventKey and event.pressed and not event.echo:
+		var key := OS.get_keycode_string(event.keycode).to_upper()
+		if key.length() == 1:
+			var now := Time.get_ticks_msec()
+			if _dev_cheat_last_time == 0 or now - _dev_cheat_last_time > 1500:
+				_dev_cheat_buffer = ""
+			_dev_cheat_buffer += key
+			if _dev_cheat_buffer.length() > 7:
+				_dev_cheat_buffer = _dev_cheat_buffer.substr(_dev_cheat_buffer.length() - 7)
+			_dev_cheat_last_time = now
+			if _dev_cheat_buffer == "CHOGDEV":
+				_dev_cheat_buffer = ""
+				_dev_cheat_unlocked = true
+
+	# --- CHOG REVEAL (Chog Genesis holders in a CHOG room only) ---
+
+	# The same `chog` action drives the hidden extras and the random power-up
+	# grant. Both are gated on a mainnet ownership verdict from the backend; a
+	# press outside a CHOG room, before a verdict, or by a non-holder does
+	# nothing (deny by default).
 	if event.is_action_pressed("chog"):
-		_set_hidden_extras_revealed(not _hidden_extras_revealed)
-		if _hidden_extras_revealed and is_local:
+		if _hidden_extras_revealed:
+			# Turning it off is always allowed; otherwise an expiring verdict
+			# could leave the extras stuck visible.
+			_set_hidden_extras_revealed(false)
+		elif _chog_can_activate():
+			_set_hidden_extras_revealed(true)
 			_maybe_grant_random_powerup_on_reveal()
+		else:
+			_refresh_chog_eligibility()
 
 	if event is InputEventScreenTouch:
 		if event.pressed:
@@ -745,7 +803,7 @@ func _input(event: InputEvent) -> void:
 		if active_touches > 0 or DisplayServer.is_touchscreen_available():
 			return
 		cam_rot_y -= event.relative.x * 0.005
-		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.005, min_pitch, max_pitch)
+		cam_rot_x = clamp(cam_rot_x + event.relative.y * 0.005, _effective_min_pitch(), max_pitch)
 
 	# Mouse Wheel Zoom
 	if event is InputEventMouseButton:
@@ -781,7 +839,7 @@ func _set_hidden_extras_revealed(revealed: bool) -> void:
 func _reveal_if_key_held() -> void:
 	if not is_local:
 		return
-	if Input.is_action_pressed("chog"):
+	if Input.is_action_pressed("chog") and _chog_can_activate():
 		_set_hidden_extras_revealed(true)
 
 # Invisible dead zone along all four screen edges. Any touch that STARTS here is
@@ -2300,6 +2358,11 @@ func _timed_duration_for(mode: int) -> float:
 func _maybe_grant_random_powerup_on_reveal() -> void:
 	if not is_local:
 		return
+	# Defence in depth: the input handler already checks this, but the grant is
+	# the one place that hands out a free power-up, so it must never run without
+	# a fresh mainnet verdict for the current account in a CHOG room.
+	if not _chog_can_activate():
+		return
 	if _active_power_up_mode != LocalPickup.PowerUpMode.NONE and _active_power_up_remaining > 0.0:
 		return
 	if held_power_up_mode != LocalPickup.PowerUpMode.NONE:
@@ -2317,6 +2380,163 @@ func _maybe_grant_random_powerup_on_reveal() -> void:
 	var chosen: int = pool[0]
 	held_power_up_mode = chosen
 	_update_hud_power_up()
+
+# ---------------------------------------------------------------------------
+# CHOG Genesis gate
+#
+# The backend verdict is the only authority. The client starts in UNKNOWN (the
+# input is denied), reads the verdict asynchronously, and re-reads it when the
+# TTL lapses or the authenticated account changes. Nothing here trusts a URL
+# flag, a room name alone, or a locally-set boolean.
+# ---------------------------------------------------------------------------
+
+## Deferred from _ready: `root` and `is_local` are assigned by PlayerManager
+## right after add_child(), so they are only reliable on the next idle frame.
+func _init_chog_gate() -> void:
+	if not is_local:
+		return
+	var auth = get_node_or_null("/root/AuthManager")
+	if auth != null:
+		if auth.has_signal("logged_out") and not auth.logged_out.is_connected(_on_chog_session_changed):
+			auth.logged_out.connect(_on_chog_session_changed)
+		if auth.has_signal("login_completed") and not auth.login_completed.is_connected(_on_chog_login_completed):
+			auth.login_completed.connect(_on_chog_login_completed)
+		if auth.has_signal("session_refreshed") and not auth.session_refreshed.is_connected(_on_chog_login_completed):
+			auth.session_refreshed.connect(_on_chog_login_completed)
+	_chog_eligibility.reset()
+	_chog_next_check_at_ms = 0
+	_chog_gate_poll = CHOG_GATE_POLL_INTERVAL
+	_refresh_chog_eligibility(true)
+
+func _on_chog_session_changed(_reason: String) -> void:
+	_invalidate_chog_eligibility()
+
+func _on_chog_login_completed(_state: Variant) -> void:
+	_invalidate_chog_eligibility()
+
+func _invalidate_chog_eligibility() -> void:
+	_chog_eligibility.reset()
+	_chog_next_check_at_ms = 0
+	# An in-flight request is not cancelled (HTTPRequest has no cancel); its
+	# response is discarded by the identity check in _run_chog_ownership_check,
+	# and the poll retries for the new account once it lands.
+	_refresh_chog_eligibility(true)
+
+## The only predicate the CHOG input and the reveal grant use.
+func _chog_can_activate() -> bool:
+	if _dev_cheat_unlocked:
+		return true
+	return _chog_eligibility.can_activate(
+		_is_chog_room(),
+		_chog_identity_key(),
+		Time.get_ticks_msec()
+	)
+
+func _is_chog_room() -> bool:
+	if root == null:
+		return false
+	var match_id := str(root.get("local_match_id")).strip_edges()
+	return match_id == ChogEligibility.CHOG_ROOM_ID
+
+## Stable key for "which authenticated account produced the cached verdict".
+## Native sessions use the verified wallet; the web build has no wallet address
+## in the client, so it fingerprints the short-lived Privy token instead. Either
+## way a changed account changes the key and invalidates the old result.
+func _chog_identity_key() -> String:
+	var auth = get_node_or_null("/root/AuthManager")
+	if auth != null and auth.is_authenticated():
+		var wallet := str(auth.get_wallet_address()).strip_edges().to_lower()
+		if wallet != "":
+			return "won:%s" % wallet
+	var token := _chog_web_privy_token()
+	if token != "":
+		return "privy:%s" % token.sha256_text()
+	return ""
+
+func _chog_web_privy_token() -> String:
+	if not OS.has_feature("web"):
+		return ""
+	var raw: Variant = JavaScriptBridge.eval(
+		"sessionStorage.getItem('%s') || ''" % CHOG_WEB_TOKEN_KEY
+	)
+	if typeof(raw) != TYPE_STRING:
+		return ""
+	return str(raw).strip_edges()
+
+## Starts a check only when one is actually due. Never called per frame: the
+## poll runs every CHOG_GATE_POLL_INTERVAL seconds and the TTL/retry gates keep
+## the request rate low. A pending request always leaves the input denied.
+func _refresh_chog_eligibility(force: bool = false) -> void:
+	if not is_local:
+		return
+	if not _is_chog_room():
+		# Outside a CHOG room no verdict may authorise the input, and none may
+		# survive into the next CHOG room.
+		_chog_eligibility.reset()
+		return
+	if _chog_check_in_flight:
+		return
+	var identity_key := _chog_identity_key()
+	if identity_key == "":
+		_chog_eligibility.reset()
+		return
+	var now := Time.get_ticks_msec()
+	if now < _chog_next_check_at_ms:
+		return
+	if not force and not _chog_eligibility.needs_check(identity_key, now):
+		return
+	_chog_check_in_flight = true
+	_chog_check_identity = identity_key
+	@warning_ignore("missing_await")
+	_run_chog_ownership_check(identity_key)
+
+## Coroutine: asks the backend about the authenticated wallet and stores the
+## verdict. A response for an account that is no longer current is discarded.
+func _run_chog_ownership_check(identity_key: String) -> void:
+	var response := await _request_chog_ownership()
+	var now := Time.get_ticks_msec()
+	if _chog_check_identity == identity_key:
+		_chog_check_in_flight = false
+	var current := _chog_identity_key()
+	if identity_key == "" or current != identity_key:
+		_chog_eligibility.reset()
+		_chog_next_check_at_ms = 0
+		_refresh_chog_eligibility(true)
+		return
+	var status := int(response.get("__status", 0))
+	var has_nft: bool = response.get("has_chog_nft") == true
+	_chog_eligibility.resolve(status, has_nft, identity_key, now)
+	if status != 200:
+		# Timeout, rate limit, expired token, RPC failure: stay in ERROR and
+		# retry later. Never fall back to a previous positive result.
+		_chog_next_check_at_ms = now + CHOG_OWNERSHIP_RETRY_MS
+	else:
+		_chog_next_check_at_ms = 0
+
+## The request itself. Native uses the WON session through AuthManager; the web
+## build presents the Privy access token the React /play hand-off stored in
+## sessionStorage. No token is ever placed in the URL or logged.
+func _request_chog_ownership() -> Dictionary:
+	if not is_inside_tree():
+		return {"ok": false, "__status": 0}
+	var auth = get_node_or_null("/root/AuthManager")
+	if auth == null or auth.api == null:
+		return {"ok": false, "__status": 0}
+	var authenticated: bool = auth.is_authenticated()
+	var extra_headers := PackedStringArray()
+	if not authenticated:
+		var token := _chog_web_privy_token()
+		if token == "":
+			return {"ok": false, "__status": 0}
+		extra_headers.append("Authorization: Bearer %s" % token)
+	return await auth.api.request(
+		HTTPClient.METHOD_GET,
+		CHOG_OWNERSHIP_PATH,
+		null,
+		authenticated,
+		extra_headers
+	)
+
 
 # Finds the HUD node that owns the Action button (buttons.gd). Only scanned once.
 func _find_buttons_hud() -> Node:
@@ -2584,7 +2804,7 @@ func _handle_camera_gamepad(delta: float) -> void:
 	if abs(rx) > DEADZONE:
 		cam_rot_y -= rx * 0.05 * delta * 60
 	if abs(ry) > DEADZONE:
-		cam_rot_x = clamp(cam_rot_x + ry * 0.05 * delta * 60, min_pitch, max_pitch)
+		cam_rot_x = clamp(cam_rot_x + ry * 0.05 * delta * 60, _effective_min_pitch(), max_pitch)
 
 func _update_dive_level(delta: float) -> void:
 	# Continuous "skydive" camera blend: 0 on the ground, ramping toward 1 while
@@ -2684,22 +2904,35 @@ func _update_camera_collision_logic(delta: float) -> void:
 				_camera_collision_distance = move_toward(_camera_collision_distance, target_collision_distance, delta * 2.0 * CAMERA_COLLISION_RECOVERY_SPEED)
 
 # While moving, the pitch floor is raised to the movement pitch mark — the point
-# min_pitch + movement_pitch_raise_fraction (1/7 ≈ 14.3% by default) of the
-# pitch range — so the camera escapes the lowest band where its near plane
-# clips the floor and the player sees through it. With min_pitch = -0.4 and
-# max_pitch = 1.0, the floor goes from -0.4 (stationary) to -0.2 (moving). The
-# raise is temporary: when the player stops moving, the pitch eases back down
-# to the angle they had before the raise kicked in. Manual input still wins
-# while pitching above the mark; only below the mark does movement nudge the
-# camera up. Set low_pitch_ease_speed to 0 to disable.
+# min_pitch + movement_pitch_raise_fraction (1/4 by default) of the pitch range —
+# so the camera can never be dragged into the lowest band where its near plane
+# clips the floor and the player sees under the map. With min_pitch = -0.4 and
+# max_pitch = 1.0, the floor goes from -0.4 (stationary) to -0.05 (moving), which
+# is essentially level. The raise is temporary: when the player stops moving, the
+# pitch eases back down to the angle they had before the raise kicked in. Manual
+# input still wins while pitching above the mark; only below the mark does
+# movement nudge the camera up. Set low_pitch_ease_speed to 0 to disable.
+func _movement_pitch_mark() -> float:
+	var pitch_range := maxf(max_pitch - min_pitch, 0.001)
+	return min_pitch + clampf(movement_pitch_raise_fraction, 0.0, 1.0) * pitch_range
+
+# The lowest pitch the orbital controls may currently reach: the plain min_pitch
+# while the player stands still, the raised movement mark while they are moving
+# (or still unwinding a raise). Every input path clamps through this instead of
+# min_pitch directly, so a drag or a flick cannot push the camera back under the
+# floor mid-run.
+func _effective_min_pitch() -> float:
+	if camera_is_moving or _movement_pitch_ease_active:
+		return maxf(min_pitch, _movement_pitch_mark())
+	return min_pitch
+
 func _apply_movement_pitch_ease(delta: float) -> void:
 	if low_pitch_ease_speed <= 0.0:
 		return
 	# Only do the pitch-mark maths while moving. When idle with no lingering
 	# raise left to unwind, this is just a couple of cheap boolean checks.
 	if camera_is_moving:
-		var pitch_range := maxf(max_pitch - min_pitch, 0.001)
-		var movement_pitch_mark: float = min_pitch + movement_pitch_raise_fraction * pitch_range
+		var movement_pitch_mark := _movement_pitch_mark()
 		if not _movement_pitch_ease_active:
 			_movement_pitch_ease_active = true
 			_pitch_before_movement_ease = cam_rot_x
@@ -2729,7 +2962,7 @@ func _update_camera_visual(delta: float) -> void:
 	_camera_follow_velocity = follow_result[1]
 	var target_pos: Vector3 = _camera_follow_target
 	_apply_movement_pitch_ease(delta)
-	cam_rot_x = clamp(cam_rot_x, min_pitch, max_pitch)
+	cam_rot_x = clamp(cam_rot_x, _effective_min_pitch(), max_pitch)
 	_sin_cam_x = sin(cam_rot_x)
 	_cos_cam_x = cos(cam_rot_x)
 	var cam_offset: Vector3 = Vector3(_sin_cam_y * _cos_cam_x, _sin_cam_x, _cos_cam_y * _cos_cam_x) 
@@ -2961,21 +3194,21 @@ func _apply_touch_orbit() -> void:
 		touch_delta.x = clamp(touch_delta.x, -64.0, 64.0)
 		touch_delta.y = clamp(touch_delta.y, -64.0, 64.0)
 		cam_rot_y -= touch_delta.x * touch_orbit_sensitivity
-		cam_rot_x = clamp(cam_rot_x + touch_delta.y * touch_orbit_sensitivity, min_pitch, max_pitch)
+		cam_rot_x = clamp(cam_rot_x + touch_delta.y * touch_orbit_sensitivity, _effective_min_pitch(), max_pitch)
 	if has_joystick_orbit:
 		joystick_delta.x = clamp(joystick_delta.x, -joystick_orbit_clamp, joystick_orbit_clamp)
 		joystick_delta.y = clamp(joystick_delta.y, -joystick_orbit_clamp, joystick_orbit_clamp)
 		if joystick_orbit_invert_x: joystick_delta.x = -joystick_delta.x
 		if joystick_orbit_invert_y: joystick_delta.y = -joystick_delta.y
 		cam_rot_y -= joystick_delta.x * joystick_orbit_sensitivity
-		cam_rot_x = clamp(cam_rot_x + joystick_delta.y * joystick_orbit_sensitivity, min_pitch, max_pitch)
+		cam_rot_x = clamp(cam_rot_x + joystick_delta.y * joystick_orbit_sensitivity, _effective_min_pitch(), max_pitch)
 
 func _apply_slide_camera_restore(delta: float) -> void:
 	if not _slide_camera_restore_active:
 		return
 	var restore_weight: float = clampf(delta * 6.0, 0.0, 1.0)
 	cam_rot_y = lerp_angle(cam_rot_y, _touch_slide_start_cam_rot_y, restore_weight)
-	cam_rot_x = clampf(lerpf(cam_rot_x, _touch_slide_start_cam_rot_x, restore_weight), min_pitch, max_pitch)
+	cam_rot_x = clampf(lerpf(cam_rot_x, _touch_slide_start_cam_rot_x, restore_weight), _effective_min_pitch(), max_pitch)
 	if absf(angle_difference(cam_rot_y, _touch_slide_start_cam_rot_y)) < 0.001 and absf(cam_rot_x - _touch_slide_start_cam_rot_x) < 0.001:
 		_slide_camera_restore_active = false
 

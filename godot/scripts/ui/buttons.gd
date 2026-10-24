@@ -252,6 +252,8 @@ func _stack_vertically(text: String) -> String:
 func _ready() -> void:
 	get_viewport().size_changed.connect(_reposition)
 	_reposition()
+	if chog_button != null:
+		chog_button.visible = false
 	if action_button != null:
 		_action_caption = action_button.get_node_or_null("action") as Label
 		if _action_caption != null:
@@ -404,6 +406,7 @@ func _process(_delta: float) -> void:
 		return
 	if _cached_local_player == null or not is_instance_valid(_cached_local_player):
 		_cached_local_player = get_tree().get_first_node_in_group("local_player")
+	_update_chog_visibility()
 
 	var target_alpha := 0.5
 	if _cached_local_player != null \
@@ -418,6 +421,28 @@ func _process(_delta: float) -> void:
 
 	_update_active_power_up()
 	_refresh_action_caption()
+
+
+func _update_chog_visibility() -> void:
+	if chog_button == null:
+		return
+	if _cached_local_player == null or not is_instance_valid(_cached_local_player):
+		chog_button.visible = false
+		return
+	var player = _cached_local_player
+	if not player.has_method("_is_chog_room") or not player.has_method("_chog_can_activate"):
+		chog_button.visible = false
+		return
+	if not player.call("_is_chog_room"):
+		if player.get("_dev_cheat_unlocked"):
+			chog_button.visible = true
+			return
+		chog_button.visible = false
+		return
+	if player.get("_dev_cheat_unlocked"):
+		chog_button.visible = true
+		return
+	chog_button.visible = bool(player.call("_chog_can_activate"))
 
 func _reposition() -> void:
 	var viewport_size := get_viewport().get_visible_rect().size

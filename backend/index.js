@@ -12,13 +12,20 @@ import {
   approveDeviceLogin,
   cancelDeviceLogin,
   exchangeDeviceLogin,
+  fetchPrivyUser,
   getAuthenticatedSession,
   getDeviceLoginStatus,
   lookupDeviceLogin,
   logoutSession,
   refreshSession,
-  startDeviceLogin
+  startDeviceLogin,
+  verifyPrivyAccessToken
 } from './authService.js';
+import {
+  createChogOwnershipHandler,
+  createChogOwnershipService,
+  createRateLimiter
+} from './chogNft.js';
 import { linkWalletKey, mintSkinForAccount } from './walletService.js';
 
 const PORT = process.env.PORT || 8080;
@@ -536,6 +543,86 @@ function sendAuthResult(res, result) {
   sendJson(res, result?.status || 500, { ok: false, error: result?.error || 'internal_error' });
 }
 
+function extractBearerToken(authorizationHeader) {
+  const value = String(authorizationHeader || '').trim();
+  const match = /^Bearer\s+(.+)$/i.exec(value);
+  return match ? match[1].trim() : '';
+}
+
+/**
+ * Identity for the Chog Genesis ownership check.
+ *
+ * Two existing credential types are accepted:
+ *   - a WON session token (native/desktop device login), whose stored user
+ *     record carries the address of the Privy Ethereum wallet;
+ *   - a Privy access token (web build), verified by the Privy SDK and resolved
+ *     to the same linked wallet server-side.
+ *
+ * The wallet address never comes from the request; only from one of those
+ * verified identities. Anything else is a 401.
+ */
+async function authenticateChogOwnership(authorizationHeader) {
+  const token = extractBearerToken(authorizationHeader);
+  if (!token) {
+    return { ok: false, status: 401, error: 'missing_access_token' };
+  }
+
+  let session = { ok: false };
+  try {
+    session = await getAuthenticatedSession({ authorizationHeader });
+  } catch (error) {
+    // A native-session lookup failure must not block the web (Privy) path.
+    console.warn('[ChogNFT] native session lookup failed');
+  }
+  if (session.ok) {
+    const user = session.payload?.user || {};
+    return {
+      ok: true,
+      userId: user.user_id || user.username || '',
+      walletAddress: user.wallet_address || ''
+    };
+  }
+
+  const verified = await verifyPrivyAccessToken(token);
+  if (!verified.ok) {
+    return { ok: false, status: 401, error: 'invalid_access_token' };
+  }
+  const privyUser = await fetchPrivyUser(verified.claims.userId);
+  if (!privyUser) {
+    return { ok: false, status: 503, error: 'identity_unavailable' };
+  }
+  return {
+    ok: true,
+    userId: privyUser.id,
+    walletAddress: privyUser.walletAddress || ''
+  };
+}
+
+// Mainnet-only reader for the Chog Genesis gate. Constructed lazily in the
+// sense that it performs no RPC until the first request. A bad address/RPC
+// configuration must not take the whole game backend down: the endpoint fails
+// closed with 503 and the rest of the service keeps running.
+let chogOwnershipService;
+try {
+  chogOwnershipService = createChogOwnershipService();
+} catch (error) {
+  const code = typeof error?.message === 'string' && /^[a-z0-9_]{1,64}$/.test(error.message)
+    ? error.message
+    : 'invalid_configuration';
+  console.error(`[ChogNFT] ownership reader disabled: ${code}`);
+  chogOwnershipService = {
+    async isHolder() {
+      throw new Error('service_unavailable');
+    }
+  };
+}
+const handleChogOwnership = createChogOwnershipHandler({
+  authenticate: authenticateChogOwnership,
+  service: chogOwnershipService,
+  rateLimiter: createRateLimiter(),
+  sendJson
+});
+
 async function readJsonBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -925,6 +1012,14 @@ const server = createServer(async (req, res) => {
     }
     const skin = await getPlayerSkin(username);
     sendJson(res, 200, { ok: true, username, skin: skin || 's-default' });
+    return;
+  }
+
+  // Chog Genesis ownership gate. Mainnet only, verified wallet only, and a
+  // failure to read the chain is an error rather than an eligibility answer.
+  // See `chogNft.js`; the response is deliberately just the boolean.
+  if (req.method === 'GET' && reqUrl.pathname === '/api/nft/chog-genesis/ownership') {
+    await handleChogOwnership(req, res);
     return;
   }
 

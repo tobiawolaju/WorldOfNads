@@ -22,7 +22,7 @@ shading_mode = 0
 [sub_resource type="CylinderMesh" id="CylinderMesh_l0bqs"]
 top_radius = 0.002
 bottom_radius = 0.008
-height = 0.8413788
+height = 0.421
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_036xw"]
 shading_mode = 0
@@ -48,13 +48,14 @@ shader_parameter/pupil_color = Color(0, 0, 0, 1)
 shader_parameter/pupil_size = 1.02100004710047
 shader_parameter/pupil_softness = 0.0010000000475
 shader_parameter/rim_darken = 0.0
-shader_parameter/dot_shift_x = 0.025000096187500098
+shader_parameter/dot_shift_x = 0.02500009618750009
 shader_parameter/dot_shift_y = -0.01599990575999999
 shader_parameter/dot_roll = 3.1414101800343004
 shader_parameter/flip_dot = 0.89200004237
 shader_parameter/debug_flat = 0.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o4lkk"]
+shading_mode = 0
 uv1_scale = Vector3(0.395, 0.395, 0.395)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lem7u"]
@@ -86,14 +87,14 @@ cast_shadow = 0
 mesh = SubResource("CylinderMesh_l0bqs")
 
 [node name="box" type="MeshInstance3D" parent="." unique_id=183772736]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2848841, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_036xw")
 cast_shadow = 0
 mesh = SubResource("BoxMesh_l0bqs")
 
 [node name="chick" parent="." unique_id=1684271244 instance=ExtResource("2_gyxxy")]
-transform = Transform3D(-0.34957114, 0, 0.017320894, 0, 0.35, 0, -0.017320894, 0, -0.34957114, 0, 1.3739843, 0)
-visible = false
+transform = Transform3D(-0.34957114, 0, 0.017320894, 0, 0.35, 0, -0.017320894, 0, -0.34957114, 0, 0.8, 0)
 
 [node name="Cone" parent="chick" index="0" unique_id=571555263]
 transform = Transform3D(-0.0019831767, 0.278231, 0, -0.278231, -0.0019831767, 0, 0, 0, 0.27823806, 0.98191434, -0.09501603, 0)
@@ -119,18 +120,18 @@ material_override = SubResource("ShaderMaterial_ror3w")
 material_override = SubResource("ShaderMaterial_ror3w")
 
 [node name="powerup" parent="." unique_id=785002720 instance=ExtResource("5_hqyie")]
-transform = Transform3D(0.09, 0, -1.3969839e-09, 0, 0.09, 0, 1.3969839e-09, 0, 0.09, 0, 1.2882782, 0)
+transform = Transform3D(0.09, 0, -1.3969839e-09, 0, 0.09, 0, 1.3969839e-09, 0, 0.09, 0, 0.8, 0)
 visible = false
 
 [node name="Cube" parent="powerup" index="0" unique_id=564922205]
 material_override = SubResource("StandardMaterial3D_o4lkk")
 
 [node name="Sphere" parent="powerup" index="1" unique_id=1072065408]
+transform = Transform3D(1.4, 0, 0, 0, 1.4, 0, 0, 0, 1.4, 0, 0, 0.004068285)
 material_override = SubResource("StandardMaterial3D_lem7u")
 
 [node name="loot" parent="." unique_id=287564453 instance=ExtResource("5_hqyie")]
-transform = Transform3D(0.15, 0, -4.656613e-10, 0, 0.15, 0, 4.656613e-10, 0, 0.15, 0, 1.2882782, 0)
-visible = false
+transform = Transform3D(0.15, 0, -4.656613e-10, 0, 0.15, 0, 4.656613e-10, 0, 0.15, 0, 0.8, 0)
 
 [node name="Cube" parent="loot" index="0" unique_id=564922205]
 material_override = SubResource("StandardMaterial3D_ror3w")

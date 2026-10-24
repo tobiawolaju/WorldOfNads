@@ -49,7 +49,7 @@ async function requestAuthToken(username: string): Promise<string | null> {
 }
 
 const Play: React.FC = () => {
-  const { user } = usePrivy();
+  const { user, getAccessToken } = usePrivy();
   const username = getUsernameFromPrivy(user);
   const [loading, setLoading] = useState(true);
   // Direct hits on /play still have to install first on mobile.
@@ -73,6 +73,19 @@ const Play: React.FC = () => {
     const redirectToGame = async () => {
       const params = new URLSearchParams(window.location.search);
       const match = params.get("match") || "";
+
+      // The Godot build asks the backend whether the authenticated wallet holds
+      // a Chog Genesis NFT. Same-tab sessionStorage survives the hand-off to
+      // /play.html without putting a credential in the URL.
+      try {
+        const privyToken = await getAccessToken();
+        if (privyToken) sessionStorage.setItem("wons_privy_token", privyToken);
+        else sessionStorage.removeItem("wons_privy_token");
+      } catch {
+        try {
+          sessionStorage.removeItem("wons_privy_token");
+        } catch {}
+      }
 
       try {
         const skinRes = await fetch(`${BACKEND_URL}/api/skins`);
@@ -116,7 +129,7 @@ const Play: React.FC = () => {
     };
 
     redirectToGame();
-  }, [username, blocked]);
+  }, [username, blocked, getAccessToken]);
 
   if (loading) {
     return (
