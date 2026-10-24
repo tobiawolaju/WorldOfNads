@@ -28,6 +28,24 @@
 [ext_resource type="Texture2D" uid="uid://ceofg5yk6faak" path="res://assets/img/gem.png" id="22_mgfyp"]
 [ext_resource type="Texture2D" uid="uid://ceofg5yk6lkbk" path="res://assets/img/mon.png" id="23_ptr5m"]
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_q62xx"]
+shader = ExtResource("11_3swnk")
+shader_parameter/brightness = 0.1
+shader_parameter/chromatic_shift_amount = 0.2
+shader_parameter/bend_amount = 0.4
+shader_parameter/blur_amount = 2.0
+shader_parameter/grain_amount = 0.05
+shader_parameter/curve_light_blend = 0.5
+shader_parameter/rim_light_blend = 0.8
+shader_parameter/shadow_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q62xx"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 70
+corner_radius_top_right = 70
+corner_radius_bottom_right = 70
+corner_radius_bottom_left = 70
+
 [sub_resource type="Shader" id="Shader_storm"]
 code = "shader_type canvas_item;
 uniform vec2 storm_center = vec2(0.5);
@@ -52,24 +70,6 @@ atlas = ExtResource("10_ui_atlas")
 region = Rect2(0, 0, 400, 82)
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_p3vpr"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_q62xx"]
-shader = ExtResource("11_3swnk")
-shader_parameter/brightness = 0.1
-shader_parameter/chromatic_shift_amount = 0.2
-shader_parameter/bend_amount = 0.4
-shader_parameter/blur_amount = 2.0
-shader_parameter/grain_amount = 0.05
-shader_parameter/curve_light_blend = 0.5
-shader_parameter/rim_light_blend = 0.8
-shader_parameter/shadow_color = Color(0, 0, 0, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q62xx"]
-bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 70
-corner_radius_top_right = 70
-corner_radius_bottom_right = 70
-corner_radius_bottom_left = 70
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lle6q"]
 bg_color = Color(1, 1, 1, 0.9098039)
@@ -134,6 +134,108 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_mphia")
 
+[node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]
+
+[node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=203270884]
+position = Vector2(-152, -134)
+
+[node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=121289564]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -75.0
+offset_top = -75.0
+offset_right = 75.0
+offset_bottom = 75.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0)
+metadata/_edit_use_anchors_ = true
+
+[node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=420255833]
+scale = Vector2(1.1, 1.1)
+texture = ExtResource("9_qkknv")
+
+[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyBase" unique_id=1853570535]
+modulate = Color(1, 1, 1, 0.6313726)
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(130, 130)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -104.0
+offset_top = -104.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
+
+[node name="JoyLock" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=1534232310]
+position = Vector2(0, -90)
+
+[node name="JoyLock" type="Sprite2D" parent="Joystick/TouchJoyStick/JoyLock" unique_id=1518767299]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("9_qkknv")
+
+[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyLock/JoyLock" unique_id=379869769]
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(130, 130)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -104.0
+offset_top = -104.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
+
+[node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=661345483 node_paths=PackedStringArray("joy_lock")]
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("9_qkknv")
+script = ExtResource("9_mphia")
+auto_lock_hold_seconds = 0.0
+auto_lock_forward_min_strength = 1.2
+auto_lock_north_distance_multiplier = 2.0
+keep_locked_position_on_resize = false
+joy_lock = NodePath("../JoyLock")
+
+[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyKnob" unique_id=2054266225]
+material = SubResource("ShaderMaterial_q62xx")
+custom_minimum_size = Vector2(130, 130)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -104.0
+offset_top = -104.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
+theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
+
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=701090656]
 
 [node name="BoxContainer" type="BoxContainer" parent="CanvasLayer" unique_id=569957497]
@@ -143,17 +245,15 @@ offset_bottom = 40.0
 [node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=802481236]
 
 [node name="Minimap" type="Control" parent="CanvasLayer/BoxContainer/Node2" unique_id=43787215 node_paths=PackedStringArray("background_texture", "minimap_container", "player_pointer", "chicken_pointer", "lootbox_pointer", "pickup_pointer", "storm_overlay", "bus_path_overlay", "shade_overlay")]
+modulate = Color(1, 1, 1, 0.48235294)
 custom_minimum_size = Vector2(60, 60)
 clip_contents = true
 layout_mode = 3
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -150.0
-offset_top = 32.0
-offset_right = -30.0
-offset_bottom = 152.0
-grow_horizontal = 0
+anchors_preset = 0
+offset_left = 23.0
+offset_top = 21.0
+offset_right = 143.0
+offset_bottom = 141.0
 pivot_offset = Vector2(60, 60)
 size_flags_horizontal = 4
 size_flags_vertical = 4
@@ -226,7 +326,6 @@ stretch_mode = 4
 flip_v = true
 
 [node name="ChickenPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1952187711]
-visible = false
 z_index = 11
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 0
@@ -241,7 +340,6 @@ stretch_mode = 4
 flip_v = true
 
 [node name="LootBoxPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=146359137]
-visible = false
 z_index = 11
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 0
@@ -322,14 +420,13 @@ theme_override_font_sizes/font_size = 12
 text = "...."
 
 [node name="BoxContainer3" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1509763072]
-visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -84.0
-offset_top = 176.0
-offset_right = -26.0
-offset_bottom = 194.0
+offset_left = -69.0
+offset_top = 12.0
+offset_right = -11.0
+offset_bottom = 30.0
 grow_horizontal = 0
 size_flags_horizontal = 0
 size_flags_vertical = 4
@@ -383,14 +480,8 @@ theme_override_font_sizes/font_size = 12
 text = "Stand your Ground for 60s"
 
 [node name="FPSLabel" type="Label" parent="CanvasLayer" unique_id=2147483647]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -96.0
-offset_top = 10.0
-offset_right = -16.0
-offset_bottom = 30.0
-grow_horizontal = 0
+offset_right = 21.0
+offset_bottom = 20.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5411765)
 theme_override_font_sizes/font_size = 14
@@ -399,123 +490,29 @@ script = ExtResource("8_mphia")
 
 [node name="debug" type="Label" parent="CanvasLayer" unique_id=1172499753]
 visible = false
-offset_right = 40.0
-offset_bottom = 23.0
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -67.0
+offset_top = 38.0
+offset_right = -10.0
+offset_bottom = 87.0
+grow_horizontal = 0
 text = "loading
 "
 
 [node name="debug2" type="Label" parent="CanvasLayer" unique_id=1253793999]
 visible = false
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_top = -24.5
-offset_right = 57.0
-offset_bottom = 24.5
-grow_vertical = 2
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -68.0
+offset_top = 70.0
+offset_right = -11.0
+offset_bottom = 119.0
+grow_horizontal = 0
 text = "loading
 "
-
-[node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]
-
-[node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=203270884]
-position = Vector2(-152, -134)
-
-[node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=121289564]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -75.0
-offset_top = -75.0
-offset_right = 75.0
-offset_bottom = 75.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(1, 1, 1, 0)
-metadata/_edit_use_anchors_ = true
-
-[node name="JoyBase" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=420255833]
-scale = Vector2(1.1, 1.1)
-texture = ExtResource("9_qkknv")
-
-[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyBase" unique_id=1853570535]
-modulate = Color(1, 1, 1, 0.6313726)
-material = SubResource("ShaderMaterial_q62xx")
-custom_minimum_size = Vector2(130, 130)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -104.0
-offset_top = -104.0
-offset_right = -24.0
-offset_bottom = -24.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
-
-[node name="JoyLock" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=1534232310]
-position = Vector2(0, -90)
-
-[node name="JoyLock" type="Sprite2D" parent="Joystick/TouchJoyStick/JoyLock" unique_id=1518767299]
-scale = Vector2(0.4, 0.4)
-texture = ExtResource("9_qkknv")
-
-[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyLock/JoyLock" unique_id=379869769]
-material = SubResource("ShaderMaterial_q62xx")
-custom_minimum_size = Vector2(130, 130)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -104.0
-offset_top = -104.0
-offset_right = -24.0
-offset_bottom = -24.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
-
-[node name="JoyKnob" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=661345483 node_paths=PackedStringArray("joy_lock")]
-scale = Vector2(0.7, 0.7)
-texture = ExtResource("9_qkknv")
-script = ExtResource("9_mphia")
-auto_lock_hold_seconds = 0.0
-auto_lock_north_distance_multiplier = 4.0
-keep_locked_position_on_resize = false
-joy_lock = NodePath("../JoyLock")
-
-[node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyKnob" unique_id=2054266225]
-material = SubResource("ShaderMaterial_q62xx")
-custom_minimum_size = Vector2(130, 130)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -104.0
-offset_top = -104.0
-offset_right = -24.0
-offset_bottom = -24.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/hover = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
-theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
 
 [node name="Node3" type="Node" parent="." unique_id=1974703911]
 
@@ -690,14 +687,10 @@ texture = ExtResource("21_gltyx")
 
 [node name="MONstream" type="Label" parent="." unique_id=366851244]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -311.0
-offset_top = 80.0
-offset_right = -157.0
-offset_bottom = 106.0
-grow_horizontal = 0
+offset_left = 55.0
+offset_top = 155.0
+offset_right = 179.0
+offset_bottom = 175.0
 theme_override_colors/font_color = Color(0.4392157, 0.023529412, 0.99607843, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
@@ -705,7 +698,7 @@ theme_override_constants/shadow_offset_y = 5
 theme_override_constants/outline_size = 0
 theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 20
 text = "Your MON stream"
 horizontal_alignment = 2
 
@@ -721,14 +714,10 @@ texture = ExtResource("22_mgfyp")
 
 [node name="PrizePool" type="Label" parent="." unique_id=1341296255]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -291.0
-offset_top = 51.0
-offset_right = -157.0
-offset_bottom = 127.0
-grow_horizontal = 0
+offset_left = 53.0
+offset_top = 187.0
+offset_right = 160.0
+offset_bottom = 207.0
 theme_override_colors/font_color = Color(1, 1, 1, 0.50980395)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
@@ -736,7 +725,7 @@ theme_override_constants/shadow_offset_y = 5
 theme_override_constants/outline_size = 0
 theme_override_constants/shadow_outline_size = 0
 theme_override_fonts/font = ExtResource("3_apjy4")
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 20
 text = "Total MON pool"
 horizontal_alignment = 2
 
