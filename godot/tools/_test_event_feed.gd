@@ -88,6 +88,24 @@ func _initialize() -> void:
 	_check("colour is case-insensitive", hud._avatars.name_color("Alice") == hud._avatars.name_color("alice"))
 	_check("colour differs between names", hud._avatars.name_color("alice") != hud._avatars.name_color("bob"))
 
+	# 8b. The Twitch property that actually matters: nobody in the session wears
+	#     a colour someone else already has, even when their hashes collide.
+	var fresh := AvatarLoader.new()
+	var distinct: Dictionary = {}
+	for index in AvatarLoader.NAME_COLORS.size():
+		distinct[fresh.name_color("chatter%d" % index).to_html(true)] = true
+	_check(
+		"a full palette of players gets distinct colours",
+		distinct.size() == AvatarLoader.NAME_COLORS.size()
+	)
+	fresh.free()
+
+	# 8c. A colour is a session-long identity, not a property of the current row:
+	#     meeting someone new must not repaint an existing name.
+	var alice_color: Color = hud._avatars.name_color("alice")
+	hud._avatars.name_color("someone-brand-new")
+	_check("colour survives later arrivals", hud._avatars.name_color("alice") == alice_color)
+
 	# 9. A missing picture never blocks the feed: the row still renders, and the
 	#    name is not marked settled until the backend has actually answered.
 	_check("an unresolved name is not settled", not hud._avatars.is_settled("alice"))

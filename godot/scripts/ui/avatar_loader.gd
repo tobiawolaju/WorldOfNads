@@ -36,18 +36,27 @@ const MAX_CONCURRENT := 3
 const REQUEST_TIMEOUT_SEC := 8.0
 const MIN_AVATAR_PIXELS := 8
 
-## Palette for generated badges and for colouring names. Picked to stay legible
-## on the bright sand and on the dark storm overlay, and to be distinguishable
-## from each other for colour-blind viewers (distinct lightness as well as hue).
+## Palette for generated badges and for colouring names. Sixteen hues, ordered
+## around the wheel so that a run of neighbouring slots never reads as the same
+## colour, and kept light enough to survive a 12px font over bright sand thanks
+## to the black shadow outline every row carries.
 const NAME_COLORS: Array[Color] = [
-	Color(0.36, 0.90, 0.62),  # mint
-	Color(0.45, 0.78, 1.00),  # sky
-	Color(1.00, 0.78, 0.36),  # amber
-	Color(1.00, 0.55, 0.72),  # rose
-	Color(0.78, 0.66, 1.00),  # lilac
-	Color(0.55, 0.94, 0.94),  # aqua
-	Color(1.00, 0.66, 0.42),  # coral
-	Color(0.86, 0.92, 0.48),  # lime
+	Color(1.00, 0.42, 0.42),  # red
+	Color(0.45, 0.80, 1.00),  # sky
+	Color(0.55, 0.92, 0.45),  # lime
+	Color(0.95, 0.52, 0.95),  # magenta
+	Color(1.00, 0.80, 0.35),  # amber
+	Color(0.38, 0.92, 0.92),  # aqua
+	Color(0.78, 0.58, 1.00),  # violet
+	Color(0.36, 0.90, 0.66),  # mint
+	Color(1.00, 0.58, 0.32),  # orange
+	Color(0.40, 0.60, 1.00),  # blue
+	Color(1.00, 0.55, 0.75),  # pink
+	Color(0.82, 0.93, 0.42),  # yellow-green
+	Color(0.62, 0.60, 1.00),  # indigo
+	Color(0.45, 0.86, 0.72),  # teal
+	Color(1.00, 0.68, 0.68),  # rose
+	Color(0.92, 0.86, 0.62),  # sand
 ]
 
 ## `https://host/api/profile/picture?username=...`
@@ -64,6 +73,13 @@ var _queue: Array[String] = []
 var _display_names: Dictionary = {}
 var _in_flight := 0
 var _stopped := false
+
+## name(lower) -> Color. Sticky for the session so a player does not change
+## colour when their row scrolls out of the feed and back in later.
+var _name_colors: Dictionary = {}
+## colour hex -> name(lower). A second player whose hash lands on a taken colour
+## is pushed to the next free one, which is what keeps a busy feed readable.
+var _color_owners: Dictionary = {}
 
 ## Set by the owner. Kept as a setter so the loader can be reused if the client
 ## switches between the live backend and localhost (the events bridge does).
@@ -102,16 +118,45 @@ func is_settled(username: String) -> bool:
 	return key.is_empty() or _resolved.has(key)
 
 
-## Deterministic colour for a name: same name always gets the same colour, on
-## every client, without any coordination between them.
+## Colour for a name, Twitch-style: the name's hash picks a preferred slot, but
+## a slot already worn by someone else in this session is skipped, so no two
+## players in view ever share a colour.
+##
+## The probe is deterministic given the order names first appeared, which is the
+## same order on every client watching the same room — so a player looks the same
+## to everyone without any coordination, and stays that colour for the session.
 func name_color(username: String) -> Color:
 	var key := _cache_key(username)
 	if key.is_empty():
-		return Color(0.8, 0.8, 0.8)
+		return Color(0.82, 0.82, 0.82)
+
+	var cached = _name_colors.get(key)
+	if cached is Color:
+		return cached
+
+	var palette_size := NAME_COLORS.size()
+	var start := _hash_key(key) % palette_size
+
+	for offset in palette_size:
+		var candidate: Color = NAME_COLORS[(start + offset) % palette_size]
+		var owner := str(_color_owners.get(candidate.to_html(true), ""))
+		if owner.is_empty():
+			_name_colors[key] = candidate
+			_color_owners[candidate.to_html(true)] = key
+			return candidate
+
+	# All sixteen are spoken for: 16+ distinct players in one session. Repeating
+	# a colour beats refusing to name someone.
+	var overflow: Color = NAME_COLORS[start]
+	_name_colors[key] = overflow
+	return overflow
+
+
+func _hash_key(key: String) -> int:
 	var hash_value := 0
 	for index in key.length():
 		hash_value = (hash_value * 31 + key.unicode_at(index)) & 0x7FFFFFFF
-	return NAME_COLORS[hash_value % NAME_COLORS.size()]
+	return hash_value
 
 
 ## One or two characters for the badge. Handles the `player-1a2b3c4d` shape the
