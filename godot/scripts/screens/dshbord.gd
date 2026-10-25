@@ -690,14 +690,15 @@ func _preview_pane_height() -> float:
 
 
 # Queue a drag the way handleMouseMoveRotate does. Directions match OrbitControls:
-# drag right swings the camera left (the model follows the finger), drag down lifts
-# the camera so more of the crown is visible.
+# drag right swings the camera left (the model follows the finger).
+# Vertical orbit is switched off: only the sideways drag swings the camera, so
+# the nad is always viewed from the same framed elevation (the default pitch,
+# atan(0.08), which is the angle _frame_preview_camera() frames it at).
 func _orbit_preview(relative: Vector2) -> void:
 	if relative == Vector2.ZERO:
 		return
 	var per_pixel := TAU * ORBIT_ROTATE_SPEED / _preview_pane_height()
 	_preview_delta_yaw -= relative.x * per_pixel
-	_preview_delta_pitch += relative.y * per_pixel
 
 
 # Queue a zoom step. `factor` above 1 moves in; the wheel, pinch and magnify all
