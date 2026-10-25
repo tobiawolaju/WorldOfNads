@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./App.tsx";
 import { initGoogleAnalytics } from "./lib/analyticsClient";
 import { initInstallPrompt } from "./lib/installPrompt";
+import { initDeviceProfile, requestPersistentStorage } from "./lib/deviceProfile";
 
 import { PrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
@@ -59,13 +60,30 @@ initGoogleAnalytics();
 blockBrowserZoom();
 initInstallPrompt();
 
-// Register the service worker that makes the site installable as an app. It
-// never caches, so it only unlocks the native install prompt / WebAPK.
+// Reads deviceMemory / hardwareConcurrency / DPR once and stamps the tier on
+// <html data-perf="..."> so the 3D scene and CSS can size themselves to the
+// device. Must run before the first render, hence the top-level call.
+initDeviceProfile();
+
+// Ask the browser to keep our caches. Chromium grants this silently for an
+// installed PWA; without it, Android evicts the service-worker caches (and the
+// artwork in them) whenever storage gets tight, which is exactly the tablet /
+// phone case we care about. Re-asked after install because the grant is tied to
+// the installed app, not to the browser tab that requested it.
+requestPersistentStorage().catch(() => {});
+window.addEventListener("appinstalled", () => {
+  requestPersistentStorage().catch(() => {});
+});
+
+// Register the service worker that makes the site installable and keeps the
+// app shell, build output and artwork on disk.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // Installing from the browser menu still works if this fails.
-    });
+    navigator.serviceWorker
+      .register("/sw.js", { updateViaCache: "none" })
+      .catch(() => {
+        // Installing from the browser menu still works if this fails.
+      });
   });
 }
 

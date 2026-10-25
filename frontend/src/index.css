@@ -616,3 +616,12 @@ img,
         animation: none !important;
     }
 }
+
+/* Low-end devices (tier set by lib/deviceProfile). The rainbow bar is a
+   150vw blurred layer that animates forever: cheap on a desktop GPU, a
+   constant compositor wake-up on a weak phone. Freezing it keeps the page
+   idle when nothing is happening. */
+html[data-perf="low"] .rainbow-bar {
+    animation: none !important;
+    will-change: auto;
+}

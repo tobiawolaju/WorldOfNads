@@ -7,6 +7,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { resolveShaderType } from "../lib/skinMapping";
+import { getDeviceProfile } from "../lib/deviceProfile";
 
 // --- Prop Types ---
 interface Palette {
@@ -1321,7 +1322,12 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
     };
   }, []);
 
-  const chickenCount = 6;
+  // Capability-based quality: `low` halves the render resolution, drops MSAA
+  // and thins out the decorative chickens. Desktop / mid phones keep the exact
+  // previous look. Our focus is low-end Android, where fill rate is the wall.
+  const profile = useMemo(() => getDeviceProfile(), []);
+
+  const chickenCount = profile.decorativeChickens;
   const radius = 6;
   const seed = 12345;
   const rand = (s: number) => () => {
@@ -1350,14 +1356,14 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
         scale: 2 + random() * 2,
       };
     });
-  }, []);
+  }, [chickenCount]);
 
   return (
     <Canvas
-      dpr={[1, 1.35]}
+      dpr={[1, profile.maxDpr]}
       camera={{ position: cameraPosition }}
       frameloop="demand"
-      gl={{ alpha: true, powerPreference: "high-performance", antialias: true }}
+      gl={{ alpha: true, powerPreference: "high-performance", antialias: profile.antialias }}
       style={{ background: "none", pointerEvents: "auto" }}
       onCreated={({ gl, camera, invalidate }) => {
         gl.setClearColor(0x000000, 0);
@@ -1375,7 +1381,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
       {/* Rim Light: Provides highlights on the edges (separated from BG) */}
       <pointLight position={[0, 10, -10]} intensity={3.5} />
 
-      <Environment resolution={64} frames={1}>
+      <Environment resolution={profile.environmentResolution} frames={1}>
         <Lightformer intensity={4} rotation-x={Math.PI / 2} position={[0, 5, -9]} scale={[10, 10, 1]} />
         <Lightformer intensity={2.5} rotation-y={Math.PI / 2} position={[-5, 1, -1]} scale={[20, 0.5, 1]} />
         <Lightformer intensity={2} rotation-y={-Math.PI / 2} position={[10, 1, 0]} scale={[20, 1, 1]} />
