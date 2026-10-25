@@ -2,12 +2,14 @@
 // MIT License · https://pixeldreamerstudio.itch.io/
 // Animate `dissolve` from 0 (solid) to 1 (gone). The burning edge glows with `edge_color`.
 //
-// LOCAL MODIFICATION (World of Nads): the character body is drawn by
-// `skin_shaded.gdshader`, which uses a soft wrap-diffuse. This material replaces
-// that one at the instant of death, so without the same wrap the body would
-// flash noticeably brighter for the frame before the burn eats into it. The
-// lighting term below is copied from `skin_shaded.gdshader` for that reason.
-// Delete it and use `albedo.rgb * tex.rgb` for the unmodified stock effect.
+// Unmodified except for the note below. ALBEDO is left for Godot's default
+// spatial lighting to shade, exactly like the StandardMaterial3D the character
+// wears in life, so the swap does not change the body colour.
+//
+// Do NOT bake a hand-rolled light term into ALBEDO here. `skin_shaded.gdshader`
+// multiplies by normalize(BACKLIGHT), and BACKLIGHT is (0,0,0) for an ordinary
+// lit material, so copying that trick drops the body to ~20% brightness and the
+// character turns black the instant it starts dying.
 shader_type spatial;
 render_mode cull_disabled;
 
@@ -60,12 +62,7 @@ void fragment() {
 	}
 	vec4 tex = texture(albedo_texture, UV);
 
-	// Local modification: match the body's wrap-diffuse so the swap is invisible.
-	vec3 light = normalize(BACKLIGHT);
-	float ndotl = max(0.0, dot(NORMAL, light));
-	float wrap = pow(ndotl * 0.7 + 0.3, 1.3);
-
-	ALBEDO = albedo.rgb * tex.rgb * wrap;
+	ALBEDO = albedo.rgb * tex.rgb;
 	ROUGHNESS = roughness;
 	METALLIC = metallic;
 	float edge = 1.0 - smoothstep(d, d + edge_width, n);
