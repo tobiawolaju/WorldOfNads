@@ -1591,6 +1591,9 @@ func _recover_demo_agent() -> void:
 	_health_regen_timer = 0.0
 	_is_dead = false
 	_respawn_timer = 0.0
+	# A recovery is a revive like any other: make sure a burn in progress cannot
+	# leave the model invisible or invisible-but-solid.
+	DeathDissolve.restore(self)
 
 func _check_map_recovery() -> void:
 	if global_position.y >= -5.0:
@@ -1630,6 +1633,7 @@ func _check_map_recovery() -> void:
 	_health_regen_timer = 0.0
 	_is_dead = false
 	_respawn_timer = 0.0
+	DeathDissolve.restore(self)
 
 	# Get spawn position - try root first, then search scene for spawn marker
 	var spawn_pos: Vector3
@@ -2612,6 +2616,10 @@ func die() -> void:
 		# random spot) and the player is stripped of it.
 		_drop_power_up_at_death()
 	
+	# Burn the body away. The burn takes most of the respawn delay so the model
+	# is gone before the player reappears at the spawn point.
+	DeathDissolve.begin(self, RESPAWN_DELAY * 0.7)
+
 	# Visual feedback - could add death animation here
 	print("Player died! Respawning in ", RESPAWN_DELAY, "s...")
 
@@ -2627,6 +2635,9 @@ func respawn_at_spawn_point() -> void:
 	health = MAX_HEALTH
 	_health_regen_timer = 0.0
 	_is_dead = false
+	# Put the skin back before the player is visible again; the dissolve left the
+	# model fully discarded.
+	DeathDissolve.restore(self)
 	
 	# Reset stamina
 	stamina = STAMINA_MAX
