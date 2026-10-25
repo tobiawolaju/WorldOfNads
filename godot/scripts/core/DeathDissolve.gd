@@ -1,0 +1,206 @@
+extends RefCounted
+class_name DeathDissolve
+
+## Burns a player model away on death using `death_dissolve.gdshader`.
+##
+## The effect works by swapping each mesh's `material_override` for a
+## per-instance dissolve material and tweening all of them together. Swapping
+## rather than editing is not a style preference: `SkinApplier` hands the *same*
+## material instance to every player wearing a skin, so mutating one in place
+## would dissolve the entire room.
+##
+## `begin()` is idempotent per death and `restore()` is idempotent per respawn,
+## and the skin is snapshotted by reference rather than rebuilt, so a respawn
+## cannot come back wearing the wrong skin.
+##
+## This is presentation only. It never touches health, death timing or anything
+## the server is told about.
+
+const SHADER := preload("res://assets/shaders/death_dissolve.gdshader")
+
+## Seconds the burn takes by default. `die()` spends most of `RESPAWN_DELAY`
+## here so the body is fully gone before the player pops back in.
+const DEFAULT_DURATION := 1.4
+
+## Warm ember edge, as authored. Kept here so retinting the effect to the game's
+## pink is a one-line change rather than a shader edit.
+const EDGE_COLOR := Color(1.0, 0.45, 0.1, 1.0)
+
+const _DISSOLVE_META := "_death_dissolve_material"
+const _ORIGINAL_META := "_death_dissolve_original"
+const _LABEL_META := "_death_dissolve_label_modulate"
+const _TWEEN_META := "_death_dissolve_tween"
+
+
+## Starts the burn. Safe to call on a player that is already dissolving.
+static func begin(player: Node3D, duration: float = DEFAULT_DURATION) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	# A Tween needs a scene tree, and a player outside one is not being rendered
+	# anyway.
+	if not player.is_inside_tree():
+		return
+	# One dissolve per death. Running twice would snapshot the dissolve material
+	# as the "original" and the player would never get their skin back.
+	if player.has_meta(_TWEEN_META):
+		return
+
+	var materials: Array[ShaderMaterial] = []
+	for child in player.find_children("*", "MeshInstance3D", true, false):
+		var mesh := child as MeshInstance3D
+		if mesh == null:
+			continue
+		# `material_override` may be null on a mesh that relies on its surface
+		# material. That null is what has to be restored later, but the surface
+		# material is what has to be read for the colour.
+		var override_material := mesh.material_override
+		var source := override_material
+		if source == null:
+			source = _surface_material(mesh)
+
+		var dissolve := _build_material(source)
+		mesh.set_meta(_ORIGINAL_META, override_material)
+		mesh.set_meta(_DISSOLVE_META, dissolve)
+		mesh.material_override = dissolve
+		materials.append(dissolve)
+
+	if materials.is_empty():
+		return
+
+	var tween := player.create_tween()
+	tween.set_parallel(true)
+	for material in materials:
+		tween.tween_property(material, "shader_parameter/dissolve", 1.0, duration) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+	# The floating name tag is not a mesh, so without this it would hang in the
+	# air over an empty spot for the length of the respawn.
+	_fade_name_tags(player, tween, duration * 0.6)
+
+	player.set_meta(_TWEEN_META, tween)
+
+
+## Puts the player's real materials back. Safe to call when not dissolving, which
+## is what lets every respawn/teleport path call it unconditionally.
+static func restore(player: Node3D) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+
+	var running = player.get_meta(_TWEEN_META, null)
+	if running is Tween and (running as Tween).is_valid():
+		(running as Tween).kill()
+	player.remove_meta(_TWEEN_META)
+
+	for child in player.find_children("*", "MeshInstance3D", true, false):
+		var mesh := child as MeshInstance3D
+		if mesh == null or not mesh.has_meta(_DISSOLVE_META):
+			continue
+		if mesh.has_meta(_ORIGINAL_META):
+			mesh.material_override = mesh.get_meta(_ORIGINAL_META) as Material
+			mesh.remove_meta(_ORIGINAL_META)
+		mesh.remove_meta(_DISSOLVE_META)
+
+	for child in player.find_children("*", "Label3D", true, false):
+		var label := child as Label3D
+		if label == null or not label.has_meta(_LABEL_META):
+			continue
+		var saved: Color = label.get_meta(_LABEL_META)
+		label.modulate = saved
+		label.remove_meta(_LABEL_META)
+
+
+# ---------------------------------------------------------------------------
+# Material construction
+# ---------------------------------------------------------------------------
+
+## Mirrors whatever the mesh was drawn with, because the swap happens on screen
+## and a colour change at t=0 would read as a glitch rather than an effect.
+static func _build_material(source: Material) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = SHADER
+
+	var albedo := Color(0.8, 0.8, 0.85, 1.0)
+	var roughness := 0.5
+	var metallic := 0.0
+	var albedo_texture: Texture2D = null
+
+	if source is StandardMaterial3D:
+		var standard := source as StandardMaterial3D
+		albedo = standard.albedo_color
+		roughness = standard.roughness
+		metallic = standard.metallic
+		albedo_texture = standard.albedo_texture
+	elif source is ShaderMaterial:
+		# The skin shaders spell their one colour `albedo`; the face, eye and mouth
+		# shaders each use their own name, so probe the plausible ones rather than
+		# assuming. Getting this wrong shows up as a grey face during the burn.
+		var shader_material := source as ShaderMaterial
+		albedo = _first_color(shader_material, [
+			"albedo", "albedo_color", "color", "eye_color", "mouth_color", "base_color"
+		], albedo)
+		roughness = _first_float(shader_material, ["roughness_val", "roughness"], roughness)
+		metallic = _first_float(shader_material, ["metalness_val", "metallic", "metallic_val"], metallic)
+		albedo_texture = _first_texture(shader_material, ["albedo_texture", "albedo_tex", "texture"])
+
+	material.set_shader_parameter("albedo", albedo)
+	material.set_shader_parameter("roughness", roughness)
+	material.set_shader_parameter("metallic", metallic)
+	material.set_shader_parameter("edge_color", EDGE_COLOR)
+	# Start solid; the tween does the rest.
+	material.set_shader_parameter("dissolve", 0.0)
+	if albedo_texture != null:
+		material.set_shader_parameter("albedo_texture", albedo_texture)
+
+	return material
+
+
+static func _surface_material(mesh: MeshInstance3D) -> Material:
+	if mesh.mesh == null or mesh.mesh.get_surface_count() == 0:
+		return null
+	return mesh.mesh.surface_get_material(0)
+
+
+static func _first_color(source: ShaderMaterial, names: Array, fallback: Color) -> Color:
+	for name in names:
+		var value: Variant = source.get_shader_parameter(name)
+		if value is Color:
+			return value
+		# `eye_color` is declared `vec3`, which comes back as a Vector3 rather
+		# than a Color.
+		if value is Vector3:
+			return Color(value.x, value.y, value.z, 1.0)
+	return fallback
+
+
+static func _first_float(source: ShaderMaterial, names: Array, fallback: float) -> float:
+	for name in names:
+		var value: Variant = source.get_shader_parameter(name)
+		if value is float or value is int:
+			return float(value)
+	return fallback
+
+
+static func _first_texture(source: ShaderMaterial, names: Array) -> Texture2D:
+	for name in names:
+		var value: Variant = source.get_shader_parameter(name)
+		if value is Texture2D:
+			return value
+	return null
+
+
+# ---------------------------------------------------------------------------
+# Name tags
+# ---------------------------------------------------------------------------
+
+## Fades the floating name tag out with the body, remembering its current value
+## so a tag that was already dimmed for another reason comes back unchanged.
+static func _fade_name_tags(player: Node3D, tween: Tween, duration: float) -> void:
+	for child in player.find_children("*", "Label3D", true, false):
+		var label := child as Label3D
+		if label == null:
+			continue
+		if not label.has_meta(_LABEL_META):
+			label.set_meta(_LABEL_META, label.modulate)
+		var faded: Color = label.modulate
+		faded.a = 0.0
+		tween.tween_property(label, "modulate", faded, duration)
