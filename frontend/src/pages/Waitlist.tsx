@@ -50,7 +50,16 @@ const Waitlist: React.FC = () => {
       <div className="noise-overlay" />
 
       <div className="hero-bg-container">
-        <img src="/wons.gif" alt="Live gameplay" className="hero-bg-video" loading="lazy" />
+        <video
+          src="/wons.webm"
+          className="hero-bg-video"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          aria-label="Live gameplay"
+        />
         <div className="hero-overlay" />
       </div>
 
