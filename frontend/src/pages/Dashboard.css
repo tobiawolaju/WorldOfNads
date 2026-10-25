@@ -14,7 +14,7 @@
    lobbybg.jpeg's own 1216x523 ratio, so the backdrop keeps one constant shape
    instead of changing height with each match's artwork. Width fills the scene,
    vertically centered, with a 1:3:1 opacity gradient (top fades in, middle full,
-   bottom fades out) */
+   bottom fades out) at half opacity overall. */
 .lobby-bg {
   position: absolute;
   inset: 0;
@@ -24,6 +24,7 @@
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  opacity: 0.5;
 }
 
 .lobby-bg img {

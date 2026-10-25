@@ -14,6 +14,11 @@ void fragment() {
 	if (uv.y > 0.8) {
 		fade = (1.0 - uv.y) / 0.2;
 	}
-	COLOR = texture(TEXTURE, uv);
-	COLOR.a *= fade;
+	// COLOR holds the node's modulate (times the vertex colour) on entry; the
+	// texture write below would otherwise replace it, so fold its alpha into the
+	// fade. That keeps the TextureRect's modulate.a - set to 0.5 in dshbord.tscn -
+	// controlling the backdrop's overall opacity.
+	vec4 base = texture(TEXTURE, uv);
+	base.a *= fade * COLOR.a;
+	COLOR = base;
 }
