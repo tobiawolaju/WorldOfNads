@@ -26,6 +26,7 @@ import {
   createChogOwnershipService,
   createRateLimiter
 } from './chogNft.js';
+import { createAvatarDirectoryHandler } from './avatarDirectory.js';
 import { linkWalletKey, mintSkinForAccount } from './walletService.js';
 
 const PORT = process.env.PORT || 8080;
@@ -623,6 +624,15 @@ const handleChogOwnership = createChogOwnershipHandler({
   sendJson
 });
 
+// Public avatar lookup for the in-game event feed. Usernames are already
+// broadcast to the room in the events payload, so this only pairs that name
+// with its public picture — see `avatarDirectory.js` for the full contract.
+const handleProfilePicture = createAvatarDirectoryHandler({
+  lookupProfile: getPlayerProfile,
+  getClientIp,
+  sendJson
+});
+
 async function readJsonBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -1020,6 +1030,13 @@ const server = createServer(async (req, res) => {
   // See `chogNft.js`; the response is deliberately just the boolean.
   if (req.method === 'GET' && reqUrl.pathname === '/api/nft/chog-genesis/ownership') {
     await handleChogOwnership(req, res);
+    return;
+  }
+
+  // Avatar for a name shown in the events feed. Unauthenticated by design: the
+  // game client is rendering public chat, and this returns nothing but a URL.
+  if (req.method === 'GET' && reqUrl.pathname === '/api/profile/picture') {
+    await handleProfilePicture(req, res);
     return;
   }
 

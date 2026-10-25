@@ -69,8 +69,6 @@ shader_parameter/storm_radius = 0.25
 atlas = ExtResource("10_ui_atlas")
 region = Rect2(0, 0, 400, 82)
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_p3vpr"]
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lle6q"]
 bg_color = Color(1, 1, 1, 0.9098039)
 corner_radius_top_left = 50
@@ -326,6 +324,7 @@ stretch_mode = 4
 flip_v = true
 
 [node name="ChickenPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1952187711]
+visible = false
 z_index = 11
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 0
@@ -340,6 +339,7 @@ stretch_mode = 4
 flip_v = true
 
 [node name="LootBoxPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=146359137]
+visible = false
 z_index = 11
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 0
@@ -419,33 +419,17 @@ theme_override_constants/shadow_outline_size = 0
 theme_override_font_sizes/font_size = 12
 text = "...."
 
-[node name="BoxContainer3" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1509763072]
+[node name="EventFeed" type="VBoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1509763072]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -69.0
-offset_top = 12.0
-offset_right = -11.0
-offset_bottom = 30.0
+offset_left = -232.0
+offset_top = 76.0
+offset_right = -12.0
+offset_bottom = 196.0
 grow_horizontal = 0
-size_flags_horizontal = 0
-size_flags_vertical = 4
-alignment = 2
-
-[node name="status2" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=2089582472]
-layout_mode = 2
-theme_override_colors/font_color = Color(0, 1, 0, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
-theme_override_font_sizes/font_size = 13
-text = "...."
-
-[node name="status" type="Label" parent="CanvasLayer/BoxContainer/Node2/BoxContainer3" unique_id=1931454316]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxTexture_p3vpr")
-text = "...."
+mouse_filter = 2
+theme_override_constants/separation = 4
 
 [node name="CompassBar" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2" unique_id=1476260550]
 modulate = Color(1, 1, 1, 0.6509804)

@@ -8,10 +8,25 @@ const LIVE_EVENTS_URL := "wss://worldofnads.onrender.com/events"
 const ROOM_EVENTS_URL := "wss://wons-room-server.onrender.com/events"
 const LOCAL_EVENTS_URL := "ws://localhost:8080/events"
 const GAMEOVER_SCENE := preload("res://scenes/gameover.tscn")
-const MAX_STATUS_LINES := 4
+const AVATAR_CIRCLE_SHADER := preload("res://scenes/avatar_circle.gdshader")
 
-@export var status_label_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/BoxContainer3/status")
-@export var status2_label_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/BoxContainer3/status2")
+## Rows kept in the feed. Enough to follow what the room is doing, few enough to
+## stay readable over gameplay.
+const MAX_FEED_ROWS := 5
+const AVATAR_SIZE := 20.0
+const FEED_FADE_SEC := 0.18
+const FEED_NAME_ALPHA := 1.0
+const FEED_TEXT_ALPHA := 0.94
+const FEED_SYSTEM_ALPHA := 0.62
+
+# The avatar directory lives on the Node backend: the Rust room server knows
+# nothing about Privy, so there is nothing to ask it. Mirrors
+# `PlayerManager.API_BASE` (and its localhost fallback) so a local run resolves
+# local avatars instead of reaching for production.
+const LIVE_API_URL := "https://worldofnads.onrender.com"
+const LOCAL_API_URL := "http://localhost:8080"
+
+@export var feed_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/EventFeed")
 @export var username_label_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/BoxContainer2/username")
 
 var ws := WebSocketPeer.new()
@@ -24,13 +39,19 @@ var fallback_started := false
 var _room_query := ""
 
 var _username_locked := false
-var _actor_lines: Array[String] = []
-var _message_lines: Array[String] = []
+## Logical feed history, oldest first. Rows are a fixed pool rendered from this,
+## so a burst of events never allocates nodes.
+var _entries: Array[Dictionary] = []
+var _entry_seq := 0
+var _rows: Array[Dictionary] = []
+var _avatars: AvatarLoader = null
+var _circle_material: ShaderMaterial = null
+## colour hex -> StyleBoxFlat, so the badge disc is not rebuilt on every render.
+var _disc_styles: Dictionary = {}
 var _local_player_id := ""
 var _navigated_to_gameover := false
 
-@onready var status_label: Label = get_node_or_null(status_label_path)
-@onready var status_username: Label = get_node_or_null(status2_label_path)
+@onready var _feed: VBoxContainer = get_node_or_null(feed_path)
 @onready var username_label: Label = get_node_or_null(username_label_path)
 
 @onready var xp_stream_label: Label = get_node_or_null("XPstream")
@@ -61,6 +82,7 @@ var _last_mon_shown: float = -1.0
 
 func _ready() -> void:
 	add_to_group("events_bridge")
+	_setup_avatar_loader()
 	_setup_debug_labels()
 	_cache_reward_colors()
 	_try_set_username_from_web_query()
@@ -262,6 +284,10 @@ func _apply_label_color(color: Color, label: Label) -> void:
 
 func _start_local_fallback(reason: String) -> void:
 	fallback_started = true
+	# Avatars follow the same host as the feed, otherwise a local run would keep
+	# asking production for pictures of local players who are not there.
+	if _avatars != null and is_instance_valid(_avatars):
+		_avatars.configure(LOCAL_API_URL)
 	_show_local_status(reason)
 	var err = ws.connect_to_url(LOCAL_EVENTS_URL + _room_query)
 	if err != OK:
@@ -365,15 +391,6 @@ func _show_local_status(text: String, actor: String = "system") -> void:
 	_push_event_line(actor, text)
 
 func _push_event_line(actor: String, message: String) -> void:
-	if status_label == null:
-		status_label = get_node_or_null(status_label_path)
-	if status_username == null:
-		status_username = get_node_or_null(status2_label_path)
-	if status_label == null:
-		return
-	if status_username == null:
-		return
-
 	var safe_actor := actor.strip_edges()
 	var safe_message := message.strip_edges()
 	if safe_message == "":
@@ -381,15 +398,244 @@ func _push_event_line(actor: String, message: String) -> void:
 	if safe_actor == "":
 		safe_actor = "system"
 
-	_actor_lines.append(safe_actor)
-	_message_lines.append(safe_message)
-	if _actor_lines.size() > MAX_STATUS_LINES:
-		_actor_lines.pop_front()
-	if _message_lines.size() > MAX_STATUS_LINES:
-		_message_lines.pop_front()
+	_entry_seq += 1
+	_entries.append({
+		"actor": safe_actor,
+		"message": safe_message,
+		"seq": _entry_seq,
+	})
+	while _entries.size() > MAX_FEED_ROWS:
+		_entries.pop_front()
 
-	status_username.text = "\n".join(_actor_lines)
-	status_label.text = "\n".join(_message_lines)
+	_render_feed()
+
+# ---------------------------------------------------------------------------
+# Stream-chat feed
+# ---------------------------------------------------------------------------
+#
+# One row per event: avatar, coloured name, message. The rows are a fixed pool
+# built once and re-textured on each event, so a noisy room does not churn the
+# scene tree. Everything here is driven by an event arriving, never by a frame.
+
+func _setup_avatar_loader() -> void:
+	_avatars = AvatarLoader.new()
+	_avatars.name = "AvatarLoader"
+	_avatars.configure(LIVE_API_URL)
+	_avatars.avatar_ready.connect(_on_avatar_ready)
+	_avatars.avatar_missing.connect(_on_avatar_missing)
+	add_child(_avatars)
+
+func _on_avatar_ready(_username: String, _texture: Texture2D) -> void:
+	# A picture landed for a name already on screen: repaint so every row showing
+	# that player picks up the real avatar instead of the badge.
+	_render_feed()
+
+func _on_avatar_missing(_username: String) -> void:
+	# The badge is already what is on screen; nothing to swap. Kept as a hook so
+	# the "loading" state can be cleared if one is ever added.
+	pass
+
+func _ensure_feed_rows() -> void:
+	if not _rows.is_empty():
+		return
+	if _feed == null:
+		_feed = get_node_or_null(feed_path) as VBoxContainer
+	if _feed == null:
+		return
+	for index in MAX_FEED_ROWS:
+		_rows.append(_create_row(index))
+
+func _create_row(index: int) -> Dictionary:
+	var row := HBoxContainer.new()
+	row.name = "Row%d" % index
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 6)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.visible = false
+	_feed.add_child(row)
+
+	# The avatar slot is a fixed square; the disc and the photo are both stacked
+	# inside it so swapping one for the other never reflows the row.
+	var slot := Control.new()
+	slot.name = "Avatar"
+	slot.custom_minimum_size = Vector2(AVATAR_SIZE, AVATAR_SIZE)
+	slot.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(slot)
+
+	var disc := Panel.new()
+	disc.name = "Disc"
+	disc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	disc.add_theme_stylebox_override("panel", _disc_style(Color(0.18, 0.18, 0.18)))
+	slot.add_child(disc)
+	disc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var photo := TextureRect.new()
+	photo.name = "Photo"
+	photo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	photo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	photo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	photo.material = _avatar_material()
+	photo.visible = false
+	slot.add_child(photo)
+	photo.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var initial := Label.new()
+	initial.name = "Initial"
+	initial.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	initial.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	initial.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	initial.add_theme_font_size_override("font_size", 10)
+	initial.add_theme_color_override("font_color", Color(1, 1, 1, 0.92))
+	slot.add_child(initial)
+	initial.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	# RichTextLabel rather than Label: the name is coloured per player and the
+	# message wraps under it, which two newline-joined Labels could not do.
+	var text := RichTextLabel.new()
+	text.name = "Text"
+	text.bbcode_enabled = false
+	text.fit_content = true
+	text.scroll_active = false
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	text.add_theme_font_size_override("normal_font_size", 12)
+	text.add_theme_color_override("default_color", Color(1, 1, 1, FEED_TEXT_ALPHA))
+	text.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.75))
+	text.add_theme_constant_override("shadow_outline_size", 1)
+	row.add_child(text)
+
+	return {
+		"root": row,
+		"slot": slot,
+		"disc": disc,
+		"photo": photo,
+		"initial": initial,
+		"text": text,
+		"seq": -1,
+	}
+
+func _render_feed() -> void:
+	_ensure_feed_rows()
+	if _rows.is_empty():
+		return
+
+	for index in _rows.size():
+		var row: Dictionary = _rows[index]
+		var root: Control = row["root"]
+		if index >= _entries.size():
+			root.visible = false
+			row["seq"] = -1
+			continue
+		root.visible = true
+		_apply_row(row, _entries[index])
+
+func _apply_row(row: Dictionary, entry: Dictionary) -> void:
+	var actor := str(entry.get("actor", "system"))
+	var message := str(entry.get("message", ""))
+	var seq := int(entry.get("seq", 0))
+	var is_system := actor == "system"
+
+	# System notices (connection state, round results) get no face: a badge for
+	# "system" would put a fake player in the room. The slot itself stays laid
+	# out so every row's text starts on the same x.
+	var slot: Control = row["slot"]
+	slot.visible = true
+	if is_system:
+		_clear_avatar(row)
+	else:
+		_apply_avatar(row, actor)
+
+	var text: RichTextLabel = row["text"]
+	text.clear()
+	if is_system:
+		text.push_color(Color(1, 1, 1, FEED_SYSTEM_ALPHA))
+		text.add_text(message)
+		text.pop()
+	else:
+		var color := _name_color(actor)
+		text.push_color(Color(color.r, color.g, color.b, FEED_NAME_ALPHA))
+		text.push_bold()
+		text.add_text(actor)
+		text.pop()
+		text.pop()
+		text.push_color(Color(1, 1, 1, FEED_TEXT_ALPHA))
+		text.add_text(" " + message)
+		text.pop()
+
+	if int(row["seq"]) != seq:
+		row["seq"] = seq
+		# Only the newest row animates in; the ones shifting up stay put.
+		if seq == _entry_seq:
+			_play_row_fade(row["root"])
+
+func _clear_avatar(row: Dictionary) -> void:
+	var photo: TextureRect = row["photo"]
+	var disc: Panel = row["disc"]
+	var initial: Label = row["initial"]
+	photo.visible = false
+	disc.visible = false
+	initial.visible = false
+
+func _apply_avatar(row: Dictionary, actor: String) -> void:
+	var photo: TextureRect = row["photo"]
+	var disc: Panel = row["disc"]
+	var initial: Label = row["initial"]
+
+	var texture: Texture2D = _avatars.get_avatar(actor) if _avatars != null else null
+	if texture != null:
+		photo.texture = texture
+		photo.visible = true
+		disc.visible = false
+		initial.visible = false
+		return
+
+	# Badge: the first letter on a darkened name colour. A saturated fill at 20px
+	# competes with the message, so the disc stays dark and the letter carries
+	# the colour.
+	var base := _name_color(actor)
+	disc.add_theme_stylebox_override("panel", _disc_style(base.darkened(0.5)))
+	disc.visible = true
+	photo.visible = false
+	initial.text = _avatars.initial(actor) if _avatars != null else "?"
+	initial.visible = true
+
+func _play_row_fade(control: Control) -> void:
+	if control == null or not is_instance_valid(control):
+		return
+	control.modulate.a = 0.0
+	var tween := create_tween()
+	tween.tween_property(control, "modulate:a", 1.0, FEED_FADE_SEC) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+func _name_color(actor: String) -> Color:
+	if _avatars != null and is_instance_valid(_avatars):
+		return _avatars.name_color(actor)
+	return Color(0.45, 0.78, 1.0)
+
+func _disc_style(color: Color) -> StyleBoxFlat:
+	var key := color.to_html(true)
+	var cached = _disc_styles.get(key)
+	if cached is StyleBoxFlat:
+		return cached
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	var radius := int(AVATAR_SIZE * 0.5)
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius
+	_disc_styles[key] = style
+	return style
+
+## Shared material: the uniforms are constant, so every avatar row can point at
+## one material instead of carrying its own.
+func _avatar_material() -> ShaderMaterial:
+	if _circle_material == null:
+		_circle_material = ShaderMaterial.new()
+		_circle_material.shader = AVATAR_CIRCLE_SHADER
+	return _circle_material
 
 func _resolve_event_actor(event_data: Dictionary, fallback_actor: String) -> String:
 	var candidate = str(event_data.get("username", "")).strip_edges()
