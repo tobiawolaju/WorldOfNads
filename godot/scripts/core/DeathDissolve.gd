@@ -70,8 +70,12 @@ static func begin(player: Node3D, duration: float = DEFAULT_DURATION) -> void:
 	var tween := player.create_tween()
 	tween.set_parallel(true)
 	for material in materials:
+		# Ease *out*, not in. With EASE_IN a quadratic curve keeps `dissolve` at
+		# ~0 for the first 40% of the duration, which reads as a delay: the body
+		# stands there untouched and then suddenly vanishes. EASE_OUT front-loads
+		# the burn so it responds on the frame you die and leaves embers behind.
 		tween.tween_property(material, "shader_parameter/dissolve", 1.0, duration) \
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 	# The floating name tag is not a mesh, so without this it would hang in the
 	# air over an empty spot for the length of the respawn.

@@ -118,6 +118,16 @@ func _initialize() -> void:
 	DeathDissolve.restore(player)
 	_check("dying is reversible", _count_same_material(meshes, shared) == meshes.size())
 
+	# 12. The burn must be under way almost immediately. A slow-start curve (the
+	#     first version used EASE_IN) reads as a delay: the body stands untouched
+	#     for a moment and then pops out of existence.
+	DeathDissolve.begin(player, 1.0)
+	var burn: Tween = player.get_meta(TWEEN_META, null)
+	if burn is Tween:
+		(burn as Tween).custom_step(0.2)
+	_check("the burn is under way within 20% of its duration", _min_dissolve(meshes) >= 0.25)
+	DeathDissolve.restore(player)
+
 	print("death dissolve selftest: %d failure(s)" % failures)
 	quit(1 if failures > 0 else 0)
 
@@ -146,6 +156,18 @@ func _count_on_dissolve(meshes: Array[MeshInstance3D]) -> int:
 		if material != null and material.shader == DeathDissolve.SHADER:
 			count += 1
 	return count
+
+
+## Lowest dissolve value across the model, used to prove the burn is already
+## under way early in the tween rather than stalling at zero.
+func _min_dissolve(meshes: Array[MeshInstance3D]) -> float:
+	var lowest := 1.0
+	for mesh in meshes:
+		var material := mesh.material_override as ShaderMaterial
+		if material == null:
+			continue
+		lowest = minf(lowest, float(material.get_shader_parameter("dissolve")))
+	return lowest
 
 
 func _count_with_dissolve_at_least(meshes: Array[MeshInstance3D], minimum: float, maximum: float) -> int:
