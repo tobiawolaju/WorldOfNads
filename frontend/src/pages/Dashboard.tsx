@@ -18,6 +18,7 @@ import {
   recordSponsorDailyUniquePlayer
 } from "./firebaseClient";
 import { trackMatchJoined } from "../lib/analyticsClient";
+import { warmImage, warmImages, whenIdle } from "../lib/imageCache";
 import { requireInstall } from "../lib/installPrompt";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
 import { resolveGameSkinName, buildComboMap, resolveSkinAttachments, resolveSkinImageUrl } from "../lib/skinMapping";
@@ -738,23 +739,38 @@ export default function Dashboard() {
     [selectedMatchData?.lobbyBg, selectedMatch]
   );
 
-  // Preload lobby backgrounds so they're visible immediately on first swap.
+  // Keep the selected backdrop warm: it is on screen right now, so it must be
+  // decoded synchronously rather than on idle.
   useEffect(() => {
-    try {
-      lobbyBackgrounds.forEach((p) => {
-        const img = new Image();
-        img.src = p;
-      });
-      // Permanent rooms pin their own card art / backdrop, which is not part of the
-      // rotating sponsor picker, so warm those too.
-      ["/lobbybg/chogcard.jpg", "/lobbybg/chogbg.jpg"].forEach((p) => {
-        const img = new Image();
-        img.src = p;
-      });
-    } catch (e) {
-      // ignore preload failures
-    }
+    warmImage(lobbyBg);
+  }, [lobbyBg]);
+
+  // Preload the other backdrops (and the permanent rooms' own art) only once
+  // the browser is idle. Warming them on mount competed with the first paint and
+  // the 3D scene on low-end devices, which is exactly where a late frame shows.
+  useEffect(() => {
+    whenIdle(() => {
+      try {
+        warmImages([...lobbyBackgrounds, "/lobbybg/chogcard.jpg", "/lobbybg/chogbg.jpg"]);
+      } catch {
+        // Preloading is best effort; a missing file must not break the page.
+      }
+    });
   }, []);
+
+  // Card art: warm the carousel's artwork once the browser is idle, so flipping
+  // to Rewards or Store and back paints the cards from the warm bitmaps instead
+  // of re-decoding them. Keyed on `matches` rather than the sorted order, which
+  // is recomputed whenever the live-status clock ticks.
+  useEffect(() => {
+    whenIdle(() => {
+      try {
+        warmImages(matches.map((match) => match.image));
+      } catch {
+        // Best effort: card art is not required for the tab to work.
+      }
+    });
+  }, [matches]);
   const normalizedSelectedStatus = statusOf(selectedMatchData);
   const isLive = normalizedSelectedStatus === "live";
   const isTrainingLobby = selectedMatchData?.ctaMode === "play";
@@ -881,11 +897,13 @@ export default function Dashboard() {
       {!showLoader && authenticated && user && (
         <div className="dashboard-wrapper">
         <div className={`left-3d-section ${equipFlash ? "shake" : ""}`}>
-        {tab !== "store" && (
-          <div className="lobby-bg">
-            <img src={lobbyBg} alt="" />
-          </div>
-        )}
+        {/* The backdrop stays mounted for the whole dashboard session: swapping
+            tabs must not unmount it, or the browser drops the decoded bitmap
+            and re-decodes (blank frame) when the Events tab comes back. On the
+            Store tab it is only hidden. */}
+        <div className={`lobby-bg ${tab === "store" ? "lobby-bg--hidden" : ""}`} aria-hidden={tab === "store"}>
+          <img src={lobbyBg} alt="" decoding="async" />
+        </div>
         <ThreeScene
           equippedSkin={displayedSkin}
           isStoreOpen={tab === "store"}
@@ -955,6 +973,7 @@ export default function Dashboard() {
                           src={getStoreImageUrl(variant)}
                           alt=""
                           className="skin-preview__variant-img"
+                          decoding="async"
                         />
                       </button>
                     );
@@ -1164,7 +1183,14 @@ export default function Dashboard() {
                       className={`store-card ${isOwned ? "owned" : "unowned"} ${isSelected ? "selected" : ""}`}
                       onClick={() => setSelectedStore(item.id)}
                     >
-                      <div className="store-card-image" style={{ backgroundImage: `url(${getStoreImageUrl(item)})` }} />
+                      <img
+                        className="store-card-image"
+                        src={getStoreImageUrl(item)}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        draggable={false}
+                      />
                       <div className="store-card-info">
                         <h3>{skinBaseName(item.name)}</h3>
                         <p>
