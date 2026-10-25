@@ -66,7 +66,7 @@ const Home: React.FC = () => {
 
   // Hero Parallax
   const heroRef = useRef<HTMLDivElement>(null);
-  const heroBgRef = useRef<HTMLImageElement>(null);
+  const heroBgRef = useRef<HTMLVideoElement>(null);
   const [showFooterButtons, setShowFooterButtons] = useState(false);
   const heroFrameRef = useRef<number | null>(null);
   const heroVisibleRef = useRef(false);
@@ -383,7 +383,17 @@ const Home: React.FC = () => {
       {/* SECTION 1: HERO */}
       <section className="hero-section" ref={heroRef}>
         <div className="hero-bg-container">
-          <img ref={heroBgRef} src="/wons.gif" alt="World of Nads Gameplay" className="hero-bg-video" fetchPriority="high" />
+          <video
+            ref={heroBgRef}
+            src="/wons.webm"
+            className="hero-bg-video"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            aria-label="World of Nads Gameplay"
+          />
           <div className="hero-overlay" />
         </div>
 
