@@ -79,11 +79,12 @@ var lootbox_holder_id: String = ""
 var _last_lootbox_is_held: bool = false
 var _last_lootbox_holder_id: String = ""
 
-# --- SERVER-AUTHORITATIVE ITEM STATE (power-ups p1..p5) ---
-# The five power-ups share the chicken/lootbox protocol: the server owns each
-# item's spawn spot and who holds it. These mirror the last snapshot so the
-# per-frame pass can hide carried power-ups and seat released ones.
-const POWER_UP_ITEM_IDS: Array[String] = ["p1", "p2", "p3", "p4", "p5"]
+# --- SERVER-AUTHORITATIVE ITEM STATE (power-ups p1, p2, p3, p5) ---
+# The power-ups share the chicken/lootbox protocol: the server owns each item's
+# spawn spot and who holds it. These mirror the last snapshot so the per-frame
+# pass can hide carried power-ups and seat released ones. p4 is retired: it was
+# the HOOK power-up.
+const POWER_UP_ITEM_IDS: Array[String] = ["p1", "p2", "p3", "p5"]
 ## How far (on the HORIZONTAL plane) a server item spot must move before the local
 ## copy is re-seated. The server's y is a flat placeholder below the terrain, so
 ## once physics has dropped an item onto the ground its y no longer matches the

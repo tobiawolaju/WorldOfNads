@@ -60,6 +60,11 @@ var _held_color: Color = Color.WHITE
 ## How long the held pickup's effect would run (0 when it has no timed effect).
 ## While > 0 and no effect is running, the ring draws full as a "ready" signal.
 var _held_duration: float = 0.0
+## Charges left / total while a WEAPON is held (LocalPickup2). Weapons have no
+## timer: the ring drains one step per Action press. `_held_uses_total` <= 0
+## means "not a weapon".
+var _held_uses_left: int = -1
+var _held_uses_total: int = 0
 ## The TIMED power-up that is running, polled from the local player each frame.
 ## Shared with get_active_power_up() (player.gd) so the idle case, which is most
 ## of the time, costs no dictionary allocation per frame.
@@ -77,10 +82,20 @@ var _stacked_cache_text: String = ""
 ## label is empty. Called by player.gd whenever a pickup is grabbed or dropped.
 ## `duration` is how long the held pickup's effect would run; while > 0 the HUD
 ## draws the countdown ring as a full "ready" ring while it is carried.
-func show_power_up(label: String, color: Color, duration: float = 0.0) -> void:
+## `uses_left` / `uses_total` are the weapon alternative: the ring drains by one
+## `uses_total`-th per use instead of by time. Pass -1 / 0 when not a weapon.
+func show_power_up(
+	label: String,
+	color: Color,
+	duration: float = 0.0,
+	uses_left: int = -1,
+	uses_total: int = 0
+) -> void:
 	_held_label = label
 	_held_color = color
 	_held_duration = duration
+	_held_uses_left = uses_left
+	_held_uses_total = uses_total
 	_update_active_power_up()
 	_refresh_action_caption()
 
@@ -123,8 +138,8 @@ func _refresh_action_caption() -> void:
 		action_button.add_theme_color_override("font_color", tint)
 
 # Polls the local player for the running timed power-up and picks what the ring
-# should show: the depleting countdown of a running effect, or a full "ready"
-# ring while a pickup with a timed effect is being held.
+# should show: the depleting countdown of a running effect, a weapon's ammo gauge
+# (one step per use), or a full "ready" ring while a timed pickup is held.
 func _update_active_power_up() -> void:
 	_active = EMPTY_POWER_UP
 	if _cached_local_player != null \
@@ -138,6 +153,13 @@ func _update_active_power_up() -> void:
 		_ring_remaining = float(_active.get("remaining", 0.0))
 		_ring_duration = maxf(float(_active.get("duration", 0.0)), 0.0001)
 		_ring_color = _active.get("color", Color.WHITE)
+		_ring_active = true
+		_ring_held_ready = false
+	elif _held_uses_total > 0:
+		# A weapon in hand: the ring is its ammo gauge, one step per use.
+		_ring_remaining = float(maxi(_held_uses_left, 0))
+		_ring_duration = float(_held_uses_total)
+		_ring_color = _held_color
 		_ring_active = true
 		_ring_held_ready = false
 	elif _held_duration > 0.0:
@@ -457,6 +479,9 @@ func _poll_pickable(delta: float) -> void:
 	if _pickable_poll > 0.0:
 		return
 	_pickable_poll = PICKABLE_POLL_SECONDS
+	# The caption is not on screen in portrait mode, so nothing is polled there.
+	if not visible:
+		return
 	if _cached_local_player == null or not is_instance_valid(_cached_local_player) \
 	or not _cached_local_player.has_method("has_pickable_in_range"):
 		return

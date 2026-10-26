@@ -75,6 +75,8 @@ const POWERUP_AURA_SIZE := Vector2(2.0, 2.0)
 ## Local height the aura is centred on - the player's mid-body (the capsule sits
 ## at y 0.2, spanning roughly -0.3..0.7).
 const POWERUP_AURA_HEIGHT: float = 0.25
+## Hand slot in skin.tscn that holds the weapon meshes a pickup can reveal.
+const WEAPON_HAND_ATTACH_PATH: String = "Skeleton3D/BoneAttachment3D"
 
 # --- STORM DAMAGE ---
 @export var storm_center: Vector2 = Vector2(0, 0)
@@ -205,16 +207,6 @@ var _dev_cheat_buffer: String = ""
 var _dev_cheat_last_time: int = 0
 
 
-## HOOK punch: how long the punch plays when the HOOK power-up is used. Read from
-## the hook animation's own length when available; this is the fallback.
-const HOOK_FALLBACK_DURATION: float = 2.4
-## HOOK punch: the punch animation plays at this speed multiplier. Doubled from
-## the original 3x to 6x so the full swing reads as a quicker jab.
-const PUNCH_SPEED_MULT: float = 6.0
-## HOOK punch: for HOOK_DURATION seconds after use, the Action button fires the
-## punch (repeatable — each swing finishes before the next starts), with an
-## immediate first punch on use.
-const HOOK_DURATION: float = 8.0
 ## Health fraction (of MAX_HEALTH) at or below which the near-death fall animation
 ## plays once, right before the health bar empties.
 const HEALTH_CRITICAL_FRACTION: float = 0.05
@@ -236,6 +228,16 @@ var _active_power_up_mode: int = LocalPickup.PowerUpMode.NONE
 var _active_power_up_remaining: float = 0.0
 ## Total duration of the running timed power-up, for the HUD's progress ring.
 var _active_power_up_duration: float = 0.0
+## Weapon carried in the left hand (LocalPickup2.WeaponKind), or NONE. Weapons
+## are local-only and are spent by USE COUNT instead of a timer.
+var held_weapon_kind: int = LocalPickup2.WeaponKind.NONE
+## Charges left on the held weapon (spent one per Action press).
+var held_weapon_uses: int = 0
+## Charges a fresh weapon of that kind starts with; the HUD ring drains by
+## held_weapon_uses / held_weapon_max_uses.
+var held_weapon_max_uses: int = 0
+## The pickup this weapon came from; recycled to a far spot when it runs dry.
+var _held_weapon_pickup: RigidBody3D = null
 ## Shared powerup.gdshader material, built once (in _ready, with a lazy fallback)
 ## and handed to the aura quad.
 var _powerup_material: ShaderMaterial = null
@@ -275,11 +277,6 @@ var _smoke_clouds: Array = []
 static var _smoke_prewarmed: bool = false
 ## Cached once; avoids a tree search every pickup/drop.
 var _cached_buttons_hud: Node = null
-## HOOK punch: while true, the run/idle animation states stay suppressed and the
-## punch (hook) animation plays once to completion.
-var _is_punching: bool = false
-## Seconds left on the punch; the run/idle states resume when it hits zero.
-var _punch_timer: float = 0.0
 ## Near-death fall: while true, the run/idle animation states stay suppressed and
 ## the "fall" animation plays once after health drops to the critical threshold.
 var _is_dying_fall: bool = false
@@ -499,6 +496,11 @@ var _camera_ray_layer_set: bool = false
 var _cached_shader_player_pos: Vector3 = Vector3.INF
 var _cached_chicken_node: RigidBody3D = null
 var _cached_lootbox_node: RigidBody3D = null
+## Every pickup in LocalPickup.GROUP, cached. The HUD asks whether anything is in
+## grab range ten times a second, and walking the group on every ask cost ~50 us;
+## rebuilding the list only when a node enters or leaves the tree costs ~3 us.
+var _local_pickup_nodes: Array[RigidBody3D] = []
+var _local_pickup_nodes_dirty: bool = true
 ## How long to wait before re-scanning the "bus" group after a miss (see
 ## _apply_bus_riding): one immediate lookup, then at most once a second.
 const BUS_LOOKUP_RETRY_MSEC: int = 1000
@@ -537,6 +539,10 @@ func _ready() -> void:
 	_was_on_floor = is_on_floor()
 	_slide_timer = 0.0
 	_is_sliding = false
+	# Pickups can only appear or disappear by entering or leaving the tree, so these
+	# two signals are enough to keep the cached grab list honest.
+	get_tree().node_added.connect(_on_tree_node_changed)
+	get_tree().node_removed.connect(_on_tree_node_changed)
 	
 	# Initialize health
 	health = MAX_HEALTH
@@ -571,6 +577,8 @@ func _ready() -> void:
 
 	_cached_viewport_size = get_viewport().get_visible_rect().size
 	_setup_anim_tree()
+	# The rig ships with every hand weapon; only a held weapon may be visible.
+	_set_weapon_visual(LocalPickup2.WeaponKind.NONE)
 	_play_anim("idle")
 	_refresh_name_label()
 	_refresh_touch_joystick()
@@ -595,14 +603,10 @@ func _ready() -> void:
 
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
-	var state_names := ["idle", "running", "runningjump", "falling", "runningslide", "hook", "fall", "climb"]
+	var state_names := ["idle", "running", "runningjump", "falling", "runningslide", "fall", "climb"]
 	for state_name in state_names:
 		var node := AnimationNodeAnimation.new()
 		node.animation = state_name
-		if state_name == "hook":
-			# Play a faster copy of the punch (PUNCH_SPEED_MULT) so the one-shot
-			# reads as a quick jab.
-			node.animation = _ensure_fast_hook_animation(PUNCH_SPEED_MULT)
 		state_machine.add_node(state_name, node)
 	for from_name in state_names:
 		for to_name in state_names:
@@ -720,9 +724,10 @@ func _perform_pickup_request() -> void:
 	if _is_smoke_active():
 		_try_drop_smoke_cloud()
 		return
-	# While the HOOK power-up is running, the Action button fires a punch.
-	if _is_hook_active():
-		_start_punch()
+	# A held weapon is spent with the Action button: one charge per press, no
+	# timer. Weapons and power-ups occupy the same slot, so only one is active.
+	if held_weapon_kind != LocalPickup2.WeaponKind.NONE:
+		_use_held_weapon()
 		return
 	# A held power-up counts as "carried" even without a pickup instance (the
 	# reveal action can grant one directly), so the Action button uses it too.
@@ -742,6 +747,8 @@ func _perform_pickup_request() -> void:
 		_drop_object()
 		return
 	if _try_pickup_local():
+		return
+	if _try_pickup_weapon():
 		return
 	_try_pickup()
 
@@ -891,11 +898,6 @@ func _physics_process(delta: float) -> void:
 
 	if _smoke_drop_cooldown > 0.0:
 		_smoke_drop_cooldown = maxf(0.0, _smoke_drop_cooldown - delta)
-
-	if _is_punching:
-		_punch_timer = maxf(0.0, _punch_timer - delta)
-		if _punch_timer <= 0.0:
-			_is_punching = false
 
 	if _is_dying_fall:
 		_critical_fall_timer = maxf(0.0, _critical_fall_timer - delta)
@@ -1126,9 +1128,8 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, 0, FRICTION * delta)
 		velocity.z = move_toward(velocity.z, 0, FRICTION * delta)
-		# The HOOK punch / near-death fall lock the player in place, so no glide
-		# under the animation — but unlike a blocked match they still fall while
-		# airborne.
+		# The near-death fall locks the player in place, so no glide under the
+		# animation — but unlike a blocked match they still fall while airborne.
 		if not _is_action_locked():
 			velocity_y = 0.0
 
@@ -1613,8 +1614,6 @@ func _check_map_recovery() -> void:
 		return
 
 	_last_recovery_ms = now_ms
-	_is_punching = false
-	_punch_timer = 0.0
 	_is_dying_fall = false
 	_critical_fall_timer = 0.0
 	_is_sliding = false
@@ -1735,10 +1734,15 @@ func _is_objective_item_mode(mode: int) -> bool:
 	return mode == LocalPickup.PowerUpMode.CHICKEN or mode == LocalPickup.PowerUpMode.LOOTBOX
 
 func _find_nearest_local_pickup() -> RigidBody3D:
+	_refresh_local_pickup_nodes()
 	var best: RigidBody3D = null
 	var best_dist: float = LOCAL_PICKUP_RADIUS
-	for node in get_tree().get_nodes_in_group("local_pickup_items"):
-		if not (node is RigidBody3D) or not is_instance_valid(node):
+	for node in _local_pickup_nodes:
+		if not is_instance_valid(node):
+			continue
+		# Weapon pickups (LocalPickup2) share the minimap group but are grabbed by
+		# their own finder below, never as a power-up.
+		if node.has_method("is_weapon_pickup") and bool(node.call("is_weapon_pickup")):
 			continue
 		if not node.has_method("can_pick_up") or not node.can_pick_up():
 			continue
@@ -1748,11 +1752,28 @@ func _find_nearest_local_pickup() -> RigidBody3D:
 			best = node
 	return best
 
+# Rebuilds the cached pickup list after anything entered or left the tree. The
+# group itself is only walked when that happened, not on every grab-range ask.
+func _refresh_local_pickup_nodes() -> void:
+	if not _local_pickup_nodes_dirty:
+		return
+	_local_pickup_nodes_dirty = false
+	_local_pickup_nodes.clear()
+	for node in get_tree().get_nodes_in_group(LocalPickup.GROUP):
+		if node is RigidBody3D and is_instance_valid(node):
+			_local_pickup_nodes.append(node)
+
+func _on_tree_node_changed(_node: Node) -> void:
+	_local_pickup_nodes_dirty = true
+
 # LocalPickup items are never sent to the server, they are grabbed client side only.
 func _try_pickup_local() -> bool:
 	# One carried item at a time: holding anything blocks another pickup. A
 	# reveal-granted power-up has no pickup instance, so its mode is checked too.
-	if _is_local_holding_pickup() or held_power_up_mode != LocalPickup.PowerUpMode.NONE:
+	# A weapon in hand also occupies the slot, so a power-up cannot stack on it.
+	if _is_local_holding_pickup() \
+			or held_power_up_mode != LocalPickup.PowerUpMode.NONE \
+			or held_weapon_kind != LocalPickup2.WeaponKind.NONE:
 		return false
 	var now := Time.get_ticks_msec()
 	if now - last_pickup_request_ms < PICKUP_REQUEST_COOLDOWN_MS:
@@ -1776,6 +1797,105 @@ func _try_pickup_local() -> bool:
 	held_power_up_mode = int(mode_value) if mode_value != null else LocalPickup.PowerUpMode.NONE
 	_update_hud_power_up()
 	return true
+
+# --- WEAPONS (LocalPickup2) ---------------------------------------------
+# Weapons use charges instead of timers: a pickup is grabbed, its hand mesh is
+# revealed, and each Action press drains one charge from the HUD ring. At zero
+# the mesh is hidden again and the pickup recycles to a far spot on the map.
+
+func _find_nearest_weapon_pickup() -> RigidBody3D:
+	_refresh_local_pickup_nodes()
+	var best: RigidBody3D = null
+	var best_dist: float = LOCAL_PICKUP_RADIUS
+	for node in _local_pickup_nodes:
+		if not is_instance_valid(node):
+			continue
+		if not node.has_method("is_weapon_pickup") or not bool(node.call("is_weapon_pickup")):
+			continue
+		if not node.has_method("can_pick_up") or not node.can_pick_up():
+			continue
+		var dist: float = global_position.distance_to(node.global_position)
+		if dist < best_dist:
+			best_dist = dist
+			best = node
+	return best
+
+
+func _try_pickup_weapon() -> bool:
+	# Weapons share the single carried slot with power-ups and objective items.
+	if held_weapon_kind != LocalPickup2.WeaponKind.NONE:
+		return false
+	if _is_local_holding_pickup() or held_power_up_mode != LocalPickup.PowerUpMode.NONE:
+		return false
+	var now := Time.get_ticks_msec()
+	if now - last_pickup_request_ms < PICKUP_REQUEST_COOLDOWN_MS:
+		return false
+	var target := _find_nearest_weapon_pickup()
+	if target == null:
+		return false
+	if not target.has_method("pick_up") or not target.pick_up(self):
+		return false
+	_held_weapon_pickup = target
+	var kind_value = target.get("weapon_kind")
+	held_weapon_kind = int(kind_value) if kind_value != null else LocalPickup2.WeaponKind.NONE
+	var uses_value = target.get("uses")
+	var total: int = maxi(int(uses_value) if uses_value != null else 1, 1)
+	held_weapon_max_uses = total
+	held_weapon_uses = total
+	last_pickup_request_ms = now
+	_set_weapon_visual(held_weapon_kind)
+	_update_hud_power_up()
+	return true
+
+
+# Spends one charge. The last press hides the hand mesh and sends the pickup to
+# a fresh spot so it is never re-grabbed where the player stood.
+func _use_held_weapon() -> void:
+	if held_weapon_kind == LocalPickup2.WeaponKind.NONE:
+		return
+	if held_weapon_uses <= 0:
+		_clear_held_weapon(true)
+		return
+	held_weapon_uses -= 1
+	_update_hud_power_up()
+	if held_weapon_uses <= 0:
+		_clear_held_weapon(true)
+
+
+# Drops the carried weapon state. When `recycle` is true the pickup is respawned
+# somewhere far away; the hand mesh is always hidden.
+func _clear_held_weapon(recycle: bool) -> void:
+	var item := _held_weapon_pickup
+	held_weapon_kind = LocalPickup2.WeaponKind.NONE
+	held_weapon_uses = 0
+	held_weapon_max_uses = 0
+	_held_weapon_pickup = null
+	_set_weapon_visual(LocalPickup2.WeaponKind.NONE)
+	_update_hud_power_up()
+	if not recycle or item == null or not is_instance_valid(item):
+		return
+	if item.has_method("deplete_and_respawn"):
+		item.call("deplete_and_respawn", global_position)
+
+
+# Shows exactly the hand mesh of `kind` (NONE hides every weapon). The hand slot
+# also holds the shield, which is never touched here.
+func _set_weapon_visual(kind: int) -> void:
+	var slot := get_node_or_null(WEAPON_HAND_ATTACH_PATH) as Node3D
+	if slot == null:
+		return
+	var wanted := String(LocalPickup2.WEAPON_NODE_NAMES.get(kind, ""))
+	for node_name in LocalPickup2.WEAPON_NODE_NAMES.values():
+		var node := slot.get_node_or_null(String(node_name)) as Node3D
+		if node != null:
+			node.visible = String(node_name) == wanted
+
+
+# On death the weapon is lost: mesh off, pickup recycled to a random spot.
+func _drop_weapon_on_death() -> void:
+	if held_weapon_kind == LocalPickup2.WeaponKind.NONE:
+		return
+	_clear_held_weapon(true)
 
 func _drop_local_pickup() -> void:
 	var item := held_local_pickup
@@ -1877,22 +1997,12 @@ func _activate_power_up(mode: int) -> void:
 			# plus an immediate launch on use.
 			_start_timed_power_up(LocalPickup.PowerUpMode.MEGA_LEAP, MEGA_LEAP_DURATION)
 			_trigger_mega_leap()
-		LocalPickup.PowerUpMode.HOOK:
-			# HOOK: an 8s window during which the Action button fires the punch,
-			# with an immediate first punch on use. Each punch plays to completion
-			# before another can be fired.
-			_start_timed_power_up(LocalPickup.PowerUpMode.HOOK, HOOK_DURATION)
-			_start_punch()
 		_:
 			pass
 
 # True while the timed MEGA_LEAP effect is still running.
 func _is_mega_leap_active() -> bool:
 	return _active_power_up_mode == LocalPickup.PowerUpMode.MEGA_LEAP and _active_power_up_remaining > 0.0
-
-# True while the timed HOOK punch window is still running.
-func _is_hook_active() -> bool:
-	return _active_power_up_mode == LocalPickup.PowerUpMode.HOOK and _active_power_up_remaining > 0.0
 
 # Launches a 4x mega jump, one per time the player leaves the ground. The launch
 # is deferred to the next physics step so the grounded "velocity_y = 0" reset
@@ -1902,52 +2012,6 @@ func _trigger_mega_leap() -> void:
 	if not is_on_floor():
 		return
 	_mega_leap_pending = true
-
-# Returns the name of a PUNCH_SPEED_MULT-faster copy of the hook punch animation,
-# creating and registering it in the animator's library on first call. The
-# original clip is left untouched; the state machine's "hook" state plays the copy.
-func _ensure_fast_hook_animation(speed_mult: float) -> StringName:
-	var fast_name := &"hook_fast"
-	if anim_player.has_animation(fast_name):
-		return fast_name
-	var src := anim_player.get_animation("hook") as Animation
-	if src == null:
-		return &"hook"
-	var fast := src.duplicate() as Animation
-	for track in fast.get_track_count():
-		var key_count := fast.track_get_key_count(track)
-		for key in key_count:
-			fast.track_set_key_time(track, key, fast.track_get_key_time(track, key) / speed_mult)
-	fast.length = src.length / speed_mult
-	var lib := anim_player.get_animation_library(&"") as AnimationLibrary
-	if lib == null:
-		lib = AnimationLibrary.new()
-		anim_player.add_animation_library(&"", lib)
-	lib.add_animation(fast_name, fast)
-	return fast_name
-
-# Plays the HOOK punch animation once, locking the run/idle animation states for
-# the animation's duration so a moving player punches in place instead of running.
-func _start_punch() -> void:
-	# A punch already in flight is left alone to finish: the Action button can be
-	# pressed as often as you like during the HOOK window, but each swing has to
-	# play to the end before the next one starts, so spamming never restarts the
-	# clip mid-swing (which also keeps the movement lock from being held forever).
-	if _is_punching:
-		return
-	_is_punching = true
-	var duration := HOOK_FALLBACK_DURATION / PUNCH_SPEED_MULT
-	var punch_anim := anim_player.get_animation("hook") as Animation
-	if punch_anim != null:
-		duration = punch_anim.length / PUNCH_SPEED_MULT
-	_punch_timer = duration
-	if current_animation == "hook":
-		# Rare: the state is still on "hook" (held past the clip), so restart it
-		# from the top rather than being skipped by _set_anim's same-state guard.
-		if anim_state_machine:
-			anim_state_machine.start(&"hook", true)
-		return
-	_set_anim("hook")
 
 # Plays the near-death fall animation once when health drops to the critical
 # threshold (5% of max), right before the health bar empties.
@@ -2332,12 +2396,18 @@ func get_active_power_up() -> Dictionary:
 		"duration": _active_power_up_duration,
 	}
 
-# HUD API: whether anything is close enough to grab right now. Mirrors the checks
-# _try_pickup() and _find_nearest_local_pickup() make, so the Action button never
-# offers a grab a press would not actually perform.
+# HUD API: whether anything is close enough to grab right now -- power-ups and
+# weapons alike. Runs off the cached pickup list, so the HUD can ask ten times a
+# second without walking the scene tree.
 func has_pickable_in_range() -> bool:
-	if _find_nearest_local_pickup() != null:
-		return true
+	_refresh_local_pickup_nodes()
+	for node in _local_pickup_nodes:
+		if not is_instance_valid(node):
+			continue
+		if global_position.distance_to(node.global_position) >= LOCAL_PICKUP_RADIUS:
+			continue
+		if node.has_method("can_pick_up") and node.can_pick_up():
+			return true
 	if pickup_area != null:
 		for body in pickup_area.get_overlapping_bodies():
 			if body is RigidBody3D and body != self and body.is_in_group("pickup_items"):
@@ -2352,9 +2422,10 @@ func has_pickable_in_range() -> bool:
 			return true
 	return false
 
-# Shows the carried power-up (if any) on the HUD Action button. `duration` tells
-# the HUD how long the held pickup's effect would run, so it can draw the
-# countdown ring as a full "ready" ring while the pickup is carried.
+# Shows the carried power-up or weapon (if any) on the HUD Action button.
+# `duration` tells the HUD how long the held pickup's effect would run, so it can
+# draw the countdown ring as a full "ready" ring while the pickup is carried.
+# Weapons pass `uses_left`/`uses_total` instead: their ring drains by charges.
 func _update_hud_power_up() -> void:
 	var buttons := _find_buttons_hud()
 	if buttons == null or not buttons.has_method("show_power_up"):
@@ -2362,7 +2433,17 @@ func _update_hud_power_up() -> void:
 	var label := ""
 	var color: Color = Color.WHITE
 	var duration := 0.0
-	if held_power_up_mode != LocalPickup.PowerUpMode.NONE:
+	var uses_left := -1
+	var uses_total := 0
+	if held_weapon_kind != LocalPickup2.WeaponKind.NONE:
+		# Weapons show one shared 4-letter action word and drain the ring by
+		# charges instead of time.
+		label = LocalPickup2.ACTION_CAPTION
+		color = LocalPickup2.ACTION_COLOR
+		duration = 0.0
+		uses_left = held_weapon_uses
+		uses_total = held_weapon_max_uses
+	elif held_power_up_mode != LocalPickup.PowerUpMode.NONE:
 		if _is_objective_item_mode(held_power_up_mode):
 			# Objective items (chicken / lootbox) are carried, never used: the
 			# Action button is a plain white DROP, with no effect ring.
@@ -2377,7 +2458,7 @@ func _update_hud_power_up() -> void:
 				label = LocalPickup.POWER_UP_LABELS.get(held_power_up_mode, "")
 				color = LocalPickup.POWER_UP_COLORS.get(held_power_up_mode, Color.WHITE)
 			duration = _timed_duration_for(held_power_up_mode)
-	buttons.call("show_power_up", label, color, duration)
+	buttons.call("show_power_up", label, color, duration, uses_left, uses_total)
 
 # How long the given power-up's effect runs once used, or 0 for pickups with no
 # timed effect (they are consumed without a countdown).
@@ -2391,8 +2472,6 @@ func _timed_duration_for(mode: int) -> float:
 			return SMOKE_DURATION
 		LocalPickup.PowerUpMode.MEGA_LEAP:
 			return MEGA_LEAP_DURATION
-		LocalPickup.PowerUpMode.HOOK:
-			return HOOK_DURATION
 	return 0.0
 
 
@@ -2408,11 +2487,14 @@ func _maybe_grant_random_powerup_on_reveal() -> void:
 		return
 	if held_power_up_mode != LocalPickup.PowerUpMode.NONE:
 		return
+	# A weapon occupies the same carried slot, so the free power-up would have
+	# nowhere to go.
+	if held_weapon_kind != LocalPickup2.WeaponKind.NONE:
+		return
 	var pool: Array = [
 		LocalPickup.PowerUpMode.SPEED_BURST,
 		LocalPickup.PowerUpMode.TWIN,
 		LocalPickup.PowerUpMode.SMOKE_GRENADE,
-		LocalPickup.PowerUpMode.HOOK,
 		LocalPickup.PowerUpMode.MEGA_LEAP,
 	]
 	if pool.is_empty():
@@ -2652,6 +2734,9 @@ func die() -> void:
 		# An unused power-up stays where the player died (never recycled to a
 		# random spot) and the player is stripped of it.
 		_drop_power_up_at_death()
+	# A weapon is lost on death: the hand mesh goes away and its pickup is
+	# recycled to a random spot on the map.
+	_drop_weapon_on_death()
 	
 	# Burn the body away. The burn takes most of the respawn delay so the model
 	# is gone before the player reappears at the spawn point.
@@ -2722,8 +2807,6 @@ func respawn_at_spawn_point() -> void:
 	_camera_look_target = _camera_follow_target
 	
 	# Reset animation
-	_is_punching = false
-	_punch_timer = 0.0
 	_is_dying_fall = false
 	_critical_fall_timer = 0.0
 	current_animation = "idle"
@@ -3097,11 +3180,10 @@ func set_animation_state(new_state: String):
 	current_animation = new_state
 	_play_anim(new_state)
 
-# True while a non-locomotion animation is playing that must not be interrupted
-# (HOOK punch or the near-death fall): the player stops and the run/idle states
-# stay suppressed until it completes.
+# True while the near-death fall animation is playing and must not be interrupted:
+# the player stops and the run/idle states stay suppressed until it completes.
 func _is_action_locked() -> bool:
-	return _is_punching or _is_dying_fall
+	return _is_dying_fall
 
 func _handle_animations(move_dir: Vector3) -> void:
 	if not is_local: return
@@ -3109,10 +3191,6 @@ func _handle_animations(move_dir: Vector3) -> void:
 		# Attached to a surface: the climb loop owns the pose. The climb branch in
 		# _physics_process normally sets this; the guard covers any other caller.
 		_set_anim("climb")
-		return
-	if _is_punching:
-		# Hold the punch animation; the run/idle logic below must not override it.
-		_set_anim("hook")
 		return
 	if _is_dying_fall:
 		# Nearly dead: hold the fall animation for its full length.

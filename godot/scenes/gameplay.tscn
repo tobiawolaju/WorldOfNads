@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://bj27lnrpsa1wt" path="res://scenes/busyland.tscn" id="12_nt65e"]
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="13_i18v2"]
 [ext_resource type="PackedScene" uid="uid://ds74a1sw044u4" path="res://scenes/pickup.tscn" id="13_nt65e"]
+[ext_resource type="PackedScene" uid="uid://cqgso836leaiu" path="res://scenes/pickup2.tscn" id="14_weapons"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_qixtg"]
 render_priority = 0
@@ -143,21 +144,37 @@ power_up_mode = 2
 transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.647236, 1.4365964, -0.26766753)
 power_up_mode = 3
 
-[node name="p4" parent="." unique_id=80862294 instance=ExtResource("13_nt65e")]
-transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -1.649298)
-power_up_mode = 4
-
 [node name="p5" parent="." unique_id=300391791 instance=ExtResource("13_nt65e")]
 transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -2.2704427)
-power_up_mode = 5
+power_up_mode = 4
 
 [node name="Chicken" parent="." unique_id=1795549842 instance=ExtResource("13_nt65e")]
 transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 1.246697, 5.703834, -0.28305912)
-power_up_mode = 6
+power_up_mode = 5
 
 [node name="LootBox" parent="." unique_id=784657971 instance=ExtResource("13_nt65e")]
 transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 1.246697, 5.703834, -0.9042039)
-power_up_mode = 7
+power_up_mode = 6
+
+[node name="WeaponSword" parent="." instance=ExtResource("14_weapons")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 1.4365964, 0.1)
+weapon_kind = 1
+
+[node name="WeaponAK47" parent="." instance=ExtResource("14_weapons")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 1.4365964, -0.9)
+weapon_kind = 2
+
+[node name="WeaponGlock" parent="." instance=ExtResource("14_weapons")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.2, 1.4365964, -1.7)
+weapon_kind = 3
+
+[node name="WeaponKnife" parent="." instance=ExtResource("14_weapons")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.8, 1.4365964, 0.6)
+weapon_kind = 4
+
+[node name="WeaponRPG" parent="." instance=ExtResource("14_weapons")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.4, 1.4365964, -1.9)
+weapon_kind = 5
 
 [editable path="Bus"]
 [editable path="Hud"]

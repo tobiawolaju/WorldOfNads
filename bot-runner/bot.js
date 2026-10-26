@@ -20,7 +20,8 @@
 //   server -> client  connect | state_full | state_delta | reward_update
 //   client -> server  update_state | pickup_request | use_request | drop_request
 //
-// Items are "Chicken", "LootBox" and the five power-ups "p1".."p5".
+// Items are "Chicken", "LootBox" and the power-ups "p1", "p2", "p3", "p5"
+// (p4 is retired: it was the removed HOOK power-up).
 
 import http from "node:http";
 import { WebSocket } from "ws";
@@ -53,7 +54,7 @@ const ACTION_COOLDOWN_MS = 400;
 const RECONNECT_MS = 1200;
 const POS_SCALE = 100.0;
 const ROT_SCALE = 1000.0;
-const POWER_UP_IDS = ["p1", "p2", "p3", "p4", "p5"];
+const POWER_UP_IDS = ["p1", "p2", "p3", "p5"];
 
 const SKINS = [
   "defaultnad",

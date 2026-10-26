@@ -209,7 +209,7 @@ scale = Vector2(0.7, 0.7)
 texture = ExtResource("9_qkknv")
 script = ExtResource("9_mphia")
 auto_lock_hold_seconds = 0.0
-auto_lock_forward_min_strength = 1.2
+auto_lock_forward_min_strength = 0.9
 auto_lock_north_distance_multiplier = 2.0
 keep_locked_position_on_resize = false
 joy_lock = NodePath("../JoyLock")
@@ -243,7 +243,6 @@ offset_bottom = 40.0
 [node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=802481236]
 
 [node name="Minimap" type="Control" parent="CanvasLayer/BoxContainer/Node2" unique_id=43787215 node_paths=PackedStringArray("background_texture", "minimap_container", "player_pointer", "chicken_pointer", "lootbox_pointer", "pickup_pointer", "storm_overlay", "bus_path_overlay", "shade_overlay")]
-modulate = Color(1, 1, 1, 0.48235294)
 custom_minimum_size = Vector2(60, 60)
 clip_contents = true
 layout_mode = 3

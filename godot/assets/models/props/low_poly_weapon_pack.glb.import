@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://v50j2ega17ct"
-path="res://.godot/imported/yeeps_rubber_chicken.glb-56f9fef5af6cb08a3ab820ebdd3e06ae.scn"
+uid="uid://b5xanvg70rhax"
+path="res://.godot/imported/low_poly_weapon_pack.glb-174d205742786680bb556a30fcd84791.scn"
 
 [deps]
 
-source_file="res://assets/models/yeeps_rubber_chicken.glb"
-dest_files=["res://.godot/imported/yeeps_rubber_chicken.glb-56f9fef5af6cb08a3ab820ebdd3e06ae.scn"]
+source_file="res://assets/models/props/low_poly_weapon_pack.glb"
+dest_files=["res://.godot/imported/low_poly_weapon_pack.glb-174d205742786680bb556a30fcd84791.scn"]
 
 [params]
 

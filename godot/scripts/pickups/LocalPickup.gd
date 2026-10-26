@@ -1,6 +1,6 @@
 extends RigidBody3D
 class_name LocalPickup
-## Pickup item: power-ups (p1..p5) and the objective items (chicken / lootbox).
+## Pickup item: the power-ups and the objective items (chicken / lootbox).
 ##
 ## The SERVER owns every item's spawn spot and who is carrying it. Clients mirror
 ## the server position (apply_server_spawn) and hide a power-up while it is in
@@ -34,7 +34,6 @@ enum PowerUpMode {
 	SPEED_BURST,    # 8s of boosted run speed
 	TWIN,           # spawn a decoy clone that mirrors your movement for 8s
 	SMOKE_GRENADE,  # temporary smoke cloud that blocks vision
-	HOOK,           # lunge punch; one hit drops the target and their chicken
 	MEGA_LEAP,      # one super high jump, consumed on use
 	CHICKEN,        # the objective chicken — server tracks its holder (winner)
 	LOOTBOX         # the objective lootbox — server tracks its holder (2nd place)
@@ -44,7 +43,6 @@ const POWER_UP_LABELS := {
 	PowerUpMode.SPEED_BURST: "RUSH",
 	PowerUpMode.TWIN: "TWIN",
 	PowerUpMode.SMOKE_GRENADE: "SMOG",
-	PowerUpMode.HOOK: "HOOK",
 	PowerUpMode.MEGA_LEAP: "LEAP",
 	PowerUpMode.CHICKEN: "CHICKEN",
 	PowerUpMode.LOOTBOX: "LOOTBOX",
@@ -56,7 +54,6 @@ const POWER_UP_COLORS := {
 	PowerUpMode.SPEED_BURST: Color(0.25, 0.55, 1.0),   # blue
 	PowerUpMode.TWIN: Color(1.0, 0.85, 0.15),          # yellow
 	PowerUpMode.SMOKE_GRENADE: Color(0.45, 0.8, 0.4),  # smoke green
-	PowerUpMode.HOOK: Color(1.0, 0.2, 0.2),            # red
 	PowerUpMode.MEGA_LEAP: Color(0.65, 0.3, 1.0),      # purple
 	PowerUpMode.CHICKEN: Color(0.98, 0.8, 0.3),        # gold
 	PowerUpMode.LOOTBOX: Color(0.35, 0.68, 1.0),       # blue
@@ -93,13 +90,14 @@ func is_objective_item() -> bool:
 
 
 # The item id the server tracks this pickup under. Objective items report their
-# dedicated ids; the power-ups report their node name (p1..p5). Returns "" for
-# any pickup the server does not know about, so unsynced items stay silent.
+# dedicated ids; the power-ups report their node name (p1, p2, p3, p5 -- p4 is
+# retired along with the removed HOOK power-up). Returns "" for any pickup the
+# server does not know about, so unsynced items stay silent.
 func server_item_id() -> String:
 	if is_objective_item():
 		return objective_item_id()
 	var pickup_name := String(name)
-	if pickup_name in ["p1", "p2", "p3", "p4", "p5"]:
+	if pickup_name in ["p1", "p2", "p3", "p5"]:
 		return pickup_name
 	return ""
 
@@ -259,14 +257,14 @@ func _find_mesh() -> MeshInstance3D:
 func is_power_up_item() -> bool:
 	match power_up_mode:
 		PowerUpMode.SPEED_BURST, PowerUpMode.TWIN, PowerUpMode.SMOKE_GRENADE, \
-		PowerUpMode.HOOK, PowerUpMode.MEGA_LEAP:
+		PowerUpMode.MEGA_LEAP:
 			return true
 	return false
 
 
 # Shows the one authored model that belongs to this pickup's mode in pickup.tscn:
 # "chick" for the objective chicken, "loot" for the objective lootbox and
-# "powerup" for any of the five power-ups. The other two stay hidden, including
+# "powerup" for any of the four power-ups. The other two stay hidden, including
 # for NONE pickups.
 func _apply_mode_visual() -> void:
 	var chick_visual := get_node_or_null("chick") as Node3D
