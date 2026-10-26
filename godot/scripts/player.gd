@@ -1098,6 +1098,12 @@ func _physics_process(delta: float) -> void:
 	# --- STORM DAMAGE (check every 0.1s) ---
 	_update_storm_damage(delta)
 
+	# --- DEATH DISSOLVE ---
+	# The burn follows health, so damage is visible on the body as it lands
+	# instead of only once the player is already dead. Placed after storm damage
+	# so a hit taken this frame shows this frame.
+	DeathDissolve.sync_health(self, health, MAX_HEALTH)
+
 	# --- MOMENTUM CALCULATION ---
 	if _climb_push_timer > 0.0:
 		# Launching off a climb surface: the away/vault vector owns horizontal

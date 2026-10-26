@@ -1,7 +1,14 @@
 extends RefCounted
 class_name DeathDissolve
 
-## Burns a player model away on death using `death_dissolve.gdshader`.
+## Burns a player model away using `death_dissolve.gdshader`.
+##
+## Two things drive the burn:
+##
+##  * `sync_health()` — called every frame with the player's health, so the body
+##    erodes as damage accumulates. The point is that you can see yourself dying:
+##    the health bar says "31%", the model says "I am coming apart".
+##  * `begin()` — called on death, and runs the burn the rest of the way to gone.
 ##
 ## The effect works by swapping each mesh's `material_override` for a
 ## per-instance dissolve material and tweening all of them together. Swapping
@@ -26,10 +33,31 @@ const DEFAULT_DURATION := 1.4
 ## pink is a one-line change rather than a shader edit.
 const EDGE_COLOR := Color(1.0, 0.45, 0.1, 1.0)
 
+## Health fraction below which the body starts to come apart. A graze should not
+## visibly wound the model, and the first thing the noise eats is the mouth, which
+## reads as a hole in the face.
+const HEALTH_DISSOLVE_START := 0.75
+
+## How far the body is eaten away by health alone. Death carries on from here to a
+## full burn, so the two effects join instead of restarting. Stopping short of 1.0
+## matters: a living player you cannot see is a gameplay problem, not a mood.
+const HEALTH_DISSOLVE_MAX := 0.6
+
+## Seconds a health-driven change takes to catch up. Long enough to read as a burn
+## creeping, short enough that a hit lands on the same beat as the health bar.
+const HEALTH_TWEEN_TIME := 0.18
+
+## Ignore health changes too small to see. Without this, slow regeneration would
+## create a fresh Tween every frame for sub-pixel differences.
+const HEALTH_RETARGET_EPSILON := 0.004
+
 const _DISSOLVE_META := "_death_dissolve_material"
 const _ORIGINAL_META := "_death_dissolve_original"
 const _LABEL_META := "_death_dissolve_label_modulate"
 const _TWEEN_META := "_death_dissolve_tween"
+const _SWAPPED_META := "_death_dissolve_swapped"
+const _DEATH_META := "_death_dissolve_death"
+const _TARGET_META := "_death_dissolve_target"
 
 ## True once this process has drawn the dissolve program at least once.
 static var _prewarmed := false
@@ -86,7 +114,53 @@ static func is_prewarmed() -> bool:
 	return _prewarmed
 
 
-## Starts the burn. Safe to call on a player that is already dissolving.
+## How far the body should be eaten away at a given health fraction, 0..1.
+static func dissolve_for_health(fraction: float) -> float:
+	var missing := 1.0 - clampf(fraction, 0.0, 1.0)
+	var past := missing - (1.0 - HEALTH_DISSOLVE_START)
+	if past <= 0.0:
+		return 0.0
+	return HEALTH_DISSOLVE_MAX * clampf(past / HEALTH_DISSOLVE_START, 0.0, 1.0)
+
+
+## Points the burn at the player's current health, so damage shows on the body as
+## it happens instead of only once the player is already dead.
+##
+## Called every frame from `player._process`, so it leaves in one comparison when
+## nothing has changed.
+static func sync_health(player: Node3D, health: float, max_health: float) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	if not player.is_inside_tree() or max_health <= 0.0:
+		return
+	# Death owns the burn from `die()` until the respawn puts the skin back.
+	if player.has_meta(_DEATH_META):
+		return
+
+	var target := dissolve_for_health(health / max_health)
+	if player.has_meta(_TARGET_META):
+		var previous := float(player.get_meta(_TARGET_META))
+		if absf(previous - target) < HEALTH_RETARGET_EPSILON:
+			return
+
+	# Fully healed: hand the real skin back, so a player who took one hit at the
+	# start of the match is not stuck on the burn material afterwards. The swap
+	# happens once the burn has faded to nothing, so the handover is invisible.
+	if target <= 0.0:
+		if not player.has_meta(_SWAPPED_META):
+			return
+		player.set_meta(_TARGET_META, 0.0)
+		_tween_dissolve(player, 0.0, true)
+		return
+
+	if _ensure_swapped(player).is_empty():
+		return
+	player.set_meta(_TARGET_META, target)
+	_tween_dissolve(player, target)
+
+
+## Starts the death burn, carrying on from wherever health left the body. Safe to
+## call on a player that is already dissolving.
 static func begin(player: Node3D, duration: float = DEFAULT_DURATION) -> void:
 	if player == null or not is_instance_valid(player):
 		return
@@ -94,32 +168,18 @@ static func begin(player: Node3D, duration: float = DEFAULT_DURATION) -> void:
 	# anyway.
 	if not player.is_inside_tree():
 		return
-	# One dissolve per death. Running twice would snapshot the dissolve material
-	# as the "original" and the player would never get their skin back.
-	if player.has_meta(_TWEEN_META):
+	# One death burn per death. Running twice would snapshot the burn material as
+	# the "original" and the player would never get their skin back.
+	if player.has_meta(_DEATH_META):
 		return
 
-	var materials: Array[ShaderMaterial] = []
-	for child in player.find_children("*", "MeshInstance3D", true, false):
-		var mesh := child as MeshInstance3D
-		if mesh == null:
-			continue
-		# `material_override` may be null on a mesh that relies on its surface
-		# material. That null is what has to be restored later, but the surface
-		# material is what has to be read for the colour.
-		var override_material := mesh.material_override
-		var source := override_material
-		if source == null:
-			source = _surface_material(mesh)
-
-		var dissolve := _build_material(source)
-		mesh.set_meta(_ORIGINAL_META, override_material)
-		mesh.set_meta(_DISSOLVE_META, dissolve)
-		mesh.material_override = dissolve
-		materials.append(dissolve)
-
+	var materials := _ensure_swapped(player)
 	if materials.is_empty():
 		return
+
+	_kill_tween(player)
+	player.set_meta(_DEATH_META, true)
+	player.set_meta(_TARGET_META, 1.0)
 
 	var tween := player.create_tween()
 	tween.set_parallel(true)
@@ -144,10 +204,10 @@ static func restore(player: Node3D) -> void:
 	if player == null or not is_instance_valid(player):
 		return
 
-	var running = player.get_meta(_TWEEN_META, null)
-	if running is Tween and (running as Tween).is_valid():
-		(running as Tween).kill()
-	player.remove_meta(_TWEEN_META)
+	_kill_tween(player)
+	player.remove_meta(_DEATH_META)
+	player.remove_meta(_SWAPPED_META)
+	player.remove_meta(_TARGET_META)
 
 	for child in player.find_children("*", "MeshInstance3D", true, false):
 		var mesh := child as MeshInstance3D
@@ -165,6 +225,88 @@ static func restore(player: Node3D) -> void:
 		var saved: Color = label.get_meta(_LABEL_META)
 		label.modulate = saved
 		label.remove_meta(_LABEL_META)
+
+
+# ---------------------------------------------------------------------------
+# Swapping and tweening
+# ---------------------------------------------------------------------------
+
+## Swaps every mesh onto the burn material, once. Meshes already swapped keep the
+## material they have, so an in-progress burn is never reset back to solid.
+static func _ensure_swapped(player: Node3D) -> Array[ShaderMaterial]:
+	var materials: Array[ShaderMaterial] = []
+	for child in player.find_children("*", "MeshInstance3D", true, false):
+		var mesh := child as MeshInstance3D
+		if mesh == null:
+			continue
+		if mesh.has_meta(_DISSOLVE_META):
+			materials.append(mesh.get_meta(_DISSOLVE_META) as ShaderMaterial)
+			continue
+
+		# `material_override` may be null on a mesh that relies on its surface
+		# material. That null is what has to be restored later, but the surface
+		# material is what has to be read for the colour.
+		var override_material := mesh.material_override
+		var source := override_material
+		if source == null:
+			source = _surface_material(mesh)
+
+		var dissolve := _build_material(source)
+		mesh.set_meta(_ORIGINAL_META, override_material)
+		mesh.set_meta(_DISSOLVE_META, dissolve)
+		mesh.material_override = dissolve
+		materials.append(dissolve)
+
+	if not materials.is_empty():
+		player.set_meta(_SWAPPED_META, true)
+	return materials
+
+
+## The burn materials currently on the player, or an empty list if the skin is
+## still in place.
+static func _current_materials(player: Node3D) -> Array[ShaderMaterial]:
+	var materials: Array[ShaderMaterial] = []
+	for child in player.find_children("*", "MeshInstance3D", true, false):
+		var mesh := child as MeshInstance3D
+		if mesh == null or not mesh.has_meta(_DISSOLVE_META):
+			continue
+		materials.append(mesh.get_meta(_DISSOLVE_META) as ShaderMaterial)
+	return materials
+
+
+static func _kill_tween(player: Node3D) -> void:
+	var running: Variant = player.get_meta(_TWEEN_META, null)
+	if running is Tween and (running as Tween).is_valid():
+		(running as Tween).kill()
+	player.remove_meta(_TWEEN_META)
+
+
+## Moves every burn material to `target`. With `restore_when_done`, the skin is
+## handed back once the burn has faded out completely.
+static func _tween_dissolve(player: Node3D, target: float, restore_when_done := false) -> void:
+	var materials := _current_materials(player)
+	if materials.is_empty():
+		return
+
+	_kill_tween(player)
+	var tween := player.create_tween()
+	tween.set_parallel(true)
+	for material in materials:
+		tween.tween_property(material, "shader_parameter/dissolve", target, HEALTH_TWEEN_TIME) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if restore_when_done:
+		tween.chain().tween_callback(func() -> void: _restore_after_heal(player))
+	player.set_meta(_TWEEN_META, tween)
+
+
+static func _restore_after_heal(player: Node3D) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	# Died during the fade out; the death burn owns the model now.
+	if player.has_meta(_DEATH_META):
+		return
+	player.remove_meta(_TWEEN_META)
+	restore(player)
 
 
 # ---------------------------------------------------------------------------
