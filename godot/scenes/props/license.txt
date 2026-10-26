@@ -1,0 +1,11 @@
+Model Information:
+* title:	Ots 14 groza
+* source:	https://sketchfab.com/3d-models/ots-14-groza-92b24eb7a2d945b9adb11e0975256fef
+* author:	Long Nguyễn (https://sketchfab.com/LongNguyen89)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Ots 14 groza" (https://sketchfab.com/3d-models/ots-14-groza-92b24eb7a2d945b9adb11e0975256fef) by Long Nguyễn (https://sketchfab.com/LongNguyen89) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
