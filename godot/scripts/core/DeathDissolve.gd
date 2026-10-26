@@ -138,20 +138,31 @@ static func sync_health(player: Node3D, health: float, max_health: float) -> voi
 		return
 
 	var target := dissolve_for_health(health / max_health)
-	if player.has_meta(_TARGET_META):
-		var previous := float(player.get_meta(_TARGET_META))
-		if absf(previous - target) < HEALTH_RETARGET_EPSILON:
-			return
 
-	# Fully healed: hand the real skin back, so a player who took one hit at the
-	# start of the match is not stuck on the burn material afterwards. The swap
-	# happens once the burn has faded to nothing, so the handover is invisible.
+	# Fully recovered: hand the real skin back, so a player who took one hit at
+	# the start of the match is not stuck on the burn material afterwards. The
+	# swap happens once the burn has faded to nothing, so it is invisible.
+	#
+	# This must be checked *before* the retarget epsilon below. Health regenerates
+	# continuously, so the target creeps down to zero in steps far smaller than the
+	# epsilon, and a guard that swallowed that last step would leave the player on
+	# the burn material indefinitely. That is nearly invisible on the body, because
+	# dissolve 0 looks like the skin — but the eyes lose their camera-facing dot,
+	# the mouth loses its interior and cosmetics lose their authored shading. Only
+	# dying cleared it, because respawn calls restore() directly.
 	if target <= 0.0:
 		if not player.has_meta(_SWAPPED_META):
+			return
+		if player.has_meta(_TARGET_META) and is_zero_approx(float(player.get_meta(_TARGET_META))):
 			return
 		player.set_meta(_TARGET_META, 0.0)
 		_tween_dissolve(player, 0.0, true)
 		return
+
+	if player.has_meta(_TARGET_META):
+		var previous := float(player.get_meta(_TARGET_META))
+		if absf(previous - target) < HEALTH_RETARGET_EPSILON:
+			return
 
 	if _ensure_swapped(player).is_empty():
 		return
@@ -275,7 +286,11 @@ static func _current_materials(player: Node3D) -> Array[ShaderMaterial]:
 
 
 static func _kill_tween(player: Node3D) -> void:
-	var running: Variant = player.get_meta(_TWEEN_META, null)
+	if not player.has_meta(_TWEEN_META):
+		return
+	# `get_meta` with a null default still logs "no meta with key" in this build,
+	# so check first: this runs on every retarget, i.e. throughout regeneration.
+	var running: Variant = player.get_meta(_TWEEN_META)
 	if running is Tween and (running as Tween).is_valid():
 		(running as Tween).kill()
 	player.remove_meta(_TWEEN_META)
