@@ -196,6 +196,19 @@ func _initialize() -> void:
 	_check("dying from a part-burned body still disappears", _count_with_dissolve_at_least(meshes, 0.99, 1.01) == meshes.size())
 	DeathDissolve.restore(player)
 
+	# 22. Health regenerates in small steps. The last step down to the threshold is
+	#     smaller than the retarget epsilon, and swallowing that step left the
+	#     player on the burn material for the rest of the match — invisible on the
+	#     body, because dissolve 0 looks like the skin, but the eyes lose their
+	#     camera-facing dot, the mouth its interior and cosmetics their shading.
+	#     Only death put it back, because respawn calls restore() directly.
+	DeathDissolve.sync_health(player, MAX_HEALTH_TEST * 0.5, MAX_HEALTH_TEST)
+	_settle_dissolve(player)
+	for step in [0.6, 0.7, 0.74, 0.749, 0.75]:
+		DeathDissolve.sync_health(player, MAX_HEALTH_TEST * step, MAX_HEALTH_TEST)
+		_settle_dissolve(player)
+	_check("a gradual heal still restores the skin", _count_same_material(meshes, shared) == meshes.size())
+
 	print("death dissolve selftest: %d failure(s)" % failures)
 	quit(1 if failures > 0 else 0)
 
