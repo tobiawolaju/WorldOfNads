@@ -58,11 +58,6 @@ const MAX_SMOKE_CLOUDS: int = 6
 ## The standalone cloud prefab. Spawned under the scene root (not the player) so
 ## it stays put, and so multiplayer can replicate it by position + seed.
 const SMOKE_CLOUD_SCENE := preload("res://scenes/smoke_cloud.tscn")
-## Ground dust kicked up on take-off and landing. Purely visual, spawned under
-## the scene root so it stays where it was raised.
-const DUST_BURST_SCENE := preload("res://scenes/dust_burst.tscn")
-## Hard cap on simultaneous puffs; the oldest is recycled beyond this.
-const MAX_DUST_BURSTS: int = 6
 ## Shared empty result from get_active_power_up(), so the idle case allocates nothing.
 const NO_ACTIVE_POWER_UP := {}
 ## powerup.gdshader: an animated, additive glow drawn around the player for the
@@ -278,10 +273,6 @@ var _smoke_clouds: Array = []
 ## Set once the SMOG effect's sprite + shader have been warmed up, so respawns and
 ## later matches in the same process don't pay to build them again.
 static var _smoke_prewarmed: bool = false
-## Live dust puffs this player spawned, for the concurrent-burst cap.
-var _dust_bursts: Array = []
-## Same one-shot warm-up rule as the SMOG cloud, for the jump/landing dust.
-static var _dust_prewarmed: bool = false
 ## Cached once; avoids a tree search every pickup/drop.
 var _cached_buttons_hud: Node = null
 ## HOOK punch: while true, the run/idle animation states stay suppressed and the
@@ -593,10 +584,6 @@ func _ready() -> void:
 	# Death dissolve warm-up: same idea, so the first death does not stutter on a
 	# shader compile. Death can happen in any scene, so this one is unconditional.
 	_prewarm_death_dissolve.call_deferred()
-	# Jump/landing dust: same one-shot rule. The first jump can happen seconds
-	# after spawn, so this one is unconditional too (unlike the SMOG cloud, which
-	# only exists in a match).
-	_prewarm_jump_dust.call_deferred()
 
 	# The reveal key may already be down when this player spawns (the scene
 	# changed while it was held), so the extras follow the key itself and not
@@ -1161,17 +1148,11 @@ func _physics_process(delta: float) -> void:
 
 	if is_on_floor() and not was_on_floor_before_move:
 		_start_landing_bob(vertical_speed_before_move)
-		_spawn_landing_dust(vertical_speed_before_move)
 		# Landing re-arms the double jump: the earned charge carries over until it is
 		# actually used, so the HUD can show "double available" while grounded.
 		_double_jump_used = false
 		_double_jump_air_time = 0.0
 		_zoom_cap_override = -1.0
-	elif was_on_floor_before_move and not is_on_floor():
-		# Left the ground this frame: a jump, a MEGA_LEAP, or simply walking off a
-		# ledge. velocity_y still holds whatever impulse was applied above, so the
-		# puff sizes itself from the jump instead of needing a call per jump site.
-		_spawn_takeoff_dust()
 	_apply_bus_riding()
 
 	# Squash & stretch on jump/land
@@ -2174,97 +2155,6 @@ func _track_smoke_cloud(cloud: Node3D) -> void:
 		if is_instance_valid(oldest):
 			oldest.queue_free()
 	_smoke_clouds.append(cloud)
-
-
-# --- JUMP / LANDING DUST ---
-# A short ground puff on take-off and on landing. Both are detected centrally in
-# _physics_process by watching the floor state across move_and_slide(), so every
-# jump site (walk, buffered jump, double jump's landing, MEGA_LEAP) is covered
-# without repeating a spawn call at each one.
-
-# Builds one throwaway puff so the first real jump doesn't hitch. Same reasoning
-# as _prewarm_smoke_cloud: the first burst pays for the shared sprite and for
-# compiling the particle material, both of which would land on the frame the
-# player presses jump. Off-screen geometry is culled before its material
-# compiles, so the warm-up is parked in front of the camera and kept invisible.
-func _prewarm_jump_dust() -> void:
-	if _dust_prewarmed:
-		return
-	if DisplayServer.get_name() == "headless":
-		return
-	var camera := _resolve_camera_node()
-	if camera == null:
-		return
-	var burst := DUST_BURST_SCENE.instantiate() as Node3D
-	if burst == null:
-		return
-	_dust_prewarmed = true
-	burst.call("setup", 1.0)
-	burst.call("set_warmup")
-	var parent := get_tree().current_scene
-	if parent == null:
-		parent = get_parent()
-	if parent == null:
-		burst.queue_free()
-		return
-	parent.add_child(burst)
-	burst.global_position = camera.global_position - camera.global_transform.basis.z * 2.0
-	await RenderingServer.frame_post_draw
-	await RenderingServer.frame_post_draw
-	if is_instance_valid(burst):
-		burst.queue_free()
-
-
-# Take-off strength comes from the impulse that was just applied, so a MEGA_LEAP
-# throws a much bigger puff than a tired hop, and stepping off a ledge (almost no
-# vertical speed) barely raises any.
-func _spawn_takeoff_dust() -> void:
-	_spawn_dust(global_position, absf(velocity_y) / JUMP_VELOCITY)
-
-
-# Landing strength comes from the speed the player hit the ground with. Small
-# drops are ignored: a puff on every kerb step would read as noise.
-func _spawn_landing_dust(fall_velocity: float) -> void:
-	var impact := absf(fall_velocity)
-	if impact < 2.5:
-		return
-	_spawn_dust(global_position, impact / 8.0)
-
-
-# Network seam: like the SMOG cloud, this is a local-only visual for now. The
-# multiplayer version only needs to replicate the position + strength.
-func _spawn_dust(world_position: Vector3, burst_strength: float) -> void:
-	if not is_local:
-		return
-	var burst := DUST_BURST_SCENE.instantiate() as Node3D
-	if burst == null:
-		return
-	burst.call("setup", burst_strength)
-	var parent := get_tree().current_scene
-	if parent == null:
-		parent = get_parent()
-	if parent == null:
-		burst.queue_free()
-		return
-	parent.add_child(burst)
-	# A few centimetres up so the puffs are not half buried in the ground.
-	burst.global_position = world_position + Vector3(0.0, 0.04, 0.0)
-	_track_dust_burst(burst)
-
-
-# Keeps at most MAX_DUST_BURSTS alive by recycling the oldest when full; bursts
-# free themselves once their particles have faded.
-func _track_dust_burst(burst: Node3D) -> void:
-	var alive: Array = []
-	for existing in _dust_bursts:
-		if is_instance_valid(existing) and not existing.is_queued_for_deletion():
-			alive.append(existing)
-	_dust_bursts = alive
-	while _dust_bursts.size() >= MAX_DUST_BURSTS:
-		var oldest = _dust_bursts.pop_front()
-		if is_instance_valid(oldest):
-			oldest.queue_free()
-	_dust_bursts.append(burst)
 
 
 # Starts (or replaces) the single timed power-up the HUD draws a ring for.
