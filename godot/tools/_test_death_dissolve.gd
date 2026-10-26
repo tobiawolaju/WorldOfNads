@@ -128,8 +128,25 @@ func _initialize() -> void:
 	_check("the burn is under way within 20% of its duration", _min_dissolve(meshes) >= 0.25)
 	DeathDissolve.restore(player)
 
+	# 13. Warm-up: the shader is compiled by drawing it for one frame before
+	#     anyone dies. Nothing renders headless, so there is no program to compile
+	#     and the warm-up must stay out of the way instead of allocating probes.
+	DeathDissolve.prewarm(player)
+	_check("warm-up does not run headless", not DeathDissolve.is_prewarmed())
+	_check("warm-up leaves no probe behind", _find_probe(root) == null)
+
 	print("death dissolve selftest: %d failure(s)" % failures)
 	quit(1 if failures > 0 else 0)
+
+
+func _find_probe(node: Node) -> Node:
+	for child in node.get_children():
+		if child.name == "DeathDissolvePrewarm":
+			return child
+		var found := _find_probe(child)
+		if found != null:
+			return found
+	return null
 
 
 func _meshes(player: Node3D) -> Array[MeshInstance3D]:

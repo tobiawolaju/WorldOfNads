@@ -31,6 +31,60 @@ const _ORIGINAL_META := "_death_dissolve_original"
 const _LABEL_META := "_death_dissolve_label_modulate"
 const _TWEEN_META := "_death_dissolve_tween"
 
+## True once this process has drawn the dissolve program at least once.
+static var _prewarmed := false
+
+
+## Draws the dissolve material for a single real frame so the shader program is
+## compiled before anyone dies.
+##
+## Godot compiles a shader the first time a material is actually *drawn*, not
+## when it is created or assigned. Without this, the very first death hitches for
+## a frame or two at exactly the moment the effect has to be immediate — the
+## opening of the burn is when a stutter is most obvious.
+##
+## The probe is drawn at `dissolve = 1.0`, which discards every fragment, so it
+## is invisible even though the draw happens. Same one-shot-per-process rule as
+## the smoke cloud and the power-up aura in `player.gd`.
+static func prewarm(player: Node3D) -> void:
+	if _prewarmed:
+		return
+	# Nothing is rendered headless, so there is no program to compile.
+	if DisplayServer.get_name() == "headless":
+		return
+	if player == null or not is_instance_valid(player) or not player.is_inside_tree():
+		return
+	# Bailing before claiming the flag lets a later player retry, in case the
+	# camera has not been created yet when the first one spawns.
+	var camera := player.get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	_prewarmed = true
+
+	var probe := MeshInstance3D.new()
+	probe.name = "DeathDissolvePrewarm"
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.002, 0.002)
+	probe.mesh = quad
+	probe.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var material := _build_material(null)
+	material.set_shader_parameter("dissolve", 1.0)
+	probe.material_override = material
+	# Half a metre in front of the camera: inside the frustum, so it is drawn,
+	# and in the same viewport and lighting as the death will be.
+	probe.position = Vector3(0.0, 0.0, -0.5)
+	camera.add_child(probe)
+
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	if is_instance_valid(probe):
+		probe.queue_free()
+
+
+## Test hook: reports whether this process has warmed the dissolve program.
+static func is_prewarmed() -> bool:
+	return _prewarmed
+
 
 ## Starts the burn. Safe to call on a player that is already dissolving.
 static func begin(player: Node3D, duration: float = DEFAULT_DURATION) -> void:
