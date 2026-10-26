@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/effects/dust_burst.gd" id="1_dust"]
+
+[node name="DustBurst" type="CPUParticles3D"]
+script = ExtResource("1_dust")
