@@ -26,6 +26,22 @@ var _action_caption: Label = null
 var _action_caption_default: String = ""
 var _action_caption_default_color: Color = Color.WHITE
 
+## Shown instead of the authored GRAB while nothing is close enough to grab. It is
+## four characters like GRAB, so it stacks to the same height in the 80x80 button.
+const IDLE_CAPTION := "PUMP"
+## The idle caption is always plain white, never a held power-up's colour.
+const IDLE_CAPTION_COLOR := Color.WHITE
+## How often the "is anything in reach?" check runs. It walks the pickup group and
+## the player's grab area, so it is polled instead of run every frame.
+const PICKABLE_POLL_SECONDS := 0.1
+
+## The stacked form of IDLE_CAPTION, built once in _ready.
+var _idle_caption_stacked: String = ""
+## Whether the local player has anything to grab. Drives PUMP vs GRAB. Starts true
+## so the caption reads as it always has until a player exists.
+var _pickable_in_range: bool = true
+var _pickable_poll: float = 0.0
+
 ## Radial countdown drawn around the Action button while a timed power-up runs.
 var _action_ring: Control = null
 var _ring_active: bool = false
@@ -84,8 +100,16 @@ func _refresh_action_caption() -> void:
 			_stacked_source_label = label
 			_stacked_cache_text = _stack_vertically(label)
 		stacked = _stacked_cache_text
-	var text := _action_caption_default if label == "" else stacked
-	var tint := _action_caption_default_color if label == "" else color
+	var text := _action_caption_default
+	var tint := _action_caption_default_color
+	if label != "":
+		text = stacked
+		tint = color
+	elif not _pickable_in_range and _idle_caption_stacked != "":
+		# Nothing held and nothing in reach: PUMP, in the plain white the
+		# authored caption already uses.
+		text = _idle_caption_stacked
+		tint = IDLE_CAPTION_COLOR
 	if text == _last_caption_text and tint == _last_caption_color:
 		return
 	_last_caption_text = text
@@ -259,6 +283,7 @@ func _ready() -> void:
 		if _action_caption != null:
 			_action_caption_default = _action_caption.text
 			_action_caption_default_color = _action_caption.get_theme_color("font_color")
+			_idle_caption_stacked = _stack_vertically(IDLE_CAPTION)
 		_create_action_ring()
 
 # Builds the countdown ring and parents it to the Action button. Created in code
@@ -401,7 +426,7 @@ func _fire_action(action_name: StringName, pressed: bool) -> void:
 	event.pressed = pressed
 	Input.parse_input_event(event)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if action_button == null:
 		return
 	if _cached_local_player == null or not is_instance_valid(_cached_local_player):
@@ -420,7 +445,22 @@ func _process(_delta: float) -> void:
 		action_button.self_modulate.a = target_alpha
 
 	_update_active_power_up()
+	_poll_pickable(delta)
 	_refresh_action_caption()
+
+
+## Refreshes whether anything is within grab range, at PICKABLE_POLL_SECONDS rather
+## than every frame. Players without the method (older scenes, bots) leave the
+## caption on GRAB, which is what it showed before this existed.
+func _poll_pickable(delta: float) -> void:
+	_pickable_poll -= delta
+	if _pickable_poll > 0.0:
+		return
+	_pickable_poll = PICKABLE_POLL_SECONDS
+	if _cached_local_player == null or not is_instance_valid(_cached_local_player) \
+	or not _cached_local_player.has_method("has_pickable_in_range"):
+		return
+	_pickable_in_range = bool(_cached_local_player.call("has_pickable_in_range"))
 
 
 func _update_chog_visibility() -> void:
