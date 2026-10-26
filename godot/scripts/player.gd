@@ -2332,6 +2332,26 @@ func get_active_power_up() -> Dictionary:
 		"duration": _active_power_up_duration,
 	}
 
+# HUD API: whether anything is close enough to grab right now. Mirrors the checks
+# _try_pickup() and _find_nearest_local_pickup() make, so the Action button never
+# offers a grab a press would not actually perform.
+func has_pickable_in_range() -> bool:
+	if _find_nearest_local_pickup() != null:
+		return true
+	if pickup_area != null:
+		for body in pickup_area.get_overlapping_bodies():
+			if body is RigidBody3D and body != self and body.is_in_group("pickup_items"):
+				return true
+	var entities: Array[RigidBody3D] = [
+		_get_cached_chicken_node(),
+		_get_cached_lootbox_node(),
+	]
+	for entity in entities:
+		if entity != null and entity.is_in_group("pickup_items") \
+				and global_position.distance_to(entity.global_position) < ITEM_PICKUP_RADIUS:
+			return true
+	return false
+
 # Shows the carried power-up (if any) on the HUD Action button. `duration` tells
 # the HUD how long the held pickup's effect would run, so it can draw the
 # countdown ring as a full "ready" ring while the pickup is carried.
