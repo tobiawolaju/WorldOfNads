@@ -581,6 +581,9 @@ func _ready() -> void:
 	# on a shader compile. Same one-shot-per-process rule as the smoke cloud.
 	if _storm_eye != null and not _powerup_prewarmed:
 		_prewarm_powerup_aura.call_deferred()
+	# Death dissolve warm-up: same idea, so the first death does not stutter on a
+	# shader compile. Death can happen in any scene, so this one is unconditional.
+	_prewarm_death_dissolve.call_deferred()
 
 	# The reveal key may already be down when this player spawns (the scene
 	# changed while it was held), so the extras follow the key itself and not
@@ -2206,6 +2209,14 @@ func _ensure_aura_node() -> MeshInstance3D:
 	add_child(aura)
 	_powerup_aura = aura
 	return aura
+
+
+# Compiles the death burn's shader on a throwaway frame, so the first death does
+# not eat the stall. Measured on this machine: the first death frame goes from
+# ~44-62 ms cold to ~14-24 ms warm, against a ~7-11 ms idle baseline, which keeps
+# the stutter inside the 30fps frame budget instead of dropping one.
+func _prewarm_death_dissolve() -> void:
+	DeathDissolve.prewarm(self)
 
 
 # Compiles the aura's shader on a throwaway frame, so the first real power-up
