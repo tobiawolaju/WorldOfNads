@@ -209,13 +209,47 @@ func _initialize() -> void:
 		_settle_dissolve(player)
 	_check("a gradual heal still restores the skin", _count_same_material(meshes, shared) == meshes.size())
 
+	# 23. The mouth shader draws its interior, which the burn material cannot
+	#     reproduce, so a swapped mouth reads as a blob until the real shader comes
+	#     back. The eyes stay visible: flat-shaded they still read as eyes.
+	DeathDissolve.sync_health(player, MAX_HEALTH_TEST * 0.74, MAX_HEALTH_TEST)
+	_settle_dissolve(player)
+	_check("a burn too faint to see leaves the skin alone", _count_same_material(meshes, shared) == meshes.size())
+	_check("a burn too faint to see keeps the mouth", _meshes_visible(player, "mouth"))
+
+	DeathDissolve.sync_health(player, MAX_HEALTH_TEST * 0.5, MAX_HEALTH_TEST)
+	_settle_dissolve(player)
+	_check("the mouth is hidden while the body burns", not _meshes_visible(player, "mouth"))
+	_check("the eyes stay visible while the body burns", _meshes_visible(player, "eye"))
+
+	DeathDissolve.sync_health(player, MAX_HEALTH_TEST, MAX_HEALTH_TEST)
+	_settle_dissolve(player)
+	_check("the mouth comes back with the skin", _meshes_visible(player, "mouth"))
+	_check("the mouth mesh is the original again", _count_same_material(meshes, shared) == meshes.size())
+
 	print("death dissolve selftest: %d failure(s)" % failures)
 	quit(1 if failures > 0 else 0)
 
 
+## Every mesh whose name starts with `prefix` is visible. Returns false if none
+## were found at all, so a naming change cannot pass silently.
+func _meshes_visible(player: Node3D, prefix: String) -> bool:
+	var found := false
+	for child in player.find_children("*", "MeshInstance3D", true, false):
+		var mesh := child as MeshInstance3D
+		if mesh == null or not String(mesh.name).to_lower().begins_with(prefix):
+			continue
+		found = true
+		if not mesh.visible:
+			return false
+	return found
+
+
 ## Runs the health tween to completion, since the test never yields to the tree.
 func _settle_dissolve(player: Node3D) -> void:
-	var tween: Tween = player.get_meta(TWEEN_META, null)
+	if not player.has_meta(TWEEN_META):
+		return
+	var tween: Tween = player.get_meta(TWEEN_META)
 	if tween is Tween:
 		(tween as Tween).custom_step(DeathDissolve.HEALTH_TWEEN_TIME + 0.05)
 

@@ -43,6 +43,10 @@ const HEALTH_DISSOLVE_START := 0.75
 ## matters: a living player you cannot see is a gameplay problem, not a mood.
 const HEALTH_DISSOLVE_MAX := 0.6
 
+## Burn strengths below this are not visible on the model, so the skin is left
+## alone rather than swapping every material (and hiding the face) for nothing.
+const HEALTH_DISSOLVE_MIN := 0.05
+
 ## Seconds a health-driven change takes to catch up. Long enough to read as a burn
 ## creeping, short enough that a hit lands on the same beat as the health bar.
 const HEALTH_TWEEN_TIME := 0.18
@@ -58,6 +62,7 @@ const _TWEEN_META := "_death_dissolve_tween"
 const _SWAPPED_META := "_death_dissolve_swapped"
 const _DEATH_META := "_death_dissolve_death"
 const _TARGET_META := "_death_dissolve_target"
+const _VISIBLE_META := "_death_dissolve_visible"
 
 ## True once this process has drawn the dissolve program at least once.
 static var _prewarmed := false
@@ -138,6 +143,10 @@ static func sync_health(player: Node3D, health: float, max_health: float) -> voi
 		return
 
 	var target := dissolve_for_health(health / max_health)
+	# Too faint to see: leave the skin alone. Swapping would hide the face for
+	# damage the player cannot perceive.
+	if target < HEALTH_DISSOLVE_MIN:
+		target = 0.0
 
 	# Fully recovered: hand the real skin back, so a player who took one hit at
 	# the start of the match is not stuck on the burn material afterwards. The
@@ -228,6 +237,9 @@ static func restore(player: Node3D) -> void:
 			mesh.material_override = mesh.get_meta(_ORIGINAL_META) as Material
 			mesh.remove_meta(_ORIGINAL_META)
 		mesh.remove_meta(_DISSOLVE_META)
+		if mesh.has_meta(_VISIBLE_META):
+			mesh.visible = bool(mesh.get_meta(_VISIBLE_META))
+			mesh.remove_meta(_VISIBLE_META)
 
 	for child in player.find_children("*", "Label3D", true, false):
 		var label := child as Label3D
@@ -266,11 +278,26 @@ static func _ensure_swapped(player: Node3D) -> Array[ShaderMaterial]:
 		mesh.set_meta(_ORIGINAL_META, override_material)
 		mesh.set_meta(_DISSOLVE_META, dissolve)
 		mesh.material_override = dissolve
+		# The mouth shader draws its interior, which the burn material cannot
+		# reproduce, so a swapped mouth reads as a blob. Hide it until the real
+		# shader is put back. The eyes are deliberately left visible: flat-shaded
+		# they still read as eyes, and a blank face looks worse. The previous
+		# visibility is remembered, so a mouth that was already hidden stays hidden.
+		if _is_mouth_mesh(mesh):
+			mesh.set_meta(_VISIBLE_META, mesh.visible)
+			mesh.visible = false
 		materials.append(dissolve)
 
 	if not materials.is_empty():
 		player.set_meta(_SWAPPED_META, true)
 	return materials
+
+
+## The mouth loses its interior on the burn material and reads as a blob, so it is
+## hidden until the real shader comes back. The eyes stay: flat-shaded they still
+## read as eyes. Matches the naming `SkinApplier` uses for the parts.
+static func _is_mouth_mesh(mesh: MeshInstance3D) -> bool:
+	return String(mesh.name).to_lower().begins_with("mouth")
 
 
 ## The burn materials currently on the player, or an empty list if the skin is
