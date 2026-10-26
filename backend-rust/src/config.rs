@@ -123,7 +123,9 @@ pub const ITEM_SPAWN_MIN_RADIUS: f64 = 1.0;
 // Events feed.
 pub const MAX_EVENT_HISTORY: usize = 100;
 
-pub const POWER_UP_IDS: [&str; 5] = ["p1", "p2", "p3", "p4", "p5"];
+// The server-tracked power-up item ids. p4 is retired: it belonged to the HOOK
+// power-up, which the client no longer has.
+pub const POWER_UP_IDS: [&str; 4] = ["p1", "p2", "p3", "p5"];
 
 /// Capacity of the room, mirroring Node's `currentMaxPlayers`.
 ///

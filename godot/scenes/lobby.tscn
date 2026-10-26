@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://bj27lnrpsa1wt" path="res://scenes/busyland.tscn" id="9_07nfq"]
 [ext_resource type="PackedScene" uid="uid://dud0j72gp62nr" path="res://scenes/props/enviroment/bus.tscn" id="11_m1sns"]
 [ext_resource type="PackedScene" uid="uid://ds74a1sw044u4" path="res://scenes/pickup.tscn" id="11_yad6j"]
+[ext_resource type="PackedScene" uid="uid://cqgso836leaiu" path="res://scenes/pickup2.tscn" id="12_m1sns"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
 render_priority = 0
@@ -118,13 +119,9 @@ power_up_mode = 2
 transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.647236, 1.4365964, -0.26766753)
 power_up_mode = 3
 
-[node name="Pickup4" parent="." unique_id=1118312215 instance=ExtResource("11_yad6j")]
-transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -1.649298)
-power_up_mode = 4
-
 [node name="Pickup5" parent="." unique_id=408056980 instance=ExtResource("11_yad6j")]
 transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -2.2704427)
-power_up_mode = 5
+power_up_mode = 4
 
 [node name="Bus" parent="." unique_id=1811375150 instance=ExtResource("11_m1sns")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 60, 0)
@@ -137,5 +134,24 @@ cast_shadow = 0
 
 [node name="Object_2" parent="Bus" index="4" unique_id=1403144337]
 cast_shadow = 0
+
+[node name="Pickup" parent="." unique_id=2002177915 instance=ExtResource("12_m1sns")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.927867, 1.2619171, 5.0545917)
+weapon_kind = 2
+
+[node name="Pickup6" parent="." unique_id=1868968525 instance=ExtResource("12_m1sns")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.426284, 1.2619171, 4.753911)
+
+[node name="Pickup7" parent="." unique_id=1363473025 instance=ExtResource("12_m1sns")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.598536, 1.2619171, 3.554974)
+weapon_kind = 3
+
+[node name="Pickup8" parent="." unique_id=293667661 instance=ExtResource("12_m1sns")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.157862, 1.2619171, 4.912618)
+weapon_kind = 4
+
+[node name="Pickup9" parent="." unique_id=855484493 instance=ExtResource("12_m1sns")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.199215, 1.2619171, 6.4351153)
+weapon_kind = 5
 
 [editable path="Bus"]
