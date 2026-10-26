@@ -5,6 +5,7 @@ extends SceneTree
 
 const TWEEN_META := "_death_dissolve_tween"
 const ORIGINAL_META := "_death_dissolve_original"
+const MAX_HEALTH_TEST := 100.0
 
 var failures := 0
 
@@ -135,8 +136,75 @@ func _initialize() -> void:
 	_check("warm-up does not run headless", not DeathDissolve.is_prewarmed())
 	_check("warm-up leaves no probe behind", _find_probe(root) == null)
 
+	# 14. Health drives the burn. Full health is untouched, deeper damage erodes
+	#     further, and the curve stays clear of the body until it actually matters.
+	_check("full health leaves the body untouched", is_zero_approx(DeathDissolve.dissolve_for_health(1.0)))
+	_check("zero health burns the body partway", is_equal_approx(DeathDissolve.dissolve_for_health(0.0), DeathDissolve.HEALTH_DISSOLVE_MAX))
+	_check("health input is clamped", is_equal_approx(DeathDissolve.dissolve_for_health(-2.0), DeathDissolve.dissolve_for_health(0.0)) and is_zero_approx(DeathDissolve.dissolve_for_health(3.0)))
+	_check("more damage means more burn",
+		DeathDissolve.dissolve_for_health(0.75) < DeathDissolve.dissolve_for_health(0.5)
+		and DeathDissolve.dissolve_for_health(0.5) < DeathDissolve.dissolve_for_health(0.25))
+	_check("a scratch does not burn the body", DeathDissolve.dissolve_for_health(0.9) < 0.05)
+	_check("the burn starts only past the threshold",
+		is_zero_approx(DeathDissolve.dissolve_for_health(DeathDissolve.HEALTH_DISSOLVE_START))
+		and DeathDissolve.dissolve_for_health(DeathDissolve.HEALTH_DISSOLVE_START - 0.05) > 0.0)
+
+	# 15. sync_health runs every frame, so a healthy player must never be dragged
+	#     onto the burn material — that would restyle the whole room.
+	DeathDissolve.sync_health(player, MAX_HEALTH_TEST, MAX_HEALTH_TEST)
+	_check("full health keeps the real skin", _count_same_material(meshes, shared) == meshes.size())
+
+	# 16. Half health puts the body on the burn shader, part-way gone.
+	DeathDissolve.sync_health(player, MAX_HEALTH_TEST * 0.5, MAX_HEALTH_TEST)
+	_settle_dissolve(player)
+	_check("half health puts the body on the burn shader", _count_on_dissolve(meshes) == meshes.size())
+	var halfway := _max_dissolve(meshes)
+	_check("half health burns the body partway", halfway > 0.1 and halfway < 0.35)
+
+	# 17. Worse health burns further without swapping again.
+	DeathDissolve.sync_health(player, MAX_HEALTH_TEST * 0.2, MAX_HEALTH_TEST)
+	_settle_dissolve(player)
+	_check("worse health burns further", _max_dissolve(meshes) > halfway)
+
+	# 18. Dying carries on from the health burn instead of restarting at solid.
+	var before_death := _max_dissolve(meshes)
+	DeathDissolve.begin(player, 1.0)
+	_check("death continues from the health burn", absf(_max_dissolve(meshes) - before_death) < 0.05)
+
+	# 19. And from then on health must not fight the death tween.
+	var death_tween: Tween = player.get_meta(TWEEN_META, null)
+	DeathDissolve.sync_health(player, MAX_HEALTH_TEST * 0.2, MAX_HEALTH_TEST)
+	_check("health sync stands down while dying", player.get_meta(TWEEN_META, null) == death_tween)
+	DeathDissolve.restore(player)
+	_check("restoring after a health burn returns the real skin", _count_same_material(meshes, shared) == meshes.size())
+
+	# 20. Healing back to full hands the skin back once the burn has faded, so a
+	#     player who took one early hit does not stay on the burn material.
+	DeathDissolve.sync_health(player, MAX_HEALTH_TEST * 0.5, MAX_HEALTH_TEST)
+	_settle_dissolve(player)
+	DeathDissolve.sync_health(player, MAX_HEALTH_TEST, MAX_HEALTH_TEST)
+	_settle_dissolve(player)
+	_check("healing to full returns the real skin", _count_same_material(meshes, shared) == meshes.size())
+
+	# 21. Dying from a part-burned body still goes all the way to gone.
+	DeathDissolve.sync_health(player, MAX_HEALTH_TEST * 0.3, MAX_HEALTH_TEST)
+	_settle_dissolve(player)
+	DeathDissolve.begin(player, 0.5)
+	var finish: Tween = player.get_meta(TWEEN_META, null)
+	if finish is Tween:
+		(finish as Tween).custom_step(0.6)
+	_check("dying from a part-burned body still disappears", _count_with_dissolve_at_least(meshes, 0.99, 1.01) == meshes.size())
+	DeathDissolve.restore(player)
+
 	print("death dissolve selftest: %d failure(s)" % failures)
 	quit(1 if failures > 0 else 0)
+
+
+## Runs the health tween to completion, since the test never yields to the tree.
+func _settle_dissolve(player: Node3D) -> void:
+	var tween: Tween = player.get_meta(TWEEN_META, null)
+	if tween is Tween:
+		(tween as Tween).custom_step(DeathDissolve.HEALTH_TWEEN_TIME + 0.05)
 
 
 func _find_probe(node: Node) -> Node:
@@ -173,6 +241,18 @@ func _count_on_dissolve(meshes: Array[MeshInstance3D]) -> int:
 		if material != null and material.shader == DeathDissolve.SHADER:
 			count += 1
 	return count
+
+
+## Highest dissolve value across the model, used to read how far the health burn
+## has eaten in.
+func _max_dissolve(meshes: Array[MeshInstance3D]) -> float:
+	var highest := 0.0
+	for mesh in meshes:
+		var material := mesh.material_override as ShaderMaterial
+		if material == null:
+			continue
+		highest = maxf(highest, float(material.get_shader_parameter("dissolve")))
+	return highest
 
 
 ## Lowest dissolve value across the model, used to prove the burn is already
