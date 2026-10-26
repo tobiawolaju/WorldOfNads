@@ -37,8 +37,8 @@ func _initialize() -> void:
 					_check_track(player, animation_name, animation, track)
 
 	scene_root.free()
-	_check("every player was scanned", players.size() == 8)
 	_check("every track resolves", failures == 0)
+	_check("every player was scanned", players.size() == 9)
 	print("")
 	print("%d players, %d tracks scanned" % [players.size(), track_total])
 	_finish()
