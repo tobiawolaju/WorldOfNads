@@ -5,6 +5,7 @@ extends SceneTree
 
 const TWEEN_META := "_death_dissolve_tween"
 const ORIGINAL_META := "_death_dissolve_original"
+const DISSOLVE_META := "_death_dissolve_material"
 const MAX_HEALTH_TEST := 100.0
 
 var failures := 0
@@ -33,8 +34,21 @@ func _initialize() -> void:
 		"mouth_color": Color(0.1, 0.05, 0.02, 1.0),
 	})
 
+	# The power-up aura is a billboarded quad on its own additive shader, parented
+	# to the player exactly like a skin mesh. The burn has to skip it: swapping it
+	# onto the dissolve shader turns the glow into a solid square, and the aura is
+	# supposed to keep running while the body comes apart.
+	var aura := MeshInstance3D.new()
+	aura.name = "powerup_aura"
+	aura.mesh = QuadMesh.new()
+	var aura_material := ShaderMaterial.new()
+	aura_material.shader = load("res://assets/shaders/powerup.gdshader")
+	aura.material_override = aura_material
+	player.add_child(aura)
+
 	var meshes := _meshes(player)
 	_check("player has meshes to dissolve", meshes.size() > 0)
+	_check("the aura is not treated as a skin mesh", not meshes.has(aura))
 
 	# Reference the skin materials as they are now. The dissolve must swap them
 	# out, never edit them: one instance is shared by every player on that skin.
@@ -54,6 +68,7 @@ func _initialize() -> void:
 	# 1. Every mesh moves onto the dissolve shader.
 	DeathDissolve.begin(player, 0.05)
 	_check("every mesh uses the dissolve shader", _count_on_dissolve(meshes) == meshes.size())
+	_check("the power-up aura keeps its own shader", _aura_untouched(player, aura_material))
 
 	# 2. The shared skin materials are untouched, so no other player dissolves.
 	var shared_untouched := 0
@@ -88,6 +103,7 @@ func _initialize() -> void:
 	#    back wearing the skin they had and not a rebuilt approximation of it.
 	DeathDissolve.restore(player)
 	_check("restore returns the original material instances", _count_same_material(meshes, shared) == meshes.size())
+	_check("the aura survives restore", _aura_untouched(player, aura_material))
 	if label != null:
 		_check("name tag comes back", is_equal_approx(label.modulate.a, label_alpha_before))
 
@@ -158,6 +174,7 @@ func _initialize() -> void:
 	DeathDissolve.sync_health(player, MAX_HEALTH_TEST * 0.5, MAX_HEALTH_TEST)
 	_settle_dissolve(player)
 	_check("half health puts the body on the burn shader", _count_on_dissolve(meshes) == meshes.size())
+	_check("a health burn leaves the aura alone", _aura_untouched(player, aura_material))
 	var halfway := _max_dissolve(meshes)
 	_check("half health burns the body partway", halfway > 0.1 and halfway < 0.35)
 
@@ -268,9 +285,26 @@ func _meshes(player: Node3D) -> Array[MeshInstance3D]:
 	var result: Array[MeshInstance3D] = []
 	for child in player.find_children("*", "MeshInstance3D", true, false):
 		var mesh := child as MeshInstance3D
-		if mesh != null:
-			result.append(mesh)
+		if mesh == null:
+			continue
+		# The power-up aura rides along under the player but is not skin, so it has
+		# its own assertions instead of counting towards "every mesh dissolved".
+		if String(mesh.name).to_lower().begins_with("powerup_aura"):
+			continue
+		result.append(mesh)
 	return result
+
+
+## The aura must still be wearing its own material and carry no burn state, which
+## is what proves the burn's mesh sweep skipped it rather than swapping and
+## swapping back.
+func _aura_untouched(player: Node3D, expected: Material) -> bool:
+	var aura := player.get_node_or_null("powerup_aura") as MeshInstance3D
+	if aura == null:
+		return false
+	return is_same(aura.material_override, expected) \
+		and not aura.has_meta(DISSOLVE_META) \
+		and not aura.has_meta(ORIGINAL_META)
 
 
 func _first_label(player: Node3D) -> Label3D:
