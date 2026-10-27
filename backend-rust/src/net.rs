@@ -11,8 +11,8 @@ use std::time::Duration;
 
 use axum::extract::ws::{close_code, CloseFrame, Message, WebSocket, WebSocketUpgrade};
 use axum::extract::{Query, State};
-use axum::http::HeaderMap;
-use axum::response::IntoResponse;
+use axum::http::{header, HeaderMap};
+use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::Router;
 use futures_util::stream::SplitSink;
@@ -497,10 +497,50 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/", get(ws_game))
         .route("/events", get(ws_events))
         .route("/health", get(health))
+        .route("/rooms", get(public_rooms))
         .route("/debug/rooms", get(debug_rooms))
         .route("/debug/logs", get(debug_logs))
         .fallback(get(ws_game))
         .with_state(state)
+}
+
+/// Live occupancy per room, for the public site's match cards.
+///
+/// `/debug/rooms` is the operator view: every player, the writer stats and the
+/// close counters. This is the same room state reduced to the two numbers the
+/// dashboard needs, and it is the only response the room server sends with CORS
+/// open, because the browser polls it directly from a different origin.
+///
+/// Players inside the reconnect grace window are skipped: their socket is gone,
+/// so they are not in the room right now and counting them would overstate it.
+async fn public_rooms(State(state): State<Arc<AppState>>) -> Response {
+    let mut rooms_out = serde_json::Map::new();
+    let rooms = state.rooms.lock().await;
+    for (name, handle) in rooms.iter() {
+        let (players, match_running) = {
+            let room = handle.room.lock().await;
+            (
+                room.players
+                    .values()
+                    .filter(|p| p.orphaned_at.is_none())
+                    .count(),
+                room.match_running,
+            )
+        };
+        rooms_out.insert(
+            name.clone(),
+            json!({ "players": players, "match_running": match_running }),
+        );
+    }
+    let body = json!({ "ok": true, "rooms": rooms_out }).to_string();
+    (
+        [
+            (header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"),
+            (header::CONTENT_TYPE, "application/json"),
+        ],
+        body,
+    )
+        .into_response()
 }
 
 /// Liveness probe. The first line is kept byte-identical to the old response so

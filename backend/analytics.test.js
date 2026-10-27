@@ -7,7 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { computeAnalyticsReport, buildDayList, toRangeDates } from './analyticsMetrics.js';
+import { computeAnalyticsReport, matchJoinCounts, buildDayList, toRangeDates } from './analyticsMetrics.js';
 
 const NOW = Date.parse('2026-10-20T12:00:00.000Z');
 
@@ -120,6 +120,45 @@ test('training-lobby joins are not matches played with other people', () => {
   assert.equal(summary.gameMetrics.averagePlayersPerMatch, 2, 'two distinct people on the real match');
   assert.equal(summary.gameMetrics.playersTracked, 2);
   assert.equal(summary.gameMetrics.matchesPerUser, 0.5, 'one match between two players');
+});
+
+test('match join totals are lifetime, per person, and skip practice rooms', () => {
+  const users = {
+    alice: { username: 'alice', privyId: 'did:privy:a' },
+    bob: { username: 'bob', privyId: 'did:privy:b' }
+  };
+  const events = [
+    event({ event_type: 'match_joined', match_id: 'match-a', sponsor_id: 'Alice' }),
+    event({
+      event_type: 'match_joined',
+      match_id: 'match-a',
+      sponsor_id: 'Alice',
+      user_id: 'did:privy:b',
+      metadata: { username: 'bob' }
+    }),
+    // Alice plays the same match twice: the card shows people, not visits.
+    event({
+      event_type: 'match_joined',
+      match_id: 'match-a',
+      sponsor_id: 'Alice',
+      timestamp: '2026-10-06T10:00:00.000Z'
+    }),
+    // A practice room has no card and must not appear in the map at all.
+    event({ event_type: 'match_joined', match_id: 'match-training-lobby', sponsor_id: 'Training Lobby' }),
+    // Older than any admin range: the card's total is lifetime, so it still counts.
+    event({
+      event_type: 'match_joined',
+      match_id: 'match-b',
+      sponsor_id: 'Alice',
+      user_id: 'did:privy:b',
+      metadata: { username: 'bob' },
+      timestamp: '2025-01-01T10:00:00.000Z'
+    }),
+    // Only joins count.
+    event({ event_type: 'session_started', match_id: 'match-a' })
+  ];
+
+  assert.deepEqual(matchJoinCounts({ events, users }), { 'match-a': 2, 'match-b': 1 });
 });
 
 test('chog world order joins are practice, not matches played', () => {

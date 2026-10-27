@@ -687,3 +687,38 @@ export function computeAnalyticsReport({
 
   return { summary, timeseries };
 }
+
+/**
+ * How many distinct people ever joined each match, all time.
+ *
+ * The dashboard's match card shows "playing now / ever joined", so this is the
+ * lifetime half of that pair and deliberately ignores the report's date range:
+ * the total must not shrink when the admin tab is looking at the last 7 days.
+ *
+ * Identity is resolved exactly like the participation metric (Privy DID first,
+ * then wallet, then username) so one person who joined three times counts once,
+ * and practice rooms are excluded for the same reason they are excluded from
+ * `averagePlayersPerMatch`: joining the training lobby is not playing a match.
+ *
+ * Returns `{ [matchId]: count }`; matches nobody joined are absent, and the
+ * caller treats a missing id as 0.
+ */
+export function matchJoinCounts({ events = [], users = {} } = {}) {
+  const directory = buildDirectory(users);
+  const playersByMatch = new Map();
+  for (const event of Array.isArray(events) ? events : []) {
+    if (!event || typeof event !== 'object') continue;
+    if (event.event_type !== 'match_joined') continue;
+    if (isPracticeRoom(event.match_id, event.sponsor_id)) continue;
+    const matchId = sanitizeString(event.match_id);
+    if (!matchId) continue;
+    const person = directory.keyOf(event);
+    if (!person) continue;
+    addToSetMap(playersByMatch, matchId, person);
+  }
+  const counts = {};
+  for (const [matchId, players] of playersByMatch) {
+    counts[matchId] = players.size;
+  }
+  return counts;
+}

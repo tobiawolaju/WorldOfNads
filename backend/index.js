@@ -5,7 +5,7 @@ import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
 import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward } from './firebaseClient.js';
 import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, lootBoxSteal, getLootBoxPoolOnchain, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain, getContractStatus } from './contractClient.js';
 import { settleRound, parsePrizeMon, round6, LOOTBOX_POOL_SHARE } from './settlement.js';
-import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents } from './analyticsService.js';
+import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents, getMatchPlayerCounts } from './analyticsService.js';
 import { refreshAllUserPfps } from './refreshUserPfps.js';
 import { attachmentsForId, loadCombos, loadDefaults } from './skinIndex.js';
 import {
@@ -892,6 +892,21 @@ const server = createServer(async (req, res) => {
     } catch (error) {
       console.error('[Matches] /matches failed:', error);
       sendJson(res, 500, { ok: false, error: 'failed to load matches' });
+    }
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/api/matches/players') {
+    // Lifetime distinct joiners per match. The dashboard pairs this with the room
+    // server's live occupancy ("playing now / ever joined"); the match payload
+    // itself carries no player data, and computing it on the client would mean
+    // downloading the whole event stream.
+    try {
+      const counts = await getMatchPlayerCounts();
+      sendJson(res, 200, { ok: true, counts });
+    } catch (error) {
+      console.error('[Matches] /api/matches/players failed:', error);
+      sendJson(res, 500, { ok: false, error: 'failed to load player counts' });
     }
     return;
   }

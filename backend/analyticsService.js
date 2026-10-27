@@ -1,6 +1,6 @@
 import { db } from './firebaseClient.js';
 import { ref, push, set, get } from 'firebase/database';
-import { computeAnalyticsReport, toRangeDates } from './analyticsMetrics.js';
+import { computeAnalyticsReport, matchJoinCounts, toRangeDates } from './analyticsMetrics.js';
 
 const MAX_METADATA_KEYS = 64;
 const MAX_METADATA_STRING = 200;
@@ -147,6 +147,17 @@ export async function getAnalyticsSummary({ start, end } = {}) {
 export async function getAnalyticsTimeseries({ start, end } = {}) {
   const report = await buildReport({ start, end });
   return report.timeseries;
+}
+
+/**
+ * Lifetime distinct joiners per match, for the dashboard's match cards.
+ *
+ * Shares the cached snapshot with the admin tabs, so a dashboard page load and
+ * an admin page load download `analytics/events` once between them.
+ */
+export async function getMatchPlayerCounts() {
+  const snapshot = await loadSnapshot();
+  return matchJoinCounts(snapshot);
 }
 
 export async function exportAnalyticsEvents({ start, end, format }) {
