@@ -20,6 +20,16 @@ func _initialize() -> void:
 	_check("the player builds a state machine", player.anim_state_machine != null)
 	_check("the library ships a hook clip", player.anim_player.has_animation("hook"))
 	_check("the library ships a shoot clip", player.anim_player.has_animation("shoot"))
+	# The hook clip is 2.4 s at 1x, which reads as "the swing never starts". The
+	# state is retimed with a custom timeline instead (Animation has no speed in
+	# Godot 4), and _play_weapon_action locks the pose for that same timeline.
+	var hook_state := (player.anim_tree.tree_root as AnimationNodeStateMachine).get_node("hook")
+	_check(
+		"the hook state is retimed shorter than its 2.4 s clip",
+		hook_state is AnimationNodeAnimation
+			and hook_state.use_custom_timeline
+			and hook_state.timeline_length < player.anim_player.get_animation("hook").length
+	)
 
 	var machine := player.anim_tree.tree_root as AnimationNodeStateMachine
 	_check("the state machine carries the hook state", machine != null and machine.has_node("hook"))
@@ -59,8 +69,13 @@ func _initialize() -> void:
 	await create_timer(0.15).timeout
 	_check("the shoot clip moves the skeleton", skeleton != null and absf(_bone_signature(skeleton) - idle_pose) > 0.001)
 
+	# The 0.2 s clip is over by now, but the shot holds its final (aim) pose for
+	# SHOOT_END_HOLD longer so the recoil reads instead of flickering.
+	await create_timer(0.06).timeout
+	_check("the shot holds its pose past the clip", player._weapon_action_active)
+
 	# It releases the pose on its own, so the player is never stuck mid-swing.
-	await create_timer(player.anim_player.get_animation("shoot").length + 0.2).timeout
+	await create_timer(player.SHOOT_END_HOLD + 0.1).timeout
 	_check("the action releases the pose", not player._weapon_action_active)
 	player.is_local = true
 	player._handle_animations(Vector3.ZERO)

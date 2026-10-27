@@ -242,6 +242,15 @@ var _held_weapon_pickup: RigidBody3D = null
 ## for its length, otherwise the next frame travels straight back to idle/running
 ## and the clip is never seen.
 var _weapon_action_active: bool = false
+## A shot clip is only 0.2 s, so the recoil snapped straight back to idle and read
+## as a flicker. The final (aim) pose is held this much longer before the lock is
+## released. The hook does not use it: its swing is already the whole point.
+const SHOOT_END_HOLD: float = 0.16
+## The hook clip is 2.4 s at 1x and its long wind-up reads as "the swing never
+## starts". Godot 4's Animation resource has no speed property, so the hook state
+## is retimed with AnimationNodeAnimation's custom timeline (see _setup_anim_tree)
+## and the pose lock uses this same length.
+const HOOK_PLAYBACK_SECONDS: float = 1.3
 ## Shared powerup.gdshader material, built once (in _ready, with a lazy fallback)
 ## and handed to the aura quad.
 var _powerup_material: ShaderMaterial = null
@@ -617,6 +626,14 @@ func _setup_anim_tree() -> void:
 	for state_name in state_names:
 		var node := AnimationNodeAnimation.new()
 		node.animation = state_name
+		if state_name == "hook":
+			# The clip is 2.4 s and its long wind-up reads as "the swing never
+			# starts". Godot 4's Animation resource has no speed property, so the
+			# clip is stretched onto a shorter timeline instead. Keep this length
+			# in step with HOOK_PLAYBACK_SECONDS: the pose lock uses it too.
+			node.use_custom_timeline = true
+			node.timeline_length = HOOK_PLAYBACK_SECONDS
+			node.stretch_time_scale = true
 		state_machine.add_node(state_name, node)
 	for from_name in state_names:
 		for to_name in state_names:
@@ -1914,7 +1931,13 @@ func _use_held_weapon() -> void:
 func _play_weapon_action(clip: String) -> void:
 	if anim_player == null or not anim_player.has_animation(clip):
 		return
-	var length := anim_player.get_animation(clip).length
+	var anim := anim_player.get_animation(clip)
+	# The hook state is retimed with a custom timeline (see _setup_anim_tree), so
+	# its playback length is that timeline, not the clip's own length.
+	var length := HOOK_PLAYBACK_SECONDS if clip == "hook" else anim.length
+	# A shot is only 0.2 s: hold the final (aim) pose a beat longer so it reads.
+	if clip == "shoot":
+		length += SHOOT_END_HOLD
 	_weapon_action_active = true
 	_set_anim(clip)
 	await get_tree().create_timer(maxf(length, 0.05)).timeout
