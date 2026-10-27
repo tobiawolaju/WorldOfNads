@@ -1905,6 +1905,10 @@ func _use_held_weapon() -> void:
 				clip = "shoot"
 		if clip != "":
 			await _play_weapon_action(clip)
+			# The weapon can be gone by now (death mid-swing, or the server handed
+			# it to someone else): nothing left to spend.
+			if held_weapon_kind == LocalPickup2.WeaponKind.NONE:
+				return
 		held_weapon_uses -= 1
 		_update_hud_power_up()
 		if held_weapon_uses <= 0:
@@ -1973,6 +1977,12 @@ func _set_weapon_visual(kind: int) -> void:
 			node.visible = String(node_name) == wanted
 
 
+# Shows the weapon ANOTHER player is carrying, from the server's item state. Only
+# the hand mesh is touched: a remote copy has no charges, HUD or input of its own.
+func show_remote_weapon(kind: int) -> void:
+	_set_weapon_visual(kind)
+
+
 # On death the weapon is lost: mesh off, pickup recycled to a random spot.
 func _drop_weapon_on_death() -> void:
 	if held_weapon_kind == LocalPickup2.WeaponKind.NONE:
@@ -2024,16 +2034,30 @@ func _held_local_item_id() -> String:
 # snatched). Drop the local claim silently — no drop_request, the server already
 # decided who has it, and it will broadcast the item's new spot.
 func release_item_if_holding(item_id: String) -> void:
-	if held_local_pickup == null or not is_instance_valid(held_local_pickup):
-		return
-	if _held_local_item_id() != item_id:
-		return
-	var item := held_local_pickup
-	held_local_pickup = null
-	held_power_up_mode = LocalPickup.PowerUpMode.NONE
-	_update_hud_power_up()
-	if item.has_method("release_silently"):
-		item.call("release_silently")
+	if held_local_pickup != null and is_instance_valid(held_local_pickup):
+		if _held_local_item_id() == item_id:
+			var item := held_local_pickup
+			held_local_pickup = null
+			held_power_up_mode = LocalPickup.PowerUpMode.NONE
+			_update_hud_power_up()
+			if item.has_method("release_silently"):
+				item.call("release_silently")
+			return
+	# A weapon shares the same single carried slot.
+	if _held_weapon_pickup != null and is_instance_valid(_held_weapon_pickup):
+		if not _held_weapon_pickup.has_method("server_item_id"):
+			return
+		if String(_held_weapon_pickup.call("server_item_id")) != item_id:
+			return
+		var weapon := _held_weapon_pickup
+		held_weapon_kind = LocalPickup2.WeaponKind.NONE
+		held_weapon_uses = 0
+		held_weapon_max_uses = 0
+		_held_weapon_pickup = null
+		_set_weapon_visual(LocalPickup2.WeaponKind.NONE)
+		_update_hud_power_up()
+		if weapon.has_method("release_silently"):
+			weapon.call("release_silently")
 
 # Uses the held power-up pickup: it is consumed here and teleports to a random
 # far-away spot on the map instead of being dropped at the player's feet, then
