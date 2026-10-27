@@ -138,6 +138,10 @@ pub struct PlayerNet {
     pub r: i64,
     pub a: i64,
     pub skin: String,
+    /// Whole seconds of chicken possession this round. Every client needs it, not
+    /// just the holder: the feed counts down "wins in N" for whoever is carrying
+    /// the chicken, and the chicken label above the item shows it too.
+    pub ps: i64,
     /// Username is only present in full snapshots.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub u: Option<String>,

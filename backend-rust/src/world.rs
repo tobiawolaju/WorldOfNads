@@ -1458,6 +1458,9 @@ fn encode_player(player: &Player) -> PlayerNet {
         } else {
             player.skin.clone()
         },
+        // Whole seconds only: the holder's possession is credited once a second, so
+        // this changes at most once per tick and costs one delta per second.
+        ps: player.accumulated_possession.floor() as i64,
         u: None,
     }
 }
@@ -1726,7 +1729,9 @@ mod tests {
         assert_eq!(v["match"]["pl"], 2);
         assert_eq!(v["chicken"]["i"], "Chicken");
         assert_eq!(v["lootbox"]["i"], "LootBox");
-        assert_eq!(v["items"].as_array().unwrap().len(), 5);
+        // One entry per server-tracked power-up, so retiring an id does not leave
+        // this assertion behind (the HOOK removal did exactly that).
+        assert_eq!(v["items"].as_array().unwrap().len(), POWER_UP_IDS.len());
         assert!(v["players"].as_array().unwrap()[0]["u"].is_string());
     }
 

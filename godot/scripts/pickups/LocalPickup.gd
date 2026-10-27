@@ -206,6 +206,15 @@ var _local_player_exception_active: bool = false
 
 var _idle_tween: Tween = null
 
+# --- CHICKEN COUNTDOWN LABEL ---
+# "chick/Label3D" in pickup.tscn. Reads out the seconds its holder still needs to
+# win, so the countdown is visible on the item itself to everyone in the room.
+const CHICKEN_LABEL_PATH: String = "chick/Label3D"
+var _chicken_label: Label3D = null
+var _chicken_label_text: String = ""
+# Cached PlayerManager (only the chicken instance ever looks it up).
+var _player_manager: Node = null
+
 func _ready() -> void:
 	add_to_group(GROUP)
 	# Run after the holder's AnimationTree and Skeleton3D, which both sit at the
@@ -234,6 +243,11 @@ func _ready() -> void:
 	_mesh = _find_mesh()
 	_apply_mesh_offset()
 	_apply_mode_visual()
+	if power_up_mode == PowerUpMode.CHICKEN:
+		_chicken_label = get_node_or_null(CHICKEN_LABEL_PATH) as Label3D
+		if _chicken_label != null:
+			# No countdown until someone is carrying it.
+			_chicken_label.visible = false
 	# Copy the materials so a tint never mutates the shared scene sub-resource
 	# (every pickup instance references the same StandardMaterial3D otherwise).
 	for child in get_children():
@@ -596,6 +610,37 @@ func _start_idle_anim() -> void:
 		_idle_tween.tween_property(_mesh, "position:y", mesh_offset_y, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_idle_tween.tween_interval(0.4)
 
+# --- CHICKEN COUNTDOWN LABEL ---
+# Runs every frame, but only on the CHICKEN instance and only rewrites the text
+# when the whole second changed. Everyone holding or looking at the chicken sees
+# the same number the feed shows, for themselves and for other players.
+func _update_chicken_label() -> void:
+	if power_up_mode != PowerUpMode.CHICKEN:
+		return
+	if _chicken_label == null or not is_instance_valid(_chicken_label):
+		return
+	if not (is_held or remote_held):
+		if _chicken_label.visible:
+			_chicken_label.visible = false
+		return
+	if _player_manager == null or not is_instance_valid(_player_manager):
+		_player_manager = get_tree().get_first_node_in_group("player_manager")
+		if _player_manager == null:
+			return
+	var holder_id := str(_player_manager.get("chicken_holder_id"))
+	var held_seconds := 0
+	if holder_id != "":
+		var times = _player_manager.get("player_possession_time")
+		if times is Dictionary:
+			held_seconds = int((times as Dictionary).get(holder_id, 0))
+	var target: int = int(_player_manager.get("victory_target_seconds"))
+	var text := "%ds" % maxi(0, target - held_seconds)
+	if text != _chicken_label_text:
+		_chicken_label_text = text
+		_chicken_label.text = text
+	_chicken_label.visible = true
+
+
 func _apply_glow() -> void:
 	var c := power_up_color()
 	if is_objective_item():
@@ -612,6 +657,7 @@ func _apply_glow() -> void:
 
 func _process(_delta: float) -> void:
 	_ensure_local_player_exception()
+	_update_chicken_label()
 	# A free item spins and bobs where it lies; a carried one rides its holder, local
 	# or remote, so it must not spin.
 	if not is_held and not remote_held:

@@ -187,10 +187,16 @@ static var session_earned_xp: float = 0.0
 var session_earned_mon: float = 0.0
 
 # --- POSSESSION TRACKING (HUD) ---
-# Server-authoritative possession time per player. Updated via reward_update.
+# Server-authoritative possession time per player. The local player's comes from
+# reward_update; every player's comes from the `ps` field on their state entry,
+# which is what lets the feed count down someone else's hold.
 var player_possession_time: Dictionary = {}  # player_id -> seconds
 var local_possession_time: float = 0.0
 var victory_target_seconds: int = 60
+# Last thing pushed to the feed's pinned countdown row, so the push can be skipped
+# when nothing visible changed (it runs on every state packet).
+var _countdown_holder_id: String = ""
+var _countdown_seconds: int = -1
 
 # --- FALLBACK LOGIC ---
 var is_connecting_to_live: bool = true
@@ -805,10 +811,9 @@ func _receive_messages():
 						events_node.call("update_mon_display", earned_mon, pool_total)
 					if events_node.has_method("update_possession_display"):
 						events_node.call("update_possession_display", possession_time, victory_target)
-				# Update possession time for all players from the server's full state.
-				# Note: reward_update only sends local player's possession time.
-				# For other players, we'd need server to broadcast full possession state.
-				# For now, we track local player and the current chicken holder.
+				# reward_update is the once-a-second heartbeat: it carries the local
+				# possession time and the victory target the countdown needs.
+				_push_chicken_countdown()
 
 
 # --- CLIENT-SIDE REWARDS ---
@@ -847,6 +852,10 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 		if id == "":
 			continue
 		received_ids[id] = true
+		# Whole seconds of chicken possession. Broadcast for every player (not just
+		# the holder) so the feed and the chicken label can count down "wins in N"
+		# for whoever is carrying it. Absent on the legacy Node server: stays 0.
+		player_possession_time[id] = int(p_state.get("ps", player_possession_time.get(id, 0)))
 		var resolved_name = _resolve_server_username(p_state, id)
 		var previous_skin := str(player_skin_names.get(id, "")).strip_edges()
 		var resolved_skin = _resolve_server_skin(p_state, id, player_skin_names.get(id, DEFAULT_SKIN_NAME))
@@ -905,6 +914,10 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 		for id in departed:
 			_remove_player(id)
 
+	# Possession ticks once a second, so this is where the countdown row picks up
+	# its new value; the push itself is a no-op when nothing it shows changed.
+	_push_chicken_countdown()
+
 
 # --- CHICKEN SYNC ---
 func _cache_chicken_node() -> void:
@@ -932,6 +945,7 @@ func _update_chicken_state(chicken_state: Dictionary, _quantized := false, _snap
 	)
 	_set_item_server_state("Chicken", chicken_is_held, chicken_holder_id, pos, has_pos)
 	_handle_chicken_state_event(chicken_is_held, chicken_holder_id)
+	_push_chicken_countdown()
 
 func is_local_player_holding_chicken() -> bool:
 	return chicken_is_held and chicken_holder_id == player_id
@@ -939,6 +953,44 @@ func is_local_player_holding_chicken() -> bool:
 func get_chicken_node() -> RigidBody3D:
 	_cache_chicken_node()
 	return chicken_node
+
+
+# --- CHICKEN COUNTDOWN (feed row) ---
+# What the countdown row should read right now, independent of any node lookup:
+# the holder's display name and the whole seconds they still need. `seconds` is -1
+# when nobody is carrying the chicken, which is the feed row's "hide" signal.
+func chicken_countdown_state() -> Dictionary:
+	var holder_id := chicken_holder_id if chicken_is_held else ""
+	if holder_id == "":
+		return {"name": "", "seconds": -1}
+	var holder_name := str(player_display_names.get(holder_id, "")).strip_edges()
+	if holder_name == "":
+		# The server names players on full snapshots only; until one lands, the id
+		# prefix keeps the row readable instead of blank.
+		holder_name = holder_id.substr(0, 8)
+	var held := int(player_possession_time.get(holder_id, 0))
+	return {"name": holder_name, "seconds": maxi(0, victory_target_seconds - held)}
+
+
+# Pushes the countdown to the events feed. Possession is credited once a second,
+# so the visible value changes once a second too; the guard keeps the 20 Hz state
+# packets from re-rendering the row for nothing.
+func _push_chicken_countdown() -> void:
+	var state := chicken_countdown_state()
+	var holder_id := chicken_holder_id if chicken_is_held else ""
+	var seconds_left := int(state["seconds"])
+	if holder_id == _countdown_holder_id and seconds_left == _countdown_seconds:
+		return
+	var events_node = events_bridge
+	if events_node == null or not is_instance_valid(events_node):
+		events_node = get_tree().get_first_node_in_group("events_bridge")
+	if events_node == null or not events_node.has_method("update_chicken_countdown"):
+		# No feed in this scene: leave the cache alone so the first push after one
+		# appears still goes out.
+		return
+	_countdown_holder_id = holder_id
+	_countdown_seconds = seconds_left
+	events_node.call("update_chicken_countdown", str(state["name"]), seconds_left)
 
 func _get_player_node_by_id(id: String) -> Node3D:
 	if id == "":
