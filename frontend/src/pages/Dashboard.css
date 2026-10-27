@@ -962,10 +962,10 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
 }
 
 /* ====== Match card likes + player count ====== */
-/* Stats row, bottom-left ON the card: a heart with its count, then a people icon
-   with its count. Counter-skewed to match the card's skewX(-5deg) so the row
-   stands upright, and inset from the corner because the card's radial mask fades
-   the exact corner out. */
+/* Stats row, bottom-left ON the card: the money icon with its count, then a
+   people icon with "playing now / ever joined". Counter-skewed to match the
+   card's skewX(-5deg) so the row stands upright, and inset from the corner
+   because the card's radial mask fades the exact corner out. */
 .match-card-stats {
   position: absolute;
   left: 10px;
@@ -1012,7 +1012,7 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   line-height: 1;
   color: #ffffff;
   /* Material Symbols Rounded is loaded with FILL as a range in index.html, so the
-     FILL axis is live here. Both badges (heart, people) use the filled variants. */
+     FILL axis is live here. Both badges ($ and people) use the filled variants. */
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
