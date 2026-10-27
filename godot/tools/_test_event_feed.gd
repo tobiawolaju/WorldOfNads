@@ -117,6 +117,29 @@ func _initialize() -> void:
 	_check("repaint does not duplicate text", _row_text(hud._rows[0]) == before)
 	_check("repaint does not add rows", _visible_rows() == hud.MAX_FEED_ROWS)
 
+	# 11. The chicken countdown is a pinned row: it updates in place above the chat
+	#     rows and never enters the history, so a 60-second hold cannot flush it.
+	hud.update_chicken_countdown("alice", 43)
+	_check("countdown creates a row", not hud._countdown_row.is_empty())
+	var countdown: Dictionary = hud._countdown_row
+	_check("countdown row is visible", (countdown["root"] as Control).visible)
+	_check("countdown row sits above the chat", feed.get_child(0) == countdown["root"])
+	_check("countdown names the holder", _row_text(countdown).contains("alice"))
+	_check("countdown shows the seconds left", _row_text(countdown).contains("wins in 43s"))
+	_check("countdown is not part of the history", not hud._rows.has(countdown))
+	var feed_children := feed.get_child_count()
+	hud.update_chicken_countdown("alice", 42)
+	_check("countdown updates in place", hud._countdown_row["root"] == countdown["root"])
+	_check("countdown does not add a row", feed.get_child_count() == feed_children)
+	_check("countdown shows the new second", _row_text(countdown).contains("wins in 42s"))
+	_check("countdown text is not duplicated", not _row_text(countdown).contains("43"))
+	hud.update_chicken_countdown("", -1)
+	_check("countdown hides when nobody holds it", not (countdown["root"] as Control).visible)
+	hud.update_chicken_countdown("bob", 0)
+	_check("countdown comes back for a new holder", (countdown["root"] as Control).visible)
+	_check("countdown switches holder", _row_text(countdown).contains("bob"))
+	_check("countdown at zero reads zero", _row_text(countdown).contains("wins in 0s"))
+
 	print("event feed selftest: %d failure(s)" % failures)
 	quit(1 if failures > 0 else 0)
 

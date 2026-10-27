@@ -46,6 +46,9 @@ var _entry_seq := 0
 var _rows: Array[Dictionary] = []
 var _avatars: AvatarLoader = null
 var _circle_material: ShaderMaterial = null
+## The pinned "wins in N" row for the chicken holder, kept out of `_rows` so the
+## event history never pushes it out.
+var _countdown_row: Dictionary = {}
 ## colour hex -> StyleBoxFlat, so the badge disc is not rebuilt on every render.
 var _disc_styles: Dictionary = {}
 var _local_player_id := ""
@@ -169,6 +172,33 @@ func update_mon_display(earned_mon: float, pool_remaining: float) -> void:
 		else:
 			# The pool is 0.18 x the prize, so it usually has cents: show them.
 			prize_pool_label.text = "%.2f MON pool" % pool_remaining
+
+## Pinned countdown row above the chat rows: "<name> wins in 43s" for whoever is
+## carrying the chicken, rewritten in place as possession ticks. A chat line per
+## second would flush the five-row feed within five seconds of a pickup, and the
+## countdown is a status, not an event.
+func update_chicken_countdown(holder_name: String, seconds_left: int) -> void:
+	var display_name := holder_name.strip_edges()
+	if seconds_left < 0 or display_name == "":
+		if not _countdown_row.is_empty():
+			(_countdown_row["root"] as Control).visible = false
+		return
+	_ensure_feed_rows()
+	if _feed == null:
+		return
+	if _countdown_row.is_empty():
+		_countdown_row = _create_row(-1)
+		(_countdown_row["root"] as Control).name = "CountdownRow"
+		# Above the chat rows: it is always-on status, not part of the history.
+		_feed.move_child(_countdown_row["root"], 0)
+	(_countdown_row["root"] as Control).visible = true
+	# seq -1 (the row's initial value) keeps _apply_row from replaying the fade on
+	# every tick: the row only ever changes its text.
+	_apply_row(_countdown_row, {
+		"actor": display_name,
+		"message": "wins in %ds" % seconds_left,
+		"seq": -1,
+	})
 
 func update_possession_display(possession_seconds: int, victory_target: int) -> void:
 	# Create possession progress UI if not exists.
