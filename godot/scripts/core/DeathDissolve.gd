@@ -64,6 +64,13 @@ const _DEATH_META := "_death_dissolve_death"
 const _TARGET_META := "_death_dissolve_target"
 const _VISIBLE_META := "_death_dissolve_visible"
 
+## Meshes that live under the player but are not the skin, matched by node-name
+## prefix. The power-up aura is a billboarded quad on its own additive shader: the
+## burn material would turn the glow into a solid square, and the aura is meant to
+## keep running while the body comes apart. `player.gd` names it for exactly this
+## kind of sweep (see `_ensure_aura_node`).
+const IGNORED_MESH_PREFIXES := ["powerup_aura"]
+
 ## True once this process has drawn the dissolve program at least once.
 static var _prewarmed := false
 
@@ -262,6 +269,10 @@ static func _ensure_swapped(player: Node3D) -> Array[ShaderMaterial]:
 		var mesh := child as MeshInstance3D
 		if mesh == null:
 			continue
+		# The power-up aura is not skin: it keeps its own shader and its own
+		# lifetime while the body burns.
+		if _is_ignored_mesh(mesh):
+			continue
 		if mesh.has_meta(_DISSOLVE_META):
 			materials.append(mesh.get_meta(_DISSOLVE_META) as ShaderMaterial)
 			continue
@@ -298,6 +309,17 @@ static func _ensure_swapped(player: Node3D) -> Array[ShaderMaterial]:
 ## read as eyes. Matches the naming `SkinApplier` uses for the parts.
 static func _is_mouth_mesh(mesh: MeshInstance3D) -> bool:
 	return String(mesh.name).to_lower().begins_with("mouth")
+
+
+## True for the non-skin meshes that ride along with the player. Matched by name
+## prefix, the same rule `player.gd` relies on when it names the aura so other
+## mesh sweeps skip it.
+static func _is_ignored_mesh(mesh: MeshInstance3D) -> bool:
+	var lower := String(mesh.name).to_lower()
+	for prefix in IGNORED_MESH_PREFIXES:
+		if lower.begins_with(String(prefix)):
+			return true
+	return false
 
 
 ## The burn materials currently on the player, or an empty list if the skin is
