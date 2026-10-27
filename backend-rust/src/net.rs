@@ -999,13 +999,27 @@ async fn handle_game(mut socket: WebSocket, state: Arc<AppState>, params: HashMa
     if !orphaned {
         let removed = {
             let mut room = handle.room.lock().await;
-            room.remove_player(&player_id, now_ms())
+            // `orphan_player` also reports false when this connection no longer owns
+            // the player: a newer connection may have resumed it (same id, new conn
+            // id) while this socket was still winding down. Removing it then would
+            // delete the session that just took over, so only remove a player this
+            // connection still owns.
+            if room.owns_player(&player_id, conn_id) {
+                room.remove_player(&player_id, now_ms())
+            } else {
+                None
+            }
         };
         if let Some(payload) = removed {
             broadcast_bytes(&handle, &payload).await;
+            tracing::info!("player disconnected: {} (room {})", player_id, handle.name);
+            logs::push(format!("client disconnected: {}", player_id));
+        } else {
+            // Already gone, or a newer connection resumed this player while the old
+            // socket was winding down. Either way there is nothing left to remove.
+            tracing::info!("stale socket closed for {}; player kept (room {})", player_id, handle.name);
+            logs::push(format!("client stale socket closed: {}", player_id));
         }
-        tracing::info!("player disconnected: {} (room {})", player_id, handle.name);
-        logs::push(format!("client disconnected: {}", player_id));
     } else {
         tracing::info!("player disconnected, holding for resume: {} (room {})", player_id, handle.name);
         logs::push(format!("client disconnected (held for resume): {}", player_id));

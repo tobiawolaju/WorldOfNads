@@ -710,6 +710,9 @@ func _receive_messages():
 		match data.get("type"):
 			"connect":
 				player_id = data["id"]
+				# Remembered so a rejoin of this room resumes this player instead
+				# of opening a second one (see RESUME_STORE_KEY above).
+				_remember_player_id(player_id)
 				local_display_name = _resolve_server_username(data, player_id)
 				local_skin_name = _resolve_server_skin(data, player_id, local_skin_name)
 				_update_debug_skin()
@@ -1815,12 +1818,65 @@ func _normalize_skin_name(raw_skin: String) -> String:
 		return str(SKIN_NAME_ALIASES[key])
 	return key if key != "" else DEFAULT_SKIN_NAME
 
+# --- REJOIN AS THE SAME PLAYER -------------------------------------------
+# The room server holds a disconnected player for its reconnect grace window so a
+# client can come back as that player. Leaving a room and rejoining is that same
+# case, but a fresh scene starts with no id: the rejoin used to open a second
+# connection under a brand-new id, so the room kept the old player as a frozen
+# ghost, counted two players, and started the match. Remembering the last id per
+# room turns the rejoin into a resume. On the web the record lives in
+# sessionStorage (per tab, so two tabs never fight over one player); native builds
+# use user://, where there is only ever one window.
+const RESUME_STORE_KEY: String = "wons_room_resume"
+const RESUME_STORE_PATH: String = "user://room_resume.cfg"
+
+func _resume_room_key() -> String:
+	var key := local_match_id.strip_edges()
+	return key if key != "" else "default"
+
+# Stored as "<room>|<player id>". Room ids are sanitised server-side to
+# [A-Za-z0-9_-], so the separator can never appear in the room half.
+func _read_resume_record() -> String:
+	if OS.has_feature("web"):
+		var raw = JavaScriptBridge.eval("sessionStorage.getItem('%s') || ''" % RESUME_STORE_KEY)
+		return str(raw) if typeof(raw) == TYPE_STRING else ""
+	var cfg := ConfigFile.new()
+	if cfg.load(RESUME_STORE_PATH) != OK:
+		return ""
+	return str(cfg.get_value("resume", "record", ""))
+
+func _write_resume_record(record: String) -> void:
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval(
+			"sessionStorage.setItem('%s', %s)" % [RESUME_STORE_KEY, JSON.stringify(record)]
+		)
+		return
+	var cfg := ConfigFile.new()
+	cfg.load(RESUME_STORE_PATH)
+	cfg.set_value("resume", "record", record)
+	cfg.save(RESUME_STORE_PATH)
+
+# The id to ask the server to resume, or "" when this room has no remembered
+# player (first visit, a different room, or an id the server will refuse).
+func _remembered_resume_id() -> String:
+	var parts := _read_resume_record().split("|", true, 1)
+	if parts.size() != 2 or parts[0] != _resume_room_key():
+		return ""
+	return parts[1].strip_edges()
+
+func _remember_player_id(id: String) -> void:
+	if id.strip_edges() == "":
+		return
+	_write_resume_record("%s|%s" % [_resume_room_key(), id])
+
 func _build_ws_url_with_username(base_url: String) -> String:
 	var url := base_url
 	var sep := "&" if url.find("?") != -1 else "?"
 	var resume_id := player_id
 	if resume_id == "":
 		resume_id = _preserved_local_id
+	if resume_id == "":
+		resume_id = _remembered_resume_id()
 	if resume_id != "":
 		url += "%sresume=%s" % [sep, resume_id.uri_encode()]
 		sep = "&"
