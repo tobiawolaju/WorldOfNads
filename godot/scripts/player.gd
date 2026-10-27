@@ -238,6 +238,10 @@ var held_weapon_uses: int = 0
 var held_weapon_max_uses: int = 0
 ## The pickup this weapon came from; recycled to a far spot when it runs dry.
 var _held_weapon_pickup: RigidBody3D = null
+## True while a hook/shoot clip owns the pose. `_handle_animations` stands down
+## for its length, otherwise the next frame travels straight back to idle/running
+## and the clip is never seen.
+var _weapon_action_active: bool = false
 ## Shared powerup.gdshader material, built once (in _ready, with a lazy fallback)
 ## and handed to the aura quad.
 var _powerup_material: ShaderMaterial = null
@@ -603,7 +607,13 @@ func _ready() -> void:
 
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
-	var state_names := ["idle", "running", "runningjump", "falling", "runningslide", "fall", "climb"]
+	# Movement states plus the two weapon clips. The AnimationTree owns the
+	# skeleton, so a clip the machine cannot travel to is never drawn no matter
+	# what `anim_player.play()` says (see `_play_weapon_action`).
+	var state_names := [
+		"idle", "running", "runningjump", "falling", "runningslide", "fall", "climb",
+		"hook", "shoot",
+	]
 	for state_name in state_names:
 		var node := AnimationNodeAnimation.new()
 		node.animation = state_name
@@ -612,8 +622,15 @@ func _setup_anim_tree() -> void:
 		for to_name in state_names:
 			if from_name != to_name:
 				var trans := AnimationNodeStateMachineTransition.new()
-				trans.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_SYNC
-				trans.xfade_time = 0.06 if to_name == "idle" else 0.12  # idle settles faster; 0.12 s held the run cycle past the stop
+				if to_name == "hook" or to_name == "shoot":
+					# A one-shot action has to start at its first frame. SYNC would
+					# phase-match it to whatever the legs were doing, which drops the
+					# wind-up and can start the swing halfway through.
+					trans.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_IMMEDIATE
+					trans.xfade_time = 0.04
+				else:
+					trans.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_SYNC
+					trans.xfade_time = 0.06 if to_name == "idle" else 0.12  # idle settles faster; 0.12 s held the run cycle past the stop
 				state_machine.add_transition(from_name, to_name, trans)
 	anim_tree.tree_root = state_machine
 	anim_tree.active = true
@@ -874,6 +891,7 @@ func _physics_process(delta: float) -> void:
 	_check_map_recovery()
 	_update_camera_zoom(delta)
 	_update_camera_collision_logic(delta)
+	_update_weapon_fire_cam(delta)
 	_landing_bob_timer = maxf(0.0, _landing_bob_timer - delta)
 	# Climb timers tick here, before the climb branch can take over the frame, so
 	# the re-grab cooldown and the launch window always run down.
@@ -1856,10 +1874,51 @@ func _use_held_weapon() -> void:
 	if held_weapon_uses <= 0:
 		_clear_held_weapon(true)
 		return
+	# One clip at a time: a press during the swing/shot is dropped, so the uses
+	# cannot be spent faster than the animation that shows them.
+	if _weapon_action_active:
+		return
+	if is_local:
+		velocity = Vector3.ZERO
+		var clip := ""
+		match held_weapon_kind:
+			LocalPickup2.WeaponKind.KNIFE, LocalPickup2.WeaponKind.SWORD:
+				clip = "hook"
+			LocalPickup2.WeaponKind.AK47, LocalPickup2.WeaponKind.GLOCK, LocalPickup2.WeaponKind.RPG:
+				clip = "shoot"
+		if clip != "":
+			await _play_weapon_action(clip)
+		held_weapon_uses -= 1
+		_update_hud_power_up()
+		if held_weapon_uses <= 0:
+			_clear_held_weapon(true)
+		else:
+			_trigger_weapon_fire_cam()
+		return
 	held_weapon_uses -= 1
 	_update_hud_power_up()
 	if held_weapon_uses <= 0:
 		_clear_held_weapon(true)
+	else:
+		_trigger_weapon_fire_cam()
+
+
+## Plays a one-shot weapon clip and holds the pose for its length.
+##
+## It has to go through the state machine rather than `anim_player.play()`:
+## `_setup_anim_tree` makes the AnimationTree drive the skeleton, so a clip played
+## straight on the AnimationPlayer is written over every frame and never reaches
+## the screen. "hook" and "shoot" are states for that reason, and
+## `_handle_animations` stands down while `_weapon_action_active` so the next frame
+## does not travel back to idle/running mid-swing.
+func _play_weapon_action(clip: String) -> void:
+	if anim_player == null or not anim_player.has_animation(clip):
+		return
+	var length := anim_player.get_animation(clip).length
+	_weapon_action_active = true
+	_set_anim(clip)
+	await get_tree().create_timer(maxf(length, 0.05)).timeout
+	_weapon_action_active = false
 
 
 # Drops the carried weapon state. When `recycle` is true the pickup is respawned
@@ -3196,6 +3255,12 @@ func _handle_animations(move_dir: Vector3) -> void:
 		# Nearly dead: hold the fall animation for its full length.
 		_set_anim("fall")
 		return
+	# A hook/shoot clip owns the pose until it finishes (see _play_weapon_action).
+	# Without this the very next frame travels back to idle/running and the clip is
+	# cut off before it is ever seen.
+	if _weapon_action_active:
+		_last_world_y = global_position.y
+		return
 	if not _is_movement_allowed():
 		_set_anim("idle")
 		_was_on_floor = is_on_floor()
@@ -3364,3 +3429,47 @@ func _spawn_flash() -> void:
 	var tween := create_tween()
 	tween.tween_property(overlay, "color:a", 0.0, 0.35)
 	tween.tween_callback(canvas.queue_free)
+
+## Brief over-the-shoulder zoom behind the player on weapon fire.
+var _weapon_fire_cam_active: bool = false
+var _weapon_fire_cam_t: float = 0.0
+const WEAPON_FIRE_CAM_DUR: float = 0.32
+const WEAPON_FIRE_CAM_ZOOM_MULT: float = 0.85
+const WEAPON_FIRE_CAM_FOV_DROP: float = 1.5
+const WEAPON_FIRE_CAM_BEHIND_BLEND: float = 0.12
+var _weapon_fire_cam_saved_dist: float = 0.0
+var _weapon_fire_cam_saved_fov: float = 0.0
+var _weapon_fire_cam_saved_yaw: float = 0.0
+var _weapon_fire_cam_saved_pitch: float = 0.0
+
+
+# Starts a brief over-the-shoulder zoom behind the player on weapon fire.
+func _trigger_weapon_fire_cam() -> void:
+	if not is_local or camera == null or not is_instance_valid(camera):
+		return
+	if not _weapon_fire_cam_active:
+		_weapon_fire_cam_saved_dist = camera_distance_current
+		_weapon_fire_cam_saved_fov = camera.fov
+		_weapon_fire_cam_saved_yaw = cam_rot_y
+		_weapon_fire_cam_saved_pitch = cam_rot_x
+	_weapon_fire_cam_active = true
+	_weapon_fire_cam_t = 0.0
+
+
+# Updates the weapon fire camera kick each physics frame.
+func _update_weapon_fire_cam(delta: float) -> void:
+	if not _weapon_fire_cam_active or camera == null or not is_instance_valid(camera):
+		return
+	_weapon_fire_cam_t += delta
+	if _weapon_fire_cam_t >= WEAPON_FIRE_CAM_DUR:
+		_weapon_fire_cam_active = false
+		return
+	var t: float = _weapon_fire_cam_t / WEAPON_FIRE_CAM_DUR
+	var kick: float = sin(t * PI)
+	var target_dist: float = _weapon_fire_cam_saved_dist * lerp(1.0, WEAPON_FIRE_CAM_ZOOM_MULT, kick)
+	# Don't let normal camera zoom override during the kick
+	camera_distance_current = lerp(_weapon_fire_cam_saved_dist, target_dist, kick)
+	camera.fov = lerp(_weapon_fire_cam_saved_fov, _weapon_fire_cam_saved_fov - WEAPON_FIRE_CAM_FOV_DROP, kick * 0.4)
+	# Stay very close to current aim, just tighten slightly
+	cam_rot_y = lerp_angle(cam_rot_y, _weapon_fire_cam_saved_yaw, kick * WEAPON_FIRE_CAM_BEHIND_BLEND)
+	cam_rot_x = lerp(cam_rot_x, _weapon_fire_cam_saved_pitch, kick * WEAPON_FIRE_CAM_BEHIND_BLEND)
