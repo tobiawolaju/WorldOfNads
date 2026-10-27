@@ -1,21 +1,25 @@
 @tool
 extends RigidBody3D
 class_name LocalPickup2
-## Local-only WEAPON pickup: sword / AK47 / glock / knife / RPG.
+## Weapon pickup: sword / AK47 / glock / knife / RPG.
 ##
 ## This is the weapon sibling of LocalPickup.gd (power-ups + objective items).
-## It is deliberately client-side only for now: nothing is sent to the server, so
-## every player picks up and spends their own weapons.
+## A pickup named after a server id (w1..w5, see SERVER_WEAPON_KINDS) is
+## SERVER-AUTHORITATIVE, exactly like a power-up: the server owns its spawn spot
+## and who carries it, mirrors both to every client, and re-rolls the spot when
+## the last charge is spent. Any other copy (e.g. one placed in a scene by hand)
+## stays a local-only prop that recycles itself.
 ##
 ## Behaviour:
 ##   * One weapon model is shown on the ground, chosen by `weapon_kind`.
 ##   * A player grabs it like any other local pickup. The ground model disappears
 ##     and the matching mesh in skin.tscn (`Skeleton3D/BoneAttachment3D/<name>`)
-##     becomes visible in the left hand.
+##     becomes visible in the left hand — on every client, because the holder is
+##     part of the server's item state.
 ##   * Instead of a timer, a weapon has `uses` charges. Every press of the Action
 ##     button spends one, and the HUD ring drains 1/uses per press.
 ##   * When the last charge is spent the hand mesh is hidden again and the pickup
-##     is teleported to a fresh far-away spot on the map, ready to be found.
+##     moves to a fresh far-away spot on the map, ready to be found.
 ##
 ## Physics (falling, resting, respawn probing) mirrors LocalPickup.gd so both
 ## pickup families feel identical in the hand and on the ground.
@@ -60,6 +64,19 @@ const WEAPON_NODE_NAMES := {
 	WeaponKind.RPG: "rpg",
 }
 
+## The server-tracked weapon ids and the weapon each one spawns as. Mirrors the
+## server's WEAPON_IDS roster (config.rs), so every client shows the same weapon
+## at the same spot. A pickup whose node name is one of these ids is
+## server-authoritative: the server owns its spot and who carries it, exactly like
+## the power-ups (LocalPickup). Any other pickup stays a local-only prop.
+const SERVER_WEAPON_KINDS := {
+	"w1": WeaponKind.SWORD,
+	"w2": WeaponKind.AK47,
+	"w3": WeaponKind.GLOCK,
+	"w4": WeaponKind.KNIFE,
+	"w5": WeaponKind.RPG,
+}
+
 ## How many Action presses a fresh weapon lasts.
 const DEFAULT_USES: int = 8
 
@@ -97,9 +114,18 @@ const RESPAWN_PROBE_DEPTH: float = 160.0
 ## Keeps respawns inside the minimap bounds so their pointers stay on the map.
 const RESPAWN_EDGE_MARGIN: float = 5.0
 const RESPAWN_GROUND_OFFSET: float = 1.0
+## Extra height above the terrain a server-placed weapon is dropped from, so it
+## lands on uneven ground instead of spawning inside or under it.
+const SPAWN_DROP_HEIGHT: float = 2.0
 
 var is_held: bool = false
 var holder: Node3D = null
+## True while the ground model is out of play: the SERVER says another player is
+## carrying it. Hidden and not grabbable.
+var remote_held: bool = false
+## True while the pickup is being re-seated (the last charge was spent, or the
+## server picked a new spot) and must not be grabbed yet.
+var respawning: bool = false
 
 ## Runtime pivot the weapon models are parented to, so the idle bob moves them as
 ## one unit without touching the physics body's transform.
@@ -131,6 +157,54 @@ func weapon_node_name() -> String:
 ## minimap group.
 func is_weapon_pickup() -> bool:
 	return true
+
+
+## The server id this pickup reports under, or "" when it is a purely local prop.
+## PlayerManager renames server-spawned weapons to their id (w1..w5), so the node
+## name is the id.
+func server_item_id() -> String:
+	var pickup_name := String(name)
+	if SERVER_WEAPON_KINDS.has(pickup_name):
+		return pickup_name
+	return ""
+
+
+## The weapon kind a server id spawns as, or NONE for an unknown id.
+static func kind_for_server_id(item_id: String) -> int:
+	return int(SERVER_WEAPON_KINDS.get(item_id, WeaponKind.NONE))
+
+
+## Tells the server this weapon was just grabbed (holding) or released. Only the
+## LOCAL holder reports anything: every client owns its own copy, and only that
+## copy ever has a local holder.
+func _notify_server_hold(holding: bool, holder_node: Node3D = null) -> void:
+	var claimant: Node3D = null
+	if holder_node != null and is_instance_valid(holder_node):
+		claimant = holder_node
+	elif is_instance_valid(holder):
+		claimant = holder
+	if claimant == null or not claimant.is_in_group("local_player"):
+		return
+	var item_id := server_item_id()
+	if item_id == "":
+		return
+	var pm := get_tree().get_first_node_in_group("player_manager")
+	if pm == null:
+		return
+	if holding and pm.has_method("notify_item_held"):
+		pm.call("notify_item_held", item_id)
+	elif not holding and pm.has_method("notify_item_dropped"):
+		pm.call("notify_item_dropped", item_id)
+
+
+## Tells the server the weapon was spent, so it can re-roll a fresh spot.
+func _notify_server_used() -> void:
+	var item_id := server_item_id()
+	if item_id == "":
+		return
+	var pm := get_tree().get_first_node_in_group("player_manager")
+	if pm != null and pm.has_method("notify_item_used"):
+		pm.call("notify_item_used", item_id)
 
 
 # --- LIFECYCLE ----------------------------------------------------------
@@ -214,11 +288,12 @@ func _apply_mesh_offset() -> void:
 
 # --- PLAYER.GD API ------------------------------------------------------
 func can_pick_up() -> bool:
-	return can_be_picked and not is_held and weapon_kind != WeaponKind.NONE
+	return can_be_picked and not is_held and not remote_held and not respawning \
+		and weapon_kind != WeaponKind.NONE
 
 
 func is_being_held() -> bool:
-	return is_held and is_instance_valid(holder)
+	return (is_held and is_instance_valid(holder)) or remote_held
 
 
 ## Grab: the ground model vanishes and player.gd reveals the hand mesh.
@@ -233,37 +308,128 @@ func pick_up(by: Node3D) -> bool:
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
 	emit_signal("picked_up", self)
+	_notify_server_hold(true)
 	return true
 
 
-## Every uses charge is spent: recycle the pickup to a far-away spot so a fresh
-## weapon can be found elsewhere on the map.
+## Every uses charge is spent: recycle the pickup so a fresh weapon can be found
+## elsewhere on the map.
+##
+## A server-tracked weapon (w1..w5) is re-rolled by the SERVER: this only releases
+## the hold, hides the model and reports the use, then waits for the new spot to
+## arrive through apply_server_spawn(). A local-only prop still picks its own spot.
 func deplete_and_respawn(from_position: Vector3) -> void:
 	if is_held:
 		is_held = false
 		holder = null
-	# Visible again and parked until the new spot has been chosen.
-	visible = true
-	linear_velocity = Vector3.ZERO
-	angular_velocity = Vector3.ZERO
 	# Frozen while teleporting so Jolt never drags the body across the map.
 	freeze = true
 	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+	if server_item_id() != "":
+		# Hidden and un-grabbable until the server hands back a new position.
+		# notify_item_used() also clears the local hold, so no separate drop
+		# message is sent.
+		respawning = true
+		visible = false
+		_notify_server_used()
+		emit_signal("depleted", self)
+		return
+	# Visible again and parked until the new spot has been chosen. Still out of
+	# play so the old spot cannot be re-grabbed in the frame between here and the
+	# probe below.
+	respawning = true
+	visible = true
+	# The spot probe needs the physics space, and this runs from an idle-frame
+	# resume (the weapon clip's timer) as often as from a physics step. Jolt
+	# refuses the query while the space is stepping, so probe on the next physics
+	# frame instead of spamming "space state is inaccessible" and silently falling
+	# back to the far-away default.
+	await get_tree().physics_frame
+	if not is_instance_valid(self) or not is_inside_tree():
+		return
 	global_position = _pick_respawn_point(from_position)
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
+	respawning = false
 	freeze = false
 	_apply_mesh_offset()
 	_start_idle_anim()
 	emit_signal("depleted", self)
 
 
+## Applies a spot chosen by the SERVER (round start, re-roll after the last
+## charge, drop on death). The server only owns x/z: its y is a flat constant
+## below the hilly terrain, so the model is seated on the ground at that x/z and
+## left to settle.
+func apply_server_spawn(target: Vector3) -> void:
+	# Out of play until it is actually seated: the old spot may be right under a
+	# player, and a visible-but-hidden-for-a-frame copy would flicker there.
+	respawning = true
+	visible = false
+	freeze = true
+	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+	# Same space-state rule as deplete_and_respawn: this is reached from the
+	# message pump, not from a physics step.
+	await get_tree().physics_frame
+	if not is_instance_valid(self) or not is_inside_tree():
+		return
+	global_position = _grounded_spawn_point(target)
+	remote_held = false
+	respawning = false
+	visible = true
+	freeze = false
+	_apply_mesh_offset()
+	_start_idle_anim()
+
+
+## The SERVER says another player is carrying this weapon: hide the ground model
+## so it cannot be grabbed twice. The carrier's hand mesh is driven by
+## PlayerManager (player.show_remote_weapon), not here.
+func set_remote_held(value: bool) -> void:
+	if value == remote_held:
+		return
+	remote_held = value
+	if value:
+		visible = false
+		freeze = true
+		freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+		linear_velocity = Vector3.ZERO
+		angular_velocity = Vector3.ZERO
+	else:
+		freeze = false
+
+
+## Drops a local hold WITHOUT telling the server (the server already decided who
+## has this weapon). Hidden until the new spot arrives.
+func release_silently() -> void:
+	is_held = false
+	holder = null
+	remote_held = true
+	visible = false
+	freeze = true
+	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+
+
 # --- PHYSICS ------------------------------------------------------------
 ## Picks a valid standing spot inside the minimap bounds, preferring one that is
 ## at least RESPAWN_MIN_DISTANCE away from the player.
 func _pick_respawn_point(from_position: Vector3) -> Vector3:
-	var world_size: Vector2 = GameManager.minimap_world_size
-	var world_origin: Vector2 = GameManager.minimap_origin
+	# Read the map bounds through the autoload NODE, not the `GameManager`
+	# identifier: this script is parsed by headless --script tests before the
+	# project's autoloads are registered, and a global identifier reference there
+	# fails the whole file (and every script that depends on it) to compile.
+	var manager := get_node_or_null("/root/GameManager")
+	var world_size: Vector2 = Vector2(70.0, 70.0)
+	var world_origin: Vector2 = Vector2.ZERO
+	if manager != null:
+		world_size = manager.get("minimap_world_size")
+		world_origin = manager.get("minimap_origin")
 	if world_size.x <= 0.0 or world_size.y <= 0.0:
 		world_size = Vector2(70.0, 70.0)
 	var half_x: float = maxf(world_size.x * 0.5 - RESPAWN_EDGE_MARGIN, 1.0)
@@ -295,6 +461,26 @@ func _pick_respawn_point(from_position: Vector3) -> Vector3:
 			best_sq = d_sq
 			best = point
 	return best
+
+
+## Picks a point above the terrain at the server's x/z so the model drops onto the
+## ground instead of spawning inside or under it.
+func _grounded_spawn_point(target: Vector3) -> Vector3:
+	var world := get_world_3d()
+	if world == null:
+		return Vector3(target.x, target.y + SPAWN_DROP_HEIGHT, target.z)
+	var space := world.direct_space_state
+	if space == null:
+		return Vector3(target.x, target.y + SPAWN_DROP_HEIGHT, target.z)
+	var ground: Variant = _probe_ground(
+		Vector3(target.x, target.y + RESPAWN_PROBE_HEIGHT, target.z), space
+	)
+	if ground == null:
+		# Nothing below (over water/void, or the map has not streamed in yet):
+		# keep the server's x/z and still drop from above.
+		return Vector3(target.x, target.y + SPAWN_DROP_HEIGHT, target.z)
+	var point: Vector3 = ground
+	return Vector3(target.x, point.y + SPAWN_DROP_HEIGHT, target.z)
 
 
 ## Casts straight down and returns the first world-layer (1) surface hit, raised

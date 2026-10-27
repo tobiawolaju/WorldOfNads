@@ -127,6 +127,11 @@ pub const MAX_EVENT_HISTORY: usize = 100;
 // power-up, which the client no longer has.
 pub const POWER_UP_IDS: [&str; 4] = ["p1", "p2", "p3", "p5"];
 
+/// The server-tracked weapon pickup ids. Like the power-ups, every client has one
+/// copy of each and the server owns the spot and the holder; the id fixes which
+/// weapon it spawns as (see LocalPickup2.SERVER_WEAPON_KINDS on the client).
+pub const WEAPON_IDS: [&str; 5] = ["w1", "w2", "w3", "w4", "w5"];
+
 /// Capacity of the room, mirroring Node's `currentMaxPlayers`.
 ///
 /// `None` means unlimited, which is Node's default (`let currentMaxPlayers = null`).

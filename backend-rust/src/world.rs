@@ -133,6 +133,10 @@ pub struct Room {
     pub chicken: Item,
     pub lootbox: Item,
     pub power_ups: HashMap<String, Item>,
+    /// Server-spawned weapon pickups, keyed by WEAPON_IDS. Same contract as the
+    /// power-ups: the server owns the spot and the holder, the client only shows
+    /// the weapon the id stands for.
+    pub weapons: HashMap<String, Item>,
     pub player_cell_index: HashMap<String, String>,
     pub cell_occupants: HashMap<String, HashSet<String>>,
     pub recipient_state: HashMap<String, RecipientState>,
@@ -181,11 +185,16 @@ impl Room {
         for id in POWER_UP_IDS {
             power_ups.insert(id.to_string(), Item::new(id));
         }
+        let mut weapons = HashMap::new();
+        for id in WEAPON_IDS {
+            weapons.insert(id.to_string(), Item::new(id));
+        }
         let mut room = Room {
             players: HashMap::new(),
             chicken: Item::new("Chicken"),
             lootbox: Item::new("LootBox"),
             power_ups,
+            weapons,
             player_cell_index: HashMap::new(),
             cell_occupants: HashMap::new(),
             recipient_state: HashMap::new(),
@@ -366,6 +375,9 @@ impl Room {
         if POWER_UP_IDS.iter().any(|x| *x == item_id) {
             return self.power_ups.get_mut(item_id);
         }
+        if WEAPON_IDS.iter().any(|x| *x == item_id) {
+            return self.weapons.get_mut(item_id);
+        }
         None
     }
 
@@ -384,6 +396,13 @@ impl Room {
         let storm_radius = self.storm_radius;
         for id in POWER_UP_IDS {
             if let Some(item) = self.power_ups.get_mut(id) {
+                item.is_held = false;
+                item.holder_id = None;
+                Self::place_item_at_random_spawn(item, storm_radius);
+            }
+        }
+        for id in WEAPON_IDS {
+            if let Some(item) = self.weapons.get_mut(id) {
                 item.is_held = false;
                 item.holder_id = None;
                 Self::place_item_at_random_spawn(item, storm_radius);
@@ -421,6 +440,9 @@ impl Room {
         let holder_exists = self.players.contains_key(holder_id);
         let mut ids: Vec<String> = vec!["Chicken".to_string(), "LootBox".to_string()];
         for id in POWER_UP_IDS {
+            ids.push(id.to_string());
+        }
+        for id in WEAPON_IDS {
             ids.push(id.to_string());
         }
         for id in ids {
@@ -644,20 +666,24 @@ impl Room {
         }
     }
 
+    /// A carried item was USED. Power-ups and weapons are both re-rolled to a new
+    /// spot so the item stays findable; a weapon is spent when its last charge
+    /// goes, a power-up when it is activated.
     pub fn use_request(&mut self, id: &str, item_id: &str) {
-        if !POWER_UP_IDS.iter().any(|x| *x == item_id) {
+        let is_power_up = POWER_UP_IDS.iter().any(|x| *x == item_id);
+        let is_weapon = WEAPON_IDS.iter().any(|x| *x == item_id);
+        if !is_power_up && !is_weapon {
             return;
         }
         let allowed = self
-            .power_ups
-            .get(item_id)
+            .item_mut(item_id)
             .map(|item| item.is_held && item.holder_id.as_deref() == Some(id))
             .unwrap_or(false);
         if !allowed {
             return;
         }
         let storm_radius = self.storm_radius;
-        if let Some(item) = self.power_ups.get_mut(item_id) {
+        if let Some(item) = self.item_mut(item_id) {
             item.is_held = false;
             item.holder_id = None;
             Self::place_item_at_random_spawn(item, storm_radius);
@@ -1397,6 +1423,7 @@ impl Room {
         let current_items: Vec<ItemNet> = POWER_UP_IDS
             .iter()
             .map(|id| encode_item(&self.power_ups[*id]))
+            .chain(WEAPON_IDS.iter().map(|id| encode_item(&self.weapons[*id])))
             .collect();
         let current_match = self.build_encoded_match();
 
@@ -1729,9 +1756,12 @@ mod tests {
         assert_eq!(v["match"]["pl"], 2);
         assert_eq!(v["chicken"]["i"], "Chicken");
         assert_eq!(v["lootbox"]["i"], "LootBox");
-        // One entry per server-tracked power-up, so retiring an id does not leave
-        // this assertion behind (the HOOK removal did exactly that).
-        assert_eq!(v["items"].as_array().unwrap().len(), POWER_UP_IDS.len());
+        // One entry per server-tracked power-up and weapon, so retiring an id does
+        // not leave this assertion behind (the HOOK removal did exactly that).
+        assert_eq!(
+            v["items"].as_array().unwrap().len(),
+            POWER_UP_IDS.len() + WEAPON_IDS.len()
+        );
         assert!(v["players"].as_array().unwrap()[0]["u"].is_string());
     }
 
@@ -1761,6 +1791,45 @@ mod tests {
         room.add_player("p2", "bob", "s-default", 0, 2);
         room.pickup_request("p2", "Chicken", 1_000_000_000_000);
         assert_eq!(room.chicken.holder_id.as_deref(), Some("p2"));
+    }
+
+    #[test]
+    fn weapons_spawn_and_recycle_like_power_ups() {
+        let mut room = live_room();
+        // Every weapon starts free and placed by the round-start roll.
+        for id in WEAPON_IDS {
+            let item = &room.weapons[id];
+            assert!(!item.is_held, "{id} must start unheld");
+            assert!(item.holder_id.is_none(), "{id} must start unowned");
+        }
+
+        room.pickup_request("p1", "w1", 1_000_000_000_000);
+        assert!(room.weapons["w1"].is_held);
+        assert_eq!(room.weapons["w1"].holder_id.as_deref(), Some("p1"));
+
+        // A spent weapon is released and re-rolled, exactly like a used power-up.
+        room.use_request("p1", "w1");
+        let item = &room.weapons["w1"];
+        assert!(!item.is_held, "a used weapon must be free again");
+        assert!(item.holder_id.is_none(), "a used weapon must be unowned");
+    }
+
+    #[test]
+    fn a_weapon_drops_where_its_holder_died() {
+        let mut room = live_room();
+        {
+            let player = room.players.get_mut("p1").unwrap();
+            player.x = 5.0;
+            player.z = -3.0;
+        }
+        room.pickup_request("p1", "w3", 1_000_000_000_000);
+        room.remove_player("p1", 1_000_000_000_000);
+
+        let item = &room.weapons["w3"];
+        assert!(!item.is_held);
+        assert!(item.holder_id.is_none());
+        assert!((item.x - 5.0).abs() < 1e-9, "x={}", item.x);
+        assert!((item.z + 3.0).abs() < 1e-9, "z={}", item.z);
     }
 
     // -- win condition ----------------------------------------------------
@@ -1808,14 +1877,17 @@ mod tests {
 
     // -- item spawns ------------------------------------------------------
 
-    /// Every item the round starts with: the chicken, the lootbox and the five
-    /// power-ups, as (id, x, z).
+    /// Every item the round starts with: the chicken, the lootbox, the power-ups
+    /// and the weapons, as (id, x, z).
     fn item_spots(room: &Room) -> Vec<(String, f64, f64)> {
         let mut spots = vec![
             ("Chicken".to_string(), room.chicken.x, room.chicken.z),
             ("LootBox".to_string(), room.lootbox.x, room.lootbox.z),
         ];
         for (id, item) in room.power_ups.iter() {
+            spots.push((id.clone(), item.x, item.z));
+        }
+        for (id, item) in room.weapons.iter() {
             spots.push((id.clone(), item.x, item.z));
         }
         spots

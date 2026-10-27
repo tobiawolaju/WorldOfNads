@@ -60,6 +60,10 @@ func _initialize() -> void:
 	pickup.call("deplete_and_respawn", from + Vector3(1.0, 0.0, 0.0))
 	_check("pickup visible again after deplete", (pickup as Node3D).visible)
 	_check("pickup no longer held", not bool(pickup.call("is_being_held")))
+	# The probe itself runs on the next physics frame: Jolt refuses a space query
+	# while the physics step owns the space, so the new spot lands a frame later.
+	await physics_frame
+	await physics_frame
 	var moved := (pickup as Node3D).global_position.distance_to(from + Vector3(1.0, 0.0, 0.0))
 	_check("pickup respawns far away (moved %.1f)" % moved, moved >= 20.0)
 
@@ -111,6 +115,9 @@ func _initialize() -> void:
 	_check("hand is empty after the last use", _visible_hand_weapon(player) == "")
 	_check("pickup visible again after the last use", (pickup as Node3D).visible
 		and not bool(pickup.call("is_being_held")))
+	# Same one-physics-frame deferral as section 3.
+	await physics_frame
+	await physics_frame
 	var respawned := (pickup as Node3D).global_position.distance_to(player.global_position)
 	_check("pickup respawned away from the player (%.1f m)" % respawned, respawned >= 20.0)
 

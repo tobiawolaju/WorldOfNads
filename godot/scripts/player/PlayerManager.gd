@@ -79,12 +79,16 @@ var lootbox_holder_id: String = ""
 var _last_lootbox_is_held: bool = false
 var _last_lootbox_holder_id: String = ""
 
-# --- SERVER-AUTHORITATIVE ITEM STATE (power-ups p1, p2, p3, p5) ---
+# --- SERVER-AUTHORITATIVE ITEM STATE (power-ups p1, p2, p3, p5; weapons w1..w5) ---
 # The power-ups share the chicken/lootbox protocol: the server owns each item's
 # spawn spot and who holds it. These mirror the last snapshot so the per-frame
 # pass can hide carried power-ups and seat released ones. p4 is retired: it was
 # the HOOK power-up.
 const POWER_UP_ITEM_IDS: Array[String] = ["p1", "p2", "p3", "p5"]
+## Weapons ride the same protocol. Each id always spawns as the same weapon kind
+## (see LocalPickup2.SERVER_WEAPON_KINDS), so the server only has to send a spot
+## and a holder; every client builds the right model from the id.
+const WEAPON_ITEM_IDS: Array[String] = ["w1", "w2", "w3", "w4", "w5"]
 ## How far (on the HORIZONTAL plane) a server item spot must move before the local
 ## copy is re-seated. The server's y is a flat placeholder below the terrain, so
 ## once physics has dropped an item onto the ground its y no longer matches the
@@ -94,6 +98,10 @@ var item_nodes: Dictionary = {}       # item id -> Node3D
 var item_is_held: Dictionary = {}     # item id -> bool (server state)
 var item_holder: Dictionary = {}      # item id -> holder player id
 var item_local_held: String = ""      # item id the LOCAL player is carrying (or "")
+## weapon item id -> the remote player node showing that weapon in hand. Kept so
+## the hand mesh can be cleared when the server releases the weapon, without
+## walking every player on every snapshot.
+var _remote_weapon_holders: Dictionary = {}
 var _remote_lod_timer: float = 0.0
 const REMOTE_LOD_INTERVAL: float = 0.15 # Check distance 6 times per second
 var _storm_env_node: Node = null
@@ -1125,7 +1133,9 @@ func _is_objective_item_id(item_id: String) -> bool:
 
 
 func _is_known_item_id(item_id: String) -> bool:
-	return _is_objective_item_id(item_id) or POWER_UP_ITEM_IDS.has(item_id)
+	return _is_objective_item_id(item_id) \
+		or POWER_UP_ITEM_IDS.has(item_id) \
+		or WEAPON_ITEM_IDS.has(item_id)
 
 
 # Resolves (and caches) the world node for an item id. Only the local scene's own
@@ -1144,6 +1154,53 @@ func _get_item_node(item_id: String) -> Node3D:
 	if found != null:
 		item_nodes[item_id] = found
 	return found
+
+
+# Makes sure a local copy of a server-spawned weapon exists before its first
+# snapshot is applied. A scene that already places a weapon of that kind (the
+# authored WeaponSword / WeaponAK47 / ... nodes) is ADOPTED: it is renamed to the
+# server id, so it becomes the authoritative copy instead of leaving a second,
+# local-only weapon of the same kind next to it. Anything else is instantiated
+# from pickup2.tscn, which is what a map without hand-placed weapons gets.
+func _ensure_weapon_node(item_id: String) -> Node3D:
+	var existing := _get_item_node(item_id)
+	if existing != null:
+		return existing
+	var kind := LocalPickup2.kind_for_server_id(item_id)
+	if kind == LocalPickup2.WeaponKind.NONE:
+		return null
+	var weapon := _adopt_weapon_of_kind(kind)
+	if weapon == null:
+		var scene := load("res://scenes/pickup2.tscn") as PackedScene
+		if scene == null:
+			return null
+		weapon = scene.instantiate() as Node3D
+		if weapon == null:
+			return null
+		weapon.set("weapon_kind", kind)
+		var parent := get_parent()
+		if parent == null:
+			return null
+		parent.add_child(weapon)
+	weapon.name = item_id
+	# Hidden until the snapshot below seats it (a held weapon is never drawn on the
+	# ground). _set_item_server_state forces the seat for a hidden copy, so a free
+	# weapon always reappears at the server's spot.
+	weapon.visible = false
+	item_nodes[item_id] = weapon
+	return weapon
+
+
+# A hand-placed weapon of this kind that no server id has claimed yet.
+func _adopt_weapon_of_kind(kind: int) -> Node3D:
+	for node in get_tree().get_nodes_in_group(LocalPickup2.GROUP):
+		if not (node is Node3D) or not is_instance_valid(node):
+			continue
+		if WEAPON_ITEM_IDS.has(String(node.name)):
+			continue
+		if int(node.get("weapon_kind")) == kind:
+			return node
+	return null
 
 
 # Applies the server's hold/position state for one item. When held, the per-frame
@@ -1168,6 +1225,12 @@ func _set_item_server_state(item_id: String, held: bool, holder: String, server_
 	var node := _get_item_node(item_id)
 	if node != null and is_instance_valid(node) and node.has_method("set_remote_held"):
 		node.call("set_remote_held", false)
+	# A released weapon also has to leave the hand it was shown in.
+	var stale_holder = _remote_weapon_holders.get(item_id)
+	if stale_holder != null:
+		_remote_weapon_holders.erase(item_id)
+		if is_instance_valid(stale_holder) and stale_holder.has_method("show_remote_weapon"):
+			stale_holder.call("show_remote_weapon", LocalPickup2.WeaponKind.NONE)
 	if has_pos:
 		# Force the seat when the item was just released, or when our copy is still
 		# hidden (e.g. a used power-up the server re-rolled to a nearby spot), so it
@@ -1192,6 +1255,10 @@ func _update_item_states(items_state, quantized := true) -> void:
 			_decode_pos(entry, "y", quantized),
 			_decode_pos(entry, "z", quantized)
 		)
+		# Weapons are spawned by the server, so the local copy may not exist yet:
+		# build (or adopt) it before the first spot/hold is applied.
+		if WEAPON_ITEM_IDS.has(item_id) and _ensure_weapon_node(item_id) == null:
+			continue
 		_set_item_server_state(item_id, held, holder, pos, true)
 
 
@@ -1230,8 +1297,9 @@ func _release_local_item_hold(item_id: String) -> void:
 
 
 # Per-frame visual pass for items carried by OTHER players: power-ups are hidden,
-# objective items ride the holder's back (so everyone sees the chicken/lootbox).
-# The local holder is left alone — LocalPickup drives its own copy.
+# objective items ride the holder's back (so everyone sees the chicken/lootbox) and
+# a weapon shows in the holder's hand. The local holder is left alone — its own
+# pickup drives the local copy.
 func _update_item_hold_visuals() -> void:
 	for item_id in item_is_held.keys():
 		if not bool(item_is_held[item_id]):
@@ -1244,6 +1312,18 @@ func _update_item_hold_visuals() -> void:
 			continue
 		var is_objective := _is_objective_item_id(item_id)
 		var pnode := _get_player_node_by_id(holder)
+		if WEAPON_ITEM_IDS.has(item_id):
+			# The ground model is hidden while carried and the HOLDER shows the hand
+			# mesh instead, so everyone sees who is armed with what. Remote player
+			# copies are plain skin.tscn instances, so the mesh toggles the same way
+			# it does on the local player.
+			if node.has_method("set_remote_held"):
+				node.call("set_remote_held", true)
+			node.visible = false
+			if pnode != null and is_instance_valid(pnode) and pnode.has_method("show_remote_weapon"):
+				pnode.call("show_remote_weapon", LocalPickup2.kind_for_server_id(item_id))
+				_remote_weapon_holders[item_id] = pnode
+			continue
 		if is_objective and pnode != null and is_instance_valid(pnode):
 			# Hand the holder over instead of posing the item from the holder's
 			# origin: LocalPickup then follows the holder's own back attachment
