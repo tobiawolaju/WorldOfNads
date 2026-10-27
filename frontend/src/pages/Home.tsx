@@ -411,7 +411,7 @@ const Home: React.FC = () => {
           {/* Slide 1: Gameplay */}
           <div className="functional-slide">
             <div className="func-content">
-              <h2 className="func-headline">Play</h2>
+              <h2 className="func-headline">Drop In!</h2>
               <p className="func-subtext func-subtext-inline-replaced" style={{ fontSize: '40px' }}>
                 <WaveText text="Drop into the arena with 19 other players. Find the chicken. Take it. Run. Everyone else wants what you're holding." />
               </p>
@@ -492,7 +492,7 @@ const Home: React.FC = () => {
           onClick={handlePlay}
           disabled={!ready}
           className="play-btn-fixed"
-          title="Play"
+          title="Drop In!"
         >
           Play
         </button>
