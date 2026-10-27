@@ -53,33 +53,34 @@ cylinder_wall = NodePath("Cylinder")
 cylinder_border = NodePath("Cylinder2")
 normal_env = ExtResource("9_qixtg")
 storm_env = ExtResource("10_nt65e")
-cylinder_radius = 18.0
+cylinder_radius = 45.0
+damage_per_second = 5.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=799662076]
-environment = ExtResource("10_nt65e")
+environment = ExtResource("9_qixtg")
 
 [node name="day" type="DirectionalLight3D" parent="env" unique_id=14538735]
 transform = Transform3D(0.84941316, -2.3067738e-08, 0.5277283, -0.5277284, -3.7129027e-08, 0.8494131, 0, -0.99999994, -4.3711385e-08, 0, 34.18702, 0)
-visible = false
 light_energy = 0.2
 shadow_enabled = true
 directional_shadow_mode = 0
 
 [node name="night" type="DirectionalLight3D" parent="env" unique_id=636189729]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
+visible = false
 light_color = Color(0.85490197, 0, 0.78431374, 1)
 light_energy = 0.2
 shadow_enabled = true
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=232728076]
-transform = Transform3D(18, 0, 0, 0, 200, 0, 0, 0, 18, 0, 0, 0)
+transform = Transform3D(45, 0, 0, 0, 200, 0, 0, 0, 45, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_qixtg")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_nt65e")
 
 [node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=87302044]
-transform = Transform3D(18, 0, 0, 0, 200, 0, 0, 0, 18, 0, 0, 0)
+transform = Transform3D(45, 0, 0, 0, 200, 0, 0, 0, 45, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_bhmdk")
 surface_material_override/0 = SubResource("StandardMaterial3D_s5y6v")
@@ -156,23 +157,22 @@ power_up_mode = 5
 transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 1.246697, 5.703834, -0.9042039)
 power_up_mode = 6
 
-[node name="WeaponSword" parent="." instance=ExtResource("14_weapons")]
+[node name="WeaponSword" parent="." unique_id=820653889 instance=ExtResource("14_weapons")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 1.4365964, 0.1)
-weapon_kind = 1
 
-[node name="WeaponAK47" parent="." instance=ExtResource("14_weapons")]
+[node name="WeaponAK47" parent="." unique_id=1264444796 instance=ExtResource("14_weapons")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 1.4365964, -0.9)
 weapon_kind = 2
 
-[node name="WeaponGlock" parent="." instance=ExtResource("14_weapons")]
+[node name="WeaponGlock" parent="." unique_id=102669741 instance=ExtResource("14_weapons")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.2, 1.4365964, -1.7)
 weapon_kind = 3
 
-[node name="WeaponKnife" parent="." instance=ExtResource("14_weapons")]
+[node name="WeaponKnife" parent="." unique_id=909259896 instance=ExtResource("14_weapons")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.8, 1.4365964, 0.6)
 weapon_kind = 4
 
-[node name="WeaponRPG" parent="." instance=ExtResource("14_weapons")]
+[node name="WeaponRPG" parent="." unique_id=742287051 instance=ExtResource("14_weapons")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.4, 1.4365964, -1.9)
 weapon_kind = 5
 
