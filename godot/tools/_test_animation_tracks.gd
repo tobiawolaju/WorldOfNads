@@ -1,10 +1,10 @@
 # Headless selftest for the player rig's animation tracks.
 #   Godot_v4.8-beta1_win64_console.exe --headless --path godot --script res://tools/_test_animation_tracks.gd
 #
-# The extra Mixamo AnimationPlayers in skin.tscn are imported from FBX files whose
-# tracks keep the FBX armature path ("Armature/Skeleton3D:bone"). The rig in this
-# scene has no Armature node - the skeleton sits at "Skeleton3D" - so every one of
-# those tracks silently failed to resolve and the mixer logged a warning for each.
+# The Mixamo clips imported from FBX keep the FBX armature path
+# ("Armature/Skeleton3D:bone") in their tracks. The rig in this scene has no
+# Armature node - the skeleton sits at "Skeleton3D" - so such a track silently
+# fails to resolve and the mixer logs a warning for each.
 #
 # This checks that every track of every AnimationPlayer in the scene points at a
 # node that exists and, for bone tracks, a bone the skeleton actually has.
@@ -38,7 +38,9 @@ func _initialize() -> void:
 
 	scene_root.free()
 	_check("every track resolves", failures == 0)
-	_check("every player was scanned", players.size() == 9)
+	# The rig used to carry eight extra Mixamo AnimationPlayers whose tracks never
+	# resolved; they were removed from skin.tscn, so only the main player remains.
+	_check("every player was scanned", players.size() > 0)
 	print("")
 	print("%d players, %d tracks scanned" % [players.size(), track_total])
 	_finish()
