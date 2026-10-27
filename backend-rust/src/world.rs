@@ -802,20 +802,26 @@ impl Room {
                 self.match_start_countdown -= FIXED_DT;
                 if self.match_start_countdown <= 0.0 {
                     self.match_start_countdown = -1.0;
-                    self.match_running = true;
-                    self.match_started_this_round = true;
-                    self.randomize_all_item_spawns();
-                    // A fresh round starts with an untouched box: no steals yet.
-                    self.lootbox_steals = 0;
-                    // The chicken is re-spawned at match start, so nobody holds it.
-                    // Clear the holder flags: a player who grabbed the chicken
-                    // during the countdown would otherwise keep accruing
-                    // possession without actually holding it.
-                    let ids: Vec<String> = self.players.keys().cloned().collect();
-                    for pid in ids {
-                        if let Some(player) = self.players.get_mut(&pid) {
-                            player.is_current_holder = false;
-                            player.possession_since_ms = None;
+                    // Someone left while the countdown ran: go back to waiting rather
+                    // than starting a match with fewer players than the room needs. A
+                    // leaver stays in `players` as an orphan for the reconnect grace
+                    // window, so this is the check that notices them.
+                    if self.player_count() >= self.min_players_to_start {
+                        self.match_running = true;
+                        self.match_started_this_round = true;
+                        self.randomize_all_item_spawns();
+                        // A fresh round starts with an untouched box: no steals yet.
+                        self.lootbox_steals = 0;
+                        // The chicken is re-spawned at match start, so nobody holds it.
+                        // Clear the holder flags: a player who grabbed the chicken
+                        // during the countdown would otherwise keep accruing
+                        // possession without actually holding it.
+                        let ids: Vec<String> = self.players.keys().cloned().collect();
+                        for pid in ids {
+                            if let Some(player) = self.players.get_mut(&pid) {
+                                player.is_current_holder = false;
+                                player.possession_since_ms = None;
+                            }
                         }
                     }
                 }
@@ -1373,9 +1379,17 @@ impl Room {
             let _ = self.remove_player(&id, now);
         }
 
+        // Only LIVE players are broadcast. An orphaned player is held for the
+        // reconnect grace window so a client that comes back can resume it, but it
+        // has no connection: sending it makes every other client render a frozen
+        // avatar at its last position, and the player who just rejoined sees their
+        // own ghost standing next to them. Dropping it here also makes the next
+        // delta carry a `removed` entry, so clients drop it the moment the socket
+        // goes away instead of waiting for the grace window to expire.
         let current_players: HashMap<String, PlayerNet> = self
             .players
             .values()
+            .filter(|p| p.orphaned_at.is_none())
             .map(|p| (p.id.clone(), encode_player(p)))
             .collect();
         let current_chicken = encode_item(&self.chicken);
