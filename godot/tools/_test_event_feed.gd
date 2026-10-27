@@ -53,6 +53,11 @@ func _initialize() -> void:
 	_check("row shows the initial", (row["initial"] as Label).visible)
 	_check("badge uses the name initial", (row["initial"] as Label).text == "A")
 	_check("row hides the photo until it resolves", not (row["photo"] as TextureRect).visible)
+	# Profile pictures are square, like stream chat: no circular crop shader, and the
+	# badge fallback must not round its corners either.
+	_check("photo has no circular crop", (row["photo"] as TextureRect).material == null)
+	var badge_style := (row["disc"] as Panel).get_theme_stylebox("panel") as StyleBoxFlat
+	_check("badge is not round", badge_style != null and badge_style.corner_radius_top_left == 0)
 	_check("row text carries the message", _row_text(row).contains("joined the game"))
 	_check("row text carries the name", _row_text(row).contains("alice"))
 	_check("avatar slot keeps its footprint", (row["slot"] as Control).visible)

@@ -8,7 +8,6 @@ const LIVE_EVENTS_URL := "wss://worldofnads.onrender.com/events"
 const ROOM_EVENTS_URL := "wss://wons-room-server.onrender.com/events"
 const LOCAL_EVENTS_URL := "ws://localhost:8080/events"
 const GAMEOVER_SCENE := preload("res://scenes/gameover.tscn")
-const AVATAR_CIRCLE_SHADER := preload("res://scenes/avatar_circle.gdshader")
 
 ## Rows kept in the feed. Enough to follow what the room is doing, few enough to
 ## stay readable over gameplay.
@@ -45,7 +44,6 @@ var _entries: Array[Dictionary] = []
 var _entry_seq := 0
 var _rows: Array[Dictionary] = []
 var _avatars: AvatarLoader = null
-var _circle_material: ShaderMaterial = null
 ## The pinned "wins in N" row for the chicken holder, kept out of `_rows` so the
 ## event history never pushes it out.
 var _countdown_row: Dictionary = {}
@@ -484,7 +482,7 @@ func _create_row(index: int) -> Dictionary:
 	row.visible = false
 	_feed.add_child(row)
 
-	# The avatar slot is a fixed square; the disc and the photo are both stacked
+	# The avatar slot is a fixed square; the badge and the photo are both stacked
 	# inside it so swapping one for the other never reflows the row.
 	var slot := Control.new()
 	slot.name = "Avatar"
@@ -505,7 +503,6 @@ func _create_row(index: int) -> Dictionary:
 	photo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	photo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	photo.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	photo.material = _avatar_material()
 	photo.visible = false
 	slot.add_child(photo)
 	photo.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -622,8 +619,9 @@ func _apply_avatar(row: Dictionary, actor: String) -> void:
 		return
 
 	# Badge: the first letter on a darkened name colour. A saturated fill at 20px
-	# competes with the message, so the disc stays dark and the letter carries
-	# the colour.
+	# competes with the message, so the badge stays dark and the letter carries
+	# the colour. Square, like the photos: the feed reads as stream chat, not as a
+	# list of round avatars.
 	var base := _name_color(actor)
 	disc.add_theme_stylebox_override("panel", _disc_style(base.darkened(0.5)))
 	disc.visible = true
@@ -651,21 +649,9 @@ func _disc_style(color: Color) -> StyleBoxFlat:
 		return cached
 	var style := StyleBoxFlat.new()
 	style.bg_color = color
-	var radius := int(AVATAR_SIZE * 0.5)
-	style.corner_radius_top_left = radius
-	style.corner_radius_top_right = radius
-	style.corner_radius_bottom_left = radius
-	style.corner_radius_bottom_right = radius
+	# No corner radius: profile pictures are square, so the badge is too.
 	_disc_styles[key] = style
 	return style
-
-## Shared material: the uniforms are constant, so every avatar row can point at
-## one material instead of carrying its own.
-func _avatar_material() -> ShaderMaterial:
-	if _circle_material == null:
-		_circle_material = ShaderMaterial.new()
-		_circle_material.shader = AVATAR_CIRCLE_SHADER
-	return _circle_material
 
 func _resolve_event_actor(event_data: Dictionary, fallback_actor: String) -> String:
 	var candidate = str(event_data.get("username", "")).strip_edges()
