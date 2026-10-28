@@ -535,6 +535,22 @@
   overflow: hidden;
   border-radius: 0;
   clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  /* "Drop In!" is longer than the old "Play": let the button grow past the
+     shared 130px instead of clipping it, and never wrap. */
+  width: auto;
+  min-width: 130px;
+  padding: 0 18px;
+  white-space: nowrap;
+}
+
+/* The label no longer changes while Privy initialises, so show the wait state
+   with the button itself. */
+.play-btn-fixed:disabled,
+.play-btn-fixed:disabled:hover {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+  box-shadow: 0 10px 25px rgba(144, 124, 255, 0.2);
 }
 
 .discord-btn-fixed:hover,

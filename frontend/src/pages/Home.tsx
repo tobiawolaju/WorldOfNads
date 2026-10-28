@@ -494,7 +494,7 @@ const Home: React.FC = () => {
           className="play-btn-fixed"
           title="Drop In!"
         >
-          Play
+          Drop In!
         </button>
 
         <a
