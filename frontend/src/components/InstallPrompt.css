@@ -1,4 +1,4 @@
-/* Modal overlay for install prompt - covers screen but can be dismissed */
+/* Modal overlay for install prompt - covers screen; clicking outside dismisses */
 .install-prompt {
   position: fixed;
   inset: 0;
@@ -39,30 +39,6 @@
   animation: install-prompt-pop 260ms ease both;
 }
 
-.install-prompt__close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.06);
-  color: var(--foreground, #171717);
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.15s ease, transform 0.15s ease;
-}
-
-.install-prompt__close:hover,
-.install-prompt__close:active {
-  background: rgba(0, 0, 0, 0.12);
-  transform: scale(1.05);
-}
-
 @keyframes install-prompt-pop {
   from {
     opacity: 0;
@@ -97,16 +73,9 @@
   height: 1.15rem;
 }
 
-.install-prompt__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
-  margin-top: 0.35rem;
-}
-
 .install-prompt__cta {
   width: 100%;
+  margin-top: 0.35rem;
   padding: 0.85rem 1rem;
   border: none;
   border-radius: 0.9rem;
@@ -120,39 +89,4 @@
 
 .install-prompt__cta:hover {
   background: #ffe14d;
-}
-
-.install-prompt__cancel {
-  width: 100%;
-  padding: 0.7rem 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 0.9rem;
-  background: transparent;
-  color: var(--foreground, #171717);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.install-prompt__cancel:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-@media (prefers-color-scheme: dark) {
-  .install-prompt__close {
-    background: rgba(255, 255, 255, 0.12);
-    color: #ffffff;
-  }
-  .install-prompt__close:hover,
-  .install-prompt__close:active {
-    background: rgba(255, 255, 255, 0.2);
-  }
-  .install-prompt__cancel {
-    border-color: rgba(255, 255, 255, 0.2);
-    color: #ffffff;
-  }
-  .install-prompt__cancel:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
 }
