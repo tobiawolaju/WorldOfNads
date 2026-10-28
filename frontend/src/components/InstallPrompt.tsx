@@ -1,5 +1,6 @@
-import React, { useSyncExternalStore } from "react";
+import React, { useEffect, useSyncExternalStore } from "react";
 import {
+  closeInstallGate,
   isInstallGateOpen,
   isIosDevice,
   promptInstall,
@@ -8,11 +9,21 @@ import {
 import "./InstallPrompt.css";
 
 // Rendered globally, but only visible once `requireInstall()` has opened the
-// gate (i.e. the user tapped Play without the app installed). It is transparent
-// and covers the whole viewport, so the page stays visible underneath yet
-// cannot be scrolled or tapped until the app is installed.
+// gate (i.e. the user tapped Play/Drop In without the app installed).
+// Users can cancel/dismiss the prompt to continue browsing the page.
 export const InstallPrompt: React.FC = () => {
   const open = useSyncExternalStore(subscribeInstallState, isInstallGateOpen, () => false);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeInstallGate();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   if (!open) return null;
 
@@ -24,8 +35,33 @@ export const InstallPrompt: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-label="Install World of Nads"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          closeInstallGate();
+        }
+      }}
     >
       <div className="install-prompt__card">
+        <button
+          type="button"
+          className="install-prompt__close"
+          onClick={closeInstallGate}
+          aria-label="Cancel and close prompt"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            fill="none"
+            strokeLinecap="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
         <span className="install-prompt__title">World of Nads</span>
         {ios ? (
           <span className="install-prompt__subtitle">
@@ -47,15 +83,25 @@ export const InstallPrompt: React.FC = () => {
             Install the app to continue. It runs full screen.
           </span>
         )}
-        {!ios && (
+
+        <div className="install-prompt__actions">
+          {!ios && (
+            <button
+              type="button"
+              className="install-prompt__cta"
+              onClick={() => void promptInstall()}
+            >
+              Install
+            </button>
+          )}
           <button
             type="button"
-            className="install-prompt__cta"
-            onClick={() => void promptInstall()}
+            className="install-prompt__cancel"
+            onClick={closeInstallGate}
           >
-            Install
+            {ios ? "Dismiss" : "Cancel"}
           </button>
-        )}
+        </div>
       </div>
     </div>
   );

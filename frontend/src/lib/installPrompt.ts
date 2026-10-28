@@ -104,7 +104,11 @@ export const promptInstall = async (): Promise<void> => {
   if (!prompt) return;
   try {
     await prompt.prompt();
-    await prompt.userChoice;
+    const choice = await prompt.userChoice;
+    if (choice && choice.outcome === "accepted") {
+      installedThisSession = true;
+      gateOpen = false;
+    }
   } catch {
     /* ignore */
   }
