@@ -10,7 +10,7 @@ import "./InstallPrompt.css";
 
 // Rendered globally, but only visible once `requireInstall()` has opened the
 // gate (i.e. the user tapped Play/Drop In without the app installed).
-// Users can cancel/dismiss the prompt to continue browsing the page.
+// Clicking anywhere outside the card dismisses the prompt so users can continue browsing.
 export const InstallPrompt: React.FC = () => {
   const open = useSyncExternalStore(subscribeInstallState, isInstallGateOpen, () => false);
 
@@ -42,26 +42,6 @@ export const InstallPrompt: React.FC = () => {
       }}
     >
       <div className="install-prompt__card">
-        <button
-          type="button"
-          className="install-prompt__close"
-          onClick={closeInstallGate}
-          aria-label="Cancel and close prompt"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-
         <span className="install-prompt__title">World of Nads</span>
         {ios ? (
           <span className="install-prompt__subtitle">
@@ -84,24 +64,15 @@ export const InstallPrompt: React.FC = () => {
           </span>
         )}
 
-        <div className="install-prompt__actions">
-          {!ios && (
-            <button
-              type="button"
-              className="install-prompt__cta"
-              onClick={() => void promptInstall()}
-            >
-              Install
-            </button>
-          )}
+        {!ios && (
           <button
             type="button"
-            className="install-prompt__cancel"
-            onClick={closeInstallGate}
+            className="install-prompt__cta"
+            onClick={() => void promptInstall()}
           >
-            {ios ? "Dismiss" : "Cancel"}
+            Install
           </button>
-        </div>
+        )}
       </div>
     </div>
   );
