@@ -1,10 +1,10 @@
 // @ts-nocheck
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, lazy, Suspense } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { FullScreenLoader } from "../components/ui/fullscreen-loader";
-import { ThreeScene } from "../components/ThreeScene";
+const ThreeScene = lazy(() => import("../components/ThreeScene").then((m) => ({ default: m.ThreeScene })));
 import "./Dashboard.css";
 import {
   fetchMatchesFromFirebase,
@@ -997,10 +997,12 @@ export default function Dashboard() {
         <div className={`lobby-bg ${tab === "store" ? "lobby-bg--hidden" : ""}`} aria-hidden={tab === "store"}>
           <img src={lobbyBg} alt="" decoding="async" />
         </div>
-        <ThreeScene
-          equippedSkin={displayedSkin}
-          isStoreOpen={tab === "store"}
-        />
+        <Suspense fallback={<div className="three-scene-placeholder" aria-hidden="true" />}>
+          <ThreeScene
+            equippedSkin={displayedSkin}
+            isStoreOpen={tab === "store"}
+          />
+        </Suspense>
         {equipFlash && <div className="equip-flash" />}
 
         {(tab !== "store" || monBalance !== null) && (
