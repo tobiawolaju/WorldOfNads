@@ -8,6 +8,8 @@ import RainbowBeam from "./components/RainbowBeam";
 import TopNavbar from "./components/TopNavbar";
 import FullscreenToggle from "./components/FullscreenToggle";
 import InstallPrompt from "./components/InstallPrompt";
+import OfflineNotice from "./components/OfflineNotice";
+import { scheduleIdlePreload } from "./lib/wasmPreloader";
 
 // UI
 import { FullScreenLoader } from "./components/ui/fullscreen-loader";
@@ -260,26 +262,38 @@ const AppContent: React.FC = () => {
     return () => unlisten?.();
   }, [ready, authenticated, user]);
 
-  useEffect(() => {
-    setShowLoader(!ready);
-  }, [ready]);
+  // Keep the fullscreen toggle off the landing page (Home).
+  const isHomeRoute = location.pathname === "/" || location.pathname === "/home";
 
+  // Privy's `ready` also waits for the SDK chunk and its iframe. Blocking the
+  // whole app on it kept the landing page blank for that entire download, so
+  // "/" paints straight away (its CTA is disabled until `ready`). Every other
+  // route still waits, so a signed-in visitor never sees a signed-out page.
   useEffect(() => {
+    setShowLoader(!ready && !isHomeRoute);
+  }, [ready, isHomeRoute]);
+
+  // Warm the routes a signed-in player is most likely to open next. Never for
+  // anonymous visitors: on the landing page this only competed for bandwidth
+  // with the page they were actually looking at.
+  useEffect(() => {
+    if (!authenticated) return;
+    const cancelIdlePreload = scheduleIdlePreload(4000);
     const t = window.setTimeout(() => {
       void import("./pages/Dashboard");
       void import("./pages/Play");
       void import("./pages/NadArena");
       void import("./pages/Leaderboard");
     }, 2500);
-    return () => window.clearTimeout(t);
-  }, []);
+    return () => {
+      window.clearTimeout(t);
+      cancelIdlePreload();
+    };
+  }, [authenticated]);
 
   // Hide navbar on immersive/special landing routes
   const hideNavbar = location.pathname === "/play" || location.pathname === "/auth";
   const hideTopNavbarContents = location.pathname === "/waitlist" || location.pathname === "/wait-list";
-
-  // Keep the fullscreen toggle off the landing page (Home).
-  const isHomeRoute = location.pathname === "/" || location.pathname === "/home";
 
   return (
     <>
@@ -287,6 +301,7 @@ const AppContent: React.FC = () => {
       <RainbowBeam />
       {!isHomeRoute && <FullscreenToggle />}
       <InstallPrompt />
+      <OfflineNotice />
       <FullScreenLoader visible={showLoader} />
       <ToastContainer
         position="top-center"

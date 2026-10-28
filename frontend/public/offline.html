@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#6553c7" />
+    <title>Offline • World of Nads</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #6553c7;
+        color: #fff;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at top, rgba(231, 149, 231, 0.28), transparent 50%), #6553c7;
+        position: relative;
+      }
+
+      /* Animated rainbow beam matching the site */
+      .rainbow-beam-container {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        overflow: hidden;
+        opacity: 0.35;
+        pointer-events: none;
+      }
+
+      .rainbow-bar {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 150vw;
+        height: 80px;
+        background: radial-gradient(
+          ellipse at center,
+          rgb(255, 255, 255) 10%,
+          rgb(251, 218, 255) 20%,
+          rgb(241, 134, 255) 85%,
+          rgb(225, 0, 255) 100%
+        );
+        filter: blur(35px);
+        animation: rainbow-beam-scroll 9s linear infinite;
+        will-change: transform;
+      }
+
+      @keyframes rainbow-beam-scroll {
+        from { transform: translate(-50%, -80px); }
+        to { transform: translate(-50%, calc(100vh + 80px)); }
+      }
+
+      /* Background Nad tiles */
+      .pattern-background {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        opacity: 0.08;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .pattern-tile {
+        position: absolute;
+        width: 65px;
+        height: 65px;
+        background-image: url(/w.png);
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+
+      /* Main Card */
+      .offline-card {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 2.25rem 1.75rem;
+        max-width: 440px;
+        width: 90%;
+        background: rgba(36, 26, 74, 0.55);
+        border: 2px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-radius: 1.25rem;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        transform: translateY(-8px);
+        animation: floatCard 4s ease-in-out infinite alternate;
+      }
+
+      @keyframes floatCard {
+        from { transform: translateY(-4px); }
+        to { transform: translateY(4px); }
+      }
+
+      /* Animated Nad Mascot */
+      .mascot-wrap {
+        position: relative;
+        cursor: pointer;
+        outline: none;
+        margin-bottom: 1.25rem;
+        transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .mascot-wrap:active {
+        transform: scale(0.9) rotate(-4deg);
+      }
+
+      .mascot-img {
+        width: 110px;
+        height: auto;
+        display: block;
+        filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.45));
+        animation: mascotBob 2.4s ease-in-out infinite alternate;
+      }
+
+      @keyframes mascotBob {
+        0% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-8px) scale(1.03); }
+        100% { transform: translateY(0) scale(1); }
+      }
+
+      .mascot-badge {
+        position: absolute;
+        bottom: -6px;
+        right: -10px;
+        background: #ff4757;
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        padding: 3px 8px;
+        border-radius: 9999px;
+        border: 2px solid #241a4a;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .mascot-badge::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #fff;
+        display: inline-block;
+        animation: pulseDot 1.2s infinite;
+      }
+
+      @keyframes pulseDot {
+        0% { opacity: 0.4; }
+        50% { opacity: 1; }
+        100% { opacity: 0.4; }
+      }
+
+      /* Typography */
+      .signal-pill {
+        display: inline-block;
+        background: rgba(255, 215, 0, 0.18);
+        border: 1px solid rgba(255, 215, 0, 0.4);
+        color: #ffd700;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        margin-bottom: 0.75rem;
+      }
+
+      .title {
+        font-size: 1.65rem;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        line-height: 1.15;
+        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      }
+
+      .description {
+        font-size: 0.92rem;
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.45;
+        margin-bottom: 1.5rem;
+      }
+
+      /* Retry Button with game's signature pink skew */
+      .retry-btn {
+        width: 100%;
+        max-width: 260px;
+        height: 3.2rem;
+        border: none;
+        background: #ff7ab6;
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transform: skewX(-8deg);
+        box-shadow: 0 8px 24px rgba(255, 122, 182, 0.35);
+        transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+        margin-bottom: 1rem;
+      }
+
+      .retry-btn:hover {
+        background: #ffa0cb;
+        transform: skewX(-8deg) scale(1.02);
+        box-shadow: 0 10px 30px rgba(255, 122, 182, 0.5);
+      }
+
+      .retry-btn:active {
+        transform: skewX(-8deg) scale(0.98);
+      }
+
+      .retry-btn.connected {
+        background: #2ed573;
+        box-shadow: 0 8px 24px rgba(46, 213, 115, 0.4);
+      }
+
+      .retry-btn span {
+        display: inline-block;
+        transform: skewX(8deg);
+      }
+
+      /* Countdown / Status text */
+      .status-text {
+        font-size: 0.82rem;
+        color: rgba(255, 255, 255, 0.65);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .easter-egg-text {
+        margin-top: 1.25rem;
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.45);
+        font-style: italic;
+      }
+
+      .boop-counter {
+        color: #ffd700;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Rainbow beam background -->
+    <div class="rainbow-beam-container" aria-hidden="true">
+      <div class="rainbow-bar"></div>
+    </div>
+
+    <!-- Tiled 'W' pattern -->
+    <div class="pattern-background" id="patternBg" aria-hidden="true"></div>
+
+    <main class="offline-card">
+      <div class="mascot-wrap" id="mascot" title="Tap to bounce Nad!" tabindex="0">
+        <img src="/loadinglogo.png" alt="World of Nads" class="mascot-img" />
+        <div class="mascot-badge" id="mascotBadge">OFFLINE</div>
+      </div>
+
+      <div class="signal-pill">NO CONNECTION</div>
+      <h1 class="title">SIGNAL LOST</h1>
+      <p class="description">
+        World of Nads requires an active internet connection to synchronize the arena, matches, and rewards.
+      </p>
+
+      <button type="button" class="retry-btn" id="retryBtn">
+        <span id="btnText">TRY AGAIN</span>
+      </button>
+
+      <p class="status-text" id="statusLine">
+        Auto-retrying in <strong id="countdown">6</strong>s...
+      </p>
+
+      <div class="easter-egg-text" id="easterEgg">
+        Tap Nad while you wait: <span class="boop-counter" id="boopCount">0</span> bounces
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        // Populate ambient background tiles
+        const patternBg = document.getElementById("patternBg");
+        if (patternBg) {
+          for (let i = 0; i < 24; i += 1) {
+            const tile = document.createElement("div");
+            tile.className = "pattern-tile";
+            tile.style.transform = `rotate(${Math.floor(Math.random() * 360)}deg)`;
+            tile.style.left = `${Math.random() * 95}vw`;
+            tile.style.top = `${Math.random() * 95}vh`;
+            patternBg.appendChild(tile);
+          }
+        }
+
+        const retryBtn = document.getElementById("retryBtn");
+        const btnText = document.getElementById("btnText");
+        const countdownEl = document.getElementById("countdown");
+        const statusLine = document.getElementById("statusLine");
+        const mascot = document.getElementById("mascot");
+        const mascotBadge = document.getElementById("mascotBadge");
+        const boopCountEl = document.getElementById("boopCount");
+
+        let countdown = 6;
+        let boops = 0;
+        let isReconnecting = false;
+
+        // Interactive mascot bounce
+        function handleBoop() {
+          boops += 1;
+          boopCountEl.textContent = boops;
+          mascot.style.transform = `scale(1.15) rotate(${Math.random() > 0.5 ? 6 : -6}deg)`;
+          setTimeout(() => {
+            mascot.style.transform = "";
+          }, 150);
+        }
+
+        mascot.addEventListener("click", handleBoop);
+        mascot.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleBoop();
+          }
+        });
+
+        // Test internet connection and reload if alive
+        async function attemptReconnect() {
+          if (isReconnecting) return;
+          isReconnecting = true;
+          btnText.textContent = "CHECKING...";
+
+          if (!navigator.onLine) {
+            setTimeout(() => {
+              btnText.textContent = "STILL OFFLINE";
+              setTimeout(() => {
+                btnText.textContent = "TRY AGAIN";
+                isReconnecting = false;
+              }, 1200);
+            }, 500);
+            return;
+          }
+
+          try {
+            // Ping with cache busting
+            const res = await fetch("/manifest.json?t=" + Date.now(), { method: "HEAD", cache: "no-store" });
+            if (res.ok) {
+              btnText.textContent = "CONNECTED!";
+              retryBtn.classList.add("connected");
+              mascotBadge.textContent = "ONLINE";
+              mascotBadge.style.background = "#2ed573";
+              statusLine.textContent = "Rejoining the arena...";
+              setTimeout(() => {
+                window.location.reload();
+              }, 600);
+              return;
+            }
+          } catch {}
+
+          btnText.textContent = "STILL OFFLINE";
+          setTimeout(() => {
+            btnText.textContent = "TRY AGAIN";
+            isReconnecting = false;
+          }, 1200);
+        }
+
+        retryBtn.addEventListener("click", () => {
+          attemptReconnect();
+        });
+
+        // Auto-retry countdown loop
+        setInterval(() => {
+          if (isReconnecting) return;
+          countdown -= 1;
+          if (countdownEl) countdownEl.textContent = countdown;
+          if (countdown <= 0) {
+            countdown = 8;
+            attemptReconnect();
+          }
+        }, 1000);
+
+        // Immediate wakeup when browser detects network is back
+        window.addEventListener("online", () => {
+          attemptReconnect();
+        });
+      }());
+    </script>
+  </body>
+</html>

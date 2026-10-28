@@ -4,7 +4,6 @@
 [ext_resource type="FontFile" uid="uid://bkrsehe3e3foh" path="res://assets/fonts/font1.ttf" id="2_font"]
 [ext_resource type="FontFile" uid="uid://y4skjn4e2mya" path="res://assets/fonts/font2.ttf" id="3_font2"]
 [ext_resource type="Environment" uid="uid://rpidr3omplr6" path="res://assets/resources/day.tres" id="3_u8sr6"]
-[ext_resource type="Texture2D" uid="uid://b1dshb0rdnrg1" path="res://assets/img/energy.png" id="4_energy"]
 [ext_resource type="Texture2D" uid="uid://ceofg5yk6faak" path="res://assets/img/gem.png" id="5_gem"]
 [ext_resource type="Texture2D" uid="uid://ceofg5yk6lkbk" path="res://assets/img/mon.png" id="6_mon"]
 [ext_resource type="Texture2D" uid="uid://87hft1j821i0" path="res://assets/img/lobbybg_masked.png" id="7_lobby"]
@@ -240,67 +239,6 @@ offset_right = -12.0
 offset_bottom = 125.25
 grow_horizontal = 2
 theme_override_constants/separation = 10
-
-[node name="EnergyPill" type="PanelContainer" parent="CanvasLayer/StatRail" unique_id=1240411141]
-custom_minimum_size = Vector2(0, 24)
-layout_mode = 2
-size_flags_vertical = 4
-theme_override_styles/panel = SubResource("SB_pill")
-
-[node name="EnergyPips" type="HBoxContainer" parent="CanvasLayer/StatRail/EnergyPill" unique_id=340481116]
-modulate = Color(1, 1, 0, 1)
-layout_mode = 2
-theme_override_constants/separation = 3
-
-[node name="Pip1" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips" unique_id=117595338]
-modulate = Color(0.99215686, 0.8784314, 1, 1)
-custom_minimum_size = Vector2(15, 15)
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-texture = ExtResource("4_energy")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Pip2" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips" unique_id=2113935748]
-modulate = Color(0.99215686, 0.8784314, 0.2784314, 1)
-custom_minimum_size = Vector2(15, 15)
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-texture = ExtResource("4_energy")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Pip3" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips" unique_id=1935372162]
-modulate = Color(0.99215686, 0.8784314, 0.2784314, 1)
-custom_minimum_size = Vector2(15, 15)
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-texture = ExtResource("4_energy")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Pip4" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips" unique_id=2073342210]
-modulate = Color(0.99215686, 0.8784314, 0.2784314, 1)
-custom_minimum_size = Vector2(15, 15)
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-texture = ExtResource("4_energy")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Pip5" type="TextureRect" parent="CanvasLayer/StatRail/EnergyPill/EnergyPips" unique_id=502048417]
-modulate = Color(0.72, 0.72, 0.72, 0.2)
-custom_minimum_size = Vector2(15, 15)
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-texture = ExtResource("4_energy")
-expand_mode = 1
-stretch_mode = 5
 
 [node name="MonPill" type="PanelContainer" parent="CanvasLayer/StatRail" unique_id=1595571179]
 visible = false

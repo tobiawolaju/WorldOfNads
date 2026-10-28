@@ -28,35 +28,6 @@ const WaveText = React.memo(({ text }: { text: string }) => {
   );
 });
 
-const LatestTweet = () => {
-  useEffect(() => {
-    const w = window as any;
-    if (w.twttr && w.twttr.widgets) {
-      w.twttr.widgets.load();
-      return;
-    }
-    const s = document.createElement("script");
-    s.src = "https://platform.x.com/widgets.js";
-    s.async = true;
-    s.charset = "utf-8";
-    document.body.appendChild(s);
-  }, []);
-
-  return (
-    <article className="tweet-card tweet-widget">
-      <a
-        className="twitter-timeline"
-        data-theme="dark"
-        data-dnt="true"
-        data-chrome="noheader nofooter noborders"
-        data-tweet-limit="1"
-        href="https://x.com/WorldOfNads?ref_src=twsrc%5Etfw"
-      >
-        Posts by World of Nads (@WorldOfNads)
-      </a>
-    </article>
-  );
-};
 
 const Home: React.FC = () => {
   const { login, authenticated, ready } = usePrivy();
@@ -475,13 +446,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* SECTION 4: EVENTS GRID */}
-      <section className="events-grid-section reveal">
-        <h2 className="section-title">WHAT'S HAPPENING</h2>
-<div className="events-grid">
-          <LatestTweet />
-        </div>
-      </section>
 
       <Footer />
 
