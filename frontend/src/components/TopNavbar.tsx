@@ -41,9 +41,15 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
 
   const isHome = location.pathname === '/';
 
+  // The section label sits right next to the logo, so it is only drawn on the
+  // sub-pages: on the landing page the logo already says where you are.
+  // (The "Play" entry stays in NAV_ITEMS because it is also the nav link home.)
   const currentText = useMemo(
-    () => NAV_ITEMS.find(item => item.path === location.pathname)?.label || '',
-    [location.pathname]
+    () =>
+      isHome
+        ? ''
+        : NAV_ITEMS.find(item => item.path === location.pathname)?.label || '',
+    [isHome, location.pathname]
   );
 
   const qualityHint = useMemo(
