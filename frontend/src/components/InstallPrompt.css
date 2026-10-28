@@ -8,7 +8,7 @@
   justify-content: center;
   padding: 1.5rem;
   padding-bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));
-  background: rgba(0, 0, 0, 0.45);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.15) 60%, rgba(0, 0, 0, 0) 100%);
   animation: install-prompt-fade 200ms ease both;
 }
 
