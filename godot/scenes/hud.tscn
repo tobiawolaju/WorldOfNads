@@ -244,6 +244,7 @@ offset_bottom = 40.0
 [node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=802481236]
 
 [node name="Minimap" type="Control" parent="CanvasLayer/BoxContainer/Node2" unique_id=43787215 node_paths=PackedStringArray("background_texture", "minimap_container", "player_pointer", "chicken_pointer", "lootbox_pointer", "pickup_pointer", "storm_overlay", "bus_path_overlay", "shade_overlay")]
+modulate = Color(1, 1, 1, 0.75686276)
 custom_minimum_size = Vector2(60, 60)
 clip_contents = true
 layout_mode = 3
@@ -264,6 +265,8 @@ lootbox_pointer = NodePath("LootBoxPointer")
 pickup_pointer = NodePath("PickupsPointer")
 storm_overlay = NodePath("StormOverlay")
 bus_path_overlay = NodePath("BusPath")
+bus_path_color = Color(1, 0.1764706, 0.61960787, 1)
+bus_path_width = 1.0
 shade_overlay = NodePath("../../../../shde")
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=123456789]
