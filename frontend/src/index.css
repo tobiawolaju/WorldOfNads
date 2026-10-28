@@ -187,8 +187,16 @@ select,
         border-color: transparent !important;
     }
 
-    /* 2. Global Text Colors: Force all purple / black texts to white */
-    body, h1, h2, h3, h4, h5, h6, p, span, li, strong, th, td, label, blockquote, input, select, textarea {
+    /* 2. Global Text Colors: Force all purple / black texts to white.
+       Scoped to #root on purpose: the Privy modal is portalled next to it, so a
+       rule that reached the whole body repainted Privy's own theme (that is why
+       the login dialog used to need a hard-coded dark-text override, which then
+       broke as soon as Privy followed the device theme). `dialog` is excluded as
+       well, because the Privy modal is an HTML <dialog> and may be mounted inside
+       #root; the app itself uses no <dialog> elements.
+       :where()/:is() keep the specificity of the old bare element selectors, so
+       existing `.badge span { color: #000 !important }` style rules still win. */
+    :where(#root) :is(h1, h2, h3, h4, h5, h6, p, span, li, strong, th, td, label, blockquote, input, select, textarea):not(dialog, dialog *) {
         color: #ffffff !important;
     }
 
@@ -225,17 +233,9 @@ select,
         color: #1a1a1a !important;
     }
 
-    /* Privy modal: override CSS variables so all var(--privy-color-foreground*) resolve to dark text */
-    [data-headlessui-state],
-    [data-headlessui-state] * {
-        --privy-color-foreground: #1a1a1a !important;
-        --privy-color-foreground-2: #1a1a1a !important;
-        --privy-color-foreground-3: #333333 !important;
-        --privy-color-foreground-4: #555555 !important;
-        --privy-color-foreground-accent: #1a1a1a !important;
-        --privy-color-foreground-disabled: #888888 !important;
-        color: #1a1a1a !important;
-    }
+    /* The Privy modal is not styled from here any more: it follows the device
+       theme through PrivyProvider's `appearance.theme`, and the global text
+       rules above are scoped to #root so they cannot repaint it. */
 
     /* Exclude specific buttons or badges if necessary, but keep titles white */
     .careers-header,
