@@ -210,15 +210,14 @@
   color: #ffd700;
 }
 
-/* --- Player stat pills: level / energy / MON ---
+/* --- Player stat pills: level / MON ---
    Each pill carries its own accent (--pill-accent) while sharing one base
-   rule, so all three stay identically sized and pick up the page background
+   rule, so both stay identically sized and pick up the page background
    via var(--background). Accents are re-declared per colour scheme so they
    stay legible on both the white and the #6553c7 page background. */
 .stat-rail {
   --pill-fg: var(--foreground);
   --pill-level: #eab308;
-  --pill-energy: #ca8a04;
   --pill-mon: #a21caf;
 
   position: absolute;
@@ -239,7 +238,6 @@
   .stat-rail {
     --pill-fg: #ffffff;
     --pill-level: #ffd700;
-    --pill-energy: #fde047;
     --pill-mon: #e879f9;
   }
 }
@@ -272,7 +270,6 @@
   --pill-accent: var(--pill-level);
   margin-left: auto;
 }
-.stat-pill--energy { --pill-accent: var(--pill-energy); }
 .stat-pill--mon { --pill-accent: var(--pill-mon); }
 
 /* Children counter the parent's skew so glyphs and icons stay upright */
@@ -299,9 +296,6 @@
   transform: skewX(12deg);
 }
 
-.stat-pill--energy .stat-pill__value {
-  color: var(--pill-energy);
-}
 
 .stat-pill--mon .stat-pill__value {
   color: var(--pill-mon);
@@ -315,7 +309,7 @@
 
 /* The level number is the one value players read at a glance, so it sits in
    yellow, runs at the pill's own skew instead of being straightened, and is a
-   step larger than the energy/MON values. */
+   step larger than the MON value. */
 .stat-pill--level .stat-pill__label {
   font-size: 10px;
   transform: none;
@@ -328,28 +322,6 @@
   transform: none;
 }
 
-.stat-pips {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  transform: skewX(12deg);
-}
-
-.stat-pip {
-  width: 15px;
-  height: 15px;
-  object-fit: contain;
-  opacity: 0.2;
-  filter: grayscale(1);
-  transform: scale(0.85);
-  transition: opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease;
-}
-
-.stat-pip.is-filled {
-  opacity: 1;
-  filter: grayscale(1) sepia(1) saturate(6) hue-rotate(-12deg);
-  transform: scale(1);
-}
 
 /* Mobile portrait keeps the base 54px offset; landscape and desktop drop
    the rail down a further 25% from 81px. */
@@ -393,9 +365,6 @@
     animation: none;
   }
 
-  .stat-pip {
-    transition: none;
-  }
 }
 .card-bottom {
   position: absolute;

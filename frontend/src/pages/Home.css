@@ -338,12 +338,6 @@
   white-space: nowrap;
 }
 
-/* 5️⃣ Section 4: Events Grid */
-.events-grid-section {
-  padding: 140px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
 
 .section-title {
   font-size: clamp(28px, 4vw, 36px);
@@ -365,11 +359,6 @@
 
 
 
-.events-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 40px;
-}
 
 .tweet-card {
   background: #ffffff;

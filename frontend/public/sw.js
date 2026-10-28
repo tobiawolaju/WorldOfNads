@@ -12,7 +12,7 @@
 // bundle) and /attachments (GLBs fetched through a manifest). Those are either
 // time sensitive or big enough that the HTTP cache already does the right thing.
 
-const VERSION = "won-v2";
+const VERSION = "won-v3";
 const SHELL = `won-shell-${VERSION}`;
 const ASSETS = `won-assets-${VERSION}`;
 const MEDIA = `won-media-${VERSION}`;
@@ -24,7 +24,7 @@ const MAX_MEDIA_ENTRIES = 90;
 // cache is bounded too (~a handful of deploys) instead of growing forever.
 const MAX_ASSET_ENTRIES = 120;
 
-const SHELL_URLS = ["/", "/index.html", "/manifest.json"];
+const SHELL_URLS = ["/", "/index.html", "/manifest.json", "/offline.html", "/loadinglogo.png", "/w.png"];
 
 const MEDIA_PATTERN =
   /\.(?:png|jpe?g|webp|avif|gif|svg|ico|woff2?|ttf|otf|mp3|ogg|wav|m4a|webm|mp4)$/i;
@@ -119,6 +119,8 @@ async function networkFirstShell(request, url) {
   } catch {
     const cached = (await caches.match(request)) || (await caches.match("/index.html"));
     if (cached) return cached;
+    const offlinePage = await caches.match("/offline.html");
+    if (offlinePage) return offlinePage;
     return new Response("Offline", { status: 503, statusText: "Offline" });
   }
 }

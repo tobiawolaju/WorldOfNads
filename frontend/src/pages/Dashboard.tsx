@@ -20,6 +20,7 @@ import {
 import { trackMatchJoined } from "../lib/analyticsClient";
 import { warmImage, warmImages, whenIdle } from "../lib/imageCache";
 import { requireInstall } from "../lib/installPrompt";
+import { preloadGodotWasm, scheduleIdlePreload } from "../lib/wasmPreloader";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
 import { resolveGameSkinName, buildComboMap, resolveSkinAttachments, resolveSkinImageUrl } from "../lib/skinMapping";
 import { displayMatchStatus, type DisplayMatchStatus } from "../lib/matchStatus";
@@ -296,8 +297,6 @@ export default function Dashboard() {
   const [isMinting, setIsMinting] = useState(false);
   const [mintError, setMintError] = useState<string | null>(null);
   const [equipFlash, setEquipFlash] = useState(false);
-  const MAX_ENERGY = 5;
-  const [energy, setEnergy] = useState<number>(4);
   const newStoreItemCount = 1;
 
   const level = useMemo(() => {
@@ -687,12 +686,17 @@ export default function Dashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    const cancelIdle = scheduleIdlePreload(3500);
+    return () => cancelIdle();
+  }, []);
+
   const handlePlayClick = useCallback(() => {
     if (!selectedMatch || !user) return;
     if (requireInstall()) return;
 
     if (playButtonState === "idle") {
-      prefetchLinks(["/godot/index.wasm", "/godot/index.pck"]);
+      void preloadGodotWasm({ userIntent: true });
       setPlayButtonState("counting");
       setElapsedTime(0);
       clearPlayTimers();
@@ -1002,25 +1006,6 @@ export default function Dashboard() {
         {(tab !== "store" || monBalance !== null) && (
           <div className="card-overlay">
             <div className="stat-rail">
-              {tab !== "store" && (
-                <div
-                  className="stat-pill stat-pill--energy"
-                  role="img"
-                  aria-label={`Energy ${energy} of ${MAX_ENERGY}`}
-                  title={`Energy ${energy} of ${MAX_ENERGY}`}
-                  >
-                  <span className="stat-pips">
-                    {Array.from({ length: MAX_ENERGY }).map((_, i) => (
-                      <img
-                        key={i}
-                        src="/energy.png"
-                        alt=""
-                        className={`stat-pip ${i < energy ? "is-filled" : ""}`}
-                      />
-                    ))}
-                  </span>
-                </div>
-              )}
 
               {monBalance !== null && (
                 <div className="stat-pill stat-pill--mon" title={`${monBalance} MON`}>
@@ -1309,6 +1294,8 @@ export default function Dashboard() {
         <button
           className={`play-fixed ${canPlay ? "active" : "disabled"} ${playButtonState === "counting" ? "counting" : ""}`}
           onClick={canPlay ? handlePlayClick : undefined}
+          onMouseEnter={canPlay ? () => preloadGodotWasm({ userIntent: true }) : undefined}
+          onTouchStart={canPlay ? () => preloadGodotWasm({ userIntent: true }) : undefined}
           disabled={!canPlay}
           style={{
             opacity: 1,

@@ -1,0 +1,88 @@
+.offline-notice-bar {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1.15rem;
+  background: rgba(36, 26, 74, 0.92);
+  border: 1px solid rgba(255, 71, 87, 0.5);
+  border-radius: 9999px;
+  color: #ffffff;
+  font-family: Inter, system-ui, sans-serif;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: offlineSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: auto;
+}
+
+.offline-notice-bar.is-restored {
+  border-color: rgba(46, 213, 115, 0.6);
+  background: rgba(20, 48, 30, 0.92);
+}
+
+@keyframes offlineSlideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.offline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff4757;
+  box-shadow: 0 0 10px #ff4757;
+  animation: offlineBlink 1.2s infinite;
+}
+
+.offline-dot.is-green {
+  background: #2ed573;
+  box-shadow: 0 0 10px #2ed573;
+  animation: none;
+}
+
+@keyframes offlineBlink {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.offline-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.offline-btn {
+  border: none;
+  background: #ff7ab6;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.65rem;
+  transform: skewX(-8deg);
+  cursor: pointer;
+  border-radius: 0;
+  transition: background 0.15s ease;
+}
+
+.offline-btn span {
+  display: inline-block;
+  transform: skewX(8deg);
+}
+
+.offline-btn:hover {
+  background: #ffa0cb;
+}

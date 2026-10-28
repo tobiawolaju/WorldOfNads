@@ -8,6 +8,7 @@ import {
   openInstallGate,
   subscribeInstallState
 } from "../lib/installPrompt";
+import { preloadGodotWasm } from "../lib/wasmPreloader";
 
 const BACKEND_URL = import.meta.env.VITE_ANALYTICS_API_URL || "https://worldofnads.onrender.com";
 
@@ -71,6 +72,7 @@ const Play: React.FC = () => {
     if (typeof window === "undefined" || blocked) return;
 
     const redirectToGame = async () => {
+      void preloadGodotWasm({ userIntent: true });
       const params = new URLSearchParams(window.location.search);
       const match = params.get("match") || "";
 
