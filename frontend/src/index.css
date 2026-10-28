@@ -555,28 +555,17 @@ body.play-immersive {
     }
 }
 
-/* Base transitions for smooth interaction */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p,
+/* Base transitions for smooth interactive controls */
 a,
 button,
-img,
-.card,
-.match-card,
 .tab,
 .filter {
     transition:
-        color 0.4s ease,
-        filter 0.4s ease,
-        text-shadow 0.4s ease,
-        box-shadow 0.4s ease,
-        background-color 0.4s ease,
-        border-color 0.4s ease !important;
+        color 0.2s ease,
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        opacity 0.2s ease,
+        transform 0.2s ease;
 }
 
 /* Intersection Effect Classes */

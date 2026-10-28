@@ -7,6 +7,8 @@
     z-index: -1;
     opacity: 0.1;
     overflow: hidden;
+    pointer-events: none;
+    contain: strict;
 }
 
 .pattern-tile {
@@ -16,4 +18,10 @@
     background-image: url(/w.png);
     background-repeat: no-repeat;
     background-size: cover;
+    will-change: auto;
+}
+
+/* On low-end hardware, skip 25 rotating background tiles */
+html[data-perf="low"] .pattern-background {
+    display: none;
 }
