@@ -1246,14 +1246,17 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
     return [dir.x, targetY + dir.y, dir.z] as [number, number, number];
   }, [cameraLift, cameraZ, targetY]);
 
-  // Vertical orbit is switched off: the polar angle is pinned to the framed
-  // elevation (the angle of the camera offset used above), so dragging
-  // left/right still swings the camera around the nad but dragging up/down
-  // leaves the height untouched. Pinning min and max to the same value is how
-  // OrbitControls locks an axis.
-  const lockedPolarAngle = useMemo(() => {
+  // Vertical orbit is unlocked with a shallow range (20 degrees up and down)
+  // around the framed elevation, allowing the user to tilt up/down slightly without
+  // flipping the camera or clipping into the floor.
+  const VERTICAL_ORBIT_SPAN = (20 * Math.PI) / 180;
+  const { minPolarAngle, maxPolarAngle } = useMemo(() => {
     const dy = cameraLift - targetY;
-    return Math.acos(dy / Math.hypot(dy, cameraZ));
+    const basePolarAngle = Math.acos(dy / Math.hypot(dy, cameraZ));
+    return {
+      minPolarAngle: Math.max(0.1, basePolarAngle - VERTICAL_ORBIT_SPAN),
+      maxPolarAngle: Math.min(Math.PI - 0.1, basePolarAngle + VERTICAL_ORBIT_SPAN),
+    };
   }, [cameraLift, targetY, cameraZ]);
 
   // Force the orbit target on the controls so a fresh load always frames
@@ -1415,8 +1418,8 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
         enableRotate={true}
         minDistance={LOCKED_ZOOM_DISTANCE}
         maxDistance={LOCKED_ZOOM_DISTANCE}
-        minPolarAngle={lockedPolarAngle}
-        maxPolarAngle={lockedPolarAngle}
+        minPolarAngle={minPolarAngle}
+        maxPolarAngle={maxPolarAngle}
         mouseButtons={{
           LEFT: THREE.MOUSE.ROTATE,
           MIDDLE: null as any,
