@@ -31,6 +31,7 @@ const BOT_JUMP_HEIGHT: float = 1.5
 # it hop and stand still, and drives the same animation states a remote gets
 # from the server.
 class BotMotion:
+	var rig: CharacterBody3D = null
 	var home: Vector3 = Vector3.ZERO
 	var radius: float = 1.5
 	var speed: float = 1.0
@@ -41,8 +42,6 @@ class BotMotion:
 	var jump_min: float = 1.0
 	var jump_max: float = 3.0
 	var jump_timer: float = 1.0
-	var height: float = 0.0
-	var vertical_speed: float = 0.0
 	## Counts down to the next stand-still, which then runs in pause_left.
 	var pause_timer: float = 0.0
 	var pause_left: float = 0.0
@@ -91,9 +90,11 @@ func _ready():
 	_spawn_lobby_stress_agents()
 	_assign_camera()
 
-func _process(delta: float) -> void:
-	_check_map_recovery()
+func _physics_process(delta: float) -> void:
 	_drive_lobby_bots(delta)
+
+func _process(_delta: float) -> void:
+	_check_map_recovery()
 
 func _check_map_recovery() -> void:
 	# Respawn at lobby spawn point if player falls off map
@@ -188,9 +189,10 @@ func _spawn_lobby_stress_agents() -> void:
 	for i in range(lobby_stress_agent_count):
 		var skin_name: String = picks[i] if i < picks.size() else DEFAULT_SKIN_NAME
 
-		var bot := _instantiate_remote_bot(skin_name)
-		bot.name = "Bot%03d" % (i + 1)
-		add_child(bot)
+		var rig := _instantiate_bot_rig(skin_name)
+		rig.name = "Bot%03d" % (i + 1)
+		add_child(rig)
+		var bot: Node3D = rig.get_node("Avatar")
 		npcs.append(bot)
 
 		var ring_index := int(floor(sqrt(float(i))))
@@ -203,10 +205,11 @@ func _spawn_lobby_stress_agents() -> void:
 		bot.root = self
 		bot.player_id = "BOT_%03d" % (i + 1)
 		bot.display_name = "BOT %03d" % (i + 1)
-		bot.global_position = home_center
-		_disable_bot_shadows(bot)
+		rig.global_position = home_center
+		_disable_bot_shadows(rig)
 
 		var motion := BotMotion.new()
+		motion.rig = rig
 		motion.home = home_center
 		motion.radius = _stress_rng.randf_range(0.9, 3.5)
 		motion.speed = _stress_rng.randf_range(0.55, 1.6)
@@ -223,26 +226,57 @@ func _spawn_lobby_stress_agents() -> void:
 	print("[LOBBY] Spawned %d remote-player bots from %d skins." % [npcs.size(), _bot_skin_pool().size()])
 
 
-# The same conversion PlayerManager runs for every other player in a match
-# (_convert_scene_to_remote_player): a RemotePlayer node owns the skin scene's
-# visuals, and the physics nodes are stripped so nothing can collide with a bot.
-func _instantiate_remote_bot(skin_name: String) -> Node3D:
+# PlayerManager turns another player's skin scene into a RemotePlayer node: the
+# visuals are re-parented under it and every collider is dropped, because the
+# server moves that avatar. A lobby bot has no server, so it keeps a body of its
+# own - otherwise the avatar hangs at the spawn point's height instead of
+# standing on the floor. The RemotePlayer still owns the look and the animation
+# machine, exactly like a remote in a match.
+func _instantiate_bot_rig(skin_name: String) -> CharacterBody3D:
 	var source := SKIN_SCENE.instantiate()
-	var bot: Node3D = REMOTE_PLAYER_SCRIPT.new()
-	bot.name = source.name
+
+	var rig := CharacterBody3D.new()
+	rig.collision_layer = 0  # nothing has to collide with a bot...
+	rig.collision_mask = 1   # ...but a bot has to stand on the world
+	rig.floor_max_angle = deg_to_rad(50.0)
+
+	var avatar: Node3D = REMOTE_PLAYER_SCRIPT.new()
+	avatar.name = "Avatar"
+	rig.add_child(avatar)
+
+	# The character's own capsule: skin.tscn ships it at the right size and
+	# height, so the body reuses that shape instead of guessing one.
+	var shape := source.get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if shape != null:
+		source.remove_child(shape)
+		shape.owner = null
+		rig.add_child(shape)
 
 	_strip_physics_nodes(source)
 	for child in source.get_children():
 		source.remove_child(child)
 		child.owner = null
-		bot.add_child(child)
+		avatar.add_child(child)
+		_own_subtree(child, avatar)
 	source.queue_free()
 
-	# Applied after the visuals are re-parented: apply_skin walks the player's
-	# own children, so it has to run on the finished avatar, not on the scene
-	# root it was unpacked from.
-	_skin_applier.apply_skin(bot, skin_name)
-	return bot
+	# Applied after the visuals are re-parented, so the same call also serves a
+	# re-dress later on (see _redress_fallback_bots).
+	_skin_applier.apply_skin(avatar, skin_name)
+	return rig
+
+
+# SkinApplier walks the player's own children - find_children's `owned` flag
+# defaults to true - so every visual has to be owned by the RemotePlayer or
+# apply_skin silently skips its meshes. That is how a bot ends up wearing the
+# right hat on the scene's default pink body: attachments are looked up by node
+# path, body colours by walking the children. PlayerManager dodges this by
+# dressing the skin scene before it re-parents it; owning the subtree lets the
+# lobby re-dress a bot at any time instead.
+func _own_subtree(node: Node, owner_node: Node) -> void:
+	node.owner = owner_node
+	for child in node.get_children():
+		_own_subtree(child, owner_node)
 
 
 func _strip_physics_nodes(node: Node) -> void:
@@ -256,8 +290,8 @@ func _strip_physics_nodes(node: Node) -> void:
 
 # RemotePlayer has no disable_character_shadows() - that lives on player.gd - but
 # a lobby full of bots should not add a shadow caster per mesh either.
-func _disable_bot_shadows(bot: Node3D) -> void:
-	for child in bot.find_children("*", "MeshInstance3D", true):
+func _disable_bot_shadows(rig: Node3D) -> void:
+	for child in rig.find_children("*", "MeshInstance3D", true, false):
 		(child as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
@@ -321,6 +355,8 @@ func _redress_fallback_bots() -> void:
 # Stands in for PlayerManager's world-state loop: a RemotePlayer never moves or
 # animates on its own, so the lobby walks it around its orbit, makes it hop and
 # stand still, and sends it the same animation states a real remote receives.
+# Driven through its CharacterBody3D rig so it stands and walks on the ground
+# with local physics instead of hovering at the spawn point's altitude.
 func _drive_lobby_bots(delta: float) -> void:
 	if _bot_motions.is_empty():
 		return
@@ -330,6 +366,9 @@ func _drive_lobby_bots(delta: float) -> void:
 		if not is_instance_valid(bot):
 			continue
 		var motion: BotMotion = _bot_motions[i]
+		var rig := motion.rig
+		if rig == null or not is_instance_valid(rig):
+			continue
 
 		if motion.pause_left > 0.0:
 			motion.pause_left -= delta
@@ -342,27 +381,40 @@ func _drive_lobby_bots(delta: float) -> void:
 				motion.pause_left = _stress_rng.randf_range(0.6, 1.8)
 		var moving := motion.pause_left <= 0.0
 
-		if motion.height > 0.0 or motion.vertical_speed > 0.0:
-			motion.vertical_speed -= BOT_GRAVITY * delta
-			motion.height = maxf(0.0, motion.height + (motion.vertical_speed * delta))
-			if motion.height <= 0.0:
-				motion.vertical_speed = 0.0
-				motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
-		elif moving:
-			motion.jump_timer -= delta
-			if motion.jump_timer <= 0.0:
-				motion.vertical_speed = sqrt(2.0 * BOT_GRAVITY * BOT_JUMP_HEIGHT)
-				motion.height = 0.01
+		if not rig.is_on_floor():
+			rig.velocity.y -= BOT_GRAVITY * delta
+		else:
+			rig.velocity.y = 0.0
+			if moving:
+				motion.jump_timer -= delta
+				if motion.jump_timer <= 0.0:
+					rig.velocity.y = sqrt(2.0 * BOT_GRAVITY * BOT_JUMP_HEIGHT)
+					motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
 
 		var target := motion.home + _bot_orbit_offset(motion)
-		target.y += motion.height
-		var step: Vector3 = target - bot.global_position
-		bot.global_position = target
-		step.y = 0.0
-		# player.gd yaws its Skeleton3D with atan2(x, z), so the model's +Z is
-		# its face; the same formula on the bot root turns it into the walk.
-		if step.length_squared() > 0.000001:
-			bot.rotation.y = atan2(step.x, step.z)
+		var diff := target - rig.global_position
+		diff.y = 0.0
+
+		if moving:
+			var speed := motion.radius * motion.speed
+			if diff.length() > 0.001:
+				var dir := diff.normalized()
+				var desired_speed := clampf(diff.length() / maxf(delta, 0.001), 0.0, maxf(speed * 2.0, 4.0))
+				rig.velocity.x = dir.x * desired_speed
+				rig.velocity.z = dir.z * desired_speed
+				bot.rotation.y = atan2(dir.x, dir.z)
+			else:
+				rig.velocity.x = 0.0
+				rig.velocity.z = 0.0
+		else:
+			rig.velocity.x = 0.0
+			rig.velocity.z = 0.0
+
+		rig.move_and_slide()
+
+		if rig.global_position.y < -15.0:
+			rig.global_position = motion.home
+			rig.velocity = Vector3.ZERO
 
 		bot.set_animation_state(_bot_animation_state(motion, moving))
 
@@ -377,8 +429,8 @@ func _bot_orbit_offset(motion: BotMotion) -> Vector3:
 # The states a remote player actually gets sent: standing still is idle, walking
 # is running, and the two halves of a hop are runningjump and falling.
 func _bot_animation_state(motion: BotMotion, moving: bool) -> String:
-	if motion.height > 0.0:
-		return "runningjump" if motion.vertical_speed > 0.0 else "falling"
+	if motion.rig != null and not motion.rig.is_on_floor():
+		return "runningjump" if motion.rig.velocity.y > 0.0 else "falling"
 	if not moving:
 		return "idle"
 	return "running"
