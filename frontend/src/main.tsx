@@ -58,7 +58,19 @@ const monadTestnet = {
   },
 };
 
-initGoogleAnalytics();
+// Google Analytics injects a third-party script, so it is not on the critical
+// path: wait for the first idle slot instead of competing with the app bundle.
+// `safeGtag` drops events until init has run, and the backend trackers are
+// independent of it, so nothing is lost except GA events in that first moment.
+const whenIdle = (fn: () => void) => {
+  const idle = (window as any).requestIdleCallback as
+    | ((cb: () => void, opts?: { timeout: number }) => number)
+    | undefined;
+  if (idle) idle(fn, { timeout: 3000 });
+  else window.setTimeout(fn, 1500);
+};
+
+whenIdle(initGoogleAnalytics);
 blockBrowserZoom();
 initInstallPrompt();
 
