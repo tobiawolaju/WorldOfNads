@@ -8,7 +8,7 @@ import {
   openInstallGate,
   subscribeInstallState
 } from "../lib/installPrompt";
-import { preloadGodotWasm } from "../lib/wasmPreloader";
+import { cancelWasmPreload } from "../lib/wasmPreloader";
 
 const BACKEND_URL = import.meta.env.VITE_ANALYTICS_API_URL || "https://worldofnads.onrender.com";
 
@@ -72,45 +72,52 @@ const Play: React.FC = () => {
     if (typeof window === "undefined" || blocked) return;
 
     const redirectToGame = async () => {
-      void preloadGodotWasm({ userIntent: true });
+      cancelWasmPreload();
       const params = new URLSearchParams(window.location.search);
       const match = params.get("match") || "";
 
       // The Godot build asks the backend whether the authenticated wallet holds
       // a Chog Genesis NFT. Same-tab sessionStorage survives the hand-off to
       // /play.html without putting a credential in the URL.
-      try {
-        const privyToken = await getAccessToken();
-        if (privyToken) sessionStorage.setItem("wons_privy_token", privyToken);
-        else sessionStorage.removeItem("wons_privy_token");
-      } catch {
-        try {
-          sessionStorage.removeItem("wons_privy_token");
-        } catch {}
+      const currentParamSkin = resolveGameSkinName(params.get("skin") || params.get("skinId") || "");
+
+      // Run auth, skin lists, player skin, and session tokens in parallel
+      const [privyTokenResult, , playerSkinResult, tokenResult] = await Promise.allSettled([
+        getAccessToken().catch(() => null),
+        fetch(`${BACKEND_URL}/api/skins`)
+          .then((r) => r.json())
+          .then((data) => {
+            if (data?.ok && Array.isArray(data.skins)) {
+              sessionStorage.setItem("wons_skin_cache", JSON.stringify(data.skins));
+            }
+          })
+          .catch(() => {}),
+        (!currentParamSkin || currentParamSkin === "s-default") && username && username !== "Anon"
+          ? fetch(`${BACKEND_URL}/api/player-skin?username=${encodeURIComponent(username)}`)
+              .then((r) => r.json())
+              .then((data) => (data?.ok && data?.skin && data.skin !== "s-default" ? data.skin : null))
+              .catch(() => null)
+          : Promise.resolve(null),
+        requestAuthToken(username).catch(() => null)
+      ]);
+
+      const privyToken = privyTokenResult.status === "fulfilled" ? privyTokenResult.value : null;
+      if (privyToken) {
+        sessionStorage.setItem("wons_privy_token", privyToken);
+      } else {
+        sessionStorage.removeItem("wons_privy_token");
       }
 
-      try {
-        const skinRes = await fetch(`${BACKEND_URL}/api/skins`);
-        const skinData = await skinRes.json();
-        if (skinData.ok && Array.isArray(skinData.skins)) {
-          sessionStorage.setItem("wons_skin_cache", JSON.stringify(skinData.skins));
-        }
-      } catch {}
-
-      let skin = resolveGameSkinName(params.get("skin") || params.get("skinId") || "");
+      let skin = currentParamSkin;
       if (!skin || skin === "s-default") {
-        try {
-          const playerSkinRes = await fetch(`${BACKEND_URL}/api/player-skin?username=${encodeURIComponent(username)}`);
-          const playerSkinData = await playerSkinRes.json();
-          if (playerSkinData.ok && playerSkinData.skin && playerSkinData.skin !== "s-default") {
-            skin = playerSkinData.skin;
-          }
-        } catch {}
+        if (playerSkinResult.status === "fulfilled" && playerSkinResult.value) {
+          skin = playerSkinResult.value;
+        }
       }
       if (!skin) skin = "s-default";
 
+      const token = tokenResult.status === "fulfilled" ? tokenResult.value : null;
       let urlUsername = username;
-      const token = await requestAuthToken(username);
       if (token) {
         urlUsername = `${token}:${username}`;
       }
