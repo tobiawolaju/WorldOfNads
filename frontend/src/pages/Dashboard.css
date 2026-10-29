@@ -966,25 +966,26 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   line-height: 1;
 }
 
-/* Google Font icon as a white glyph in a black circle. */
+/* Google Font icon badge: square with light pink background. */
 .match-icon-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 100%;
-  background: #000000;
+  width: 26px;
+  height: 26px;
+  border-radius: 0;
+  background: #ffa9d0;
   flex: 0 0 auto;
 }
 
 .match-icon-badge .material-symbols-rounded {
-  font-size: 14px;
+  font-size: 17px;
   line-height: 1;
-  color: #ffffff;
+  color: #000000;
+  text-shadow: none;
   /* Material Symbols Rounded is loaded with FILL as a range in index.html, so the
      FILL axis is live here. Both badges ($ and people) use the filled variants. */
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
 }
 
 .grayscale-card {
