@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 
@@ -279,7 +279,7 @@ const AppContent: React.FC = () => {
     return () => unlisten?.();
   }, [ready, authenticated, user]);
 
-  const isLikelyLoggedIn = useMemo(() => hasLikelySession(), []);
+  const [isLikelyLoggedIn] = useState(() => hasLikelySession());
 
   useEffect(() => {
     if (ready) {
