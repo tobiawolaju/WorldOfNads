@@ -91,6 +91,7 @@ const fragmentShader = `
 `;
 
 // --- Chicken Component with Shader ---
+useLoader.preload(OBJLoader, "/Chicken.obj");
 interface ChickenProps {
   position: [number, number, number];
   rotation: [number, number, number];
@@ -544,6 +545,7 @@ float roundedBox(vec2 p, vec2 halfSize, float radius) {
 }
 
 // --- Animated Nad Model Component ---
+useFBX.preload("/nad.fbx");
 interface NadModelProps {
   position?: [number, number, number];
   rotation?: [number, number, number];
@@ -1362,7 +1364,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
     <Canvas
       dpr={[1, profile.maxDpr]}
       camera={{ position: cameraPosition }}
-      frameloop="demand"
+      frameloop="always"
       gl={{ alpha: true, powerPreference: "high-performance", antialias: profile.antialias }}
       style={{ background: "none", pointerEvents: "auto" }}
       onCreated={({ gl, camera, invalidate }) => {
