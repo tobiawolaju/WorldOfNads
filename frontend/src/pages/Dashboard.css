@@ -885,7 +885,9 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   --edge-ramp: 84%;
   /* Theme frame: purple on the white light-mode page, white on the purple (dark)
      page - see the dark-mode override at the end of this file. */
-  border: 2px solid var(--primary);
+  border-style: solid;
+  border-color: #000000;
+  border-width: 2px 3px 2px 2px;
   position: relative;
   overflow: hidden;
   /* Dissolves the old hard rectangle. Kept deliberately shallow so the artwork stays
@@ -1002,8 +1004,17 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   text-shadow: none;
 }
 
+.match-card:not(.selected) {
+  filter: grayscale(0.5);
+}
+
+.match-card:not(.selected):hover,
+.match-card.selected {
+  filter: none;
+}
+
 .match-card:not(.selected) .match-card-content {
-  filter: blur(2px);
+  filter: none;
 }
 
 .match-card:hover .match-card-content {
@@ -1087,12 +1098,16 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
 
 /* Sponsor Title */
 .match-sponsor {
-  font-size: 1.125rem;
-  font-weight: bolder;
+  font-size: 0.95rem;
+  font-weight: 800;
   font-family: 'Poppins', sans-serif;
   text-transform: uppercase;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   color: #ffffff;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Reward Text - top right corner badge */
@@ -1107,7 +1122,7 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   line-height: 1.2;
   color: #ffffff;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.35);
   padding: 4px 8px;
   border-radius: 0;
   letter-spacing: 0.5px;
@@ -1208,14 +1223,15 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
 }
 
 .match-desc {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   opacity: 0.9;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 5;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-height: 1.2;
 }
 
 .match-info {
@@ -1571,8 +1587,8 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
     text-shadow: none;
   }
 
-  /* Match cards sit on the purple dark background, so their frame flips to white. */
+  /* Match cards keep their black frame with 1.5x thicker right border. */
   .match-card {
-    border-color: #ffffff;
+    border-color: #000000;
   }
 }
