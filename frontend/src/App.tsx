@@ -82,6 +82,23 @@ const RequireRole: React.FC<{ role: string; children: React.ReactElement }> = ({
 // a different scale and blow up text/button sizes.
 let cachedLandscapeWidth: number | null = null;
 
+function hasLikelySession(): boolean {
+  if (typeof window === "undefined" || !window.localStorage) return false;
+  try {
+    if (localStorage.getItem("wons_logged_in") === "1") return true;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith("privy:") || key.startsWith("privy_"))) {
+        const val = localStorage.getItem(key);
+        if (val && val !== "null" && val !== "undefined" && val !== '""') {
+          return true;
+        }
+      }
+    }
+  } catch {}
+  return false;
+}
+
 const AppContent: React.FC = () => {
   const { ready, authenticated, user } = usePrivy();
   const location = useLocation();
@@ -262,16 +279,32 @@ const AppContent: React.FC = () => {
     return () => unlisten?.();
   }, [ready, authenticated, user]);
 
+  const isLikelyLoggedIn = useMemo(() => hasLikelySession(), []);
+
+  useEffect(() => {
+    if (ready) {
+      if (authenticated) {
+        try {
+          localStorage.setItem("wons_logged_in", "1");
+        } catch {}
+      } else {
+        try {
+          localStorage.removeItem("wons_logged_in");
+        } catch {}
+      }
+    }
+  }, [ready, authenticated]);
+
   // Keep the fullscreen toggle off the landing page (Home).
   const isHomeRoute = location.pathname === "/" || location.pathname === "/home";
 
-  // Privy's `ready` also waits for the SDK chunk and its iframe. Blocking the
-  // whole app on it kept the landing page blank for that entire download, so
-  // "/" paints straight away (its CTA is disabled until `ready`). Every other
-  // route still waits, so a signed-in visitor never sees a signed-out page.
+  // Privy's `ready` waits for the SDK chunk and its iframe.
+  // If the user has a stored session, wait for Privy before rendering "/" so they
+  // go straight to /dashboard without briefly flashing the Home landing page.
+  // Anonymous visitors still paint "/" immediately.
   useEffect(() => {
-    setShowLoader(!ready && !isHomeRoute);
-  }, [ready, isHomeRoute]);
+    setShowLoader(!ready && (!isHomeRoute || isLikelyLoggedIn));
+  }, [ready, isHomeRoute, isLikelyLoggedIn]);
 
   // Warm the routes a signed-in player is most likely to open next. Never for
   // anonymous visitors: on the landing page this only competed for bandwidth
@@ -323,7 +356,18 @@ const AppContent: React.FC = () => {
             <Suspense fallback={<FullScreenLoader visible />}>
               <Routes>
                 {/* Public Routes */}
-                <Route path="/" element={authenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
+                <Route
+                  path="/"
+                  element={
+                    !ready && isLikelyLoggedIn ? (
+                      <FullScreenLoader visible />
+                    ) : authenticated ? (
+                      <Navigate to="/dashboard" replace />
+                    ) : (
+                      <Home />
+                    )
+                  }
+                />
                 {/* Device linking for native clients. Reachable signed-out on
                     purpose: the page shows what is asking before sign-in. */}
                 <Route path="/auth" element={<DeviceAuth />} />
