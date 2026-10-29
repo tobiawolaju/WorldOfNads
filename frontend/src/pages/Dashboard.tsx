@@ -15,7 +15,8 @@ import {
   updateUserEquippedSkin,
   updateUserProjects,
   fetchUserRewards,
-  recordSponsorDailyUniquePlayer
+  recordSponsorDailyUniquePlayer,
+  fetchSponsorDailyPlayers
 } from "./firebaseClient";
 import { trackMatchJoined } from "../lib/analyticsClient";
 import { warmImage, warmImages, whenIdle } from "../lib/imageCache";
@@ -356,6 +357,7 @@ export default function Dashboard() {
   // server has never seen.
   const [liveRoomPlayers, setLiveRoomPlayers] = useState<Record<string, number>>({});
   const [matchJoinTotals, setMatchJoinTotals] = useState<Record<string, number>>({});
+  const [sponsorPlayerCounts, setSponsorPlayerCounts] = useState<Record<string, number>>({});
 
   const lobbyAudioRef = useRef<HTMLAudioElement | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -538,6 +540,23 @@ export default function Dashboard() {
     // Lifetime joiners per match, from the analytics join events.
     if (tab !== "events") return;
     let cancelled = false;
+
+    fetchSponsorDailyPlayers(30)
+      .then((data) => {
+        if (cancelled || !data?.sponsors) return;
+        const counts: Record<string, number> = {};
+        Object.entries(data.sponsors).forEach(([sponsor, info]) => {
+          const users = new Set<string>();
+          Object.values((info as any)?.usersByDate || {}).forEach((list: any) => {
+            if (Array.isArray(list)) list.forEach((u: string) => users.add(u));
+          });
+          const count = users.size;
+          counts[sponsor] = count;
+          counts[sponsor.trim().toLowerCase()] = count;
+        });
+        setSponsorPlayerCounts(counts);
+      })
+      .catch(() => {});
 
     const loadJoinTotals = async () => {
       try {
