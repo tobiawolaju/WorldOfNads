@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://b4wta5d5nlcua"]
 
 [ext_resource type="Script" uid="uid://ds7rfadg6n6k8" path="res://scripts/player/PlayerManager.gd" id="1_hpwea"]
-[ext_resource type="PackedScene" uid="uid://bq3i1po3drd3s" path="res://scenes/skin.tscn" id="2_w01lk"]
+[ext_resource type="PackedScene" uid="uid://b53ngdxj081wg" path="res://scenes/skin.tscn" id="2_w01lk"]
 [ext_resource type="PackedScene" uid="uid://dud0j72gp62nr" path="res://scenes/props/enviroment/bus.tscn" id="5_w01lk"]
 [ext_resource type="Script" uid="uid://guvxewi0bmto" path="res://scripts/map/StormEye.gd" id="8_ctvyo"]
 [ext_resource type="Environment" uid="uid://rpidr3omplr6" path="res://assets/resources/day.tres" id="9_qixtg"]
@@ -53,8 +53,8 @@ cylinder_wall = NodePath("Cylinder")
 cylinder_border = NodePath("Cylinder2")
 normal_env = ExtResource("9_qixtg")
 storm_env = ExtResource("10_nt65e")
-cylinder_radius = 45.0
-damage_per_second = 5.0
+cylinder_radius = 25.0
+damage_per_second = 2.5
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=799662076]
 environment = ExtResource("9_qixtg")
@@ -74,13 +74,55 @@ shadow_enabled = true
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=232728076]
-transform = Transform3D(45, 0, 0, 0, 200, 0, 0, 0, 45, 0, 0, 0)
+transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_qixtg")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_nt65e")
 
 [node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=87302044]
-transform = Transform3D(45, 0, 0, 0, 200, 0, 0, 0, 45, 0, 0, 0)
+transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_bhmdk")
+surface_material_override/0 = SubResource("StandardMaterial3D_s5y6v")
+
+[node name="env2" type="Node3D" parent="." unique_id=2004508524 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
+script = ExtResource("8_ctvyo")
+world_env = NodePath("WorldEnvironment")
+light_normal = NodePath("day")
+light_storm = NodePath("night")
+camera = NodePath("../PlayerManager/Camera3D")
+cylinder_wall = NodePath("Cylinder")
+cylinder_border = NodePath("Cylinder2")
+normal_env = ExtResource("9_qixtg")
+storm_env = ExtResource("10_nt65e")
+cylinder_radius = 25.0
+damage_per_second = 2.5
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="env2" unique_id=1010925123]
+environment = ExtResource("9_qixtg")
+
+[node name="day" type="DirectionalLight3D" parent="env2" unique_id=539243288]
+transform = Transform3D(0.84941316, -2.3067738e-08, 0.5277283, -0.5277284, -3.7129027e-08, 0.8494131, 0, -0.99999994, -4.3711385e-08, 0, 34.18702, 0)
+light_energy = 0.2
+shadow_enabled = true
+directional_shadow_mode = 0
+
+[node name="night" type="DirectionalLight3D" parent="env2" unique_id=1382200946]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
+visible = false
+light_color = Color(0.85490197, 0, 0.78431374, 1)
+light_energy = 0.2
+shadow_enabled = true
+sky_mode = 1
+
+[node name="Cylinder2" type="MeshInstance3D" parent="env2" unique_id=2081667704]
+transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
+material_override = SubResource("ShaderMaterial_qixtg")
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_nt65e")
+
+[node name="Cylinder" type="MeshInstance3D" parent="env2" unique_id=1355788841]
+transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_bhmdk")
 surface_material_override/0 = SubResource("StandardMaterial3D_s5y6v")

@@ -44,6 +44,7 @@ const FALLBACK_UNSHADED: Dictionary = {
 }
 
 static func seed_from_api(json_array: Array) -> void:
+	_skin_material_sets.clear()
 	for entry in json_array:
 		if entry is Dictionary:
 			var key: String = str(entry.get("id", "")).to_lower()
@@ -59,7 +60,12 @@ static func seed_from_api(json_array: Array) -> void:
 static func seed_single_from_api(skin_id: String, entry: Dictionary) -> void:
 	var skin_config: Dictionary = entry.get("skinConfig", entry.get("skin_config", {}))
 	if not skin_config.is_empty():
-		_api_cache[_index_key(skin_id)] = _convert_api_entry(skin_config)
+		var key := _index_key(skin_id)
+		_api_cache[key] = _convert_api_entry(skin_config)
+		_skin_material_sets.erase(skin_id)
+		_skin_material_sets.erase(skin_id + "|reveal")
+		_skin_material_sets.erase(key)
+		_skin_material_sets.erase(key + "|reveal")
 
 # Seeds the id index from GET /api/skin-combos: combo n owns ids 2n+1 (shaded)
 # and 2n+2 (unshaded), plus any named ids pinned in "defaults". This is the
@@ -68,6 +74,7 @@ static func seed_single_from_api(skin_id: String, entry: Dictionary) -> void:
 # defaults are now empty: s-default / s-default-unshaded wear nothing.
 static func seed_index_from_api(payload: Dictionary) -> void:
 	_index_cache.clear()
+	_skin_material_sets.clear()
 	var combos: Variant = payload.get("combos", [])
 	if combos is Array:
 		var index := 0
@@ -294,7 +301,7 @@ static func _apply_skin(player: Node3D, skin_name: String, tint: Color) -> void:
 	var material_set := _get_material_set(skin_name, data, tinted)
 
 	var meshes: Array[MeshInstance3D] = []
-	for c in player.find_children("*", "MeshInstance3D", true):
+	for c in player.find_children("*", "MeshInstance3D", true, false):
 		if c is MeshInstance3D:
 			meshes.append(c as MeshInstance3D)
 
@@ -402,7 +409,7 @@ static func set_reveal_tint(player: Node3D, enabled: bool) -> void:
 	player.remove_meta(REVEAL_TINT_SKIN_META)
 	_apply_skin(player, restore, NO_TINT)
 	# Restore eye shaders explicitly in case _tint_eye didn't catch up
-	for c in player.find_children("*", "MeshInstance3D", true):
+	for c in player.find_children("*", "MeshInstance3D", true, false):
 		if c is MeshInstance3D and String(c.name).begins_with("eye"):
 			var mi := c as MeshInstance3D
 			var mat := mi.material_override as ShaderMaterial
@@ -455,7 +462,7 @@ static func _apply_attachment_shader(unit: Node3D, shader_type: String) -> void:
 	var targets: Array[MeshInstance3D] = []
 	if unit is MeshInstance3D:
 		targets.append(unit as MeshInstance3D)
-	for node in unit.find_children("*", "MeshInstance3D", true):
+	for node in unit.find_children("*", "MeshInstance3D", true, false):
 		if node is MeshInstance3D:
 			targets.append(node as MeshInstance3D)
 	for mi in targets:
@@ -544,7 +551,9 @@ static func _get_material_set(skin_name: String, data: Dictionary, tinted: bool 
 	if _skin_material_sets.size() >= MAX_MATERIAL_CACHE:
 		_skin_material_sets.clear()
 	var material_set := _build_material_set(data)
-	_skin_material_sets[cache_key] = material_set
+	var key := _index_key(skin_name)
+	if _api_cache.has(key) or key == DEFAULT_SKIN or key == "s-default-unshaded":
+		_skin_material_sets[cache_key] = material_set
 	return material_set
 
 static func _build_material_set(data: Dictionary) -> Dictionary:
