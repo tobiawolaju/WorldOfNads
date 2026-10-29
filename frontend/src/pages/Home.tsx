@@ -166,6 +166,11 @@ const Home: React.FC = () => {
       hero.removeEventListener("mousemove", onMouseMove);
       hero.removeEventListener("mouseleave", onMouseLeave);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (heroBg) {
+        heroBg.pause();
+        heroBg.removeAttribute("src");
+        heroBg.load();
+      }
     };
   }, []);
 
