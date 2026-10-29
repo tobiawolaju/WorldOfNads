@@ -252,14 +252,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   box-sizing: border-box;
-  padding: 1px 5px;
-  min-height: 24px;
+  padding: 4px 12px;
+  min-height: 38px;
   border-radius: 0;
   background: color-mix(in srgb, var(--background) 50%, transparent);
   color: var(--pill-fg);
-  font-size: 10.5px;
+  font-size: 14px;
   line-height: 1;
   white-space: nowrap;
   pointer-events: auto;
@@ -274,7 +274,7 @@
 
 /* Children counter the parent's skew so glyphs and icons stay upright */
 .stat-pill__label {
-  font-size: 7.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--pill-accent);
@@ -282,7 +282,7 @@
 }
 
 .stat-pill__value {
-  font-size: 10.5px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--pill-fg);
   font-variant-numeric: tabular-nums;
@@ -290,38 +290,38 @@
 }
 
 .stat-pill__icon {
-  width: 16px;
-  height: 16px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
   transform: skewX(12deg);
 }
 
-
 .stat-pill--mon .stat-pill__value {
   color: var(--pill-mon);
-  font-size: 11.5px;
+  font-size: 17px;
+  font-weight: 900;
 }
 
 .stat-pill--mon .stat-pill__icon {
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
 }
 
 /* The level number is the one value players read at a glance, so it sits in
    yellow, runs at the pill's own skew instead of being straightened, and is a
    step larger than the MON value. */
 .stat-pill--level .stat-pill__label {
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: 800;
   transform: none;
 }
 
 .stat-pill--level .stat-pill__value {
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 900;
   color: var(--pill-level);
   transform: none;
 }
-
 
 /* Mobile portrait keeps the base 54px offset; landscape and desktop drop
    the rail down a further 25% from 81px. */
@@ -331,32 +331,38 @@
   }
 }
 
-/* Mobile portrait scales the pill type down to 0.65 of the base size */
+/* Mobile portrait maintains readable game-ready indicator sizes */
 @media (orientation: portrait) and (max-width: 767px) {
   .stat-pill {
-    font-size: 6.83px;
+    min-height: 32px;
+    padding: 3px 9px;
+    gap: 8px;
+    font-size: 12px;
   }
 
   .stat-pill__label {
-    font-size: 4.88px;
+    font-size: 10px;
   }
 
   .stat-pill__value {
-    font-size: 6.83px;
+    font-size: 13px;
   }
 
-  /* These repeat the 0.65 scale for the pills that are bumped up in the
-     base rules, otherwise the higher specificity would skip the reduction */
+  .stat-pill--mon .stat-pill__icon {
+    width: 24px;
+    height: 24px;
+  }
+
   .stat-pill--mon .stat-pill__value {
-    font-size: 7.48px;
+    font-size: 15px;
   }
 
   .stat-pill--level .stat-pill__label {
-    font-size: 6.5px;
+    font-size: 10px;
   }
 
   .stat-pill--level .stat-pill__value {
-    font-size: 10.4px;
+    font-size: 19px;
   }
 }
 
