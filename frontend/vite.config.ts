@@ -20,6 +20,15 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          // React has to be claimed BEFORE the three rule below. @react-three/fiber
+          // imports react-dom, so Rollup used to park react-dom inside
+          // three-vendor - which put that whole chunk (three.js + drei, ~300 KB
+          // brotli) into the entry's static graph. The landing page then
+          // downloaded the 3D stack for a page that has no 3D at all.
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) {
+            return "react-vendor";
+          }
           if (id.includes("node_modules/three/") || id.includes("node_modules/@react-three")) {
             return "three-vendor";
           }
