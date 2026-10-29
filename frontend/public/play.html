@@ -222,7 +222,7 @@
         const username = params.get("username") || "";
         const skin = resolveGameSkinName(params.get("skin") || params.get("skinName") || "s-default");
         const match = params.get("match") || "";
-        const quality = ["low", "high"].includes(params.get("quality")) ? params.get("quality") : "auto";
+        const quality = ["low", "high", "auto"].includes(params.get("quality")) ? params.get("quality") : "low";
         // Mirrors src/lib/gameQuality.ts: the game canvas is rendered smaller
         // and scaled back up, which also drops the engine's own pixel budget.
         const isLowEndDevice = () => {

@@ -26,7 +26,7 @@ export function isLowEndDevice(): boolean {
 }
 
 export function normalizeQuality(value: unknown): GameQuality {
-  return value === "low" || value === "high" || value === "auto" ? value : "auto";
+  return value === "low" || value === "high" || value === "auto" ? value : "low";
 }
 
 export function resolveQuality(value: unknown): { quality: GameQuality; renderScale: number } {
@@ -37,11 +37,11 @@ export function resolveQuality(value: unknown): { quality: GameQuality; renderSc
 }
 
 export function readGameQuality(): GameQuality {
-  if (typeof localStorage === "undefined") return "auto";
+  if (typeof localStorage === "undefined") return "low";
   try {
     return normalizeQuality(localStorage.getItem(QUALITY_STORAGE_KEY));
   } catch {
-    return "auto";
+    return "low";
   }
 }
 
