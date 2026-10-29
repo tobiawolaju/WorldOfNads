@@ -21,6 +21,7 @@ import { trackMatchJoined } from "../lib/analyticsClient";
 import { warmImage, warmImages, whenIdle } from "../lib/imageCache";
 import { requireInstall } from "../lib/installPrompt";
 import { preloadGodotWasm, scheduleIdlePreload } from "../lib/wasmPreloader";
+import { AssetPriority, preloadSkinAsset, preloadTabThumbnail, cancelTabPrefetch } from "../lib/assetPriorityQueue";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
 import { resolveGameSkinName, buildComboMap, resolveSkinAttachments, resolveSkinImageUrl } from "../lib/skinMapping";
 import { displayMatchStatus, type DisplayMatchStatus } from "../lib/matchStatus";
@@ -343,6 +344,45 @@ export default function Dashboard() {
   const hasEnoughXP = xpBalance >= selectedItemXP;
   const selectedItemLevel = getLevelFromXP(selectedItemXP);
   const displayedSkin = (tab === "store" && currentStoreItem) ? currentStoreItem : equippedSkin;
+
+  // Preload critical current skin asset immediately with top priority
+  useEffect(() => {
+    if (displayedSkin?.id) {
+      preloadSkinAsset(displayedSkin.id, AssetPriority.CRITICAL);
+    }
+  }, [displayedSkin?.id]);
+
+  // Idle background prefetch for top store items while on events tab
+  useEffect(() => {
+    if (tab === "events" && storeGroups.length > 0) {
+      const topStore = storeGroups.slice(0, 4).map((g) => getStoreImageUrl(g.pick));
+      topStore.forEach((url) => {
+        preloadTabThumbnail(url, AssetPriority.LOW, "store");
+      });
+    }
+  }, [tab, storeGroups]);
+
+  const handleTabHover = (targetTab: "events" | "rewards" | "store") => {
+    if (targetTab === "store") {
+      storeGroups.slice(0, 6).forEach((g) => {
+        preloadTabThumbnail(getStoreImageUrl(g.pick), AssetPriority.HIGH, "store");
+      });
+    } else if (targetTab === "events") {
+      orderedMatches.slice(0, 4).forEach((m) => {
+        if (m.image) preloadTabThumbnail(m.image, AssetPriority.HIGH, "events");
+      });
+    }
+  };
+
+  const handleTabClick = (newTab: "events" | "rewards" | "store") => {
+    if (newTab !== tab) {
+      cancelTabPrefetch(tab);
+      setTab(newTab);
+      setSelectedMatch(null);
+      setSelectedReward(null);
+      setSelectedStore(null);
+    }
+  };
 
   // Grouped store list: one card per skin (combo), showing the shaded or flat
   // variant rolled for this store-tab open. Each group owns both editions, so
@@ -995,7 +1035,7 @@ export default function Dashboard() {
             and re-decodes (blank frame) when the Events tab comes back. On the
             Store tab it is only hidden. */}
         <div className={`lobby-bg ${tab === "store" ? "lobby-bg--hidden" : ""}`} aria-hidden={tab === "store"}>
-          <img src={lobbyBg} alt="" decoding="async" />
+          <img src={lobbyBg} alt="" decoding="async" fetchpriority="high" />
         </div>
         <Suspense fallback={<div className="three-scene-placeholder" aria-hidden="true" />}>
           <ThreeScene
@@ -1067,13 +1107,28 @@ export default function Dashboard() {
       <div className="right-info-section">
         <div className="right-info-zoom">
           <div className="tabs">
-            <div className={tab === "events" ? "tab active" : "tab"} onClick={() => { setTab("events"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
+            <div
+            className={tab === "events" ? "tab active" : "tab"}
+            onClick={() => handleTabClick("events")}
+            onMouseEnter={() => handleTabHover("events")}
+            onTouchStart={() => handleTabHover("events")}
+          >
             <span className="tab-with-badge">Events</span>
           </div>
-          <div className={tab === "rewards" ? "tab active" : "tab"} onClick={() => { setTab("rewards"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
+          <div
+            className={tab === "rewards" ? "tab active" : "tab"}
+            onClick={() => handleTabClick("rewards")}
+            onMouseEnter={() => handleTabHover("rewards")}
+            onTouchStart={() => handleTabHover("rewards")}
+          >
             <span className="tab-with-badge">Rewards</span>
           </div>
-          <div className={tab === "store" ? "tab active" : "tab"} onClick={() => { setTab("store"); setSelectedMatch(null); setSelectedReward(null); setSelectedStore(null); }}>
+          <div
+            className={tab === "store" ? "tab active" : "tab"}
+            onClick={() => handleTabClick("store")}
+            onMouseEnter={() => handleTabHover("store")}
+            onTouchStart={() => handleTabHover("store")}
+          >
             <span className="tab-with-badge">
               Store
               <span className="tab-notif-badge">
