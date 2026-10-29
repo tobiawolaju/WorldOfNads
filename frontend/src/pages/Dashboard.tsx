@@ -62,11 +62,6 @@ type Match = {
 
 // --- Match card counts ------------------------------------------------------
 // The `$` stat is still a placeholder: a match record carries a prize but no
-// entry fee, so a stable hash of the match id keeps each card on the same number
-// instead of reshuffling it on every render. The people stat is real — live
-// occupancy from the room server, lifetime joins from the analytics events.
-const DUMMY_MONEY_COUNTS = [12, 48, 96, 240, 512, 1200, 3400, 8600];
-
 // The room server is a separate Render service (see PlayerManager.ROOM_URL in the
 // Godot client). It is the only place that knows who is inside a room right now,
 // so the dashboard polls it directly; the CORS header on /rooms is what makes
@@ -76,22 +71,6 @@ const LIVE_PLAYER_POLL_MS = 10_000;
 // Joins change slowly and the backend serves them from a 30 s analytics snapshot,
 // so polling faster would only re-download the same numbers.
 const MATCH_JOIN_POLL_MS = 60_000;
-
-function hashSeed(seed: string, salt: number): number {
-  let hash = salt >>> 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  }
-  return hash;
-}
-
-function matchSeed(match: Match): string {
-  return `${match.matchId}-${match.id}`;
-}
-
-function dummyMoneyCount(match: Match): number {
-  return DUMMY_MONEY_COUNTS[hashSeed(matchSeed(match), 7) % DUMMY_MONEY_COUNTS.length];
-}
 
 function formatPlayerCount(count: number): string {
   if (count < 1000) return String(count);
@@ -1109,6 +1088,9 @@ export default function Dashboard() {
                   const isOver = cardStatus === "completed" || cardStatus === "cancelled";
                   const liveCount = liveRoomPlayers[roomKeyForMatch(match)] ?? 0;
                   const joinTotal = matchJoinTotals[match.matchId] ?? 0;
+                  const sponsorKey = (match.sponsor || "").trim().toLowerCase();
+                  const sponsorTotal = sponsorPlayerCounts[match.sponsor] || sponsorPlayerCounts[sponsorKey] || 0;
+                  const playerCount = Math.max(joinTotal, matchJoinTotals[match.id] || 0, sponsorTotal);
                   return (
                   <div
                     key={match.matchId}
@@ -1138,24 +1120,17 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
-                    {/* Money placeholder + players in this room, bottom-left ON the card.
-                        The people stat reads "playing now / ever joined". */}
+                    {/* Players who have played this match / game, bottom-left on the card. */}
                     <div className="match-card-stats">
-                      <span className="match-stat">
-                        <span className="match-icon-badge">
-                          <span className="material-symbols-rounded">attach_money</span>
-                        </span>
-                        <span className="match-stat-count">{formatPlayerCount(dummyMoneyCount(match))}</span>
-                      </span>
                       <span
                         className="match-stat"
-                        title={`${liveCount} playing now · ${joinTotal} joined all time`}
+                        title={`${formatPlayerCount(playerCount)} players joined`}
                       >
                         <span className="match-icon-badge">
                           <span className="material-symbols-rounded">group</span>
                         </span>
                         <span className="match-stat-count">
-                          {formatPlayerCount(liveCount)}/{formatPlayerCount(joinTotal)}
+                          {formatPlayerCount(playerCount)}
                         </span>
                       </span>
                     </div>
