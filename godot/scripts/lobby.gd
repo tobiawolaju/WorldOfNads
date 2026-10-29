@@ -15,6 +15,40 @@ var npcs := []
 var _stress_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _last_recovery_ms: int = 0
 
+# === LOBBY TEST BOTS ===
+# The bots are built the way PlayerManager builds another player's avatar in a
+# match: the skin scene's visuals are re-parented under a RemotePlayer node with
+# every collision shape dropped. The lobby therefore shows the same avatar, name
+# label and six-state animation machine a real remote player has, which makes it
+# usable for testing remote-player work without a second client.
+const REMOTE_PLAYER_SCRIPT: GDScript = preload("res://scripts/player/RemotePlayer.gd")
+const BOT_GRAVITY: float = 22.0
+const BOT_JUMP_HEIGHT: float = 1.5
+
+# One orbit per bot. A RemotePlayer has no _process of its own - in a match
+# PlayerManager feeds it positions and animation states from world-state packets
+# - so the lobby plays that part: it walks each bot around its own circle, lets
+# it hop and stand still, and drives the same animation states a remote gets
+# from the server.
+class BotMotion:
+	var home: Vector3 = Vector3.ZERO
+	var radius: float = 1.5
+	var speed: float = 1.0
+	var angle: float = 0.0
+	var direction: float = 1.0
+	var wobble: float = 0.5
+	var wobble_phase: float = 0.0
+	var jump_min: float = 1.0
+	var jump_max: float = 3.0
+	var jump_timer: float = 1.0
+	var height: float = 0.0
+	var vertical_speed: float = 0.0
+	## Counts down to the next stand-still, which then runs in pause_left.
+	var pause_timer: float = 0.0
+	var pause_left: float = 0.0
+
+var _bot_motions: Array[BotMotion] = []
+
 # Hand-off from dshbord.gd: READY counts down on the dashboard and then sends the
 # player here with the match they queued and the nad they picked, written straight
 # onto these exports by SceneTransition.change_scene() so the lobby can read them
@@ -59,6 +93,7 @@ func _ready():
 
 func _process(delta: float) -> void:
 	_check_map_recovery()
+	_drive_lobby_bots(delta)
 
 func _check_map_recovery() -> void:
 	# Respawn at lobby spawn point if player falls off map
@@ -103,6 +138,9 @@ func _on_skin_data_fetched(result: int, response_code: int, _headers: PackedStri
 			print("SkinApplier (lobby): Cached %d skins from API." % skins_array.size())
 	if local_player:
 		_skin_applier.apply_skin(local_player, _resolve_local_skin_name())
+	# Bots spawned before this answer wore a bundled alias; now that the real
+	# skin list is in, dress them from it.
+	_redress_fallback_bots()
 
 func _spawn_local_player():
 	var skin_name := _resolve_local_skin_name()
@@ -145,17 +183,13 @@ func _spawn_lobby_stress_agents() -> void:
 		return
 
 	var base_pos := spawn_point.global_position
-	var skin_names: Array = SKIN_NAME_ALIASES.values()
-	var unique_skins: Array[String] = []
-	for s in skin_names:
-		if not unique_skins.has(s):
-			unique_skins.append(s)
+	var picks := _bot_skin_picks(lobby_stress_agent_count)
 
 	for i in range(lobby_stress_agent_count):
-		var skin_name := str(unique_skins[i % unique_skins.size()])
+		var skin_name: String = picks[i] if i < picks.size() else DEFAULT_SKIN_NAME
 
-		var bot = SKIN_SCENE.instantiate()
-		_skin_applier.apply_skin(bot, skin_name)
+		var bot := _instantiate_remote_bot(skin_name)
+		bot.name = "Bot%03d" % (i + 1)
 		add_child(bot)
 		npcs.append(bot)
 
@@ -166,31 +200,188 @@ func _spawn_lobby_stress_agents() -> void:
 		var home_center := base_pos + spawn_offset
 
 		bot.is_local = false
+		bot.root = self
 		bot.player_id = "BOT_%03d" % (i + 1)
 		bot.display_name = "BOT %03d" % (i + 1)
 		bot.global_position = home_center
+		_disable_bot_shadows(bot)
 
-		if bot.has_method("disable_character_shadows"):
-			bot.disable_character_shadows()
+		var motion := BotMotion.new()
+		motion.home = home_center
+		motion.radius = _stress_rng.randf_range(0.9, 3.5)
+		motion.speed = _stress_rng.randf_range(0.55, 1.6)
+		motion.angle = _stress_rng.randf_range(0.0, TAU)
+		motion.direction = -1.0 if _stress_rng.randi_range(0, 1) == 0 else 1.0
+		motion.wobble = _stress_rng.randf_range(0.2, 1.1)
+		motion.wobble_phase = _stress_rng.randf_range(0.0, TAU)
+		motion.jump_min = _stress_rng.randf_range(0.8, 2.4)
+		motion.jump_max = _stress_rng.randf_range(2.5, 5.5)
+		motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
+		motion.pause_timer = _stress_rng.randf_range(2.0, 8.0)
+		_bot_motions.append(motion)
 
-		if bot.has_method("configure_demo_agent"):
-			var orbit_radius := _stress_rng.randf_range(0.9, 3.5)
-			var orbit_speed := _stress_rng.randf_range(0.55, 1.6)
-			var orbit_phase := _stress_rng.randf_range(0.0, TAU)
-			var orbit_direction := -1.0 if _stress_rng.randi_range(0, 1) == 0 else 1.0
-			var jump_min := _stress_rng.randf_range(0.8, 2.4)
-			var jump_max := _stress_rng.randf_range(2.5, 5.5)
-			var wobble := _stress_rng.randf_range(0.2, 1.1)
-			bot.configure_demo_agent(
-				home_center,
-				orbit_radius,
-				orbit_speed,
-				orbit_phase,
-				orbit_direction,
-				jump_min,
-				jump_max,
-				wobble
-			)
+	print("[LOBBY] Spawned %d remote-player bots from %d skins." % [npcs.size(), _bot_skin_pool().size()])
+
+
+# The same conversion PlayerManager runs for every other player in a match
+# (_convert_scene_to_remote_player): a RemotePlayer node owns the skin scene's
+# visuals, and the physics nodes are stripped so nothing can collide with a bot.
+func _instantiate_remote_bot(skin_name: String) -> Node3D:
+	var source := SKIN_SCENE.instantiate()
+	var bot: Node3D = REMOTE_PLAYER_SCRIPT.new()
+	bot.name = source.name
+
+	_strip_physics_nodes(source)
+	for child in source.get_children():
+		source.remove_child(child)
+		child.owner = null
+		bot.add_child(child)
+	source.queue_free()
+
+	# Applied after the visuals are re-parented: apply_skin walks the player's
+	# own children, so it has to run on the finished avatar, not on the scene
+	# root it was unpacked from.
+	_skin_applier.apply_skin(bot, skin_name)
+	return bot
+
+
+func _strip_physics_nodes(node: Node) -> void:
+	for child in node.get_children():
+		if child is CollisionObject3D or child is CollisionShape3D or child is Area3D or child is RayCast3D:
+			node.remove_child(child)
+			child.queue_free()
+			continue
+		_strip_physics_nodes(child)
+
+
+# RemotePlayer has no disable_character_shadows() - that lives on player.gd - but
+# a lobby full of bots should not add a shadow caster per mesh either.
+func _disable_bot_shadows(bot: Node3D) -> void:
+	for child in bot.find_children("*", "MeshInstance3D", true):
+		(child as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+# The skins the backend actually knows about (GET /api/skins, or the
+# sessionStorage pre-seed on web), minus the two bundled default aliases: those
+# both paint the generic pink Nad that made every bot look identical. The
+# aliases only stand in while the list is still empty, and _redress_fallback_bots()
+# swaps them out the moment the real list lands.
+func _bot_skin_pool() -> Array[String]:
+	var pool: Array[String] = []
+	for key in SkinApplier._api_cache.keys():
+		var skin_name := str(key)
+		if skin_name == DEFAULT_SKIN_NAME or skin_name == "s-default-unshaded":
+			continue
+		pool.append(skin_name)
+	if pool.is_empty():
+		for alias in SKIN_NAME_ALIASES.values():
+			pool.append(str(alias))
+	pool.sort()
+	return pool
+
+
+# One random skin per bot, dealt from a shuffled deck: two bots standing next to
+# each other never wear the same skin, and the deck is reshuffled instead of
+# repeating the same order when there are more bots than skins.
+func _bot_skin_picks(count: int) -> Array[String]:
+	var picks: Array[String] = []
+	var pool := _bot_skin_pool()
+	if pool.is_empty() or count <= 0:
+		return picks
+	var deck: Array[String] = pool.duplicate()
+	for _i in range(count):
+		if deck.is_empty():
+			deck = pool.duplicate()
+		var index := _stress_rng.randi_range(0, deck.size() - 1)
+		picks.append(deck[index])
+		deck.remove_at(index)
+	return picks
+
+
+# Bots spawned before GET /api/skins answered wear a bundled alias. Once the real
+# list is in, re-dress only those bots - a bot that already wears a real skin
+# keeps it, so a warm skin cache does not flicker on every refresh.
+func _redress_fallback_bots() -> void:
+	if npcs.is_empty():
+		return
+	var pool := _bot_skin_pool()
+	if pool.is_empty():
+		return
+	var picks := _bot_skin_picks(npcs.size())
+	for i in range(npcs.size()):
+		var bot = npcs[i]
+		if not is_instance_valid(bot):
+			continue
+		var worn := str(bot.get_meta(SkinApplier.APPLIED_SKIN_META, ""))
+		if pool.has(worn):
+			continue
+		_skin_applier.apply_skin(bot, picks[i] if i < picks.size() else DEFAULT_SKIN_NAME)
+
+
+# Stands in for PlayerManager's world-state loop: a RemotePlayer never moves or
+# animates on its own, so the lobby walks it around its orbit, makes it hop and
+# stand still, and sends it the same animation states a real remote receives.
+func _drive_lobby_bots(delta: float) -> void:
+	if _bot_motions.is_empty():
+		return
+	var count := mini(npcs.size(), _bot_motions.size())
+	for i in range(count):
+		var bot = npcs[i]
+		if not is_instance_valid(bot):
+			continue
+		var motion: BotMotion = _bot_motions[i]
+
+		if motion.pause_left > 0.0:
+			motion.pause_left -= delta
+			if motion.pause_left <= 0.0:
+				motion.pause_timer = _stress_rng.randf_range(4.0, 12.0)
+		else:
+			motion.angle = wrapf(motion.angle + (delta * motion.speed * motion.direction), 0.0, TAU)
+			motion.pause_timer -= delta
+			if motion.pause_timer <= 0.0:
+				motion.pause_left = _stress_rng.randf_range(0.6, 1.8)
+		var moving := motion.pause_left <= 0.0
+
+		if motion.height > 0.0 or motion.vertical_speed > 0.0:
+			motion.vertical_speed -= BOT_GRAVITY * delta
+			motion.height = maxf(0.0, motion.height + (motion.vertical_speed * delta))
+			if motion.height <= 0.0:
+				motion.vertical_speed = 0.0
+				motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
+		elif moving:
+			motion.jump_timer -= delta
+			if motion.jump_timer <= 0.0:
+				motion.vertical_speed = sqrt(2.0 * BOT_GRAVITY * BOT_JUMP_HEIGHT)
+				motion.height = 0.01
+
+		var target := motion.home + _bot_orbit_offset(motion)
+		target.y += motion.height
+		var step: Vector3 = target - bot.global_position
+		bot.global_position = target
+		step.y = 0.0
+		# player.gd yaws its Skeleton3D with atan2(x, z), so the model's +Z is
+		# its face; the same formula on the bot root turns it into the walk.
+		if step.length_squared() > 0.000001:
+			bot.rotation.y = atan2(step.x, step.z)
+
+		bot.set_animation_state(_bot_animation_state(motion, moving))
+
+
+func _bot_orbit_offset(motion: BotMotion) -> Vector3:
+	var offset := Vector3(cos(motion.angle), 0.0, sin(motion.angle)) * motion.radius
+	offset.x += sin((motion.angle * 1.7) + motion.wobble_phase) * motion.wobble
+	offset.z += cos((motion.angle * 1.3) + motion.wobble_phase) * motion.wobble
+	return offset
+
+
+# The states a remote player actually gets sent: standing still is idle, walking
+# is running, and the two halves of a hop are runningjump and falling.
+func _bot_animation_state(motion: BotMotion, moving: bool) -> String:
+	if motion.height > 0.0:
+		return "runningjump" if motion.vertical_speed > 0.0 else "falling"
+	if not moving:
+		return "idle"
+	return "running"
 
 func _pre_seed_from_session_storage() -> void:
 	if not OS.has_feature("web"):
