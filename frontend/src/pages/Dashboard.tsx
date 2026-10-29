@@ -1100,8 +1100,8 @@ export default function Dashboard() {
           )}
         </div>
 
-        <div className="tab-content-scroll">
-          <div className="matches-wrapper">
+        <div className={`tab-content-scroll ${tab === "events" ? "no-vertical-scroll" : ""}`}>
+          <div className={`matches-wrapper ${tab === "events" ? "no-vertical-scroll" : ""}`}>
             {tab === "events" && (
               <div className="matches-carousel" ref={carouselRef}>
                 {orderedMatches.map((match) => {
