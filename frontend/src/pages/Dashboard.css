@@ -435,6 +435,13 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   -webkit-overflow-scrolling: touch;
 }
 
+.tab-content-scroll.no-vertical-scroll {
+  overflow-y: hidden;
+  overflow-x: hidden;
+  padding-bottom: 0;
+  touch-action: pan-x;
+}
+
 .tab-content-scroll::-webkit-scrollbar {
   display: none;
 }
@@ -819,8 +826,14 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
 .matches-wrapper {
   position: relative;
   overflow: hidden;
+  overflow-y: hidden;
   /* ← VERY IMPORTANT */
   min-height: 100%;
+}
+
+.matches-wrapper.no-vertical-scroll {
+  overflow-y: hidden;
+  touch-action: pan-x;
 }
 
 /* Your scrolling container */
@@ -828,10 +841,13 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   display: flex;
   gap: 10px;
   overflow-x: auto;
+  overflow-y: hidden;
   scroll-snap-type: x mandatory;
   padding: 10px;
   scroll-behavior: smooth;
   background: rgba(255, 255, 255, 0);
+  touch-action: pan-x;
+  overscroll-behavior-y: none;
 }
 
 /* Hide scrollbar */
@@ -873,6 +889,7 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
 }
 
 .match-card {
+  touch-action: pan-x;
   scroll-snap-align: center;
   flex: 0 0 160px;
   width: 160px;
