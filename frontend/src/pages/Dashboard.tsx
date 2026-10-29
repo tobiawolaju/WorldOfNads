@@ -1129,23 +1129,15 @@ export default function Dashboard() {
                       }, 600);
                     }}
                   >
-                    {selectedMatch === match.matchId ? (
-                      <div className={`match-card-overlay selected-overlay status-${cardStatus}`}>
-                        <p className="match-reward">{match.prize}</p>
-                        <div className="match-card-content">
-                          <div className="match-details-inner">
-                            <p className="match-desc">{match.description}</p>
-                          </div>
+                    <div className={`match-card-overlay ${selectedMatch === match.matchId ? "selected-overlay" : ""} status-${cardStatus}`}>
+                      <p className="match-reward">{match.prize}</p>
+                      <div className="match-card-content">
+                        <h3 className="match-sponsor">{match.sponsor}</h3>
+                        <div className="match-details-inner">
+                          <p className="match-desc">{match.description}</p>
                         </div>
                       </div>
-                    ) : (
-                      <div className="match-card-overlay">
-                        <p className="match-reward">{match.prize}</p>
-                        <div className="match-card-content">
-                          <h3 className="match-sponsor">{match.sponsor}</h3>
-                        </div>
-                      </div>
-                    )}
+                    </div>
                     {/* Money placeholder + players in this room, bottom-left ON the card.
                         The people stat reads "playing now / ever joined". */}
                     <div className="match-card-stats">
