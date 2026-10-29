@@ -1058,6 +1058,15 @@ export default function Dashboard() {
             </p>
           </div>
         )}
+
+        {tab === "events" && selectedMatchData && (
+          <div className="event-preview">
+            <h2 className="event-preview__title">{selectedMatchData.sponsor}</h2>
+            {selectedMatchData.description && (
+              <p className="event-preview__desc">{selectedMatchData.description}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="right-info-section">

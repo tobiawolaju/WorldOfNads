@@ -173,6 +173,49 @@
   }
 }
 
+/* Event title + description overlay on 3D scene when on the events tab */
+.event-preview {
+  position: absolute;
+  left: 28px;
+  bottom: 30px;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: min(420px, calc(100% - 56px));
+  pointer-events: none;
+  font-family: 'Font1', var(--font-inter), sans-serif;
+  color: #000000;
+}
+
+.event-preview__title {
+  margin: 0;
+  font-size: clamp(24px, 2.6vw, 36px);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.event-preview__desc {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0.85;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (prefers-color-scheme: dark) {
+  .event-preview {
+    color: #ffffff;
+  }
+}
+
 .card-overlay {
   position: absolute;
   top: 0;
@@ -989,7 +1032,7 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   line-height: 1;
 }
 
-/* Google Font icon badge: square with light pink background. */
+/* Google Font icon badge: square with black background. */
 .match-icon-badge {
   display: inline-flex;
   align-items: center;
@@ -997,14 +1040,14 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   width: 26px;
   height: 26px;
   border-radius: 0;
-  background: #ffa9d0;
+  background: #000000;
   flex: 0 0 auto;
 }
 
 .match-icon-badge .material-symbols-rounded {
   font-size: 17px;
   line-height: 1;
-  color: #000000;
+  color: #ffffff;
   text-shadow: none;
   /* Material Symbols Rounded is loaded with FILL as a range in index.html, so the
      FILL axis is live here. Both badges ($ and people) use the filled variants. */
