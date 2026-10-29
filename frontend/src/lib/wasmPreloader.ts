@@ -1,5 +1,6 @@
 import { getDeviceProfile } from "./deviceProfile";
 import { isLowEndDevice } from "./gameQuality";
+import { isAppInstalled, isMobileDevice, subscribeInstallState } from "./installPrompt";
 
 export const STORAGE_KEY_WASM_VER = "wons_cached_wasm_version";
 
@@ -19,6 +20,7 @@ export interface PreloadResult {
     | "save_data"
     | "slow_connection"
     | "low_tier_without_intent"
+    | "not_installed"
     | "already_cached"
     | "in_flight"
     | "offline"
@@ -86,6 +88,11 @@ export function shouldPreload(userIntent: boolean = false): {
 } {
   if (typeof window === "undefined" || !("fetch" in window)) {
     return { allowed: false, reason: "offline" };
+  }
+
+  // 1. Mobile devices: Never start background downloads until installed as an app / APK
+  if (isMobileDevice() && !isAppInstalled()) {
+    return { allowed: false, reason: "not_installed" };
   }
 
   const nav = navigator as unknown as {
@@ -278,4 +285,13 @@ export function scheduleIdlePreload(delayMs: number = 3500): () => void {
       (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleCallbackId);
     }
   };
+}
+
+// Automatically start background preload once app is installed during the session
+if (typeof window !== "undefined") {
+  subscribeInstallState(() => {
+    if (isAppInstalled()) {
+      scheduleIdlePreload(1500);
+    }
+  });
 }

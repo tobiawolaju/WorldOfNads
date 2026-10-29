@@ -39,7 +39,9 @@ export const isStandalone = (): boolean => {
 // Phones and tablets only; desktop users install from the address bar.
 export const isMobileDevice = (): boolean => {
   if (typeof window === "undefined") return false;
-  return window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+  const ua = window.navigator?.userAgent || "";
+  const isMobileUa = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  return isMobileUa || window.matchMedia("(hover: none) and (pointer: coarse)").matches;
 };
 
 // iOS never fires `beforeinstallprompt`, so there we fall back to manual

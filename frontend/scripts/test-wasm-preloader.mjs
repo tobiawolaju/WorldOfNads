@@ -20,8 +20,18 @@ globalThis.window = {
 // 1. Test Low-End Guardrails
 console.log("\n[Test 1] Testing Guardrails...");
 
-function evaluateShouldPreload({ saveData = false, effectiveType = "4g", onLine = true, tier = "medium", isLowEnd = false, userIntent = false }) {
+function evaluateShouldPreload({
+  saveData = false,
+  effectiveType = "4g",
+  onLine = true,
+  tier = "medium",
+  isLowEnd = false,
+  userIntent = false,
+  isMobile = false,
+  isInstalled = false
+}) {
   if (!onLine) return { allowed: false, reason: "offline" };
+  if (isMobile && !isInstalled) return { allowed: false, reason: "not_installed" };
   if (saveData) return { allowed: false, reason: "save_data" };
   if (effectiveType === "slow-2g" || effectiveType === "2g") return { allowed: false, reason: "slow_connection" };
   
@@ -65,6 +75,20 @@ assert.deepEqual(
   evaluateShouldPreload({ tier: "high", isLowEnd: false, userIntent: false }),
   { allowed: true },
   "Must permit idle background preload on high-end device"
+);
+
+// Case F: mobile device when NOT installed as app/APK
+assert.deepEqual(
+  evaluateShouldPreload({ isMobile: true, isInstalled: false, userIntent: false }),
+  { allowed: false, reason: "not_installed" },
+  "Must block background download on mobile if site is not installed as an app/APK"
+);
+
+// Case G: mobile device when INSTALLED as app/APK
+assert.deepEqual(
+  evaluateShouldPreload({ isMobile: true, isInstalled: true, userIntent: true }),
+  { allowed: true },
+  "Must permit preload on mobile once app is installed"
 );
 
 console.log("✓ Guardrail checks passed!");
