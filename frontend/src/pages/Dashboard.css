@@ -1031,8 +1031,8 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   /* The old 4px #1a1a1a ring and the 6px white inset ring are gone. The card keeps
      its theme frame, and selected reads as a soft lift plus the purple glow. */
   box-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.45),
-    0 0 60px rgba(160, 0, 255, 0.4);
+    0 10px 24px rgba(0, 0, 0, 0.22),
+    0 0 30px rgba(160, 0, 255, 0.2);
   opacity: 1;
 }
 
