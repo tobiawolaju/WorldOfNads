@@ -875,7 +875,7 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   height: 220px;
   min-height: 220px;
   max-height: 220px;
-  border-radius: 10px;
+  border-radius: 0;
   /* Halftone edge. --dot-pitch is the grid spacing, --dot-ink the dot radius, and
      --edge-ramp how far the dissolve reaches in from the rim. The dissolve thins the
      card's own rim, so the frame below lives on the card and reads through it: solid
@@ -891,8 +891,8 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   /* Dissolves the old hard rectangle. Kept deliberately shallow so the artwork stays
      opaque through the middle and the prize text along the bottom, while the corners
      thin out into nothing. */
-  -webkit-mask-image: radial-gradient(ellipse var(--edge-ramp) var(--edge-ramp) at 50% 50%, #000 0 74%, rgba(0, 0, 0, 0.5) 90%, transparent 100%);
-  mask-image: radial-gradient(ellipse var(--edge-ramp) var(--edge-ramp) at 50% 50%, #000 0 74%, rgba(0, 0, 0, 0.5) 90%, transparent 100%);
+  -webkit-mask-image: none;
+  mask-image: none;
   cursor: pointer;
   transform: perspective(600px) rotateY(0deg) skewX(-5deg);
   transition:
@@ -1109,7 +1109,7 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
   background: rgba(0, 0, 0, 0.55);
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 0;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   white-space: nowrap;
