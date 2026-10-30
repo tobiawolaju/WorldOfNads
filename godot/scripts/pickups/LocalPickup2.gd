@@ -13,12 +13,13 @@ class_name LocalPickup2
 ## Behaviour:
 ##   * One weapon model is shown on the ground, chosen by `weapon_kind`.
 ##   * A player grabs it like any other local pickup. The ground model disappears
-##     and the matching mesh in skin.tscn (`Skeleton3D/BoneAttachment3D/<name>`)
-##     becomes visible in the left hand — on every client, because the holder is
-##     part of the server's item state.
+##     and the matching mesh in skin.tscn is carried on the back
+##     (`Skeleton3D/BackBoneAttachment3D/<name>`) — on every client, because the
+##     holder is part of the server's item state. A swing/shot moves it to the
+##     hand slot (`Skeleton3D/BoneAttachment3D`) for the clip and back again.
 ##   * Instead of a timer, a weapon has `uses` charges. Every press of the Action
 ##     button spends one, and the HUD ring drains 1/uses per press.
-##   * When the last charge is spent the hand mesh is hidden again and the pickup
+##   * When the last charge is spent both meshes are hidden again and the pickup
 ##     moves to a fresh far-away spot on the map, ready to be found.
 ##
 ## Physics (falling, resting, respawn probing) mirrors LocalPickup.gd so both
@@ -54,8 +55,9 @@ const ACTION_CAPTION: String = "FIRE"
 ## materials authored in pickup2.tscn / skin.tscn.
 const ACTION_COLOR := Color(1.0, 0.42352942, 1.0)
 
-## Node names under Skeleton3D/BoneAttachment3D (skin.tscn). These are also the
-## model node names in pickup2.tscn, so one table drives both scenes.
+## Node names under skin.tscn's two weapon slots - Skeleton3D/BoneAttachment3D
+## (hand, drawn) and Skeleton3D/BackBoneAttachment3D (back, carried). These are
+## also the model node names in pickup2.tscn, so one table drives all three.
 const WEAPON_NODE_NAMES := {
 	WeaponKind.SWORD: "sword",
 	WeaponKind.AK47: "ak47",
@@ -79,6 +81,33 @@ const SERVER_WEAPON_KINDS := {
 
 ## How many Action presses a fresh weapon lasts.
 const DEFAULT_USES: int = 8
+
+
+## Shows exactly the weapon model of `kind` in one attachment slot of a skin rig
+## (NONE hides the slot and every model in it). Both slots - the hand
+## (Skeleton3D/BoneAttachment3D) and the back (Skeleton3D/BackBoneAttachment3D) -
+## hold the same roster, so one call serves the local player, a remote copy and
+## the lobby bots. A rig without that slot is left alone.
+static func show_weapon_in_slot(rig: Node, slot_path: String, kind: int) -> void:
+	if rig == null:
+		return
+	var slot := rig.get_node_or_null(slot_path) as Node3D
+	if slot == null:
+		return
+	var wanted := String(WEAPON_NODE_NAMES.get(kind, ""))
+	for node_name in WEAPON_NODE_NAMES.values():
+		var node := slot.get_node_or_null(String(node_name)) as Node3D
+		if node != null:
+			node.visible = String(node_name) == wanted
+	if wanted != "":
+		# Both slots are weapon slots, so a slot that shows a weapon shows
+		# nothing else. skin.tscn keeps a shield in each of them, and it must
+		# not pop into the hand just because a swing made the slot visible.
+		for child in slot.get_children():
+			if child is Node3D and not WEAPON_NODE_NAMES.values().has(String(child.name)):
+				(child as Node3D).visible = false
+	slot.visible = wanted != ""
+
 
 @export var weapon_kind: WeaponKind = WeaponKind.SWORD:
 	set(value):

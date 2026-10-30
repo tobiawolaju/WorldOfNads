@@ -15,6 +15,7 @@
 extends SceneTree
 
 const HAND_SLOT := "Skeleton3D/BoneAttachment3D"
+const BACK_SLOT := "Skeleton3D/BackBoneAttachment3D"
 ## Node names under the hand slot, keyed the same way skin.tscn names them.
 const KIND_NAMES := {
 	"sword": 1,
@@ -88,14 +89,15 @@ func _initialize() -> void:
 		absf(seated.x - target.x) < 0.01 and absf(seated.z - target.z) < 0.01)
 	_check("the weapon is visible at its server spot", pickup.visible)
 
-	# --- 5. Another player's hand shows the weapon the server says they hold. ---
+	# --- 5. Another player's back shows the weapon the server says they hold. ---
 	var player := (load("res://scenes/skin.tscn") as PackedScene).instantiate() as Node3D
 	root.add_child(player)
 	await process_frame
 	player.call("show_remote_weapon", int(expected["w5"]))
-	_check("show_remote_weapon shows exactly the rpg", _visible_hand_weapon(player) == "rpg")
+	_check("show_remote_weapon carries exactly the rpg", _visible_weapon_in(player, BACK_SLOT) == "rpg")
+	_check("show_remote_weapon leaves the hand empty", _visible_weapon_in(player, HAND_SLOT) == "")
 	player.call("show_remote_weapon", 0)
-	_check("show_remote_weapon(NONE) clears the hand", _visible_hand_weapon(player) == "")
+	_check("show_remote_weapon(NONE) clears the back", _visible_weapon_in(player, BACK_SLOT) == "")
 
 	# --- 6. A spent server weapon is re-rolled by the SERVER, not locally. ---
 	pickup.call("pick_up", player)
@@ -119,11 +121,15 @@ func _initialize() -> void:
 		quit(1)
 
 
-# Name of the single visible weapon model in the hand slot, or "" when none/many.
-func _visible_hand_weapon(player: Node) -> String:
-	var slot := player.get_node_or_null(HAND_SLOT) as Node3D
+# Name of the single visible weapon model in a slot, or "" when none/many.
+# A hidden slot hides its meshes regardless of their own flags, so the slot is
+# part of the answer.
+func _visible_weapon_in(player: Node, slot_path: String) -> String:
+	var slot := player.get_node_or_null(slot_path) as Node3D
 	if slot == null:
-		_check("missing hand slot " + HAND_SLOT, false)
+		_check("missing weapon slot " + slot_path, false)
+		return ""
+	if not slot.visible:
 		return ""
 	var found := ""
 	for kind_name in KIND_NAMES.keys():

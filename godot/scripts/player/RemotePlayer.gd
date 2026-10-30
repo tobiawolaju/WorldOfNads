@@ -1,10 +1,19 @@
 extends Node3D
 
+## The two weapon slots skin.tscn ships: the hand (drawn for a swing/shot) and
+## the back (carried). A remote never swings locally, so its weapon stays on the
+## back - the same slot the local player uses between shots.
+const WEAPON_HAND_ATTACH_PATH: String = "Skeleton3D/BoneAttachment3D"
+const WEAPON_BACK_ATTACH_PATH: String = "Skeleton3D/BackBoneAttachment3D"
+
 var root: Node = null
 var player_id: String = ""
 var is_local: bool = false
 var animation_lod_enabled: bool = true
 var mesh_lod_enabled: bool = true
+## Kind of the weapon the server says this player carries, so a skin swap can put
+## it back on the fresh skeleton (see refresh_mesh_lod).
+var shown_weapon_kind: int = LocalPickup2.WeaponKind.NONE
 
 var display_name: String = "" :
 	set(new_name):
@@ -29,6 +38,26 @@ func _ready() -> void:
 	_refresh_name_label()
 	_setup_anim_tree()
 	_play_anim("idle")
+	# The rig ships every weapon model, and the back slot authors a knife and an
+	# RPG as visible: an unarmed copy has to clear both slots explicitly.
+	_apply_weapon_visual()
+
+
+## Shows the weapon this remote player is carrying, from the server's item state.
+## Only the back slot is used: a remote copy has no charges, HUD or input of its
+## own, so it never draws the weapon into its hand.
+func show_remote_weapon(kind: int) -> void:
+	if kind == shown_weapon_kind:
+		return
+	shown_weapon_kind = kind
+	_apply_weapon_visual()
+
+
+func _apply_weapon_visual() -> void:
+	var carried_on_back := get_node_or_null(WEAPON_BACK_ATTACH_PATH) != null
+	LocalPickup2.show_weapon_in_slot(self, WEAPON_BACK_ATTACH_PATH, shown_weapon_kind)
+	# A rig without a back slot (an older skin scene) keeps the weapon in the hand.
+	LocalPickup2.show_weapon_in_slot(self, WEAPON_HAND_ATTACH_PATH, LocalPickup2.WeaponKind.NONE if carried_on_back else shown_weapon_kind)
 
 func _setup_anim_tree() -> void:
 	var state_machine := AnimationNodeStateMachine.new()
@@ -96,9 +125,11 @@ func _apply_mesh_lod() -> void:
 		skeleton.visible = mesh_lod_enabled
 
 # Re-applies the current LOD state to a freshly swapped-in Skeleton3D, since a
-# skin change replaces the node and resets its visibility.
+# skin change replaces the node and resets its visibility. The same swap brings
+# the authored weapon meshes back, so the carried one is re-asserted too.
 func refresh_mesh_lod() -> void:
 	_apply_mesh_lod()
+	_apply_weapon_visual()
 
 func refresh_animation_state() -> void:
 	if not animation_lod_enabled:
