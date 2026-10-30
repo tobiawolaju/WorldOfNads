@@ -75,8 +75,12 @@ const POWERUP_AURA_SIZE := Vector2(2.0, 2.0)
 ## Local height the aura is centred on - the player's mid-body (the capsule sits
 ## at y 0.2, spanning roughly -0.3..0.7).
 const POWERUP_AURA_HEIGHT: float = 0.25
-## Hand slot in skin.tscn that holds the weapon meshes a pickup can reveal.
+## Hand slot in skin.tscn (bone: mixamorig_LeftHand). Holds a copy of every
+## weapon mesh; it only shows while a swing/shot is being played.
 const WEAPON_HAND_ATTACH_PATH: String = "Skeleton3D/BoneAttachment3D"
+## Back slot in skin.tscn (bone: mixamorig_Spine1). Holds the same weapon meshes
+## and is where a carried weapon rides the rest of the time.
+const WEAPON_BACK_ATTACH_PATH: String = "Skeleton3D/BackBoneAttachment3D"
 
 # --- STORM DAMAGE ---
 @export var storm_center: Vector2 = Vector2(0, 0)
@@ -1943,9 +1947,13 @@ func _play_weapon_action(clip: String) -> void:
 	if clip == "shoot":
 		length += SHOOT_END_HOLD
 	_weapon_action_active = true
+	# Drawn right before the first animated frame: the back copy disappears and
+	# the hand copy appears for exactly as long as the clip runs.
+	_set_weapon_drawn(true)
 	_set_anim(clip)
 	await get_tree().create_timer(maxf(length, 0.05)).timeout
 	_weapon_action_active = false
+	_set_weapon_drawn(false)
 
 
 # Drops the carried weapon state. When `recycle` is true the pickup is respawned
@@ -1964,21 +1972,41 @@ func _clear_held_weapon(recycle: bool) -> void:
 		item.call("deplete_and_respawn", global_position)
 
 
-# Shows exactly the hand mesh of `kind` (NONE hides every weapon). The hand slot
-# also holds the shield, which is never touched here.
+# Shows exactly the weapon mesh of `kind`, carried on the back (NONE hides every
+# weapon and both slots). The hand slot stays hidden until a swing or shot draws
+# the weapon - see _set_weapon_drawn.
 func _set_weapon_visual(kind: int) -> void:
-	var slot := get_node_or_null(WEAPON_HAND_ATTACH_PATH) as Node3D
-	if slot == null:
+	var carried_on_back := _has_weapon_back_slot()
+	_show_weapon_on(WEAPON_BACK_ATTACH_PATH, kind)
+	# A rig without a back slot (an older skin scene) keeps the weapon in the hand.
+	_show_weapon_on(WEAPON_HAND_ATTACH_PATH, LocalPickup2.WeaponKind.NONE if carried_on_back else kind)
+
+
+func _has_weapon_back_slot() -> bool:
+	return get_node_or_null(WEAPON_BACK_ATTACH_PATH) != null
+
+
+# Both attachment slots hold the same five models, so one table drives them.
+# Hiding the slot itself is what keeps an empty rig cheap: the back slot also
+# ships a knife and an RPG, which would otherwise ride every character's spine.
+func _show_weapon_on(slot_path: String, kind: int) -> void:
+	LocalPickup2.show_weapon_in_slot(self, slot_path, kind)
+
+
+# A swing/shot needs the weapon in the hand: the back copy is hidden just before
+# the clip starts and put back when it ends. Reads `held_weapon_kind` on the way
+# out, so a weapon lost mid-swing (death, last charge) simply stays hidden.
+func _set_weapon_drawn(drawn: bool) -> void:
+	# Nothing to swap on a rig without a back slot: the hand already carries it.
+	if not _has_weapon_back_slot():
 		return
-	var wanted := String(LocalPickup2.WEAPON_NODE_NAMES.get(kind, ""))
-	for node_name in LocalPickup2.WEAPON_NODE_NAMES.values():
-		var node := slot.get_node_or_null(String(node_name)) as Node3D
-		if node != null:
-			node.visible = String(node_name) == wanted
+	_show_weapon_on(WEAPON_BACK_ATTACH_PATH, LocalPickup2.WeaponKind.NONE if drawn else held_weapon_kind)
+	_show_weapon_on(WEAPON_HAND_ATTACH_PATH, held_weapon_kind if drawn else LocalPickup2.WeaponKind.NONE)
 
 
-# Shows the weapon ANOTHER player is carrying, from the server's item state. Only
-# the hand mesh is touched: a remote copy has no charges, HUD or input of its own.
+# Shows the weapon ANOTHER player is carrying, from the server's item state. It
+# rides their back, the same way the local player's does between swings: a remote
+# copy has no charges, HUD or input of its own.
 func show_remote_weapon(kind: int) -> void:
 	_set_weapon_visual(kind)
 

@@ -1,10 +1,11 @@
-# Headless selftest for LocalPickup2 (weapon pickups) and the hand-mesh switching
-# it drives in skin.tscn.
+# Headless selftest for LocalPickup2 (weapon pickups) and the carried-weapon
+# slots it drives in skin.tscn.
 #   Godot_v4.8-beta1_win64_console.exe --headless --path godot --script res://tools/_test_weapon_pickup.gd
 # Prints FAIL lines for every broken expectation and exits non-zero if any fail.
 extends SceneTree
 
 const HAND_SLOT := "Skeleton3D/BoneAttachment3D"
+const BACK_SLOT := "Skeleton3D/BackBoneAttachment3D"
 const KIND_NAMES := {
 	"sword": 1,
 	"ak47": 2,
@@ -67,14 +68,16 @@ func _initialize() -> void:
 	var moved := (pickup as Node3D).global_position.distance_to(from + Vector3(1.0, 0.0, 0.0))
 	_check("pickup respawns far away (moved %.1f)" % moved, moved >= 20.0)
 
-	# --- 4. skin.tscn exposes exactly one hand weapon at a time. ---
+	# --- 4. skin.tscn carries exactly one weapon, on the back. ---
 	var player := (load("res://scenes/skin.tscn") as PackedScene).instantiate() as Node3D
 	for kind_name in KIND_NAMES.keys():
 		var kind: int = KIND_NAMES[kind_name]
 		player.call("_set_weapon_visual", kind)
-		_check("skin shows only %s for kind %d" % [kind_name, kind], _visible_hand_weapon(player) == kind_name)
+		_check("skin carries only %s for kind %d" % [kind_name, kind], _visible_weapon_in(player, BACK_SLOT) == kind_name)
+		_check("kind %d keeps the hand empty" % kind, _visible_weapon_in(player, HAND_SLOT) == "")
 	player.call("_set_weapon_visual", 0)
-	_check("skin hides every weapon for NONE", _visible_hand_weapon(player) == "")
+	_check("skin hides every weapon for NONE", _visible_weapon_in(player, BACK_SLOT) == ""
+		and _visible_weapon_in(player, HAND_SLOT) == "")
 
 	# --- 5. The HUD ring treats charges as its fraction, one step per use. ---
 	var hud: Object = (load("res://scripts/ui/buttons.gd") as GDScript).new()
@@ -89,7 +92,7 @@ func _initialize() -> void:
 	_check("hud ring clears when the weapon is spent", not bool(hud.get("_ring_active")))
 	hud.free()
 
-	# --- 6. End-to-end: grab -> hand mesh -> 8 uses -> respawn. ---
+	# --- 6. End-to-end: grab -> carried on the back -> 8 uses -> respawn. ---
 	root.add_child(player)
 	await process_frame
 	player.set("last_pickup_request_ms", -100000)
@@ -100,19 +103,31 @@ func _initialize() -> void:
 	_check("player holds AK47", int(player.get("held_weapon_kind")) == 2)
 	_check("grab starts at 8 uses", int(player.get("held_weapon_uses")) == 8
 		and int(player.get("held_weapon_max_uses")) == 8)
-	_check("ak47 shown in hand after grab", _visible_hand_weapon(player) == "ak47")
+	_check("ak47 carried on the back after grab", _visible_weapon_in(player, BACK_SLOT) == "ak47")
+	_check("hand empty after grab", _visible_weapon_in(player, HAND_SLOT) == "")
 	_check("ground pickup hidden after grab", not (pickup as Node3D).visible)
+
+	# Firing draws it into the hand for the clip, then holsters it again. The clip
+	# itself is driven by _play_weapon_action; the local input path that spends a
+	# charge is covered by _test_weapon_animation.
+	player.call("_play_weapon_action", "shoot")
+	_check("firing draws the weapon into the hand", _visible_weapon_in(player, HAND_SLOT) == "ak47")
+	_check("firing hides the back copy", _visible_weapon_in(player, BACK_SLOT) == "")
+	await create_timer(0.6).timeout
+	_check("the clip holsters the weapon again", _visible_weapon_in(player, BACK_SLOT) == "ak47")
+	_check("the hand is empty after the clip", _visible_weapon_in(player, HAND_SLOT) == "")
 
 	for _i in 7:
 		player.call("_use_held_weapon")
 	_check("after 7 uses one charge remains", int(player.get("held_weapon_uses")) == 1)
-	_check("weapon still in hand with one charge", _visible_hand_weapon(player) == "ak47")
+	_check("weapon still carried with one charge", _visible_weapon_in(player, BACK_SLOT) == "ak47")
 
 	await physics_frame
 	player.call("_use_held_weapon")
 	_check("last use clears the held weapon", int(player.get("held_weapon_kind")) == 0
 		and int(player.get("held_weapon_uses")) == 0)
-	_check("hand is empty after the last use", _visible_hand_weapon(player) == "")
+	_check("both slots are empty after the last use", _visible_weapon_in(player, BACK_SLOT) == ""
+		and _visible_weapon_in(player, HAND_SLOT) == "")
 	_check("pickup visible again after the last use", (pickup as Node3D).visible
 		and not bool(pickup.call("is_being_held")))
 	# Same one-physics-frame deferral as section 3.
@@ -149,10 +164,14 @@ func _visible_model_name(pickup: Node) -> String:
 	return found
 
 
-func _visible_hand_weapon(player: Node) -> String:
-	var slot := player.get_node_or_null(HAND_SLOT) as Node3D
+func _visible_weapon_in(player: Node, slot_path: String) -> String:
+	var slot := player.get_node_or_null(slot_path) as Node3D
 	if slot == null:
-		_check("missing hand slot " + HAND_SLOT, false)
+		_check("missing weapon slot " + slot_path, false)
+		return ""
+	# A hidden slot hides its meshes no matter what the meshes say, so the slot
+	# itself is part of the answer.
+	if not slot.visible:
 		return ""
 	var found := ""
 	for kind_name in KIND_NAMES.keys():
