@@ -842,7 +842,7 @@ export default function Dashboard() {
   useEffect(() => {
     whenIdle(() => {
       try {
-        warmImages([...lobbyBackgrounds, "/lobbybg/chogcard.jpg", "/lobbybg/chogbg.jpg"]);
+        warmImages([...lobbyBackgrounds, "/lobbybg/chogcard.jpg", "/lobbybg/chogbg.jpg", "/lobbybg/trainingcard.jpg"]);
       } catch {
         // Preloading is best effort; a missing file must not break the page.
       }
