@@ -1059,12 +1059,9 @@ export default function Dashboard() {
           </div>
         )}
 
-        {tab === "events" && selectedMatchData && (
+        {tab === "events" && selectedMatchData && selectedMatchData.description && (
           <div className="event-preview">
-            <h2 className="event-preview__title">{selectedMatchData.sponsor}</h2>
-            {selectedMatchData.description && (
-              <p className="event-preview__desc">{selectedMatchData.description}</p>
-            )}
+            <p className="event-preview__desc">{selectedMatchData.description}</p>
           </div>
         )}
       </div>
@@ -1143,9 +1140,6 @@ export default function Dashboard() {
                       <p className="match-reward">{match.prize}</p>
                       <div className="match-card-content">
                         <h3 className="match-sponsor">{match.sponsor}</h3>
-                        <div className="match-details-inner">
-                          <p className="match-desc">{match.description}</p>
-                        </div>
                       </div>
                     </div>
                     {/* Players who have played this match / game, bottom-left on the card. */}
