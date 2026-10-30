@@ -1081,27 +1081,22 @@ export default function Dashboard() {
         />
         {equipFlash && <div className="equip-flash" />}
 
-        {(tab !== "store" || monBalance !== null) && (
-          <div className="card-overlay">
-            <div className="stat-rail">
+        <div className="card-overlay">
+          <div className="stat-rail">
+            {monBalance !== null && (
+              <div className="stat-pill stat-pill--mon" title={`${monBalance} MON`}>
+                <img src="/gem.png" alt="" className="stat-pill__icon" />
+                <span className="stat-pill__value">{monBalance}</span>
+              </div>
+            )}
 
-              {monBalance !== null && (
-                <div className="stat-pill stat-pill--mon" title={`${monBalance} MON`}>
-                  <img src="/gem.png" alt="" className="stat-pill__icon" />
-                  <span className="stat-pill__value">{monBalance}</span>
-                </div>
-              )}
-
-              {tab !== "store" && (
-                <div className="stat-pill stat-pill--level" title={`Level ${level}`}>
-                  <img src="/star.png" alt="" className="stat-pill__icon" />
-                  <span className="stat-pill__label">Level</span>
-                  <span className="stat-pill__value">{level}</span>
-                </div>
-              )}
+            <div className="stat-pill stat-pill--level" title={`Level ${level}`}>
+              <img src="/star.png" alt="" className="stat-pill__icon" />
+              <span className="stat-pill__label">Level</span>
+              <span className="stat-pill__value">{level}</span>
             </div>
           </div>
-        )}
+        </div>
 
         {tab === "store" && currentStoreItem && (
           <div className="skin-preview">
