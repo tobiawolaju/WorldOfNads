@@ -864,6 +864,47 @@ export default function Dashboard() {
     warmImage(activeLobbyBg);
   }, [activeLobbyBg]);
 
+  // Animated sliding transition when switching tabs or match cards:
+  const [currentBgSrc, setCurrentBgSrc] = useState(activeLobbyBg);
+  const [prevBgSrc, setPrevBgSrc] = useState<string | null>(null);
+  const [transitionDirection, setTransitionDirection] = useState<"right" | "left">("right");
+  const previousTabRef = useRef(tab);
+  const previousMatchIdRef = useRef(selectedMatch);
+  const bgTransitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const tabOrder: Array<"events" | "rewards" | "store"> = ["events", "rewards", "store"];
+    let direction: "right" | "left" = "right";
+
+    if (previousTabRef.current !== tab) {
+      const prevIdx = tabOrder.indexOf(previousTabRef.current);
+      const nextIdx = tabOrder.indexOf(tab);
+      direction = nextIdx >= prevIdx ? "right" : "left";
+      previousTabRef.current = tab;
+    } else if (tab === "events" && previousMatchIdRef.current !== selectedMatch) {
+      const prevMatchIdx = orderedMatches.findIndex((m) => m.matchId === previousMatchIdRef.current);
+      const nextMatchIdx = orderedMatches.findIndex((m) => m.matchId === selectedMatch);
+      if (prevMatchIdx !== -1 && nextMatchIdx !== -1) {
+        direction = nextMatchIdx >= prevMatchIdx ? "right" : "left";
+      }
+    }
+    previousMatchIdRef.current = selectedMatch;
+
+    if (activeLobbyBg !== currentBgSrc) {
+      setTransitionDirection(direction);
+      setPrevBgSrc(currentBgSrc);
+      setCurrentBgSrc(activeLobbyBg);
+
+      if (bgTransitionTimeoutRef.current) {
+        clearTimeout(bgTransitionTimeoutRef.current);
+      }
+      bgTransitionTimeoutRef.current = setTimeout(() => {
+        setPrevBgSrc(null);
+        bgTransitionTimeoutRef.current = null;
+      }, 450);
+    }
+  }, [activeLobbyBg, tab, selectedMatch, orderedMatches, currentBgSrc]);
+
   // Preload the other backdrops (and the permanent rooms' own art) only once
   // the browser is idle. Warming them on mount competed with the first paint and
   // the 3D scene on low-end devices, which is exactly where a late frame shows.
@@ -1016,11 +1057,23 @@ export default function Dashboard() {
       {!showLoader && authenticated && user && (
         <div className="dashboard-wrapper">
         <div className={`left-3d-section ${equipFlash ? "shake" : ""}`}>
-        {/* The backdrop stays mounted for the whole dashboard session, updating
-            its background image per tab (events: match backdrop, store: storebg,
-            rewards: rewrdsbg). */}
+        {/* The backdrop stays mounted for the whole dashboard session, sliding and
+            fading between lobby background images in the direction of the tab or card navigation. */}
         <div className="lobby-bg">
-          <img src={activeLobbyBg} alt="" decoding="async" />
+          {prevBgSrc && (
+            <div
+              key={prevBgSrc}
+              className={`lobby-bg__layer lobby-bg__layer--exit-${transitionDirection === "right" ? "left" : "right"}`}
+            >
+              <img src={prevBgSrc} alt="" decoding="async" />
+            </div>
+          )}
+          <div
+            key={currentBgSrc}
+            className={`lobby-bg__layer ${prevBgSrc ? `lobby-bg__layer--enter-${transitionDirection}` : ""}`}
+          >
+            <img src={currentBgSrc} alt="" decoding="async" />
+          </div>
         </div>
         <ThreeScene
           equippedSkin={displayedSkin}
