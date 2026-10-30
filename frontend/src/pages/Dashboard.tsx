@@ -848,19 +848,21 @@ export default function Dashboard() {
   // records have no `lobbyBg`; they fall back to a stable per-match hash (the same
   // one backend/scripts/assignLobbyBackgrounds.js writes during backfill), so the
   // image stays put instead of changing every time the card changes.
-  const lobbyBg = useMemo(
-    () =>
+  const activeLobbyBg = useMemo(() => {
+    if (tab === "store") return "/lobbybg/storebg.jpg";
+    if (tab === "rewards") return "/lobbybg/rewrdsbg.jpg";
+    return (
       selectedMatchData?.lobbyBg ||
       stableLobbyBgFor(selectedMatch) ||
-      FALLBACK_LOBBY_BG,
-    [selectedMatchData?.lobbyBg, selectedMatch]
-  );
+      FALLBACK_LOBBY_BG
+    );
+  }, [tab, selectedMatchData?.lobbyBg, selectedMatch]);
 
   // Keep the selected backdrop warm: it is on screen right now, so it must be
   // decoded synchronously rather than on idle.
   useEffect(() => {
-    warmImage(lobbyBg);
-  }, [lobbyBg]);
+    warmImage(activeLobbyBg);
+  }, [activeLobbyBg]);
 
   // Preload the other backdrops (and the permanent rooms' own art) only once
   // the browser is idle. Warming them on mount competed with the first paint and
@@ -868,7 +870,7 @@ export default function Dashboard() {
   useEffect(() => {
     whenIdle(() => {
       try {
-        warmImages([...lobbyBackgrounds, "/lobbybg/chogcard.jpg", "/lobbybg/chogbg.jpg", "/lobbybg/trainingcard.jpg"]);
+        warmImages([...lobbyBackgrounds, "/lobbybg/chogcard.jpg", "/lobbybg/chogbg.jpg", "/lobbybg/trainingcard.jpg", "/lobbybg/storebg.jpg", "/lobbybg/rewrdsbg.jpg"]);
       } catch {
         // Preloading is best effort; a missing file must not break the page.
       }
@@ -1014,12 +1016,11 @@ export default function Dashboard() {
       {!showLoader && authenticated && user && (
         <div className="dashboard-wrapper">
         <div className={`left-3d-section ${equipFlash ? "shake" : ""}`}>
-        {/* The backdrop stays mounted for the whole dashboard session: swapping
-            tabs must not unmount it, or the browser drops the decoded bitmap
-            and re-decodes (blank frame) when the Events tab comes back. On the
-            Store tab it is only hidden. */}
-        <div className={`lobby-bg ${tab === "store" ? "lobby-bg--hidden" : ""}`} aria-hidden={tab === "store"}>
-          <img src={lobbyBg} alt="" decoding="async" />
+        {/* The backdrop stays mounted for the whole dashboard session, updating
+            its background image per tab (events: match backdrop, store: storebg,
+            rewards: rewrdsbg). */}
+        <div className="lobby-bg">
+          <img src={activeLobbyBg} alt="" decoding="async" />
         </div>
         <ThreeScene
           equippedSkin={displayedSkin}
