@@ -372,6 +372,14 @@
 @media (orientation: landscape), (min-width: 768px) {
   .stat-rail {
     top: 101.25px;
+    flex-direction: column;
+    align-items: flex-start;
+    width: auto;
+    gap: 8px;
+  }
+
+  .stat-pill--level {
+    margin-left: 0;
   }
 }
 
