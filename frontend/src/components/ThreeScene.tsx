@@ -563,6 +563,17 @@ const NadModel: React.FC<NadModelProps> = ({
   const mixer = useMemo(() => new THREE.AnimationMixer(model), [model]);
   const animatedMaterialsRef = useRef<THREE.Material[]>([]);
   const outlineMeshesRef = useRef<THREE.Mesh[]>([]);
+  const groupRef = useRef<THREE.Group>(null);
+  const spinStartTimeRef = useRef<number | null>(null);
+  const prevSkinIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const currentSkinId = equippedSkin?.id || null;
+    if (prevSkinIdRef.current !== null && prevSkinIdRef.current !== currentSkinId) {
+      spinStartTimeRef.current = performance.now();
+    }
+    prevSkinIdRef.current = currentSkinId;
+  }, [equippedSkin?.id]);
 
   function createToonGradientTexture(steps: number = 4): THREE.CanvasTexture {
     const canvas = document.createElement('canvas');
@@ -1186,15 +1197,30 @@ const NadModel: React.FC<NadModelProps> = ({
       }
       shader.uniforms.uTime.value = clockTime;
     }
+
+    if (groupRef.current) {
+      if (spinStartTimeRef.current !== null) {
+        const elapsed = (performance.now() - spinStartTimeRef.current) / 1000;
+        const DURATION = 0.85; // smooth 360 spin in 850ms
+        if (elapsed < DURATION) {
+          const t = elapsed / DURATION;
+          // Quintic ease out for snappy start and natural deceleration
+          const ease = 1 - Math.pow(1 - t, 5);
+          groupRef.current.rotation.y = rotation[1] + ease * Math.PI * 2;
+        } else {
+          groupRef.current.rotation.y = rotation[1];
+          spinStartTimeRef.current = null;
+        }
+      } else {
+        groupRef.current.rotation.y = rotation[1];
+      }
+    }
   });
 
   return (
-    <primitive
-      object={model}
-      position={position}
-      rotation={rotation}
-      scale={scale}
-    />
+    <group ref={groupRef} position={position} rotation={rotation} scale={scale}>
+      <primitive object={model} />
+    </group>
   );
 };
 
