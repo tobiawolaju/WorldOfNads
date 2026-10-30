@@ -1094,6 +1094,7 @@ export default function Dashboard() {
 
               {tab !== "store" && (
                 <div className="stat-pill stat-pill--level" title={`Level ${level}`}>
+                  <img src="/star.png" alt="" className="stat-pill__icon" />
                   <span className="stat-pill__label">Level</span>
                   <span className="stat-pill__value">{level}</span>
                 </div>

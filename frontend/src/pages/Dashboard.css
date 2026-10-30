@@ -424,7 +424,8 @@
   font-weight: 900;
 }
 
-.stat-pill--mon .stat-pill__icon {
+.stat-pill--mon .stat-pill__icon,
+.stat-pill--level .stat-pill__icon {
   width: 28px;
   height: 28px;
 }
@@ -478,7 +479,8 @@
     font-size: 13px;
   }
 
-  .stat-pill--mon .stat-pill__icon {
+  .stat-pill--mon .stat-pill__icon,
+  .stat-pill--level .stat-pill__icon {
     width: 24px;
     height: 24px;
   }
