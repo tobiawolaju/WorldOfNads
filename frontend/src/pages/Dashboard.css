@@ -194,6 +194,7 @@
   font-size: clamp(24px, 2.6vw, 36px);
   font-weight: 800;
   line-height: 1.05;
+  opacity: 0;
 }
 
 .event-preview__desc {
@@ -1291,7 +1292,7 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
 
 .match-desc {
   font-size: 0.72rem;
-  opacity: 0.9;
+  opacity: 0;
   margin-bottom: 0;
   overflow: hidden;
   text-overflow: ellipsis;
