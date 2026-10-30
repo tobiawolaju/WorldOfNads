@@ -1164,9 +1164,9 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   padding: 20px 14px 40px;
 }
 
-/* Sponsor Title */
+/* Sponsor Title (1.5x scaled) */
 .match-sponsor {
-  font-size: 0.95rem;
+  font-size: 1.425rem;
   font-weight: 800;
   font-family: 'Poppins', sans-serif;
   text-transform: uppercase;
