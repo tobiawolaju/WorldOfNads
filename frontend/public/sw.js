@@ -12,7 +12,7 @@
 // bundle) and /attachments (GLBs fetched through a manifest). Those are either
 // time sensitive or big enough that the HTTP cache already does the right thing.
 
-const VERSION = "won-v3";
+const VERSION = "won-v4";
 const SHELL = `won-shell-${VERSION}`;
 const ASSETS = `won-assets-${VERSION}`;
 const MEDIA = `won-media-${VERSION}`;
