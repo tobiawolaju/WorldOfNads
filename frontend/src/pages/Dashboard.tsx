@@ -643,7 +643,7 @@ export default function Dashboard() {
     let audio: HTMLAudioElement | null = null;
     let started = false;
 
-    const detach = () => {
+    const detachUserInteraction = () => {
       window.removeEventListener("pointerdown", tryPlay);
       window.removeEventListener("keydown", tryPlay);
       window.removeEventListener("touchstart", tryPlay);
@@ -654,7 +654,8 @@ export default function Dashboard() {
       if (!audio) {
         audio = new Audio("/lobbysong.mp3");
         audio.loop = true;
-        audio.volume = 0.4;
+        audio.volume = 0.35;
+        audio.preload = "auto";
         lobbyAudioRef.current = audio;
       }
       const promise = audio.play();
@@ -662,21 +663,43 @@ export default function Dashboard() {
         promise
           .then(() => {
             started = true;
-            detach();
+            detachUserInteraction();
           })
           .catch(() => {});
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (!audio || !started) return;
+      if (document.hidden) {
+        audio.pause();
+      } else {
+        const promise = audio.play();
+        if (promise) promise.catch(() => {});
+      }
+    };
+
+    const handlePageHide = () => {
+      if (audio) {
+        audio.pause();
       }
     };
 
     window.addEventListener("pointerdown", tryPlay);
     window.addEventListener("keydown", tryPlay);
     window.addEventListener("touchstart", tryPlay, { passive: true });
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeunload", handlePageHide);
 
     return () => {
-      detach();
+      detachUserInteraction();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeunload", handlePageHide);
       if (audio) {
         audio.pause();
-        audio.src = "";
+        audio.removeAttribute("src");
         audio.load();
         audio = null;
       }
@@ -707,6 +730,9 @@ export default function Dashboard() {
         setPlayButtonState("idle");
         const currentSkinId = displayedSkin?.id || equippedSkin?.id || "s-default";
         const currentSkinName = resolveGameSkinName(currentSkinId);
+        if (lobbyAudioRef.current) {
+          lobbyAudioRef.current.pause();
+        }
         const playParams = new URLSearchParams({
           match: selectedMatch,
           skin: currentSkinName
