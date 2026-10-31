@@ -56,6 +56,13 @@ func _initialize() -> void:
 			caption.get_theme_color("font_color") == Color(1.0, 0.0, 0.0),
 			str(caption.get_theme_color("font_color")))
 
+	# The caption colour is the power-up's own colour (POWER_UP_COLORS), which also
+	# tints the pickup on the ground: SMOG reads yellow and TWIN green.
+	var smog: Color = LocalPickup.POWER_UP_COLORS[LocalPickup.PowerUpMode.SMOKE_GRENADE]
+	var twin: Color = LocalPickup.POWER_UP_COLORS[LocalPickup.PowerUpMode.TWIN]
+	_check("SMOG's caption is yellow", smog.r > 0.9 and smog.g > 0.7 and smog.b < 0.3, str(smog))
+	_check("TWIN's caption is green", twin.g > twin.r and twin.g > twin.b, str(twin))
+
 	buttons.call("show_power_up", "", Color.WHITE, 0.0)
 	_force_poll(buttons)
 	await _frames(3)
