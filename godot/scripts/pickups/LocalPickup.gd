@@ -51,12 +51,12 @@ const POWER_UP_LABELS := {
 ## One color per power-up. Drives both the pickup's mesh tint and the HUD Action
 ## caption color, so an item and its on-screen text always match.
 const POWER_UP_COLORS := {
-	PowerUpMode.SPEED_BURST: Color(0.25, 0.55, 1.0),   # blue
-	PowerUpMode.TWIN: Color(1.0, 0.85, 0.15),          # yellow
-	PowerUpMode.SMOKE_GRENADE: Color(0.45, 0.8, 0.4),  # smoke green
-	PowerUpMode.MEGA_LEAP: Color(0.65, 0.3, 1.0),      # purple
-	PowerUpMode.CHICKEN: Color(0.98, 0.8, 0.3),        # gold
-	PowerUpMode.LOOTBOX: Color(0.35, 0.68, 1.0),       # blue
+	PowerUpMode.SPEED_BURST: Color(0.25, 0.55, 1.0), # blue
+	PowerUpMode.TWIN: Color(0.45, 0.8, 0.4), # green
+	PowerUpMode.SMOKE_GRENADE: Color(1.0, 0.85, 0.15), # yellow
+	PowerUpMode.MEGA_LEAP: Color(0.65, 0.3, 1.0), # purple
+	PowerUpMode.CHICKEN: Color(0.98, 0.8, 0.3), # gold
+	PowerUpMode.LOOTBOX: Color(0.35, 0.68, 1.0), # blue
 }
 
 ## Mesh tints while an objective item is being carried. The chicken rides the
@@ -522,8 +522,16 @@ func release_silently() -> void:
 # at least RESPAWN_MIN_DISTANCE away from the holder. Falls back to the farthest
 # valid point if no probe clears the distance.
 func _pick_respawn_point(from_position: Vector3) -> Vector3:
-	var world_size: Vector2 = GameManager.minimap_world_size
-	var world_origin: Vector2 = GameManager.minimap_origin
+	# Read the map bounds through the autoload NODE, not the `GameManager`
+	# identifier: this script is parsed by headless --script tests before the
+	# project's autoloads are registered, and a global identifier reference there
+	# fails the whole file (and every script that depends on it) to compile.
+	var world_size: Vector2 = Vector2(70.0, 70.0)
+	var world_origin: Vector2 = Vector2.ZERO
+	var manager := get_node_or_null("/root/GameManager")
+	if manager != null:
+		world_size = manager.get("minimap_world_size")
+		world_origin = manager.get("minimap_origin")
 	if world_size.x <= 0.0 or world_size.y <= 0.0:
 		world_size = Vector2(70.0, 70.0)
 	var half_x: float = maxf(world_size.x * 0.5 - RESPAWN_EDGE_MARGIN, 1.0)
