@@ -2,11 +2,10 @@
 #   Godot_v4.8-beta1_win64_console.exe --headless --path godot --script res://tools/_test_weapon_animation.gd
 # Prints FAIL lines for every broken expectation and exits non-zero if any fail.
 #
-# Why this exists: the clips were in the library and `_use_held_weapon()` called
-# `anim_player.play("hook")`, but nothing ever moved on screen. The AnimationTree
-# built in `_setup_anim_tree()` drives the skeleton, so a clip the state machine
-# cannot travel to is written over every frame, and `_handle_animations()` re-picks
-# idle/running on the next frame regardless. Both halves are asserted here.
+# Architecture: the AnimationTree root is a BlendTree containing:
+#   movement (StateMachine)  → OneShot("action_shot") ← actions (StateMachine)
+# The OneShot is filtered to upper-body bones so weapon clips only override the
+# torso/arms while legs keep playing the movement animation.
 extends SceneTree
 
 var failures := 0
@@ -20,10 +19,23 @@ func _initialize() -> void:
 	_check("the player builds a state machine", player.anim_state_machine != null)
 	_check("the library ships a hook clip", player.anim_player.has_animation("hook"))
 	_check("the library ships a shoot clip", player.anim_player.has_animation("shoot"))
-	# The hook clip is 2.4 s at 1x, which reads as "the swing never starts". The
-	# state is retimed with a custom timeline instead (Animation has no speed in
-	# Godot 4), and _play_weapon_action locks the pose for that same timeline.
-	var hook_state := (player.anim_tree.tree_root as AnimationNodeStateMachine).get_node("hook")
+
+	# The tree root is now a BlendTree wrapping a OneShot.
+	var blend_tree := player.anim_tree.tree_root as AnimationNodeBlendTree
+	_check("the tree root is a BlendTree", blend_tree != null)
+
+	# The movement machine is inside the BlendTree.
+	var movement_machine := blend_tree.get_node("movement") as AnimationNodeStateMachine if blend_tree else null
+	_check("the BlendTree has a movement machine", movement_machine != null)
+
+	# The action machine holds hook/shoot.
+	var action_machine := blend_tree.get_node("actions") as AnimationNodeStateMachine if blend_tree else null
+	_check("the BlendTree has an action machine", action_machine != null)
+	_check("the action machine has hook", action_machine != null and action_machine.has_node("hook"))
+	_check("the action machine has shoot", action_machine != null and action_machine.has_node("shoot"))
+
+	# The hook clip is retimed with a custom timeline.
+	var hook_state := action_machine.get_node("hook") if action_machine else null
 	_check(
 		"the hook state is retimed shorter than its 2.4 s clip",
 		hook_state is AnimationNodeAnimation
@@ -31,26 +43,23 @@ func _initialize() -> void:
 			and hook_state.timeline_length < player.anim_player.get_animation("hook").length
 	)
 
-	var machine := player.anim_tree.tree_root as AnimationNodeStateMachine
-	_check("the state machine carries the hook state", machine != null and machine.has_node("hook"))
-	_check("the state machine carries the shoot state", machine != null and machine.has_node("shoot"))
+	# The movement machine should NOT have hook/shoot (they live in the action machine).
+	_check("movement machine has no hook state", movement_machine != null and not movement_machine.has_node("hook"))
+	_check("movement machine has no shoot state", movement_machine != null and not movement_machine.has_node("shoot"))
 
-	# The tree owns the skeleton, so a state the machine does not carry is never
-	# drawn no matter what anim_player.play() is told to do. `travel` returns void
-	# in this build, so the state it actually reached is what gets asserted.
-	player.anim_state_machine.travel("hook")
-	await create_timer(0.3).timeout
-	_check("the machine actually reaches the hook state", player.anim_state_machine.get_current_node() == "hook")
-	player.anim_state_machine.travel("shoot")
-	await create_timer(0.3).timeout
-	_check("the machine actually reaches the shoot state", player.anim_state_machine.get_current_node() == "shoot")
+	# Verify movement states exist.
+	_check("movement machine has idle", movement_machine != null and movement_machine.has_node("idle"))
+	_check("movement machine has running", movement_machine != null and movement_machine.has_node("running"))
+
+	# The movement playback should be reachable.
+	player.anim_state_machine.travel("idle")
+	await create_timer(0.25).timeout
+	_check("movement machine reaches idle", player.anim_state_machine.get_current_node() == "idle")
 
 	# The clip has to reach the model, not just the state machine's bookkeeping.
 	# Bone poses are sampled in idle and again mid-shot; the tree is the only thing
 	# driving them, so a difference proves the clip is actually being drawn.
 	var skeleton := player.get_node_or_null("Skeleton3D") as Skeleton3D
-	player.anim_state_machine.travel("idle")
-	await create_timer(0.25).timeout
 	var idle_pose := _bone_signature(skeleton)
 
 	# A weapon action has to survive _handle_animations, which re-picks the
@@ -60,10 +69,14 @@ func _initialize() -> void:
 	player.is_local = true
 	player._set_anim("idle")
 	player._play_weapon_action("shoot")
-	_check("the action takes the pose", player.current_animation == "shoot")
 	_check("the action locks the movement state", player._weapon_action_active)
+	# With the OneShot architecture, movement animations should keep updating
+	# (no early return in _handle_animations).
 	player._handle_animations(Vector3.ZERO)
-	_check("movement animation stands down during the action", player.current_animation == "shoot")
+	# current_animation is set to "shoot" by _play_weapon_action for network sync,
+	# but _handle_animations may update it to idle — that's fine because the
+	# movement machine stays on idle (legs). The upper body is driven by the OneShot.
+	_check("the action still active after handle_animations", player._weapon_action_active)
 	player.is_local = false
 
 	await create_timer(0.15).timeout
@@ -79,6 +92,8 @@ func _initialize() -> void:
 	_check("the action releases the pose", not player._weapon_action_active)
 	player.is_local = true
 	player._handle_animations(Vector3.ZERO)
+	# After the action ends, movement should resume: current_animation is a
+	# movement state (not "shoot") since _handle_animations ran.
 	_check("movement animation resumes afterwards", player.current_animation != "shoot")
 	player.is_local = false
 
