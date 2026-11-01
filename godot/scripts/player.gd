@@ -668,10 +668,12 @@ func _setup_anim_tree() -> void:
 	var oneshot := AnimationNodeOneShot.new()
 	oneshot.filter_enabled = true
 	var upper_body_paths := [
-		# The entire spine chain (Spine → Spine1 → Spine2) stays with the movement
-		# machine so the running lean/twist is never overridden. Only the limbs
-		# and head are driven by the weapon clip — they attach to Spine2 via the
-		# shoulder bones, so they follow the running torso naturally.
+		# Hips is included so the full rotation chain (Hips → Spine → Spine2 →
+		# shoulders → arms) stays internally consistent with the weapon clip.
+		# The leg bones (LeftUpLeg, RightUpLeg and descendants) are NOT filtered,
+		# so they keep playing the movement animation.
+		"Skeleton3D:mixamorig_Hips",
+		"Skeleton3D:mixamorig_Spine", "Skeleton3D:mixamorig_Spine1", "Skeleton3D:mixamorig_Spine2",
 		"Skeleton3D:mixamorig_Neck", "Skeleton3D:mixamorig_Head",
 		"Skeleton3D:mixamorig_LeftShoulder", "Skeleton3D:mixamorig_LeftArm",
 		"Skeleton3D:mixamorig_LeftForeArm", "Skeleton3D:mixamorig_LeftHand",
