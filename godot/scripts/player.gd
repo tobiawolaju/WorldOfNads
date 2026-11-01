@@ -668,7 +668,10 @@ func _setup_anim_tree() -> void:
 	var oneshot := AnimationNodeOneShot.new()
 	oneshot.filter_enabled = true
 	var upper_body_paths := [
-		"Skeleton3D:mixamorig_Spine", "Skeleton3D:mixamorig_Spine1", "Skeleton3D:mixamorig_Spine2",
+		# Spine and Spine1 are left to the movement machine so the running
+		# animation's natural torso lean/twist is preserved. The override starts
+		# at the chest (Spine2) — shoulders, arms, head follow the weapon clip.
+		"Skeleton3D:mixamorig_Spine2",
 		"Skeleton3D:mixamorig_Neck", "Skeleton3D:mixamorig_Head",
 		"Skeleton3D:mixamorig_LeftShoulder", "Skeleton3D:mixamorig_LeftArm",
 		"Skeleton3D:mixamorig_LeftForeArm", "Skeleton3D:mixamorig_LeftHand",
