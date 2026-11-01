@@ -358,6 +358,8 @@ var _reconnect_dot_timer: float = 0.0
 var _reconnect_dots: int = 0
 var _reconnect_countdown: int = 0
 var _subtitle_label: Label = null
+var _subtitle_bg: ColorRect = null
+var _subtitle_hide_timer: SceneTreeTimer = null
 var _reconnect_target_url: String = ""
 var _last_server_position: Vector3 = Vector3.ZERO
 const RECONNECT_DOT_INTERVAL: float = 0.5
@@ -694,6 +696,10 @@ func _resolve_subtitle_label():
 	if candidate is Label:
 		_subtitle_label = candidate
 		_subtitle_label.visible = false
+	var bg := hud.get_node_or_null("CanvasLayer/BoxContainer/Node2/ColorRect")
+	if bg is ColorRect:
+		_subtitle_bg = bg
+		_subtitle_bg.visible = false
 
 func _update_subtitle_text(text: String):
 	_resolve_subtitle_label()
@@ -701,11 +707,23 @@ func _update_subtitle_text(text: String):
 		return
 	_set_subtitle_visible(true)
 	_subtitle_label.text = text
+	# Auto-hide after 3 seconds if no new text arrives.
+	if _subtitle_hide_timer != null and _subtitle_hide_timer.time_left > 0:
+		# Can't cancel a SceneTreeTimer, so just disconnect the old one.
+		if _subtitle_hide_timer.is_connected("timeout", _on_subtitle_hide_timeout):
+			_subtitle_hide_timer.disconnect("timeout", _on_subtitle_hide_timeout)
+	_subtitle_hide_timer = get_tree().create_timer(3.0)
+	_subtitle_hide_timer.connect("timeout", _on_subtitle_hide_timeout)
+
+func _on_subtitle_hide_timeout():
+	_set_subtitle_visible(false)
 
 func _set_subtitle_visible(is_visible: bool):
 	if _subtitle_label == null:
 		return
 	_subtitle_label.visible = is_visible
+	if _subtitle_bg != null:
+		_subtitle_bg.visible = is_visible
 
 func _receive_messages():
 	var packets_processed := 0
