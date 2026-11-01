@@ -1996,6 +1996,9 @@ func _play_weapon_action(clip: String) -> void:
 	current_animation = clip
 	_anim_state_dirty = true
 	await get_tree().create_timer(maxf(length, 0.05)).timeout
+	# Abort the OneShot so the movement machine reclaims the full body (upper +
+	# lower). Without this the action clip loops and the torso stays frozen.
+	anim_tree.set("parameters/action_shot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
 	_weapon_action_active = false
 	_set_weapon_drawn(false)
 
