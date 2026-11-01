@@ -453,6 +453,7 @@ fade_color = Color(0, 0, 0, 0)
 north_label_color = Color(1, 1, 1, 1)
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer/BoxContainer/Node2" unique_id=915954366]
+visible = false
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
@@ -463,6 +464,7 @@ grow_vertical = 0
 color = Color(1, 0, 1, 1)
 
 [node name="subtitle" type="Label" parent="CanvasLayer/BoxContainer/Node2" unique_id=1792981601]
+visible = false
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
