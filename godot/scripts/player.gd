@@ -367,6 +367,7 @@ var cam_rot_x: float = deg_to_rad(30)
 var cam_rot_y: float = 0.0
 var current_animation: String = "idle"
 var anim_state_machine: AnimationNodeStateMachinePlayback = null
+var _action_playback: AnimationNodeStateMachinePlayback = null
 var camera_distance_current: float = 0.0
 var camera_distance_bias: float = 0.0
 var camera_is_airborne: bool = false
@@ -619,18 +620,34 @@ func _ready() -> void:
 	call_deferred("_init_chog_gate")
 
 func _setup_anim_tree() -> void:
-	var state_machine := AnimationNodeStateMachine.new()
-	# Movement states plus the two weapon clips. The AnimationTree owns the
-	# skeleton, so a clip the machine cannot travel to is never drawn no matter
-	# what `anim_player.play()` says (see `_play_weapon_action`).
-	var state_names := [
-		"idle", "running", "runningjump", "falling", "runningslide", "fall", "climb",
-		"hook", "shoot",
-	]
-	for state_name in state_names:
+	# --- BlendTree + OneShot architecture ---
+	# Movement animations play on a state machine (lower body always updates).
+	# Weapon actions (hook/shoot) play on a separate one-shot layer filtered to
+	# the upper body, so legs keep running/sliding while the torso swings or fires.
+	var blend_tree := AnimationNodeBlendTree.new()
+
+	# -- movement state machine (idle, running, jump, slide, fall, climb) --
+	var movement_machine := AnimationNodeStateMachine.new()
+	var move_states := ["idle", "running", "runningjump", "falling", "runningslide", "fall", "climb"]
+	for state_name in move_states:
 		var node := AnimationNodeAnimation.new()
 		node.animation = state_name
-		if state_name == "hook":
+		movement_machine.add_node(state_name, node)
+	for from_name in move_states:
+		for to_name in move_states:
+			if from_name != to_name:
+				var trans := AnimationNodeStateMachineTransition.new()
+				trans.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_SYNC
+				trans.xfade_time = 0.06 if to_name == "idle" else 0.12
+				movement_machine.add_transition(from_name, to_name, trans)
+
+	# -- action state machine (hook, shoot) --
+	var action_machine := AnimationNodeStateMachine.new()
+	var action_names := ["hook", "shoot"]
+	for action_name in action_names:
+		var node := AnimationNodeAnimation.new()
+		node.animation = action_name
+		if action_name == "hook":
 			# The clip is 2.4 s and its long wind-up reads as "the swing never
 			# starts". Godot 4's Animation resource has no speed property, so the
 			# clip is stretched onto a shorter timeline instead. Keep this length
@@ -638,24 +655,47 @@ func _setup_anim_tree() -> void:
 			node.use_custom_timeline = true
 			node.timeline_length = HOOK_PLAYBACK_SECONDS
 			node.stretch_time_scale = true
-		state_machine.add_node(state_name, node)
-	for from_name in state_names:
-		for to_name in state_names:
+		action_machine.add_node(action_name, node)
+	for from_name in action_names:
+		for to_name in action_names:
 			if from_name != to_name:
 				var trans := AnimationNodeStateMachineTransition.new()
-				if to_name == "hook" or to_name == "shoot":
-					# A one-shot action has to start at its first frame. SYNC would
-					# phase-match it to whatever the legs were doing, which drops the
-					# wind-up and can start the swing halfway through.
-					trans.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_IMMEDIATE
-					trans.xfade_time = 0.04
-				else:
-					trans.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_SYNC
-					trans.xfade_time = 0.06 if to_name == "idle" else 0.12  # idle settles faster; 0.12 s held the run cycle past the stop
-				state_machine.add_transition(from_name, to_name, trans)
-	anim_tree.tree_root = state_machine
+				trans.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_IMMEDIATE
+				trans.xfade_time = 0.04
+				action_machine.add_transition(from_name, to_name, trans)
+
+	# -- OneShot: upper-body bone filter --
+	var oneshot := AnimationNodeOneShot.new()
+	oneshot.filter_enabled = true
+	var upper_body_paths := [
+		"Skeleton3D:mixamorig_Spine", "Skeleton3D:mixamorig_Spine1", "Skeleton3D:mixamorig_Spine2",
+		"Skeleton3D:mixamorig_Neck", "Skeleton3D:mixamorig_Head",
+		"Skeleton3D:mixamorig_LeftShoulder", "Skeleton3D:mixamorig_LeftArm",
+		"Skeleton3D:mixamorig_LeftForeArm", "Skeleton3D:mixamorig_LeftHand",
+		"Skeleton3D:mixamorig_LeftHandIndex1", "Skeleton3D:mixamorig_LeftHandIndex2",
+		"Skeleton3D:mixamorig_LeftHandIndex3",
+		"Skeleton3D:mixamorig_RightShoulder", "Skeleton3D:mixamorig_RightArm",
+		"Skeleton3D:mixamorig_RightForeArm", "Skeleton3D:mixamorig_RightHand",
+		"Skeleton3D:mixamorig_RightHandIndex1", "Skeleton3D:mixamorig_RightHandIndex2",
+		"Skeleton3D:mixamorig_RightHandIndex3",
+	]
+	for path in upper_body_paths:
+		oneshot.set_filter_path(NodePath(path), true)
+	oneshot.fadein_time = 0.05
+	oneshot.fadeout_time = 0.1
+
+	# -- wire BlendTree: movement → OneShot(in) ← actions, OneShot → output --
+	blend_tree.add_node("movement", movement_machine)
+	blend_tree.add_node("actions", action_machine)
+	blend_tree.add_node("action_shot", oneshot)
+	blend_tree.connect_node("action_shot", 0, "movement")
+	blend_tree.connect_node("action_shot", 1, "actions")
+	blend_tree.connect_node("output", 0, "action_shot")
+
+	anim_tree.tree_root = blend_tree
 	anim_tree.active = true
-	anim_state_machine = anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+	anim_state_machine = anim_tree.get("parameters/movement/playback") as AnimationNodeStateMachinePlayback
+	_action_playback = anim_tree.get("parameters/actions/playback") as AnimationNodeStateMachinePlayback
 	_camera_collision_distance = camera_distance
 	_camera_base_target_prev = global_transform.origin + Vector3(0, 1.5, 0)
 	_camera_base_target_curr = _camera_base_target_prev
@@ -1900,7 +1940,6 @@ func _use_held_weapon() -> void:
 	if _weapon_action_active:
 		return
 	if is_local:
-		velocity = Vector3.ZERO
 		var clip := ""
 		match held_weapon_kind:
 			LocalPickup2.WeaponKind.KNIFE, LocalPickup2.WeaponKind.SWORD:
@@ -1928,14 +1967,13 @@ func _use_held_weapon() -> void:
 		_trigger_weapon_fire_cam()
 
 
-## Plays a one-shot weapon clip and holds the pose for its length.
+## Plays a one-shot weapon clip on the upper-body layer while the lower body
+## keeps playing whatever movement animation is active (idle, running, sliding…).
 ##
-## It has to go through the state machine rather than `anim_player.play()`:
-## `_setup_anim_tree` makes the AnimationTree drive the skeleton, so a clip played
-## straight on the AnimationPlayer is written over every frame and never reaches
-## the screen. "hook" and "shoot" are states for that reason, and
-## `_handle_animations` stands down while `_weapon_action_active` so the next frame
-## does not travel back to idle/running mid-swing.
+## The BlendTree root wires movement → OneShot ← actions. Firing the OneShot
+## overlays the action clip onto the upper-body bones only (filter_enabled),
+## leaving legs untouched. `_handle_animations` keeps updating the movement
+## machine throughout, so transitions like running→idle happen naturally.
 func _play_weapon_action(clip: String) -> void:
 	if anim_player == null or not anim_player.has_animation(clip):
 		return
@@ -1950,7 +1988,13 @@ func _play_weapon_action(clip: String) -> void:
 	# Drawn right before the first animated frame: the back copy disappears and
 	# the hand copy appears for exactly as long as the clip runs.
 	_set_weapon_drawn(true)
-	_set_anim(clip)
+	# Travel the action state machine to the right clip, then fire the OneShot.
+	if _action_playback:
+		_action_playback.travel(clip)
+	anim_tree.set("parameters/action_shot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
+	# For network sync: record which clip is playing so remotes can show it.
+	current_animation = clip
+	_anim_state_dirty = true
 	await get_tree().create_timer(maxf(length, 0.05)).timeout
 	_weapon_action_active = false
 	_set_weapon_drawn(false)
@@ -3330,12 +3374,11 @@ func _handle_animations(move_dir: Vector3) -> void:
 		# Nearly dead: hold the fall animation for its full length.
 		_set_anim("fall")
 		return
-	# A hook/shoot clip owns the pose until it finishes (see _play_weapon_action).
-	# Without this the very next frame travels back to idle/running and the clip is
-	# cut off before it is ever seen.
+	# During a weapon action (hook/shoot), the upper-body OneShot layer owns the
+	# torso+arms. Movement animations must keep updating so the legs stay in sync
+	# with actual movement (running, sliding, idle). No early return here.
 	if _weapon_action_active:
 		_last_world_y = global_position.y
-		return
 	if not _is_movement_allowed():
 		_set_anim("idle")
 		_was_on_floor = is_on_floor()
@@ -3412,6 +3455,10 @@ func _set_anim(anim_name: String) -> void:
 	current_animation = anim_name
 	# Mark it so the next _physics_process sends it right away (see the send block).
 	_anim_state_dirty = true
+	# "hook" and "shoot" live in the action state machine, not the movement one.
+	# They are fired via the OneShot in _play_weapon_action; skip the movement travel.
+	if anim_name == "hook" or anim_name == "shoot":
+		return
 	_play_anim(anim_name)
 
 func _play_anim(anim_name: String) -> void:
