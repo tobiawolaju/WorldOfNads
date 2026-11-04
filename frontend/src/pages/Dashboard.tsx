@@ -10,6 +10,7 @@ import {
   fetchMatchesFromFirebase,
   getUsernameFromPrivy,
   getProfilePictureFromPrivy,
+  getPrimaryWalletAddress,
   fetchUserProfile,
   saveUserToFirebase,
   updateUserEquippedSkin,
@@ -411,13 +412,12 @@ export default function Dashboard() {
 
     const loadOnchainData = async () => {
       try {
-        const ethWallet = user.linkedAccounts?.find(
-          (acc) => acc.type === "wallet" && acc.chainType === "ethereum"
-        );
-        if (!ethWallet || !("address" in ethWallet) || !ethWallet.address) return;
+        // Balances belong to the in-game wallet (the Privy embedded one), never
+        // to a wallet that was only connected to sign in.
+        const address = getPrimaryWalletAddress(user);
+        if (!address) return;
 
         const provider = new ethers.JsonRpcProvider("https://testnet-rpc.monad.xyz");
-        const address = ethWallet.address;
 
         // Load MON balance
         try {
@@ -1410,8 +1410,10 @@ export default function Dashboard() {
               setMintError(null);
               setIsMinting(true);
               try {
+                // Sign game transactions with the in-game wallet only. A wallet
+                // connected to sign in is auth-only and never holds the skins.
                 const ethWallet = wallets.find(
-                  (w) => w.walletClientType === "privy" || w.chainType === "ethereum"
+                  (w) => w.walletClientType === "privy" && w.chainType === "ethereum"
                 );
                 if (!ethWallet) {
                   setMintError("No Ethereum wallet connected");

@@ -284,6 +284,13 @@ in on the website and then links the app gets the same account, not a second one
 The wallet address is stored for display and for settlement. It is never an
 identity: a player can link a different wallet later and must keep their account.
 
+Signing in with a wallet (SIWE/SIWS) is authentication only. The connected
+wallet is never the player's in-game wallet: game wallets are the Privy
+*embedded* wallets (`walletClientType === "privy"`), and only those are used for
+payouts, balances, minting and settlement. A wallet-only login still keys its
+account by the wallet address (there is no social handle to use), but the
+address is not written to `ethAddress`/`solAddress`.
+
 ## Database records
 
 Firebase RTDB, alongside the existing `users/` tree. No new database.

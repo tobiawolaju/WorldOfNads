@@ -139,8 +139,9 @@ export default function SpounsorDashbaord() {
     const embedded = wallets.find(w => w.walletClientType === 'privy' && w.chainType === 'ethereum');
     if (embedded) return embedded;
 
-    // 3. Fall back to any Ethereum wallet present in the Privy list
-    return wallets.find(w => w.chainType === 'ethereum');
+    // No embedded (in-game) wallet: a wallet connected purely to sign in must
+    // not sign game transactions, so there is nothing to sign with.
+    return null;
   }, [wallets, walletsReady, walletAddress]);
 
   useEffect(() => {
