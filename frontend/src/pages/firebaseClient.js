@@ -1,6 +1,7 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { forceWebSockets, getDatabase, get, ref, set, update, remove } from "firebase/database";
 import { trackUserJoined, trackUserRegistered } from "../lib/analyticsClient";
+import { getEmbeddedWallet } from "../lib/privyWallets";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyD3Md8vlOQDg4QoTRJuwNmrv3mg11WMDss",
@@ -54,8 +55,10 @@ export function getUsernameFromPrivy(user) {
 }
 
 export function getPrimaryWalletAddress(user) {
-  const ethWallet = user?.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "ethereum");
-  return ethWallet?.address || "";
+  // The in-game (payout) wallet is the one Privy created for the account.
+  // Wallets used to sign in are auth-only and must never be used here.
+  const embeddedWallet = getEmbeddedWallet(user, "ethereum");
+  return embeddedWallet?.address || "";
 }
 
 export function getProfilePictureFromPrivy(user) {
@@ -72,9 +75,10 @@ export async function saveUserToFirebase(user) {
   const username = getUsernameFromPrivy(user);
   const twitter = user.linkedAccounts?.find((acc) => acc.type === "twitter_oauth");
 
-  // Explicitly find Ethereum and Solana addresses
-  const ethAcc = user.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "ethereum");
-  const solAcc = user.linkedAccounts?.find((acc) => acc.type === "wallet" && acc.chainType === "solana");
+  // Explicitly find the account's embedded Ethereum and Solana wallets. Wallets
+  // connected as a login method are auth-only and stay out of the game profile.
+  const ethAcc = getEmbeddedWallet(user, "ethereum");
+  const solAcc = getEmbeddedWallet(user, "solana");
 
   const userRef = ref(db, `users/${username}`);
   const snapshot = await get(userRef);

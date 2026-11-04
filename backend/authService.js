@@ -89,6 +89,12 @@ if (!config.secret) {
 
 const ALLOWED_PLATFORMS = new Set(["android", "ios", "desktop", "web"]);
 
+/**
+ * `wallet_client_type` Privy uses for wallets it creates and custodies. Those
+ * are the player's game wallets; wallets connected only to sign in are not.
+ */
+const EMBEDDED_WALLET_CLIENT = "privy";
+
 export const DEVICE_LOGIN_STATUS = Object.freeze({
   PENDING: "pending",
   APPROVED: "approved",
@@ -174,9 +180,17 @@ export function normalizePrivyUser(raw) {
       ? raw.linkedAccounts
       : [];
   const pick = (entry, snake, camel) => entry?.[snake] ?? entry?.[camel];
+  // Only Privy embedded wallets are game wallets. A wallet connected as a
+  // login method (SIWE/SIWS) authenticates the player but must never become
+  // their in-game / settlement wallet, so it is excluded here.
+  const embeddedWallets = accounts.filter(
+    (entry) =>
+      entry?.type === "wallet" &&
+      pick(entry, "wallet_client_type", "walletClientType") === EMBEDDED_WALLET_CLIENT
+  );
   const walletFor = (chainType) =>
-    accounts.find(
-      (entry) => entry?.type === "wallet" && (chainType === null || pick(entry, "chain_type", "chainType") === chainType)
+    embeddedWallets.find(
+      (entry) => pick(entry, "chain_type", "chainType") === chainType
     );
   const profilePicture = (entry) => {
     const value = pick(entry, "profile_picture_url", "profilePictureUrl");

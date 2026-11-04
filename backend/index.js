@@ -1089,7 +1089,10 @@ const server = createServer(async (req, res) => {
   if (req.method === 'POST' && reqUrl.pathname === '/auth/request-token') {
     try {
       const payload = await readJsonBody(req);
-      const username = typeof payload?.username === 'string' ? payload.username.trim().slice(0, 24) : '';
+      // Usernames are Firebase keys: social handles are short, but a wallet-only
+      // account is keyed by its full address (42 chars for EVM), so the bound
+      // must not truncate it or the game session would point at another record.
+      const username = typeof payload?.username === 'string' ? payload.username.trim().slice(0, 128) : '';
       if (!username) {
         sendJson(res, 400, { ok: false, error: 'username required' });
         return;

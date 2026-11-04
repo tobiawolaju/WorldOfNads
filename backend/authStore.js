@@ -242,18 +242,28 @@ export function deriveUsername(privyUser) {
     }
   }
 
-  const ethWallet = accounts.find((entry) => entry?.type === "wallet" && entry?.chainType === "ethereum");
-  if (ethWallet?.address) return sanitizeUsername(ethWallet.address);
+  // Wallet-only accounts: the username the web build derives is the wallet
+  // address, so read both the snake_case (Privy API) and camelCase (SDK) field
+  // names and keep the full address. Truncating it would key a different
+  // Firebase user record than the frontend and split the player's account.
+  const pick = (entry, snake, camel) => entry?.[snake] ?? entry?.[camel];
+  const ethWallet = accounts.find(
+    (entry) => entry?.type === "wallet" && pick(entry, "chain_type", "chainType") === "ethereum"
+  );
+  if (ethWallet?.address) return sanitizeUsername(ethWallet.address, 0);
 
-  const solWallet = accounts.find((entry) => entry?.type === "wallet" && entry?.chainType === "solana");
-  if (solWallet?.address) return sanitizeUsername(solWallet.address);
+  const solWallet = accounts.find(
+    (entry) => entry?.type === "wallet" && pick(entry, "chain_type", "chainType") === "solana"
+  );
+  if (solWallet?.address) return sanitizeUsername(solWallet.address, 0);
 
   return `won-${randomId(8)}`;
 }
 
-function sanitizeUsername(value) {
-  const cleaned = String(value).trim().slice(0, 24);
-  return cleaned.replace(/[.#$/[\]]/g, "_") || `won-${randomId(8)}`;
+function sanitizeUsername(value, maxLength = 24) {
+  const trimmed = String(value).trim();
+  const cleaned = (maxLength > 0 ? trimmed.slice(0, maxLength) : trimmed).replace(/[.#$/[\]]/g, "_");
+  return cleaned || `won-${randomId(8)}`;
 }
 
 function randomId(bytes) {
