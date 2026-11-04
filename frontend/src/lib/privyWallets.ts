@@ -40,17 +40,3 @@ export function getEmbeddedWallet(
   );
   return account || null;
 }
-
-/**
- * Options for `login()` that open Privy's modal directly on the wallet flow
- * (Ethereum SIWE + Solana SIWS), so wallet sign-in does not depend on the
- * social methods being configured.
- *
- * Requires the "Wallet" login method to be enabled in the Privy dashboard.
- * Note the spelling differs from `appearance.walletChainType` in the provider
- * config: the modal option is `ethereum-or-solana`.
- */
-export const WALLET_LOGIN_OPTIONS = {
-  loginMethods: ["wallet"] as Array<"wallet">,
-  walletChainType: "ethereum-or-solana" as "ethereum-or-solana",
-};

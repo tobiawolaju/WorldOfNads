@@ -2,12 +2,11 @@ import React, { useRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogin, usePrivy } from "@privy-io/react-auth";
 import "./Home.css";
-import { FaDiscord, FaWallet } from "react-icons/fa";
+import { FaDiscord } from "react-icons/fa";
 import Slide1 from "../components/Slide1";
 import Slide2 from "../components/Slide2";
 import Footer from "../components/Footer";
 import { requireInstall } from "../lib/installPrompt";
-import { WALLET_LOGIN_OPTIONS } from "../lib/privyWallets";
 
 const WaveText = React.memo(({ text }: { text: string }) => {
   const words = text.split(" ");
@@ -71,18 +70,6 @@ const Home: React.FC = () => {
     } else {
       login();
     }
-  };
-
-  // Wallet sign-in is an extra way in next to the social providers. It only
-  // authenticates the player: the connected wallet is never the in-game wallet.
-  const handleWalletLogin = (): void => {
-    if (!ready) return;
-    if (requireInstall()) return;
-    if (authenticated) {
-      navigate("/dashboard");
-      return;
-    }
-    login(WALLET_LOGIN_OPTIONS);
   };
 
   useEffect(() => {
@@ -470,18 +457,6 @@ const Home: React.FC = () => {
 
       {/* FIXED BUTTONS */}
       <div className={`footer-buttons ${showFooterButtons ? "is-visible" : ""}`}>
-
-        {!authenticated && (
-          <button
-            onClick={handleWalletLogin}
-            disabled={!ready}
-            className="wallet-btn-fixed"
-            title="Sign in with a wallet"
-            aria-label="Sign in with a wallet"
-          >
-            <FaWallet size={26} />
-          </button>
-        )}
 
         <button
           onClick={handlePlay}
