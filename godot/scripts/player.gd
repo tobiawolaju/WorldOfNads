@@ -165,6 +165,10 @@ const CLIMB_REATTACH_COOLDOWN: float = 0.5
 ## half a turn to keep the chest and hands on the wall.
 const CLIMB_MESH_YAW_OFFSET: float = PI
 
+## Hips track of the weapon-action layer. Pulled out of the upper-body filter
+## while climbing: see _set_action_hips_filter.
+const ACTION_HIPS_FILTER_PATH := "Skeleton3D:mixamorig_Hips"
+
 const ANIM_NAME_TO_ID: Dictionary = {
 	"idle": 0,
 	"running": 1,
@@ -368,6 +372,9 @@ var cam_rot_y: float = 0.0
 var current_animation: String = "idle"
 var anim_state_machine: AnimationNodeStateMachinePlayback = null
 var _action_playback: AnimationNodeStateMachinePlayback = null
+## Weapon-action one-shot layer, kept so its Hips track can be taken out of the
+## upper-body filter while climbing (see _set_action_hips_filter).
+var _action_oneshot: AnimationNodeOneShot = null
 var camera_distance_current: float = 0.0
 var camera_distance_bias: float = 0.0
 var camera_is_airborne: bool = false
@@ -670,9 +677,11 @@ func _setup_anim_tree() -> void:
 	var upper_body_paths := [
 		# Hips is included so the full rotation chain (Hips → Spine → Spine2 →
 		# shoulders → arms) stays internally consistent with the weapon clip.
+		# It is pulled back out while climbing (the climb clip's Hips are turned
+		# half a turn from every other clip — see _set_action_hips_filter).
 		# The leg bones (LeftUpLeg, RightUpLeg and descendants) are NOT filtered,
 		# so they keep playing the movement animation.
-		"Skeleton3D:mixamorig_Hips",
+		ACTION_HIPS_FILTER_PATH,
 		"Skeleton3D:mixamorig_Spine", "Skeleton3D:mixamorig_Spine1", "Skeleton3D:mixamorig_Spine2",
 		"Skeleton3D:mixamorig_Neck", "Skeleton3D:mixamorig_Head",
 		"Skeleton3D:mixamorig_LeftShoulder", "Skeleton3D:mixamorig_LeftArm",
@@ -688,6 +697,7 @@ func _setup_anim_tree() -> void:
 		oneshot.set_filter_path(NodePath(path), true)
 	oneshot.fadein_time = 0.05
 	oneshot.fadeout_time = 0.1
+	_action_oneshot = oneshot
 
 	# -- wire BlendTree: movement → OneShot(in) ← actions, OneShot → output --
 	blend_tree.add_node("movement", movement_machine)
@@ -1409,6 +1419,11 @@ func begin_climb(surface: Node3D, normal: Vector3 = Vector3.ZERO) -> void:
 		_climb_surface = null
 		return
 
+	# Weapon actions must not take Hips back while attached: their Hips pose is
+	# half a turn away from the climb clip's and would spin the model to the
+	# camera on the first shot.
+	_set_action_hips_filter(false)
+
 	# Stop dead and square up to the face: climbing is a controlled attachment,
 	# not a slide down it. Jump/run pose leftovers are cleared so the climb loop
 	# starts from the model's rest pose.
@@ -1453,6 +1468,9 @@ func end_climb(surface: Node3D = null, jump_off: bool = false, vault: bool = fal
 	_climb_reattach_cooldown = CLIMB_REATTACH_COOLDOWN
 	var normal := _climb_normal
 	_climb_normal = Vector3.ZERO
+	# Off the wall the movement clips and the weapon clips share the same Hips
+	# orientation again, so the action layer may own Hips once more.
+	_set_action_hips_filter(true)
 
 	if jump_off:
 		# Push away from the face and hop off. The push owns horizontal velocity
@@ -1989,6 +2007,11 @@ func _play_weapon_action(clip: String) -> void:
 	# A shot is only 0.2 s: hold the final (aim) pose a beat longer so it reads.
 	if clip == "shoot":
 		length += SHOOT_END_HOLD
+	# A shot started while on a wall must not hand Hips to the action clip: its
+	# Hips are half a turn off the climb clip's and would spin the model around
+	# to face the camera (see _set_action_hips_filter).
+	if _is_climbing:
+		_set_action_hips_filter(false)
 	_weapon_action_active = true
 	# Drawn right before the first animated frame: the back copy disappears and
 	# the hand copy appears for exactly as long as the clip runs.
@@ -2006,6 +2029,18 @@ func _play_weapon_action(clip: String) -> void:
 	anim_tree.set("parameters/action_shot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
 	_weapon_action_active = false
 	_set_weapon_drawn(false)
+
+
+## The climb clip's Hips are swung half a turn round from every other clip,
+## which is why the mesh gets CLIMB_MESH_YAW_OFFSET while attached to a wall.
+## If the weapon layer kept overwriting Hips during a hook/shoot, that half turn
+## would disappear and the model would snap around to face the camera. On a
+## wall, Hips therefore stays owned by the climb loop and the action only
+## overlays the spine/arms on top of it.
+func _set_action_hips_filter(enabled: bool) -> void:
+	if _action_oneshot == null:
+		return
+	_action_oneshot.set_filter_path(NodePath(ACTION_HIPS_FILTER_PATH), enabled)
 
 
 # Drops the carried weapon state. When `recycle` is true the pickup is respawned
