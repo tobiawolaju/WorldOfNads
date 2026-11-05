@@ -8,6 +8,7 @@ import { initDeviceProfile, requestPersistentStorage } from "./lib/deviceProfile
 
 import { PrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
+import { EnsureGameWallet } from "./components/EnsureGameWallet";
 
 import { useEffect, useState } from "react";
 
@@ -127,17 +128,21 @@ function PrivyProviderWrapper() {
         defaultChain: monadTestnet,
         supportedChains: [monadTestnet],
         embeddedWallets: {
+          // Every account gets an embedded wallet, including accounts that
+          // signed in with an external wallet: the login wallet is auth-only
+          // and never the in-game wallet.
           ethereum: {
-            createOnLogin: "users-without-wallets",
+            createOnLogin: "all-users",
           },
           solana: {
-            createOnLogin: "users-without-wallets",
+            createOnLogin: "all-users",
           },
         },
         appearance: { walletChainType: "ethereum-and-solana", theme },
         externalWallets: { solana: { connectors: toSolanaWalletConnectors() } },
       }}
     >
+      <EnsureGameWallet />
       <App />
     </PrivyProvider>
   );
