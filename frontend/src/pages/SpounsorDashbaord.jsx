@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { findConnectedEmbeddedWallet } from "../lib/privyWallets";
 import { FullScreenLoader } from "../components/ui/fullscreen-loader";
 import {
   fetchMatchesFromFirebase,
@@ -135,8 +136,8 @@ export default function SpounsorDashbaord() {
       if (match) return match;
     }
 
-    // 2. Prioritize sub-selection of Privy Embedded Ethereum wallet
-    const embedded = wallets.find(w => w.walletClientType === 'privy' && w.chainType === 'ethereum');
+    // 2. Otherwise use the connected Privy embedded wallet (the in-game one).
+    const embedded = findConnectedEmbeddedWallet(wallets, { chainType: 'ethereum' });
     if (embedded) return embedded;
 
     // No embedded (in-game) wallet: a wallet connected purely to sign in must

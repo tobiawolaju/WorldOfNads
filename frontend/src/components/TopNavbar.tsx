@@ -1,8 +1,9 @@
 import { useMemo, useCallback, useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { usePrivy, useExportWallet } from '@privy-io/react-auth';
+import { usePrivy, useExportWallet, useWallets } from '@privy-io/react-auth';
 import { showSuccessToast } from './ui/custom-toast';
 import { getPrimaryWalletAddress, getProfilePictureFromPrivy, getUsernameFromPrivy, fetchUserRoles } from '../pages/firebaseClient';
+import { findConnectedEmbeddedWallet } from '../lib/privyWallets';
 import {
   QUALITY_LABELS,
   QUALITY_OPTIONS,
@@ -60,9 +61,17 @@ const TopNavbar = ({ hideContents = false }: TopNavbarProps) => {
     []
   );
 
+  const { wallets } = useWallets();
+
+  // Same resolution as the dashboard: the connected embedded wallet, with the
+  // linked account as fallback, so the badge and the MON pill never disagree.
   const walletAddress = useMemo(
-    () => (user ? getPrimaryWalletAddress(user) : ""),
-    [user]
+    () => {
+      const connected = findConnectedEmbeddedWallet(wallets, { chainType: "ethereum" });
+      if (connected?.address) return connected.address;
+      return user ? getPrimaryWalletAddress(user) : "";
+    },
+    [user, wallets]
   );
 
   const shortAddress = walletAddress

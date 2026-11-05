@@ -25,6 +25,7 @@ import { requireInstall } from "../lib/installPrompt";
 import { preloadGodotWasm, scheduleIdlePreload } from "../lib/wasmPreloader";
 import { showSuccessToast, showErrorToast } from "../components/ui/custom-toast";
 import { resolveGameSkinName, buildComboMap, resolveSkinAttachments, resolveSkinImageUrl } from "../lib/skinMapping";
+import { findConnectedEmbeddedWallet } from "../lib/privyWallets";
 import { displayMatchStatus, type DisplayMatchStatus } from "../lib/matchStatus";
 import { staticMatches } from "./staticMatches.js";
 import storeItemsData from "../data/items.json";
@@ -264,8 +265,16 @@ export default function Dashboard() {
     return () => { mounted = false; };
   }, []);
   const { ready, authenticated, user } = usePrivy();
-  const { wallets } = useWallets();
+  const { wallets, ready: walletsReady } = useWallets();
   const navigate = useNavigate();
+
+  // The in-game wallet the whole page must agree on. Privy's connected embedded
+  // wallet is authoritative (it is what signs), and the linked account is the
+  // fallback for the moment the connector has not caught up yet.
+  const gameWalletAddress = useMemo(() => {
+    const connected = findConnectedEmbeddedWallet(wallets, { chainType: "ethereum" });
+    return connected?.address || (user ? getPrimaryWalletAddress(user) : "");
+  }, [wallets, user]);
 
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [selectedReward, setSelectedReward] = useState<string | null>(null);
@@ -414,18 +423,35 @@ export default function Dashboard() {
       try {
         // Balances belong to the in-game wallet (the Privy embedded one), never
         // to a wallet that was only connected to sign in.
-        const address = getPrimaryWalletAddress(user);
-        if (!address) return;
+        const address = gameWalletAddress;
+        if (!address) {
+          setMonBalance(null);
+          return;
+        }
+
+        // Privy does not always return an EIP-55 checksummed address, and ethers
+        // rejects a mixed-case mismatch, so normalise before every call.
+        let owner: string;
+        try {
+          owner = ethers.getAddress(address.toLowerCase());
+        } catch {
+          console.error("Invalid game wallet address:", address);
+          setMonBalance((prev) => prev ?? "—");
+          return;
+        }
 
         const provider = new ethers.JsonRpcProvider("https://testnet-rpc.monad.xyz");
 
         // Load MON balance
         try {
-          const balance = await provider.getBalance(address);
+          const balance = await provider.getBalance(owner);
           const formatted = Number(ethers.formatEther(balance)).toFixed(4);
           setMonBalance(formatted);
-        } catch {
-          setMonBalance(null);
+        } catch (error) {
+          // A flaky RPC must not make the balance disappear: keep the last known
+          // value and only fall back to a placeholder when we never had one.
+          console.error("Failed to load MON balance:", error);
+          setMonBalance((prev) => prev ?? "—");
         }
 
         // Load XP balance
@@ -433,7 +459,7 @@ export default function Dashboard() {
         if (xpContractAddress) {
           try {
             const xpContract = new ethers.Contract(xpContractAddress, XP_ABI, provider);
-            const xpRaw = await xpContract.balanceOf(address);
+            const xpRaw = await xpContract.balanceOf(owner);
             const xpFormatted = Number(ethers.formatEther(xpRaw));
             setXpBalance(xpFormatted);
             setXp(xpFormatted);
@@ -448,7 +474,7 @@ export default function Dashboard() {
             const owned: number[] = [];
             for (const item of storeItems) {
               if (item.onChainId) {
-                const balance = await skinsContract.balanceOf(address, item.onChainId);
+                const balance = await skinsContract.balanceOf(owner, item.onChainId);
                 if (Number(balance) > 0) owned.push(item.onChainId);
               }
             }
@@ -461,7 +487,7 @@ export default function Dashboard() {
     };
 
     loadOnchainData();
-  }, [authenticated, user, storeItems]);
+  }, [authenticated, user, storeItems, gameWalletAddress]);
 
   useEffect(() => {
     return () => {
@@ -1409,18 +1435,31 @@ export default function Dashboard() {
               if (!currentStoreItem.onChainId) return;
               setMintError(null);
               setIsMinting(true);
+              let signingAddress = "";
               try {
                 // Sign game transactions with the in-game wallet only. A wallet
                 // connected to sign in is auth-only and never holds the skins.
-                const ethWallet = wallets.find(
-                  (w) => w.walletClientType === "privy" && w.chainType === "ethereum"
-                );
+                // `useWallets()` wallets expose `type`/`connectorType`, not
+                // `chainType`, so match through the shared helper.
+                const embeddedAddress = user ? getPrimaryWalletAddress(user) : "";
+                const ethWallet =
+                  findConnectedEmbeddedWallet(wallets, { chainType: "ethereum" }) ??
+                  (embeddedAddress
+                    ? wallets.find(
+                        (w) => w.address?.toLowerCase() === embeddedAddress.toLowerCase()
+                      ) ?? null
+                    : null);
                 if (!ethWallet) {
-                  setMintError("Your game wallet is still being set up. Try again in a moment.");
+                  setMintError(
+                    walletsReady
+                      ? "Your game wallet is still being set up. Try again in a moment."
+                      : "Your game wallet is loading. Try again in a moment."
+                  );
                   setIsMinting(false);
                   return;
                 }
                 const providerSource = await ethWallet.getEthereumProvider();
+                signingAddress = ethWallet.address;
                 if (!providerSource) {
                   setMintError("Wallet provider not available");
                   setIsMinting(false);
@@ -1448,8 +1487,16 @@ export default function Dashboard() {
                 showSuccessToast(`${currentStoreItem.name} minted successfully!`);
               } catch (error: any) {
                 console.error("Mint failed:", error);
-                showErrorToast(error?.reason || error?.message || "Mint failed");
-                setMintError(error?.reason || error?.message || "Mint failed");
+                const rawMessage = error?.reason || error?.message || "Mint failed";
+                // The in-game wallet starts empty: point the player at it instead
+                // of showing the node's "insufficient funds" wording.
+                const message =
+                  error?.code === "INSUFFICIENT_FUNDS" ||
+                  /insufficient funds/i.test(String(rawMessage))
+                    ? `Your game wallet needs MON for this mint. Send MON to ${signingAddress || "your game wallet"} first.`
+                    : rawMessage;
+                showErrorToast(message);
+                setMintError(message);
               } finally {
                 setIsMinting(false);
               }
