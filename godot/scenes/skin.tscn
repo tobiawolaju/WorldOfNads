@@ -2790,10 +2790,12 @@ mesh = SubResource("ArrayMesh_60oy6")
 
 [node name="Cube_010" type="MeshInstance3D" parent="Skeleton3D/heddds/offset/burgr" unique_id=1498579916]
 transform = Transform3D(0.91645074, 0, 0, 0, 0, -1.1476628, 0, 0.91645074, 0, -0.3, 0.5943941, -0.39999998)
+material_override = SubResource("ShaderMaterial_f0bnh")
 mesh = SubResource("ArrayMesh_a2lal")
 
 [node name="Cube_011" type="MeshInstance3D" parent="Skeleton3D/heddds/offset/burgr" unique_id=718482617]
 transform = Transform3D(0.91645074, 0, 0, 0, 0, -1.1476628, 0, 0.91645074, 0, 0.3, 0.5943941, -0.39999998)
+material_override = SubResource("ShaderMaterial_f0bnh")
 mesh = SubResource("ArrayMesh_bjpuo")
 
 [node name="Cube_008" type="MeshInstance3D" parent="Skeleton3D/heddds/offset/burgr" unique_id=854611999]
@@ -2915,18 +2917,18 @@ bone_name = "mixamorig_Spine1"
 bone_idx = 2
 
 [node name="shield" type="MeshInstance3D" parent="Skeleton3D/BackBoneAttachment3D" unique_id=964968617]
-transform = Transform3D(-0.007421366, -0.032612946, 0.0005747448, -0.035122633, 0.006808611, -0.002886773, 0.0027069566, -0.0010702447, -0.035879448, 0.013714417, 0.5457367, -1.0981404)
+transform = Transform3D(-0.007421366, -0.032612946, 0.0005747443, -0.035122633, 0.0068086106, -0.0028867722, 0.0027069552, -0.0010702452, -0.035879448, -0.067472234, 0.4205961, -1.6338433)
 visible = false
 mesh = SubResource("ArrayMesh_jo0t6")
 
 [node name="sword" type="MeshInstance3D" parent="Skeleton3D/BackBoneAttachment3D" unique_id=698929791]
-transform = Transform3D(0.003712198, -0.04979187, 0.0026435656, 0.0011265939, -0.002566466, -0.049921356, 0.04984925, 0.0037659272, 0.0009313701, -0.850778, 2.2839828, -1.6987789)
+transform = Transform3D(0.0037121978, -0.049791865, 0.002643566, 0.001126593, -0.0025664663, -0.049921352, 0.04984925, 0.0037659262, 0.00093136914, -0.94211304, 2.1431997, -2.301445)
 visible = false
 material_override = SubResource("StandardMaterial3D_xbqr5")
 mesh = SubResource("ArrayMesh_au2v8")
 
 [node name="ak47" type="Node3D" parent="Skeleton3D/BackBoneAttachment3D" unique_id=1329389139]
-transform = Transform3D(-0.04977049, -0.99716276, 0.056511268, -0.010758683, -0.056042776, -0.99837136, 0.9987047, -0.050298512, -0.007939637, 0.8739128, 2.7891939, -0.9243304)
+transform = Transform3D(-0.049770504, -0.9971627, 0.056511268, -0.010758698, -0.056042776, -0.99837136, 0.9987046, -0.050298527, -0.007939637, 0.78511477, 2.6523213, -1.5102555)
 visible = false
 
 [node name="Handle_0" type="Node3D" parent="Skeleton3D/BackBoneAttachment3D/ak47" unique_id=1907318145]
@@ -2945,12 +2947,12 @@ transform = Transform3D(0.40140963, 0, 0, 0, 0.40140963, 0, 0, 0, 0.40140963, 0,
 mesh = SubResource("ArrayMesh_jv7ab")
 
 [node name="glock" type="MeshInstance3D" parent="Skeleton3D/BackBoneAttachment3D" unique_id=282876927]
-transform = Transform3D(-0.014166112, 0.09608337, -0.02381909, 0.02944348, -0.018883102, -0.0936833, -0.09451144, -0.020284351, -0.025615241, -0.31506044, 0.5390476, -0.68730026)
+transform = Transform3D(-0.016027294, 0.09677232, -0.01944948, -0.003082998, -0.020185381, -0.097893216, -0.0986592, -0.015089903, 0.006218711, -0.4171336, 1.2200466, -1.5907205)
 visible = false
 mesh = SubResource("ArrayMesh_sq7dy")
 
 [node name="Knife" type="Node3D" parent="Skeleton3D/BackBoneAttachment3D" unique_id=1774999176]
-transform = Transform3D(0.010074328, -0.06731748, 0.042034056, -0.024407819, -0.04294583, -0.06292778, 0.0755167, -0.0049000755, -0.025946533, -0.113796666, 0.18964121, -0.81421703)
+transform = Transform3D(0.011713437, -0.064931504, 0.045240402, 0.0049089454, -0.04504907, -0.06592778, 0.07898548, 0.012429025, -0.0026117032, -0.20965397, 0.88637125, -1.6783087)
 visible = false
 
 [node name="Object_19" type="MeshInstance3D" parent="Skeleton3D/BackBoneAttachment3D/Knife" unique_id=1461586764]
@@ -2960,7 +2962,7 @@ mesh = SubResource("ArrayMesh_tjjj7")
 mesh = SubResource("ArrayMesh_osqp3")
 
 [node name="rpg" type="Node3D" parent="Skeleton3D/BackBoneAttachment3D" unique_id=1915052195]
-transform = Transform3D(0.046941333, -0.003008522, -0.016954578, -0.01719485, -0.010819033, -0.045686755, -0.00091972365, 0.048722662, -0.011191819, -0.63908803, 0.337916, -0.89164174)
+transform = Transform3D(0.041392613, -0.011712892, -0.02548446, -0.02789151, -0.021971248, -0.035203997, -0.0029517591, 0.043359805, -0.024722744, -0.74730647, 0.81017804, -1.7809644)
 visible = false
 
 [node name="Object_2" type="MeshInstance3D" parent="Skeleton3D/BackBoneAttachment3D/rpg" unique_id=2088414365]
