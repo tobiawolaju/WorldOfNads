@@ -286,10 +286,18 @@ identity: a player can link a different wallet later and must keep their account
 
 Signing in with a wallet (SIWE/SIWS) is authentication only. The connected
 wallet is never the player's in-game wallet: game wallets are the Privy
-*embedded* wallets (`walletClientType === "privy"`), and only those are used for
-payouts, balances, minting and settlement. A wallet-only login still keys its
-account by the wallet address (there is no social handle to use), but the
-address is not written to `ethAddress`/`solAddress`.
+*embedded* wallets (`walletClientType === "privy"` / `connectorType ===
+"embedded"`), and only those are used for payouts, balances, minting and
+settlement. A wallet-only login still keys its account by the wallet address
+(there is no social handle to use), but the address is not written to
+`ethAddress`/`solAddress`.
+
+Linked accounts and connected wallets use different shapes: a linked account
+carries `chainType`, while a `useWallets()` wallet carries `type` (and a CAIP-2
+`chainId`). Always resolve the game wallet through
+`lib/privyWallets.ts` (`getEmbeddedWallet`, `findConnectedEmbeddedWallet`)
+instead of hand-rolled `wallet.chainType` filters, which never match a
+connected wallet.
 
 Every account owns an embedded wallet: `embeddedWallets.*.createOnLogin` is
 `all-users` so an external sign-in wallet does not suppress wallet creation, and

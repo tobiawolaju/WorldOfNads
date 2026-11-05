@@ -95,6 +95,9 @@ const ALLOWED_PLATFORMS = new Set(["android", "ios", "desktop", "web"]);
  */
 const EMBEDDED_WALLET_CLIENT = "privy";
 
+/** `connector_type` Privy uses on the same wallets. */
+const EMBEDDED_CONNECTOR_TYPE = "embedded";
+
 export const DEVICE_LOGIN_STATUS = Object.freeze({
   PENDING: "pending",
   APPROVED: "approved",
@@ -182,16 +185,21 @@ export function normalizePrivyUser(raw) {
   const pick = (entry, snake, camel) => entry?.[snake] ?? entry?.[camel];
   // Only Privy embedded wallets are game wallets. A wallet connected as a
   // login method (SIWE/SIWS) authenticates the player but must never become
-  // their in-game / settlement wallet, so it is excluded here.
+  // their in-game / settlement wallet, so it is excluded here. Privy marks its
+  // wallets with `wallet_client_type: "privy"` and `connector_type: "embedded"`;
+  // either marker identifies them.
   const embeddedWallets = accounts.filter(
     (entry) =>
       entry?.type === "wallet" &&
-      pick(entry, "wallet_client_type", "walletClientType") === EMBEDDED_WALLET_CLIENT
+      (pick(entry, "wallet_client_type", "walletClientType") === EMBEDDED_WALLET_CLIENT ||
+        pick(entry, "connector_type", "connectorType") === EMBEDDED_CONNECTOR_TYPE)
   );
+  // Mirrors the frontend resolver: when an account holds several HD embedded
+  // wallets, the primary one (lowest `wallet_index`) is the game wallet.
   const walletFor = (chainType) =>
-    embeddedWallets.find(
-      (entry) => pick(entry, "chain_type", "chainType") === chainType
-    );
+    embeddedWallets
+      .filter((entry) => pick(entry, "chain_type", "chainType") === chainType)
+      .sort((a, b) => (pick(a, "wallet_index", "walletIndex") ?? 0) - (pick(b, "wallet_index", "walletIndex") ?? 0))[0];
   const profilePicture = (entry) => {
     const value = pick(entry, "profile_picture_url", "profilePictureUrl");
     return typeof value === "string" && value ? value : "";
