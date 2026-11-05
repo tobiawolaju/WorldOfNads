@@ -1416,7 +1416,7 @@ export default function Dashboard() {
                   (w) => w.walletClientType === "privy" && w.chainType === "ethereum"
                 );
                 if (!ethWallet) {
-                  setMintError("No Ethereum wallet connected");
+                  setMintError("Your game wallet is still being set up. Try again in a moment.");
                   setIsMinting(false);
                   return;
                 }

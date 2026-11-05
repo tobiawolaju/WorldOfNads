@@ -291,6 +291,11 @@ payouts, balances, minting and settlement. A wallet-only login still keys its
 account by the wallet address (there is no social handle to use), but the
 address is not written to `ethAddress`/`solAddress`.
 
+Every account owns an embedded wallet: `embeddedWallets.*.createOnLogin` is
+`all-users` so an external sign-in wallet does not suppress wallet creation, and
+`components/EnsureGameWallet.tsx` creates the embedded Ethereum wallet on demand
+for accounts that were authenticated before that setting applied.
+
 ## Database records
 
 Firebase RTDB, alongside the existing `users/` tree. No new database.
