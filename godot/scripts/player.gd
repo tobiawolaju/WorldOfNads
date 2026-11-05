@@ -329,6 +329,10 @@ var _critical_fall_timer: float = 0.0
 @export_range(0.0, 20.0, 0.5) var dive_fov_boost_max: float = 8.0 # extra FOV while diving at full speed
 @export_range(5.0, 100.0, 1.0) var dive_fov_ref_speed: float = 35.0 # fall speed (m/s) that reaches the full dive FOV boost
 @export_range(0.0, 15.0, 0.5) var landing_fov_kick_max: float = 6.0 # FOV flash on a hard landing
+## How hard weapons move the camera (0 disables every kick and shake). Keep the
+## option exposed: repeated shake is the first thing that makes a shooter
+## unplayable for some players.
+@export_range(0.0, 1.0, 0.05) var weapon_fx_intensity: float = 0.85
 @export var fov: float = 70.0
 @export var touch_orbit_sensitivity: float = 0.032
 @export var joystick_orbit_sensitivity: float = 0.003
@@ -1979,15 +1983,11 @@ func _use_held_weapon() -> void:
 		_update_hud_power_up()
 		if held_weapon_uses <= 0:
 			_clear_held_weapon(true)
-		else:
-			_trigger_weapon_fire_cam()
 		return
 	held_weapon_uses -= 1
 	_update_hud_power_up()
 	if held_weapon_uses <= 0:
 		_clear_held_weapon(true)
-	else:
-		_trigger_weapon_fire_cam()
 
 
 ## Plays a one-shot weapon clip on the upper-body layer while the lower body
@@ -2016,6 +2016,10 @@ func _play_weapon_action(clip: String) -> void:
 	# Drawn right before the first animated frame: the back copy disappears and
 	# the hand copy appears for exactly as long as the clip runs.
 	_set_weapon_drawn(true)
+	# Fire the screen/world effects on the same frame the clip starts. Doing it
+	# after the `await` below would land the kick a third of a second late, which
+	# reads as input lag rather than recoil.
+	_trigger_weapon_fx(clip)
 	# Travel the action state machine to the right clip, then fire the OneShot.
 	if _action_playback:
 		_action_playback.travel(clip)
@@ -3353,6 +3357,9 @@ func _update_camera_visual(delta: float) -> void:
 	var half_width: float = half_height * aspect
 	camera.h_offset = -camera_screen_offset.x * half_width
 	camera.v_offset = -camera_screen_offset.y * half_height
+	# Last, so it sits on top of the solved follow pose and is fully rebuilt next
+	# frame: the shake can never accumulate into the aim.
+	_apply_camera_shake(delta)
 
 func _quantize_pos(value: float) -> int:
 	return int(round(value * POS_SCALE))
@@ -3595,6 +3602,73 @@ func _spawn_flash() -> void:
 	tween.tween_property(overlay, "color:a", 0.0, 0.35)
 	tween.tween_callback(canvas.queue_free)
 
+# --- WEAPON SCREEN FX -----------------------------------------------------
+# One table drives everything a shot does to the player, per weapon: the
+# shoulder kick, the shake trauma, the muzzle flash/light, the tracer and the
+# full-screen tint. Pure feel — no damage, no hit detection, no physics query.
+# Tune here, never in the fire path.
+#
+#   cam_time     seconds the shoulder kick lasts
+#   cam_zoom     camera distance multiplier at the peak (1 = none, <1 pushes in)
+#   cam_fov      FOV delta at the peak (negative widens the view)
+#   cam_behind   how far the aim is pulled toward the pre-shot yaw/pitch
+#   shake        camera trauma added on fire/swing (0..1)
+#   muzzle_size  flash billboard size, 0 = melee (no flash)
+#   screen       alpha of the full-screen tint, 0 = none
+#   tracer       draw a streak down the barrel line (visual only, no impact)
+const WEAPON_FIRE_FX := {
+	LocalPickup2.WeaponKind.GLOCK: {
+		"cam_time": 0.20, "cam_zoom": 0.87, "cam_fov": 1.2, "cam_behind": 0.08,
+		"shake": 0.09,
+		"muzzle_size": 0.15, "flash_time": 0.07, "light_energy": 2.0, "light_range": 2.2,
+		"flash_color": Color(1.0, 0.86, 0.55),
+		"tracer": true, "tracer_width": 0.010, "tracer_color": Color(1.0, 0.92, 0.66),
+		"screen": 0.0,
+	},
+	LocalPickup2.WeaponKind.AK47: {
+		"cam_time": 0.24, "cam_zoom": 0.83, "cam_fov": 1.6, "cam_behind": 0.11,
+		"shake": 0.16,
+		"muzzle_size": 0.22, "flash_time": 0.09, "light_energy": 3.2, "light_range": 3.0,
+		"flash_color": Color(1.0, 0.82, 0.48),
+		"tracer": true, "tracer_width": 0.014, "tracer_color": Color(1.0, 0.86, 0.55),
+		"screen": 0.03, "screen_color": Color(1.0, 0.76, 0.42, 0.03), "screen_time": 0.12,
+	},
+	LocalPickup2.WeaponKind.RPG: {
+		# A rocket pulls the camera BACK and widens the view: a blast, not recoil.
+		"cam_time": 0.45, "cam_zoom": 1.14, "cam_fov": -2.6, "cam_behind": 0.16,
+		"shake": 0.55,
+		"muzzle_size": 0.42, "flash_time": 0.16, "light_energy": 6.0, "light_range": 6.5,
+		"flash_color": Color(1.0, 0.72, 0.36), "smoke": 1.0,
+		"tracer": true, "tracer_width": 0.05, "tracer_time": 0.12,
+		"tracer_color": Color(1.0, 0.62, 0.24),
+		"screen": 0.14, "screen_color": Color(1.0, 0.60, 0.28, 0.14), "screen_time": 0.24,
+	},
+	LocalPickup2.WeaponKind.KNIFE: {
+		"cam_time": 0.18, "cam_zoom": 0.92, "cam_fov": 0.6, "cam_behind": 0.06,
+		"shake": 0.10,
+		"muzzle_size": 0.0,
+		"screen": 0.0,
+	},
+	LocalPickup2.WeaponKind.SWORD: {
+		"cam_time": 0.26, "cam_zoom": 0.88, "cam_fov": 1.0, "cam_behind": 0.08,
+		"shake": 0.14,
+		"muzzle_size": 0.0,
+		"screen": 0.0,
+	},
+}
+
+## How far the tracer streak flies. Purely cosmetic: it does not stop on geometry.
+const WEAPON_SHOT_RANGE: float = 90.0
+
+## Camera shake, applied as a non-destructive offset after the follow camera has
+## been placed. Trauma decays linearly; the offset uses trauma² so small hits
+## stay subtle and big ones stay punchy.
+const CAM_SHAKE_DECAY: float = 2.4
+const CAM_SHAKE_MAX_YAW_DEG: float = 1.4
+const CAM_SHAKE_MAX_PITCH_DEG: float = 1.0
+const CAM_SHAKE_MAX_ROLL_DEG: float = 2.0
+const CAM_SHAKE_MAX_OFFSET: float = 0.05
+
 ## Brief over-the-shoulder zoom behind the player on weapon fire.
 var _weapon_fire_cam_active: bool = false
 var _weapon_fire_cam_t: float = 0.0
@@ -3606,12 +3680,67 @@ var _weapon_fire_cam_saved_dist: float = 0.0
 var _weapon_fire_cam_saved_fov: float = 0.0
 var _weapon_fire_cam_saved_yaw: float = 0.0
 var _weapon_fire_cam_saved_pitch: float = 0.0
+# Per-shot overrides of the kick, taken from WEAPON_FIRE_FX.
+var _weapon_fire_cam_dur: float = WEAPON_FIRE_CAM_DUR
+var _weapon_fire_cam_zoom: float = WEAPON_FIRE_CAM_ZOOM_MULT
+var _weapon_fire_cam_fov_drop: float = WEAPON_FIRE_CAM_FOV_DROP
+var _weapon_fire_cam_behind: float = WEAPON_FIRE_CAM_BEHIND_BLEND
+
+var _cam_shake_trauma: float = 0.0
+var _cam_shake_time: float = 0.0
 
 
-# Starts a brief over-the-shoulder zoom behind the player on weapon fire.
-func _trigger_weapon_fire_cam() -> void:
+func _weapon_fx_config(kind: int) -> Dictionary:
+	var cfg: Variant = WEAPON_FIRE_FX.get(kind)
+	if cfg is Dictionary:
+		return cfg
+	return WEAPON_FIRE_FX[LocalPickup2.WeaponKind.GLOCK]
+
+
+## Called from `_play_weapon_action` the moment the weapon is drawn, so the kick,
+## the flash and the shake all land with the first frame of the clip.
+func _trigger_weapon_fx(clip: String) -> void:
+	if not is_local or held_weapon_kind == LocalPickup2.WeaponKind.NONE:
+		return
+	_trigger_weapon_fire_cam(held_weapon_kind)
+	if clip == "shoot":
+		_spawn_gun_fx(held_weapon_kind)
+	else:
+		_add_camera_shake(_weapon_fx_config(held_weapon_kind).get("shake", 0.1))
+
+
+## Muzzle flash, tracer, tint and shake for a gun shot. Pure visuals: no physics
+## queries, so it is safe to call from any frame (deferred input, timers, …).
+func _spawn_gun_fx(kind: int) -> void:
+	var cfg := _weapon_fx_config(kind)
+	var aim := _aim_direction()
+	var muzzle := WeaponFX.muzzle_point(self, WEAPON_HAND_ATTACH_PATH, aim)
+
+	WeaponFX.spawn_muzzle_flash(self, muzzle, aim, cfg)
+	if bool(cfg.get("tracer", false)):
+		WeaponFX.spawn_tracer(self, muzzle, muzzle + aim * WEAPON_SHOT_RANGE, cfg)
+
+	_add_camera_shake(cfg.get("shake", 0.1))
+	var screen_alpha: float = cfg.get("screen", 0.0)
+	if screen_alpha > 0.0 and camera != null:
+		WeaponFX.spawn_screen_flash(camera, cfg.get("screen_color", Color(1, 1, 1, screen_alpha)), cfg.get("screen_time", 0.2))
+
+
+## Where the camera is looking, flattened to a unit vector.
+func _aim_direction() -> Vector3:
+	if camera != null and is_instance_valid(camera):
+		var dir := -camera.global_transform.basis.z
+		if dir.length_squared() > 0.0001:
+			return dir.normalized()
+	return -global_transform.basis.z.normalized()
+
+
+# Starts a brief over-the-shoulder zoom behind the player on weapon fire, using
+# the held weapon's row from WEAPON_FIRE_FX.
+func _trigger_weapon_fire_cam(kind: int = -1) -> void:
 	if not is_local or camera == null or not is_instance_valid(camera):
 		return
+	var cfg := _weapon_fx_config(kind)
 	if not _weapon_fire_cam_active:
 		_weapon_fire_cam_saved_dist = camera_distance_current
 		_weapon_fire_cam_saved_fov = camera.fov
@@ -3619,6 +3748,10 @@ func _trigger_weapon_fire_cam() -> void:
 		_weapon_fire_cam_saved_pitch = cam_rot_x
 	_weapon_fire_cam_active = true
 	_weapon_fire_cam_t = 0.0
+	_weapon_fire_cam_dur = maxf(0.05, float(cfg.get("cam_time", WEAPON_FIRE_CAM_DUR)))
+	_weapon_fire_cam_zoom = float(cfg.get("cam_zoom", WEAPON_FIRE_CAM_ZOOM_MULT))
+	_weapon_fire_cam_fov_drop = float(cfg.get("cam_fov", WEAPON_FIRE_CAM_FOV_DROP))
+	_weapon_fire_cam_behind = float(cfg.get("cam_behind", WEAPON_FIRE_CAM_BEHIND_BLEND))
 
 
 # Updates the weapon fire camera kick each physics frame.
@@ -3626,15 +3759,49 @@ func _update_weapon_fire_cam(delta: float) -> void:
 	if not _weapon_fire_cam_active or camera == null or not is_instance_valid(camera):
 		return
 	_weapon_fire_cam_t += delta
-	if _weapon_fire_cam_t >= WEAPON_FIRE_CAM_DUR:
+	if _weapon_fire_cam_t >= _weapon_fire_cam_dur:
 		_weapon_fire_cam_active = false
 		return
-	var t: float = _weapon_fire_cam_t / WEAPON_FIRE_CAM_DUR
-	var kick: float = sin(t * PI)
-	var target_dist: float = _weapon_fire_cam_saved_dist * lerp(1.0, WEAPON_FIRE_CAM_ZOOM_MULT, kick)
+	var t: float = _weapon_fire_cam_t / _weapon_fire_cam_dur
+	var kick: float = sin(t * PI) * weapon_fx_intensity
+	var target_dist: float = _weapon_fire_cam_saved_dist * lerp(1.0, _weapon_fire_cam_zoom, kick)
 	# Don't let normal camera zoom override during the kick
 	camera_distance_current = lerp(_weapon_fire_cam_saved_dist, target_dist, kick)
-	camera.fov = lerp(_weapon_fire_cam_saved_fov, _weapon_fire_cam_saved_fov - WEAPON_FIRE_CAM_FOV_DROP, kick * 0.4)
+	camera.fov = lerp(_weapon_fire_cam_saved_fov, _weapon_fire_cam_saved_fov - _weapon_fire_cam_fov_drop, kick * 0.4)
 	# Stay very close to current aim, just tighten slightly
-	cam_rot_y = lerp_angle(cam_rot_y, _weapon_fire_cam_saved_yaw, kick * WEAPON_FIRE_CAM_BEHIND_BLEND)
-	cam_rot_x = lerp(cam_rot_x, _weapon_fire_cam_saved_pitch, kick * WEAPON_FIRE_CAM_BEHIND_BLEND)
+	cam_rot_y = lerp_angle(cam_rot_y, _weapon_fire_cam_saved_yaw, kick * _weapon_fire_cam_behind)
+	cam_rot_x = lerp(cam_rot_x, _weapon_fire_cam_saved_pitch, kick * _weapon_fire_cam_behind)
+
+
+## Adds camera trauma (0..1). Stacking is clamped so a burst cannot go nuclear.
+func _add_camera_shake(amount: float) -> void:
+	if amount <= 0.0 or weapon_fx_intensity <= 0.0:
+		return
+	_cam_shake_trauma = clampf(_cam_shake_trauma + amount * weapon_fx_intensity, 0.0, 1.0)
+
+
+## Applies the shake as an offset on top of the follow camera. Runs after
+## `look_at`, so it never fights the aim: next frame rebuilds the transform from
+## scratch and only the trauma value persists.
+func _apply_camera_shake(delta: float) -> void:
+	if _cam_shake_trauma <= 0.0 or camera == null or not is_instance_valid(camera):
+		return
+	_cam_shake_time += delta
+	_cam_shake_trauma = maxf(0.0, _cam_shake_trauma - CAM_SHAKE_DECAY * delta)
+	var strength: float = _cam_shake_trauma * _cam_shake_trauma
+	if strength <= 0.0:
+		return
+	# Deterministic layered sines: cheap, continuous, and no RNG state to store.
+	var t := _cam_shake_time
+	var nx: float = sin(t * 47.0) * 0.6 + sin(t * 89.0) * 0.4
+	var ny: float = sin(t * 53.0 + 1.7) * 0.6 + sin(t * 97.0 + 0.3) * 0.4
+	var nr: float = sin(t * 41.0 + 2.4)
+	var basis := camera.global_transform.basis
+	camera.global_position += basis * Vector3(
+		nx * CAM_SHAKE_MAX_OFFSET * strength,
+		ny * CAM_SHAKE_MAX_OFFSET * strength,
+		0.0
+	)
+	camera.rotate_object_local(Vector3.RIGHT, deg_to_rad(ny * CAM_SHAKE_MAX_PITCH_DEG * strength))
+	camera.rotate_object_local(Vector3.UP, deg_to_rad(nx * CAM_SHAKE_MAX_YAW_DEG * strength))
+	camera.rotate_object_local(Vector3.FORWARD, deg_to_rad(nr * CAM_SHAKE_MAX_ROLL_DEG * strength))
