@@ -106,22 +106,21 @@ cast_shadow = 0
 mesh = SubResource("SphereMesh_l626g")
 
 [node name="loot" type="Node3D" parent="." unique_id=350117191]
-visible = false
 
 [node name="loot" type="MeshInstance3D" parent="loot" unique_id=754833013]
-transform = Transform3D(0.003, 0, -9.313226e-12, 0, 0.003, 0, 9.313226e-12, 0, 0.003, 0, 1.4857309, 0)
+transform = Transform3D(0.003, 0, -9.313226e-12, 0, 0.003, 0, 9.313226e-12, 0, 0.003, 0, 1.3892646, 0)
 material_override = SubResource("StandardMaterial3D_j61ql")
 mesh = SubResource("ArrayMesh_bloei")
 
 [node name="powerup" type="Node3D" parent="." unique_id=2112767107]
-visible = false
 
 [node name="powerup" type="MeshInstance3D" parent="powerup" unique_id=862301191]
-transform = Transform3D(0.003, 0, -9.313226e-12, 0, 0.003, 0, 9.313226e-12, 0, 0.003, 0, 1.4857309, 0)
+transform = Transform3D(0.003, 0, -9.313226e-12, 0, 0.003, 0, 9.313226e-12, 0, 0.003, 0, 1.3810716, 0)
 material_override = SubResource("StandardMaterial3D_4m06l")
 mesh = SubResource("ArrayMesh_bloei")
 
 [node name="chick" type="Node3D" parent="." unique_id=1495544932]
+visible = false
 
 [node name="Label3D" type="Label3D" parent="chick" unique_id=2018297262]
 transform = Transform3D(0.2, 0, 1.4901164e-09, 0, 0.2, 0, -1.4901164e-09, 0, 0.2, 0, 1.4857309, 0)
@@ -135,7 +134,6 @@ font_size = 200
 outline_size = 50
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="chick" unique_id=894522824]
-transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 1.7042592, 0)
-visible = false
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 1.5904496, 0)
 material_override = SubResource("StandardMaterial3D_t0qhb")
 mesh = SubResource("SphereMesh_hqyie")
