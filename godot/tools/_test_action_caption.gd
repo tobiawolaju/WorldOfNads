@@ -1,9 +1,16 @@
 # Checks the HUD Action button caption: PUMP while nothing is in reach, the
 # authored GRAB once something is, and a held power-up still winning over both.
+# The caption text is always plain white; only its alpha encodes state (half while
+# the hands are empty, full while carrying or running a pickup).
 #   Godot_v4.8-beta1_win64_console.exe --headless --path godot --script res://tools/_test_action_caption.gd
 extends SceneTree
 
 const BUTTONS_SCRIPT := "res://scripts/ui/buttons.gd"
+
+## The caption's idle/active alphas, mirrored from buttons.gd so the test fails
+## loudly if one side changes without the other.
+const IDLE_ALPHA := 0.5
+const ACTIVE_ALPHA := 1.0
 
 var failures: int = 0
 
@@ -38,13 +45,13 @@ func _initialize() -> void:
 
 	await _frames(3)
 	_check("PUMP while nothing is in reach", caption.text == "P\nU\nM\nP", caption.text)
-	_check("PUMP is white", caption.get_theme_color("font_color") == Color.WHITE,
-			str(caption.get_theme_color("font_color")))
+	_check_white("PUMP is white at half opacity", caption, IDLE_ALPHA)
 
 	player.pickable = true
 	_force_poll(buttons)
 	await _frames(3)
 	_check("GRAB once something is in reach", caption.text == "G\nR\nA\nB", caption.text)
+	_check_white("GRAB is white at half opacity", caption, IDLE_ALPHA)
 
 	# A held power-up owns the caption whatever is lying around.
 	player.pickable = false
@@ -52,23 +59,20 @@ func _initialize() -> void:
 	buttons.call("show_power_up", "RUSH", Color(1.0, 0.0, 0.0), 5.0)
 	await _frames(3)
 	_check("a held power-up wins over PUMP", caption.text == "R\nU\nS\nH", caption.text)
-	_check("the held caption keeps its own colour",
-			caption.get_theme_color("font_color") == Color(1.0, 0.0, 0.0),
-			str(caption.get_theme_color("font_color")))
+	_check_white("a held power-up turns the caption white", caption, ACTIVE_ALPHA)
 
-	# The caption colour is the power-up's own colour (POWER_UP_COLORS), which also
-	# tints the pickup on the ground: SMOG reads yellow and TWIN green.
+	# The power-up's own colour still identifies it on the ground; it no longer
+	# tints the caption.
 	var smog: Color = LocalPickup.POWER_UP_COLORS[LocalPickup.PowerUpMode.SMOKE_GRENADE]
 	var twin: Color = LocalPickup.POWER_UP_COLORS[LocalPickup.PowerUpMode.TWIN]
-	_check("SMOG's caption is yellow", smog.r > 0.9 and smog.g > 0.7 and smog.b < 0.3, str(smog))
-	_check("TWIN's caption is green", twin.g > twin.r and twin.g > twin.b, str(twin))
+	_check("SMOG is yellow on the pickup", smog.r > 0.9 and smog.g > 0.7 and smog.b < 0.3, str(smog))
+	_check("TWIN is green on the pickup", twin.g > twin.r and twin.g > twin.b, str(twin))
 
 	buttons.call("show_power_up", "", Color.WHITE, 0.0)
 	_force_poll(buttons)
 	await _frames(3)
 	_check("PUMP returns when the power-up is gone", caption.text == "P\nU\nM\nP", caption.text)
-	_check("PUMP is white again", caption.get_theme_color("font_color") == Color.WHITE,
-			str(caption.get_theme_color("font_color")))
+	_check_white("PUMP drops back to half opacity", caption, IDLE_ALPHA)
 
 	print("action caption selftest: %d failure(s)" % failures)
 	quit(1 if failures > 0 else 0)
@@ -78,6 +82,13 @@ func _initialize() -> void:
 ## makes the next frame poll, so the test does not have to wait out real time.
 func _force_poll(buttons: Node) -> void:
 	buttons.set("_pickable_poll", 0.0)
+
+
+## The caption must be pure white with the given alpha, in both R/G/B and alpha.
+func _check_white(what: String, caption: Label, alpha: float) -> void:
+	var got := caption.get_theme_color("font_color")
+	_check(what, is_equal_approx(got.r, 1.0) and is_equal_approx(got.g, 1.0) \
+			and is_equal_approx(got.b, 1.0) and is_equal_approx(got.a, alpha), str(got))
 
 
 func _frames(count: int) -> void:
