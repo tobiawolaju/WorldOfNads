@@ -3603,71 +3603,62 @@ func _spawn_flash() -> void:
 	tween.tween_callback(canvas.queue_free)
 
 # --- WEAPON SCREEN FX -----------------------------------------------------
-# One table drives everything a shot does to the player, per weapon: the
-# shoulder kick, the shake trauma, the muzzle flash/light, the tracer and the
-# full-screen tint. Pure feel — no damage, no hit detection, no physics query.
-# Tune here, never in the fire path.
+# One table drives what a shot does to the camera, per weapon: the shoulder
+# kick, the shake trauma and the full-screen tint.
+#
+# Nothing 3D is spawned per shot. The muzzle flash used to add an OmniLight3D
+# and a billboard every trigger pull, and creating/destroying a light stalls the
+# GL Compatibility renderer badly — that was the fire-rate bottleneck. Everything
+# below is a few floats plus one tween on the two weapons that tint the screen.
 #
 #   cam_time     seconds the shoulder kick lasts
 #   cam_zoom     camera distance multiplier at the peak (1 = none, <1 pushes in)
 #   cam_fov      FOV delta at the peak (negative widens the view)
 #   cam_behind   how far the aim is pulled toward the pre-shot yaw/pitch
 #   shake        camera trauma added on fire/swing (0..1)
-#   muzzle_size  flash billboard size, 0 = melee (no flash)
 #   screen       alpha of the full-screen tint, 0 = none
-#   tracer       draw a streak down the barrel line (visual only, no impact)
+#
+# Every gun uses the same recoil trauma, so the whole firearms feel is one number
+# to tune. Melee swings are separate (lighter, they have no muzzle event).
+const GUN_SHAKE_TRAUMA := 0.85
 const WEAPON_FIRE_FX := {
 	LocalPickup2.WeaponKind.GLOCK: {
 		"cam_time": 0.20, "cam_zoom": 0.87, "cam_fov": 1.2, "cam_behind": 0.08,
-		"shake": 0.09,
-		"muzzle_size": 0.15, "flash_time": 0.07, "light_energy": 2.0, "light_range": 2.2,
-		"flash_color": Color(1.0, 0.86, 0.55),
-		"tracer": true, "tracer_width": 0.010, "tracer_color": Color(1.0, 0.92, 0.66),
+		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.0,
 	},
 	LocalPickup2.WeaponKind.AK47: {
 		"cam_time": 0.24, "cam_zoom": 0.83, "cam_fov": 1.6, "cam_behind": 0.11,
-		"shake": 0.16,
-		"muzzle_size": 0.22, "flash_time": 0.09, "light_energy": 3.2, "light_range": 3.0,
-		"flash_color": Color(1.0, 0.82, 0.48),
-		"tracer": true, "tracer_width": 0.014, "tracer_color": Color(1.0, 0.86, 0.55),
+		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.03, "screen_color": Color(1.0, 0.76, 0.42, 0.03), "screen_time": 0.12,
 	},
 	LocalPickup2.WeaponKind.RPG: {
 		# A rocket pulls the camera BACK and widens the view: a blast, not recoil.
 		"cam_time": 0.45, "cam_zoom": 1.14, "cam_fov": -2.6, "cam_behind": 0.16,
-		"shake": 0.55,
-		"muzzle_size": 0.42, "flash_time": 0.16, "light_energy": 6.0, "light_range": 6.5,
-		"flash_color": Color(1.0, 0.72, 0.36), "smoke": 1.0,
-		"tracer": true, "tracer_width": 0.05, "tracer_time": 0.12,
-		"tracer_color": Color(1.0, 0.62, 0.24),
+		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.14, "screen_color": Color(1.0, 0.60, 0.28, 0.14), "screen_time": 0.24,
 	},
 	LocalPickup2.WeaponKind.KNIFE: {
 		"cam_time": 0.18, "cam_zoom": 0.92, "cam_fov": 0.6, "cam_behind": 0.06,
-		"shake": 0.10,
-		"muzzle_size": 0.0,
+		"shake": 0.24,
 		"screen": 0.0,
 	},
 	LocalPickup2.WeaponKind.SWORD: {
 		"cam_time": 0.26, "cam_zoom": 0.88, "cam_fov": 1.0, "cam_behind": 0.08,
-		"shake": 0.14,
-		"muzzle_size": 0.0,
+		"shake": 0.32,
 		"screen": 0.0,
 	},
 }
 
-## How far the tracer streak flies. Purely cosmetic: it does not stop on geometry.
-const WEAPON_SHOT_RANGE: float = 90.0
-
 ## Camera shake, applied as a non-destructive offset after the follow camera has
-## been placed. Trauma decays linearly; the offset uses trauma² so small hits
-## stay subtle and big ones stay punchy.
+## been placed. Trauma decays linearly and drives the amplitude directly, so the
+## shake starts at full punch on the fire frame and eases out. All numbers are
+## per-weapon in WEAPON_FIRE_FX (`shake`) — this block is the global shape.
 const CAM_SHAKE_DECAY: float = 2.4
-const CAM_SHAKE_MAX_YAW_DEG: float = 1.4
-const CAM_SHAKE_MAX_PITCH_DEG: float = 1.0
-const CAM_SHAKE_MAX_ROLL_DEG: float = 2.0
-const CAM_SHAKE_MAX_OFFSET: float = 0.05
+const CAM_SHAKE_MAX_YAW_DEG: float = 2.0
+const CAM_SHAKE_MAX_PITCH_DEG: float = 1.4
+const CAM_SHAKE_MAX_ROLL_DEG: float = 2.4
+const CAM_SHAKE_MAX_OFFSET: float = 0.07
 
 ## Brief over-the-shoulder zoom behind the player on weapon fire.
 var _weapon_fire_cam_active: bool = false
@@ -3697,42 +3688,20 @@ func _weapon_fx_config(kind: int) -> Dictionary:
 	return WEAPON_FIRE_FX[LocalPickup2.WeaponKind.GLOCK]
 
 
-## Called from `_play_weapon_action` the moment the weapon is drawn, so the kick,
-## the flash and the shake all land with the first frame of the clip.
+## Called from `_play_weapon_action` the moment the weapon is drawn, so the kick
+## and the shake land with the first frame of the clip. Nothing is allocated
+## here beyond one CanvasLayer for the two weapons that tint the screen.
 func _trigger_weapon_fx(clip: String) -> void:
 	if not is_local or held_weapon_kind == LocalPickup2.WeaponKind.NONE:
 		return
+	var cfg := _weapon_fx_config(held_weapon_kind)
 	_trigger_weapon_fire_cam(held_weapon_kind)
-	if clip == "shoot":
-		_spawn_gun_fx(held_weapon_kind)
-	else:
-		_add_camera_shake(_weapon_fx_config(held_weapon_kind).get("shake", 0.1))
-
-
-## Muzzle flash, tracer, tint and shake for a gun shot. Pure visuals: no physics
-## queries, so it is safe to call from any frame (deferred input, timers, …).
-func _spawn_gun_fx(kind: int) -> void:
-	var cfg := _weapon_fx_config(kind)
-	var aim := _aim_direction()
-	var muzzle := WeaponFX.muzzle_point(self, WEAPON_HAND_ATTACH_PATH, aim)
-
-	WeaponFX.spawn_muzzle_flash(self, muzzle, aim, cfg)
-	if bool(cfg.get("tracer", false)):
-		WeaponFX.spawn_tracer(self, muzzle, muzzle + aim * WEAPON_SHOT_RANGE, cfg)
-
 	_add_camera_shake(cfg.get("shake", 0.1))
+	if clip != "shoot":
+		return
 	var screen_alpha: float = cfg.get("screen", 0.0)
 	if screen_alpha > 0.0 and camera != null:
 		WeaponFX.spawn_screen_flash(camera, cfg.get("screen_color", Color(1, 1, 1, screen_alpha)), cfg.get("screen_time", 0.2))
-
-
-## Where the camera is looking, flattened to a unit vector.
-func _aim_direction() -> Vector3:
-	if camera != null and is_instance_valid(camera):
-		var dir := -camera.global_transform.basis.z
-		if dir.length_squared() > 0.0001:
-			return dir.normalized()
-	return -global_transform.basis.z.normalized()
 
 
 # Starts a brief over-the-shoulder zoom behind the player on weapon fire, using
@@ -3788,7 +3757,9 @@ func _apply_camera_shake(delta: float) -> void:
 		return
 	_cam_shake_time += delta
 	_cam_shake_trauma = maxf(0.0, _cam_shake_trauma - CAM_SHAKE_DECAY * delta)
-	var strength: float = _cam_shake_trauma * _cam_shake_trauma
+	# Linear, not squared: per-weapon trauma is small (0.2–0.9), and squaring it
+	# flattened everything under ~0.4 into an invisible twitch.
+	var strength: float = _cam_shake_trauma
 	if strength <= 0.0:
 		return
 	# Deterministic layered sines: cheap, continuous, and no RNG state to store.

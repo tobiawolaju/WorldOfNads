@@ -50,8 +50,8 @@ enum WeaponKind {
 ## HUD caption, with the shared ACTION_COLOR below.
 const ACTION_CAPTION: String = "FIRE"
 
-## The Action button caption + ring colour for every weapon pickup (#ff6cff).
-## One shared colour instead of per-weapon colours: it matches the pink weapon
+## The HUD caption and the countdown ring are both plain white now, so this colour
+## only identifies the weapon pickup itself (#ff6cff), matching the pink weapon
 ## materials authored in pickup2.tscn / skin.tscn.
 const ACTION_COLOR := Color(1.0, 0.42352942, 1.0)
 

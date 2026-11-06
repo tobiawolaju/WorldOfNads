@@ -18,19 +18,26 @@ const RING_WIDTH := 4.0
 const RING_MARGIN := 4.0            # how far the ring sits outside the button
 const RING_TRACK_ALPHA := 0.12      # faint full circle behind the countdown
 const RING_PULSE_SECONDS := 2.0     # pulse the ring during the last seconds
+## The countdown is always plain white, whatever the pickup or weapon behind it
+## is. The same ring serves pickup (timer), fire (ammo) and hook, so a coloured
+## ring would mean three different things in one place.
+const RING_COLOR := Color.WHITE
 
 # The visible caption on the Action button is a Label child named "action"
 # (the Button's own text property is covered by it). Captured in _ready so the
 # authored default can be restored when no power-up is held.
 var _action_caption: Label = null
 var _action_caption_default: String = ""
-var _action_caption_default_color: Color = Color.WHITE
 
 ## Shown instead of the authored GRAB while nothing is close enough to grab. It is
 ## four characters like GRAB, so it stacks to the same height in the 80x80 button.
 const IDLE_CAPTION := "PUMP"
-## The idle caption is always plain white, never a held power-up's colour.
-const IDLE_CAPTION_COLOR := Color.WHITE
+## The Action caption is always plain white. Full opacity means "you are carrying
+## or running something", half opacity means "nothing to use". Power-up colours
+## stay on the ring around the button and on the pickup itself, never on the text.
+const CAPTION_COLOR := Color.WHITE
+const CAPTION_ACTIVE_ALPHA := 1.0
+const CAPTION_IDLE_ALPHA := 0.5
 ## How often the "is anything in reach?" check runs. It walks the pickup group and
 ## the player's grab area, so it is polled instead of run every frame.
 const PICKABLE_POLL_SECONDS := 0.1
@@ -47,7 +54,6 @@ var _action_ring: Control = null
 var _ring_active: bool = false
 var _ring_remaining: float = 0.0
 var _ring_duration: float = 0.0
-var _ring_color: Color = Color.WHITE
 ## True when the ring is the full "ready" ring shown while a power-up is HELD
 ## (as opposed to a depleting countdown of a running effect). In this state the
 ## whole ring flashes between its colour and colourless.
@@ -103,10 +109,8 @@ func show_power_up(
 # timed power-up, otherwise the authored default (GRAB).
 func _refresh_action_caption() -> void:
 	var label := _held_label
-	var color := _held_color
 	if label == "" and not _active.is_empty():
 		label = str(_active.get("label", ""))
-		color = _active.get("color", color)
 	# The stacked form depends only on the label, so cache it: rebuilding it
 	# every frame allocated a PackedStringArray for a caption that rarely changes.
 	var stacked := label
@@ -116,15 +120,13 @@ func _refresh_action_caption() -> void:
 			_stacked_cache_text = _stack_vertically(label)
 		stacked = _stacked_cache_text
 	var text := _action_caption_default
-	var tint := _action_caption_default_color
 	if label != "":
 		text = stacked
-		tint = color
 	elif not _pickable_in_range and _idle_caption_stacked != "":
 		# Nothing held and nothing in reach: PUMP, in the plain white the
 		# authored caption already uses.
 		text = _idle_caption_stacked
-		tint = IDLE_CAPTION_COLOR
+	var tint := _caption_tint(not label.is_empty() or not _active.is_empty())
 	if text == _last_caption_text and tint == _last_caption_color:
 		return
 	_last_caption_text = text
@@ -136,6 +138,15 @@ func _refresh_action_caption() -> void:
 	if action_button != null:
 		action_button.text = text
 		action_button.add_theme_color_override("font_color", tint)
+
+
+# White either way; only the alpha says whether the Action button has anything
+# to do. Full while carrying a power-up/weapon or running a timed effect, half
+# when the hands are empty — including the idle PUMP/GRAB states.
+func _caption_tint(has_pickup: bool) -> Color:
+	var tint := CAPTION_COLOR
+	tint.a = CAPTION_ACTIVE_ALPHA if has_pickup else CAPTION_IDLE_ALPHA
+	return tint
 
 # Polls the local player for the running timed power-up and picks what the ring
 # should show: the depleting countdown of a running effect, a weapon's ammo gauge
@@ -152,21 +163,18 @@ func _update_active_power_up() -> void:
 		# A timed effect is running: its countdown takes priority over held.
 		_ring_remaining = float(_active.get("remaining", 0.0))
 		_ring_duration = maxf(float(_active.get("duration", 0.0)), 0.0001)
-		_ring_color = _active.get("color", Color.WHITE)
 		_ring_active = true
 		_ring_held_ready = false
 	elif _held_uses_total > 0:
 		# A weapon in hand: the ring is its ammo gauge, one step per use.
 		_ring_remaining = float(maxi(_held_uses_left, 0))
 		_ring_duration = float(_held_uses_total)
-		_ring_color = _held_color
 		_ring_active = true
 		_ring_held_ready = false
 	elif _held_duration > 0.0:
 		# Holding a pickup whose effect is timed: full ring as "ready to use".
 		_ring_remaining = _held_duration
 		_ring_duration = _held_duration
-		_ring_color = _held_color
 		_ring_active = true
 		_ring_held_ready = true
 	else:
@@ -199,7 +207,7 @@ func _draw_action_ring() -> void:
 	var fraction := clampf(_ring_remaining / _ring_duration, 0.0, 1.0)
 	if fraction <= 0.0:
 		return
-	var color := _ring_color
+	var color := RING_COLOR
 	if _ring_held_ready:
 		# Held "ready" ring: flash the whole ring from its colour to colourless
 		# and back, so carrying a power-up visibly breathes on the border.
@@ -304,7 +312,6 @@ func _ready() -> void:
 		_action_caption = action_button.get_node_or_null("action") as Label
 		if _action_caption != null:
 			_action_caption_default = _action_caption.text
-			_action_caption_default_color = _action_caption.get_theme_color("font_color")
 			_idle_caption_stacked = _stack_vertically(IDLE_CAPTION)
 		_create_action_ring()
 
