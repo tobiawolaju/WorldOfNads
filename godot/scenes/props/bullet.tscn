@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://bk6lbbdwdm18i"]
+
+[ext_resource type="Script" uid="uid://bdrbi6mno0l1f" path="res://scripts/weapons/Bullet.gd" id="1_bullet"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6sjxh"]
+albedo_color = Color(1, 0.8980392, 0.654902, 1)
+roughness = 0.46
+proximity_fade_enabled = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_r0gq1"]
+radius = 0.03
+height = 0.06
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_3c7c4"]
+radius = 0.06
+
+[node name="Bullet" type="RigidBody3D" unique_id=126099700]
+script = ExtResource("1_bullet")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1880210816]
+material_override = SubResource("StandardMaterial3D_6sjxh")
+mesh = SubResource("SphereMesh_r0gq1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1005279117]
+shape = SubResource("SphereShape3D_3c7c4")

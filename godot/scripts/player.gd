@@ -81,6 +81,15 @@ const WEAPON_HAND_ATTACH_PATH: String = "Skeleton3D/BoneAttachment3D"
 ## Back slot in skin.tscn (bone: mixamorig_Spine1). Holds the same weapon meshes
 ## and is where a carried weapon rides the rest of the time.
 const WEAPON_BACK_ATTACH_PATH: String = "Skeleton3D/BackBoneAttachment3D"
+## Muzzle of the drawn weapon: where bullets, smoke and the flash leave from. It is
+## a child of the hand slot so it follows the aim pose. Falls back to the hand slot
+## itself, then to the chest, when a rig has no marker.
+const WEAPON_MUZZLE_PATH: String = "Skeleton3D/BoneAttachment3D/Marker3D"
+## Projectile spawned on every "shoot" action (see _fire_bullet).
+const BULLET_SCENE_PATH: String = "res://scenes/props/bullet.tscn"
+## Pooled muzzle flash: built once on the first shot, then only restarted, so the
+## fire path never allocates nodes and never touches a light.
+const MUZZLE_FLASH_SCENE_PATH: String = "res://scenes/fx/muzzle_flash.tscn"
 
 # --- STORM DAMAGE ---
 @export var storm_center: Vector2 = Vector2(0, 0)
@@ -250,6 +259,10 @@ var _held_weapon_pickup: RigidBody3D = null
 ## for its length, otherwise the next frame travels straight back to idle/running
 ## and the clip is never seen.
 var _weapon_action_active: bool = false
+## Bumped on every action start. The await in _play_weapon_action only puts the
+## weapon away if it is still the newest action: a shot fired during the previous
+## clip restarts it, and the older timer must not cancel the newer shot.
+var _weapon_action_generation: int = 0
 ## A shot clip is only 0.2 s, so the recoil snapped straight back to idle and read
 ## as a flicker. The final (aim) pose is held this much longer before the lock is
 ## released. The hook does not use it: its swing is already the whole point.
@@ -333,6 +346,14 @@ var _critical_fall_timer: float = 0.0
 ## option exposed: repeated shake is the first thing that makes a shooter
 ## unplayable for some players.
 @export_range(0.0, 1.0, 0.05) var weapon_fx_intensity: float = 0.85
+## DEBUG ONLY: time scale for fired bullets. 0.05 makes a shot lob out of the gun
+## in slow motion, arc down and land where you can walk up to it; set it to 1.0
+## for real speed.
+@export_range(0.02, 1.0, 0.01) var bullet_speed_scale: float = 0.05
+## Projectile drop. 1.0 is real gravity, 0.0 makes shots run dead straight. At full
+## speed the drop is invisible; at debug speed it is what puts the bullet on the
+## floor where you can see it.
+@export_range(0.0, 4.0, 0.1) var bullet_gravity_scale: float = 1.0
 @export var fov: float = 70.0
 @export var touch_orbit_sensitivity: float = 0.032
 @export var joystick_orbit_sensitivity: float = 0.003
@@ -1962,9 +1983,10 @@ func _use_held_weapon() -> void:
 	if held_weapon_uses <= 0:
 		_clear_held_weapon(true)
 		return
-	# One clip at a time: a press during the swing/shot is dropped, so the uses
-	# cannot be spent faster than the animation that shows them.
-	if _weapon_action_active:
+	# Melee stays one-swing-at-a-time: a hook cannot cancel itself. Guns do not
+	# wait - see the `_weapon_action_active` branch below.
+	if _weapon_action_active and held_weapon_kind in [
+			LocalPickup2.WeaponKind.KNIFE, LocalPickup2.WeaponKind.SWORD]:
 		return
 	if is_local:
 		var clip := ""
@@ -1974,15 +1996,12 @@ func _use_held_weapon() -> void:
 			LocalPickup2.WeaponKind.AK47, LocalPickup2.WeaponKind.GLOCK, LocalPickup2.WeaponKind.RPG:
 				clip = "shoot"
 		if clip != "":
-			await _play_weapon_action(clip)
-			# The weapon can be gone by now (death mid-swing, or the server handed
-			# it to someone else): nothing left to spend.
-			if held_weapon_kind == LocalPickup2.WeaponKind.NONE:
-				return
+			# Fire and forget: the clip's own timer puts the weapon away. A press
+			# that lands during the previous clip starts a new one and the older
+			# timer stands down by generation, so a burst never waits its turn.
+			_play_weapon_action(clip)
 		held_weapon_uses -= 1
 		_update_hud_power_up()
-		if held_weapon_uses <= 0:
-			_clear_held_weapon(true)
 		return
 	held_weapon_uses -= 1
 	_update_hud_power_up()
@@ -1998,8 +2017,35 @@ func _use_held_weapon() -> void:
 ## leaving legs untouched. `_handle_animations` keeps updating the movement
 ## machine throughout, so transitions like running→idle happen naturally.
 func _play_weapon_action(clip: String) -> void:
-	if anim_player == null or not anim_player.has_animation(clip):
+	var length := _start_weapon_action(clip)
+	if length < 0.0:
 		return
+	var generation := _weapon_action_generation
+	await get_tree().create_timer(maxf(length, 0.05)).timeout
+	# A shot fired during this clip already bumped the generation: that newer one
+	# owns the hand and the lock now, so this timer must not put the gun away.
+	if generation != _weapon_action_generation:
+		return
+	# Abort the OneShot so the movement machine reclaims the full body (upper +
+	# lower). Without this the action clip loops and the torso stays frozen.
+	anim_tree.set("parameters/action_shot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
+	_weapon_action_active = false
+	_set_weapon_drawn(false)
+	# The last charge is spent on press, but the hand is only emptied here so the
+	# final shot still gets its clip on screen.
+	if is_local and held_weapon_kind != LocalPickup2.WeaponKind.NONE and held_weapon_uses <= 0:
+		_clear_held_weapon(true)
+
+
+## Everything a weapon action does on its first frame: pose lock, hand swap,
+## effects (bullet, flash, kick) and the OneShot request. Returns the clip length
+## in seconds, or -1 when the clip is missing.
+##
+## Split out of _play_weapon_action so a rapid second press can restart the shot
+## without spawning a second coroutine that would later put the weapon away.
+func _start_weapon_action(clip: String) -> float:
+	if anim_player == null or not anim_player.has_animation(clip):
+		return -1.0
 	var anim := anim_player.get_animation(clip)
 	# The hook state is retimed with a custom timeline (see _setup_anim_tree), so
 	# its playback length is that timeline, not the clip's own length.
@@ -2012,27 +2058,24 @@ func _play_weapon_action(clip: String) -> void:
 	# to face the camera (see _set_action_hips_filter).
 	if _is_climbing:
 		_set_action_hips_filter(false)
+	_weapon_action_generation += 1
 	_weapon_action_active = true
 	# Drawn right before the first animated frame: the back copy disappears and
 	# the hand copy appears for exactly as long as the clip runs.
 	_set_weapon_drawn(true)
 	# Fire the screen/world effects on the same frame the clip starts. Doing it
-	# after the `await` below would land the kick a third of a second late, which
-	# reads as input lag rather than recoil.
+	# after the `await` would land the kick a third of a second late, which reads
+	# as input lag rather than recoil.
 	_trigger_weapon_fx(clip)
 	# Travel the action state machine to the right clip, then fire the OneShot.
+	# Re-firing while it is already running restarts the clip from the top.
 	if _action_playback:
 		_action_playback.travel(clip)
 	anim_tree.set("parameters/action_shot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
 	# For network sync: record which clip is playing so remotes can show it.
 	current_animation = clip
 	_anim_state_dirty = true
-	await get_tree().create_timer(maxf(length, 0.05)).timeout
-	# Abort the OneShot so the movement machine reclaims the full body (upper +
-	# lower). Without this the action clip loops and the torso stays frozen.
-	anim_tree.set("parameters/action_shot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
-	_weapon_action_active = false
-	_set_weapon_drawn(false)
+	return length
 
 
 ## The climb clip's Hips are swung half a turn round from every other clip,
@@ -3617,6 +3660,8 @@ func _spawn_flash() -> void:
 #   cam_behind   how far the aim is pulled toward the pre-shot yaw/pitch
 #   shake        camera trauma added on fire/swing (0..1)
 #   screen       alpha of the full-screen tint, 0 = none
+#   damage       health removed by the bullet this shot spawns, 0 = no projectile
+#   bullet_speed metres per second for that bullet
 #
 # Every gun uses the same recoil trauma, so the whole firearms feel is one number
 # to tune. Melee swings are separate (lighter, they have no muzzle event).
@@ -3626,17 +3671,20 @@ const WEAPON_FIRE_FX := {
 		"cam_time": 0.20, "cam_zoom": 0.87, "cam_fov": 1.2, "cam_behind": 0.08,
 		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.0,
+		"damage": 24.0, "bullet_speed": 130.0,
 	},
 	LocalPickup2.WeaponKind.AK47: {
 		"cam_time": 0.24, "cam_zoom": 0.83, "cam_fov": 1.6, "cam_behind": 0.11,
 		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.03, "screen_color": Color(1.0, 0.76, 0.42, 0.03), "screen_time": 0.12,
+		"damage": 18.0, "bullet_speed": 170.0,
 	},
 	LocalPickup2.WeaponKind.RPG: {
 		# A rocket pulls the camera BACK and widens the view: a blast, not recoil.
 		"cam_time": 0.45, "cam_zoom": 1.14, "cam_fov": -2.6, "cam_behind": 0.16,
 		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.14, "screen_color": Color(1.0, 0.60, 0.28, 0.14), "screen_time": 0.24,
+		"damage": 90.0, "bullet_speed": 60.0,
 	},
 	LocalPickup2.WeaponKind.KNIFE: {
 		"cam_time": 0.18, "cam_zoom": 0.92, "cam_fov": 0.6, "cam_behind": 0.06,
@@ -3679,6 +3727,14 @@ var _weapon_fire_cam_behind: float = WEAPON_FIRE_CAM_BEHIND_BLEND
 
 var _cam_shake_trauma: float = 0.0
 var _cam_shake_time: float = 0.0
+## Bullet scene, loaded on the first shot instead of at spawn.
+var _bullet_scene_cache: PackedScene = null
+var _bullet_scene_checked: bool = false
+## The player's single muzzle flash, parented to the muzzle marker. Reused for
+## every shot (see _play_muzzle_flash).
+var _muzzle_flash: Node = null
+var _muzzle_flash_checked: bool = false
+var _muzzle_flash_scene_cache: PackedScene = null
 
 
 func _weapon_fx_config(kind: int) -> Dictionary:
@@ -3688,9 +3744,9 @@ func _weapon_fx_config(kind: int) -> Dictionary:
 	return WEAPON_FIRE_FX[LocalPickup2.WeaponKind.GLOCK]
 
 
-## Called from `_play_weapon_action` the moment the weapon is drawn, so the kick
-## and the shake land with the first frame of the clip. Nothing is allocated
-## here beyond one CanvasLayer for the two weapons that tint the screen.
+## Called from `_play_weapon_action` the moment the weapon is drawn, so the kick,
+## the bullet and the shake land with the first frame of the clip. Nothing is
+## allocated here beyond the bullet itself and one CanvasLayer on tinted weapons.
 func _trigger_weapon_fx(clip: String) -> void:
 	if not is_local or held_weapon_kind == LocalPickup2.WeaponKind.NONE:
 		return
@@ -3699,9 +3755,127 @@ func _trigger_weapon_fx(clip: String) -> void:
 	_add_camera_shake(cfg.get("shake", 0.1))
 	if clip != "shoot":
 		return
+	_fire_bullet(cfg)
+	_play_muzzle_flash()
 	var screen_alpha: float = cfg.get("screen", 0.0)
 	if screen_alpha > 0.0 and camera != null:
 		WeaponFX.spawn_screen_flash(camera, cfg.get("screen_color", Color(1, 1, 1, screen_alpha)), cfg.get("screen_time", 0.2))
+
+
+## Spawns one projectile at the muzzle Marker3D and sends it down the aim line.
+## Weapons with no `damage` in their row (knife, sword) spawn nothing.
+##
+## The marker only supplies the ORIGIN: the bullet follows the camera so it lands
+## where the crosshair points, which is what a third-person shot should do. The
+## marker can therefore be rotated freely to sit on the barrel tip.
+func _fire_bullet(cfg: Dictionary) -> void:
+	var damage: float = cfg.get("damage", 0.0)
+	if damage <= 0.0:
+		return
+	var packed := _bullet_scene()
+	if packed == null:
+		return
+	var origin := _muzzle_position()
+	var aim := _aim_direction()
+	# One global time scale: the per-weapon speeds stay real, so turning the debug
+	# knob back to 1.0 is all it takes to ship.
+	var speed := float(cfg.get("bullet_speed", 120.0)) * maxf(bullet_speed_scale, 0.02)
+	var debug_bullets := bullet_speed_scale < 1.0
+	var bullet: Node = packed.instantiate()
+	if bullet is RigidBody3D:
+		(bullet as RigidBody3D).gravity_scale = bullet_gravity_scale
+	# Slow motion is a debug mode: the shot arcs to the floor and rests there long
+	# enough to be seen, which is the only cheap proof a projectile really exists.
+	# Bullet._ready() starts the timers, so every value must be set before add_child().
+	if "lifetime" in bullet:
+		bullet.set("lifetime", 12.0 if debug_bullets else float(bullet.get("lifetime")))
+	if "linger_after_hit" in bullet:
+		bullet.set("linger_after_hit", 4.0 if debug_bullets else 0.0)
+	if "debug" in bullet:
+		bullet.set("debug", debug_bullets)
+	var host := get_tree().current_scene
+	if host == null:
+		host = get_tree().root
+	host.add_child(bullet)
+	if bullet.has_method("launch"):
+		bullet.call("launch", origin, aim, speed, damage, self)
+	elif bullet is RigidBody3D:
+		# A bullet.tscn without the Bullet script: still fire it, just without
+		# damage, instead of dropping the shot on the floor.
+		var body := bullet as RigidBody3D
+		body.global_position = origin
+		body.linear_velocity = aim * speed
+		body.add_collision_exception_with(self)
+
+
+## Where a shot leaves the gun: the muzzle Marker3D, else the hand slot, else the
+## chest. Resolved per shot because the hand slot is rebuilt on every skin swap.
+func _muzzle_position() -> Vector3:
+	var marker := get_node_or_null(WEAPON_MUZZLE_PATH) as Node3D
+	if marker != null:
+		return marker.global_position
+	var hand := get_node_or_null(WEAPON_HAND_ATTACH_PATH) as Node3D
+	if hand != null:
+		return hand.global_position
+	return global_position + Vector3.UP * 1.35
+
+
+## Loaded once, on the first shot. A missing scene warns once and disables bullets
+## rather than erroring on every trigger pull.
+func _bullet_scene() -> PackedScene:
+	if _bullet_scene_cache != null:
+		return _bullet_scene_cache
+	if _bullet_scene_checked:
+		return null
+	_bullet_scene_checked = true
+	if not ResourceLoader.exists(BULLET_SCENE_PATH):
+		push_warning("Bullet scene missing: %s (shots will deal no damage)" % BULLET_SCENE_PATH)
+		return null
+	_bullet_scene_cache = load(BULLET_SCENE_PATH) as PackedScene
+	return _bullet_scene_cache
+
+
+## The muzzle flash scene, loaded on the first shot and cached like the bullet.
+func _muzzle_flash_scene() -> PackedScene:
+	if _muzzle_flash_scene_cache != null:
+		return _muzzle_flash_scene_cache
+	if _muzzle_flash_checked:
+		return null
+	_muzzle_flash_checked = true
+	if not ResourceLoader.exists(MUZZLE_FLASH_SCENE_PATH):
+		push_warning("Muzzle flash scene missing: %s (shots fire without a flash)" % MUZZLE_FLASH_SCENE_PATH)
+		return null
+	_muzzle_flash_scene_cache = load(MUZZLE_FLASH_SCENE_PATH) as PackedScene
+	return _muzzle_flash_scene_cache
+
+
+## Restarts the player's single muzzle flash. Built on the first shot and only
+## re-triggered after that: the old flash created a billboard and an OmniLight3D
+## per shot, and that light churn is what stalled the Compatibility renderer.
+## Rebuilt only if the rig (and the marker it hangs off) was swapped out.
+func _play_muzzle_flash() -> void:
+	if _muzzle_flash != null and not is_instance_valid(_muzzle_flash):
+		_muzzle_flash = null
+	if _muzzle_flash == null:
+		var marker := get_node_or_null(WEAPON_MUZZLE_PATH) as Node3D
+		if marker == null:
+			return
+		var packed := _muzzle_flash_scene()
+		if packed == null:
+			return
+		_muzzle_flash = packed.instantiate()
+		marker.add_child(_muzzle_flash)
+	if _muzzle_flash.has_method("flash"):
+		_muzzle_flash.call("flash")
+
+
+## Where the camera is looking, flattened to a unit vector.
+func _aim_direction() -> Vector3:
+	if camera != null and is_instance_valid(camera):
+		var dir := -camera.global_transform.basis.z
+		if dir.length_squared() > 0.0001:
+			return dir.normalized()
+	return -global_transform.basis.z.normalized()
 
 
 # Starts a brief over-the-shoulder zoom behind the player on weapon fire, using

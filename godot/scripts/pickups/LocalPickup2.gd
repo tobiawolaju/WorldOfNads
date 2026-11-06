@@ -104,6 +104,12 @@ static func show_weapon_in_slot(rig: Node, slot_path: String, kind: int) -> void
 		# nothing else. skin.tscn keeps a shield in each of them, and it must
 		# not pop into the hand just because a swing made the slot visible.
 		for child in slot.get_children():
+			# The muzzle Marker3D is an anchor, not a model: anything parented to
+			# it (flash, smoke, the bullet origin) must stay visible while a
+			# weapon is out, so it is never swept up by this hide pass.
+			if child is Marker3D:
+				(child as Marker3D).visible = true
+				continue
 			if child is Node3D and not WEAPON_NODE_NAMES.values().has(String(child.name)):
 				(child as Node3D).visible = false
 	slot.visible = wanted != ""
