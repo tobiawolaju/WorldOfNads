@@ -44,7 +44,6 @@ camera_node = NodePath("Player/Camera3D")
 spawn_point = NodePath("Player/myplayerswpanpoint")
 spawn_lobby_stress_agents = true
 lobby_stress_agent_count = 2
-selected_skin_id = "6"
 
 [node name="env" type="Node3D" parent="." unique_id=933934101 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
 script = ExtResource("3_ncsg4")
@@ -157,5 +156,13 @@ weapon_kind = 4
 [node name="Pickup9" parent="." unique_id=855484493 instance=ExtResource("12_m1sns")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.199215, 1.2619171, 6.4351153)
 weapon_kind = 5
+
+[node name="Chicken" parent="." unique_id=1548322364 instance=ExtResource("11_yad6j")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 9.684858, 1.637059, 1.5459518)
+power_up_mode = 5
+
+[node name="LootBox" parent="." unique_id=531383377 instance=ExtResource("11_yad6j")]
+transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 9.684858, 1.637059, 0.9248071)
+power_up_mode = 6
 
 [editable path="Bus"]
