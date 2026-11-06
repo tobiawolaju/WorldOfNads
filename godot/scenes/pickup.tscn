@@ -114,10 +114,10 @@ material_override = SubResource("StandardMaterial3D_j61ql")
 mesh = SubResource("ArrayMesh_bloei")
 
 [node name="powerup" type="Node3D" parent="." unique_id=2112767107]
+visible = false
 
 [node name="powerup" type="MeshInstance3D" parent="powerup" unique_id=862301191]
 transform = Transform3D(0.003, 0, -9.313226e-12, 0, 0.003, 0, 9.313226e-12, 0, 0.003, 0, 1.4857309, 0)
-visible = false
 material_override = SubResource("StandardMaterial3D_4m06l")
 mesh = SubResource("ArrayMesh_bloei")
 
