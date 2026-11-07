@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cyrydhs5bxppv" path="res://scripts/pickups/LocalPickup.gd" id="1_jjeh5"]
 [ext_resource type="FontFile" uid="uid://3ldunq2ayvi6" path="res://assets/fonts/Modak-Regular.ttf" id="4_4m06l"]
+[ext_resource type="Shader" uid="uid://cxucqpu5sumrf" path="res://assets/shaders/grid.gdshader" id="5_hqyie"]
 [ext_resource type="Texture2D" uid="uid://cpxr8331va5kq" path="res://assets/models/supply_drop_box_-_fortnite_0.png" id="6_mj4kx"]
 [ext_resource type="Texture2D" uid="uid://eflq4jdanl1h" path="res://assets/models/supply_drop_box_-_fortnite_1.png" id="7_ror3w"]
 
@@ -26,6 +27,7 @@ height = 0.2
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j61ql"]
 albedo_color = Color(0.6735727, 0.31052157, 1, 1)
+disable_receive_shadows = true
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x06me"]
 resource_name = "M_Gadgets_Box_SupplyDrop_Inst"
@@ -72,11 +74,25 @@ shadow_mesh = SubResource("ArrayMesh_15rbn")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4m06l"]
 albedo_color = Color(0.8571086, 0.7481733, 1, 1)
+disable_receive_shadows = true
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t0qhb"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dgxju"]
+render_priority = 0
+shader = ExtResource("5_hqyie")
+shader_parameter/color_a = Color(0.61960787, 0, 0.9098039, 1)
+shader_parameter/color_b = Color(0.78039217, 0.8, 0, 1)
+shader_parameter/cells = 0.02
+shader_parameter/world_coordinates = false
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_hqyie"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ror3w"]
+diffuse_mode = 3
 albedo_color = Color(1, 1, 0, 1)
 
-[sub_resource type="SphereMesh" id="SphereMesh_hqyie"]
+[sub_resource type="PlaneMesh" id="PlaneMesh_t0qhb"]
+material = SubResource("StandardMaterial3D_ror3w")
+size = Vector2(0.05, 0.25)
 
 [node name="Pickup" type="RigidBody3D" unique_id=408056980]
 collision_layer = 8
@@ -106,25 +122,28 @@ cast_shadow = 0
 mesh = SubResource("SphereMesh_l626g")
 
 [node name="loot" type="Node3D" parent="." unique_id=350117191]
+visible = false
 
 [node name="loot" type="MeshInstance3D" parent="loot" unique_id=754833013]
 transform = Transform3D(0.003, 0, -9.313226e-12, 0, 0.003, 0, 9.313226e-12, 0, 0.003, 0, 1.3892646, 0)
 material_override = SubResource("StandardMaterial3D_j61ql")
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_bloei")
 
 [node name="powerup" type="Node3D" parent="." unique_id=2112767107]
+visible = false
 
 [node name="powerup" type="MeshInstance3D" parent="powerup" unique_id=862301191]
 transform = Transform3D(0.003, 0, -9.313226e-12, 0, 0.003, 0, 9.313226e-12, 0, 0.003, 0, 1.3810716, 0)
 material_override = SubResource("StandardMaterial3D_4m06l")
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_bloei")
 
 [node name="chick" type="Node3D" parent="." unique_id=1495544932]
 visible = false
 
 [node name="Label3D" type="Label3D" parent="chick" unique_id=2018297262]
-transform = Transform3D(0.2, 0, 1.4901164e-09, 0, 0.2, 0, -1.4901164e-09, 0, 0.2, 0, 1.4857309, 0)
-visible = false
+transform = Transform3D(0.2, 0, 1.4901164e-09, 0, 0.2, 0, -1.4901164e-09, 0, 0.2, 0, 1.9337013, 0)
 billboard = 1
 no_depth_test = true
 render_priority = 2
@@ -133,7 +152,16 @@ font = ExtResource("4_4m06l")
 font_size = 200
 outline_size = 50
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="chick" unique_id=894522824]
-transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 1.5904496, 0)
-material_override = SubResource("StandardMaterial3D_t0qhb")
-mesh = SubResource("SphereMesh_hqyie")
+[node name="chicken" type="MeshInstance3D" parent="chick" unique_id=60424155]
+transform = Transform3D(0.004, 0, -1.24176355e-11, 0, 0.004, 0, 1.24176355e-11, 0, 0.004, 0, 1.3892646, 0)
+material_override = SubResource("ShaderMaterial_dgxju")
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_bloei")
+
+[node name="GPUParticles3D" type="GPUParticles3D" parent="chick" unique_id=1467489159]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.607565, 0)
+randomness = 1.0
+fixed_fps = 24
+interpolate = false
+process_material = SubResource("ParticleProcessMaterial_hqyie")
+draw_pass_1 = SubResource("PlaneMesh_t0qhb")
