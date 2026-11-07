@@ -6,6 +6,7 @@ extends SceneTree
 
 const SKIN_SCENE := "res://scenes/skin.tscn"
 const GLOCK := 3
+const AK47 := 2
 const RPG := 5
 
 var failures: int = 0
@@ -55,6 +56,16 @@ func _run() -> void:
 		float(rpg_cfg.get("gravity", 1.0)) < 1.0, str(rpg_cfg.get("gravity")))
 	_check("the rocket carries smoke", bool(rpg_cfg.get("smoke", false)))
 	_check("the guns keep the plain tracer", not bool(glock_cfg.get("smoke", false)))
+	# The guns need their own visible tracer rows: the stock 0.05 m default was too
+	# thin to read at 130-170 m/s and disappeared with the bullet on impact.
+	var ak_cfg: Dictionary = player.call("_weapon_fx_config", AK47)
+	var glock_width := float(glock_cfg.get("trail_width", 0.0))
+	var ak_width := float(ak_cfg.get("trail_width", 0.0))
+	_check("the pistol has a wide tracer", glock_width >= 0.07, str(glock_width))
+	_check("the rifle tracer is the widest gun tracer", ak_width > glock_width, "%s vs %s" % [ak_width, glock_width])
+	_check("the guns keep a long tracer",
+		float(glock_cfg.get("trail_length", 0.0)) >= 10.0 and float(ak_cfg.get("trail_length", 0.0)) >= 10.0,
+		"%s / %s" % [glock_cfg.get("trail_length"), ak_cfg.get("trail_length")])
 
 	# --- 2. Firing builds the plume, the fat ribbon and the bigger shell. ---
 	player.set("held_weapon_kind", RPG)

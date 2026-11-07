@@ -3776,12 +3776,19 @@ const WEAPON_FIRE_FX := {
 		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.0,
 		"damage": 24.0, "bullet_speed": 130.0, "flash_scale": 0.7,
+		# Pistol tracer: short, pale and a touch wider than the default, so it
+		# reads at 130 m/s instead of vanishing between frames.
+		"trail_width": 0.08, "trail_tip_width": 0.006, "trail_length": 12.0,
+		"trail_time": 0.16, "trail_color": Color(1.0, 0.86, 0.5, 0.95),
 	},
 	LocalPickup2.WeaponKind.AK47: {
 		"cam_time": 0.24, "cam_zoom": 0.83, "cam_fov": 1.6, "cam_behind": 0.11,
 		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.03, "screen_color": Color(1.0, 0.76, 0.42, 0.03), "screen_time": 0.12,
 		"damage": 18.0, "bullet_speed": 170.0, "flash_scale": 1.3,
+		# Rifle tracer: the longest and fattest of the guns, orange like the flash.
+		"trail_width": 0.1, "trail_tip_width": 0.007, "trail_length": 14.0,
+		"trail_time": 0.18, "trail_color": Color(1.0, 0.68, 0.3, 0.95),
 	},
 	LocalPickup2.WeaponKind.RPG: {
 		# A rocket pulls the camera BACK and widens the view: a blast, not recoil.

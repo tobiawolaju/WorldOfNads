@@ -91,6 +91,45 @@ func _run() -> void:
 			and not (trail_mesh.material_override as StandardMaterial3D).no_depth_test)
 	trailed.queue_free()
 
+	# A heavy frame (or a very fast round) can cover the whole trail_length between
+	# two samples. The ribbon used to trim down to a single point there, which drew
+	# nothing - that is what hid the pistol/AK tracer in the editor while the slow
+	# RPG plume stayed visible.
+	var fast: Node = packed.instantiate()
+	world.add_child(fast)
+	(fast as RigidBody3D).gravity_scale = 0.0
+	fast.call("launch", Vector3(0.0, 20.0, 0.0), Vector3(1.0, 0.0, 0.0), 1200.0, 24.0, shooter)
+	for _i in 2:
+		await physics_frame
+	var fast_points: PackedVector3Array = fast.get("_trail_positions")
+	var fast_span := 0.0
+	if fast_points.size() >= 2:
+		fast_span = fast_points[fast_points.size() - 1].distance_to(fast_points[0])
+	_check("a bullet faster than one frame's trail keeps two samples",
+			fast_points.size() >= 2, str(fast_points.size()))
+	_check("...so the ribbon still has a surface",
+			(fast.get_node_or_null("Trail") as MeshInstance3D).mesh.get_surface_count() > 0)
+	_check("...even though that segment beats trail_length",
+			fast_span > float(fast.get("trail_length")), "span=%.2f" % fast_span)
+	fast.queue_free()
+
+	# The streak must outlive the bullet for a beat: on impact the ribbon is
+	# reparented to the scene and freed after the linger, so a shot into a nearby
+	# wall still shows its tracer instead of blinking out with the projectile.
+	var released: Node = packed.instantiate()
+	world.add_child(released)
+	released.call("launch", Vector3(0.0, 10.0, 0.0), Vector3(0.0, 0.0, -1.0), 130.0, 24.0, shooter)
+	for _i in 3:
+		await physics_frame
+	var ribbon := released.get_node_or_null("Trail") as MeshInstance3D
+	released.call("_release_trail", 0.05)
+	_check("an impact detaches the tracer from the bullet",
+			ribbon != null and ribbon.get_parent() == world)
+	released.queue_free()
+	await create_timer(0.15).timeout
+	_check("the detached tracer frees itself after its linger",
+			not is_instance_valid(ribbon))
+
 	# Slow-motion debug shot: gravity has to pull it down, it has to come to rest
 	# on the floor, and it must linger there instead of vanishing on contact -
 	# that resting bullet is the user's proof the projectile is real.

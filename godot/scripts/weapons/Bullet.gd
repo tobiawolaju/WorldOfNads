@@ -58,6 +58,8 @@ signal hit(target: Node, at: Vector3)
 @export var smoke_color: Color = Color(0.78, 0.76, 0.72, 0.5)
 ## Hard cap on stored samples, so a bullet that never hits cannot grow the mesh.
 const TRAIL_MAX_POINTS: int = 24
+## Seconds a spent tracer stays visible after the bullet itself is gone.
+const TRAIL_LINGER: float = 0.18
 const RPG_SMOKE_SHADER: String = "res://assets/shaders/rpg_smoke.gdshader"
 
 var _shooter: Node = null
@@ -277,16 +279,38 @@ func _release_smoke() -> void:
 	tree.create_timer(smoke_lifetime + 0.5).timeout.connect(plume.queue_free)
 
 
+## Detaches the ribbon so the last streak survives the bullet for a moment. The
+## gun tracers used to vanish on the same frame as the impact - at rifle speed the
+## bullet exists for only a handful of frames, so the shot read as "no trail".
+func _release_trail(linger: float = TRAIL_LINGER) -> void:
+	if _trail_mesh == null or not is_instance_valid(_trail_mesh):
+		return
+	var ribbon := _trail_mesh
+	_trail_mesh = null
+	var tree := get_tree()
+	if tree == null or tree.current_scene == null:
+		ribbon.queue_free()
+		return
+	# Synchronous reparent, for the same reason as the smoke: queue_free() at the
+	# end of this frame would take the child ribbon with it. Vertices are world
+	# space and the node is top_level, so it stays exactly where it was drawn.
+	ribbon.reparent(tree.current_scene, true)
+	tree.create_timer(linger).timeout.connect(ribbon.queue_free)
+
+
 func _remember_trail_point() -> void:
 	var now := Time.get_ticks_msec() / 1000.0
 	_trail_positions.append(global_position)
 	_trail_stamps.append(now)
-	while _trail_stamps.size() > 0 and now - _trail_stamps[0] > trail_time:
+	# Always keep the last two samples: a fast bullet on a heavy frame can cover
+	# the whole trail_length between two ticks, and trimming down to one point
+	# left the ribbon with nothing to draw (the pistol/AK "missing tracer").
+	while _trail_positions.size() > 2 and now - _trail_stamps[0] > trail_time:
 		_trail_positions.remove_at(0)
 		_trail_stamps.remove_at(0)
 	# Also cap the span in metres: at 170 m/s a 0.15 s trail would be 25 m of
 	# laser, so the ribbon is trimmed to the same length at every weapon speed.
-	while _trail_positions.size() > 1 \
+	while _trail_positions.size() > 2 \
 			and _trail_positions[_trail_positions.size() - 1].distance_to(_trail_positions[0]) > trail_length:
 		_trail_positions.remove_at(0)
 		_trail_stamps.remove_at(0)
@@ -335,6 +359,7 @@ func _expire() -> void:
 			print("[bullet] expired at %s (nothing in %ds)" % [global_position, int(lifetime)])
 		_freed_reason = "expired"
 		_release_smoke()
+		_release_trail()
 		queue_free()
 
 
@@ -374,6 +399,9 @@ func _on_body_entered(body: Node) -> void:
 		set_deferred("contact_monitor", false)
 		get_tree().create_timer(linger_after_hit).timeout.connect(queue_free)
 		return
+	# The streak outlives the bullet for a beat, otherwise a fast shot's tracer
+	# disappears on the same frame the impact does.
+	_release_trail()
 	queue_free()
 
 
