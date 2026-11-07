@@ -142,6 +142,11 @@ pub struct PlayerNet {
     /// just the holder: the feed counts down "wins in N" for whoever is carrying
     /// the chicken, and the chicken label above the item shows it too.
     pub ps: i64,
+    /// Kind of the last weapon action: 0 = none, 1 = shoot, 2 = hook.
+    pub act: i64,
+    /// The shooter's monotonic action counter, so every client replays a given
+    /// action exactly once (a repeat of the same snapshot must not restart it).
+    pub aseq: i64,
     /// Username is only present in full snapshots.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub u: Option<String>,
@@ -279,6 +284,11 @@ pub struct UpdateState {
     pub animation: Option<String>,
     pub slide: Option<bool>,
     pub skin: Option<String>,
+    /// Weapon action kind (1 = shoot, 2 = hook) and the client's monotonic
+    /// counter. Unlike the movement animation this is an event: clients play it
+    /// once per new `act_seq`, and the server forwards both unchanged.
+    pub act: Option<f64>,
+    pub act_seq: Option<f64>,
 }
 
 #[derive(Deserialize, Debug, Default)]

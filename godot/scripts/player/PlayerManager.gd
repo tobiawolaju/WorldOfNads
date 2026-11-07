@@ -121,6 +121,9 @@ var _skin_cycle_index: int = -1
 var player_display_names: Dictionary = {}
 var player_skin_names: Dictionary = {}
 var remote_snapshots: Dictionary = {}
+## Last weapon-action seq replayed per remote player, so a repeated snapshot never
+## restarts a clip (see accepts_remote_action).
+var remote_action_seq: Dictionary = {}
 var countdown_label: Label = null
 
 # --- OBJECT POOLING ---
@@ -151,6 +154,7 @@ func _get_player_from_pool() -> Node3D:
 		if pid != "" and pid != player_id:
 			players.erase(pid)
 			remote_snapshots.erase(pid)
+			remote_action_seq.erase(pid)
 			p.visible = true
 			p.process_mode = PROCESS_MODE_INHERIT
 			return p
@@ -169,6 +173,10 @@ func _return_player_to_pool(player: Node3D):
 		player.set_animation_lod_enabled(true)
 	if player.has_method("cache_animation_state"):
 		player.cache_animation_state("idle")
+	# Drop the previous occupant's weapon/action so a recycled node cannot show
+	# (or finish) someone else's clip.
+	if player.has_method("reset_remote_state"):
+		player.call("reset_remote_state")
 var world_environment: WorldEnvironment = null
 var camera_block: Node3D = null
 var _world_env_duplicated: bool = false
@@ -864,6 +872,12 @@ func _remove_disconnected_players(removed_ids: Array) -> void:
 		if removed_id != "" and removed_id != player_id:
 			_remove_player(removed_id)
 
+## True when a snapshot carries a weapon action this remote has not played yet:
+## a real kind and a strictly newer counter. Extracted so the action selftest can
+## cover the decision without a live PlayerManager (which needs a room and a WS).
+static func accepts_remote_action(last_seq: int, act_seq: int, act: int) -> bool:
+	return act != 0 and act_seq > last_seq
+
 func _update_world_state(players_state, is_full := true, quantized := false):
 	if _waiting_for_connect:
 		return
@@ -915,6 +929,18 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 		node.display_name = resolved_name
 		if skin_changed:
 			_update_remote_player_skin(node, resolved_skin)
+
+		# Weapon actions are events, not states: the shooter stamps a monotonic
+		# seq into update_state and the server forwards (act, aseq). Only a seq
+		# this remote has not played yet replays the clip, so the ~20 Hz snapshot
+		# stream does not restart the animation every tick. A new player seeds the
+		# baseline instead of replaying whatever they last did before we joined.
+		var act := int(p_state.get("act", 0))
+		var act_seq := int(p_state.get("aseq", 0))
+		var last_act_seq := int(remote_action_seq.get(id, act_seq))
+		remote_action_seq[id] = act_seq
+		if accepts_remote_action(last_act_seq, act_seq, act) and node.has_method("play_action"):
+			node.call("play_action", act)
 
 		# 🚗 Vehicle sync (passenger is locked to its seat; not interpolated).
 		if p_state.has("vehicle") and p_state["vehicle"] != null:
@@ -1550,6 +1576,7 @@ func _remove_player(id: String):
 		if id == player_id:
 			_cached_local_player = null
 	remote_snapshots.erase(id)
+	remote_action_seq.erase(id)
 
 func _cleanup_stale_remote_players(now_ms: float) -> void:
 	var stale := PackedStringArray()

@@ -33,7 +33,7 @@ func _run() -> void:
 	player.set("held_weapon_max_uses", 10)
 	player.set("held_weapon_uses", 10)
 	var hand := player.get_node_or_null("Skeleton3D/BoneAttachment3D") as Node3D
-	var marker := player.get_node_or_null("Skeleton3D/BoneAttachment3D/Marker3D") as Node3D
+	var marker := player.get_node_or_null("Skeleton3D/Marker3D") as Node3D
 
 	# Three presses in the same frame: the first starts the clip, the other two
 	# arrive while it is still playing.

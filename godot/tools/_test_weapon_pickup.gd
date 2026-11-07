@@ -14,6 +14,16 @@ const KIND_NAMES := {
 	"rpg": 5,
 }
 
+## Charges each kind is worth, mirrored from LocalPickup2.WEAPON_USES so the test
+## fails loudly if the magazine table changes without this list.
+const WANT_USES := {
+	"sword": 2,
+	"Knife": 2,
+	"ak47": 24,
+	"glock": 16,
+	"rpg": 4,
+}
+
 var failures := 0
 
 func _initialize() -> void:
@@ -25,13 +35,21 @@ func _initialize() -> void:
 	await process_frame
 
 	_check("default kind is SWORD", int(pickup.get("weapon_kind")) == 1)
-	_check("default uses is 8", int(pickup.get("uses")) == 8)
+	_check("the sword is worth 2 uses", int(pickup.call("total_uses")) == 2)
 	_check("only sword visible by default", _visible_model_name(pickup) == "sword")
 
 	for kind_name in KIND_NAMES.keys():
 		var kind: int = KIND_NAMES[kind_name]
 		pickup.set("weapon_kind", kind)
 		_check("kind %d shows only %s" % [kind, kind_name], _visible_model_name(pickup) == kind_name)
+		# Melee is a short pick-up; every gun carries one magazine.
+		var want_uses: int = int(WANT_USES.get(kind_name, 16))
+		_check("kind %d is worth %d uses" % [kind, want_uses],
+			int(pickup.call("total_uses")) == want_uses)
+		pickup.set("uses", 7)
+		_check("kind %d honours an Inspector override" % kind,
+			int(pickup.call("total_uses")) == 7)
+		pickup.set("uses", 0)
 		_check("kind %d uses the 4-letter FIRE caption" % kind,
 			str(pickup.call("weapon_label")) == "FIRE")
 		_check("kind %d uses the #ff6cff action colour" % kind,
@@ -92,17 +110,42 @@ func _initialize() -> void:
 	_check("hud ring clears when the weapon is spent", not bool(hud.get("_ring_active")))
 	hud.free()
 
-	# --- 6. End-to-end: grab -> carried on the back -> 8 uses -> respawn. ---
+	# --- 6. End-to-end: grab -> carried on the back -> 24 uses -> respawn. ---
+	# The real HUD path in hud.tscn, but without its Events.gd root: a stand-in
+	# "Hud" + "bullets" Label is all player._find_bullets_label() walks.
+	var hud_scene := (load("res://scenes/hud.tscn") as PackedScene).instantiate()
+	_check("hud.tscn authors a bullets label at Node3/CanvasLayer/bullets",
+		hud_scene.get_node_or_null("Node3/CanvasLayer/bullets") is Label)
+	hud_scene.free()
+	var bullet_hud := Control.new()
+	bullet_hud.name = "Hud"
+	root.add_child(bullet_hud)
+	var bullets_label := Label.new()
+	bullets_label.name = "bullets"
+	bullets_label.text = "3/56"
+	bullet_hud.add_child(bullets_label)
+
+	# A local player runs its own camera code; without one, every _process errors.
+	var camera := Camera3D.new()
+	camera.name = "Camera3D"
+	camera.current = true
+	root.add_child(camera)
 	root.add_child(player)
 	await process_frame
+	player.set("is_local", true)
+	player.call("_update_hud_bullets")
+	_check("hud keeps the counter hidden with empty hands", not bullets_label.visible)
 	player.set("last_pickup_request_ms", -100000)
 	pickup.set("weapon_kind", 2)
 	pickup.set("freeze", true)
 	(pickup as Node3D).global_position = player.global_position + Vector3(1.2, 0.0, 0.0)
 	_check("player grabs the nearby weapon", bool(player.call("_try_pickup_weapon")))
 	_check("player holds AK47", int(player.get("held_weapon_kind")) == 2)
-	_check("grab starts at 8 uses", int(player.get("held_weapon_uses")) == 8
-		and int(player.get("held_weapon_max_uses")) == 8)
+	_check("grab starts at 24 uses", int(player.get("held_weapon_uses")) == 24
+		and int(player.get("held_weapon_max_uses")) == 24)
+	player.call("_update_hud_bullets")
+	_check("hud shows the AK47 magazine (%s)" % bullets_label.text,
+		bullets_label.visible and bullets_label.text == "24 / 24")
 	_check("ak47 carried on the back after grab", _visible_weapon_in(player, BACK_SLOT) == "ak47")
 	_check("hand empty after grab", _visible_weapon_in(player, HAND_SLOT) == "")
 	_check("ground pickup hidden after grab", not (pickup as Node3D).visible)
@@ -117,17 +160,23 @@ func _initialize() -> void:
 	_check("the clip holsters the weapon again", _visible_weapon_in(player, BACK_SLOT) == "ak47")
 	_check("the hand is empty after the clip", _visible_weapon_in(player, HAND_SLOT) == "")
 
-	for _i in 7:
+	for _i in 23:
 		player.call("_use_held_weapon")
-	_check("after 7 uses one charge remains", int(player.get("held_weapon_uses")) == 1)
+	_check("after 23 uses one charge remains", int(player.get("held_weapon_uses")) == 1)
+	_check("hud counts down to the last bullet (%s)" % bullets_label.text,
+		bullets_label.text == "1 / 24" and bullets_label.visible)
+	# The local path keeps the last shot's clip on screen: the weapon is only put
+	# back on the back (and later cleared) when that clip's own timer ends.
+	await create_timer(0.6).timeout
 	_check("weapon still carried with one charge", _visible_weapon_in(player, BACK_SLOT) == "ak47")
 
-	await physics_frame
 	player.call("_use_held_weapon")
+	await create_timer(0.6).timeout
 	_check("last use clears the held weapon", int(player.get("held_weapon_kind")) == 0
 		and int(player.get("held_weapon_uses")) == 0)
 	_check("both slots are empty after the last use", _visible_weapon_in(player, BACK_SLOT) == ""
 		and _visible_weapon_in(player, HAND_SLOT) == "")
+	_check("hud hides the counter once the weapon is gone", not bullets_label.visible)
 	_check("pickup visible again after the last use", (pickup as Node3D).visible
 		and not bool(pickup.call("is_being_held")))
 	# Same one-physics-frame deferral as section 3.

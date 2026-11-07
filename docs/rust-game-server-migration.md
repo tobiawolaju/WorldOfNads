@@ -169,7 +169,7 @@ Session token is the `<token>` prefix of `username` (format `<token>:<username>`
 
 | `type` | Purpose |
 |---|---|
-| `update_state` | position/rotation/velocity + held item |
+| `update_state` | position/rotation/velocity + held item + weapon action (`act`, `act_seq`) |
 | `request_full_state` | ask for a `state_full` snapshot |
 | `pickup_request` | attempt to pick up chicken/lootbox/item |
 | `drop_request` | drop held item |
@@ -266,7 +266,7 @@ Port these behaviors 1:1 and assert equality against the Node server with a shar
 | Message | Node | Rust | Status |
 |---|---|---|---|
 | `connect` | `{type,id,username,skin,xp}` | `ConnectMsg` | identical |
-| player | `{id,x,y,z,r,a,skin}` | `PlayerNet` | identical |
+| player | `{id,x,y,z,r,a,skin}` | `PlayerNet` (+`ps`,`act`,`aseq`) | Rust additions; clients ignore unknown keys |
 | `state_full` | `{type,q,players(+u),chicken,lootbox,items,match}` | `StateFull` | identical |
 | `state_delta` | optional `players/removed/chicken/lootbox/items/match` | `StateDelta` | identical |
 | match | `{t,r,d,min,max,sr,pl,c}`, `max:null` when unset | `MatchNet` | identical |
