@@ -88,12 +88,6 @@ cast_shadow = 0
 mesh = SubResource("CylinderMesh_oipnb")
 surface_material_override/0 = SubResource("StandardMaterial3D_07nfq")
 
-[node name="Cylinder3" type="MeshInstance3D" parent="env" unique_id=105057336]
-transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
-cast_shadow = 0
-mesh = SubResource("CylinderMesh_oipnb")
-surface_material_override/0 = SubResource("StandardMaterial3D_07nfq")
-
 [node name="Player" type="Node3D" parent="." unique_id=129729236 node_paths=PackedStringArray("status_label")]
 script = ExtResource("7_yad6j")
 status_label = NodePath("../Hud/CanvasLayer/BoxContainer/Node2/BoxContainer/Countdown")
