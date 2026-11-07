@@ -72,7 +72,7 @@ func _run() -> void:
 	player.call("_trigger_weapon_fx", "shoot")
 	var first: Node = player.get("_muzzle_flash")
 	_check("the player builds a flash on the first shot", first != null)
-	var marker: Node = player.get_node_or_null("Skeleton3D/BoneAttachment3D/Marker3D")
+	var marker: Node = player.get_node_or_null("Skeleton3D/Marker3D")
 	_check("the flash hangs off the muzzle marker", first != null and first.get_parent() == marker)
 
 	player.call("_trigger_weapon_fx", "shoot")
@@ -84,6 +84,21 @@ func _run() -> void:
 			if child.has_method("flash"):
 				flashes += 1
 	_check("the marker holds exactly one flash", flashes == 1, str(flashes))
+
+	# Per-weapon size: the table scales the one pooled emitter, so a rocket flash
+	# has to be visibly wider than a pistol flash without a second scene.
+	var sizes := {}
+	for kind in [GLOCK, 2, 5]:  # glock, AK47, RPG
+		player.set("held_weapon_kind", kind)
+		player.call("_trigger_weapon_fx", "shoot")
+		sizes[kind] = (player.get("_muzzle_flash") as Node3D).scale.x
+	_check("the pistol flash is the smallest",
+			sizes[GLOCK] < sizes[2] and sizes[GLOCK] < sizes[5], str(sizes))
+	_check("the rocket flash is the biggest",
+			sizes[5] > sizes[2] and sizes[5] > sizes[GLOCK], str(sizes))
+	_check("flash sizes come from the weapon table",
+			is_equal_approx(sizes[GLOCK], 0.7) and is_equal_approx(sizes[2], 1.3)
+			and is_equal_approx(sizes[5], 2.0), str(sizes))
 
 	_finish()
 

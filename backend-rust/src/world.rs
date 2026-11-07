@@ -43,6 +43,11 @@ pub struct Player {
     pub z: f64,
     pub rotation_y: f64,
     pub animation: String,
+    /// Last weapon action (0 = none, 1 = shoot, 2 = hook) and the client's
+    /// monotonic counter. Forwarded to every other client so they can replay the
+    /// clip and the muzzle flash; purely cosmetic, no damage is implied.
+    pub action: i64,
+    pub action_seq: i64,
     pub xp: i64,
     pub last_update_ms: i64,
     pub cell_key: String,
@@ -248,6 +253,8 @@ impl Room {
             z: 0.0,
             rotation_y: 0.0,
             animation: "idle".to_string(),
+            action: 0,
+            action_seq: 0,
             xp,
             last_update_ms: now_ms(),
             cell_key: String::new(),
@@ -617,6 +624,31 @@ impl Room {
         player.animation = anim_id_to_name(anim_id).to_string();
         if let Some(skin) = data.get("skin").and_then(|v| v.as_str()) {
             player.skin = resolve_skin_name(skin);
+        }
+
+        // Weapon actions are events, not states. The shooter bumps a monotonic
+        // counter when a clip starts; viewers replay a given value exactly once.
+        // Assigning unconditionally keeps a re-sent update idempotent, and a lower
+        // value (client restarted / reconnected) becomes the new baseline instead
+        // of freezing the counter forever.
+        if let Some(seq_raw) = data.get("act_seq").and_then(|v| v.as_f64()) {
+            let seq = seq_raw.floor();
+            if seq.is_finite() && seq >= 0.0 {
+                player.action_seq = seq as i64;
+                let kind = data
+                    .get("act")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(0.0)
+                    .floor();
+                // Only the three known kinds are accepted; an unknown value (a
+                // newer client, a corrupted frame) reads as "no action" instead of
+                // silently playing the wrong clip.
+                player.action = if (0.0..=2.0).contains(&kind) {
+                    kind as i64
+                } else {
+                    0
+                };
+            }
         }
 
         self.update_player_cell_index(id);
@@ -1488,6 +1520,8 @@ fn encode_player(player: &Player) -> PlayerNet {
         // Whole seconds only: the holder's possession is credited once a second, so
         // this changes at most once per tick and costs one delta per second.
         ps: player.accumulated_possession.floor() as i64,
+        act: player.action,
+        aseq: player.action_seq,
         u: None,
     }
 }
@@ -1643,7 +1677,14 @@ fn build_recipient_payload(
         );
         let last_sent_at = *state.last_sent_player_at.get(id).unwrap_or(&0);
         let interval_ms = 1000.0 / update_rate_for_distance(distance);
-        if (now - last_sent_at) as f64 >= interval_ms {
+        // An action is an event: skip the distance rate limit so a shot reaches
+        // every viewer on the next tick instead of waiting up to 200 ms.
+        let action_changed = state
+            .last_sent_players
+            .get(id)
+            .map(|p| p.aseq != encoded.aseq)
+            .unwrap_or(true);
+        if action_changed || (now - last_sent_at) as f64 >= interval_ms {
             changed_players.push(encoded.clone());
             state.last_sent_players.insert(id.clone(), encoded.clone());
             state.last_sent_player_at.insert(id.clone(), now);
@@ -1763,6 +1804,37 @@ mod tests {
             POWER_UP_IDS.len() + WEAPON_IDS.len()
         );
         assert!(v["players"].as_array().unwrap()[0]["u"].is_string());
+    }
+
+    #[test]
+    fn update_state_carries_weapon_actions() {
+        let mut room = Room::new();
+        room.add_player("p1", "alice", "s-default", 0, 1);
+
+        let shot = serde_json::json!({
+            "type": "update_state",
+            "qx": 0, "qy": 0, "qz": 0, "qrot": 0, "anim_id": 0,
+            "act": 1, "act_seq": 3
+        });
+        room.apply_update_state("p1", &shot);
+        let player = room.players.get("p1").unwrap();
+        assert_eq!(player.action, 1);
+        assert_eq!(player.action_seq, 3);
+        // The snapshot carries the pair unchanged, so a remote can replay it once.
+        let encoded = encode_player(player);
+        assert_eq!(encoded.act, 1);
+        assert_eq!(encoded.aseq, 3);
+
+        // An unknown kind (newer client / corrupted frame) reads as "no action".
+        let unknown = serde_json::json!({
+            "type": "update_state",
+            "qx": 0, "qy": 0, "qz": 0, "qrot": 0, "anim_id": 0,
+            "act": 9, "act_seq": 4
+        });
+        room.apply_update_state("p1", &unknown);
+        let player = room.players.get("p1").unwrap();
+        assert_eq!(player.action, 0);
+        assert_eq!(player.action_seq, 4);
     }
 
     #[test]

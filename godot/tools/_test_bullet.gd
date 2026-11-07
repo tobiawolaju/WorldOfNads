@@ -68,6 +68,29 @@ func _run() -> void:
 	_check("the hit reports the shooter", target.last_source == shooter)
 	_check("the bullet frees itself on impact", not is_instance_valid(bullet))
 
+	# Trail: one world-space ribbon that samples the flight. Checked on a fresh
+	# shot because the first bullet above is already gone.
+	var trailed: Node = packed.instantiate()
+	world.add_child(trailed)
+	var trail_mesh := trailed.get_node_or_null("Trail") as MeshInstance3D
+	_check("the bullet builds a trail", trail_mesh != null and trail_mesh.mesh is ImmediateMesh)
+	trailed.call("launch", Vector3(0.0, 6.0, 0.0), Vector3(0.0, 0.0, -1.0), 130.0, 24.0, shooter)
+	for _i in 10:
+		await physics_frame
+	_check("the trail draws segments while the bullet flies",
+			trail_mesh != null and (trail_mesh.mesh as ImmediateMesh).get_surface_count() > 0)
+	var points: PackedVector3Array = trailed.get("_trail_positions")
+	var span := 0.0
+	if points.size() >= 2:
+		span = points[points.size() - 1].distance_to(points[0])
+	_check("the trail is capped in metres, not stretched by speed",
+			points.size() >= 2 and span <= float(trailed.get("trail_length")) + 0.01,
+			"span=%.2f points=%d" % [span, points.size()])
+	_check("the trail is depth-tested",
+			trail_mesh != null
+			and not (trail_mesh.material_override as StandardMaterial3D).no_depth_test)
+	trailed.queue_free()
+
 	# Slow-motion debug shot: gravity has to pull it down, it has to come to rest
 	# on the floor, and it must linger there instead of vanishing on contact -
 	# that resting bullet is the user's proof the projectile is real.

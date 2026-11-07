@@ -79,8 +79,18 @@ const SERVER_WEAPON_KINDS := {
 	"w5": WeaponKind.RPG,
 }
 
-## How many Action presses a fresh weapon lasts.
-const DEFAULT_USES: int = 8
+## How many Action presses a weapon lasts: one magazine per gun. Melee is a short
+## burst pick-up, so the sword and knife are a couple of swings rather than a
+## replacement loadout. `uses` still overrides any of these on a single instance.
+const WEAPON_USES := {
+	WeaponKind.SWORD: 2,
+	WeaponKind.KNIFE: 2,
+	WeaponKind.GLOCK: 16,
+	WeaponKind.AK47: 24,
+	WeaponKind.RPG: 4,
+}
+## Fallback for a kind that is not in the table (and for WeaponKind.NONE).
+const DEFAULT_USES: int = 16
 
 
 ## Shows exactly the weapon model of `kind` in one attachment slot of a skin rig
@@ -120,7 +130,10 @@ static func show_weapon_in_slot(rig: Node, slot_path: String, kind: int) -> void
 		weapon_kind = value
 		_apply_weapon_visual()
 
-@export_range(1, 99, 1) var uses: int = DEFAULT_USES
+## Charges this pickup is worth. 0 means "the default for this weapon kind"
+## (see WEAPON_USES); a positive value overrides it, so one pickup instance can
+## still be tuned in the Inspector.
+@export_range(0, 99, 1) var uses: int = 0
 
 @export var can_be_picked: bool = true
 
@@ -181,6 +194,17 @@ func weapon_label() -> String:
 
 func weapon_color() -> Color:
 	return ACTION_COLOR
+
+
+## Default charges for a kind: the weapon's magazine from WEAPON_USES.
+static func uses_for(kind: int) -> int:
+	return int(WEAPON_USES.get(kind, DEFAULT_USES))
+
+
+## Charges the holder actually gets. The single number the player and the HUD ring
+## agree on: the Inspector override when set, otherwise the kind's default.
+func total_uses() -> int:
+	return uses if uses > 0 else uses_for(weapon_kind)
 
 
 ## Node name in skin.tscn this weapon shows while carried, or "" for NONE.

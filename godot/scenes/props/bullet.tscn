@@ -3,8 +3,8 @@
 [ext_resource type="Script" uid="uid://bdrbi6mno0l1f" path="res://scripts/weapons/Bullet.gd" id="1_bullet"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6sjxh"]
-albedo_color = Color(1, 0.8980392, 0.654902, 1)
-roughness = 0.46
+shading_mode = 0
+albedo_color = Color(0.4390491, 0.43904912, 0.43904912, 1)
 proximity_fade_enabled = true
 
 [sub_resource type="SphereMesh" id="SphereMesh_r0gq1"]

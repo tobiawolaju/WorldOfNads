@@ -81,15 +81,24 @@ const WEAPON_HAND_ATTACH_PATH: String = "Skeleton3D/BoneAttachment3D"
 ## Back slot in skin.tscn (bone: mixamorig_Spine1). Holds the same weapon meshes
 ## and is where a carried weapon rides the rest of the time.
 const WEAPON_BACK_ATTACH_PATH: String = "Skeleton3D/BackBoneAttachment3D"
-## Muzzle of the drawn weapon: where bullets, smoke and the flash leave from. It is
-## a child of the hand slot so it follows the aim pose. Falls back to the hand slot
-## itself, then to the chest, when a rig has no marker.
-const WEAPON_MUZZLE_PATH: String = "Skeleton3D/BoneAttachment3D/Marker3D"
+## Muzzle of the drawn weapon: where bullets, smoke and the flash leave from, and
+## the only thing that decides where a shot goes. It hangs off the Skeleton3D root,
+## not a bone, so the shoot animation cannot swing the aim. Falls back to the hand
+## slot, then to the chest, when a rig has no marker.
+const WEAPON_MUZZLE_PATH: String = "Skeleton3D/Marker3D"
 ## Projectile spawned on every "shoot" action (see _fire_bullet).
 const BULLET_SCENE_PATH: String = "res://scenes/props/bullet.tscn"
 ## Pooled muzzle flash: built once on the first shot, then only restarted, so the
 ## fire path never allocates nodes and never touches a light.
 const MUZZLE_FLASH_SCENE_PATH: String = "res://scenes/fx/muzzle_flash.tscn"
+
+@export_group("Weapon Aim")
+## Debug: draws the exact line the next bullet will take, from the muzzle. The
+## muzzle marker decides the direction, so this is how it is checked by eye.
+@export var show_shot_line: bool = false
+## Length of that debug line, in metres.
+@export var shot_line_length: float = 12.0
+@export_group("")
 
 # --- STORM DAMAGE ---
 @export var storm_center: Vector2 = Vector2(0, 0)
@@ -187,6 +196,12 @@ const ANIM_NAME_TO_ID: Dictionary = {
 	"climb": 5
 }
 
+## Weapon action kinds sent in update_state (`act`). The server forwards them to
+## every other client, which replays the clip + muzzle flash from the matching
+## seq. 0 = no action.
+const ACTION_KIND_SHOOT: int = 1
+const ACTION_KIND_HOOK: int = 2
+
 # --- CHOG GENESIS GATE ---
 ## Backend endpoint that verifies the authenticated wallet on Monad mainnet.
 const CHOG_OWNERSHIP_PATH: String = "/api/nft/chog-genesis/ownership"
@@ -263,6 +278,19 @@ var _weapon_action_active: bool = false
 ## weapon away if it is still the newest action: a shot fired during the previous
 ## clip restarts it, and the older timer must not cancel the newer shot.
 var _weapon_action_generation: int = 0
+## Monotonic action counter + kind sent in update_state. A remote copy replays the
+## clip once per new counter value; the value itself is meaningless otherwise.
+var _weapon_action_seq: int = 0
+var _weapon_action_kind: int = 0
+## Swing queued by the input frame, resolved on the next physics tick because the
+## physics space cannot be queried from _process.
+var _pending_melee: Dictionary = {}
+## One-shot diagnostic: the first shot of a session prints its numbers, so a rig
+## with a backwards gun can be told apart from a broken aim in the Output panel.
+var _shot_reported: bool = false
+## Debug shot line, built on demand and kept as one mesh.
+var _aim_line: MeshInstance3D = null
+var _aim_line_mesh: ImmediateMesh = null
 ## A shot clip is only 0.2 s, so the recoil snapped straight back to idle and read
 ## as a flicker. The final (aim) pose is held this much longer before the lock is
 ## released. The hook does not use it: its swing is already the whole point.
@@ -311,6 +339,8 @@ var _smoke_clouds: Array = []
 static var _smoke_prewarmed: bool = false
 ## Cached once; avoids a tree search every pickup/drop.
 var _cached_buttons_hud: Node = null
+## HUD "bullets" label (hud.tscn Node3/CanvasLayer/bullets), cached on first use.
+var _cached_bullets_label: Label = null
 ## Near-death fall: while true, the run/idle animation states stay suppressed and
 ## the "fall" animation plays once after health drops to the critical threshold.
 var _is_dying_fall: bool = false
@@ -346,13 +376,14 @@ var _critical_fall_timer: float = 0.0
 ## option exposed: repeated shake is the first thing that makes a shooter
 ## unplayable for some players.
 @export_range(0.0, 1.0, 0.05) var weapon_fx_intensity: float = 0.85
-## DEBUG ONLY: time scale for fired bullets. 0.05 makes a shot lob out of the gun
-## in slow motion, arc down and land where you can walk up to it; set it to 1.0
-## for real speed.
-@export_range(0.02, 1.0, 0.01) var bullet_speed_scale: float = 0.05
-## Projectile drop. 1.0 is real gravity, 0.0 makes shots run dead straight. At full
-## speed the drop is invisible; at debug speed it is what puts the bullet on the
-## floor where you can see it.
+## Time scale for fired bullets. 1.0 is real speed; 0.05 is the slow-motion test
+## mode that makes a shot lob out of the gun, arc down and land where you can walk
+## up to it. Everything debug-only (long lifetime, bullets that linger on the floor,
+## the [bullet] prints) switches itself on below 1.0.
+@export_range(0.02, 1.0, 0.01) var bullet_speed_scale: float = 1.0
+## Projectile drop. 1.0 is real gravity, 0.0 makes shots run dead straight. Real
+## speed makes the drop invisible over normal range; it is what puts a debug shot on
+## the floor where you can see it.
 @export_range(0.0, 4.0, 0.1) var bullet_gravity_scale: float = 1.0
 @export var fov: float = 70.0
 @export var touch_orbit_sensitivity: float = 0.032
@@ -629,6 +660,9 @@ func _ready() -> void:
 	_setup_anim_tree()
 	# The rig ships with every hand weapon; only a held weapon may be visible.
 	_set_weapon_visual(LocalPickup2.WeaponKind.NONE)
+	# Deferred: the HUD is a sibling scene, so it may not be in the tree yet. Hides
+	# the authored placeholder until a weapon is carried.
+	_update_hud_bullets.call_deferred()
 	_play_anim("idle")
 	_refresh_name_label()
 	_refresh_touch_joystick()
@@ -989,9 +1023,17 @@ func _physics_process(delta: float) -> void:
 	if not is_local:
 		return
 
+	# Melee is queued from the input frame and resolved here: the physics space
+	# cannot be queried from _process, so the swing lands on the next tick.
+	if not _pending_melee.is_empty():
+		var swing := _pending_melee
+		_pending_melee = {}
+		_melee_strike(swing)
+
 	_check_map_recovery()
 	_update_camera_zoom(delta)
 	_update_camera_collision_logic(delta)
+	_update_shot_line()
 	_update_weapon_fire_cam(delta)
 	_landing_bob_timer = maxf(0.0, _landing_bob_timer - delta)
 	# Climb timers tick here, before the climb branch can take over the frame, so
@@ -1965,10 +2007,16 @@ func _try_pickup_weapon() -> bool:
 	_held_weapon_pickup = target
 	var kind_value = target.get("weapon_kind")
 	held_weapon_kind = int(kind_value) if kind_value != null else LocalPickup2.WeaponKind.NONE
-	var uses_value = target.get("uses")
-	var total: int = maxi(int(uses_value) if uses_value != null else 1, 1)
-	held_weapon_max_uses = total
-	held_weapon_uses = total
+	# The pickup owns its charge count: 2 for the sword and knife, DEFAULT_USES for
+	# guns, and an Inspector override wins. The fallback keeps a plain pickup working.
+	var total: int = 1
+	if target.has_method("total_uses"):
+		total = int(target.call("total_uses"))
+	else:
+		var uses_value = target.get("uses")
+		total = int(uses_value) if uses_value != null else 1
+	held_weapon_max_uses = maxi(total, 1)
+	held_weapon_uses = held_weapon_max_uses
 	last_pickup_request_ms = now
 	_set_weapon_visual(held_weapon_kind)
 	_update_hud_power_up()
@@ -2060,6 +2108,14 @@ func _start_weapon_action(clip: String) -> float:
 		_set_action_hips_filter(false)
 	_weapon_action_generation += 1
 	_weapon_action_active = true
+	# Network sync: remotes replay the clip and the muzzle flash from this event.
+	# It is sent on the same frame (see _frame_ticks/_send_state_to_server).
+	_weapon_action_seq += 1
+	_weapon_action_kind = ACTION_KIND_HOOK if clip == "hook" else ACTION_KIND_SHOOT
+	# The decoy is a RemotePlayer clone, so it replays the action locally instead
+	# of waiting for a snapshot (there is none for a local swing).
+	if _twin_decoy != null and is_instance_valid(_twin_decoy) and _twin_decoy.has_method("play_action"):
+		_twin_decoy.call("play_action", _weapon_action_kind)
 	# Drawn right before the first animated frame: the back copy disappears and
 	# the hand copy appears for exactly as long as the clip runs.
 	_set_weapon_drawn(true)
@@ -2114,6 +2170,10 @@ func _set_weapon_visual(kind: int) -> void:
 	_show_weapon_on(WEAPON_BACK_ATTACH_PATH, kind)
 	# A rig without a back slot (an older skin scene) keeps the weapon in the hand.
 	_show_weapon_on(WEAPON_HAND_ATTACH_PATH, LocalPickup2.WeaponKind.NONE if carried_on_back else kind)
+	# The twin decoy is a RemotePlayer clone of this rig: keep its copy in step so
+	# the clone is armed the same way.
+	if _twin_decoy != null and is_instance_valid(_twin_decoy) and _twin_decoy.has_method("show_remote_weapon"):
+		_twin_decoy.call("show_remote_weapon", kind)
 
 
 func _has_weapon_back_slot() -> bool:
@@ -2332,6 +2392,9 @@ func _spawn_twin_decoy() -> void:
 	decoy.set("display_name", "")  # no floating name over the decoy
 	_twin_decoy = decoy
 	_twin_decoy_mesh = decoy.get_node_or_null("Skeleton3D") as Node3D
+	# A clone of this rig: carry whatever weapon the player currently holds.
+	if decoy.has_method("show_remote_weapon"):
+		decoy.call("show_remote_weapon", held_weapon_kind)
 	_mirror_twin_decoy()
 
 
@@ -2695,6 +2758,7 @@ func has_pickable_in_range() -> bool:
 # draw the countdown ring as a full "ready" ring while the pickup is carried.
 # Weapons pass `uses_left`/`uses_total` instead: their ring drains by charges.
 func _update_hud_power_up() -> void:
+	_update_hud_bullets()
 	var buttons := _find_buttons_hud()
 	if buttons == null or not buttons.has_method("show_power_up"):
 		return
@@ -2945,6 +3009,35 @@ func _find_buttons_hud() -> Node:
 			_cached_buttons_hud = child
 			break
 	return _cached_buttons_hud
+
+
+# Finds the HUD bullet counter (hud.tscn: Node3/CanvasLayer/bullets). Only scanned
+# once; a HUD that is swapped or freed is found again on the next call.
+func _find_bullets_label() -> Label:
+	if _cached_bullets_label != null and is_instance_valid(_cached_bullets_label):
+		return _cached_bullets_label
+	_cached_bullets_label = null
+	var hud := get_tree().root.find_child("Hud", true, false)
+	if hud == null:
+		return null
+	_cached_bullets_label = hud.find_child("bullets", true, false) as Label
+	return _cached_bullets_label
+
+
+## Keeps the HUD bullet counter on the carried weapon: charges left / the magazine.
+## Hidden when nothing is held, so the authored placeholder never sits on screen.
+## Called wherever the held weapon changes (grab, every spent charge, drop).
+func _update_hud_bullets() -> void:
+	if not is_local:
+		return
+	var label := _find_bullets_label()
+	if label == null:
+		return
+	if held_weapon_kind == LocalPickup2.WeaponKind.NONE:
+		label.visible = false
+		return
+	label.visible = true
+	label.text = "%d / %d" % [held_weapon_uses, held_weapon_max_uses]
 
 # --- STORM ZONE ---
 ## The server shrinks the storm over the match. The damage zone is simulated
@@ -3433,6 +3526,9 @@ func _send_state_to_server(_force_send := false) -> void:
 		_payload["anim_id"] = anim_id
 		_payload["slide"] = 1 if _is_sliding else 0
 		_payload["skin"] = str(root.local_skin_name) if root != null else ""
+		# Cosmetic weapon action: the other clients replay it when the counter moves.
+		_payload["act"] = _weapon_action_kind
+		_payload["act_seq"] = _weapon_action_seq
 		_payload.erase("chicken")
 		_payload.erase("lootbox")
 		root.ws.send(MsgPack.pack(_payload))
@@ -3662,39 +3758,58 @@ func _spawn_flash() -> void:
 #   screen       alpha of the full-screen tint, 0 = none
 #   damage       health removed by the bullet this shot spawns, 0 = no projectile
 #   bullet_speed metres per second for that bullet
+#   melee_reach  swing distance in metres for a weapon with no `bullet_speed`
+#   flash_scale  size of the muzzle flash (1 = the scene's authored 0.4 m quad)
 #
 # Every gun uses the same recoil trauma, so the whole firearms feel is one number
 # to tune. Melee swings are separate (lighter, they have no muzzle event).
 const GUN_SHAKE_TRAUMA := 0.85
+## Melee swing shape: a sphere `MELEE_HIT_RADIUS` wide, centred `MELEE_REACH` in
+## front of the player at chest height. 1.6 m + 0.7 m radius is about arm's length
+## past the body, so a swing hits what looks like it should hit.
+const MELEE_REACH: float = 1.6
+const MELEE_HIT_RADIUS: float = 0.7
+const MELEE_HEIGHT: float = 1.0
 const WEAPON_FIRE_FX := {
 	LocalPickup2.WeaponKind.GLOCK: {
 		"cam_time": 0.20, "cam_zoom": 0.87, "cam_fov": 1.2, "cam_behind": 0.08,
 		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.0,
-		"damage": 24.0, "bullet_speed": 130.0,
+		"damage": 24.0, "bullet_speed": 130.0, "flash_scale": 0.7,
 	},
 	LocalPickup2.WeaponKind.AK47: {
 		"cam_time": 0.24, "cam_zoom": 0.83, "cam_fov": 1.6, "cam_behind": 0.11,
 		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.03, "screen_color": Color(1.0, 0.76, 0.42, 0.03), "screen_time": 0.12,
-		"damage": 18.0, "bullet_speed": 170.0,
+		"damage": 18.0, "bullet_speed": 170.0, "flash_scale": 1.3,
 	},
 	LocalPickup2.WeaponKind.RPG: {
 		# A rocket pulls the camera BACK and widens the view: a blast, not recoil.
 		"cam_time": 0.45, "cam_zoom": 1.14, "cam_fov": -2.6, "cam_behind": 0.16,
 		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.14, "screen_color": Color(1.0, 0.60, 0.28, 0.14), "screen_time": 0.24,
-		"damage": 90.0, "bullet_speed": 60.0,
+		"damage": 90.0, "flash_scale": 2.0,
+		# Slow enough to read, and barely dropped: a heavy rocket, not a rifle round.
+		"bullet_speed": 32.0, "gravity": 0.2,
+		# Fat orange exhaust instead of a rifle tracer, plus a slow smoke plume that
+		# keeps drifting after impact. The rocket itself is a bigger, greener shell.
+		"trail_width": 0.16, "trail_tip_width": 0.02, "trail_length": 7.0,
+		"trail_time": 0.22, "trail_color": Color(1.0, 0.55, 0.2, 0.8),
+		"smoke": true, "smoke_amount": 90, "smoke_lifetime": 2.4, "smoke_size": 0.9,
+		"smoke_color": Color(0.82, 0.80, 0.76, 0.55),
+		"mesh_scale": 2.6, "mesh_tint": Color(0.9, 0.95, 0.85),
 	},
 	LocalPickup2.WeaponKind.KNIFE: {
 		"cam_time": 0.18, "cam_zoom": 0.92, "cam_fov": 0.6, "cam_behind": 0.06,
 		"shake": 0.24,
 		"screen": 0.0,
+		"damage": 34.0, "melee_reach": 1.6,
 	},
 	LocalPickup2.WeaponKind.SWORD: {
 		"cam_time": 0.26, "cam_zoom": 0.88, "cam_fov": 1.0, "cam_behind": 0.08,
 		"shake": 0.32,
 		"screen": 0.0,
+		"damage": 46.0, "melee_reach": 1.9,
 	},
 }
 
@@ -3753,21 +3868,36 @@ func _trigger_weapon_fx(clip: String) -> void:
 	var cfg := _weapon_fx_config(held_weapon_kind)
 	_trigger_weapon_fire_cam(held_weapon_kind)
 	_add_camera_shake(cfg.get("shake", 0.1))
+	if clip == "hook":
+		# Knife/sword: the swing is the hit, no projectile.
+		if held_weapon_kind == LocalPickup2.WeaponKind.KNIFE or held_weapon_kind == LocalPickup2.WeaponKind.SWORD:
+			_pending_melee = cfg
+		return
 	if clip != "shoot":
 		return
 	_fire_bullet(cfg)
-	_play_muzzle_flash()
+	_play_muzzle_flash(float(cfg.get("flash_scale", 1.0)))
 	var screen_alpha: float = cfg.get("screen", 0.0)
 	if screen_alpha > 0.0 and camera != null:
 		WeaponFX.spawn_screen_flash(camera, cfg.get("screen_color", Color(1, 1, 1, screen_alpha)), cfg.get("screen_time", 0.2))
 
 
-## Spawns one projectile at the muzzle Marker3D and sends it down the aim line.
-## Weapons with no `damage` in their row (knife, sword) spawn nothing.
+## Projectile look keys copied from WEAPON_FIRE_FX onto the bullet before it enters
+## the tree. Bullet._ready() builds the trail and the smoke from whatever is set,
+## so the RPG can look and fly differently without a second bullet scene.
+const BULLET_LOOK_KEYS: Array[String] = [
+	"trail", "trail_width", "trail_tip_width", "trail_color", "trail_time", "trail_length",
+	"smoke", "smoke_amount", "smoke_lifetime", "smoke_size", "smoke_color",
+	"mesh_scale", "mesh_tint",
+]
+
+
+## Spawns one projectile at the muzzle Marker3D and sends it along the marker's
+## -Z, i.e. wherever the gun is facing. Weapons with no `damage` in their row
+## (knife, sword) spawn nothing.
 ##
-## The marker only supplies the ORIGIN: the bullet follows the camera so it lands
-## where the crosshair points, which is what a third-person shot should do. The
-## marker can therefore be rotated freely to sit on the barrel tip.
+## The camera plays no part: rotate the marker in the rig to aim, and the bullet
+## follows the gun even when the camera looks somewhere else.
 func _fire_bullet(cfg: Dictionary) -> void:
 	var damage: float = cfg.get("damage", 0.0)
 	if damage <= 0.0:
@@ -3776,14 +3906,19 @@ func _fire_bullet(cfg: Dictionary) -> void:
 	if packed == null:
 		return
 	var origin := _muzzle_position()
-	var aim := _aim_direction()
+	var aim := _shot_direction()
+	if OS.is_debug_build() and not _shot_reported:
+		_shot_reported = true
+		print("[shot] origin=%s dir=%s marker=%s" % [
+			origin, aim, WEAPON_MUZZLE_PATH if get_node_or_null(WEAPON_MUZZLE_PATH) != null else "<missing>"])
 	# One global time scale: the per-weapon speeds stay real, so turning the debug
 	# knob back to 1.0 is all it takes to ship.
 	var speed := float(cfg.get("bullet_speed", 120.0)) * maxf(bullet_speed_scale, 0.02)
 	var debug_bullets := bullet_speed_scale < 1.0
 	var bullet: Node = packed.instantiate()
 	if bullet is RigidBody3D:
-		(bullet as RigidBody3D).gravity_scale = bullet_gravity_scale
+		# Per-weapon gravity: the rocket barely drops, rifle rounds keep the arc.
+		(bullet as RigidBody3D).gravity_scale = float(cfg.get("gravity", bullet_gravity_scale))
 	# Slow motion is a debug mode: the shot arcs to the floor and rests there long
 	# enough to be seen, which is the only cheap proof a projectile really exists.
 	# Bullet._ready() starts the timers, so every value must be set before add_child().
@@ -3793,6 +3928,11 @@ func _fire_bullet(cfg: Dictionary) -> void:
 		bullet.set("linger_after_hit", 4.0 if debug_bullets else 0.0)
 	if "debug" in bullet:
 		bullet.set("debug", debug_bullets)
+	# Per-weapon look (fat slow rocket with a plume, thin tracer for the guns).
+	# Set before add_child(): Bullet._ready() builds the trail and smoke from it.
+	for key in BULLET_LOOK_KEYS:
+		if cfg.has(key) and key in bullet:
+			bullet.set(key, cfg[key])
 	var host := get_tree().current_scene
 	if host == null:
 		host = get_tree().root
@@ -3853,7 +3993,10 @@ func _muzzle_flash_scene() -> PackedScene:
 ## re-triggered after that: the old flash created a billboard and an OmniLight3D
 ## per shot, and that light churn is what stalled the Compatibility renderer.
 ## Rebuilt only if the rig (and the marker it hangs off) was swapped out.
-func _play_muzzle_flash() -> void:
+##
+## `size` scales the whole emitter, so a rocket flashes far wider than a pistol
+## without a second scene: it is a node scale, not a rebuild.
+func _play_muzzle_flash(size: float = 1.0) -> void:
 	if _muzzle_flash != null and not is_instance_valid(_muzzle_flash):
 		_muzzle_flash = null
 	if _muzzle_flash == null:
@@ -3865,17 +4008,178 @@ func _play_muzzle_flash() -> void:
 			return
 		_muzzle_flash = packed.instantiate()
 		marker.add_child(_muzzle_flash)
+	(_muzzle_flash as Node3D).scale = Vector3.ONE * maxf(size, 0.05)
 	if _muzzle_flash.has_method("flash"):
 		_muzzle_flash.call("flash")
 
 
-## Where the camera is looking, flattened to a unit vector.
+## One swing: the closest damageable body inside a short sphere in front of the
+## player takes the hit. Offline, exactly like Bullet: when the server owns
+## damage, swap the take_damage() call for a request.
+##
+## Must run inside a physics frame (it queries the physics space); the input path
+## queues it through `_pending_melee` for that reason.
+func _melee_strike(cfg: Dictionary) -> void:
+	var damage: float = cfg.get("damage", 0.0)
+	if damage <= 0.0:
+		return
+	var world := get_world_3d()
+	if world == null:
+		return
+	var state := world.direct_space_state
+	if state == null:
+		return
+	# Aim flat: a swing at waist height should not go into the floor because the
+	# camera happened to be looking down.
+	var forward := _aim_direction()
+	forward.y = 0.0
+	if forward.length_squared() < 0.0001:
+		forward = -global_transform.basis.z
+	forward = forward.normalized()
+	var reach := float(cfg.get("melee_reach", MELEE_REACH))
+
+	var sphere := SphereShape3D.new()
+	sphere.radius = MELEE_HIT_RADIUS
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = sphere
+	query.transform = Transform3D(Basis.IDENTITY,
+			global_position + Vector3.UP * MELEE_HEIGHT + forward * reach)
+	query.exclude = [get_rid()]
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+
+	var best: Node = null
+	var best_distance := INF
+	for hit in state.intersect_shape(query, 16):
+		var collider := hit.get("collider") as Node
+		if collider == null:
+			continue
+		var target := _damage_owner(collider)
+		if target == null or target == self:
+			continue
+		var point: Vector3 = hit.get("point", global_position)
+		var distance := global_position.distance_squared_to(point)
+		if distance < best_distance:
+			best_distance = distance
+			best = target
+	if best != null:
+		best.call("take_damage", damage, self)
+
+
+## Nearest node at or above `node` that owns a take_damage() method, or null. The
+## collider is usually a hitbox, not the actor itself.
+func _damage_owner(node: Node) -> Node:
+	var current := node
+	while current != null:
+		if current.has_method("take_damage"):
+			return current
+		current = current.get_parent()
+	return null
+
+
+## Where the camera is looking, flattened to a unit vector. MELEE ONLY: bullets
+## follow the muzzle marker, never the camera.
 func _aim_direction() -> Vector3:
-	if camera != null and is_instance_valid(camera):
-		var dir := -camera.global_transform.basis.z
+	var forward := _camera_forward()
+	if forward != Vector3.ZERO:
+		return forward
+	return _body_forward()
+
+
+## Where a shot goes: straight out of the muzzle marker's -Z. The direction comes
+## from the rig alone, so the bullet goes where the gun is facing and the camera
+## has no say at all. Rotate the marker in the editor to aim the gun.
+##
+## A rig with no marker falls back to the character's facing; a shot is never
+## dropped on the floor and never follows the camera.
+func _shot_direction() -> Vector3:
+	var marker := get_node_or_null(WEAPON_MUZZLE_PATH) as Node3D
+	if marker != null:
+		var direction := -marker.global_transform.basis.z
+		if direction.length_squared() > 0.0001:
+			return direction.normalized()
+	return _body_forward()
+
+
+## The camera's look direction, or zero when there is no usable camera. Cameras
+## mounted on the player itself (the lobby's character preview) are ignored: they
+## look AT the character, so aiming along them would fire at the player's face.
+func _camera_forward() -> Vector3:
+	if camera == null or not is_instance_valid(camera) or _is_preview_camera(camera):
+		return Vector3.ZERO
+	var forward := -camera.global_transform.basis.z
+	if forward.length_squared() <= 0.0001:
+		return Vector3.ZERO
+	return forward.normalized()
+
+
+## The character's facing. The body node itself never rotates: the Skeleton3D turns
+## instead (mesh.rotation.y = atan2(move.x, move.z)), which puts the rig's +Z on the
+## movement direction. This model is authored facing +Z - its left foot sits on +X,
+## which only holds for +Z forward - so +Z is forward here, not Godot's usual -Z.
+## Used only when there is no camera and no marker.
+func _body_forward() -> Vector3:
+	if mesh != null and is_instance_valid(mesh):
+		var dir := mesh.global_transform.basis.z
 		if dir.length_squared() > 0.0001:
 			return dir.normalized()
-	return -global_transform.basis.z.normalized()
+	return global_transform.basis.z.normalized()
+
+
+## A preview rig is a camera parented under the player (lobby.tscn/Player/Camera3D)
+## or one tagged with the "aim_preview" group. Gameplay cameras are always outside
+## the player, e.g. PlayerManager/Camera3D.
+func _is_preview_camera(which: Camera3D) -> bool:
+	if which == null or not is_instance_valid(which):
+		return true
+	if which == self or is_ancestor_of(which):
+		return true
+	return which.is_in_group(&"aim_preview")
+
+
+## Debug tool: draws the exact line the next bullet will take. Off cost is a single
+## branch per tick.
+func _update_shot_line() -> void:
+	if not show_shot_line or not is_local:
+		if _aim_line != null:
+			_aim_line.visible = false
+		return
+	if _aim_line == null:
+		_build_shot_line()
+	var from := _muzzle_position()
+	var direction := _shot_direction()
+	var end := from + direction * maxf(shot_line_length, 0.1)
+	_aim_line.visible = true
+	_aim_line_mesh.clear_surfaces()
+	_aim_line_mesh.surface_begin(Mesh.PRIMITIVE_LINES)
+	_aim_line_mesh.surface_add_vertex(from)
+	_aim_line_mesh.surface_add_vertex(end)
+	# Short cross at the far end so the direction reads at a glance.
+	var side := direction.cross(Vector3.UP)
+	if side.length_squared() < 0.0001:
+		side = Vector3.RIGHT
+	side = side.normalized() * 0.35
+	_aim_line_mesh.surface_add_vertex(end - side)
+	_aim_line_mesh.surface_add_vertex(end + side)
+	_aim_line_mesh.surface_end()
+
+
+func _build_shot_line() -> void:
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = Color(1.0, 0.95, 0.25)
+	material.no_depth_test = true
+	material.disable_receive_shadows = true
+
+	_aim_line_mesh = ImmediateMesh.new()
+	_aim_line = MeshInstance3D.new()
+	_aim_line.name = "ShotLine"
+	_aim_line.mesh = _aim_line_mesh
+	_aim_line.material_override = material
+	_aim_line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# World-space vertices: the line must not swim with the animation.
+	_aim_line.top_level = true
+	add_child(_aim_line)
 
 
 # Starts a brief over-the-shoulder zoom behind the player on weapon fire, using
