@@ -218,7 +218,7 @@ common/physics_ticks_per_second=30
 
 textures/streaming/enabled=true
 textures/streaming/memory_budget_enabled=true
-textures/streaming/memory_budget_mb=200
+textures/streaming/memory_budget_mb=128
 textures/streaming/max_ops_per_second=100
 textures/streaming/inactivity_decay_rate_ms=500
 rendering_device/driver.windows="d3d12"

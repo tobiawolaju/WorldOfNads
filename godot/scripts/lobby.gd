@@ -66,10 +66,13 @@ var _bot_hive_timer: float = 0.0
 var _bot_sim_set: Dictionary = {} # motion index -> true (full-physics budget)
 var _bot_lod_cursor: int = 0
 var _stress_spawn_pending: int = 0
+var _stress_spawn_total: int = 0
 var _stress_spawn_base: Vector3 = Vector3.ZERO
 var _stress_spawn_picks: Array[String] = []
 
 const CLIMBABLE_ACTOR_SCRIPT := preload("res://scripts/environment/ClimbableActor.gd")
+# Low-end mobile browsers: cap stress bots for memory/FPS; horde still works.
+const LOW_END_WEB_MAX_STRESS_BOTS: int = 48
 
 const BOT_HIVE_INTERVAL: float = 0.75 # one "brain" tick for all bots
 const BOT_GOAL_REACH: float = 2.0
@@ -222,21 +225,34 @@ func get_local_spawn_position() -> Vector3:
 		return spawn_point.global_position
 	return global_position
 
+func _effective_stress_bot_count() -> int:
+	var n := lobby_stress_agent_count
+	if OS.has_feature("web") or OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios"):
+		n = mini(n, LOW_END_WEB_MAX_STRESS_BOTS)
+	return maxi(0, n)
+
+
 func _spawn_lobby_stress_agents() -> void:
 	if not spawn_lobby_stress_agents or lobby_stress_agent_count <= 0:
 		return
 	if spawn_point == null:
 		return
+	var count := _effective_stress_bot_count()
+	if count <= 0:
+		return
+	_stress_spawn_total = count
 	_stress_spawn_base = spawn_point.global_position
-	_stress_spawn_picks = _bot_skin_picks(lobby_stress_agent_count)
-	_stress_spawn_pending = lobby_stress_agent_count
-	print("[LOBBY] Spawning %d stress bots in batches of %d..." % [lobby_stress_agent_count, BOT_SPAWN_PER_FRAME])
+	_stress_spawn_picks = _bot_skin_picks(count)
+	_stress_spawn_pending = count
+	print("[LOBBY] Spawning %d stress bots in batches of %d (requested %d)..." % [count, BOT_SPAWN_PER_FRAME, lobby_stress_agent_count])
 
 
 func _tick_stress_spawn() -> void:
 	if _stress_spawn_pending <= 0:
 		return
-	var total := lobby_stress_agent_count
+	var total := _stress_spawn_total
+	if total <= 0:
+		total = lobby_stress_agent_count
 	var budget := mini(BOT_SPAWN_PER_FRAME, _stress_spawn_pending)
 	for _k in range(budget):
 		var i := total - _stress_spawn_pending

@@ -4,10 +4,11 @@ extends Node
 ## Provides global access to game-wide settings and controls.
 
 const PIXEL_BUDGET_DESKTOP := 180_000
-const PIXEL_BUDGET_MOBILE := 180_000
-const PIXEL_BUDGET_WEB := 150_000 # browser/low-end: favor FPS (Hitman-style render budget)
-const SCALE_STEPS: Array[float] = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35]
+const PIXEL_BUDGET_MOBILE := 120_000
+const PIXEL_BUDGET_WEB := 90_000 # low-end mobile browser: aggressive dynamic res for FPS
+const SCALE_STEPS: Array[float] = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25]
 const RESIZE_DEBOUNCE_SEC := 0.3
+const LOW_END_WEB_MAX_FPS := 30
 
 var _resize_debounce := 0.0
 
@@ -22,9 +23,9 @@ func _ready() -> void:
 	# Force a responsive frame loop for the live 3D game (low_processor_mode is
 	# a battery-saver meant for static UI and throttles the frame rate hard).
 	#Engine.low_processor_mode = false
-	# The frame cap lives only in project.godot (run/max_fps=30) now. A runtime
-	# override here silently made the project setting meaningless, and 30 fps
-	# held on purpose keeps low-end devices steady instead of dipping.
+	# Low-end mobile browsers: steady 30 FPS avoids thermal throttling/stutter.
+	if OS.has_feature("web") or _is_mobile():
+		Engine.max_fps = LOW_END_WEB_MAX_FPS
 
 	get_tree().root.size_changed.connect(_on_root_size_changed)
 	_apply_3d_scale(_compute_3d_scale())
@@ -52,10 +53,11 @@ func _compute_3d_scale() -> float:
 	if pixels <= 0.0:
 		return 1.0
 	var budget := float(PIXEL_BUDGET_DESKTOP)
-	if OS.has_feature("web"):
-		budget = float(PIXEL_BUDGET_WEB)
-	elif _is_mobile():
+	if OS.has_feature("web") or _is_mobile():
+		# Mobile browser: use the tighter budget.
 		budget = float(PIXEL_BUDGET_MOBILE)
+		if OS.has_feature("web"):
+			budget = minf(budget, float(PIXEL_BUDGET_WEB))
 	for step in SCALE_STEPS:
 		if pixels * step * step <= budget:
 			return step
