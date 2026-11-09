@@ -76,6 +76,9 @@ const LOW_END_WEB_MAX_STRESS_BOTS: int = 48
 
 const BOT_HIVE_INTERVAL: float = 0.75 # one "brain" tick for all bots
 const BOT_GOAL_REACH: float = 2.0
+# Keep bots at/below local player pace (player SPEED ~4.0).
+const BOT_MAX_SPEED: float = 3.6
+const BOT_SEEK_SPEED: float = 4.0
 
 # Distance tiers (meters): near=full sim+anim, mid=throttled sim/anim LOD,
 # far=very low sim rate + mesh/anim disabled. Tuned for low-end browser crowds.
@@ -790,7 +793,9 @@ func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float)
 
 	var diff := target - rig.global_position
 	diff.y = 0.0
-	var speed := (motion.radius * motion.speed) * (1.7 if seek_goal else 1.0)
+	var base_speed := minf((motion.radius * motion.speed) * (1.25 if seek_goal else 1.0), BOT_MAX_SPEED)
+	if seek_goal:
+		base_speed = minf(maxf(base_speed, 3.2), BOT_SEEK_SPEED)
 	if seek_goal and diff.length() <= BOT_GOAL_REACH:
 		rig.velocity.x = 0.0
 		rig.velocity.z = 0.0
@@ -798,7 +803,7 @@ func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float)
 	else:
 		if moving and diff.length() > 0.001:
 			var dir := diff.normalized()
-			var desired_speed := clampf(diff.length() / maxf(delta, 0.001), 0.0, maxf(speed * 2.0, 5.5))
+			var desired_speed := clampf(diff.length() / maxf(delta, 0.001), 0.0, base_speed)
 			rig.velocity.x = dir.x * desired_speed
 			rig.velocity.z = dir.z * desired_speed
 			bot.rotation.y = atan2(dir.x, dir.z)
