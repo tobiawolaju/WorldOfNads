@@ -16,8 +16,8 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
 render_priority = 0
 shader = ExtResource("5_omrgh")
-shader_parameter/_color = Color(0.6509804, 0.32941177, 1, 1)
-shader_parameter/sphere_size = 2.0
+shader_parameter/_color = Color(0, 0, 0, 1)
+shader_parameter/sphere_size = 2.5
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_07nfq"]
 top_radius = 1.0
@@ -29,9 +29,17 @@ bottom_radius = 1.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_07nfq"]
 transparency = 1
+cull_mode = 1
 shading_mode = 0
-albedo_color = Color(0.8392157, 0.50980395, 0.9372549, 1)
-proximity_fade_enabled = true
+albedo_color = Color(0.62012964, 0.0034962178, 0.9330607, 0.69803923)
+proximity_fade_distance = 15.0
+stencil_flags = 2
+stencil_color = Color(1, 1, 1, 1)
+stencil_outline_thickness = 0.034
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_m1sns"]
+shading_mode = 0
+albedo_color = Color(0.7764706, 0.6313726, 0.9529412, 1)
 proximity_fade_distance = 15.0
 stencil_flags = 2
 stencil_color = Color(1, 1, 1, 1)
@@ -87,6 +95,11 @@ transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_oipnb")
 surface_material_override/0 = SubResource("StandardMaterial3D_07nfq")
+
+[node name="Cylinder3" type="MeshInstance3D" parent="env/Cylinder" unique_id=1492510077]
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_oipnb")
+surface_material_override/0 = SubResource("StandardMaterial3D_m1sns")
 
 [node name="Player" type="Node3D" parent="." unique_id=129729236 node_paths=PackedStringArray("status_label")]
 script = ExtResource("7_yad6j")

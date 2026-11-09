@@ -52,15 +52,27 @@ class BotMotion:
 	var dist_sq: float = INF
 	## Orbit advanced even when dormant so teleported bots don't freeze in time.
 	var orbit_accum: float = 0.0
+	# Hive-mind goal (assigned centrally at low frequency). Overrides orbit when set.
+	var goal_node: Node3D = null
+	var goal_kind: String = "" # "chicken","lootbox","powerup","weapon"
+	var action_cooldown: float = 0.0
+	var held_item: Node = null
+	var held_kind: String = ""
 
 var _bot_motions: Array[BotMotion] = []
 var _bot_lod_timer: float = 0.0
 var _bot_budget_timer: float = 0.0
+var _bot_hive_timer: float = 0.0
 var _bot_sim_set: Dictionary = {} # motion index -> true (full-physics budget)
 var _bot_lod_cursor: int = 0
 var _stress_spawn_pending: int = 0
 var _stress_spawn_base: Vector3 = Vector3.ZERO
 var _stress_spawn_picks: Array[String] = []
+
+const CLIMBABLE_ACTOR_SCRIPT := preload("res://scripts/environment/ClimbableActor.gd")
+
+const BOT_HIVE_INTERVAL: float = 0.75 # one "brain" tick for all bots
+const BOT_GOAL_REACH: float = 2.0
 
 # Distance tiers (meters): near=full sim+anim, mid=throttled sim/anim LOD,
 # far=very low sim rate + mesh/anim disabled. Tuned for low-end browser crowds.
@@ -123,6 +135,7 @@ func _ready():
 
 func _physics_process(delta: float) -> void:
 	_tick_stress_spawn()
+	_tick_hive_mind(delta)
 	_drive_lobby_bots(delta)
 
 func _process(_delta: float) -> void:
@@ -284,13 +297,23 @@ func _instantiate_bot_rig(skin_name: String) -> CharacterBody3D:
 	var source := SKIN_SCENE.instantiate()
 
 	var rig := CharacterBody3D.new()
-	rig.collision_layer = 1  # detectable by melee/physics queries...
-	rig.collision_mask = 1   # ...and stands on the world
+	# Layer 3 (value 4): melee/queries can still find us, but pickups (mask=layer 1)
+	# won't be pushed by bots. Layer 1 mask keeps us standing on the world floor.
+	rig.collision_layer = 4
+	rig.collision_mask = 1
 	rig.floor_max_angle = deg_to_rad(50.0)
 
 	var avatar: Node3D = REMOTE_PLAYER_SCRIPT.new()
 	avatar.name = "Avatar"
 	rig.add_child(avatar)
+
+	# Horde FX: local player can climb on bots (disabled by default; LOD enables near).
+	var climb: Area3D = CLIMBABLE_ACTOR_SCRIPT.new()
+	climb.name = "ClimbActor"
+	climb.monitoring = false
+	rig.add_child(climb)
+	if climb.has_method("set_climb_enabled"):
+		climb.call("set_climb_enabled", false)
 
 	# The character's own capsule: skin.tscn ships it at the right size and
 	# height, so the body reuses that shape instead of guessing one.
@@ -400,6 +423,148 @@ func _redress_fallback_bots() -> void:
 		_skin_applier.apply_skin(bot, picks[i] if i < picks.size() else DEFAULT_SKIN_NAME)
 
 
+# --- HIVE MIND (one cheap brain, low frequency) --------------------------
+# Assigns goals only to sim-budgeted bots so 2000 agents don't run per-bot AI.
+func _tick_hive_mind(delta: float) -> void:
+	_bot_hive_timer -= delta
+	if _bot_hive_timer > 0.0:
+		return
+	_bot_hive_timer = BOT_HIVE_INTERVAL
+	if _bot_sim_set.is_empty():
+		return
+
+	var chicken := _find_pickup_objective("Chicken")
+	var lootbox := _find_pickup_objective("LootBox")
+	var powerups := _find_available_powerups()
+	var weapons := _find_available_weapons()
+	var sim_ids: Array = _bot_sim_set.keys()
+	# Shuffle a little by rotating start so assignments don't stick statically.
+	if sim_ids.size() > 1:
+		sim_ids.sort()
+
+	var want_chicken := 3
+	var want_lootbox := 3
+	for idx in sim_ids:
+		var i := int(idx)
+		if i < 0 or i >= _bot_motions.size():
+			continue
+		var motion: BotMotion = _bot_motions[i]
+		if motion == null:
+			continue
+		# Clear invalid/consumed goals/items.
+		if motion.goal_node != null and not is_instance_valid(motion.goal_node):
+			motion.goal_node = null
+			motion.goal_kind = ""
+		if motion.held_item != null and not is_instance_valid(motion.held_item):
+			motion.held_item = null
+			motion.held_kind = ""
+
+		# Holding something: if stolen (objective) or gone, release; else keep.
+		if motion.held_kind != "" and motion.held_item != null and is_instance_valid(motion.held_item):
+			if motion.held_kind == "objective":
+				var avatar = npcs[i] if i < npcs.size() else null
+				var it := motion.held_item
+				var still_mine: bool = bool(it.get("remote_held")) and (it.get("holder") == avatar)
+				if not still_mine:
+					motion.held_item = null
+					motion.held_kind = ""
+					# fall through to get a new goal
+				else:
+					motion.goal_node = null
+					motion.goal_kind = ""
+					continue
+			else:
+				motion.goal_node = null
+				motion.goal_kind = ""
+				continue
+
+		if chicken != null and want_chicken > 0 and _pickup_grabbable(chicken):
+			motion.goal_node = chicken
+			motion.goal_kind = "chicken"
+			want_chicken -= 1
+		elif lootbox != null and want_lootbox > 0 and _pickup_grabbable(lootbox):
+			motion.goal_node = lootbox
+			motion.goal_kind = "lootbox"
+			want_lootbox -= 1
+		else:
+			# Opportunistic: nearest useful pickup to this bot.
+			_assign_opportunistic_goal(motion, powerups, weapons)
+
+
+func _find_pickup_objective(item_id: String) -> Node3D:
+	# Objective items are LocalPickup nodes (CHICKEN/LOOTBOX) in lobby.
+	var group := "local_pickup_items"
+	for n in get_tree().get_nodes_in_group(group):
+		if not is_instance_valid(n):
+			continue
+		if n.has_method("objective_item_id") and str(n.call("objective_item_id")) == item_id:
+			return n as Node3D
+		# fallback by name/mode
+		if n is Node and (n as Node).name == item_id:
+			return n as Node3D
+	return null
+
+
+func _pickup_grabbable(n: Node) -> bool:
+	if n == null or not is_instance_valid(n):
+		return false
+	if n.has_method("can_pick_up"):
+		return bool(n.call("can_pick_up"))
+	return true
+
+
+func _find_available_powerups() -> Array:
+	var out: Array = []
+	for n in get_tree().get_nodes_in_group("local_pickup_items"):
+		if out.size() >= 24:
+			break
+		if not is_instance_valid(n) or not _pickup_grabbable(n):
+			continue
+		if n.has_method("is_weapon_pickup") and bool(n.call("is_weapon_pickup")):
+			continue
+		if n.has_method("is_objective_item") and bool(n.call("is_objective_item")):
+			continue
+		if n.has_method("is_power_up_item") and bool(n.call("is_power_up_item")):
+			out.append(n)
+	return out
+
+
+func _find_available_weapons() -> Array:
+	var out: Array = []
+	for n in get_tree().get_nodes_in_group("local_weapon_pickups"):
+		if out.size() >= 16:
+			break
+		if is_instance_valid(n) and _pickup_grabbable(n):
+			out.append(n)
+	return out
+
+
+func _assign_opportunistic_goal(motion: BotMotion, powerups: Array, weapons: Array) -> void:
+	motion.goal_node = null
+	motion.goal_kind = ""
+	var rig := motion.rig
+	if rig == null or not is_instance_valid(rig):
+		return
+	var best: Node3D = null
+	var best_d := 60.0 * 60.0
+	var best_kind := ""
+	# Prefer weapon if unarmed, else powerup.
+	var pool: Array = weapons if motion.held_kind != "weapon" else powerups
+	if pool.is_empty():
+		pool = powerups if pool == weapons else weapons
+	for n in pool:
+		if not is_instance_valid(n) or not (n is Node3D):
+			continue
+		var d := rig.global_position.distance_squared_to((n as Node3D).global_position)
+		if d < best_d:
+			best_d = d
+			best = n as Node3D
+			best_kind = "weapon" if n.has_method("is_weapon_pickup") and bool(n.call("is_weapon_pickup")) else "powerup"
+	if best != null:
+		motion.goal_node = best
+		motion.goal_kind = best_kind
+
+
 # "Hitman-style" crowd at scale (20..2000): fixed full-physics budget, distance
 # tiers, and cheap dormant updates for the rest. 2000 full CharacterBody+AnimTree
 # bots can't all step every tick in a browser, so only the nearest N get
@@ -487,8 +652,13 @@ func _refresh_bot_budget(viewer_pos: Vector3) -> void:
 		if rig != null and is_instance_valid(rig):
 			var active := _bot_sim_set.has(i)
 			rig.visible = visual
-			rig.collision_layer = 1 if active else 0
+			# Keep active bots off pickup-collision (pickups mask layer 1 only).
+			rig.collision_layer = 4 if active else 0
 			rig.collision_mask = 1 if active else 0
+			# Horde: only near, visible, active bots are climbable (perf).
+			var climb = rig.get_node_or_null("ClimbActor")
+			if climb != null and climb.has_method("set_climb_enabled"):
+				climb.call("set_climb_enabled", visual and active and new_lod <= 1)
 			if not active:
 				rig.velocity = Vector3.ZERO
 
@@ -563,6 +733,13 @@ func _apply_bot_lod(bot: Node, lod: int, visual: bool = true) -> void:
 
 
 func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float) -> void:
+	motion.action_cooldown = maxf(0.0, motion.action_cooldown - delta)
+	# Held item use (hive-directed, cheap cooldown).
+	if motion.held_kind != "" and motion.action_cooldown <= 0.0:
+		_bot_use_held(bot, motion)
+		return
+
+	# Orbit baseline (always advanced so dormant/goal transitions stay smooth).
 	if motion.pause_left > 0.0:
 		motion.pause_left -= delta
 		if motion.pause_left <= 0.0:
@@ -572,36 +749,46 @@ func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float)
 		motion.pause_timer -= delta
 		if motion.pause_timer <= 0.0:
 			motion.pause_left = _stress_rng.randf_range(0.6, 1.8)
-	var moving := motion.pause_left <= 0.0
+
+	var seek_goal := false
+	var target := motion.home + _bot_orbit_offset(motion)
+	if motion.held_kind == "" and motion.goal_node != null and is_instance_valid(motion.goal_node):
+		if _pickup_grabbable(motion.goal_node):
+			target = (motion.goal_node as Node3D).global_position
+			seek_goal = true
+		else:
+			motion.goal_node = null
+			motion.goal_kind = ""
+
+	var moving := motion.pause_left <= 0.0 or seek_goal
 
 	if not rig.is_on_floor():
 		rig.velocity.y -= BOT_GRAVITY * delta
 	else:
 		rig.velocity.y = 0.0
-		if moving:
+		if moving and not seek_goal:
 			motion.jump_timer -= delta
 			if motion.jump_timer <= 0.0:
 				rig.velocity.y = sqrt(2.0 * BOT_GRAVITY * BOT_JUMP_HEIGHT)
 				motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
 
-	var target := motion.home + _bot_orbit_offset(motion)
 	var diff := target - rig.global_position
 	diff.y = 0.0
-
-	if moving:
-		var speed := motion.radius * motion.speed
-		if diff.length() > 0.001:
+	var speed := (motion.radius * motion.speed) * (1.7 if seek_goal else 1.0)
+	if seek_goal and diff.length() <= BOT_GOAL_REACH:
+		rig.velocity.x = 0.0
+		rig.velocity.z = 0.0
+		_bot_try_pickup_goal(bot, motion)
+	else:
+		if moving and diff.length() > 0.001:
 			var dir := diff.normalized()
-			var desired_speed := clampf(diff.length() / maxf(delta, 0.001), 0.0, maxf(speed * 2.0, 4.0))
+			var desired_speed := clampf(diff.length() / maxf(delta, 0.001), 0.0, maxf(speed * 2.0, 5.5))
 			rig.velocity.x = dir.x * desired_speed
 			rig.velocity.z = dir.z * desired_speed
 			bot.rotation.y = atan2(dir.x, dir.z)
 		else:
 			rig.velocity.x = 0.0
 			rig.velocity.z = 0.0
-	else:
-		rig.velocity.x = 0.0
-		rig.velocity.z = 0.0
 
 	rig.move_and_slide()
 
@@ -609,9 +796,171 @@ func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float)
 		rig.global_position = motion.home
 		rig.velocity = Vector3.ZERO
 
-	# Skip animation state churn when animation LOD is off (far/culled).
 	if motion.lod <= 1 and bot.has_method("set_animation_state"):
-		bot.set_animation_state(_bot_animation_state(motion, moving))
+		bot.set_animation_state(_bot_animation_state(motion, moving or seek_goal))
+
+
+func _bot_try_pickup_goal(bot: Node, motion: BotMotion) -> void:
+	var item := motion.goal_node
+	if item == null or not is_instance_valid(item) or not _pickup_grabbable(item):
+		motion.goal_node = null
+		return
+	# Use avatar as holder so attach paths (Back/offset) resolve on the skin rig.
+	var holder: Node3D = bot as Node3D
+	if item.has_method("is_objective_item") and bool(item.call("is_objective_item")):
+		# Mark as held by another actor (remote-held) so the local player can
+		# still snatch/steal objectives, same as stealing from a remote player.
+		if item.has_method("set_remote_held"):
+			item.call("set_remote_held", true, holder)
+		elif not item.has_method("pick_up") or not item.call("pick_up", holder):
+			return
+		else:
+			pass
+		motion.held_kind = "objective"
+		motion.held_item = item
+		motion.action_cooldown = 999.0
+		motion.goal_node = null
+		motion.goal_kind = ""
+		return
+	if not item.has_method("pick_up") or not item.call("pick_up", holder):
+		return
+	if item.has_method("is_weapon_pickup") and bool(item.call("is_weapon_pickup")):
+		motion.held_kind = "weapon"
+		motion.held_item = item
+		var kind_v = item.get("weapon_kind")
+		var kind := int(kind_v) if kind_v != null else 0
+		if bot.has_method("show_remote_weapon"):
+			bot.call("show_remote_weapon", kind)
+		motion.action_cooldown = 0.6
+	elif item.has_method("is_power_up_item") and bool(item.call("is_power_up_item")):
+		motion.held_kind = "powerup"
+		motion.held_item = item
+		motion.action_cooldown = _stress_rng.randf_range(0.8, 2.0)
+	else:
+		motion.held_kind = "item"
+		motion.held_item = item
+		motion.action_cooldown = 2.0
+	motion.goal_node = null
+	motion.goal_kind = ""
+
+
+func _bot_use_held(bot: Node, motion: BotMotion) -> void:
+	# "Use" held items (visual/perf-safe). Only meaningful for sim-budget bots.
+	if motion.held_item != null and not is_instance_valid(motion.held_item):
+		motion.held_item = null
+		motion.held_kind = ""
+		return
+	match motion.held_kind:
+		"weapon":
+			_bot_fire_weapon(bot, motion)
+		"powerup":
+			_bot_use_powerup(bot, motion)
+		"objective":
+			motion.action_cooldown = 5.0 # keep carrying
+		_:
+			motion.held_kind = ""
+			motion.held_item = null
+
+
+func _bot_fire_weapon(bot: Node, motion: BotMotion) -> void:
+	var item := motion.held_item
+	if item == null or not is_instance_valid(item):
+		_clear_bot_weapon(bot, motion)
+		return
+	var kind_v = item.get("weapon_kind")
+	var kind := int(kind_v) if kind_v != null else 0
+	# Face local player if present, else forward.
+	var target := _hive_target_for_bot(bot)
+	if target != Vector3.INF and bot is Node3D:
+		var d := target - (bot as Node3D).global_position
+		d.y = 0.0
+		if d.length_squared() > 0.01:
+			bot.rotation.y = atan2(d.x, d.z)
+	var action := 2 # HOOK (melee swing anim) default
+	if kind in [2, 3, 5]: # AK47, GLOCK, RPG -> SHOOT
+		action = 1
+	if bot.has_method("play_action"):
+		bot.call("play_action", action)
+	# Reuse LOS damage resolution for gun shots (cheap, bounded to sim bots).
+	if action == 1:
+		_bot_resolve_shot(bot, motion, kind)
+	motion.action_cooldown = 0.9 if action == 1 else 1.2
+	# Simple ammo/consumption: drop the weapon after a few uses.
+	motion.set_meta("bot_ammo", int(motion.get_meta("bot_ammo", 0)) + 1)
+	var ammo := int(motion.get_meta("bot_ammo", 0))
+	var limit := 3
+	if kind == 1 or kind == 4:
+		limit = 2
+	if ammo >= limit:
+		_clear_bot_weapon(bot, motion)
+
+
+func _clear_bot_weapon(bot: Node, motion: BotMotion) -> void:
+	if bot.has_method("show_remote_weapon"):
+		bot.call("show_remote_weapon", 0)
+	var item := motion.held_item
+	if item != null and is_instance_valid(item) and item.has_method("deplete_and_respawn"):
+		var p: Vector3 = (bot as Node3D).global_position if bot is Node3D else Vector3.ZERO
+		item.call("deplete_and_respawn", p)
+	motion.held_item = null
+	motion.held_kind = ""
+	motion.action_cooldown = 0.5
+	motion.remove_meta("bot_ammo")
+
+
+func _hive_target_for_bot(bot: Node) -> Vector3:
+	if local_player != null and is_instance_valid(local_player) and local_player is Node3D:
+		return (local_player as Node3D).global_position + Vector3.UP
+	return Vector3.INF
+
+
+func _bot_resolve_shot(bot: Node, motion: BotMotion, kind: int) -> void:
+	# Best-effort LOS damage using the same system as gameplay. Bot avatar is a
+	# RemotePlayer-like node in lobby; if it can't provide a shot ray, skip.
+	if bot == null or not bot.has_method("get_shot_ray"):
+		return
+	var ray: Dictionary = bot.call("get_shot_ray")
+	if ray.is_empty():
+		return
+	var origin: Vector3 = ray.get("origin", Vector3.ZERO)
+	var dir: Vector3 = ray.get("dir", Vector3.FORWARD)
+	# Hive-mind stress test: simplified, softened gun stats (no player.gd coupling).
+	# Signature: (shooter, origin, dir, base_damage, max_range, aim_radius,
+	#             falloff_start, falloff_end, falloff_min)
+	var damage := 8.0
+	var max_range := 70.0
+	var aim_radius := 1.0
+	var falloff_start := 12.0
+	var falloff_end := 55.0
+	var falloff_min := 0.35
+	if kind == 5: # RPG
+		damage = 30.0
+		aim_radius = 2.0
+		max_range = 80.0
+		falloff_start = 6.0
+		falloff_end = 50.0
+		falloff_min = 0.5
+	elif kind == 2: # AK47
+		damage = 10.0
+		max_range = 90.0
+		falloff_start = 18.0
+		falloff_end = 75.0
+		falloff_min = 0.3
+	Bullet.resolve_los_damage(bot, origin, dir, damage, max_range, aim_radius, falloff_start, falloff_end, falloff_min)
+
+
+func _bot_use_powerup(bot: Node, motion: BotMotion) -> void:
+	# Consume and recycle (local respawn) so lobby items keep circulating.
+	var item := motion.held_item
+	if item != null and is_instance_valid(item):
+		var from: Vector3 = (bot as Node3D).global_position if bot is Node3D else motion.home
+		if item.has_method("consume_and_respawn"):
+			item.call("consume_and_respawn", from)
+		elif item.has_method("consume_for_server"):
+			item.call("consume_for_server")
+	motion.held_item = null
+	motion.held_kind = ""
+	motion.action_cooldown = 1.5
 
 
 func _bot_orbit_offset(motion: BotMotion) -> Vector3:

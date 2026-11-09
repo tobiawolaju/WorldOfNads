@@ -418,9 +418,6 @@ func take_damage(amount: float, source: Node = null, is_bullet: bool = false) ->
 	if _is_dead or amount <= 0.0:
 		return
 	health = maxf(0.0, health - amount)
-	var from := str(source.name) if source != null else "?"
-	print("[LOS] %s -%.0f hp -> %.0f/%.0f (from %s)" % [
-		display_name if display_name != "" else player_id, amount, maxf(health, 0.0), MAX_HEALTH, from])
 	_flash_damage()
 	# Event-driven health burn (no per-frame cost): shows damage in realtime.
 	if health > 0.0:
@@ -451,7 +448,6 @@ func _flash_damage() -> void:
 func _die_local() -> void:
 	_is_dead = true
 	visible = false
-	print("[LOS] %s died (local test) - respawn in %.1fs" % [display_name if display_name != "" else player_id, TEST_RESPAWN_DELAY])
 	# Freeze a lobby bot's rig so it stops "working" while dead.
 	var p := get_parent()
 	if p is CharacterBody3D:

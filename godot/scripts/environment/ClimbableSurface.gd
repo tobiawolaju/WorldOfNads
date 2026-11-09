@@ -1,7 +1,7 @@
-extends StaticBody3D
+extends PhysicsBody3D
 
-## Climbable surface: attach this script to any StaticBody3D (a ladder, a wall, a
-## shipping container, ...) and the local player can climb it.
+## Climbable surface: attach this script to any PhysicsBody3D/StaticBody3D (a ladder,
+## a wall, a shipping container, another player rig, ...) and the local player can climb it.
 ##
 ## Walking into the body stops the player against its collision, and once the
 ## player is inside the trigger volume they attach to the face, start the "climb"

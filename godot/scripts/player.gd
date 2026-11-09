@@ -1601,6 +1601,14 @@ func _physics_process_climb(delta: float, input_dir: Vector2) -> void:
 		return
 
 	var normal := _climb_normal
+	# Moving climbable actors (bots/other players): refresh normal so the hug/yaw
+	# track the actor as it moves ("horde" stacking).
+	if _climb_surface != null and is_instance_valid(_climb_surface) and _climb_surface.get_node_or_null("ClimbActor") != null:
+		var live := global_position - _climb_surface.global_position
+		live.y = 0.0
+		if live.length_squared() > 0.0001:
+			normal = live.normalized()
+			_climb_normal = normal
 	var right := Vector3.UP.cross(normal)
 	if right.length_squared() < 0.0001:
 		right = Vector3.RIGHT

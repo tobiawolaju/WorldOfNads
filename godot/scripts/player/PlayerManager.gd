@@ -66,6 +66,7 @@ const REMOTE_MESH_LOD_DISTANCE: float = 32.0
 const REMOTE_MESH_LOD_DISTANCE_SQ: float = REMOTE_MESH_LOD_DISTANCE * REMOTE_MESH_LOD_DISTANCE
 const REMOTE_CULL_DISTANCE_SQ: float = 70.0 * 70.0
 const REMOTE_PLAYER_SCRIPT := preload("res://scripts/player/RemotePlayer.gd")
+const CLIMBABLE_ACTOR_SCRIPT := preload("res://scripts/environment/ClimbableActor.gd")
 
 # --- CHICKEN AUTHORITY STATE ---
 var chicken_node: RigidBody3D = null
@@ -1557,6 +1558,14 @@ func _convert_scene_to_remote_player(source: Node) -> Node3D:
 		child.owner = null
 		remote_player.add_child(child)
 
+	# Horde FX: let local player climb on other players (perf-gated by LOD).
+	var climb: Area3D = CLIMBABLE_ACTOR_SCRIPT.new()
+	climb.name = "ClimbActor"
+	climb.monitoring = false
+	remote_player.add_child(climb)
+	if climb.has_method("set_climb_enabled"):
+		climb.call("set_climb_enabled", false)
+
 	source.queue_free()
 	return remote_player
 
@@ -1700,9 +1709,15 @@ func _apply_remote_interpolation() -> void:
 		if do_lod_check:
 			var is_near := dist_sq < REMOTE_CULL_DISTANCE_SQ
 			node.visible = is_near
+			var climb = node.get_node_or_null("ClimbActor")
+			if climb != null and climb.has_method("set_climb_enabled"):
+				climb.call("set_climb_enabled", is_near and dist_sq <= REMOTE_ANIMATION_LOD_DISTANCE_SQ)
 			if not is_near:
 				continue
 		elif not node.visible:
+			var climb = node.get_node_or_null("ClimbActor")
+			if climb != null and climb.has_method("set_climb_enabled"):
+				climb.call("set_climb_enabled", false)
 			continue
 
 		# "Hitman-style" CPU budget: when the skinned mesh is LOD-hidden (far but
