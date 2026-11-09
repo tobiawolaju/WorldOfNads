@@ -5,6 +5,7 @@ extends Node
 
 const PIXEL_BUDGET_DESKTOP := 180_000
 const PIXEL_BUDGET_MOBILE := 180_000
+const PIXEL_BUDGET_WEB := 150_000 # browser/low-end: favor FPS (Hitman-style render budget)
 const SCALE_STEPS: Array[float] = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35]
 const RESIZE_DEBOUNCE_SEC := 0.3
 
@@ -50,7 +51,11 @@ func _compute_3d_scale() -> float:
 	var pixels := float(window_size.x) * float(window_size.y)
 	if pixels <= 0.0:
 		return 1.0
-	var budget := float(PIXEL_BUDGET_MOBILE if _is_mobile() else PIXEL_BUDGET_DESKTOP)
+	var budget := float(PIXEL_BUDGET_DESKTOP)
+	if OS.has_feature("web"):
+		budget = float(PIXEL_BUDGET_WEB)
+	elif _is_mobile():
+		budget = float(PIXEL_BUDGET_MOBILE)
 	for step in SCALE_STEPS:
 		if pixels * step * step <= budget:
 			return step
