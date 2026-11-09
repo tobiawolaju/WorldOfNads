@@ -244,7 +244,6 @@ offset_bottom = 40.0
 [node name="Node2" type="Node" parent="CanvasLayer/BoxContainer" unique_id=802481236]
 
 [node name="Minimap" type="Control" parent="CanvasLayer/BoxContainer/Node2" unique_id=43787215 node_paths=PackedStringArray("background_texture", "minimap_container", "player_pointer", "chicken_pointer", "lootbox_pointer", "pickup_pointer", "storm_overlay", "bus_path_overlay", "shade_overlay")]
-modulate = Color(1, 1, 1, 0.75686276)
 custom_minimum_size = Vector2(60, 60)
 clip_contents = true
 layout_mode = 3
@@ -659,16 +658,16 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -247.0
-offset_top = -228.0
-offset_right = -138.0
-offset_bottom = -203.0
+offset_left = -228.0
+offset_top = -238.0
+offset_right = -119.0
+offset_bottom = -213.0
 grow_horizontal = 0
 grow_vertical = 0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.5254902)
 theme_override_constants/outline_size = 12
 theme_override_fonts/font = ExtResource("14_48y67")
-text = "bullet counter "
+text = ".."
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -737,7 +736,6 @@ offset_left = 53.0
 offset_top = 187.0
 offset_right = 160.0
 offset_bottom = 207.0
-theme_override_colors/font_color = Color(1, 1, 1, 0.50980395)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.14901961)
 theme_override_constants/shadow_offset_x = -5
 theme_override_constants/shadow_offset_y = 5
@@ -749,7 +747,6 @@ text = "Total MON pool"
 horizontal_alignment = 2
 
 [node name="TextureRect2" type="TextureRect" parent="PrizePool" unique_id=671757545]
-modulate = Color(1, 1, 1, 0.50980395)
 custom_maximum_size = Vector2(25, 25)
 layout_mode = 0
 offset_left = -30.0
@@ -844,7 +841,7 @@ offset_right = 141.0
 offset_bottom = 25.5
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 0, 0.34901962, 1)
+theme_override_colors/font_color = Color(0.4392157, 0.023529412, 0.99607843, 1)
 theme_override_fonts/font = ExtResource("3_apjy4")
 theme_override_font_sizes/font_size = 50
 text = "CHASHOUT !"

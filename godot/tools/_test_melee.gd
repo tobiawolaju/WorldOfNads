@@ -64,7 +64,7 @@ func _run() -> void:
 	await physics_frame
 	await physics_frame
 	_check("a knife swing hits a target in reach", near.hits == 1, str(near.hits))
-	_check("the knife deals its own damage", is_equal_approx(near.total, 34.0), str(near.total))
+	_check("the knife deals its own damage", is_equal_approx(near.total, 55.0), str(near.total))
 	_check("the hit reports the player", near.last_source == player)
 	_check("a spam press during the swing does not hit twice", near.hits == 1, str(near.hits))
 
@@ -74,7 +74,8 @@ func _run() -> void:
 	await physics_frame
 	await physics_frame
 	_check("the sword hits harder than the knife",
-			is_equal_approx(near.total, 34.0 + 46.0), str(near.total))
+			is_equal_approx(near.total, 55.0 + 120.0), str(near.total))
+	_check("the sword is a one-strike kill", 120.0 >= 100.0)
 
 	_finish()
 

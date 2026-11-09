@@ -205,6 +205,9 @@ func _spawn_lobby_stress_agents() -> void:
 		bot.root = self
 		bot.player_id = "BOT_%03d" % (i + 1)
 		bot.display_name = "BOT %03d" % (i + 1)
+		# Lets the cylinder LOS (aim assist) find and damage lobby bots, so the
+		# stress agents double as local stand-ins for remote players.
+		bot.add_to_group("los_target")
 		rig.global_position = home_center
 		_disable_bot_shadows(rig)
 
@@ -236,8 +239,8 @@ func _instantiate_bot_rig(skin_name: String) -> CharacterBody3D:
 	var source := SKIN_SCENE.instantiate()
 
 	var rig := CharacterBody3D.new()
-	rig.collision_layer = 0  # nothing has to collide with a bot...
-	rig.collision_mask = 1   # ...but a bot has to stand on the world
+	rig.collision_layer = 1  # detectable by melee/physics queries...
+	rig.collision_mask = 1   # ...and stands on the world
 	rig.floor_max_angle = deg_to_rad(50.0)
 
 	var avatar: Node3D = REMOTE_PLAYER_SCRIPT.new()
@@ -368,6 +371,13 @@ func _drive_lobby_bots(delta: float) -> void:
 		var motion: BotMotion = _bot_motions[i]
 		var rig := motion.rig
 		if rig == null or not is_instance_valid(rig):
+			continue
+		# A bot "killed" by the local LOS test hides and freezes until it respawns.
+		if bool(rig.get_meta("combat_dead", false)) or (bot.has_method("is_remote_player") and bot.get("_is_dead") == true):
+			rig.velocity = Vector3.ZERO
+			if rig.is_on_floor() == false:
+				rig.velocity.y -= BOT_GRAVITY * delta
+			rig.move_and_slide()
 			continue
 
 		if motion.pause_left > 0.0:

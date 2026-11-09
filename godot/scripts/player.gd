@@ -385,6 +385,8 @@ var _critical_fall_timer: float = 0.0
 ## speed makes the drop invisible over normal range; it is what puts a debug shot on
 ## the floor where you can see it.
 @export_range(0.0, 4.0, 0.1) var bullet_gravity_scale: float = 1.0
+## Draws the aim-assist LOS cylinder for each shot (radius/range) so you can tune it.
+@export var debug_los_cylinder: bool = false
 @export var fov: float = 70.0
 @export var touch_orbit_sensitivity: float = 0.032
 @export var joystick_orbit_sensitivity: float = 0.003
@@ -611,6 +613,11 @@ func _resolve_camera_node() -> Camera3D:
 	return null
 
 func _ready() -> void:
+	# Hide hit-confetti until an actual bullet hit plays it.
+	var _hfx = find_child("HitConfetti", true, false)
+	if _hfx is GPUParticles3D:
+		(_hfx as GPUParticles3D).emitting = false
+		(_hfx as GPUParticles3D).one_shot = true
 	camera_distance = clamp(camera_distance, min_zoom, _zoom_cap_base())
 	camera_distance_current = camera_distance
 	cam_rot_x = min_pitch
@@ -3055,12 +3062,16 @@ func _refresh_storm_zone() -> void:
 		storm_center = _storm_eye.get_storm_center()
 
 # --- HEALTH SYSTEM ---
-func take_damage(amount: float, source: Node = null) -> void:
+func take_damage(amount: float, source: Node = null, is_bullet: bool = false) -> void:
 	if _is_dead:
 		return
 	health = maxf(0.0, health - amount)
 	_health_regen_timer = HEALTH_REGEN_DELAY
-	
+
+	# Bullet hits pop a white confetti burst ("I got hit" / target-hit feedback).
+	if is_bullet:
+		_play_hit_confetti()
+
 	# Flash the health bar on damage (cached reference from _ready; no per-hit tree search)
 	if _cached_health_bar != null and not is_instance_valid(_cached_health_bar):
 		_cached_health_bar = null
@@ -3775,7 +3786,11 @@ const WEAPON_FIRE_FX := {
 		"cam_time": 0.20, "cam_zoom": 0.87, "cam_fov": 1.2, "cam_behind": 0.08,
 		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.0,
-		"damage": 24.0, "bullet_speed": 130.0, "flash_scale": 0.7,
+		"damage": 20.0, "bullet_speed": 130.0, "flash_scale": 0.7,
+		# Aim assist: a forgiving cylinder around the shot line, with damage that
+		# falls off with distance. Tuned per weapon so each gun has its own feel.
+		"aim_radius": 1.1, "los_range": 70.0,
+		"falloff_start": 12.0, "falloff_end": 55.0, "falloff_min": 0.35,
 		# Pistol tracer: short, pale and a touch wider than the default, so it
 		# reads at 130 m/s instead of vanishing between frames.
 		"trail_width": 0.08, "trail_tip_width": 0.006, "trail_length": 12.0,
@@ -3785,7 +3800,10 @@ const WEAPON_FIRE_FX := {
 		"cam_time": 0.24, "cam_zoom": 0.83, "cam_fov": 1.6, "cam_behind": 0.11,
 		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.03, "screen_color": Color(1.0, 0.76, 0.42, 0.03), "screen_time": 0.12,
-		"damage": 18.0, "bullet_speed": 170.0, "flash_scale": 1.3,
+		"damage": 34.0, "bullet_speed": 170.0, "flash_scale": 1.3,
+		# Aim assist: tighter than the pistol, but reaches further before falling off.
+		"aim_radius": 1.0, "los_range": 90.0,
+		"falloff_start": 18.0, "falloff_end": 75.0, "falloff_min": 0.3,
 		# Rifle tracer: the longest and fattest of the guns, orange like the flash.
 		"trail_width": 0.1, "trail_tip_width": 0.007, "trail_length": 14.0,
 		"trail_time": 0.18, "trail_color": Color(1.0, 0.68, 0.3, 0.95),
@@ -3795,7 +3813,11 @@ const WEAPON_FIRE_FX := {
 		"cam_time": 0.45, "cam_zoom": 1.14, "cam_fov": -2.6, "cam_behind": 0.16,
 		"shake": GUN_SHAKE_TRAUMA,
 		"screen": 0.14, "screen_color": Color(1.0, 0.60, 0.28, 0.14), "screen_time": 0.24,
-		"damage": 90.0, "flash_scale": 2.0,
+		"damage": 110.0, "flash_scale": 2.0,
+		# Aim assist: a wide cylinder, so a direct hit is forgiving. (The visual
+		# rocket still flies; the LOS resolves player damage at fire time.)
+		"aim_radius": 2.2, "los_range": 80.0,
+		"falloff_start": 6.0, "falloff_end": 50.0, "falloff_min": 0.5,
 		# Slow enough to read, and barely dropped: a heavy rocket, not a rifle round.
 		"bullet_speed": 32.0, "gravity": 0.2,
 		# Fat orange exhaust instead of a rifle tracer, plus a slow smoke plume that
@@ -3810,13 +3832,13 @@ const WEAPON_FIRE_FX := {
 		"cam_time": 0.18, "cam_zoom": 0.92, "cam_fov": 0.6, "cam_behind": 0.06,
 		"shake": 0.24,
 		"screen": 0.0,
-		"damage": 34.0, "melee_reach": 1.6,
+		"damage": 55.0, "melee_reach": 1.6,
 	},
 	LocalPickup2.WeaponKind.SWORD: {
 		"cam_time": 0.26, "cam_zoom": 0.88, "cam_fov": 1.0, "cam_behind": 0.08,
 		"shake": 0.32,
 		"screen": 0.0,
-		"damage": 46.0, "melee_reach": 1.9,
+		"damage": 120.0, "melee_reach": 1.9,
 	},
 }
 
@@ -3918,6 +3940,21 @@ func _fire_bullet(cfg: Dictionary) -> void:
 		_shot_reported = true
 		print("[shot] origin=%s dir=%s marker=%s" % [
 			origin, aim, WEAPON_MUZZLE_PATH if get_node_or_null(WEAPON_MUZZLE_PATH) != null else "<missing>"])
+	# Aim assist (cylinder LOS): resolve player damage at fire time, scaled by
+	# distance from the shooter. The visual projectile still flies but must not
+	# double-hit a player, so los_player_damage is set on it below.
+	var aim_radius := float(cfg.get("aim_radius", 0.0))
+	if aim_radius > 0.0:
+		var los_range := float(cfg.get("los_range", 60.0))
+		var los_hit: Node = Bullet.resolve_los_damage(self, origin, aim, damage,
+				los_range, aim_radius,
+				float(cfg.get("falloff_start", 10.0)),
+				float(cfg.get("falloff_end", 50.0)),
+				float(cfg.get("falloff_min", 0.35)))
+		if debug_los_cylinder:
+			_draw_los_debug(origin, aim, los_range, aim_radius)
+			print("[LOS-DBG] r=%.2f range=%.0f dmg=%.0f -> %s" % [aim_radius, los_range, damage,
+					str(los_hit.name) + ((" (%s)" % los_hit.get("display_name")) if los_hit != null and los_hit.get("display_name") != null else "") if los_hit != null else "none"])
 	# One global time scale: the per-weapon speeds stay real, so turning the debug
 	# knob back to 1.0 is all it takes to ship.
 	var speed := float(cfg.get("bullet_speed", 120.0)) * maxf(bullet_speed_scale, 0.02)
@@ -3935,6 +3972,8 @@ func _fire_bullet(cfg: Dictionary) -> void:
 		bullet.set("linger_after_hit", 4.0 if debug_bullets else 0.0)
 	if "debug" in bullet:
 		bullet.set("debug", debug_bullets)
+	if "los_player_damage" in bullet:
+		bullet.set("los_player_damage", aim_radius > 0.0)
 	# Per-weapon look (fat slow rocket with a plume, thin tracer for the guns).
 	# Set before add_child(): Bullet._ready() builds the trail and smoke from it.
 	for key in BULLET_LOOK_KEYS:
@@ -4069,6 +4108,28 @@ func _melee_strike(cfg: Dictionary) -> void:
 		if distance < best_distance:
 			best_distance = distance
 			best = target
+	# Fallback for non-physics targets (e.g. match remotes are Node3D): a short
+	# range/arc check against LOS candidates so melee still connects.
+	if best == null:
+		var swing_center := global_position + Vector3.UP * MELEE_HEIGHT + forward * reach
+		for t in Bullet._los_candidates(self, get_tree()):
+			if t == null or t == self or not is_instance_valid(t):
+				continue
+			if t.has_method("is_remote_player") and t.get("_is_dead") == true:
+				continue
+			if not (t is Node3D):
+				continue
+			var tc: Vector3 = Bullet._los_center(t)
+			var flat := (tc - global_position)
+			flat.y = 0.0
+			if flat.length() > reach + MELEE_HIT_RADIUS + 0.6:
+				continue
+			if flat.length_squared() > 0.001 and forward.dot(flat.normalized()) < 0.15:
+				continue
+			var d := swing_center.distance_to(tc)
+			if d < best_distance:
+				best_distance = d
+				best = t
 	if best != null:
 		best.call("take_damage", damage, self)
 
@@ -4261,3 +4322,209 @@ func _apply_camera_shake(delta: float) -> void:
 	camera.rotate_object_local(Vector3.RIGHT, deg_to_rad(ny * CAM_SHAKE_MAX_PITCH_DEG * strength))
 	camera.rotate_object_local(Vector3.UP, deg_to_rad(nx * CAM_SHAKE_MAX_YAW_DEG * strength))
 	camera.rotate_object_local(Vector3.FORWARD, deg_to_rad(nr * CAM_SHAKE_MAX_ROLL_DEG * strength))
+
+
+# --- LOS cylinder (aim assist) target helpers ---
+
+func is_remote_player() -> bool:
+	return false
+
+
+func get_los_center() -> Vector3:
+	return global_position + Vector3.UP * 1.0
+
+
+## Debug: draws the aim-assist cylinder for one shot (toggled by debug_los_cylinder).
+func _draw_los_debug(origin: Vector3, dir: Vector3, length: float, radius: float) -> void:
+	var host := get_tree().current_scene
+	if host == null:
+		return
+	var mi := MeshInstance3D.new()
+	mi.name = "LOSDebug"
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = radius
+	cyl.bottom_radius = radius
+	cyl.height = maxf(length, 0.1)
+	mi.mesh = cyl
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(1.0, 0.35, 0.1, 0.18)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.no_depth_test = true
+	mi.material_override = mat
+	host.add_child(mi)
+	# CylinderMesh stands along +Y; rotate so +Y aligns with the shot direction.
+	var up := dir.normalized()
+	var ref := Vector3.UP if absf(up.dot(Vector3.UP)) < 0.98 else Vector3.RIGHT
+	var right := ref.cross(up).normalized()
+	var back := up.cross(right).normalized()
+	mi.global_transform = Transform3D(right, up, back, origin + up * length * 0.5)
+	get_tree().create_timer(0.22).timeout.connect(mi.queue_free)
+
+
+# --- Bullet hit confetti (white, GPUParticles3D) ---
+var _hit_confetti = null
+
+func _play_hit_confetti() -> void:
+	var fx = _get_hit_confetti()
+	if fx == null or not is_instance_valid(fx):
+		return
+	if fx is GPUParticles3D:
+		var p := fx as GPUParticles3D
+		_apply_blood_hit_look(p)
+		# Detach so a lethal hit can't hide the burst.
+		var scene := get_tree().current_scene if get_tree() else null
+		if scene != null and p.get_parent() != scene:
+			if p.get_parent() == self:
+				p.position = Vector3(0, 1.0, 0)
+			p.reparent(scene)
+			p.global_position = global_position + Vector3(0, 1.0, 0)
+		elif p.get_parent() == self:
+			p.position = Vector3(0, 1.0, 0)
+		p.emitting = false
+		p.restart()
+		p.emitting = true
+		if not p.finished.is_connected(_reclaim_hit_confetti):
+			p.finished.connect(_reclaim_hit_confetti)
+
+
+func _reclaim_hit_confetti() -> void:
+	if _hit_confetti != null and is_instance_valid(_hit_confetti) and is_instance_valid(self):
+		var p := _hit_confetti as GPUParticles3D
+		if p.get_parent() != self:
+			p.reparent(self)
+		p.position = Vector3(0, 1.0, 0)
+
+
+func _get_hit_confetti():
+	if _hit_confetti != null and is_instance_valid(_hit_confetti):
+		return _hit_confetti
+	_hit_confetti = get_node_or_null("HitConfetti")
+	if _hit_confetti == null:
+		_hit_confetti = find_child("HitConfetti", true, false)
+	if _hit_confetti == null:
+		var created := GPUParticles3D.new()
+		created.name = "HitConfetti"
+		add_child(created)
+		_hit_confetti = created
+	_setup_hit_confetti(_hit_confetti)
+	if _hit_confetti is GPUParticles3D:
+		(_hit_confetti as GPUParticles3D).emitting = false
+	return _hit_confetti
+
+
+func _setup_hit_confetti(fx) -> void:
+	if fx == null or not (fx is GPUParticles3D):
+		return
+	var p := fx as GPUParticles3D
+	if p.has_meta("hit_fx_ready"):
+		return
+	p.one_shot = true
+	p.explosiveness = 0.98
+	p.amount = mini(maxi(p.amount, 36), 48)
+	p.lifetime = 0.42
+	p.local_coords = true
+	p.visibility_aabb = AABB(Vector3(-3, -3, -3), Vector3(6, 6, 6))
+	var mat := ParticleProcessMaterial.new()
+	mat.direction = Vector3(1, 0, 0)
+	mat.spread = 180.0
+	mat.initial_velocity_min = 4.5
+	mat.initial_velocity_max = 9.0
+	mat.gravity = Vector3(0, -5.0, 0)
+	mat.damping_min = 1.0
+	mat.damping_max = 3.0
+	mat.scale_min = 0.85
+	mat.scale_max = 1.6
+	p.process_material = mat
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.12, 0.12)
+	var draw := StandardMaterial3D.new()
+	draw.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	draw.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	draw.vertex_color_use_as_albedo = true
+	draw.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	quad.material = draw
+	p.draw_pass_1 = quad
+	p.set_meta("hit_fx_ready", true)
+	p.set_meta("hit_mat", mat)
+	p.set_meta("hit_draw", draw)
+## Picks a representative color from this character's skin/meshes (cached).
+func get_hit_fx_color() -> Color:
+	if has_meta("hit_fx_color"):
+		return get_meta("hit_fx_color")
+	var c := Color(0.9, 0.85, 0.8, 1.0)
+	for m in find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		if mi == null or not mi.visible:
+			continue
+		var smat: Material = mi.material_override
+		if smat == null:
+			for s in range(mi.get_surface_override_material_count()):
+				smat = mi.get_surface_override_material(s)
+				if smat != null:
+					break
+		if smat == null and mi.mesh != null and mi.mesh.get_surface_count() > 0:
+			smat = mi.mesh.surface_get_material(0)
+		if smat is BaseMaterial3D:
+			var ac: Color = (smat as BaseMaterial3D).albedo_color
+			if ac.a > 0.05 and ac.get_luminance() > 0.02:
+				c = ac
+				break
+		elif smat is ShaderMaterial:
+			var found := false
+			for k in ["albedo_color", "albedo", "base_color", "color", "tint", "skin_color"]:
+				var v = (smat as ShaderMaterial).get_shader_parameter(k)
+				if v is Color and (v as Color).a > 0.05:
+					c = v; found = true; break
+			if found: break
+	set_meta("hit_fx_color", c)
+	return c
+func _apply_blood_hit_look(p: GPUParticles3D) -> void:
+	# Recolor only (no allocations): victim's skin + a bit of random variation.
+	_setup_hit_confetti(p)
+	var base := get_hit_fx_color()
+	var fx_color := base.lerp(base.lightened(randf_range(0.05, 0.45)), randf_range(0.25, 0.7))
+	fx_color = (fx_color * Color(1.0, randf_range(0.92, 1.08), randf_range(0.85, 1.1))).clamp()
+	fx_color.a = 1.0
+	var mat = p.get_meta("hit_mat") if p.has_meta("hit_mat") else p.process_material
+	if mat is ParticleProcessMaterial:
+		(mat as ParticleProcessMaterial).color = fx_color
+	var draw = p.get_meta("hit_draw") if p.has_meta("hit_draw") else (p.draw_pass_1.material if p.draw_pass_1 is QuadMesh else null)
+	if draw is StandardMaterial3D:
+		(draw as StandardMaterial3D).albedo_color = fx_color
+func _build_hit_confetti() -> GPUParticles3D:
+	var p := GPUParticles3D.new()
+	p.name = "HitConfetti"
+	p.emitting = false
+	p.one_shot = true
+	p.explosiveness = 0.98
+	p.amount = 56
+	p.lifetime = 0.45
+	p.local_coords = true
+	p.visibility_aabb = AABB(Vector3(-3, -3, -3), Vector3(6, 6, 6))
+	var mat := ParticleProcessMaterial.new()
+	# Explosive burst in all directions (blood splat).
+	mat.direction = Vector3(0, 0, 0)
+	mat.spread = 180.0
+	mat.initial_velocity_min = 4.0
+	mat.initial_velocity_max = 9.5
+	mat.gravity = Vector3(0, -5.5, 0)
+	mat.damping_min = 1.5
+	mat.damping_max = 4.0
+	mat.scale_min = 0.8
+	mat.scale_max = 1.8
+	mat.color = Color(0.9, 0.06, 0.06, 1.0)
+	p.process_material = mat
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.11, 0.11)
+	var draw := StandardMaterial3D.new()
+	draw.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	draw.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	draw.albedo_color = Color(0.95, 0.08, 0.08, 1.0)
+	draw.vertex_color_use_as_albedo = true
+	draw.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	quad.material = draw
+	p.draw_pass_1 = quad
+	p.position = Vector3(0, 1.0, 0)
+	return p

@@ -2258,6 +2258,23 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_hggg7")
 
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_6o0bh"]
+emission_shape = 3
+emission_box_extents = Vector3(0.15, 0.15, 0.15)
+use_rotation_3d = true
+rotation_3d_min = Vector3(0, 0, 0)
+rotation_3d_max = Vector3(90, 90, 90)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ror3w"]
+shading_mode = 0
+disable_ambient_light = true
+albedo_color = Color(1, 1, 0, 1)
+disable_receive_shadows = true
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_2j10v"]
+material = SubResource("StandardMaterial3D_ror3w")
+size = Vector2(0.05, 0.25)
+
 [node name="CharacterBody3D" type="CharacterBody3D" unique_id=1520854348]
 script = ExtResource("1_nna72")
 camera_distance = 1.9
@@ -2977,5 +2994,15 @@ transform = Transform3D(-1.0000005, 0, -8.7422826e-08, 0, 1.0000004, 0, 8.742282
 
 [node name="core" type="Node3D" parent="." unique_id=1404345630]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15564603, 0)
+
+[node name="HitConfetti" type="GPUParticles3D" parent="." unique_id=946815956]
+amount = 9
+randomness = 1.0
+use_fixed_seed = true
+seed = 679132950
+fixed_fps = 24
+interpolate = false
+process_material = SubResource("ParticleProcessMaterial_6o0bh")
+draw_pass_1 = SubResource("PlaneMesh_2j10v")
 
 [editable path="Skeleton3D/BackBoneAttachment3D/nddsobj"]

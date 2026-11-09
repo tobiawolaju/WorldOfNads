@@ -107,6 +107,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4864397, 0)
 [node name="Timer" type="Timer" parent="Player" unique_id=1278349154]
 
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("1_o1atq")]
+offset_left = -2.0
+offset_right = -2.0
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("9_07nfq")]
 

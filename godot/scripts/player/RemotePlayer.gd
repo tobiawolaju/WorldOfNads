@@ -45,11 +45,18 @@ const UPPER_BODY_FILTER_PATHS: Array[String] = [
 	"Skeleton3D:mixamorig_RightHandIndex3",
 ]
 
+## Local-only combat state for testing the LOS cylinder (the server is
+## authoritative in a real match; this only makes hits visible in-editor).
+const MAX_HEALTH: float = 100.0
+const TEST_RESPAWN_DELAY: float = 2.5
+
 var root: Node = null
 var player_id: String = ""
 var is_local: bool = false
 var animation_lod_enabled: bool = true
 var mesh_lod_enabled: bool = true
+var health: float = MAX_HEALTH
+var _is_dead: bool = false
 ## Kind of the weapon the server says this player carries, so a skin swap can put
 ## it back on the fresh skeleton (see refresh_mesh_lod).
 var shown_weapon_kind: int = LocalPickup2.WeaponKind.NONE
@@ -89,6 +96,11 @@ func _ready() -> void:
 	# The rig ships every weapon model, and the back slot authors a knife and an
 	# RPG as visible: an unarmed copy has to clear both slots explicitly.
 	_apply_weapon_visual()
+	# Keep the hit-confetti hidden until an actual bullet hit plays it.
+	var fx := find_child("HitConfetti", true, false) as GPUParticles3D
+	if fx != null:
+		fx.emitting = false
+		fx.one_shot = true
 
 
 ## Shows the weapon this remote player is carrying, from the server's item state.
@@ -215,6 +227,10 @@ func reset_remote_state() -> void:
 	_action_generation += 1
 	_action_active = false
 	shown_weapon_kind = LocalPickup2.WeaponKind.NONE
+	health = MAX_HEALTH
+	_is_dead = false
+	if name_label:
+		name_label.modulate = Color.WHITE
 	if action_playback and anim_tree and anim_tree.active:
 		action_playback.stop()
 	_apply_weapon_visual()
@@ -367,3 +383,222 @@ func _stop_all_animations() -> void:
 	# LOD in the same tick, so nothing visible depends on the pose by then.
 	if anim_tree:
 		anim_tree.active = false
+
+# --- LOCAL COMBAT (LOS cylinder testing) ---
+
+## Marker for Bullet._is_player_damage_target / type checks.
+func is_remote_player() -> bool:
+	return true
+
+
+## Chest-height point the cylinder aims at. A body is "in the line" when this
+## point sits within the aim radius of the shot ray.
+func get_los_center() -> Vector3:
+	return global_position + Vector3.UP * 1.0
+
+
+## Muzzle origin and aim direction for a forwarded shot, matching the local
+## player's marker-only aim (-Z of the marker). Returns {origin, dir} or empty.
+func get_shot_ray() -> Dictionary:
+	var marker := get_node_or_null(WEAPON_MUZZLE_PATH) as Node3D
+	if marker == null:
+		return {}
+	return {
+		"origin": marker.global_position,
+		"dir": (-marker.global_transform.basis.z).normalized(),
+	}
+
+
+## Applies damage from the local client's LOS check (testing only - the server
+## does not know about this). A downed remote fades out and pops back after a
+## short delay so you can keep shooting at it.
+var _hit_confetti: GPUParticles3D = null
+
+func take_damage(amount: float, source: Node = null, is_bullet: bool = false) -> void:
+	if _is_dead or amount <= 0.0:
+		return
+	health = maxf(0.0, health - amount)
+	var from := str(source.name) if source != null else "?"
+	print("[LOS] %s -%.0f hp -> %.0f/%.0f (from %s)" % [
+		display_name if display_name != "" else player_id, amount, maxf(health, 0.0), MAX_HEALTH, from])
+	_flash_damage()
+	# Event-driven health burn (no per-frame cost): shows damage in realtime.
+	if health > 0.0:
+		DeathDissolve.sync_health(self, health, MAX_HEALTH)
+	if is_bullet:
+		_play_hit_confetti()
+	if health <= 0.0:
+		DeathDissolve.restore(self)
+		_die_local()
+
+
+func _flash_damage() -> void:
+	# Obvious feedback: label shows HP, flashes red, and the avatar punches up.
+	if name_label != null:
+		var nm := display_name if display_name != "" else player_id
+		name_label.text = "%s  %.0f" % [nm, maxf(health, 0.0)]
+		name_label.modulate = Color(1.0, 0.2, 0.2, 1.0)
+		var t := create_tween()
+		t.tween_property(name_label, "modulate", Color.WHITE, 0.35)
+		t.tween_callback(_refresh_name_label)
+	# Punch the whole avatar so the body flashes even when the label is small/far.
+	var base := scale
+	scale = base * 1.08
+	var ts := create_tween()
+	ts.tween_property(self, "scale", base, 0.12)
+
+
+func _die_local() -> void:
+	_is_dead = true
+	visible = false
+	print("[LOS] %s died (local test) - respawn in %.1fs" % [display_name if display_name != "" else player_id, TEST_RESPAWN_DELAY])
+	# Freeze a lobby bot's rig so it stops "working" while dead.
+	var p := get_parent()
+	if p is CharacterBody3D:
+		(p as CharacterBody3D).velocity = Vector3.ZERO
+		p.set_meta("combat_dead", true)
+	var tree := get_tree()
+	if tree == null:
+		return
+	# Test-only respawn: the server drives the real avatar, so just come back.
+	await tree.create_timer(TEST_RESPAWN_DELAY).timeout
+	if not is_instance_valid(self):
+		return
+	health = MAX_HEALTH
+	_is_dead = false
+	DeathDissolve.restore(self)
+	if p != null and is_instance_valid(p) and p is CharacterBody3D:
+		p.set_meta("combat_dead", false)
+	# Only show again if the pool/server still has us active.
+	if process_mode != Node.PROCESS_MODE_DISABLED:
+		visible = true
+	_refresh_name_label()
+
+
+## Bullet-hit confetti (white). Uses a GPUParticles3D placed in the skin if one
+## exists; otherwise creates one so "target got hit" always reads.
+func _play_hit_confetti() -> void:
+	var fx := _get_hit_confetti()
+	if fx == null:
+		return
+	_apply_blood_hit_look(fx)
+	# Detach so a lethal hit (avatar hides on death) can't hide the burst.
+	var scene := get_tree().current_scene if get_tree() else null
+	if scene != null and fx.get_parent() != scene:
+		if fx.get_parent() == self:
+			fx.position = Vector3(0, 1.0, 0)
+		fx.reparent(scene)
+		fx.global_position = global_position + Vector3(0, 1.0, 0)
+	elif fx.get_parent() == self:
+		fx.position = Vector3(0, 1.0, 0)
+	fx.emitting = false
+	fx.restart()
+	fx.emitting = true
+	if not fx.finished.is_connected(_reclaim_hit_confetti):
+		fx.finished.connect(_reclaim_hit_confetti)
+
+
+func _reclaim_hit_confetti() -> void:
+	if _hit_confetti != null and is_instance_valid(_hit_confetti) and is_instance_valid(self):
+		if _hit_confetti.get_parent() != self:
+			_hit_confetti.reparent(self)
+		_hit_confetti.position = Vector3(0, 1.0, 0)
+
+
+func _get_hit_confetti() -> GPUParticles3D:
+	if _hit_confetti != null and is_instance_valid(_hit_confetti):
+		return _hit_confetti
+	_hit_confetti = get_node_or_null("HitConfetti") as GPUParticles3D
+	if _hit_confetti == null:
+		_hit_confetti = find_child("HitConfetti", true, false) as GPUParticles3D
+	if _hit_confetti == null:
+		_hit_confetti = GPUParticles3D.new()
+		_hit_confetti.name = "HitConfetti"
+		add_child(_hit_confetti)
+	_setup_hit_confetti(_hit_confetti)
+	_hit_confetti.emitting = false
+	return _hit_confetti
+
+
+func _setup_hit_confetti(fx: GPUParticles3D) -> void:
+	# Build resources once (no per-hit allocations) for a low-end/web-friendly burst.
+	if fx.has_meta("hit_fx_ready"):
+		return
+	fx.one_shot = true
+	fx.explosiveness = 0.98
+	fx.amount = mini(maxi(fx.amount, 36), 48)
+	fx.lifetime = 0.42
+	fx.local_coords = true
+	fx.visibility_aabb = AABB(Vector3(-3, -3, -3), Vector3(6, 6, 6))
+	var mat := ParticleProcessMaterial.new()
+	mat.direction = Vector3(1, 0, 0)
+	mat.spread = 180.0
+	mat.initial_velocity_min = 4.5
+	mat.initial_velocity_max = 9.0
+	mat.gravity = Vector3(0, -5.0, 0)
+	mat.damping_min = 1.0
+	mat.damping_max = 3.0
+	mat.scale_min = 0.85
+	mat.scale_max = 1.6
+	fx.process_material = mat
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.12, 0.12)
+	var draw := StandardMaterial3D.new()
+	draw.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	draw.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	draw.vertex_color_use_as_albedo = true
+	draw.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	quad.material = draw
+	fx.draw_pass_1 = quad
+	fx.set_meta("hit_fx_ready", true)
+	fx.set_meta("hit_mat", mat)
+	fx.set_meta("hit_draw", draw)
+
+
+## Picks a representative color from this character's skin/meshes (cached).
+func get_hit_fx_color() -> Color:
+	if has_meta("hit_fx_color"):
+		return get_meta("hit_fx_color")
+	var c := Color(0.9, 0.85, 0.8, 1.0)
+	for m in find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		if mi == null or not mi.visible:
+			continue
+		var smat: Material = mi.material_override
+		if smat == null:
+			for s in range(mi.get_surface_override_material_count()):
+				smat = mi.get_surface_override_material(s)
+				if smat != null:
+					break
+		if smat == null and mi.mesh != null and mi.mesh.get_surface_count() > 0:
+			smat = mi.mesh.surface_get_material(0)
+		if smat is BaseMaterial3D:
+			var ac: Color = (smat as BaseMaterial3D).albedo_color
+			if ac.a > 0.05 and ac.get_luminance() > 0.02:
+				c = ac
+				break
+		elif smat is ShaderMaterial:
+			var found := false
+			for k in ["albedo_color", "albedo", "base_color", "color", "tint", "skin_color"]:
+				var v = (smat as ShaderMaterial).get_shader_parameter(k)
+				if v is Color and (v as Color).a > 0.05:
+					c = v; found = true; break
+			if found: break
+	set_meta("hit_fx_color", c)
+	return c
+
+
+func _apply_blood_hit_look(fx: GPUParticles3D) -> void:
+	# Recolor only (no allocations): victim's skin + a bit of random variation.
+	_setup_hit_confetti(fx)
+	var base := get_hit_fx_color()
+	var fx_color := base.lerp(base.lightened(randf_range(0.05, 0.45)), randf_range(0.25, 0.7))
+	fx_color = (fx_color * Color(1.0, randf_range(0.92, 1.08), randf_range(0.85, 1.1))).clamp()
+	fx_color.a = 1.0
+	var mat = fx.get_meta("hit_mat") if fx.has_meta("hit_mat") else fx.process_material
+	if mat is ParticleProcessMaterial:
+		(mat as ParticleProcessMaterial).color = fx_color
+	var draw = fx.get_meta("hit_draw") if fx.has_meta("hit_draw") else (fx.draw_pass_1.material if fx.draw_pass_1 is QuadMesh else null)
+	if draw is StandardMaterial3D:
+		(draw as StandardMaterial3D).albedo_color = fx_color
+
