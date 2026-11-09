@@ -940,6 +940,10 @@ func _update_world_state(players_state, is_full := true, quantized := false):
 		var last_act_seq := int(remote_action_seq.get(id, act_seq))
 		remote_action_seq[id] = act_seq
 		if accepts_remote_action(last_act_seq, act_seq, act) and node.has_method("play_action"):
+			# A forwarded shot resolves the cylinder LOS against the local player so
+			# remote fire is testable here (the server does not own damage yet).
+			if act == 1: # shoot (RemotePlayer.ACTION_SHOOT)
+				_resolve_remote_shot_los(node)
 			node.call("play_action", act)
 
 		# 🚗 Vehicle sync (passenger is locked to its seat; not interpolated).
@@ -2120,3 +2124,37 @@ func _handle_lootbox_state_event(current_is_held: bool, current_holder_id: Strin
 
 	_last_lootbox_is_held = current_is_held
 	_last_lootbox_holder_id = current_holder_id
+
+# --- REMOTE SHOT LOS (local testing) ---
+# Mirrors the gun rows in player.gd WEAPON_FIRE_FX so a replayed remote shot can
+# damage the local player through the same aim-assist cylinder + falloff.
+const REMOTE_SHOT_LOS := {
+	3: {"damage": 20.0, "aim_radius": 1.1, "los_range": 70.0, "falloff_start": 12.0, "falloff_end": 55.0, "falloff_min": 0.35}, # GLOCK
+	2: {"damage": 34.0, "aim_radius": 1.0, "los_range": 90.0, "falloff_start": 18.0, "falloff_end": 75.0, "falloff_min": 0.3}, # AK47
+	5: {"damage": 110.0, "aim_radius": 2.2, "los_range": 80.0, "falloff_start": 6.0, "falloff_end": 50.0, "falloff_min": 0.5}, # RPG
+}
+
+func _resolve_remote_shot_los(node: Node) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	var kind := int(node.get("shown_weapon_kind")) if "shown_weapon_kind" in node else 0
+	var cfg_v: Variant = REMOTE_SHOT_LOS.get(kind)
+	if not (cfg_v is Dictionary):
+		return
+	var cfg: Dictionary = cfg_v
+	if not node.has_method("get_shot_ray"):
+		return
+	var ray: Dictionary = node.call("get_shot_ray")
+	if ray.is_empty():
+		return
+	var origin: Vector3 = ray.get("origin", Vector3.ZERO)
+	var dir: Vector3 = ray.get("dir", Vector3.FORWARD)
+	# Shooter is the remote node: the resolver excludes it and may hit the local
+	# player (and, harmlessly for testing, other remotes inside the cylinder).
+	Bullet.resolve_los_damage(node, origin, dir,
+			float(cfg.get("damage", 0.0)),
+			float(cfg.get("los_range", 60.0)),
+			float(cfg.get("aim_radius", 0.6)),
+			float(cfg.get("falloff_start", 10.0)),
+			float(cfg.get("falloff_end", 50.0)),
+			float(cfg.get("falloff_min", 0.35)))

@@ -31,6 +31,10 @@ signal hit(target: Node, at: Vector3)
 ## this on together with bullet_speed_scale, so a slow-motion test explains itself
 ## in the Output panel instead of just vanishing.
 @export var debug: bool = false
+## When true, player damage is resolved by the shooter's line-of-sight cylinder
+## at fire time (aim assist + falloff), so the visual projectile must not also
+## damage a player. It still collides, reports a hit and frees normally.
+@export var los_player_damage: bool = false
 ## Ribbon trail behind the bullet. Built in code and rebuilt per physics frame
 ## from the last `trail_time` seconds of flight: one mesh, no particles and no
 ## light, so a burst of shots stays cheap.
@@ -386,7 +390,13 @@ func _on_body_entered(body: Node) -> void:
 			" (damage target: %s)" % target.get_path() if target != null else " (no damage target)",
 			global_position])
 	if target != null:
-		target.call("take_damage", damage, _shooter)
+		if los_player_damage and _is_player_damage_target(target):
+			# Cylinder LOS already applied falloff damage at fire time; the visual
+			# projectile must not re-apply it (and remotes have no physics body).
+			if debug:
+				print("[bullet] LOS owns player damage for %s" % target.name)
+		else:
+			target.call("take_damage", damage, _shooter)
 	if impact_impulse > 0.0 and body is RigidBody3D and body != self:
 		(body as RigidBody3D).apply_central_impulse(linear_velocity.normalized() * impact_impulse)
 	hit.emit(target if target != null else body, global_position)
@@ -413,3 +423,132 @@ func _damage_target(node: Node) -> Node:
 			return current
 		current = current.get_parent()
 	return null
+
+
+## True for the player-style bodies the LOS cylinder resolves (local player +
+## remote avatars). Kept narrow so a test target or damageable prop that owns
+## take_damage() still takes normal projectile damage.
+func _is_player_damage_target(target: Node) -> bool:
+	if target.has_method("is_remote_player") and target.call("is_remote_player"):
+		return true
+	# The local player: a CharacterBody3D carrying the player script markers.
+	return target is CharacterBody3D and "is_local" in target and target.has_method("take_damage")
+
+# --- LINE-OF-SIGHT CYLINDER (aim assist + distance falloff) ---
+# Static so the local shooter and a remote's replayed shot share the same math.
+
+## Resolves one hitscan-style shot: the nearest damageable player whose body
+## centre lies within `aim_radius` of the ray [origin, origin+dir*max_range],
+## taking `base_damage` scaled by distance (full until falloff_start, down to
+## falloff_min at/beyond falloff_end). Occluded by world geometry. Returns the
+## target (or null).
+static func resolve_los_damage(
+		shooter: Node, origin: Vector3, dir: Vector3,
+		base_damage: float, max_range: float, aim_radius: float,
+		falloff_start: float, falloff_end: float, falloff_min: float) -> Node:
+	if shooter == null or not is_instance_valid(shooter):
+		return null
+	var tree := shooter.get_tree()
+	if tree == null:
+		return null
+	var direction := dir.normalized()
+	if direction.length_squared() < 0.0001:
+		return null
+	var space: PhysicsDirectSpaceState3D = null
+	if shooter is Node3D and (shooter as Node3D).get_world_3d() != null:
+		space = (shooter as Node3D).get_world_3d().direct_space_state
+
+	var best: Node = null
+	var best_along := INF
+	var best_perp := INF
+	var best_damage := 0.0
+
+	for target in _los_candidates(shooter, tree):
+		if target == shooter or not is_instance_valid(target):
+			continue
+		if target.has_method("is_remote_player") and target.get("_is_dead") == true:
+			continue
+		if target is Node3D == false:
+			continue
+		var center := _los_center(target)
+		var v := center - origin
+		var along := v.dot(direction)
+		if along < 0.0 or along > max_range:
+			continue
+		var perp := (v - direction * along).length()
+		if perp > aim_radius:
+			continue
+		if space != null and _los_occluded(space, shooter, target, origin, center, along):
+			continue
+		# Aim assist: prefer the target closest to the crosshair, then the nearer.
+		if perp < best_perp - 0.001 or (is_equal_approx(perp, best_perp) and along < best_along):
+			best = target
+			best_along = along
+			best_perp = perp
+			best_damage = base_damage * _los_falloff(along, falloff_start, falloff_end, falloff_min)
+
+	if best != null and best.has_method("take_damage"):
+		# Third arg marks a bullet/LOS hit so targets can show hit feedback (confetti)
+		# without reacting to melee/storm damage.
+		best.call("take_damage", best_damage, shooter, true)
+	return best
+
+
+static func _los_candidates(shooter: Node, tree: SceneTree) -> Array:
+	var out: Array = []
+	# Remote avatars (Node3D, no physics body - the cylinder is their hit path).
+	if PlayerManager.instance != null:
+		var pm = PlayerManager.instance
+		var local_node: Node = pm._get_local_player_node() if pm.has_method("_get_local_player_node") else null
+		if local_node != null and is_instance_valid(local_node):
+			out.append(local_node)
+		for id in pm.players:
+			var n = pm.players[id]
+			if n != null and n != local_node and is_instance_valid(n):
+				out.append(n)
+	# Explicitly tagged targets (lobby stress bots, test rigs) work in any scene.
+	for n in tree.get_nodes_in_group("los_target"):
+		if n != null and is_instance_valid(n) and not out.has(n):
+			out.append(n)
+	return out
+
+
+static func _los_center(target: Node) -> Vector3:
+	if target.has_method("get_los_center"):
+		return target.call("get_los_center")
+	if target is Node3D:
+		return (target as Node3D).global_position + Vector3.UP * 1.0
+	return Vector3.ZERO
+
+
+static func _los_occluded(space: PhysicsDirectSpaceState3D, shooter: Node, target: Node,
+		origin: Vector3, center: Vector3, _along: float) -> bool:
+	# Ray toward the target centre: solid world geometry between muzzle and target
+	# blocks the shot. The shooter's own body is excluded; hitting the target (or
+	# a child/collider of it) is NOT occlusion.
+	var to := center - origin
+	if to.length_squared() < 0.0001:
+		return false
+	var query := PhysicsRayQueryParameters3D.create(origin, center + to.normalized() * 0.15)
+	if shooter is CollisionObject3D:
+		query.exclude = [ (shooter as CollisionObject3D).get_rid() ]
+	var hit: Dictionary = space.intersect_ray(query)
+	if hit.is_empty():
+		return false
+	var collider: Object = hit.get("collider")
+	if collider == null:
+		return false
+	var c := collider as Node
+	while c != null:
+		if c == target:
+			return false
+		c = c.get_parent()
+	return true
+
+
+static func _los_falloff(dist: float, start: float, end: float, min_mult: float) -> float:
+	if dist <= start:
+		return 1.0
+	if end <= start:
+		return clampf(min_mult, 0.0, 1.0)
+	return clampf(remap(dist, start, end, 1.0, min_mult), min_mult, 1.0)
