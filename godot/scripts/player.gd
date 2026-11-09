@@ -285,6 +285,10 @@ var _weapon_action_kind: int = 0
 ## Swing queued by the input frame, resolved on the next physics tick because the
 ## physics space cannot be queried from _process.
 var _pending_melee: Dictionary = {}
+# --- GAMEPLAY CALLOUTS (HUD TextFX2) ---
+var _kill_streak_count: int = 0
+var _kill_streak_timer: float = 0.0
+const KILL_STREAK_WINDOW: float = 4.0
 ## One-shot diagnostic: the first shot of a session prints its numbers, so a rig
 ## with a backwards gun can be told apart from a broken aim in the Output panel.
 var _shot_reported: bool = false
@@ -821,10 +825,42 @@ func configure_demo_agent(
 	_is_dead = false
 	_respawn_timer = 0.0
 
+func _register_local_kill() -> void:
+	if _kill_streak_timer <= 0.0:
+		_kill_streak_count = 0
+	_kill_streak_count += 1
+	_kill_streak_timer = KILL_STREAK_WINDOW
+	var text := "KILL!"
+	var color := Color(1.0, 0.92, 0.25, 1.0)
+	match _kill_streak_count:
+		2:
+			text = "DOUBLE KILL!"
+			color = Color(1.0, 0.7, 0.15, 1.0)
+		3:
+			text = "TRIPLE KILL!"
+			color = Color(1.0, 0.45, 0.15, 1.0)
+		4:
+			text = "MULTI KILL!"
+			color = Color(1.0, 0.25, 0.25, 1.0)
+		_:
+			if _kill_streak_count >= 5:
+				text = "RAMPAGE!"
+				color = Color(0.85, 0.3, 1.0, 1.0)
+	var events := get_tree().get_first_node_in_group("events_bridge") if get_tree() else null
+	if events != null and events.has_method("show_game_callout"):
+		events.call("show_game_callout", text, color)
+	elif events != null and events.has_method("show_local_event") and _kill_streak_count >= 2:
+		events.call("show_local_event", text)
+
+
 func _process(delta: float) -> void:
 	if not is_local:
 		return
 	_update_camera_visual(delta)
+	if _kill_streak_timer > 0.0:
+		_kill_streak_timer = maxf(0.0, _kill_streak_timer - delta)
+		if _kill_streak_timer <= 0.0:
+			_kill_streak_count = 0
 	# Re-evaluate the CHOG gate periodically. `_refresh_chog_eligibility` is a
 	# no-op unless a check is actually due, so this never hits the network per
 	# frame.
@@ -3980,6 +4016,12 @@ func _fire_bullet(cfg: Dictionary) -> void:
 				float(cfg.get("falloff_start", 10.0)),
 				float(cfg.get("falloff_end", 50.0)),
 				float(cfg.get("falloff_min", 0.35)))
+		if los_hit != null and is_instance_valid(los_hit):
+			var dead := bool(los_hit.get("_is_dead")) if los_hit.get("_is_dead") != null else false
+			if not dead and los_hit.has_method("is_remote_player") == false and "health" in los_hit:
+				dead = float(los_hit.get("health")) <= 0.0
+			if dead:
+				_register_local_kill()
 		if debug_los_cylinder:
 			_draw_los_debug(origin, aim, los_range, aim_radius)
 			print("[LOS-DBG] r=%.2f range=%.0f dmg=%.0f -> %s" % [aim_radius, los_range, damage,

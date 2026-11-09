@@ -36,6 +36,8 @@ signal text_finished
 ## The slide only animates nodes that actually have a position. CanvasItem does not
 ## require one, so this is checked rather than assumed.
 var _slide_supported: bool = false
+var _active_tween: Tween = null
+var _play_gen: int = 0
 
 func _ready() -> void:
 	_slide_supported = "position" in self
@@ -44,6 +46,11 @@ func _ready() -> void:
 	play()
 
 func play() -> void:
+	_play_gen += 1
+	var gen := _play_gen
+	if _active_tween != null and _active_tween.is_valid():
+		_active_tween.kill()
+		_active_tween = null
 	visible = true
 	modulate.a = 0.0
 
@@ -60,6 +67,7 @@ func play() -> void:
 
 	if fade_in_duration > 0.0:
 		var fade_in := create_tween()
+		_active_tween = fade_in
 		fade_in.set_parallel(true)
 		fade_in.tween_property(self, "modulate:a", 1.0, fade_in_duration)
 		if _slide_supported and offset != Vector2.ZERO:
@@ -70,16 +78,27 @@ func play() -> void:
 			fade_in.tween_property(self, "position", rest, travel_time) \
 				.set_trans(slide_transition).set_ease(slide_ease)
 		await fade_in.finished
+		if gen != _play_gen:
+			return
+		if _active_tween == fade_in:
+			_active_tween = null
 	else:
 		modulate.a = 1.0
 		_set_position(rest)
 
 	if fade_out_delay > 0.0:
 		await get_tree().create_timer(fade_out_delay).timeout
+		if gen != _play_gen:
+			return
 	if fade_out_duration > 0.0:
 		var fade_out := create_tween()
+		_active_tween = fade_out
 		fade_out.tween_property(self, "modulate:a", 0.0, fade_out_duration)
 		await fade_out.finished
+		if gen != _play_gen:
+			return
+		if _active_tween == fade_out:
+			_active_tween = null
 	visible = false
 	text_finished.emit()
 

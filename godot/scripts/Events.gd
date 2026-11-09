@@ -54,6 +54,7 @@ var _navigated_to_gameover := false
 
 @onready var _feed: VBoxContainer = get_node_or_null(feed_path)
 @onready var username_label: Label = get_node_or_null(username_label_path)
+@onready var _callout_fx2: Label = get_node_or_null("TextFX2")
 
 @onready var xp_stream_label: Label = get_node_or_null("XPstream")
 @onready var mon_stream_label: Label = get_node_or_null("MONstream")
@@ -131,6 +132,22 @@ func set_local_player_id(id: String) -> void:
 func show_local_event(message: String) -> void:
 	var parsed = _split_message_actor_and_text(message)
 	_push_event_line(parsed["actor"], parsed["message"])
+
+
+func show_game_callout(text: String, color: Color = Color(1.0, 0.9, 0.2, 1.0)) -> void:
+	# Big gameplay callout on TextFX2 (hud.tscn), e.g. DOUBLE KILL.
+	if _callout_fx2 == null:
+		_callout_fx2 = get_node_or_null("TextFX2")
+	if _callout_fx2 == null:
+		return
+	_callout_fx2.text = text
+	if _callout_fx2 is Label:
+		(_callout_fx2 as Label).add_theme_color_override("font_color", color)
+	_callout_fx2.visible = true
+	if _callout_fx2.has_method("play"):
+		_callout_fx2.call("play")
+	else:
+		_callout_fx2.modulate.a = 1.0
 
 func update_xp_display(total_xp: int) -> void:
 	if xp_stream_label:
