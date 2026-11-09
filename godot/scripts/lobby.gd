@@ -45,8 +45,25 @@ class BotMotion:
 	## Counts down to the next stand-still, which then runs in pause_left.
 	var pause_timer: float = 0.0
 	var pause_left: float = 0.0
+	## Simulation LOD (Hitman-style crowd budget): accumulate dt and step less
+	## often when far from the viewer. Keeps near bots smooth, far bots cheap.
+	var sim_accum: float = 0.0
+	var lod: int = 0 # 0=near, 1=mid, 2=far
 
 var _bot_motions: Array[BotMotion] = []
+var _bot_lod_timer: float = 0.0
+
+# Distance tiers (meters): near=full sim+anim, mid=throttled sim/anim LOD,
+# far=very low sim rate + mesh/anim disabled. Tuned for low-end browser crowds.
+const BOT_LOD_NEAR: float = 18.0
+const BOT_LOD_MID: float = 40.0
+const BOT_LOD_FAR: float = 70.0
+const BOT_LOD_CULL: float = 110.0
+const BOT_LOD_INTERVAL: float = 0.25
+const BOT_SIM_STEP_NEAR: float = 0.0 # every physics tick
+const BOT_SIM_STEP_MID: float = 1.0 / 15.0
+const BOT_SIM_STEP_FAR: float = 1.0 / 6.0
+const BOT_SIM_STEP_CULL: float = 1.0 / 3.0
 
 # Hand-off from dshbord.gd: READY counts down on the dashboard and then sends the
 # player here with the match they queued and the nad they picked, written straight
@@ -358,11 +375,17 @@ func _redress_fallback_bots() -> void:
 # Stands in for PlayerManager's world-state loop: a RemotePlayer never moves or
 # animates on its own, so the lobby walks it around its orbit, makes it hop and
 # stand still, and sends it the same animation states a real remote receives.
-# Driven through its CharacterBody3D rig so it stands and walks on the ground
-# with local physics instead of hovering at the spawn point's altitude.
+# "Hitman-style" crowd budget: distance LOD + time-sliced simulation so 100 bots
+# don't cost 100 full updates every physics tick on low-end/browser.
 func _drive_lobby_bots(delta: float) -> void:
 	if _bot_motions.is_empty():
 		return
+	var viewer_pos := _bot_viewer_position()
+	_bot_lod_timer -= delta
+	var refresh_lod := _bot_lod_timer <= 0.0
+	if refresh_lod:
+		_bot_lod_timer = BOT_LOD_INTERVAL
+
 	var count := mini(npcs.size(), _bot_motions.size())
 	for i in range(count):
 		var bot = npcs[i]
@@ -372,60 +395,127 @@ func _drive_lobby_bots(delta: float) -> void:
 		var rig := motion.rig
 		if rig == null or not is_instance_valid(rig):
 			continue
+
 		# A bot "killed" by the local LOS test hides and freezes until it respawns.
 		if bool(rig.get_meta("combat_dead", false)) or (bot.has_method("is_remote_player") and bot.get("_is_dead") == true):
 			rig.velocity = Vector3.ZERO
 			if rig.is_on_floor() == false:
-				rig.velocity.y -= BOT_GRAVITY * delta
-			rig.move_and_slide()
+				rig.velocity.y -= BOT_GRAVITY * minf(delta, 0.1)
+				rig.move_and_slide()
 			continue
 
-		if motion.pause_left > 0.0:
-			motion.pause_left -= delta
-			if motion.pause_left <= 0.0:
-				motion.pause_timer = _stress_rng.randf_range(4.0, 12.0)
+		var dist := viewer_pos.distance_to(rig.global_position) if viewer_pos != Vector3.INF else 0.0
+		if refresh_lod:
+			var new_lod := _bot_lod_for_distance(dist)
+			if new_lod != motion.lod:
+				motion.lod = new_lod
+				_apply_bot_lod(bot, new_lod)
+
+		var step_dt := _bot_step_dt(motion.lod)
+		if step_dt <= 0.0:
+			_step_bot(bot, motion, rig, delta)
 		else:
-			motion.angle = wrapf(motion.angle + (delta * motion.speed * motion.direction), 0.0, TAU)
-			motion.pause_timer -= delta
-			if motion.pause_timer <= 0.0:
-				motion.pause_left = _stress_rng.randf_range(0.6, 1.8)
-		var moving := motion.pause_left <= 0.0
+			motion.sim_accum = minf(motion.sim_accum + delta, step_dt * 3.0)
+			if motion.sim_accum >= step_dt:
+				var dt := motion.sim_accum
+				motion.sim_accum = 0.0
+				_step_bot(bot, motion, rig, dt)
 
-		if not rig.is_on_floor():
-			rig.velocity.y -= BOT_GRAVITY * delta
-		else:
-			rig.velocity.y = 0.0
-			if moving:
-				motion.jump_timer -= delta
-				if motion.jump_timer <= 0.0:
-					rig.velocity.y = sqrt(2.0 * BOT_GRAVITY * BOT_JUMP_HEIGHT)
-					motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
 
-		var target := motion.home + _bot_orbit_offset(motion)
-		var diff := target - rig.global_position
-		diff.y = 0.0
+func _bot_viewer_position() -> Vector3:
+	if local_player != null and is_instance_valid(local_player):
+		return local_player.global_position
+	if camera_node != NodePath() and has_node(camera_node):
+		var cam := get_node(camera_node) as Node3D
+		if cam != null:
+			return cam.global_position
+	return Vector3.INF
 
+
+func _bot_lod_for_distance(dist: float) -> int:
+	if dist <= BOT_LOD_NEAR:
+		return 0
+	if dist <= BOT_LOD_MID:
+		return 1
+	if dist <= BOT_LOD_FAR:
+		return 2
+	return 3
+
+
+func _bot_step_dt(lod: int) -> float:
+	match lod:
+		0:
+			return BOT_SIM_STEP_NEAR
+		1:
+			return BOT_SIM_STEP_MID
+		2:
+			return BOT_SIM_STEP_FAR
+		_:
+			return BOT_SIM_STEP_CULL
+
+
+func _apply_bot_lod(bot: Node, lod: int) -> void:
+	# Reuse RemotePlayer's LOD switches (animation/mesh) so we don't duplicate logic.
+	var anim_on := lod <= 1
+	var mesh_on := lod <= 2
+	if bot.has_method("set_animation_lod_enabled"):
+		bot.call("set_animation_lod_enabled", anim_on)
+	if bot.has_method("set_mesh_lod_enabled"):
+		bot.call("set_mesh_lod_enabled", mesh_on)
+	# When fully culled, stop spending anim-state updates; mesh is hidden.
+	if lod >= 3 and bot.has_method("set_animation_state"):
+		bot.call("set_animation_state", "idle")
+
+
+func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float) -> void:
+	if motion.pause_left > 0.0:
+		motion.pause_left -= delta
+		if motion.pause_left <= 0.0:
+			motion.pause_timer = _stress_rng.randf_range(4.0, 12.0)
+	else:
+		motion.angle = wrapf(motion.angle + (delta * motion.speed * motion.direction), 0.0, TAU)
+		motion.pause_timer -= delta
+		if motion.pause_timer <= 0.0:
+			motion.pause_left = _stress_rng.randf_range(0.6, 1.8)
+	var moving := motion.pause_left <= 0.0
+
+	if not rig.is_on_floor():
+		rig.velocity.y -= BOT_GRAVITY * delta
+	else:
+		rig.velocity.y = 0.0
 		if moving:
-			var speed := motion.radius * motion.speed
-			if diff.length() > 0.001:
-				var dir := diff.normalized()
-				var desired_speed := clampf(diff.length() / maxf(delta, 0.001), 0.0, maxf(speed * 2.0, 4.0))
-				rig.velocity.x = dir.x * desired_speed
-				rig.velocity.z = dir.z * desired_speed
-				bot.rotation.y = atan2(dir.x, dir.z)
-			else:
-				rig.velocity.x = 0.0
-				rig.velocity.z = 0.0
+			motion.jump_timer -= delta
+			if motion.jump_timer <= 0.0:
+				rig.velocity.y = sqrt(2.0 * BOT_GRAVITY * BOT_JUMP_HEIGHT)
+				motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
+
+	var target := motion.home + _bot_orbit_offset(motion)
+	var diff := target - rig.global_position
+	diff.y = 0.0
+
+	if moving:
+		var speed := motion.radius * motion.speed
+		if diff.length() > 0.001:
+			var dir := diff.normalized()
+			var desired_speed := clampf(diff.length() / maxf(delta, 0.001), 0.0, maxf(speed * 2.0, 4.0))
+			rig.velocity.x = dir.x * desired_speed
+			rig.velocity.z = dir.z * desired_speed
+			bot.rotation.y = atan2(dir.x, dir.z)
 		else:
 			rig.velocity.x = 0.0
 			rig.velocity.z = 0.0
+	else:
+		rig.velocity.x = 0.0
+		rig.velocity.z = 0.0
 
-		rig.move_and_slide()
+	rig.move_and_slide()
 
-		if rig.global_position.y < -15.0:
-			rig.global_position = motion.home
-			rig.velocity = Vector3.ZERO
+	if rig.global_position.y < -15.0:
+		rig.global_position = motion.home
+		rig.velocity = Vector3.ZERO
 
+	# Skip animation state churn when animation LOD is off (far/culled).
+	if motion.lod <= 1 and bot.has_method("set_animation_state"):
 		bot.set_animation_state(_bot_animation_state(motion, moving))
 
 

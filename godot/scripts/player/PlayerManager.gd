@@ -60,8 +60,11 @@ const REMOTE_MAX_EXTRAPOLATE_MS: float = 100.0
 # that can never happen.
 const REMOTE_MIN_SNAPSHOT_DT_MS: float = 16.0
 const REMOTE_MAX_EXTRAP_SPEED: float = 14.0
-const REMOTE_ANIMATION_LOD_DISTANCE: float = 20.0
+const REMOTE_ANIMATION_LOD_DISTANCE: float = 18.0
 const REMOTE_ANIMATION_LOD_DISTANCE_SQ: float = REMOTE_ANIMATION_LOD_DISTANCE * REMOTE_ANIMATION_LOD_DISTANCE
+const REMOTE_MESH_LOD_DISTANCE: float = 32.0
+const REMOTE_MESH_LOD_DISTANCE_SQ: float = REMOTE_MESH_LOD_DISTANCE * REMOTE_MESH_LOD_DISTANCE
+const REMOTE_CULL_DISTANCE_SQ: float = 70.0 * 70.0
 const REMOTE_PLAYER_SCRIPT := preload("res://scripts/player/RemotePlayer.gd")
 
 # --- CHICKEN AUTHORITY STATE ---
@@ -1695,11 +1698,19 @@ func _apply_remote_interpolation() -> void:
 
 		# Aggressive Cull: Hide players very far away
 		if do_lod_check:
-			var is_near := dist_sq < 2500.0 # 50 meters
+			var is_near := dist_sq < REMOTE_CULL_DISTANCE_SQ
 			node.visible = is_near
 			if not is_near:
 				continue
 		elif not node.visible:
+			continue
+
+		# "Hitman-style" CPU budget: when the skinned mesh is LOD-hidden (far but
+		# not culled), update interpolation at half rate - the skeleton isn't drawn,
+		# so stepping position/rotation less often is invisible but saves work.
+		var anim_on_check := dist_sq <= REMOTE_ANIMATION_LOD_DISTANCE_SQ
+		var mesh_on_check := dist_sq <= REMOTE_MESH_LOD_DISTANCE_SQ
+		if not do_lod_check and not mesh_on_check and (Engine.get_process_frames() & 1) != 0:
 			continue
 
 		var snap: Dictionary = remote_snapshots[id]
@@ -1734,10 +1745,11 @@ func _apply_remote_interpolation() -> void:
 		if do_lod_check:
 			var anim_state := str(snap.get("anim", "idle"))
 			var should_animate := dist_sq <= REMOTE_ANIMATION_LOD_DISTANCE_SQ
+			var should_mesh := dist_sq <= REMOTE_MESH_LOD_DISTANCE_SQ
 			if node.has_method("set_animation_lod_enabled"):
 				node.set_animation_lod_enabled(should_animate)
 			if node.has_method("set_mesh_lod_enabled"):
-				node.set_mesh_lod_enabled(should_animate)
+				node.set_mesh_lod_enabled(should_mesh)
 			if should_animate and node.has_method("set_animation_state"):
 				node.set_animation_state(anim_state)
 
