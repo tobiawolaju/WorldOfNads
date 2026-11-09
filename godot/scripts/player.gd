@@ -1617,9 +1617,20 @@ func _physics_process_climb(delta: float, input_dir: Vector2) -> void:
 
 	move_and_slide()
 
-	# Hold the face yaw and the climb loop; the run/idle yaw spring stays bypassed.
-	mesh.rotation.y = atan2(-normal.x, -normal.z) + CLIMB_MESH_YAW_OFFSET
-	_set_anim("climb")
+	# Hold the face yaw while climbing; but when shooting, face where the camera
+	# looks so the gun/marker points that way (marker-only shots still follow the
+	# rig). Aim uses the same +Z-forward yaw as normal movement (atan2(x,z)).
+	var climb_yaw := atan2(-normal.x, -normal.z) + CLIMB_MESH_YAW_OFFSET
+	var aim_shooting := _weapon_action_active and _weapon_action_kind == ACTION_KIND_SHOOT
+	if aim_shooting:
+		var aim_dir := _camera_forward()
+		aim_dir.y = 0.0
+		if aim_dir.length_squared() > 0.0001:
+			climb_yaw = atan2(aim_dir.x, aim_dir.z)
+	mesh.rotation.y = climb_yaw
+	# Climb anim's wall-facing pose fights camera aim; use a neutral base while
+	# aim-shooting so the upper-body shot (and gun/marker) faces forward.
+	_set_anim("idle" if aim_shooting else "climb")
 	_mirror_twin_decoy()
 
 	camera_is_airborne = not is_on_floor()
@@ -2085,6 +2096,9 @@ func _play_weapon_action(clip: String) -> void:
 	# lower). Without this the action clip loops and the torso stays frozen.
 	anim_tree.set("parameters/action_shot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
 	_weapon_action_active = false
+	# Restore climb hip ownership when a climb-aim shot ends.
+	if _is_climbing:
+		_set_action_hips_filter(false)
 	_set_weapon_drawn(false)
 	# The last charge is spent on press, but the hand is only emptied here so the
 	# final shot still gets its clip on screen.
@@ -2108,17 +2122,24 @@ func _start_weapon_action(clip: String) -> float:
 	# A shot is only 0.2 s: hold the final (aim) pose a beat longer so it reads.
 	if clip == "shoot":
 		length += SHOOT_END_HOLD
-	# A shot started while on a wall must not hand Hips to the action clip: its
-	# Hips are half a turn off the climb clip's and would spin the model around
-	# to face the camera (see _set_action_hips_filter).
+	# While climbing, aim-facing shots orient the whole mesh to camera (like
+	# running), so the action can own hips normally; wall-facing climb keeps hips
+	# with the climb clip to avoid the 180° spin.
 	if _is_climbing:
-		_set_action_hips_filter(false)
+		_set_action_hips_filter(not (clip == "shoot"))
 	_weapon_action_generation += 1
 	_weapon_action_active = true
 	# Network sync: remotes replay the clip and the muzzle flash from this event.
 	# It is sent on the same frame (see _frame_ticks/_send_state_to_server).
 	_weapon_action_seq += 1
 	_weapon_action_kind = ACTION_KIND_HOOK if clip == "hook" else ACTION_KIND_SHOOT
+	# Snap climb aim immediately so the gun/marker don't flash the opposite/wall
+	# facing for a frame before the climb loop applies camera-facing yaw.
+	if _is_climbing and _weapon_action_kind == ACTION_KIND_SHOOT:
+		var aim_dir := _camera_forward()
+		aim_dir.y = 0.0
+		if aim_dir.length_squared() > 0.0001:
+			mesh.rotation.y = atan2(aim_dir.x, aim_dir.z)
 	# The decoy is a RemotePlayer clone, so it replays the action locally instead
 	# of waiting for a snapshot (there is none for a local swing).
 	if _twin_decoy != null and is_instance_valid(_twin_decoy) and _twin_decoy.has_method("play_action"):

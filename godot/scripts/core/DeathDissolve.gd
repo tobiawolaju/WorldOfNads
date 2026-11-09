@@ -24,6 +24,8 @@ class_name DeathDissolve
 ## the server is told about.
 
 const SHADER := preload("res://assets/shaders/death_dissolve.gdshader")
+## Unshaded variant so flat/unshaded skins keep their look while burning.
+const SHADER_UNSHADED := preload("res://assets/shaders/death_dissolve_unshaded.gdshader")
 
 ## Seconds the burn takes by default. `die()` spends most of `RESPAWN_DELAY`
 ## here so the body is fully gone before the player pops back in.
@@ -110,15 +112,30 @@ static func prewarm(player: Node3D) -> void:
 	var material := _build_material(null)
 	material.set_shader_parameter("dissolve", 1.0)
 	probe.material_override = material
+	# Also warm the unshaded variant (used by flat/unshaded skins).
+	var probe2 := MeshInstance3D.new()
+	probe2.name = "DeathDissolvePrewarmUnshaded"
+	var quad2 := QuadMesh.new()
+	quad2.size = Vector2(0.002, 0.002)
+	probe2.mesh = quad2
+	probe2.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat2 := ShaderMaterial.new()
+	mat2.shader = SHADER_UNSHADED
+	mat2.set_shader_parameter("dissolve", 1.0)
+	probe2.material_override = mat2
+	probe2.position = Vector3(0.002, 0.0, -0.5)
 	# Half a metre in front of the camera: inside the frustum, so it is drawn,
 	# and in the same viewport and lighting as the death will be.
 	probe.position = Vector3(0.0, 0.0, -0.5)
 	camera.add_child(probe)
+	camera.add_child(probe2)
 
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	if is_instance_valid(probe):
 		probe.queue_free()
+	if is_instance_valid(probe2):
+		probe2.queue_free()
 
 
 ## Test hook: reports whether this process has warmed the dissolve program.
@@ -381,7 +398,7 @@ static func _restore_after_heal(player: Node3D) -> void:
 ## and a colour change at t=0 would read as a glitch rather than an effect.
 static func _build_material(source: Material) -> ShaderMaterial:
 	var material := ShaderMaterial.new()
-	material.shader = SHADER
+	material.shader = SHADER_UNSHADED if _is_unshaded_source(source) else SHADER
 
 	var albedo := Color(0.8, 0.8, 0.85, 1.0)
 	var roughness := 0.5
@@ -416,6 +433,19 @@ static func _build_material(source: Material) -> ShaderMaterial:
 		material.set_shader_parameter("albedo_texture", albedo_texture)
 
 	return material
+
+
+## True when the source material is unshaded, so the burn matches a flat skin.
+static func _is_unshaded_source(source: Material) -> bool:
+	if source is StandardMaterial3D:
+		return (source as StandardMaterial3D).shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED
+	if source is ShaderMaterial:
+		var sm := source as ShaderMaterial
+		if sm.shader != null:
+			var path := String(sm.shader.resource_path).to_lower()
+			if path.contains("unshaded"):
+				return true
+	return false
 
 
 static func _surface_material(mesh: MeshInstance3D) -> Material:

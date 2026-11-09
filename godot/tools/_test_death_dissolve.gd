@@ -73,7 +73,8 @@ func _initialize() -> void:
 	# 2. The shared skin materials are untouched, so no other player dissolves.
 	var shared_untouched := 0
 	for material in shared:
-		if not (material is ShaderMaterial) or (material as ShaderMaterial).shader != DeathDissolve.SHADER:
+		var is_dissolve := (material is ShaderMaterial) and ((material as ShaderMaterial).shader == DeathDissolve.SHADER or (material as ShaderMaterial).shader == DeathDissolve.SHADER_UNSHADED)
+		if not is_dissolve:
 			shared_untouched += 1
 	_check("shared skin materials are not mutated", shared_untouched == shared.size())
 
@@ -319,7 +320,7 @@ func _count_on_dissolve(meshes: Array[MeshInstance3D]) -> int:
 	var count := 0
 	for mesh in meshes:
 		var material := mesh.material_override as ShaderMaterial
-		if material != null and material.shader == DeathDissolve.SHADER:
+		if material != null and (material.shader == DeathDissolve.SHADER or material.shader == DeathDissolve.SHADER_UNSHADED):
 			count += 1
 	return count
 
