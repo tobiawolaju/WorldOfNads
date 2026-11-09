@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode blend_add,depth_draw_opaque,cull_disabled,
+render_mode blend_add,depth_draw_never,cull_disabled,
 diffuse_toon,specular_disabled,unshaded,shadows_disabled,
 ambient_light_disabled,fog_disabled;
 
@@ -53,8 +53,12 @@ float inverse_fresnel(float amount, vec3 normal, vec3 view){
 }
 
 void fragment() {
-	vec4 albedo_tex = texture(texture_albedo,UV);
-	ALBEDO = albedo_tex.rgb * COLOR.rgb * albedo_tex.a * 4.0;
-	ALPHA = (albedo_tex.a * inverse_fresnel(1.5, NORMAL, VIEW) * COLOR.a); // Fade away when looking at front view the muzzleflare using a fresnel.
-	ALPHA_SCISSOR_THRESHOLD = 0.001;
+	vec4 albedo_tex = texture(texture_albedo, UV);
+	// Additive soft flash: no alpha scissor (causes hard blob edges) and no
+	// view-dependent fresnel on a custom-billboard quad (can collapse into a
+	// sphere). Brightness comes from the texture/color ramp, not an alpha hack.
+	vec3 col = albedo_tex.rgb * COLOR.rgb;
+	float a = albedo_tex.a * COLOR.a;
+	ALBEDO = col;
+	ALPHA = a;
 }

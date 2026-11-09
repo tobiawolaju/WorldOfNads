@@ -18,10 +18,8 @@ const RING_WIDTH := 4.0
 const RING_MARGIN := 4.0            # how far the ring sits outside the button
 const RING_TRACK_ALPHA := 0.12      # faint full circle behind the countdown
 const RING_PULSE_SECONDS := 2.0     # pulse the ring during the last seconds
-## The countdown is always plain white, whatever the pickup or weapon behind it
-## is. The same ring serves pickup (timer), fire (ammo) and hook, so a coloured
-## ring would mean three different things in one place.
-const RING_COLOR := Color.WHITE
+## Action/timer indicator ring color.
+const RING_COLOR := Color(1.0, 0.9, 0.2, 1.0)
 
 # The visible caption on the Action button is a Label child named "action"
 # (the Button's own text property is covered by it). Captured in _ready so the
@@ -38,6 +36,9 @@ const IDLE_CAPTION := "PUMP"
 const CAPTION_COLOR := Color.WHITE
 const CAPTION_ACTIVE_ALPHA := 1.0
 const CAPTION_IDLE_ALPHA := 0.5
+## GRAB/power-up feedback: yellow makes action states intuitive.
+const CAPTION_GRAB_COLOR := Color(1.0, 0.9, 0.2, 1.0)
+const CAPTION_POWER_COLOR := Color(1.0, 0.9, 0.2, 1.0)
 ## How often the "is anything in reach?" check runs. It walks the pickup group and
 ## the player's grab area, so it is polled instead of run every frame.
 const PICKABLE_POLL_SECONDS := 0.1
@@ -120,14 +121,21 @@ func _refresh_action_caption() -> void:
 			_stacked_cache_text = _stack_vertically(label)
 		stacked = _stacked_cache_text
 	var text := _action_caption_default
+	var is_grab := false
+	var is_pump := false
 	if label != "":
 		text = stacked
 	elif not _pickable_in_range and _idle_caption_stacked != "":
-		# Nothing held and nothing in reach: PUMP, in the plain white the
-		# authored caption already uses.
+		# Nothing held and nothing in reach: idle prompt.
 		text = _idle_caption_stacked
-	var tint := _caption_tint(not label.is_empty() or not _active.is_empty())
-	if text == _last_caption_text and tint == _last_caption_color:
+		is_pump = true
+	else:
+		# Nothing held/running and something is in reach: GRAB.
+		is_grab = true
+	var held_powerup_ready := _is_held_powerup_ready()
+	var tint := _caption_tint(label, is_grab, is_pump, held_powerup_ready)
+	# Pulsing state changes every frame, so never cache-skip it.
+	if not held_powerup_ready and text == _last_caption_text and tint == _last_caption_color:
 		return
 	_last_caption_text = text
 	_last_caption_color = tint
@@ -140,13 +148,41 @@ func _refresh_action_caption() -> void:
 		action_button.add_theme_color_override("font_color", tint)
 
 
-# White either way; only the alpha says whether the Action button has anything
-# to do. Full while carrying a power-up/weapon or running a timed effect, half
-# when the hands are empty — including the idle PUMP/GRAB states.
-func _caption_tint(has_pickup: bool) -> Color:
-	var tint := CAPTION_COLOR
-	tint.a = CAPTION_ACTIVE_ALPHA if has_pickup else CAPTION_IDLE_ALPHA
-	return tint
+# True when carrying a timed power-up in hand, ready to use (not an active
+# running effect, not a weapon/ammo gauge, not DROP).
+func _is_held_powerup_ready() -> bool:
+	return _held_duration > 0.0 \
+		and _held_uses_total <= 0 \
+		and _active.is_empty() \
+		and _held_label != "" \
+		and _held_label != "DROP"
+
+
+# Caption color by state: GRAB is yellow; a held power-up pulses yellow (ready in
+# hand) to distinguish it from an active/running power (steady yellow). Idle/other
+# states keep the previous white/alpha behavior.
+func _caption_tint(label: String, is_grab: bool, is_pump: bool, held_powerup_ready: bool) -> Color:
+	if is_grab:
+		return CAPTION_GRAB_COLOR
+	if held_powerup_ready:
+		var pulse := 0.35 + 0.65 * (0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.006))
+		var c := CAPTION_POWER_COLOR
+		c.a = pulse
+		return c
+	if not _active.is_empty():
+		# Active/running timed power: steady, distinct from the pulsing held state.
+		return CAPTION_POWER_COLOR
+	if label != "":
+		# FIRE (weapon/ammo) uses the action yellow; DROP stays readable white.
+		if label == "FIRE" or _held_uses_total > 0:
+			return CAPTION_POWER_COLOR
+		var tint := CAPTION_COLOR
+		tint.a = CAPTION_ACTIVE_ALPHA
+		return tint
+	var idle := CAPTION_COLOR
+	idle.a = CAPTION_IDLE_ALPHA
+	return idle
+
 
 # Polls the local player for the running timed power-up and picks what the ring
 # should show: the depleting countdown of a running effect, a weapon's ammo gauge
