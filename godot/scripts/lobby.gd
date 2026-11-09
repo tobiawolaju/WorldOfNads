@@ -48,10 +48,19 @@ class BotMotion:
 	## Simulation LOD (Hitman-style crowd budget): accumulate dt and step less
 	## often when far from the viewer. Keeps near bots smooth, far bots cheap.
 	var sim_accum: float = 0.0
-	var lod: int = 0 # 0=near, 1=mid, 2=far
+	var lod: int = 0 # 0=near, 1=mid, 2=far, 3=culled
+	var dist_sq: float = INF
+	## Orbit advanced even when dormant so teleported bots don't freeze in time.
+	var orbit_accum: float = 0.0
 
 var _bot_motions: Array[BotMotion] = []
 var _bot_lod_timer: float = 0.0
+var _bot_budget_timer: float = 0.0
+var _bot_sim_set: Dictionary = {} # motion index -> true (full-physics budget)
+var _bot_lod_cursor: int = 0
+var _stress_spawn_pending: int = 0
+var _stress_spawn_base: Vector3 = Vector3.ZERO
+var _stress_spawn_picks: Array[String] = []
 
 # Distance tiers (meters): near=full sim+anim, mid=throttled sim/anim LOD,
 # far=very low sim rate + mesh/anim disabled. Tuned for low-end browser crowds.
@@ -60,10 +69,15 @@ const BOT_LOD_MID: float = 40.0
 const BOT_LOD_FAR: float = 70.0
 const BOT_LOD_CULL: float = 110.0
 const BOT_LOD_INTERVAL: float = 0.25
+const BOT_LOD_SLICE: int = 256 # LOD distance refresh batch per interval tick
+const BOT_BUDGET_INTERVAL: float = 0.35
+const BOT_FULL_SIM_BUDGET: int = 120 # only these get CharacterBody move_and_slide
+const BOT_VISUAL_BUDGET: int = 280 # beyond this (by distance) mesh stays hidden
+const BOT_SPAWN_PER_FRAME: int = 40
 const BOT_SIM_STEP_NEAR: float = 0.0 # every physics tick
-const BOT_SIM_STEP_MID: float = 1.0 / 15.0
-const BOT_SIM_STEP_FAR: float = 1.0 / 6.0
-const BOT_SIM_STEP_CULL: float = 1.0 / 3.0
+const BOT_SIM_STEP_MID: float = 1.0 / 12.0
+const BOT_SIM_STEP_FAR: float = 1.0 / 4.0
+const BOT_SIM_STEP_CULL: float = 1.0 / 2.0
 
 # Hand-off from dshbord.gd: READY counts down on the dashboard and then sends the
 # player here with the match they queued and the nad they picked, written straight
@@ -108,6 +122,7 @@ func _ready():
 	_assign_camera()
 
 func _physics_process(delta: float) -> void:
+	_tick_stress_spawn()
 	_drive_lobby_bots(delta)
 
 func _process(_delta: float) -> void:
@@ -199,51 +214,64 @@ func _spawn_lobby_stress_agents() -> void:
 		return
 	if spawn_point == null:
 		return
+	_stress_spawn_base = spawn_point.global_position
+	_stress_spawn_picks = _bot_skin_picks(lobby_stress_agent_count)
+	_stress_spawn_pending = lobby_stress_agent_count
+	print("[LOBBY] Spawning %d stress bots in batches of %d..." % [lobby_stress_agent_count, BOT_SPAWN_PER_FRAME])
 
-	var base_pos := spawn_point.global_position
-	var picks := _bot_skin_picks(lobby_stress_agent_count)
 
-	for i in range(lobby_stress_agent_count):
-		var skin_name: String = picks[i] if i < picks.size() else DEFAULT_SKIN_NAME
+func _tick_stress_spawn() -> void:
+	if _stress_spawn_pending <= 0:
+		return
+	var total := lobby_stress_agent_count
+	var budget := mini(BOT_SPAWN_PER_FRAME, _stress_spawn_pending)
+	for _k in range(budget):
+		var i := total - _stress_spawn_pending
+		_spawn_one_stress_bot(i, total)
+		_stress_spawn_pending -= 1
+	if _stress_spawn_pending <= 0:
+		print("[LOBBY] Spawned %d remote-player bots from %d skins." % [npcs.size(), _bot_skin_pool().size()])
 
-		var rig := _instantiate_bot_rig(skin_name)
-		rig.name = "Bot%03d" % (i + 1)
-		add_child(rig)
-		var bot: Node3D = rig.get_node("Avatar")
-		npcs.append(bot)
 
-		var ring_index := int(floor(sqrt(float(i))))
-		var ring_radius := 2.0 + (ring_index * 1.5)
-		var ring_angle := (TAU * float(i)) / maxf(1.0, float(lobby_stress_agent_count))
-		var spawn_offset := Vector3(cos(ring_angle), 0.0, sin(ring_angle)) * ring_radius
-		var home_center := base_pos + spawn_offset
+func _spawn_one_stress_bot(i: int, total: int) -> void:
+	var skin_name: String = _stress_spawn_picks[i] if i < _stress_spawn_picks.size() else DEFAULT_SKIN_NAME
+	var rig := _instantiate_bot_rig(skin_name)
+	rig.name = "Bot%04d" % (i + 1)
+	add_child(rig)
+	var bot: Node3D = rig.get_node("Avatar")
+	npcs.append(bot)
 
-		bot.is_local = false
-		bot.root = self
-		bot.player_id = "BOT_%03d" % (i + 1)
-		bot.display_name = "BOT %03d" % (i + 1)
-		# Lets the cylinder LOS (aim assist) find and damage lobby bots, so the
-		# stress agents double as local stand-ins for remote players.
-		bot.add_to_group("los_target")
-		rig.global_position = home_center
-		_disable_bot_shadows(rig)
+	var ring_index := int(floor(sqrt(float(i))))
+	var ring_radius := 2.0 + (ring_index * 1.5)
+	var ring_angle := (TAU * float(i)) / maxf(1.0, float(total))
+	var spawn_offset := Vector3(cos(ring_angle), 0.0, sin(ring_angle)) * ring_radius
+	var home_center := _stress_spawn_base + spawn_offset
 
-		var motion := BotMotion.new()
-		motion.rig = rig
-		motion.home = home_center
-		motion.radius = _stress_rng.randf_range(0.9, 3.5)
-		motion.speed = _stress_rng.randf_range(0.55, 1.6)
-		motion.angle = _stress_rng.randf_range(0.0, TAU)
-		motion.direction = -1.0 if _stress_rng.randi_range(0, 1) == 0 else 1.0
-		motion.wobble = _stress_rng.randf_range(0.2, 1.1)
-		motion.wobble_phase = _stress_rng.randf_range(0.0, TAU)
-		motion.jump_min = _stress_rng.randf_range(0.8, 2.4)
-		motion.jump_max = _stress_rng.randf_range(2.5, 5.5)
-		motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
-		motion.pause_timer = _stress_rng.randf_range(2.0, 8.0)
-		_bot_motions.append(motion)
+	bot.is_local = false
+	bot.root = self
+	bot.player_id = "BOT_%04d" % (i + 1)
+	bot.display_name = "BOT %04d" % (i + 1)
+	bot.add_to_group("los_target")
+	rig.global_position = home_center
+	_disable_bot_shadows(rig)
 
-	print("[LOBBY] Spawned %d remote-player bots from %d skins." % [npcs.size(), _bot_skin_pool().size()])
+	var motion := BotMotion.new()
+	motion.rig = rig
+	motion.home = home_center
+	motion.radius = _stress_rng.randf_range(0.9, 3.5)
+	motion.speed = _stress_rng.randf_range(0.55, 1.6)
+	motion.angle = _stress_rng.randf_range(0.0, TAU)
+	motion.direction = -1.0 if _stress_rng.randi_range(0, 1) == 0 else 1.0
+	motion.wobble = _stress_rng.randf_range(0.2, 1.1)
+	motion.wobble_phase = _stress_rng.randf_range(0.0, TAU)
+	motion.jump_min = _stress_rng.randf_range(0.8, 2.4)
+	motion.jump_max = _stress_rng.randf_range(2.5, 5.5)
+	motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
+	motion.pause_timer = _stress_rng.randf_range(2.0, 8.0)
+	_bot_motions.append(motion)
+	# Start dormant/cheap; budget + LOD passes will promote nearest.
+	_apply_bot_lod(bot, 3)
+	rig.visible = false
 
 
 # PlayerManager turns another player's skin scene into a RemotePlayer node: the
@@ -372,19 +400,18 @@ func _redress_fallback_bots() -> void:
 		_skin_applier.apply_skin(bot, picks[i] if i < picks.size() else DEFAULT_SKIN_NAME)
 
 
-# Stands in for PlayerManager's world-state loop: a RemotePlayer never moves or
-# animates on its own, so the lobby walks it around its orbit, makes it hop and
-# stand still, and sends it the same animation states a real remote receives.
-# "Hitman-style" crowd budget: distance LOD + time-sliced simulation so 100 bots
-# don't cost 100 full updates every physics tick on low-end/browser.
+# "Hitman-style" crowd at scale (20..2000): fixed full-physics budget, distance
+# tiers, and cheap dormant updates for the rest. 2000 full CharacterBody+AnimTree
+# bots can't all step every tick in a browser, so only the nearest N get
+# move_and_slide; others keep orbit state and teleport at low frequency.
 func _drive_lobby_bots(delta: float) -> void:
 	if _bot_motions.is_empty():
 		return
 	var viewer_pos := _bot_viewer_position()
-	_bot_lod_timer -= delta
-	var refresh_lod := _bot_lod_timer <= 0.0
-	if refresh_lod:
-		_bot_lod_timer = BOT_LOD_INTERVAL
+	_bot_budget_timer -= delta
+	if _bot_budget_timer <= 0.0:
+		_bot_budget_timer = BOT_BUDGET_INTERVAL
+		_refresh_bot_budget(viewer_pos)
 
 	var count := mini(npcs.size(), _bot_motions.size())
 	for i in range(count):
@@ -396,30 +423,95 @@ func _drive_lobby_bots(delta: float) -> void:
 		if rig == null or not is_instance_valid(rig):
 			continue
 
-		# A bot "killed" by the local LOS test hides and freezes until it respawns.
 		if bool(rig.get_meta("combat_dead", false)) or (bot.has_method("is_remote_player") and bot.get("_is_dead") == true):
 			rig.velocity = Vector3.ZERO
-			if rig.is_on_floor() == false:
+			if _bot_sim_set.has(i) and rig.is_on_floor() == false:
 				rig.velocity.y -= BOT_GRAVITY * minf(delta, 0.1)
 				rig.move_and_slide()
 			continue
 
-		var dist := viewer_pos.distance_to(rig.global_position) if viewer_pos != Vector3.INF else 0.0
-		if refresh_lod:
-			var new_lod := _bot_lod_for_distance(dist)
-			if new_lod != motion.lod:
-				motion.lod = new_lod
-				_apply_bot_lod(bot, new_lod)
-
-		var step_dt := _bot_step_dt(motion.lod)
-		if step_dt <= 0.0:
+		if _bot_sim_set.has(i):
 			_step_bot(bot, motion, rig, delta)
 		else:
-			motion.sim_accum = minf(motion.sim_accum + delta, step_dt * 3.0)
-			if motion.sim_accum >= step_dt:
-				var dt := motion.sim_accum
-				motion.sim_accum = 0.0
-				_step_bot(bot, motion, rig, dt)
+			_step_bot_dormant(bot, motion, rig, delta)
+
+
+func _refresh_bot_budget(viewer_pos: Vector3) -> void:
+	var count := mini(npcs.size(), _bot_motions.size())
+	if count <= 0:
+		return
+	# Update distances for all (cheap: 2000 dot/subs). Then pick nearest budgets.
+	var ranked: Array = []
+	ranked.resize(count)
+	for i in range(count):
+		var rig: CharacterBody3D = _bot_motions[i].rig
+		var dsq := INF
+		if rig != null and is_instance_valid(rig) and viewer_pos != Vector3.INF:
+			dsq = viewer_pos.distance_squared_to(rig.global_position)
+		_bot_motions[i].dist_sq = dsq
+		ranked[i] = i
+	ranked.sort_custom(func(a: int, b: int) -> bool: return _bot_motions[a].dist_sq < _bot_motions[b].dist_sq)
+
+	_bot_sim_set.clear()
+	# Scale budgets with crowd size so 2000 stays playable on low-end/browser.
+	var sim_budget := BOT_FULL_SIM_BUDGET
+	var vis_budget := BOT_VISUAL_BUDGET
+	if count > 1200:
+		sim_budget = 50
+		vis_budget = 120
+	elif count > 500:
+		sim_budget = 80
+		vis_budget = 180
+	elif count > 200:
+		sim_budget = 100
+		vis_budget = 240
+	var sim_n := mini(sim_budget, count)
+	for r in range(sim_n):
+		_bot_sim_set[int(ranked[r])] = true
+
+	for r in range(count):
+		var i := int(ranked[r])
+		var bot = npcs[i]
+		if not is_instance_valid(bot):
+			continue
+		var motion: BotMotion = _bot_motions[i]
+		var dist := sqrt(motion.dist_sq) if motion.dist_sq != INF else INF
+		var new_lod := _bot_lod_for_distance(dist)
+		var visual := r < vis_budget
+		if not visual and new_lod < 3:
+			new_lod = 3
+		motion.lod = new_lod
+		_apply_bot_lod(bot, new_lod, visual)
+		# Dormant rigs: stop physics/render cost, keep node for LOS targeting.
+		var rig: CharacterBody3D = motion.rig
+		if rig != null and is_instance_valid(rig):
+			var active := _bot_sim_set.has(i)
+			rig.visible = visual
+			rig.collision_layer = 1 if active else 0
+			rig.collision_mask = 1 if active else 0
+			if not active:
+				rig.velocity = Vector3.ZERO
+
+
+func _step_bot_dormant(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float) -> void:
+	# Advance orbit cheaply and snap position occasionally; no move_and_slide.
+	motion.orbit_accum = minf(motion.orbit_accum + delta, 1.0)
+	var step := 0.5 if motion.lod >= 3 else 0.25
+	if motion.orbit_accum < step:
+		return
+	var dt := motion.orbit_accum
+	motion.orbit_accum = 0.0
+	if motion.pause_left > 0.0:
+		motion.pause_left -= dt
+		if motion.pause_left <= 0.0:
+			motion.pause_timer = _stress_rng.randf_range(4.0, 12.0)
+	else:
+		motion.angle = wrapf(motion.angle + (dt * motion.speed * motion.direction), 0.0, TAU)
+		motion.pause_timer -= dt
+		if motion.pause_timer <= 0.0:
+			motion.pause_left = _stress_rng.randf_range(0.6, 1.8)
+	rig.global_position = motion.home + _bot_orbit_offset(motion)
+	rig.velocity = Vector3.ZERO
 
 
 func _bot_viewer_position() -> Vector3:
@@ -454,17 +546,20 @@ func _bot_step_dt(lod: int) -> float:
 			return BOT_SIM_STEP_CULL
 
 
-func _apply_bot_lod(bot: Node, lod: int) -> void:
+func _apply_bot_lod(bot: Node, lod: int, visual: bool = true) -> void:
 	# Reuse RemotePlayer's LOD switches (animation/mesh) so we don't duplicate logic.
-	var anim_on := lod <= 1
-	var mesh_on := lod <= 2
+	var anim_on := visual and lod <= 1
+	var mesh_on := visual and lod <= 2
 	if bot.has_method("set_animation_lod_enabled"):
 		bot.call("set_animation_lod_enabled", anim_on)
 	if bot.has_method("set_mesh_lod_enabled"):
 		bot.call("set_mesh_lod_enabled", mesh_on)
-	# When fully culled, stop spending anim-state updates; mesh is hidden.
-	if lod >= 3 and bot.has_method("set_animation_state"):
+	if not anim_on and bot.has_method("set_animation_state"):
 		bot.call("set_animation_state", "idle")
+	# Hide name labels on non-visual bots (big draw/text savings at 2000).
+	var label = bot.get("name_label")
+	if label is Node3D:
+		(label as Node3D).visible = visual and lod <= 2
 
 
 func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float) -> void:
