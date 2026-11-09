@@ -3963,9 +3963,16 @@ func _trigger_weapon_fx(clip: String) -> void:
 	_trigger_weapon_fire_cam(held_weapon_kind)
 	_add_camera_shake(cfg.get("shake", 0.1))
 	if clip == "hook":
-		# Knife/sword: the swing is the hit, no projectile.
+		# Knife/sword: the swing is the hit, no projectile. Auto-slide for momentum/feel.
 		if held_weapon_kind == LocalPickup2.WeaponKind.KNIFE or held_weapon_kind == LocalPickup2.WeaponKind.SWORD:
 			_pending_melee = cfg
+			if is_on_floor() and not _is_sliding and _is_movement_allowed():
+				var slide_dir := Vector3(velocity.x, 0.0, velocity.z)
+				if slide_dir.length_squared() < 0.01:
+					slide_dir = _aim_direction()
+					slide_dir.y = 0.0
+				if slide_dir.length_squared() > 0.01:
+					_start_slide(slide_dir, false)
 		return
 	if clip != "shoot":
 		return
