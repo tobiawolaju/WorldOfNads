@@ -125,14 +125,14 @@ func _toggle_fullscreen() -> void:
 		_fade_shade(false)
 	_update_bus_path_overlay()
 
-func _fade_shade(show: bool) -> void:
+func _fade_shade(should_show: bool) -> void:
 	if shade_overlay == null or not is_instance_valid(shade_overlay):
 		return
 	if _shade_tween and is_instance_valid(_shade_tween):
 		_shade_tween.kill()
 	shade_overlay.visible = true
 	_shade_tween = create_tween()
-	if show:
+	if should_show:
 		shade_overlay.modulate.a = 0.0
 		_shade_tween.tween_property(shade_overlay, "modulate:a", 1.0, shade_fade_duration)
 	else:
