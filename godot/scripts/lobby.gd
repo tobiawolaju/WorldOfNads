@@ -89,7 +89,7 @@ const BOT_LOD_CULL: float = 110.0
 const BOT_LOD_INTERVAL: float = 0.25
 const BOT_LOD_SLICE: int = 256 # LOD distance refresh batch per interval tick
 const BOT_BUDGET_INTERVAL: float = 0.35
-const BOT_FULL_SIM_BUDGET: int = 120 # only these get CharacterBody move_and_slide
+const BOT_FULL_SIM_BUDGET: int = 120 # nearest rigs get full math-driven sim (no physics)
 const BOT_VISUAL_BUDGET: int = 280 # beyond this (by distance) mesh stays hidden
 const BOT_SPAWN_PER_FRAME: int = 40
 const BOT_SIM_STEP_NEAR: float = 0.0 # every physics tick
@@ -608,10 +608,17 @@ func _drive_lobby_bots(delta: float) -> void:
 			continue
 
 		if bool(rig.get_meta("combat_dead", false)) or (bot.has_method("is_remote_player") and bot.get("_is_dead") == true):
+			# Math-driven settle to ground (no physics). Keep node placed for LOS/cleanup.
+			if _bot_sim_set.has(i) and not motion.on_ground:
+				motion.vel_y -= BOT_GRAVITY * minf(delta, 0.1)
+				var p := rig.global_position
+				p.y += motion.vel_y * minf(delta, 0.1)
+				if p.y <= motion.home.y:
+					p.y = motion.home.y
+					motion.vel_y = 0.0
+					motion.on_ground = true
+				rig.global_position = p
 			rig.velocity = Vector3.ZERO
-			if _bot_sim_set.has(i) and rig.is_on_floor() == false:
-				rig.velocity.y -= BOT_GRAVITY * minf(delta, 0.1)
-				rig.move_and_slide()
 			continue
 
 		if _bot_sim_set.has(i):
@@ -680,10 +687,14 @@ func _refresh_bot_budget(viewer_pos: Vector3) -> void:
 				climb.call("set_climb_enabled", visual and active and new_lod <= 1)
 			if not active:
 				rig.velocity = Vector3.ZERO
+				motion.vel_y = 0.0
+				motion.on_ground = true
 
 
 func _step_bot_dormant(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float) -> void:
-	# Advance orbit cheaply and snap position occasionally; no move_and_slide.
+	# Advance orbit cheaply and snap position occasionally; math-only, no physics.
+	motion.vel_y = 0.0
+	motion.on_ground = true
 	motion.orbit_accum = minf(motion.orbit_accum + delta, 1.0)
 	var step := 0.5 if motion.lod >= 3 else 0.25
 	if motion.orbit_accum < step:
@@ -781,41 +792,49 @@ func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float)
 
 	var moving := motion.pause_left <= 0.0 or seek_goal
 
-	if not rig.is_on_floor():
-		rig.velocity.y -= BOT_GRAVITY * delta
-	else:
-		rig.velocity.y = 0.0
+	# Math-driven vertical (no move_and_slide / no physics solver).
+	var ground_y := motion.home.y
+	if motion.on_ground:
+		motion.vel_y = 0.0
 		if moving and not seek_goal:
 			motion.jump_timer -= delta
 			if motion.jump_timer <= 0.0:
-				rig.velocity.y = sqrt(2.0 * BOT_GRAVITY * BOT_JUMP_HEIGHT)
+				motion.vel_y = sqrt(2.0 * BOT_GRAVITY * BOT_JUMP_HEIGHT)
+				motion.on_ground = false
 				motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
+	else:
+		motion.vel_y -= BOT_GRAVITY * delta
 
 	var diff := target - rig.global_position
 	diff.y = 0.0
 	var base_speed := minf((motion.radius * motion.speed) * (1.25 if seek_goal else 1.0), BOT_MAX_SPEED)
 	if seek_goal:
 		base_speed = minf(maxf(base_speed, 3.2), BOT_SEEK_SPEED)
+	var pos := rig.global_position
 	if seek_goal and diff.length() <= BOT_GOAL_REACH:
-		rig.velocity.x = 0.0
-		rig.velocity.z = 0.0
 		_bot_try_pickup_goal(bot, motion)
 	else:
 		if moving and diff.length() > 0.001:
 			var dir := diff.normalized()
-			var desired_speed := clampf(diff.length() / maxf(delta, 0.001), 0.0, base_speed)
-			rig.velocity.x = dir.x * desired_speed
-			rig.velocity.z = dir.z * desired_speed
+			var step_len := minf(base_speed * delta, diff.length())
+			pos.x += dir.x * step_len
+			pos.z += dir.z * step_len
 			bot.rotation.y = atan2(dir.x, dir.z)
-		else:
-			rig.velocity.x = 0.0
-			rig.velocity.z = 0.0
 
-	rig.move_and_slide()
+	pos.y += motion.vel_y * delta
+	if pos.y <= ground_y:
+		pos.y = ground_y
+		motion.vel_y = 0.0
+		motion.on_ground = true
+	else:
+		motion.on_ground = false
 
-	if rig.global_position.y < -15.0:
-		rig.global_position = motion.home
-		rig.velocity = Vector3.ZERO
+	if pos.y < -15.0:
+		pos = motion.home
+		motion.vel_y = 0.0
+		motion.on_ground = true
+	rig.global_position = pos
+	rig.velocity = Vector3.ZERO
 
 	if motion.lod <= 1 and bot.has_method("set_animation_state"):
 		bot.set_animation_state(_bot_animation_state(motion, moving or seek_goal))
@@ -994,8 +1013,8 @@ func _bot_orbit_offset(motion: BotMotion) -> Vector3:
 # The states a remote player actually gets sent: standing still is idle, walking
 # is running, and the two halves of a hop are runningjump and falling.
 func _bot_animation_state(motion: BotMotion, moving: bool) -> String:
-	if motion.rig != null and not motion.rig.is_on_floor():
-		return "runningjump" if motion.rig.velocity.y > 0.0 else "falling"
+	if not motion.on_ground:
+		return "runningjump" if motion.vel_y > 0.0 else "falling"
 	if not moving:
 		return "idle"
 	return "running"
