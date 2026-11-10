@@ -96,3 +96,6 @@ contracts/bundle/
 contracts/dist/
 
 godot/webexport/
+
+# Android release keystore
+worldofnads-release.keystore
