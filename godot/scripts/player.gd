@@ -679,10 +679,8 @@ func _ready() -> void:
 	_refresh_touch_joystick()
 	_connect_joystick_signals()
 	_update_global_player_shader_pos(true)
-	# Power-up aura warm-up: build the quad + material and give the shader one
-	# real drawn frame now, so the first pickup use neither allocates nor stutters
-	# on a shader compile. Same one-shot-per-process rule as the smoke cloud.
-	if _storm_eye != null and not _powerup_prewarmed:
+	# Aura FX: skip dedicated prewarm on low-end mobile web (cheap shader; avoids startup cost).
+	if _storm_eye != null and not _powerup_prewarmed and not (OS.has_feature("web") or OS.has_feature("mobile")):
 		_prewarm_powerup_aura.call_deferred()
 	# Death dissolve warm-up: same idea, so the first death does not stutter on a
 	# shader compile. Death can happen in any scene, so this one is unconditional.
@@ -1096,8 +1094,7 @@ func _physics_process(delta: float) -> void:
 			if is_local and _hidden_extras_revealed:
 				_set_hidden_extras_revealed(false)
 		else:
-			# Keep the aura aimed at the camera while the effect runs. Cheap:
-			# one visibility check and one look_at on the aura quad.
+			# Keep aura aimed at camera (throttled internally for perf).
 			_maintain_powerup_visual()
 
 	if _smoke_drop_cooldown > 0.0:
@@ -2755,12 +2752,15 @@ func apply_powerup_visual(active: bool) -> void:
 			_powerup_aura.visible = false
 
 
-# Re-aims the aura while the effect runs. Cheap by design: nothing here scans the
-# tree, and a frame where neither the player nor the camera moved skips even the
-# billboard write.
+# Re-aims the aura while the effect runs. Throttled for low-end/mobile perf.
+var _powerup_aim_tick: int = 0
 func _maintain_powerup_visual() -> void:
-	if _powerup_visual_active:
-		_aim_aura_at_camera()
+	if not _powerup_visual_active:
+		return
+	_powerup_aim_tick = (_powerup_aim_tick + 1) % 3
+	if _powerup_aim_tick != 0:
+		return
+	_aim_aura_at_camera()
 
 
 # Faces the aura at the camera. look_at() points -Z at its target and the
