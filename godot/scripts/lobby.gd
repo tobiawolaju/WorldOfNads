@@ -55,6 +55,7 @@ class BotMotion:
 	# Math-driven vertical motion (no CharacterBody physics).
 	var vel_y: float = 0.0
 	var on_ground: bool = true
+	var floor_y: float = 0.0 # sampled ground height under current position
 	# Hive-mind goal (assigned centrally at low frequency). Overrides orbit when set.
 	var goal_node: Node3D = null
 	var goal_kind: String = "" # "chicken","lootbox","powerup","weapon"
@@ -303,6 +304,7 @@ func _spawn_one_stress_bot(i: int, total: int) -> void:
 	motion.jump_max = _stress_rng.randf_range(2.5, 5.5)
 	motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
 	motion.pause_timer = _stress_rng.randf_range(2.0, 8.0)
+	motion.floor_y = motion.home.y
 	_bot_motions.append(motion)
 	# Start dormant/cheap; budget + LOD passes will promote nearest.
 	_apply_bot_lod(bot, 3)
@@ -612,15 +614,23 @@ func _drive_lobby_bots(delta: float) -> void:
 
 		if bool(rig.get_meta("combat_dead", false)) or (bot.has_method("is_remote_player") and bot.get("_is_dead") == true):
 			# Math-driven settle to ground (no physics). Keep node placed for LOS/cleanup.
-			if _bot_sim_set.has(i) and not motion.on_ground:
-				motion.vel_y -= BOT_GRAVITY * minf(delta, 0.1)
-				var p := rig.global_position
-				p.y += motion.vel_y * minf(delta, 0.1)
-				if p.y <= motion.home.y:
-					p.y = motion.home.y
-					motion.vel_y = 0.0
-					motion.on_ground = true
-				rig.global_position = p
+			if _bot_sim_set.has(i):
+				var ground_y := _bot_sample_floor_y(motion, rig.global_position.x, rig.global_position.z, rig.global_position.y + 2.0)
+				if not motion.on_ground:
+					motion.vel_y -= BOT_GRAVITY * minf(delta, 0.1)
+					var p := rig.global_position
+					p.y += motion.vel_y * minf(delta, 0.1)
+					if p.y <= ground_y:
+						p.y = ground_y
+						motion.vel_y = 0.0
+						motion.on_ground = true
+						motion.floor_y = ground_y
+					rig.global_position = p
+				else:
+					var p := rig.global_position
+					p.y = ground_y
+					motion.floor_y = ground_y
+					rig.global_position = p
 			rig.velocity = Vector3.ZERO
 			continue
 
@@ -692,6 +702,7 @@ func _refresh_bot_budget(viewer_pos: Vector3) -> void:
 				rig.velocity = Vector3.ZERO
 				motion.vel_y = 0.0
 				motion.on_ground = true
+				motion.floor_y = motion.home.y
 
 
 func _step_bot_dormant(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float) -> void:
@@ -713,7 +724,10 @@ func _step_bot_dormant(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta
 		motion.pause_timer -= dt
 		if motion.pause_timer <= 0.0:
 			motion.pause_left = _stress_rng.randf_range(0.6, 1.8)
-	rig.global_position = motion.home + _bot_orbit_offset(motion)
+	var pos := motion.home + _bot_orbit_offset(motion)
+	pos.y = _bot_sample_floor_y(motion, pos.x, pos.z, maxf(motion.home.y, motion.floor_y) + 4.0)
+	motion.floor_y = pos.y
+	rig.global_position = pos
 	rig.velocity = Vector3.ZERO
 
 
@@ -795,19 +809,6 @@ func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float)
 
 	var moving := motion.pause_left <= 0.0 or seek_goal
 
-	# Math-driven vertical (no move_and_slide / no physics solver).
-	var ground_y := motion.home.y
-	if motion.on_ground:
-		motion.vel_y = 0.0
-		if moving and not seek_goal:
-			motion.jump_timer -= delta
-			if motion.jump_timer <= 0.0:
-				motion.vel_y = sqrt(2.0 * BOT_GRAVITY * BOT_JUMP_HEIGHT)
-				motion.on_ground = false
-				motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
-	else:
-		motion.vel_y -= BOT_GRAVITY * delta
-
 	var diff := target - rig.global_position
 	diff.y = 0.0
 	var base_speed := minf((motion.radius * motion.speed) * (1.25 if seek_goal else 1.0), BOT_MAX_SPEED)
@@ -824,18 +825,34 @@ func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float)
 			pos.z += dir.z * step_len
 			bot.rotation.y = atan2(dir.x, dir.z)
 
-	pos.y += motion.vel_y * delta
-	if pos.y <= ground_y:
-		pos.y = ground_y
+	# Math-driven vertical with floor sampling (handles uneven terrain without physics).
+	var ray_from_y := maxf(maxf(pos.y, motion.floor_y), motion.home.y) + 4.0
+	var floor_y := _bot_sample_floor_y(motion, pos.x, pos.z, ray_from_y)
+	if motion.on_ground:
 		motion.vel_y = 0.0
-		motion.on_ground = true
-	else:
-		motion.on_ground = false
+		pos.y = floor_y
+		if moving and not seek_goal:
+			motion.jump_timer -= delta
+			if motion.jump_timer <= 0.0:
+				motion.vel_y = sqrt(2.0 * BOT_GRAVITY * BOT_JUMP_HEIGHT)
+				motion.on_ground = false
+				motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
+	if not motion.on_ground:
+		motion.vel_y -= BOT_GRAVITY * delta
+		pos.y += motion.vel_y * delta
+		# Resample under airborne position in case terrain changes below.
+		floor_y = _bot_sample_floor_y(motion, pos.x, pos.z, maxf(pos.y, floor_y) + 2.0)
+		if pos.y <= floor_y:
+			pos.y = floor_y
+			motion.vel_y = 0.0
+			motion.on_ground = true
+	motion.floor_y = floor_y
 
 	if pos.y < -15.0:
 		pos = motion.home
 		motion.vel_y = 0.0
 		motion.on_ground = true
+		motion.floor_y = motion.home.y
 	rig.global_position = pos
 	rig.velocity = Vector3.ZERO
 
@@ -1004,6 +1021,35 @@ func _bot_use_powerup(bot: Node, motion: BotMotion) -> void:
 	motion.held_item = null
 	motion.held_kind = ""
 	motion.action_cooldown = 1.5
+
+
+var _bot_floor_ray := PhysicsRayQueryParameters3D.new()
+
+func _bot_sample_floor_y(motion: BotMotion, x: float, z: float, from_y: float) -> float:
+	# Raycast down to follow uneven terrain without CharacterBody physics.
+	var world := get_world_3d()
+	if world == null:
+		return motion.home.y
+	var space := world.direct_space_state
+	if space == null:
+		return motion.home.y
+	var top_y := maxf(from_y, motion.home.y + 1.0)
+	_bot_floor_ray.from = Vector3(x, top_y, z)
+	_bot_floor_ray.to = Vector3(x, top_y - 30.0, z)
+	_bot_floor_ray.collision_mask = 1
+	_bot_floor_ray.collide_with_areas = false
+	_bot_floor_ray.collide_with_bodies = true
+	if motion.rig != null and is_instance_valid(motion.rig):
+		_bot_floor_ray.exclude = [motion.rig.get_rid()]
+	else:
+		_bot_floor_ray.exclude = []
+	var hit: Dictionary = space.intersect_ray(_bot_floor_ray)
+	if not hit.is_empty() and hit.has("position"):
+		var p = hit["position"]
+		if p is Vector3:
+			return (p as Vector3).y
+	# Fallback: keep last known/support height.
+	return maxf(motion.floor_y, motion.home.y - 1.0)
 
 
 func _bot_orbit_offset(motion: BotMotion) -> Vector3:
