@@ -470,12 +470,12 @@ func _process(_delta: float):
 				# Expected teardown at the end of a round: reconnect for the next one.
 				print("🔄 Round over, reconnecting for the next round.")
 			else:
-				print("❌ Disconnected from server.")
+				print("[Net] Disconnected from server. close_code=%d reason=%s" % [ws.get_close_code(), ws.get_close_reason()])
 			connected = false
 			connection_attempted = false
 			_start_reconnection(round_over)
 		elif not _reconnecting and is_connecting_to_live:
-			print("❌ Live server connection failed.")
+			print("[Net] Live server connection failed. close_code=%d reason=%s" % [ws.get_close_code(), ws.get_close_reason()])
 			_start_reconnection()
 
 	if connected:
