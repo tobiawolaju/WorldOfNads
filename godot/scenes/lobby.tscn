@@ -51,7 +51,7 @@ local_player_scene = ExtResource("2_oipnb")
 camera_node = NodePath("Player/Camera3D")
 spawn_point = NodePath("Player/myplayerswpanpoint")
 spawn_lobby_stress_agents = true
-lobby_stress_agent_count = 2000
+lobby_stress_agent_count = 2
 
 [node name="env" type="Node3D" parent="." unique_id=933934101 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
 script = ExtResource("3_ncsg4")
