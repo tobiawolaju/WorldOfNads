@@ -30,6 +30,7 @@ const SKIN_NAME_ALIASES: Dictionary = {
 var ws: WebSocketPeer = WebSocketPeer.new()
 var connected: bool = false
 var player_id: String = ""
+var _use_unsafe_tls: bool = false # debug fallback for native WSS issues (e.g. Godot 4.8 beta mbedTLS)
 
 
 func _prepare_ws_peer() -> void:
@@ -38,6 +39,13 @@ func _prepare_ws_peer() -> void:
 		return
 	if ws.get("handshake_headers") != null:
 		ws.handshake_headers = PackedStringArray()
+
+
+func _tls_client_options():
+	if _use_unsafe_tls:
+		push_warning("[Net] Using TLSOptions.client_unsafe() (debug fallback)")
+		return TLSOptions.client_unsafe()
+	return null
 var players: Dictionary = {}
 var is_local: bool = false
 var root: Node = null
@@ -350,7 +358,8 @@ func _attempt_connection():
 
 	print("[Net] Attempting to connect to %s server: %s" % [server_type, url_to_try])
 	_prepare_ws_peer()
-	var err = ws.connect_to_url(url_to_try)
+	var tls = _tls_client_options() if (is_connecting_to_live and (base_url.begins_with("wss://") or base_url.begins_with("https://"))) else null
+	var err = ws.connect_to_url(url_to_try, tls) if tls != null else ws.connect_to_url(url_to_try)
 
 	if err != OK:
 		push_error("Failed to initiate connection: %s" % err)
@@ -600,13 +609,17 @@ func _attempt_reconnection():
 		return
 	if _reconnect_target_url == "":
 		_reconnect_target_url = ROOM_URL if is_connecting_to_live else LOCAL_URL
-	# After a few failures, try without resume id in case a stale resume blocks handshake/join.
+	# After a few failures, try without resume id; later try unsafe TLS (debug fallback).
+	if not _use_unsafe_tls and _reconnect_attempts >= 5:
+		_use_unsafe_tls = true
+		print("[Net] Enabling unsafe TLS fallback for WSS reconnect attempts")
 	var include_resume := _reconnect_attempts < 3
 	var url = _build_ws_url_with_username(_reconnect_target_url, include_resume)
 	if not include_resume:
 		print("[Net] Retrying without resume id")
 	_prepare_ws_peer()
-	var err = ws.connect_to_url(url)
+	var tls = _tls_client_options() if _reconnect_target_url.begins_with("wss://") else null
+	var err = ws.connect_to_url(url, tls) if tls != null else ws.connect_to_url(url)
 	if err != OK:
 		push_error("Reconnection attempt failed: %s" % err)
 	else:
