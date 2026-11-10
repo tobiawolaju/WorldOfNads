@@ -1998,11 +1998,18 @@ func _resolve_local_match_id() -> void:
 		var raw_match = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('match') || ''")
 		if typeof(raw_match) == TYPE_STRING:
 			var match_id := str(raw_match).strip_edges()
+			if match_id == "default":
+				local_match_id = ""
+				return
 			if match_id != "":
 				local_match_id = match_id
 				return
-	if selected_match_id.strip_edges() != "":
-		local_match_id = selected_match_id.strip_edges()
+	var handoff_match := selected_match_id.strip_edges()
+	if handoff_match == "default":
+		local_match_id = ""
+		return
+	if handoff_match != "":
+		local_match_id = handoff_match
 
 func _pre_seed_from_session_storage() -> void:
 	if not OS.has_feature("web"):
