@@ -56,6 +56,7 @@ class BotMotion:
 	var vel_y: float = 0.0
 	var on_ground: bool = true
 	var floor_y: float = 0.0 # sampled ground height under current position
+	var feet_offset_y: float = 0.0 # rig-origin to feet offset (local Y of capsule bottom)
 	# Hive-mind goal (assigned centrally at low frequency). Overrides orbit when set.
 	var goal_node: Node3D = null
 	var goal_kind: String = "" # "chicken","lootbox","powerup","weapon"
@@ -305,6 +306,7 @@ func _spawn_one_stress_bot(i: int, total: int) -> void:
 	motion.jump_timer = _stress_rng.randf_range(motion.jump_min, motion.jump_max)
 	motion.pause_timer = _stress_rng.randf_range(2.0, 8.0)
 	motion.floor_y = motion.home.y
+	motion.feet_offset_y = _bot_feet_offset_y(rig)
 	_bot_motions.append(motion)
 	# Start dormant/cheap; budget + LOD passes will promote nearest.
 	_apply_bot_lod(bot, 3)
@@ -359,6 +361,27 @@ func _instantiate_bot_rig(skin_name: String) -> CharacterBody3D:
 	# re-dress later on (see _redress_fallback_bots).
 	_skin_applier.apply_skin(avatar, skin_name)
 	return rig
+
+
+func _bot_feet_offset_y(rig: Node) -> float:
+	# Local Y of feet relative to rig origin (capsule bottom). Used to place rig on floor.
+	var shape_node := rig.get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if shape_node == null:
+		return 0.0
+	var s = shape_node.shape
+	if s is CapsuleShape3D:
+		var cap := s as CapsuleShape3D
+		return shape_node.position.y - (cap.height * 0.5)
+	if s is CylinderShape3D:
+		var cyl := s as CylinderShape3D
+		return shape_node.position.y - (cyl.height * 0.5)
+	if s is BoxShape3D:
+		var box := s as BoxShape3D
+		return shape_node.position.y - (box.size.y * 0.5)
+	if s is SphereShape3D:
+		var sph := s as SphereShape3D
+		return shape_node.position.y - sph.radius
+	return shape_node.position.y
 
 
 # SkinApplier walks the player's own children - find_children's `owned` flag
@@ -616,19 +639,20 @@ func _drive_lobby_bots(delta: float) -> void:
 			# Math-driven settle to ground (no physics). Keep node placed for LOS/cleanup.
 			if _bot_sim_set.has(i):
 				var ground_y := _bot_sample_floor_y(motion, rig.global_position.x, rig.global_position.z, rig.global_position.y + 2.0)
+				var stand_y := ground_y - motion.feet_offset_y
 				if not motion.on_ground:
 					motion.vel_y -= BOT_GRAVITY * minf(delta, 0.1)
 					var p := rig.global_position
 					p.y += motion.vel_y * minf(delta, 0.1)
-					if p.y <= ground_y:
-						p.y = ground_y
+					if p.y <= stand_y:
+						p.y = stand_y
 						motion.vel_y = 0.0
 						motion.on_ground = true
 						motion.floor_y = ground_y
 					rig.global_position = p
 				else:
 					var p := rig.global_position
-					p.y = ground_y
+					p.y = stand_y
 					motion.floor_y = ground_y
 					rig.global_position = p
 			rig.velocity = Vector3.ZERO
@@ -725,8 +749,9 @@ func _step_bot_dormant(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta
 		if motion.pause_timer <= 0.0:
 			motion.pause_left = _stress_rng.randf_range(0.6, 1.8)
 	var pos := motion.home + _bot_orbit_offset(motion)
-	pos.y = _bot_sample_floor_y(motion, pos.x, pos.z, maxf(motion.home.y, motion.floor_y) + 4.0)
-	motion.floor_y = pos.y
+	var fy := _bot_sample_floor_y(motion, pos.x, pos.z, maxf(motion.home.y, motion.floor_y) + 4.0)
+	motion.floor_y = fy
+	pos.y = fy - motion.feet_offset_y
 	rig.global_position = pos
 	rig.velocity = Vector3.ZERO
 
@@ -826,11 +851,12 @@ func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float)
 			bot.rotation.y = atan2(dir.x, dir.z)
 
 	# Math-driven vertical with floor sampling (handles uneven terrain without physics).
-	var ray_from_y := maxf(maxf(pos.y, motion.floor_y), motion.home.y) + 4.0
+	var ray_from_y := maxf(maxf(pos.y + motion.feet_offset_y, motion.floor_y), motion.home.y) + 4.0
 	var floor_y := _bot_sample_floor_y(motion, pos.x, pos.z, ray_from_y)
+	var stand_y := floor_y - motion.feet_offset_y
 	if motion.on_ground:
 		motion.vel_y = 0.0
-		pos.y = floor_y
+		pos.y = stand_y
 		if moving and not seek_goal:
 			motion.jump_timer -= delta
 			if motion.jump_timer <= 0.0:
@@ -841,18 +867,21 @@ func _step_bot(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float)
 		motion.vel_y -= BOT_GRAVITY * delta
 		pos.y += motion.vel_y * delta
 		# Resample under airborne position in case terrain changes below.
-		floor_y = _bot_sample_floor_y(motion, pos.x, pos.z, maxf(pos.y, floor_y) + 2.0)
-		if pos.y <= floor_y:
-			pos.y = floor_y
+		floor_y = _bot_sample_floor_y(motion, pos.x, pos.z, maxf(pos.y + motion.feet_offset_y, floor_y) + 2.0)
+		stand_y = floor_y - motion.feet_offset_y
+		if pos.y <= stand_y:
+			pos.y = stand_y
 			motion.vel_y = 0.0
 			motion.on_ground = true
 	motion.floor_y = floor_y
 
 	if pos.y < -15.0:
+		var fy := _bot_sample_floor_y(motion, motion.home.x, motion.home.z, motion.home.y + 4.0)
 		pos = motion.home
 		motion.vel_y = 0.0
 		motion.on_ground = true
-		motion.floor_y = motion.home.y
+		motion.floor_y = fy
+		pos.y = fy - motion.feet_offset_y
 	rig.global_position = pos
 	rig.velocity = Vector3.ZERO
 
