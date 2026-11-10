@@ -41,6 +41,16 @@ func _prepare_ws_peer() -> void:
 		ws.handshake_headers = PackedStringArray()
 
 
+# A WebSocketPeer that has already closed cannot reliably be reused for another
+# connect_to_url() (Godot returns ERR_FAILED). Reconnect paths therefore always
+# start from a fresh peer instead of trying to revive the dead one.
+func _reset_ws_peer() -> void:
+	if ws != null and ws.get_ready_state() != WebSocketPeer.STATE_CLOSED:
+		ws.close()
+	ws = WebSocketPeer.new()
+	_prepare_ws_peer()
+
+
 func _tls_client_options():
 	if _use_unsafe_tls:
 		push_warning("[Net] Using TLSOptions.client_unsafe() (debug fallback)")
@@ -357,12 +367,12 @@ func _attempt_connection():
 	var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
 
 	print("[Net] Attempting to connect to %s server: %s" % [server_type, url_to_try])
-	_prepare_ws_peer()
+	_reset_ws_peer()
 	var tls = _tls_client_options() if (is_connecting_to_live and (base_url.begins_with("wss://") or base_url.begins_with("https://"))) else null
 	var err = ws.connect_to_url(url_to_try, tls) if tls != null else ws.connect_to_url(url_to_try)
 
 	if err != OK:
-		push_error("Failed to initiate connection: %s" % err)
+		push_error("Failed to initiate connection: %s url=%s" % [err, url_to_try])
 		if is_connecting_to_live:
 			_trigger_fallback()
 	else:
@@ -492,6 +502,9 @@ func _process(_delta: float):
 			connected = false
 			connection_attempted = false
 			_start_reconnection(round_over)
+		elif _reconnecting and connection_attempted:
+			print("[Net] Reconnection attempt failed. close_code=%d reason=%s" % [ws.get_close_code(), ws.get_close_reason()])
+			connection_attempted = false
 		elif not _reconnecting and is_connecting_to_live:
 			print("[Net] Live server connection failed. close_code=%d reason=%s" % [ws.get_close_code(), ws.get_close_reason()])
 			_start_reconnection()
@@ -617,14 +630,16 @@ func _attempt_reconnection():
 	var url = _build_ws_url_with_username(_reconnect_target_url, include_resume)
 	if not include_resume:
 		print("[Net] Retrying without resume id")
-	_prepare_ws_peer()
+	# The previous socket is closed at this point; a closed WebSocketPeer refuses
+	# a new connect_to_url(), so open a fresh one for every attempt.
+	_reset_ws_peer()
 	var tls = _tls_client_options() if _reconnect_target_url.begins_with("wss://") else null
 	var err = ws.connect_to_url(url, tls) if tls != null else ws.connect_to_url(url)
 	if err != OK:
-		push_error("Reconnection attempt failed: %s" % err)
+		push_error("Reconnection attempt failed: %s url=%s" % [err, url])
 	else:
 		connection_attempted = true
-		print("[Net] Reconnection attempt %d..." % _reconnect_attempts)
+		print("[Net] Reconnection attempt %d: %s" % [_reconnect_attempts, url])
 
 
 func _give_up_reconnection() -> void:
@@ -2127,8 +2142,27 @@ func _remember_player_id(id: String) -> void:
 		return
 	_write_resume_record("%s|%s" % [_resume_room_key(), id])
 
+# Godot's WebSocketPeer rejects "wss://host?query" with ERR_FAILED because the
+# URL has no path; browsers implicitly use "/". Events worked because it uses
+# "/events", while the game socket used the bare host - which is why gameplay
+# stayed offline while the event feed looked live. Always give the URL a path.
+func _ensure_ws_path(url: String) -> String:
+	var scheme_end := url.find("://")
+	if scheme_end == -1:
+		return url
+	var host_start := scheme_end + 3
+	var query_pos := url.find("?", host_start)
+	var path_end := query_pos if query_pos != -1 else url.length()
+	var slash_pos := url.find("/", host_start)
+	if slash_pos != -1 and slash_pos < path_end:
+		return url
+	if query_pos == -1:
+		return url + "/"
+	return url.substr(0, query_pos) + "/" + url.substr(query_pos)
+
+
 func _build_ws_url_with_username(base_url: String, include_resume: bool = true) -> String:
-	var url := base_url
+	var url := _ensure_ws_path(base_url)
 	var sep := "&" if url.find("?") != -1 else "?"
 	if include_resume:
 		var resume_id := player_id
