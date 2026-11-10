@@ -379,6 +379,7 @@ const RECONNECT_MAX_DELAY: float = 8.0
 const RECONNECT_INITIAL_DELAY: float = 1.0
 const RECONNECT_GRACE_TIME: float = 0.5
 const RECONNECT_COUNTDOWN_STEPS: int = 3
+const RECONNECT_MAX_ATTEMPTS: int = 12 # stop looping forever (editor/android/offline)
 var _waiting_for_connect: bool = false
 # Set when the server tells us the round ended. The server also sends a WebSocket
 # close frame, but an HTTP edge proxy can swallow that, so the round end is also
@@ -581,6 +582,9 @@ func _update_reconnection(real_delta: float):
 func _attempt_reconnection():
 	if not _reconnecting:
 		return
+	if _reconnect_attempts >= RECONNECT_MAX_ATTEMPTS:
+		_give_up_reconnection()
+		return
 	var cur_state = ws.get_ready_state()
 	if cur_state == WebSocketPeer.STATE_OPEN or cur_state == WebSocketPeer.STATE_CONNECTING:
 		return
@@ -592,7 +596,18 @@ func _attempt_reconnection():
 		push_error("Reconnection attempt failed: %s" % err)
 	else:
 		connection_attempted = true
-		print("🔄 Reconnection attempt %d..." % _reconnect_attempts)
+		print("[Net] Reconnection attempt %d..." % _reconnect_attempts)
+
+
+func _give_up_reconnection() -> void:
+	if not _reconnecting:
+		return
+	_reconnecting = false
+	connected = false
+	connection_attempted = false
+	_resolve_subtitle_label()
+	_update_subtitle_text("Offline (server unavailable).")
+	print("[Net] Gave up reconnecting after %d attempts." % RECONNECT_MAX_ATTEMPTS)
 
 func _on_reconnect_success():
 	connected = true
