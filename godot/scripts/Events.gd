@@ -96,7 +96,14 @@ func _ready() -> void:
 	else:
 		_show_local_status("Connecting events stream...")
 
-func _process(_delta: float) -> void:
+var _events_poll_accum: float = 0.0
+const EVENTS_POLL_INTERVAL: float = 0.05 # 20Hz; events feed isn't input-critical
+
+func _process(delta: float) -> void:
+	_events_poll_accum += delta
+	if _events_poll_accum < EVENTS_POLL_INTERVAL:
+		return
+	_events_poll_accum = 0.0
 	ws.poll()
 
 	var state = ws.get_ready_state()
