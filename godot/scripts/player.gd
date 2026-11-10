@@ -1063,6 +1063,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if not is_local:
 		return
+	_process_pending_los_shots()
 
 	# Melee is queued from the input frame and resolved here: the physics space
 	# cannot be queried from _process, so the swing lands on the next tick.
@@ -3580,8 +3581,7 @@ func _quantize_rot(value: float) -> int:
 	return int(round(value * ROT_SCALE))
 
 var _payload: Dictionary = {}
-var _chicken_payload: Dictionary = {}
-var _lootbox_payload: Dictionary = {}
+# (unused payload placeholders removed)
 
 func _send_state_to_server(_force_send := false) -> void:
 	# Only send if root is PlayerManager with active WebSocket
@@ -3944,6 +3944,8 @@ var _bullet_scene_checked: bool = false
 var _muzzle_flash: Node = null
 var _muzzle_flash_checked: bool = false
 var _muzzle_flash_scene_cache: PackedScene = null
+# LOS hitscans deferred to physics frame (direct_space_state unavailable from _input).
+var _pending_los_shots: Array[Dictionary] = []
 
 
 func _weapon_fx_config(kind: int) -> Dictionary:
@@ -4012,27 +4014,24 @@ func _fire_bullet(cfg: Dictionary) -> void:
 		_shot_reported = true
 		print("[shot] origin=%s dir=%s marker=%s" % [
 			origin, aim, WEAPON_MUZZLE_PATH if get_node_or_null(WEAPON_MUZZLE_PATH) != null else "<missing>"])
-	# Aim assist (cylinder LOS): resolve player damage at fire time, scaled by
-	# distance from the shooter. The visual projectile still flies but must not
-	# double-hit a player, so los_player_damage is set on it below.
+	# Aim assist (cylinder LOS): resolve in physics (space state unavailable from input).
+	# Visual projectile still flies but must not double-hit a player.
 	var aim_radius := float(cfg.get("aim_radius", 0.0))
 	if aim_radius > 0.0:
 		var los_range := float(cfg.get("los_range", 60.0))
-		var los_hit: Node = Bullet.resolve_los_damage(self, origin, aim, damage,
-				los_range, aim_radius,
-				float(cfg.get("falloff_start", 10.0)),
-				float(cfg.get("falloff_end", 50.0)),
-				float(cfg.get("falloff_min", 0.35)))
-		if los_hit != null and is_instance_valid(los_hit):
-			var dead := bool(los_hit.get("_is_dead")) if los_hit.get("_is_dead") != null else false
-			if not dead and los_hit.has_method("is_remote_player") == false and "health" in los_hit:
-				dead = float(los_hit.get("health")) <= 0.0
-			if dead:
-				_register_local_kill()
+		_pending_los_shots.append({
+			"origin": origin,
+			"aim": aim,
+			"damage": damage,
+			"los_range": los_range,
+			"aim_radius": aim_radius,
+			"falloff_start": float(cfg.get("falloff_start", 10.0)),
+			"falloff_end": float(cfg.get("falloff_end", 50.0)),
+			"falloff_min": float(cfg.get("falloff_min", 0.35)),
+			"debug": debug_los_cylinder,
+		})
 		if debug_los_cylinder:
 			_draw_los_debug(origin, aim, los_range, aim_radius)
-			print("[LOS-DBG] r=%.2f range=%.0f dmg=%.0f -> %s" % [aim_radius, los_range, damage,
-					str(los_hit.name) + ((" (%s)" % los_hit.get("display_name")) if los_hit != null and los_hit.get("display_name") != null else "") if los_hit != null else "none"])
 	# One global time scale: the per-weapon speeds stay real, so turning the debug
 	# knob back to 1.0 is all it takes to ship.
 	var speed := float(cfg.get("bullet_speed", 120.0)) * maxf(bullet_speed_scale, 0.02)
@@ -4391,8 +4390,8 @@ func _apply_camera_shake(delta: float) -> void:
 	var nx: float = sin(t * 47.0) * 0.6 + sin(t * 89.0) * 0.4
 	var ny: float = sin(t * 53.0 + 1.7) * 0.6 + sin(t * 97.0 + 0.3) * 0.4
 	var nr: float = sin(t * 41.0 + 2.4)
-	var basis := camera.global_transform.basis
-	camera.global_position += basis * Vector3(
+	var cam_basis := camera.global_transform.basis
+	camera.global_position += cam_basis * Vector3(
 		nx * CAM_SHAKE_MAX_OFFSET * strength,
 		ny * CAM_SHAKE_MAX_OFFSET * strength,
 		0.0
@@ -4400,6 +4399,30 @@ func _apply_camera_shake(delta: float) -> void:
 	camera.rotate_object_local(Vector3.RIGHT, deg_to_rad(ny * CAM_SHAKE_MAX_PITCH_DEG * strength))
 	camera.rotate_object_local(Vector3.UP, deg_to_rad(nx * CAM_SHAKE_MAX_YAW_DEG * strength))
 	camera.rotate_object_local(Vector3.FORWARD, deg_to_rad(nr * CAM_SHAKE_MAX_ROLL_DEG * strength))
+
+
+func _process_pending_los_shots() -> void:
+	if _pending_los_shots.is_empty():
+		return
+	var shots := _pending_los_shots
+	_pending_los_shots = []
+	for shot in shots:
+		if not is_instance_valid(self):
+			return
+		var los_hit: Node = Bullet.resolve_los_damage(self, shot["origin"], shot["aim"], shot["damage"],
+				shot["los_range"], shot["aim_radius"],
+				shot["falloff_start"], shot["falloff_end"], shot["falloff_min"])
+		if los_hit != null and is_instance_valid(los_hit):
+			var dead := bool(los_hit.get("_is_dead")) if los_hit.get("_is_dead") != null else false
+			if not dead and los_hit.has_method("is_remote_player") == false and "health" in los_hit:
+				dead = float(los_hit.get("health")) <= 0.0
+			if dead:
+				_register_local_kill()
+		if bool(shot.get("debug", false)):
+			print("[LOS-DBG] r=%.2f range=%.0f dmg=%.0f -> %s" % [
+				float(shot["aim_radius"]), float(shot["los_range"]), float(shot["damage"]),
+				str(los_hit.name) + ((" (%s)" % los_hit.get("display_name")) if los_hit != null and los_hit.get("display_name") != null else "") if los_hit != null else "none"
+			])
 
 
 # --- LOS cylinder (aim assist) target helpers ---

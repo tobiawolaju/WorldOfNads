@@ -65,11 +65,9 @@ class BotMotion:
 	var held_kind: String = ""
 
 var _bot_motions: Array[BotMotion] = []
-var _bot_lod_timer: float = 0.0
 var _bot_budget_timer: float = 0.0
 var _bot_hive_timer: float = 0.0
 var _bot_sim_set: Dictionary = {} # motion index -> true (full-physics budget)
-var _bot_lod_cursor: int = 0
 var _stress_spawn_pending: int = 0
 var _stress_spawn_total: int = 0
 var _stress_spawn_base: Vector3 = Vector3.ZERO
@@ -729,7 +727,7 @@ func _refresh_bot_budget(viewer_pos: Vector3) -> void:
 				motion.floor_y = motion.home.y
 
 
-func _step_bot_dormant(bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float) -> void:
+func _step_bot_dormant(_bot: Node, motion: BotMotion, rig: CharacterBody3D, delta: float) -> void:
 	# Advance orbit cheaply and snap position occasionally; math-only, no physics.
 	motion.vel_y = 0.0
 	motion.on_ground = true

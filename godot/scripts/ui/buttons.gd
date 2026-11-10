@@ -161,7 +161,7 @@ func _is_held_powerup_ready() -> bool:
 # Caption color by state: GRAB is yellow; a held power-up pulses yellow (ready in
 # hand) to distinguish it from an active/running power (steady yellow). Idle/other
 # states keep the previous white/alpha behavior.
-func _caption_tint(label: String, is_grab: bool, is_pump: bool, held_powerup_ready: bool) -> Color:
+func _caption_tint(label: String, is_grab: bool, _is_pump: bool, held_powerup_ready: bool) -> Color:
 	if is_grab:
 		return CAPTION_GRAB_COLOR
 	if held_powerup_ready:

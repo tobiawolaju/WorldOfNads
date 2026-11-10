@@ -38,10 +38,10 @@ func _process(delta: float) -> void:
 	# Update bar value — only when the fraction actually changed. Writing value
 	# every frame dirties the control for a redraw even when health is static,
 	# which is the common case.
-	var ratio := (current_health / max_health) * 100.0
-	if not is_equal_approx(ratio, _last_value):
-		_last_value = ratio
-		value = ratio
+	var health_ratio := (current_health / max_health) * 100.0
+	if not is_equal_approx(health_ratio, _last_value):
+		_last_value = health_ratio
+		value = health_ratio
 		max_value = 100.0
 
 	# Detect damage taken (health decreased)
