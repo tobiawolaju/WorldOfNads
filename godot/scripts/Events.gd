@@ -786,15 +786,19 @@ func _try_set_username_from_web_query() -> void:
 	_username_locked = true
 	set_local_username(parsed_username, true)
 
-# Keep the events subscription in step with PlayerManager: on web the selected
-# match is on the frame URL, so mirror the game socket's room here. Native builds
-# have no URL and subscribe to the default feed (they do not carry the match id).
+# Keep the events subscription in step with PlayerManager: prefer web URL match,
+# else fall back to the match id handed to PlayerManager (native lobby flow/editor).
 func _resolve_room_query() -> void:
-	if not OS.has_feature("web"):
-		return
-	var raw_match = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('match') || ''")
-	if typeof(raw_match) != TYPE_STRING:
-		return
-	var match_id := str(raw_match).strip_edges()
+	var match_id := ""
+	if OS.has_feature("web"):
+		var raw_match = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('match') || ''")
+		if typeof(raw_match) == TYPE_STRING:
+			match_id = str(raw_match).strip_edges()
+	if match_id == "":
+		var pm = get_tree().get_first_node_in_group("player_manager")
+		if pm != null:
+			match_id = str(pm.get("local_match_id")).strip_edges()
+			if match_id == "":
+				match_id = str(pm.get("selected_match_id")).strip_edges()
 	if match_id != "":
 		_room_query = "?room=%s" % match_id.uri_encode()
