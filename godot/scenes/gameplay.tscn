@@ -12,25 +12,33 @@
 [ext_resource type="PackedScene" uid="uid://ds74a1sw044u4" path="res://scenes/pickup.tscn" id="13_nt65e"]
 [ext_resource type="PackedScene" uid="uid://cqgso836leaiu" path="res://scenes/pickup2.tscn" id="14_weapons"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_qixtg"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ctvyo"]
 render_priority = 0
 shader = ExtResource("13_i18v2")
-shader_parameter/_color = Color(0.6509804, 0.32941177, 1, 1)
-shader_parameter/sphere_size = 2.3
+shader_parameter/_color = Color(0, 0, 0, 1)
+shader_parameter/sphere_size = 2.5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_qixtg"]
+top_radius = 1.0
+bottom_radius = 1.0
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_nt65e"]
 top_radius = 1.0
 bottom_radius = 1.0
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_bhmdk"]
-top_radius = 1.0
-bottom_radius = 1.0
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bhmdk"]
+transparency = 1
+cull_mode = 1
+shading_mode = 0
+albedo_color = Color(0.62012964, 0.0034962178, 0.9330607, 0.69803923)
+proximity_fade_distance = 15.0
+stencil_flags = 2
+stencil_color = Color(1, 1, 1, 1)
+stencil_outline_thickness = 0.034
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s5y6v"]
-transparency = 1
 shading_mode = 0
-albedo_color = Color(0.8392157, 0.50980395, 0.9372549, 1)
-proximity_fade_enabled = true
+albedo_color = Color(0.7764706, 0.6313726, 0.9529412, 1)
 proximity_fade_distance = 15.0
 stencil_flags = 2
 stencil_color = Color(1, 1, 1, 1)
@@ -73,58 +81,21 @@ light_energy = 0.2
 shadow_enabled = true
 sky_mode = 1
 
-[node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=232728076]
+[node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=636315327]
 transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
-material_override = SubResource("ShaderMaterial_qixtg")
+material_override = SubResource("ShaderMaterial_ctvyo")
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_qixtg")
+
+[node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=47000237]
+transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_nt65e")
+surface_material_override/0 = SubResource("StandardMaterial3D_bhmdk")
 
-[node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=87302044]
-transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
-cast_shadow = 0
-mesh = SubResource("CylinderMesh_bhmdk")
-surface_material_override/0 = SubResource("StandardMaterial3D_s5y6v")
-
-[node name="env2" type="Node3D" parent="." unique_id=2004508524 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
-script = ExtResource("8_ctvyo")
-world_env = NodePath("WorldEnvironment")
-light_normal = NodePath("day")
-light_storm = NodePath("night")
-camera = NodePath("../PlayerManager/Camera3D")
-cylinder_wall = NodePath("Cylinder")
-cylinder_border = NodePath("Cylinder2")
-normal_env = ExtResource("9_qixtg")
-storm_env = ExtResource("10_nt65e")
-cylinder_radius = 25.0
-damage_per_second = 2.5
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="env2" unique_id=1010925123]
-environment = ExtResource("9_qixtg")
-
-[node name="day" type="DirectionalLight3D" parent="env2" unique_id=539243288]
-transform = Transform3D(0.84941316, -2.3067738e-08, 0.5277283, -0.5277284, -3.7129027e-08, 0.8494131, 0, -0.99999994, -4.3711385e-08, 0, 34.18702, 0)
-light_energy = 0.2
-shadow_enabled = true
-directional_shadow_mode = 0
-
-[node name="night" type="DirectionalLight3D" parent="env2" unique_id=1382200946]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
-visible = false
-light_color = Color(0.85490197, 0, 0.78431374, 1)
-light_energy = 0.2
-shadow_enabled = true
-sky_mode = 1
-
-[node name="Cylinder2" type="MeshInstance3D" parent="env2" unique_id=2081667704]
-transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
-material_override = SubResource("ShaderMaterial_qixtg")
+[node name="Cylinder3" type="MeshInstance3D" parent="env/Cylinder" unique_id=1422599418]
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_nt65e")
-
-[node name="Cylinder" type="MeshInstance3D" parent="env2" unique_id=1355788841]
-transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
-cast_shadow = 0
-mesh = SubResource("CylinderMesh_bhmdk")
 surface_material_override/0 = SubResource("StandardMaterial3D_s5y6v")
 
 [node name="PlayerManager" type="Node3D" parent="." unique_id=226066109 node_paths=PackedStringArray("myplayerswpanpoint")]
