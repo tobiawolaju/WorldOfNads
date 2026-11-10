@@ -600,7 +600,11 @@ func _attempt_reconnection():
 		return
 	if _reconnect_target_url == "":
 		_reconnect_target_url = ROOM_URL if is_connecting_to_live else LOCAL_URL
-	var url = _build_ws_url_with_username(_reconnect_target_url)
+	# After a few failures, try without resume id in case a stale resume blocks handshake/join.
+	var include_resume := _reconnect_attempts < 3
+	var url = _build_ws_url_with_username(_reconnect_target_url, include_resume)
+	if not include_resume:
+		print("[Net] Retrying without resume id")
 	_prepare_ws_peer()
 	var err = ws.connect_to_url(url)
 	if err != OK:
@@ -2110,17 +2114,18 @@ func _remember_player_id(id: String) -> void:
 		return
 	_write_resume_record("%s|%s" % [_resume_room_key(), id])
 
-func _build_ws_url_with_username(base_url: String) -> String:
+func _build_ws_url_with_username(base_url: String, include_resume: bool = true) -> String:
 	var url := base_url
 	var sep := "&" if url.find("?") != -1 else "?"
-	var resume_id := player_id
-	if resume_id == "":
-		resume_id = _preserved_local_id
-	if resume_id == "":
-		resume_id = _remembered_resume_id()
-	if resume_id != "":
-		url += "%sresume=%s" % [sep, resume_id.uri_encode()]
-		sep = "&"
+	if include_resume:
+		var resume_id := player_id
+		if resume_id == "":
+			resume_id = _preserved_local_id
+		if resume_id == "":
+			resume_id = _remembered_resume_id()
+		if resume_id != "":
+			url += "%sresume=%s" % [sep, resume_id.uri_encode()]
+			sep = "&"
 	if local_username != "":
 		url += "%susername=%s" % [sep, local_username.uri_encode()]
 		sep = "&"
