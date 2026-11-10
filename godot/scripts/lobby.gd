@@ -52,6 +52,9 @@ class BotMotion:
 	var dist_sq: float = INF
 	## Orbit advanced even when dormant so teleported bots don't freeze in time.
 	var orbit_accum: float = 0.0
+	# Math-driven vertical motion (no CharacterBody physics).
+	var vel_y: float = 0.0
+	var on_ground: bool = true
 	# Hive-mind goal (assigned centrally at low frequency). Overrides orbit when set.
 	var goal_node: Node3D = null
 	var goal_kind: String = "" # "chicken","lootbox","powerup","weapon"
