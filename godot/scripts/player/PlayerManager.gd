@@ -11,8 +11,6 @@ const LIVE_URL: String = "wss://worldofnads.onrender.com"
 # Set this back to LIVE_URL to talk to the Node room server instead.
 const ROOM_URL: String = "wss://wons-room-server.onrender.com"
 const LOCAL_URL: String = "ws://localhost:8080"
-# Sent on native WebSocket handshakes to better match browser clients (some servers/proxies inspect Origin).
-const WS_HANDSHAKE_ORIGIN: String = "https://worldofnads.xyz"
 const DEFAULT_SKIN_NAME: String = "s-default"
 const SKIN_SCENE_PATH: String = "res://scenes/skin.tscn"
 
@@ -35,11 +33,11 @@ var player_id: String = ""
 
 
 func _prepare_ws_peer() -> void:
+	# Keep default handshake behavior (matches Events stream which connects fine in editor).
 	if ws == null:
 		return
-	# Native Godot WS clients don't automatically send browser-like Origin; set it for live WSS.
 	if ws.get("handshake_headers") != null:
-		ws.handshake_headers = PackedStringArray(["Origin: %s" % WS_HANDSHAKE_ORIGIN])
+		ws.handshake_headers = PackedStringArray()
 var players: Dictionary = {}
 var is_local: bool = false
 var root: Node = null
