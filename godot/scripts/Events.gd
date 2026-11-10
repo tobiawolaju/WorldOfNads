@@ -800,5 +800,8 @@ func _resolve_room_query() -> void:
 			match_id = str(pm.get("local_match_id")).strip_edges()
 			if match_id == "":
 				match_id = str(pm.get("selected_match_id")).strip_edges()
+	# "default" is the shared/default room: subscribe without room filter.
+	if match_id == "default":
+		match_id = ""
 	if match_id != "":
 		_room_query = "?room=%s" % match_id.uri_encode()
