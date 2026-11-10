@@ -203,8 +203,8 @@ func _fetch(key: String) -> void:
 
 	var http := HTTPRequest.new()
 	http.timeout = REQUEST_TIMEOUT_SEC
-	# `use_threads` keeps the TLS handshake off the main thread on web/native.
-	http.use_threads = true
+	# Keep TLS/fetch work threaded on native; web uses browser networking.
+	http.use_threads = not OS.has_feature("web")
 	add_child(http)
 
 	_in_flight += 1

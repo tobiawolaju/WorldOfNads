@@ -437,22 +437,43 @@ func consume_for_server() -> void:
 ## respawns after a use, and drops (death / disconnect / manual). Drops the item
 ## above the terrain at the server's x/z so it settles on the ground, cancels any
 ## pending consume, and makes it grabbable again.
+var _pending_spawn_target := Vector3(INF, INF, INF)
+
 func apply_server_spawn(target: Vector3) -> void:
 	_awaiting_server_spawn = false
 	remote_held = false
 	visible = true
 	freeze = true
 	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
-	# The server only owns the spot on the HORIZONTAL plane (x/z). Its y is a flat
-	# constant that sits below the hilly terrain, so seating the item there buries
-	# it or drops it through the map. Spawn it ABOVE the terrain at that x/z and let
-	# gravity drop it onto the ground.
-	global_position = _grounded_spawn_point(target)
+	# Place provisionally above target; ground snap is done in physics when safe.
+	_pending_spawn_target = target
+	global_position = Vector3(target.x, target.y + RESPAWN_PROBE_HEIGHT, target.z)
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
-	# Unfreeze so physics can settle it onto the terrain. PlayerManager re-seats
-	# only on a horizontal change, so the fall does not fight the heartbeat.
+	# Unfreeze so physics can settle it onto the terrain. Ground snap refines placement.
 	freeze = false
+
+func _physics_process(_delta: float) -> void:
+	if _pending_spawn_target == Vector3(INF, INF, INF):
+		return
+	if get_world_3d() == null:
+		return
+	var target := _pending_spawn_target
+	_pending_spawn_target = Vector3(INF, INF, INF)
+	var space := get_world_3d().direct_space_state
+	if space == null:
+		return
+	var ground: Variant = _probe_ground(
+		Vector3(target.x, target.y + RESPAWN_PROBE_HEIGHT, target.z), space
+	)
+	if ground == null:
+		return
+	var point: Vector3 = ground
+	# Only snap if still near spawn area (avoid fighting carried/late state changes).
+	if not is_held and not remote_held:
+		global_position = Vector3(target.x, point.y + SPAWN_DROP_HEIGHT, target.z)
+		linear_velocity = Vector3.ZERO
+		angular_velocity = Vector3.ZERO
 
 
 # Picks a point above the terrain at the server's x/z so the item drops and rests
