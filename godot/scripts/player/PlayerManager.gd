@@ -11,6 +11,8 @@ const LIVE_URL: String = "wss://worldofnads.onrender.com"
 # Set this back to LIVE_URL to talk to the Node room server instead.
 const ROOM_URL: String = "wss://wons-room-server.onrender.com"
 const LOCAL_URL: String = "ws://localhost:8080"
+# Sent on native WebSocket handshakes to better match browser clients (some servers/proxies inspect Origin).
+const WS_HANDSHAKE_ORIGIN: String = "https://worldofnads.xyz"
 const DEFAULT_SKIN_NAME: String = "s-default"
 const SKIN_SCENE_PATH: String = "res://scenes/skin.tscn"
 
@@ -30,6 +32,14 @@ const SKIN_NAME_ALIASES: Dictionary = {
 var ws: WebSocketPeer = WebSocketPeer.new()
 var connected: bool = false
 var player_id: String = ""
+
+
+func _prepare_ws_peer() -> void:
+	if ws == null:
+		return
+	# Native Godot WS clients don't automatically send browser-like Origin; set it for live WSS.
+	if ws.get("handshake_headers") != null:
+		ws.handshake_headers = PackedStringArray(["Origin: %s" % WS_HANDSHAKE_ORIGIN])
 var players: Dictionary = {}
 var is_local: bool = false
 var root: Node = null
@@ -340,7 +350,8 @@ func _attempt_connection():
 	var url_to_try = _build_ws_url_with_username(base_url)
 	var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
 
-	print("🌐 Attempting to connect to %s server: %s" % [server_type, url_to_try])
+	print("[Net] Attempting to connect to %s server: %s" % [server_type, url_to_try])
+	_prepare_ws_peer()
 	var err = ws.connect_to_url(url_to_try)
 
 	if err != OK:
@@ -503,6 +514,7 @@ func _force_reconnect_now() -> void:
 	if ws != null:
 		ws.close()
 	ws = WebSocketPeer.new()
+	_prepare_ws_peer()
 	connected = false
 	connection_attempted = false
 	_last_rx_ms = 0.0
@@ -591,6 +603,7 @@ func _attempt_reconnection():
 	if _reconnect_target_url == "":
 		_reconnect_target_url = ROOM_URL if is_connecting_to_live else LOCAL_URL
 	var url = _build_ws_url_with_username(_reconnect_target_url)
+	_prepare_ws_peer()
 	var err = ws.connect_to_url(url)
 	if err != OK:
 		push_error("Reconnection attempt failed: %s" % err)
