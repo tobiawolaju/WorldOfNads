@@ -31,7 +31,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/fill = SubResource("StyleBoxFlat_u4wd2")
-value = 50.0
 show_percentage = false
 
 [node name="BoxContainer" type="BoxContainer" parent="CanvasLayer/BoxContainer/Node/ProgressBar" unique_id=1629808469]
