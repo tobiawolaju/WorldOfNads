@@ -1,5 +1,11 @@
 shader_type spatial;
-render_mode  cull_disabled, depth_draw_opaque, shadows_disabled;
+// `unshaded` keeps the eye a flat white (plus the dot) no matter how dark or
+// coloured the scene lighting is, exactly like the web preview's
+// MeshBasicMaterial. Without it the eyeball is lit like the body and turns
+// black/blue at night, which is not how the nad is drawn.
+// It does NOT affect the opaque/transparent pass split: leaving ALPHA unwritten
+// is what keeps this material opaque so SMOG smoke hides the eyes.
+render_mode unshaded, cull_disabled, depth_draw_opaque, shadows_disabled;
 
 // White sphere with a single black dot that always faces the camera.
 //
