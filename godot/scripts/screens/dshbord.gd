@@ -1172,7 +1172,9 @@ func _build_match_card(match: Dictionary) -> Control:
 	card.set_meta("match_id", match_id)
 	card.custom_minimum_size = Vector2(129, 86)
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	# PASS lets ScrollContainer receive touch drags for scrolling on mobile while
+	# still allowing tap selection via gui_input.
+	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	card.add_theme_stylebox_override("panel", _match_card_style(selected))
 
 	# The artwork is a canvas shader (assets/shaders/match_card.gdshader) rather than
@@ -1358,7 +1360,8 @@ func _build_match_stat(shape: int, count: int) -> HBoxContainer:
 func _on_match_card_input(event: InputEvent, match_id: String) -> void:
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
-		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+		# Select on release (tap/click) so press+drag can scroll the carousel.
+		if not mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
 			selected_match_id = match_id
 			filter = str(_selected_match().get("status", filter))
 			_refresh_all()
@@ -1461,7 +1464,9 @@ func _build_store_card(group: Dictionary) -> Control:
 	card.set_meta("selected", selected)
 	card.set_meta("owned", owned)
 	card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	# PASS lets ScrollContainer receive touch drags for scrolling on mobile while
+	# still allowing tap selection via gui_input.
+	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	card.add_theme_stylebox_override("panel", _store_card_style(selected))
 	# The 5px CSS margin lives on a MarginContainer cell so GridContainer can fit the
 	# cell to the whole track. A plain Control sits between the cell and the card:
@@ -1563,7 +1568,8 @@ func _build_store_card(group: Dictionary) -> Control:
 func _on_store_card_input(event: InputEvent, item_id: String) -> void:
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
-		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+		# Select on release (tap/click) so press+drag can scroll the grid/container.
+		if not mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
 			_select_store_item(item_id)
 
 
