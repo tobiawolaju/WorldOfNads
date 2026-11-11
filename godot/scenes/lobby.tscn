@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://dud0j72gp62nr" path="res://scenes/props/enviroment/bus.tscn" id="11_m1sns"]
 [ext_resource type="PackedScene" uid="uid://ds74a1sw044u4" path="res://scenes/pickup.tscn" id="11_yad6j"]
 [ext_resource type="PackedScene" uid="uid://cqgso836leaiu" path="res://scenes/pickup2.tscn" id="12_m1sns"]
+[ext_resource type="PackedScene" uid="uid://b455bcav0ersh" path="res://scenes/props/van.tscn" id="13_dyhay"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ncsg4"]
 render_priority = 0
@@ -63,7 +64,7 @@ cylinder_wall = NodePath("Cylinder")
 cylinder_border = NodePath("Cylinder2")
 normal_env = ExtResource("4_ncsg4")
 storm_env = ExtResource("5_07nfq")
-cylinder_radius = 20.0
+cylinder_radius = 40.0
 damage_per_second = 2.5
 prewarm_join_timeout = 5.0
 
@@ -85,13 +86,13 @@ shadow_enabled = true
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=874651139]
-transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
+transform = Transform3D(40, 0, 0, 0, 200, 0, 0, 0, 40, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_ncsg4")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_07nfq")
 
 [node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1546332868]
-transform = Transform3D(20, 0, 0, 0, 200, 0, 0, 0, 20, 0, 0, 0)
+transform = Transform3D(40, 0, 0, 0, 200, 0, 0, 0, 40, 0, 0, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_oipnb")
 surface_material_override/0 = SubResource("StandardMaterial3D_07nfq")
@@ -179,5 +180,12 @@ power_up_mode = 5
 [node name="LootBox" parent="." unique_id=531383377 instance=ExtResource("11_yad6j")]
 transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 9.684858, 1.637059, 0.9248071)
 power_up_mode = 6
+
+[node name="Van" parent="." unique_id=1389412019 instance=ExtResource("13_dyhay")]
+transform = Transform3D(0.6295066, 0, 0.7769952, 0, 1, 0, -0.7769952, 0, 0.6295066, 9.427859, 5.778367, 9.932429)
+mass = 1.0
+can_sleep = true
+continuous_cd = false
+script = null
 
 [editable path="Bus"]
