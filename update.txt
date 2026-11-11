@@ -5,6 +5,7 @@ Nov 11, 2026
 
 * Native Android client boots, logs in and plays on device.
 * Cross-platform login: a WON account now persists on Android, so the same account works on web and phone.
+* First Android build is out: a signed APK you can install straight on your phone, no store needed.
 * In-match identity fixed: the name over your nad is your WON username, not a guest placeholder.
 * Native dashboard brought in line with the web: real owned/equipped skins, match cards, 3D preview and level pill.
 * Live match feed now shows who has the chicken and when they win ("X is holding the chicken", "X wins in 30s").
@@ -23,7 +24,7 @@ Nov 11, 2026
 ### Next Steps
 
 1. Run the public test on the live servers.
-2. Ship the next Android APK release build.
+2. Keep shipping new Android builds from tester feedback.
 3. Finish verifying the native skin store + mint flow.
 4. Keep tightening game feel: movement, shooting, camera.
 5. Continue testing multiplayer load and match pacing.
