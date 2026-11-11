@@ -30,8 +30,8 @@ func _ready() -> void:
 	if progress_bar:
 		progress_bar.value = 100
 
-	print("Loading complete. Entering lobby.")
-	Game.transition_layer.change_scene("res://scenes/lobby.tscn")
+	print("Loading complete. Entering dashboard.")
+	Game.transition_layer.change_scene("res://scenes/dshbord.tscn")
 
 ## The web build signs in through the legacy /auth/request-token username
 ## handshake rather than the device-linking flow, so it must not be redirected.
