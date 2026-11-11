@@ -82,18 +82,14 @@ const ORBIT_ZOOM_SPEED: float = 1.0
 const ORBIT_WHEEL_ZOOM_STEP: float = 0.95
 # handleMouseMoveRotate uses `rotateLeft(2 * PI * dx / element.clientHeight)`, i.e.
 # one drag across the pane's height is a full turn, so the sensitivity has to track
-# the pane instead of being a fixed rad-per-pixel. Three clamps phi to (0, PI) and
-# lets the camera swing just past the nad's core to look up from underneath; the
-# epsilon keeps that far enough from the poles that look_at() stays well defined.
-const ORBIT_PITCH_LIMIT: float = PI * 0.5 - 0.02
-# OrbitControls leaves both distances open, so both ends are pinned here (and in
-# ThreeScene.tsx) to stop the camera collapsing into the nad or drifting until the
-# preview is a speck. The live distance is `_preview_base_distance / _preview_zoom`,
-# so zoom runs 0.625 (1.6x further than the framed distance) up to 2.5 (2.5x
-# closer), matching the frontend's minDistance 4 / maxDistance 16 around its ~10
-# framed distance.
-const ORBIT_ZOOM_MIN: float = 0.625
-const ORBIT_ZOOM_MAX: float = 2.5
+# the pane instead of being a fixed rad-per-pixel.
+# Subtle vertical orbit range around the framed elevation (Three.js-like feel, no zoom).
+const ORBIT_PITCH_DEFAULT: float = 0.0799  # atan(0.08)
+const ORBIT_PITCH_MIN: float = -0.12
+const ORBIT_PITCH_MAX: float = 0.28
+# Zoom disabled for the dashboard preview.
+const ORBIT_ZOOM_MIN: float = 1.0
+const ORBIT_ZOOM_MAX: float = 1.0
 # InputEventPanGesture.delta is in pan units, not pixels; this is roughly how many
 # pixels one unit covers before the value is fed to the orbit.
 const ORBIT_PAN_UNITS_TO_PIXELS: float = 12.0
@@ -611,7 +607,7 @@ func _update_preview_camera(delta: float = 0.0) -> void:
 			_preview_orbit_yaw + _preview_delta_yaw * ORBIT_DAMPING_FACTOR, -PI, PI)
 		_preview_orbit_pitch = clampf(
 			_preview_orbit_pitch + _preview_delta_pitch * ORBIT_DAMPING_FACTOR,
-			-ORBIT_PITCH_LIMIT, ORBIT_PITCH_LIMIT)
+			ORBIT_PITCH_MIN, ORBIT_PITCH_MAX)
 		_preview_delta_yaw *= 1.0 - ORBIT_DAMPING_FACTOR
 		_preview_delta_pitch *= 1.0 - ORBIT_DAMPING_FACTOR
 	if not is_equal_approx(_preview_pending_scale, 1.0):
@@ -691,15 +687,14 @@ func _preview_pane_height() -> float:
 
 
 # Queue a drag the way handleMouseMoveRotate does. Directions match OrbitControls:
-# drag right swings the camera left (the model follows the finger).
-# Vertical orbit is switched off: only the sideways drag swings the camera, so
-# the nad is always viewed from the same framed elevation (the default pitch,
-# atan(0.08), which is the angle _frame_preview_camera() frames it at).
+# drag right swings the camera left (the model follows the finger). Vertical orbit
+# is enabled but kept subtle so the nad stays readable.
 func _orbit_preview(relative: Vector2) -> void:
 	if relative == Vector2.ZERO:
 		return
 	var per_pixel := TAU * ORBIT_ROTATE_SPEED / _preview_pane_height()
 	_preview_delta_yaw -= relative.x * per_pixel
+	_preview_delta_pitch -= relative.y * per_pixel * 0.35
 
 
 # Queue a zoom step. `factor` above 1 moves in; the wheel, pinch and magnify all
@@ -730,14 +725,9 @@ func _handle_preview_mouse_button(event: InputEventMouseButton) -> void:
 			elif _preview_gesture == PREVIEW_GESTURE_MOUSE:
 				_preview_gesture = PREVIEW_GESTURE_NONE
 				get_viewport().set_input_as_handled()
-		MOUSE_BUTTON_WHEEL_UP:
+		MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN:
 			if _event_in_preview(event.position):
-				# dollyIn(getZoomScale()) -- one notch is 5% of the radius.
-				_zoom_preview(1.0 / ORBIT_WHEEL_ZOOM_STEP)
-				get_viewport().set_input_as_handled()
-		MOUSE_BUTTON_WHEEL_DOWN:
-			if _event_in_preview(event.position):
-				_zoom_preview(ORBIT_WHEEL_ZOOM_STEP)
+				# Zoom is disabled for the dashboard preview orbit.
 				get_viewport().set_input_as_handled()
 
 
@@ -778,13 +768,8 @@ func _handle_preview_screen_drag(event: InputEventScreenDrag) -> void:
 		return
 	_preview_touch_points[event.index] = event.position
 	if _preview_touch_points.size() >= 2:
-		# handleTouchMoveDolly: the radius scales by
-		# (separation_last / separation_now) ^ zoomSpeed, and pan stays off because
-		# the frontend sets enablePan={false}.
-		var separation := _pinch_distance()
-		if _preview_pinch_last > 0.0 and separation > 0.0:
-			_zoom_preview(pow(_preview_pinch_last / separation, ORBIT_ZOOM_SPEED))
-		_preview_pinch_last = separation
+		# Pinch zoom disabled for the dashboard preview; keep tracking for gesture state.
+		_preview_pinch_last = _pinch_distance()
 	else:
 		_orbit_preview(event.relative)
 	get_viewport().set_input_as_handled()
@@ -792,7 +777,7 @@ func _handle_preview_screen_drag(event: InputEventScreenDrag) -> void:
 
 func _handle_preview_magnify(event: InputEventMagnifyGesture) -> void:
 	if _event_in_preview(event.position):
-		_zoom_preview(event.factor)
+		# Zoom is disabled for the dashboard preview orbit.
 		get_viewport().set_input_as_handled()
 
 
