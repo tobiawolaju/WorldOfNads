@@ -257,6 +257,7 @@ var _wallet_link_dialog: PanelContainer = null
 var _wallet_link_input: LineEdit = null
 var _wallet_link_status: Label = null
 var _pending_mint_skin_id: String = ""
+var _last_inventory_payload: Dictionary = {}
 
 var energy: int = DEFAULT_ENERGY
 var xp: float = 0.0
@@ -861,6 +862,57 @@ func _fetch_store_data() -> void:
 	http.request("%s/api/skins" % API_BASE)
 
 
+func _fetch_inventory() -> void:
+	if not is_instance_valid(AuthManager) or not AuthManager.is_authenticated():
+		return
+	var response: Dictionary = await AuthManager.request(HTTPClient.METHOD_GET, "/api/skins/inventory")
+	if int(response.get("__status", 0)) != 200 or not response.get("ok", false):
+		print("Dshbord: inventory fetch failed (%s)" % str(response.get("error", response.get("__status", 0))))
+		return
+	_apply_inventory_payload(response)
+
+
+func _apply_inventory_payload(response: Dictionary) -> void:
+	_last_inventory_payload = response.duplicate(true)
+	var next_owned: Array[String] = []
+	for id in DEFAULT_OWNED_IDS:
+		next_owned.append(str(id))
+
+	var owned_on_chain: Dictionary = {}
+	var raw_on_chain: Variant = response.get("owned_on_chain_ids", [])
+	if raw_on_chain is Array:
+		for value in raw_on_chain:
+			owned_on_chain[ int(value)] = true
+
+	var raw_owned: Variant = response.get("owned_skin_ids", [])
+	if raw_owned is Array:
+		for value in raw_owned:
+			var skin_id := str(value)
+			if skin_id != "" and not next_owned.has(skin_id):
+				next_owned.append(skin_id)
+
+	# Also mark catalog items whose on-chain id is owned, even if the backend
+	# only returned on-chain ids or the skin doc id differs.
+	for item in store_items:
+		var skin_id := str(item.get("id", ""))
+		var on_chain_id := int(item.get("on_chain_id", 0))
+		if skin_id == "":
+			continue
+		if on_chain_id > 0 and owned_on_chain.has(on_chain_id) and not next_owned.has(skin_id):
+			next_owned.append(skin_id)
+
+	owned_ids = next_owned
+
+	var equipped := str(response.get("equipped_skin_id", equipped_skin_id)).strip_edges()
+	if equipped != "":
+		equipped_skin_id = equipped
+		# Keep the preview in sync on initial load when nothing specific is selected.
+		if tab != TAB_STORE or selected_store_id == "":
+			_apply_preview_skin(_displayed_skin_id())
+
+	_refresh_all()
+
+
 func _on_store_data_fetched(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest) -> void:
 	if http != null and is_instance_valid(http):
 		http.queue_free()
@@ -905,6 +957,11 @@ func _on_store_data_fetched(result: int, response_code: int, _headers: PackedStr
 	store_items.clear()
 	for key in by_id:
 		store_items.append(by_id[key])
+
+	# Store items (and their on-chain ids) changed; re-apply ownership if known.
+	if not _last_inventory_payload.is_empty():
+		_apply_inventory_payload(_last_inventory_payload)
+		return
 
 	_apply_preview_skin(_displayed_skin_id())
 	_refresh_all()
@@ -2185,7 +2242,11 @@ func _run_mint_request(skin_id: String) -> void:
 
 	_mint_in_flight = false
 	var error_code := str(response.get("error", "mint_failed"))
-	print("Dshbord: mint failed (%s)" % error_code)
+	var detail := str(response.get("detail", ""))
+	if detail != "":
+		print("Dshbord: mint failed (%s): %s" % [error_code, detail])
+	else:
+		print("Dshbord: mint failed (%s)" % error_code)
 	if error_code == "wallet_not_linked":
 		# First mint on this account: link the key once, then retry.
 		_open_wallet_link_dialog(skin_id)
@@ -2204,6 +2265,14 @@ func _mint_error_text(code: String) -> String:
 			return "ONE MOMENT"
 		"not_on_chain":
 			return "NOT MINTABLE"
+		"wallet_enc_not_configured":
+			return "MINT UNAVAILABLE"
+		"wallet_decrypt_failed", "key_wallet_mismatch":
+			return "RELINK WALLET"
+		"no_wallet_on_account":
+			return "NO WALLET"
+		"skin_not_found":
+			return "SKIN UNAVAILABLE"
 		_:
 			return "MINT FAILED"
 

@@ -3,7 +3,7 @@ import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
 import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward } from './firebaseClient.js';
-import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, lootBoxSteal, getLootBoxPoolOnchain, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain, getContractStatus } from './contractClient.js';
+import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, lootBoxSteal, getLootBoxPoolOnchain, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain, getContractStatus, getSkinBalance } from './contractClient.js';
 import { settleRound, parsePrizeMon, round6, LOOTBOX_POOL_SHARE } from './settlement.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents, getMatchPlayerCounts } from './analyticsService.js';
 import { refreshAllUserPfps } from './refreshUserPfps.js';
@@ -984,6 +984,59 @@ const server = createServer(async (req, res) => {
   // appending a combo to skinCombos.json lights it up everywhere at once.
   if (req.method === 'GET' && reqUrl.pathname === '/api/skin-combos') {
     sendJson(res, 200, { ok: true, combos: loadCombos(), defaults: loadDefaults() });
+    return;
+  }
+
+  // Native inventory: owned on-chain skins and equipped skin for the signed-in
+  // account. The web dashboard reads ownership from chain client-side and
+  // equipped skin from Firebase; native clients use this endpoint instead.
+  if (req.method === 'GET' && reqUrl.pathname === '/api/skins/inventory') {
+    const auth = await getAuthenticatedSession({ authorizationHeader: req.headers.authorization });
+    if (!auth.ok) {
+      sendJson(res, auth.status, { ok: false, error: auth.error });
+      return;
+    }
+    const username = auth.payload?.user?.username || '';
+    const walletAddress = auth.payload?.user?.wallet_address || '';
+    try {
+      const skins = await getAllSkins();
+      let equippedSkinId = await getPlayerSkin(username);
+      if (!equippedSkinId) {
+        const profile = await getPlayerProfile(username);
+        equippedSkinId = profile?.skin || profile?.equippedSkinId || profile?.selectedSkin || profile?.selectedSkinId || profile?.skinName || profile?.skinId || 's-default';
+      }
+      const ownedSkinIds = ['s-default', 's-default-unshaded'];
+      const ownedOnChainIds = [];
+      if (walletAddress) {
+        const onChainSkins = skins.filter((s) => Number(s?.onChainId ?? 0) > 0);
+        const balances = await Promise.all(onChainSkins.map(async (s) => {
+          try {
+            const bal = await getSkinBalance(walletAddress, Number(s.onChainId));
+            return { skin: s, balance: Number(bal || 0) };
+          } catch {
+            return { skin: s, balance: 0 };
+          }
+        }));
+        for (const entry of balances) {
+          if (entry.balance > 0) {
+            ownedOnChainIds.push(Number(entry.skin.onChainId));
+            const skinId = String(entry.skin.id || '');
+            if (skinId && !ownedSkinIds.includes(skinId)) {
+              ownedSkinIds.push(skinId);
+            }
+          }
+        }
+      }
+      sendJson(res, 200, {
+        ok: true,
+        equipped_skin_id: String(equippedSkinId || 's-default'),
+        owned_skin_ids: ownedSkinIds,
+        owned_on_chain_ids: ownedOnChainIds
+      });
+    } catch (error) {
+      console.error('[Skins] /api/skins/inventory failed:', error);
+      sendJson(res, 500, { ok: false, error: 'inventory_failed' });
+    }
     return;
   }
 
