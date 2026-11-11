@@ -101,6 +101,8 @@ godot/webexport/
 worldofnads-release.keystore
 
 # Local release artifacts and duplicate engine working copies
-/Release/
+/Release/*
+!/Release/wons.apk
+!/Release/wons.apk.idsig
 /wons-(downgrd)/
 
