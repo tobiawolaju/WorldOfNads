@@ -31,9 +31,12 @@ func _init() -> void:
 	if not _setter.is_valid() or not _getter.is_valid():
 		var cfg := ConfigFile.new()
 		var path := _store_path()
-		if cfg.load(path) == OK:
+		var err := cfg.load(path)
+		if err == OK:
 			for key in cfg.get_section_keys(""):
 				_memory[key] = cfg.get_value("", key, "")
+		elif err != ERR_FILE_NOT_FOUND:
+			push_warning("[Auth] Could not read stored credentials (%s): error %d" % [path, err])
 
 ## Wires a platform keystore (or a test double) in place of the file store.
 func configure(p_setter: Callable, p_getter: Callable) -> void:
@@ -116,7 +119,11 @@ func _flush() -> void:
 		cfg.set_value("", key, _memory[key])
 	# ConfigFile writes atomically via a temp file, so a crash mid-write cannot
 	# leave a half-written session behind.
-	cfg.save(_store_path())
+	var err := cfg.save(_store_path())
+	if err != OK:
+		# Without this a read-only/full user:// directory would silently turn
+		# every launch into a fresh login.
+		push_error("[Auth] Could not persist credentials (%s): error %d" % [_store_path(), err])
 
 ## 256 bits of randomness from the engine CSPRNG.
 func _random_hex(byte_count: int) -> String:

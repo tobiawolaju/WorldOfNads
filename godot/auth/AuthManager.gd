@@ -13,10 +13,12 @@ extends Node
 ## trusted anywhere in this subsystem.
 ##
 ## Persistent login: on boot `restore_session()` is called once. A stored
-## session is validated against `/auth/me`, refreshed if the access token has
-## expired, and accepted only if the backend still recognises it. Otherwise the
-## session is dropped and `login_required` fires so the caller can show
-## Login.tscn. First launch therefore always lands on the QR screen.
+## session is restored immediately from disk so a sleeping backend (Render cold
+## start) or a flaky mobile network cannot force a fresh QR login. It is then
+## validated against `/auth/me` and refreshed in the background; only a
+## definitive 401/403 from the backend drops it. First launch therefore lands on
+## the QR screen, while later launches go straight into the game until the
+## refresh token expires or the player logs out.
 
 ## Emitted at the very start of any login attempt.
 signal login_started()
@@ -61,6 +63,10 @@ var _state: String = STATE_IDLE
 var _restoring: bool = false
 ## Guards against two concurrent refreshes racing on the same token.
 var _refresh_in_flight: bool = false
+## HTTP status of the most recent refresh attempt (200 success, 401/403 the
+## refresh token is genuinely dead, 0/5xx the backend is unreachable). Used to
+## keep a stored session across cold starts instead of forcing a fresh QR login.
+var _last_refresh_status: int = 0
 
 func _ready() -> void:
 	# Boot order matters: AuthManager must exist before the first scene's _ready
@@ -73,7 +79,7 @@ func _ready() -> void:
 	# and `await` inside a lambda is not reliably supported across Godot builds.
 	api.configure(
 		Callable(self, "_provide_access_token"),
-		Callable(self, "_refresh_session")
+		Callable(self, "_refresh_session_status")
 	)
 	qr_provider = WONQRGenerator.new()
 
@@ -196,16 +202,16 @@ func restart_device_login() -> WONDeviceLogin:
 
 ## Rotates the token pair. Returns true when a fresh access token is in place.
 ##
-## Safe to call from gameplay code: AuthAPI calls it on a 401, and concurrent
-## callers share one in-flight refresh rather than stampeding the endpoint.
+## Safe to call from gameplay code: AuthAPI shares the same in-flight refresh,
+## so concurrent callers wait for one rotation rather than stampeding the
+## endpoint. Only a definitive 401/403 ends the session.
 func refresh_session() -> bool:
-	var ok := await _refresh_session()
-	if not ok:
-		# A refresh that fails outside the AuthAPI 401 path still has to end the
-		# session, otherwise a dead token lingers and every later call repeats
-		# the failure.
+	var status := await _refresh_session_status()
+	if status == 401 or status == 403:
+		# The backend explicitly rejected the refresh token. Only then is the
+		# session really gone; a timeout or 5xx must not sign the player out.
 		_drop_session("refresh_failed")
-	return ok
+	return status == 200
 
 ## Ends the session locally and tells the backend to revoke it.
 ##
@@ -261,43 +267,59 @@ func _run_boot_restore() -> void:
 
 func _perform_boot_restore() -> String:
 	var stored := store.load_session()
-	if stored == null:
+	if stored == null or stored.user_id.is_empty():
+		if stored != null:
+			# Tokens without an account id cannot produce a usable session.
+			store.clear_session()
 		_set_state(STATE_SIGNED_OUT)
+		print("[Auth] No stored session; showing login")
 		return "no_stored_session"
 
+	# Restore from disk immediately. The backend may be asleep when the app
+	# launches (Render cold start), and waiting for it before letting the player
+	# in is what forced a fresh QR login on every launch. The refresh token is
+	# valid for weeks, so trust it until the server explicitly rejects it and
+	# validate/refresh in the background without blocking startup.
 	_session = stored
-	# The access token may already be dead while the refresh token is still good,
-	# which is the common case after the app has been closed for a while.
-	if _session.is_expired():
-		if not await _refresh_session():
-			# Clear quietly: `_refresh_session` no longer drops the session, and
-			# emitting logged_out/login_required during boot would duplicate the
-			# signals `_run_boot_restore` is about to send.
-			_session = null
-			store.clear_session()
-			return "refresh_failed"
-
-	# Ask the backend whether this session is still valid. Trusting the stored
-	# token alone would let a revoked session look authenticated until the first
-	# real request failed.
-	var response := await api.me()
-	var status := int(response.get("__status", 0))
-	if status != 200:
-		# 401 means the session is genuinely gone. Anything else (network,
-		# server error) leaves the token alone: the player is probably offline
-		# and should not be forced to re-scan a QR code because of a blip.
-		if status == 401 or status == 403:
-			_session = null
-			store.clear_session()
-			return "session_revoked"
-		_set_state(STATE_SIGNED_OUT)
-		return "backend_unreachable"
-
-	_adopt_me_payload(response)
-	store.save_session(_session)
+	_session.state = WONAuthState.STATE_AUTHENTICATED
 	_set_state(STATE_AUTHENTICATED)
+	print("[Auth] Restored cached session for %s" % _session.user_id)
 	login_completed.emit(_session)
+	call_deferred("_validate_restored_session")
 	return ""
+
+
+## Runs after the cached session is already in use. A transient failure leaves
+## the session alone; only a definitive 401/403 from the backend signs out.
+func _validate_restored_session() -> void:
+	if _session == null:
+		return
+
+	if _session.is_expired():
+		var refresh_status := await _refresh_session_status()
+		if _session == null:
+			return
+		if refresh_status == 401 or refresh_status == 403:
+			_drop_session("refresh_failed")
+			return
+		if refresh_status != 200:
+			print("[Auth] Background refresh deferred (status=%d)" % refresh_status)
+			return
+
+	var response := await api.me()
+	if _session == null:
+		# A definitive 401 already emitted session_expired and cleared it.
+		return
+	var status := int(response.get("__status", 0))
+	if status == 200:
+		_adopt_me_payload(response)
+		store.save_session(_session)
+		_set_state(STATE_AUTHENTICATED)
+		session_refreshed.emit(_session)
+	else:
+		# Anything else means the backend is unreachable or the refresh could
+		# not complete. The stored session stays usable for the next launch.
+		print("[Auth] Background validation deferred (status=%d)" % status)
 
 ## `/auth/me` is authoritative for identity, so its response overwrites whatever
 ## was cached locally. This is what stops a tampered local file from changing
@@ -316,26 +338,37 @@ func _adopt_me_payload(response: Dictionary) -> void:
 	if expires_in > 0:
 		_session.access_token_expires_at = Time.get_unix_time_from_system() + expires_in
 
-## One refresh at a time; extra callers await the same result.
-func _refresh_session() -> bool:
+## One refresh at a time; extra callers await the same result. Returns the HTTP
+## status of the refresh: 200 on success, 401/403 when the refresh token is
+## genuinely dead, and 0/5xx when the backend could not be reached.
+func _refresh_session_status() -> int:
 	if _refresh_in_flight:
 		# Wait for the in-flight rotation instead of starting a second one with a
 		# token that is about to be invalidated by the first.
 		while _refresh_in_flight:
 			await get_tree().process_frame
-		return is_authenticated()
+		return _last_refresh_status
 
 	if _session == null or _session.refresh_token.is_empty():
-		return false
+		_last_refresh_status = 401
+		return 401
 
 	_refresh_in_flight = true
 	# Snapshot before the request: a rotation invalidates the old pair.
+	var session_ref := _session
 	var refresh_token := _session.refresh_token
 	var device_id := _session.device_id if not _session.device_id.is_empty() else get_device_id()
 
 	var response := await api.refresh(refresh_token, device_id)
+	if _session != session_ref:
+		# The session was cleared or replaced while the request was in flight
+		# (logout, new login). Never write the stale rotation back over it.
+		_refresh_in_flight = false
+		_last_refresh_status = 0
+		return 0
 	var status := int(response.get("__status", 0))
 
+	var result_status := status
 	var ok := false
 	if status == 200:
 		var access_token := str(response.get("access_token", ""))
@@ -348,16 +381,24 @@ func _refresh_session() -> bool:
 			_session.state = WONAuthState.STATE_AUTHENTICATED
 			store.save_session(_session)
 			ok = true
+		else:
+			# 200 without a token is a malformed response, not a revocation.
+			result_status = 0
 
+	_last_refresh_status = result_status
 	_refresh_in_flight = false
 
 	if ok:
 		session_refreshed.emit(_session)
 	# On failure the caller decides what the session becomes: the AuthAPI 401
-	# path drops it via `session_expired`, boot restore clears it quietly, and
-	# `refresh_session()` drops it explicitly. Dropping here too would emit
-	# duplicate logged_out/login_required signals during boot.
-	return ok
+	# path drops it via `session_expired` only for definitive 401/403 responses,
+	# `refresh_session()` drops it for those too, and transient failures leave it
+	# in place so a cold backend cannot sign the player out.
+	return result_status
+
+
+func _refresh_session() -> bool:
+	return (await _refresh_session_status()) == 200
 
 func _on_device_login_approved() -> void:
 	var login := _device_login

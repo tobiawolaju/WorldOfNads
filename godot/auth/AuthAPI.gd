@@ -177,9 +177,19 @@ func _perform(
 
 	# A 401 on an authenticated call gets exactly one refresh + replay.
 	if response.get("__status", 0) == 401 and authenticated and refresh_attempts < MAX_REFRESH_ATTEMPTS:
-		if await _refresh_session():
+		var refresh_status := await _refresh_session()
+		if refresh_status == 200:
 			return await _perform(method, path, body, authenticated, extra_headers, refresh_attempts + 1)
-		session_expired.emit("refresh_failed")
+		if refresh_status == 401 or refresh_status == 403:
+			# The refresh token is genuinely dead; the session cannot come back.
+			session_expired.emit("refresh_failed")
+		else:
+			# A timeout/5xx (status 0 or 5xx) only means the backend is
+			# unreachable. Surface it as a transport failure rather than a 401,
+			# so callers keep the stored session instead of treating the player
+			# as signed out. A later call will retry the refresh.
+			response["__status"] = 0
+			response["__transport_error"] = "refresh_unreachable"
 		return response
 
 	if response.get("__status", 0) == 401 and authenticated and refresh_attempts >= MAX_REFRESH_ATTEMPTS:
@@ -247,18 +257,22 @@ func _current_access_token() -> String:
 		return str(_token_provider.call())
 	return ""
 
-## Asks AuthManager to refresh. Returns true when a new token is available.
+## Asks AuthManager to refresh. Returns the HTTP status of the attempt:
+## 200 on success, 401/403 when the refresh token is genuinely dead, and
+## 0/5xx when the backend could not be reached (the session must be kept).
 ##
 ## The handler is usually a coroutine, so the result has to be awaited. Awaiting
 ## a plain (non-coroutine) callable returns its value immediately, which keeps
 ## a synchronous test double working.
-func _refresh_session() -> bool:
+func _refresh_session() -> int:
 	if not _refresh_handler.is_valid():
-		return false
+		return 0
 	var result: Variant = await _refresh_handler.call()
+	if result is int:
+		return int(result)
 	if result is bool:
-		return result
-	return false
+		return 200 if result else 401
+	return 0
 
 func _make_http_node() -> HTTPRequest:
 	var http := HTTPRequest.new()
