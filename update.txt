@@ -1,0 +1,41 @@
+Nov 11, 2026
+## World of Nads — Development Update
+
+### Completed
+
+* Native Android client boots, logs in and plays on device.
+* Cross-platform login: a WON account now persists on Android, so the same account works on web and phone.
+* In-match identity fixed: the name over your nad is your WON username, not a guest placeholder.
+* Native dashboard brought in line with the web: real owned/equipped skins, match cards, 3D preview and level pill.
+* Live match feed now shows who has the chicken and when they win ("X is holding the chicken", "X wins in 30s").
+* Mobile controls: quicker joystick placement, auto-hide on release, and touch scrolling in the dashboard.
+* Weapon feel pass: per-weapon muzzle FX, tracers, shake and phone haptics.
+* Networking cleanup: the client talks to the live servers only (local fallback removed).
+
+### Current Focus
+
+**Native client polish and feel**
+
+* Camera and collision behaviour on elevated parts of the map.
+* HUD and joystick tuning on real devices.
+* Performance on lower-end Android phones.
+
+### Next Steps
+
+1. Run the public test on the live servers.
+2. Ship the next Android APK release build.
+3. Finish verifying the native skin store + mint flow.
+4. Keep tightening game feel: movement, shooting, camera.
+5. Continue testing multiplayer load and match pacing.
+
+### Current Status
+
+**Browser:** 🟢 Playable
+**Android:** 🟡 Beta (APK)
+**Lobby:** 🟢 Working
+**Gameplay:** 🟢 Working
+**Cross-platform login:** 🟢 Working
+**Client optimisation:** 🟡 In progress
+**Public test:** 🔜 Starting soon
+
+The goal stays the same: make World of Nads feel like a real game first — with Web3 and Monad operating underneath the experience rather than being something players need to understand before they can play.

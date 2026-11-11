@@ -71,7 +71,7 @@ atlas = ExtResource("10_ui_atlas")
 region = Rect2(0, 0, 400, 82)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lle6q"]
-bg_color = Color(0.52906674, 0.5290667, 0.5290667, 0.49019608)
+bg_color = Color(1, 1, 1, 0.6)
 corner_radius_top_left = 50
 corner_radius_top_right = 50
 corner_radius_bottom_right = 50
@@ -136,7 +136,7 @@ script = ExtResource("1_mphia")
 [node name="Joystick" type="CanvasLayer" parent="." unique_id=1502887935]
 
 [node name="TouchJoyStick" type="Node2D" parent="Joystick" unique_id=203270884]
-position = Vector2(-152, -134)
+position = Vector2(-138, -185)
 
 [node name="ColorRect" type="ColorRect" parent="Joystick/TouchJoyStick" unique_id=121289564]
 anchors_preset = 8
@@ -179,13 +179,14 @@ theme_override_styles/disabled = SubResource("StyleBoxFlat_q62xx")
 theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
 
 [node name="JoyLock" type="Sprite2D" parent="Joystick/TouchJoyStick" unique_id=1534232310]
-position = Vector2(0, -90)
+position = Vector2(0, -200)
 
 [node name="JoyLock" type="Sprite2D" parent="Joystick/TouchJoyStick/JoyLock" unique_id=1518767299]
 scale = Vector2(0.4, 0.4)
 texture = ExtResource("9_qkknv")
 
 [node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyLock/JoyLock" unique_id=379869769]
+visible = false
 material = SubResource("ShaderMaterial_q62xx")
 custom_minimum_size = Vector2(130, 130)
 anchors_preset = 8
@@ -209,10 +210,12 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_q62xx")
 scale = Vector2(0.7, 0.7)
 texture = ExtResource("9_qkknv")
 script = ExtResource("9_mphia")
-auto_lock_hold_seconds = 0.0
-auto_lock_forward_min_strength = 0.9
-auto_lock_north_distance_multiplier = 2.0
+auto_lock_forward_min_strength = 0.25
+auto_lock_north_distance_multiplier = 3.5
+disable_joystick_lock = true
 keep_locked_position_on_resize = false
+ignore_edge_margin = 60.0
+auto_hide_on_release = true
 joy_lock = NodePath("../JoyLock")
 
 [node name="Button" type="Button" parent="Joystick/TouchJoyStick/JoyKnob" unique_id=2054266225]

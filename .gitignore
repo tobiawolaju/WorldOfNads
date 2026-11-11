@@ -99,3 +99,8 @@ godot/webexport/
 
 # Android release keystore
 worldofnads-release.keystore
+
+# Local release artifacts and duplicate engine working copies
+/Release/
+/wons-(downgrd)/
+

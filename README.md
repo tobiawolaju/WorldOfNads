@@ -104,10 +104,11 @@ graph TD
 
 The game includes a dedicated events stream for lightweight activity logs.
 
-- **Live WebSocket endpoint:** `wss://worldofnads-129481786742.europe-west1.run.app/events`
-- **Local fallback endpoint:** `ws://localhost:8080/events`
-- **HTTP snapshot endpoint:** `https://worldofnads-129481786742.europe-west1.run.app/events` (`GET`)
+- **Live WebSocket endpoint (Node server):** `wss://worldofnads.onrender.com/events`
+- **Live WebSocket endpoint (Rust room server):** `wss://wons-room-server.onrender.com/events`
+- **HTTP snapshot endpoint:** same host as the Node server, `GET /events`
 - **History size:** last `100` events (server-side ring buffer)
+- **No local fallback:** the client only connects to the live endpoints above. `ws://localhost:8080` is gone, so a local server must be added back explicitly if it is ever needed again.
 
 ### Payloads
 
@@ -155,6 +156,36 @@ Documented in `docs/skins.md`.
 - **Config:** `skinConfig` in Firebase, served by `GET /api/skins` (local defaults in `frontend/src/data/items.json`).
 - **Game:** `godot/scripts/core/SkinApplier.gd` applies materials, eye tint and attachment visibility.
 - **Preview:** `frontend/src/components/ThreeScene.tsx` dresses the same attachments from `/attachments/*.glb` (exported by `godot/tools/export_attachments.gd`).
+
+---
+
+## Native Client (Android)
+
+The same Godot project in `godot/` also exports as a standalone Android client.
+
+- **Account:** the native client signs in with the same WON account as the web build and persists the session, so a launch goes straight to the dashboard until the player logs out.
+- **Identity:** the in-match name and HUD read the authenticated WON username.
+- **Dashboard parity:** match cards, stat pills (level uses `assets/img/star.png`), live store/inventory (`GET /api/skins/inventory`) and the 3D preview follow the React dashboard. The preview orbits like the web controls and does not zoom.
+- **Chicken feed:** the possession progress bar is gone; the event feed prints `<user> is holding the chicken` plus a countdown (`<user> wins in 59s`, `30s`, `5s`, ...).
+- **Mobile input:** dashboard carousels scroll by touch, and the joystick has an optional `auto_hide_on_release` that hides it 0.5s after release.
+- **Eye shading:** the eye shader is `unshaded`, so eyeballs stay flat white in any lighting (matching the web `MeshBasicMaterial`) while still rendering in the opaque pass for SMOG smoke.
+
+---
+
+## Building & Releasing
+
+Godot export presets live in `godot/export_presets.cfg` (local only, git-ignored).
+
+- **Web build:** preset `Web` exports to `frontend/public/godot/` (`index.html`, `index.pck`, `index.wasm`, ...). Commit the refreshed `index.html` / `index.pck` so Vercel serves the new build.
+- **Android build:** preset `Android` exports to `Release/wons.apk`.
+- **After any client change**, re-export both targets; a stale `index.pck` still boots the old code.
+- `Release/` and the duplicate engine projects (`wons-*`) are local working copies and are git-ignored.
+
+---
+
+## Development Updates
+
+Progress posts are drafted in `update.txt` at the repo root before they are published.
 
 ---
 
