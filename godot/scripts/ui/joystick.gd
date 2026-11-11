@@ -26,6 +26,7 @@ signal camera_dragged(relative: Vector2)
 @export var lock_joystick_position: bool = false # anchor the base where it sits instead of jumping to the first touch
 @export var keep_locked_position_on_resize: bool = true # re-clamp the anchor when the viewport changes size
 @export var ignore_edge_margin: float = 32.0 # Ignore touches that START within this many px of any screen edge (safe-area / system-gesture dead zone)
+@export var auto_hide_on_release: bool = false # When on, hide the joystick 0.5s after release.
 
 var radiusJoyStick: float = 0.0
 var radiusJoyBase: float = 0.0
@@ -63,6 +64,7 @@ var active_camera_start_position: Vector2 = Vector2.ZERO
 var active_camera_swipe_jump_triggered: bool = false
 var jump_release_token: int = 0
 var pickup_release_token: int = 0
+var _hide_release_token: int = 0
 
 @onready var touch_joystick_node: Node = get_node_or_null("../../TouchJoyStick")
 @onready var joy_base_node: Node = get_node_or_null("../JoyBase")
@@ -152,6 +154,7 @@ func _input(event):
 				touchInsideJoystick = false
 				active_joystick_index = -1
 				_update_visuals()
+				_schedule_hide_on_release()
 			elif event.index == active_camera_index:
 				active_camera_index = -1
 				active_camera_last_position = Vector2.ZERO
@@ -213,8 +216,8 @@ func _process(delta):
 		_release_all_keys()
 		modulate.a = lerp(modulate.a, rest_opacity, delta * 10)
 	
-	# Pinned base: keep it visible and on-screen even when idle.
-	if lock_joystick_position:
+	# Pinned base: keep it visible and on-screen even when idle (unless auto-hide on release is enabled).
+	if lock_joystick_position and not auto_hide_on_release:
 		var viewport_size := get_viewport().get_visible_rect().size
 		if viewport_size != _last_viewport_size:
 			_last_viewport_size = viewport_size
@@ -341,6 +344,7 @@ func _clamp_locked_base_to_viewport(viewport_size: Vector2) -> void:
 	global_position = clamped
 
 func _start_joystick_touch(touch_pos: Vector2, touch_index: int, touch_joystick: Node):
+	_cancel_hide_on_release()
 	active_joystick_index = touch_index
 	touchInsideJoystick = true
 	north_drag_distance_accumulated = 0.0
@@ -405,6 +409,27 @@ func _unlock_auto_move():
 	visible = true
 	_release_all_keys()
 	_update_visuals()
+	_cancel_hide_on_release()
+
+
+func _cancel_hide_on_release() -> void:
+	_hide_release_token += 1
+	if touch_joystick_node != null and not touch_joystick_node.visible:
+		touch_joystick_node.visible = true
+
+
+func _schedule_hide_on_release() -> void:
+	_hide_release_token += 1
+	if not auto_hide_on_release or is_auto_locked or touch_joystick_node == null:
+		return
+	var token := _hide_release_token
+	await get_tree().create_timer(0.5).timeout
+	if token != _hide_release_token:
+		return
+	if not auto_hide_on_release or is_auto_locked or active_joystick_index != -1:
+		return
+	if touch_joystick_node != null and is_instance_valid(touch_joystick_node):
+		touch_joystick_node.visible = false
 
 func _can_swipe_jump() -> bool:
 	return active_joystick_index != -1 or is_auto_locked
