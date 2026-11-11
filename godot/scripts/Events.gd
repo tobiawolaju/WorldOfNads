@@ -88,6 +88,7 @@ func _ready() -> void:
 	_setup_debug_labels()
 	_cache_reward_colors()
 	_try_set_username_from_web_query()
+	_try_set_username_from_auth()
 	_resolve_room_query()
 	tried_live = true
 	var err = ws.connect_to_url(ROOM_EVENTS_URL + _room_query)
@@ -785,6 +786,20 @@ func _try_set_username_from_web_query() -> void:
 
 	_username_locked = true
 	set_local_username(parsed_username, true)
+
+
+func _try_set_username_from_auth() -> void:
+	# Native builds sign in via the device-link flow; the authenticated WON
+	# username must be used for join/display instead of the server's fallback.
+	if OS.has_feature("web"):
+		return
+	if not is_instance_valid(AuthManager) or not AuthManager.is_authenticated():
+		return
+	var name := AuthManager.get_username().strip_edges()
+	if name == "":
+		return
+	_username_locked = true
+	set_local_username(name, true)
 
 # Keep the events subscription in step with PlayerManager: prefer web URL match,
 # else fall back to the match id handed to PlayerManager (native lobby flow/editor).
