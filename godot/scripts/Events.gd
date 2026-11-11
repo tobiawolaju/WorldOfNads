@@ -274,10 +274,6 @@ func _create_possession_ui() -> void:
 	possession_progress_bar.max_value = 60.0
 	possession_progress_bar.value = 0.0
 	possession_progress_bar.custom_minimum_size = Vector2(200, 20)
-	possession_progress_bar.theme_override_styles = {
-		"background": StyleBoxFlat.new(),
-		"fill": StyleBoxFlat.new(),
-	}
 	# Style the progress bar.
 	var bg_style = StyleBoxFlat.new()
 	bg_style.bg_color = Color(0, 0, 0, 0.5)
