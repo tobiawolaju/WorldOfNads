@@ -2013,6 +2013,8 @@ func _get_player_display_name(id: String) -> String:
 
 func _resolve_local_username() -> void:
 	if not OS.has_feature("web"):
+		if is_instance_valid(AuthManager) and AuthManager.is_authenticated():
+			local_username = AuthManager.get_username().strip_edges()
 		return
 	var raw_username = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('username') || ''")
 	if typeof(raw_username) != TYPE_STRING:
