@@ -155,6 +155,7 @@ const VARIANT_BORDER_WIDTH: int = 2
 @onready var _mon_pill: Control = get_node_or_null("CanvasLayer/StatRail/MonPill") as Control
 @onready var _level_pill: Control = get_node_or_null("CanvasLayer/StatRail/LevelPill") as Control
 @onready var _level_value: Label = get_node_or_null("CanvasLayer/StatRail/LevelPill/Row/LevelValue") as Label
+@onready var _level_row: HBoxContainer = get_node_or_null("CanvasLayer/StatRail/LevelPill/Row") as HBoxContainer
 @onready var _mon_value: Label = get_node_or_null("CanvasLayer/StatRail/MonPill/Row/MonValue") as Label
 
 # Top navbar (user badge + logout menu), matching the frontend TopNavbar.
@@ -293,6 +294,8 @@ func _ready() -> void:
 	if viewport != null and not viewport.size_changed.is_connected(_on_viewport_size_changed):
 		viewport.size_changed.connect(_on_viewport_size_changed)
 	_layout_panel_zoom()
+
+	_ensure_level_icon()
 
 
 # Dashboard.tsx builds its lobby loop as `new Audio("/lobbysong.mp3")` with
@@ -1620,6 +1623,24 @@ func _is_owned(item: Dictionary) -> bool:
 # Ports the frontend TopNavbar user badge: avatar, username, wallet address and,
 # behind the caret, the logout action. Everything here reads from AuthManager,
 # which is the only source of identity.
+func _ensure_level_icon() -> void:
+	if _level_row == null or _level_row.get_node_or_null("LevelIcon") != null:
+		return
+	var tex: Texture2D = load("res://assets/img/star.png")
+	if tex == null:
+		return
+	var icon := TextureRect.new()
+	icon.name = "LevelIcon"
+	icon.custom_minimum_size = Vector2(16, 16)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.texture = tex
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_level_row.add_child(icon)
+	_level_row.move_child(icon, 0)
+
+
 func _setup_top_nav() -> void:
 	var username := AuthManager.get_username()
 	if _nav_name != null:
