@@ -6,7 +6,6 @@ const LIVE_EVENTS_URL := "wss://worldofnads.onrender.com/events"
 # while the room server is under test — otherwise the game socket talks to Rust
 # while chat/event toasts still come from Node, and nothing lines up.
 const ROOM_EVENTS_URL := "wss://wons-room-server.onrender.com/events"
-const LOCAL_EVENTS_URL := "ws://localhost:8080/events"
 const GAMEOVER_SCENE := preload("res://scenes/gameover.tscn")
 
 ## Rows kept in the feed. Enough to follow what the room is doing, few enough to
@@ -31,7 +30,6 @@ const LOCAL_API_URL := "http://localhost:8080"
 var ws := WebSocketPeer.new()
 var connected := false
 var tried_live := false
-var fallback_started := false
 # `?room=...` suffix for the events feed. The Rust room server keeps a per-room
 # feed, so a special match's chat/join toasts only line up when we subscribe to
 # the same room the game socket joined. Empty means the shared default room.
@@ -93,7 +91,7 @@ func _ready() -> void:
 	tried_live = true
 	var err = ws.connect_to_url(ROOM_EVENTS_URL + _room_query)
 	if err != OK:
-		_start_local_fallback("Could not start live events stream")
+		_show_local_status("Live events unavailable")
 	else:
 		_show_local_status("Connecting events stream...")
 
@@ -117,8 +115,8 @@ func _process(delta: float) -> void:
 		if connected:
 			connected = false
 			_show_local_status("Events disconnected")
-		if tried_live and not fallback_started:
-			_start_local_fallback("Falling back to local events")
+		elif tried_live:
+			_show_local_status("Live events unavailable")
 
 func set_local_username(id: String, force: bool = false) -> void:
 	if username_label == null:
@@ -331,16 +329,8 @@ func _apply_label_color(color: Color, label: Label) -> void:
 	if label != null and is_instance_valid(label):
 		label.add_theme_color_override("font_color", color)
 
-func _start_local_fallback(reason: String) -> void:
-	fallback_started = true
-	# Avatars follow the same host as the feed, otherwise a local run would keep
-	# asking production for pictures of local players who are not there.
-	if _avatars != null and is_instance_valid(_avatars):
-		_avatars.configure(LOCAL_API_URL)
-	_show_local_status(reason)
-	var err = ws.connect_to_url(LOCAL_EVENTS_URL + _room_query)
-	if err != OK:
-		_show_local_status("Events offline", "system")
+# Local events fallback removed for public/live testing: events must come from the
+# live room server. LOCAL_API_URL is still used for local/dev avatar resolution.
 
 func _read_packets() -> void:
 	while ws.get_available_packet_count() > 0:
