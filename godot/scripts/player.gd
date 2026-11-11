@@ -2193,6 +2193,9 @@ func _start_weapon_action(clip: String) -> float:
 	# after the `await` would land the kick a third of a second late, which reads
 	# as input lag rather than recoil.
 	_trigger_weapon_fx(clip)
+	# Quick mobile feedback test: a short haptic pulse on each local shot.
+	if is_local and clip == "shoot" and (OS.has_feature("android") or OS.has_feature("ios")):
+		Input.vibrate_handheld(40)
 	# Travel the action state machine to the right clip, then fire the OneShot.
 	# Re-firing while it is already running restarts the clip from the top.
 	if _action_playback:
