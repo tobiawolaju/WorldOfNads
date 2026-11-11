@@ -27,11 +27,8 @@ uniform float neon_opacity : hint_range(0.0, 1.0) = 0.8;
 uniform float grayscale_amount : hint_range(0.0, 1.0) = 0.0;
 uniform float brightness_amount : hint_range(0.0, 2.0) = 1.0;
 
-// `.match-card { border: 2px solid ... }`. The frontend flips the frame per theme -
-// purple on its white light-mode page, white on the dark one - and this screen only
-// ever renders the dark scheme, so the default here is white and dshbord.gd leaves it
-// alone. Width stays in CSS px so the shear and the dissolve carry it like the rest.
-uniform vec4 frame_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+// `.match-card` border (frontend: black, 2px, no rounded corners).
+uniform vec4 frame_color : source_color = vec4(0.0, 0.0, 0.0, 1.0);
 const float FRAME_WIDTH = 2.0;
 
 // tan(-5deg). CSS skewX(-5deg) maps pre -> post as x' = x + SKEW_TAN * y.
@@ -39,10 +36,8 @@ const float SKEW_TAN = -0.08748866;
 const float EDGE_RAMP = 0.84;
 const float DOT_PITCH = 5.0;
 const float DOT_INK = 1.6;
-// CSS `.match-card { border-radius }`, in the card's 330x220px source space.
-// Rounds the hard `overflow: hidden` box clip so the silhouette gets the same
-// soft corners the frontend now draws.
-const float CORNER_RADIUS = 10.0;
+// CSS `.match-card { border-radius: 0 }` - square corners.
+const float CORNER_RADIUS = 0.0;
 
 // Signed distance to a rounded box centred on the origin. Negative inside,
 // positive outside; used instead of the rectangular box clip below.
