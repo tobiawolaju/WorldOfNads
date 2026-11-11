@@ -3437,15 +3437,11 @@ func _update_camera_collision_logic(delta: float) -> void:
 		return
 	_camera_update_skip_frames = 0
 	var holding_chicken := _is_local_holding_chicken()
+	var above_12 := global_position.y > 12.0
 	var target_pos: Vector3 = _camera_follow_target
 	var cam_offset: Vector3 = Vector3(_sin_cam_y * _cos_cam_x, _sin_cam_x, _cos_cam_y * _cos_cam_x) * _effective_camera_distance
 	var desired_pos: Vector3 = target_pos + cam_offset
-	# Only relax camera collision during bus rides or a high-altitude dive/fall.
-	# A raw height check (e.g. y > 12) disabled collision while standing on
-	# elevated floors/platforms, letting the camera pass through them and see
-	# underneath when stepping down or looking along that surface.
-	var skip_collision := _is_riding_bus or (_dive_level > 0.5 and not is_on_floor())
-	if skip_collision:
+	if above_12:
 		_camera_collision_hold_timer = 0.0
 		_camera_collision_distance = move_toward(_camera_collision_distance, _effective_camera_distance, delta * CAMERA_COLLISION_RECOVERY_SPEED * 8.0)
 	else:
