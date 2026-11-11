@@ -1299,10 +1299,8 @@ func _build_match_card(match: Dictionary) -> Control:
 		_apply_font(sponsor, FONT_UI)
 		content.add_child(sponsor)
 
-	# `.match-card-stats` - likes + player count, bottom-left ON the card. Ported from
-	# Dashboard.tsx: the filled heart with its count, then the filled people glyph with
-	# its count. It draws over the purple plate and under nothing else, so it is added
-	# last. `.match-card-overlay` counter-skews the card and so does the stats row's own
+	# `.match-card-stats` - player count, bottom-left on the card (frontend: people only).
+	# `.match-card-overlay` counter-skews the card and so does the stats row's own
 	# `skewX(5deg)`, so it stays upright here too.
 	var stats := HBoxContainer.new()
 	stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1316,8 +1314,7 @@ func _build_match_card(match: Dictionary) -> Control:
 	stats.grow_horizontal = Control.GROW_DIRECTION_END
 	stats.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	card.add_child(stats)
-	stats.add_child(_build_match_stat(STAT_SHAPE_HEART, _dummy_heart_count(match)))
-	stats.add_child(_build_match_stat(STAT_SHAPE_PEOPLE, _dummy_player_count(match)))
+	stats.add_child(_build_match_stat(STAT_SHAPE_PEOPLE, _match_player_count(match)))
 
 	card.gui_input.connect(_on_match_card_input.bind(match_id))
 	card.mouse_entered.connect(_on_match_card_enter.bind(card))
@@ -1332,7 +1329,7 @@ func _build_match_stat(shape: int, count: int) -> HBoxContainer:
 	# `.match-stat { gap: 5px }` -> 1.76.
 	stat.add_theme_constant_override("separation", 2)
 
-	# `.match-icon-badge` - 22px, `border-radius: 100%`, black.
+	# `.match-icon-badge` - 22px black badge behind the white glyph.
 	var badge := Panel.new()
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	badge.custom_minimum_size = Vector2(7.7, 7.7)
@@ -2606,14 +2603,12 @@ func _match_hash_seed(seed: String, salt: int) -> int:
 	return h
 
 
-func _dummy_player_count(match: Dictionary) -> int:
-	var seed := str(match.get("match_id", ""))
-	return int(DUMMY_PLAYER_COUNTS[_match_hash_seed(seed, 0) % DUMMY_PLAYER_COUNTS.size()])
-
-
-func _dummy_heart_count(match: Dictionary) -> int:
-	var seed := str(match.get("match_id", ""))
-	return int(DUMMY_HEART_COUNTS[_match_hash_seed(seed, 7) % DUMMY_HEART_COUNTS.size()])
+func _match_player_count(match: Dictionary) -> int:
+	# Prefer real values from the match payload; avoid fake/random placeholders.
+	for key in ["player_count", "players", "joined", "participant_count", "join_total", "sponsor_player_count"]:
+		if match.has(key):
+			return maxi(int(match.get(key, 0)), 0)
+	return 0
 
 
 func _format_player_count(count: int) -> String:
@@ -2712,11 +2707,10 @@ func _prize_style() -> StyleBoxFlat:
 
 
 func _match_stat_badge_style() -> StyleBoxFlat:
-	# `.match-icon-badge`: a 22px black circle (`border-radius: 100%`) behind the
-	# white glyph. 7.7 layout units across, so a 4px radius rounds it.
+	# Match stat badge: black background, no rounded corners.
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0, 0, 0, 1)
-	style.set_corner_radius_all(4)
+	style.set_corner_radius_all(0)
 	style.content_margin_left = 0.0
 	style.content_margin_top = 0.0
 	style.content_margin_right = 0.0
@@ -2742,10 +2736,8 @@ func _match_card_style(selected: bool) -> StyleBoxFlat:
 	style.expand_margin_right = -6.45
 	style.expand_margin_top = -4.3
 	style.expand_margin_bottom = -4.3
-	# Round the glow to the card's new border-radius. The shader rounds in the
-	# 330x220 source space (10px); the box here is the scaled 90% card in layout
-	# units, where that lands on ~4px.
-	style.set_corner_radius_all(4)
+	# Match the frontend card's square edges.
+	style.set_corner_radius_all(0)
 	style.skew = Vector2(0.0872665, 0.0)
 	if selected:
 		style.shadow_color = Color(C_MAGENTA.r, C_MAGENTA.g, C_MAGENTA.b, 0.45)
