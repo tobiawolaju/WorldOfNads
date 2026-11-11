@@ -42,9 +42,9 @@ var _entries: Array[Dictionary] = []
 var _entry_seq := 0
 var _rows: Array[Dictionary] = []
 var _avatars: AvatarLoader = null
-## The pinned "wins in N" row for the chicken holder, kept out of `_rows` so the
-## event history never pushes it out.
-var _countdown_row: Dictionary = {}
+## Countdown state for chicken holder chat messages (progress bar removed).
+var _countdown_holder_name: String = ""
+var _countdown_last_seconds: int = -999
 ## colour hex -> StyleBoxFlat, so the badge disc is not rebuilt on every render.
 var _disc_styles: Dictionary = {}
 var _local_player_id := ""
@@ -60,9 +60,7 @@ var _navigated_to_gameover := false
 @onready var _debug_label: Label
 @onready var _debug2_label: Label
 
-# Possession progress UI (created programmatically).
-var possession_progress_bar: ProgressBar = null
-var possession_label: Label = null
+# Possession progress UI removed: chicken status is shown in the event feed/chat.
 
 # --- REWARD COUNTER JUICE ---
 # When the XP / MON stream counters tick up we punch the label: a quick scale
@@ -194,110 +192,24 @@ func update_mon_display(earned_mon: float, pool_remaining: float) -> void:
 			# The pool is 0.18 x the prize, so it usually has cents: show them.
 			prize_pool_label.text = "%.2f MON pool" % pool_remaining
 
-## Pinned countdown row above the chat rows: "<name> wins in 43s" for whoever is
-## carrying the chicken, rewritten in place as possession ticks. A chat line per
-## second would flush the five-row feed within five seconds of a pickup, and the
-## countdown is a status, not an event.
+## Chicken holder/countdown as chat feed lines (progress bar UI removed).
 func update_chicken_countdown(holder_name: String, seconds_left: int) -> void:
 	var display_name := holder_name.strip_edges()
 	if seconds_left < 0 or display_name == "":
-		if not _countdown_row.is_empty():
-			(_countdown_row["root"] as Control).visible = false
+		_countdown_holder_name = ""
+		_countdown_last_seconds = -999
 		return
-	_ensure_feed_rows()
-	if _feed == null:
-		return
-	if _countdown_row.is_empty():
-		_countdown_row = _create_row(-1)
-		(_countdown_row["root"] as Control).name = "CountdownRow"
-		# Above the chat rows: it is always-on status, not part of the history.
-		_feed.move_child(_countdown_row["root"], 0)
-	(_countdown_row["root"] as Control).visible = true
-	# seq -1 (the row's initial value) keeps _apply_row from replaying the fade on
-	# every tick: the row only ever changes its text.
-	_apply_row(_countdown_row, {
-		"actor": display_name,
-		"message": "wins in %ds" % seconds_left,
-		"seq": -1,
-	})
+	if display_name != _countdown_holder_name:
+		_countdown_holder_name = display_name
+		_countdown_last_seconds = -999
+		_push_event_line(display_name, "is holding the chicken")
+	if seconds_left != _countdown_last_seconds:
+		_countdown_last_seconds = seconds_left
+		_push_event_line(display_name, "wins in %ds" % seconds_left)
 
-func update_possession_display(possession_seconds: int, victory_target: int) -> void:
-	# Create possession progress UI if not exists.
-	if possession_progress_bar == null:
-		_create_possession_ui()
-	if possession_progress_bar:
-		possession_progress_bar.max_value = float(victory_target)
-		possession_progress_bar.value = float(possession_seconds)
-		var pct = float(possession_seconds) / float(victory_target) * 100.0 if victory_target > 0 else 0.0
-		if possession_label:
-			possession_label.text = "Chicken: %ds / %ds (%.0f%%)" % [possession_seconds, victory_target, pct]
-		# Visual feedback when close to victory.
-		if possession_seconds >= victory_target - 5 and possession_seconds < victory_target:
-			possession_progress_bar.add_theme_color_override("fill_color", Color(1.0, 0.8, 0.0, 1.0))  # Yellow warning
-		elif possession_seconds >= victory_target:
-			possession_progress_bar.add_theme_color_override("fill_color", Color(0.0, 1.0, 0.5, 1.0))  # Green victory
-		else:
-			possession_progress_bar.add_theme_color_override("fill_color", Color(0.98, 0.8, 0.3, 1.0))  # Normal gold
-
-# --- POSSESSION UI CREATION ---
-func _create_possession_ui() -> void:
-	var canvas = get_node_or_null("CanvasLayer")
-	if canvas == null:
-		return
-	
-	# Container for possession UI at top-center.
-	var container = HBoxContainer.new()
-	container.name = "PossessionUI"
-	container.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	container.offset_left = -150
-	container.offset_top = 10
-	container.offset_right = 150
-	container.offset_bottom = 50
-	container.add_theme_constant_override("separation", 8)
-	canvas.add_child(container)
-	
-	# Label.
-	possession_label = Label.new()
-	possession_label.text = "Chicken: 0s / 60s"
-	possession_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	possession_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-	possession_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
-	possession_label.add_theme_constant_override("outline_size", 2)
-	possession_label.add_theme_font_size_override("font_size", 16)
-	container.add_child(possession_label)
-	
-	# Progress bar.
-	possession_progress_bar = ProgressBar.new()
-	possession_progress_bar.min_value = 0.0
-	possession_progress_bar.max_value = 60.0
-	possession_progress_bar.value = 0.0
-	possession_progress_bar.custom_minimum_size = Vector2(200, 20)
-	# Style the progress bar.
-	var bg_style = StyleBoxFlat.new()
-	bg_style.bg_color = Color(0, 0, 0, 0.5)
-	bg_style.corner_radius_top_left = 4
-	bg_style.corner_radius_top_right = 4
-	bg_style.corner_radius_bottom_left = 4
-	bg_style.corner_radius_bottom_right = 4
-	var fill_style = StyleBoxFlat.new()
-	fill_style.bg_color = Color(0.98, 0.8, 0.3, 1.0)  # Gold
-	fill_style.corner_radius_top_left = 4
-	fill_style.corner_radius_top_right = 4
-	fill_style.corner_radius_bottom_left = 4
-	fill_style.corner_radius_bottom_right = 4
-	possession_progress_bar.add_theme_stylebox_override("background", bg_style)
-	possession_progress_bar.add_theme_stylebox_override("fill", fill_style)
-	container.add_child(possession_progress_bar)
-	
-	# Target label.
-	var target_label = Label.new()
-	target_label.text = "WIN at 60s"
-	target_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	target_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
-	target_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
-	target_label.add_theme_constant_override("outline_size", 1)
-	target_label.add_theme_font_size_override("font_size", 12)
-	container.add_child(target_label)
+func update_possession_display(_possession_seconds: int, _victory_target: int) -> void:
+	# Progress bar UI intentionally removed; countdown is shown in the event feed.
+	pass
 
 # --- REWARD COUNTER JUICE HELPERS ---
 
