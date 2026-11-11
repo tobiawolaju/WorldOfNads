@@ -10,6 +10,7 @@
 [ext_resource type="Shader" uid="uid://dqg85vp5she" path="res://assets/shaders/outline.gdshader" id="8_6sjxh"]
 [ext_resource type="Texture2D" uid="uid://bfq15ohgsj3kx" path="res://scenes/props/rpg7_-_anti_tank_0.png" id="8_bstww"]
 [ext_resource type="PackedScene" uid="uid://bj3sdsig7u2wm" path="res://assets/models/player/nddsobj.fbx" id="10_6sjxh"]
+[ext_resource type="Texture2D" uid="uid://ceofg5yk6lkbk" path="res://assets/img/mon.png" id="11_h0xwr"]
 
 [sub_resource type="Animation" id="Animation_jtd7n"]
 resource_name = "mixamo_com"
@@ -3004,5 +3005,10 @@ fixed_fps = 24
 interpolate = false
 process_material = SubResource("ParticleProcessMaterial_6o0bh")
 draw_pass_1 = SubResource("PlaneMesh_2j10v")
+
+[node name="crossir" type="Sprite3D" parent="." unique_id=1910869381]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0.45734513, 2.2334232)
+visible = false
+texture = ExtResource("11_h0xwr")
 
 [editable path="Skeleton3D/BackBoneAttachment3D/nddsobj"]
