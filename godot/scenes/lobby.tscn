@@ -182,10 +182,6 @@ transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.539
 power_up_mode = 6
 
 [node name="Van" parent="." unique_id=1389412019 instance=ExtResource("13_dyhay")]
-transform = Transform3D(0.6295066, 0, 0.7769952, 0, 1, 0, -0.7769952, 0, 0.6295066, 9.427859, 5.778367, 9.932429)
-mass = 1.0
-can_sleep = true
-continuous_cd = false
-script = null
+transform = Transform3D(0.6295066, 0, 0.7769952, 0, 1, 0, -0.7769952, 0, 0.6295066, 9.427859, 1.45, 9.932429)
 
 [editable path="Bus"]
