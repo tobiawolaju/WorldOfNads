@@ -905,8 +905,6 @@ func _receive_messages():
 						events_node.call("update_xp_display", earned_xp)
 					if events_node.has_method("update_mon_display"):
 						events_node.call("update_mon_display", earned_mon, pool_total)
-					if events_node.has_method("update_possession_display"):
-						events_node.call("update_possession_display", possession_time, victory_target)
 				# reward_update is the once-a-second heartbeat: it carries the local
 				# possession time and the victory target the countdown needs.
 				_push_chicken_countdown()
@@ -2204,7 +2202,7 @@ func _handle_chicken_state_event(current_is_held: bool, current_holder_id: Strin
 	if not _last_chicken_is_held and current_is_held and current_holder_id == player_id:
 		_emit_player_event(
 			"chicken_picked",
-			"%s picked the chicken" % holder_name,
+			"%s is holding the chicken" % holder_name,
 			{"item": "chicken", "action": "pick"}
 		)
 
