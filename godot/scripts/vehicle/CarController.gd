@@ -52,6 +52,9 @@ class_name CarController
 
 @export_group("Input")
 @export var input_enabled: bool = true
+## Only the rider drives. With this on, the van ignores WASD until the local
+## player is on board (and stops taking input again when they step out).
+@export var require_rider_for_input: bool = true
 
 @export_group("Ride")
 ## Marker the rider is parked on while inside the van.
@@ -119,7 +122,10 @@ func _physics_process(delta: float) -> void:
 	var throttle: float = 0.0
 	var steer_input: float = 0.0
 	var handbrake: bool = false
-	if input_enabled:
+	# The vehicle only answers to its rider: while nobody is on board the keys
+	# drive the player on foot instead of the van.
+	var can_drive: bool = input_enabled and (not require_rider_for_input or has_rider())
+	if can_drive:
 		throttle = Input.get_axis("car_reverse", "car_accelerate")
 		steer_input = Input.get_axis("car_steer_right", "car_steer_left")
 		handbrake = Input.is_action_pressed("car_handbrake")

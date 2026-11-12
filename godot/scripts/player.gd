@@ -382,12 +382,16 @@ var _critical_fall_timer: float = 0.0
 @export var bus_camera_look_target: Vector2 = Vector2(0.0, 0.0) # xz point the camera self-adjusts toward while riding the bus
 @export var bus_camera_recenter_speed: float = 1.4 # higher = pulls back to the look target faster, 0 = disabled
 @export var bus_camera_height_offset: float = 0.5 # lifts the camera while riding the bus
-## Height of the orbit pivot above the vehicle while riding it. The van's
-## origin sits on the ground, so this puts the pivot around the cab.
-@export var ride_camera_height: float = 1.3
+## Orbit pivot on the vehicle while riding it, in the vehicle's own local
+## space. The van's origin sits on the ground, so this is the point the camera
+## swings around.
+@export var ride_camera_pivot: Vector3 = Vector3(0.0, 0.3, 0.0)
 ## Orbit distance while riding a vehicle. The van is 4.3 m long, so the camera
 ## sits further back than the on-foot distance.
 @export var ride_camera_distance: float = 6.0
+## Lowest pitch allowed while riding. The camera sits further from the pivot
+## than on foot, so the normal floor would sink it into the ground.
+@export var ride_min_pitch: float = -0.15
 @export_range(0.0, 40.0, 0.5) var dive_ramp_low: float = 15.0 # below this altitude (y) the dive camera blend is fully off
 @export_range(0.0, 200.0, 0.5) var dive_ramp_high: float = 55.0 # at/above this altitude (y) the dive camera blend is full while falling
 @export_range(0.5, 20.0, 0.5) var dive_ramp_speed: float = 5.0 # how quickly the dive blend eases to its target (higher = snappier)
@@ -1146,6 +1150,13 @@ func _physics_process(delta: float) -> void:
 		# the normal path that updates it sits below this early return.
 		_camera_base_target_prev = _camera_base_target_curr
 		_camera_base_target_curr = _camera_base_target()
+		# The touch drag and the joystick orbit are applied further down, after
+		# this early return, so they have to be applied here as well or the
+		# orbit control dies as soon as the player climbs in.
+		_apply_touch_orbit()
+		# The van moves, the player does not: the camera must not treat this as
+		# walking, or the pitch floor would clamp the view.
+		camera_is_moving = false
 		return
 
 	if movement_allowed:
@@ -2891,6 +2902,9 @@ func enter_vehicle(vehicle: Node3D) -> void:
 	collision_mask = 0
 	velocity = Vector3.ZERO
 	velocity_y = 0.0
+	# The camera pivots on the vehicle now, so the solved collision distance
+	# (measured against the old pivot) has to be re-solved.
+	_camera_collision_distance = 0.0
 	if _is_climbing:
 		end_climb(_climb_surface, false)
 	if _is_sliding:
@@ -3487,7 +3501,7 @@ func _camera_base_target() -> Vector3:
 	# Riding a vehicle: orbit the vehicle, not the seat inside it. The pivot
 	# follows the van as it drives, so the camera keeps working normally.
 	if riding_vehicle != null and is_instance_valid(riding_vehicle):
-		return riding_vehicle.global_position + Vector3(0, ride_camera_height, 0)
+		return riding_vehicle.global_transform * ride_camera_pivot
 	var height: float = 1.5 + (bus_camera_height_offset if _is_riding_bus else 0.0)
 	return global_transform.origin + Vector3(0, height, 0)
 
@@ -3636,6 +3650,10 @@ func _movement_pitch_mark() -> float:
 # min_pitch directly, so a drag or a flick cannot push the camera back under the
 # floor mid-run.
 func _effective_min_pitch() -> float:
+	if riding_vehicle != null and is_instance_valid(riding_vehicle):
+		# The camera orbits the whole vehicle from further out, so the normal
+		# pitch floor would push it under the terrain. Keep it above the ground.
+		return maxf(min_pitch, ride_min_pitch)
 	if camera_is_moving or _movement_pitch_ease_active:
 		return maxf(min_pitch, _movement_pitch_mark())
 	return min_pitch
