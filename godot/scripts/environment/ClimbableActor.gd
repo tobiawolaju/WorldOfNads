@@ -32,12 +32,24 @@ func _ready() -> void:
 
 
 func set_climb_enabled(enabled: bool) -> void:
+	# Nothing to do when the state already matches: the lobby calls this every
+	# physics frame for every bot.
+	if monitoring == enabled:
+		return
+
+	# Read the overlaps while monitoring is still on. get_overlapping_bodies()
+	# is invalid on an area with monitoring disabled and would spam errors.
+	var overlapping: Array[Node3D] = []
+	if not enabled and monitoring:
+		overlapping = get_overlapping_bodies()
+
 	monitoring = enabled
 	set_physics_process(enabled)
+
 	if not enabled and _host != null:
 		# Detach any climber if this actor becomes non-climbable.
-		for body in get_overlapping_bodies():
-			if body != null and body.has_method("end_climb"):
+		for body in overlapping:
+			if body != null and is_instance_valid(body) and body.has_method("end_climb"):
 				body.call("end_climb", _host, false, false)
 
 
