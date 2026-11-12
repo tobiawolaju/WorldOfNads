@@ -385,7 +385,7 @@ var _critical_fall_timer: float = 0.0
 ## Orbit pivot on the vehicle while riding it, in the vehicle's own local
 ## space. The van's origin sits on the ground, so this is the point the camera
 ## swings around.
-@export var ride_camera_pivot: Vector3 = Vector3(0.0, 0.3, 0.0)
+@export var ride_camera_pivot: Vector3 = Vector3(0.0, 2.3, 0.0)
 ## Orbit distance while riding a vehicle. The van is 4.3 m long, so the camera
 ## sits further back than the on-foot distance.
 @export var ride_camera_distance: float = 6.0
