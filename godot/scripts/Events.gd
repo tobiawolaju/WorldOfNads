@@ -18,11 +18,9 @@ const FEED_TEXT_ALPHA := 0.94
 const FEED_SYSTEM_ALPHA := 0.62
 
 # The avatar directory lives on the Node backend: the Rust room server knows
-# nothing about Privy, so there is nothing to ask it. Mirrors
-# `PlayerManager.API_BASE` (and its localhost fallback) so a local run resolves
-# local avatars instead of reaching for production.
+# nothing about Privy, so there is nothing to ask it. The beta talks to the
+# remote backend only, so there is no local endpoint to fall back to.
 const LIVE_API_URL := "https://worldofnads.onrender.com"
-const LOCAL_API_URL := "http://localhost:8080"
 
 @export var feed_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/EventFeed")
 @export var username_label_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/BoxContainer2/username")
@@ -241,8 +239,8 @@ func _apply_label_color(color: Color, label: Label) -> void:
 	if label != null and is_instance_valid(label):
 		label.add_theme_color_override("font_color", color)
 
-# Local events fallback removed for public/live testing: events must come from the
-# live room server. LOCAL_API_URL is still used for local/dev avatar resolution.
+# Local events fallback removed for public/live testing: events come from the
+# live room server and the avatars from the live backend.
 
 func _read_packets() -> void:
 	while ws.get_available_packet_count() > 0:
