@@ -52,9 +52,19 @@ class_name CarController
 
 @export_group("Input")
 @export var input_enabled: bool = true
-## Only the rider drives. With this on, the van ignores WASD until the local
-## player is on board (and stops taking input again when they step out).
+## Only the rider drives. With this on, the van ignores the controls until the
+## local player is on board (and stops taking input again when they step out).
 @export var require_rider_for_input: bool = true
+## Drives the vehicle forward: the same button the player jumps with.
+@export var forward_action: StringName = &"jump"
+## Drives the vehicle in reverse: the same button the player slides with.
+@export var reverse_action: StringName = &"slide"
+## The player's own left/right movement actions steer the vehicle, so the arrow
+## keys and the on-screen joystick work exactly like they do on foot.
+@export var steer_left_action: StringName = &"move_left"
+@export var steer_right_action: StringName = &"move_right"
+## Handbrake on top of the brake, for the rear axle.
+@export var handbrake_action: StringName = &"car_handbrake"
 
 @export_group("Ride")
 ## Marker the rider is parked on while inside the van.
@@ -81,11 +91,7 @@ const NEUTRAL_STEERING_STRENGTH := 5.0
 ## Input actions created on ready when missing. Existing bindings for these
 ## names are never modified.
 const CAR_ACTIONS := {
-	"car_accelerate": KEY_W,
-	"car_reverse": KEY_S,
-	"car_steer_left": KEY_A,
-	"car_steer_right": KEY_D,
-	"car_handbrake": KEY_SPACE,
+	"car_handbrake": KEY_CTRL,
 }
 
 var _wheels: Array[CarSuspensionWheel] = []
@@ -126,9 +132,12 @@ func _physics_process(delta: float) -> void:
 	# drive the player on foot instead of the van.
 	var can_drive: bool = input_enabled and (not require_rider_for_input or has_rider())
 	if can_drive:
-		throttle = Input.get_axis("car_reverse", "car_accelerate")
-		steer_input = Input.get_axis("car_steer_right", "car_steer_left")
-		handbrake = Input.is_action_pressed("car_handbrake")
+		# Forward/reverse are the player's own jump and slide buttons, the
+		# steering reuses the player's left/right direction (arrow keys and the
+		# on-screen joystick).
+		throttle = Input.get_action_strength(forward_action) - Input.get_action_strength(reverse_action)
+		steer_input = Input.get_action_strength(steer_left_action) - Input.get_action_strength(steer_right_action)
+		handbrake = Input.is_action_pressed(handbrake_action)
 
 	var forward: Vector3 = get_forward_direction()
 	forward_speed = linear_velocity.dot(forward)
