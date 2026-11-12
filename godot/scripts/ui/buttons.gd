@@ -113,15 +113,16 @@ func show_power_up(
 # timed power-up, otherwise the authored default (GRAB).
 func _refresh_action_caption() -> void:
 	# A context caption (RIDE / EXIT) wins over everything else: it is what the
-	# Action button is going to do right now.
+	# Action button is going to do right now. It uses the same yellow as the
+	# GRAB prompt, because it is an actionable prompt too.
 	if _context_caption != "":
 		if _context_caption != _stacked_source_label:
 			_stacked_source_label = _context_caption
 			_stacked_cache_text = _stack_vertically(_context_caption)
 		var stacked_context := _stacked_cache_text
-		if stacked_context == _last_caption_text and CAPTION_COLOR == _last_caption_color:
+		if stacked_context == _last_caption_text and CAPTION_GRAB_COLOR == _last_caption_color:
 			return
-		_set_action_caption(stacked_context, CAPTION_COLOR)
+		_set_action_caption(stacked_context, CAPTION_GRAB_COLOR)
 		return
 	var label := _held_label
 	if label == "" and not _active.is_empty():
