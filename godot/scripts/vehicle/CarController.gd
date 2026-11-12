@@ -53,6 +53,16 @@ class_name CarController
 @export_group("Input")
 @export var input_enabled: bool = true
 
+@export_group("Ride")
+## Marker the rider is parked on while inside the van.
+@export var ride_marker_path: NodePath = ^"ride"
+## Marker the rider is placed on when they step out again.
+@export var exit_marker_path: NodePath = ^"exit"
+## How close the player has to stand for the RIDE prompt.
+@export var ride_radius: float = 3.2
+## Group used to find this vehicle from the player. Local play only for now.
+@export var ride_group: StringName = &"rideable"
+
 # --- Live state (read-only) ---
 ## Signed forward speed in m/s.
 var forward_speed: float = 0.0
@@ -78,6 +88,8 @@ const CAR_ACTIONS := {
 var _wheels: Array[CarSuspensionWheel] = []
 var _grounded: Array[CarSuspensionWheel] = []
 var _steer_target: float = 0.0
+## The player currently riding this vehicle, if any.
+var rider: Node3D = null
 
 
 func _ready() -> void:
@@ -93,6 +105,9 @@ func _ready() -> void:
 	# nose-dives. Move it to a low, mid-wheelbase point instead.
 	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 	center_of_mass = center_of_mass_offset
+
+	if not ride_group.is_empty():
+		add_to_group(ride_group)
 
 	_collect_wheels()
 
@@ -127,6 +142,56 @@ func _physics_process(delta: float) -> void:
 ## Chassis forward direction in world space.
 func get_forward_direction() -> Vector3:
 	return (global_transform.basis * forward_axis).normalized()
+
+
+# --- RIDING (local play only) ---------------------------------------------
+## Marker the rider is parked on while inside the van.
+func get_ride_marker() -> Marker3D:
+	return get_node_or_null(ride_marker_path) as Marker3D
+
+
+## Marker the rider is placed on when they step out again.
+func get_exit_marker() -> Marker3D:
+	return get_node_or_null(exit_marker_path) as Marker3D
+
+
+## True while somebody is riding this vehicle.
+func has_rider() -> bool:
+	return rider != null and is_instance_valid(rider)
+
+
+## True when this player may climb in.
+func can_ride(player: Node3D) -> bool:
+	if has_rider() or player == null or not is_instance_valid(player):
+		return false
+	return player.global_position.distance_to(global_position) <= ride_radius
+
+
+## Park the player on the ride marker and hand them over to the vehicle.
+func ride(player: Node3D) -> bool:
+	if not can_ride(player):
+		return false
+	rider = player
+	var marker := get_ride_marker()
+	if marker != null:
+		player.global_position = marker.global_position
+	if player.has_method("enter_vehicle"):
+		player.call("enter_vehicle", self)
+	return true
+
+
+## Put the rider back on the exit marker and hand control back to them.
+func exit_ride() -> void:
+	if not has_rider():
+		return
+	var player := rider
+	rider = null
+	if player != null and is_instance_valid(player):
+		var marker := get_exit_marker()
+		if marker != null:
+			player.global_position = marker.global_position
+		if player.has_method("exit_vehicle"):
+			player.call("exit_vehicle")
 
 
 func _ensure_input_actions() -> void:

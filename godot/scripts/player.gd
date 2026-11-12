@@ -250,6 +250,18 @@ var held_object: RigidBody3D = null
 @export var hold_distance: float = 0.25
 @export var hold_height: float = 1.5
 var last_pickup_request_ms: int = 0
+## Action button caption when a rideable vehicle is close by.
+const RIDE_CAPTION := "RIDE"
+## Action button caption while the player is on board.
+const RIDE_EXIT_CAPTION := "EXIT"
+## The vehicle the local player is riding (the van). Null while on foot.
+var riding_vehicle: Node3D = null
+## Collision layers/mask saved while riding, so they can be restored on exit.
+var _ride_saved_layer: int = 0
+var _ride_saved_mask: int = 0
+## Cached rideable vehicles (group "rideable"), rebuilt when the tree changes.
+var _rideables: Array[Node3D] = []
+var _rideables_dirty: bool = true
 var held_local_pickup: RigidBody3D = null
 ## The power-up granted by the currently carried pickup (LocalPickup.PowerUpMode).
 var held_power_up_mode: int = LocalPickup.PowerUpMode.NONE
@@ -907,6 +919,11 @@ func request_pickup() -> void:
 func _perform_pickup_request() -> void:
 	if not _is_movement_allowed():
 		return
+	# Riding a vehicle uses the same Action button: RIDE to climb in, EXIT to
+	# get out again. It is checked first so the caption always matches what the
+	# press does.
+	if _try_ride_vehicle():
+		return
 	# While the LEAP power-up is running, the Action (GRAB) button is the mega
 	# jump button — but only while grounded: mid-air presses are ignored so LEAP
 	# can't be chained into an infinite double-jump. The normal jump is unaffected.
@@ -1111,6 +1128,15 @@ func _physics_process(delta: float) -> void:
 	var is_falling_anim_playing := current_animation == "falling"
 	var was_on_floor_before_move := is_on_floor()
 	var vertical_speed_before_move := velocity_y
+
+	# Riding a vehicle: the vehicle owns the movement and the player is parked
+	# on its ride marker. The camera is driven from _process, so the view keeps
+	# following the vehicle while this branch holds the body still.
+	if riding_vehicle != null:
+		velocity = Vector3.ZERO
+		velocity_y = 0.0
+		_follow_ride_marker()
+		return
 
 	if movement_allowed:
 		input_dir.y += Input.get_action_strength("move_forward")
@@ -1994,6 +2020,7 @@ func _refresh_local_pickup_nodes() -> void:
 
 func _on_tree_node_changed(_node: Node) -> void:
 	_local_pickup_nodes_dirty = true
+	_rideables_dirty = true
 
 # LocalPickup items are never sent to the server, they are grabbed client side only.
 func _try_pickup_local() -> bool:
@@ -2828,6 +2855,99 @@ func has_pickable_in_range() -> bool:
 				and global_position.distance_to(entity.global_position) < ITEM_PICKUP_RADIUS:
 			return true
 	return false
+
+# --- RIDING (local play only) ------------------------------------------------
+## HUD API: the caption the Action button shows for a vehicle. "RIDE" when a
+## rideable is close by, "EXIT" while the player is on board, empty otherwise.
+func get_action_context_caption() -> String:
+	if riding_vehicle != null and is_instance_valid(riding_vehicle):
+		return RIDE_EXIT_CAPTION
+	if _nearest_rideable() != null:
+		return RIDE_CAPTION
+	return ""
+
+## Called by the vehicle when the local player climbs in. The vehicle owns the
+## movement from here on: the player is parked on its ride marker and stops
+## colliding with the world so the chassis does not shove them around.
+func enter_vehicle(vehicle: Node3D) -> void:
+	if not is_local or vehicle == null:
+		return
+	if riding_vehicle == vehicle:
+		return
+	riding_vehicle = vehicle
+	_ride_saved_layer = collision_layer
+	_ride_saved_mask = collision_mask
+	collision_layer = 0
+	collision_mask = 0
+	velocity = Vector3.ZERO
+	velocity_y = 0.0
+	if _is_climbing:
+		end_climb(_climb_surface, false)
+	if _is_sliding:
+		_stop_slide()
+
+## Called by the vehicle when the player gets out again.
+func exit_vehicle() -> void:
+	if riding_vehicle == null:
+		return
+	riding_vehicle = null
+	collision_layer = _ride_saved_layer
+	collision_mask = _ride_saved_mask
+	velocity = Vector3.ZERO
+	velocity_y = 0.0
+
+## Handles the Action button while a vehicle is in reach: climb in, or get out.
+func _try_ride_vehicle() -> bool:
+	if riding_vehicle != null and is_instance_valid(riding_vehicle):
+		if riding_vehicle.has_method("exit_ride"):
+			riding_vehicle.call("exit_ride")
+		else:
+			exit_vehicle()
+		return true
+	var vehicle := _nearest_rideable()
+	if vehicle == null:
+		return false
+	if vehicle.has_method("ride") and bool(vehicle.call("ride", self)):
+		return true
+	return false
+
+## The closest rideable vehicle this player may climb into.
+func _nearest_rideable() -> Node3D:
+	_refresh_rideables()
+	var best: Node3D = null
+	var best_dist: float = INF
+	for node in _rideables:
+		if not is_instance_valid(node) or node == self:
+			continue
+		if not node.has_method("can_ride") or not bool(node.call("can_ride", self)):
+			continue
+		var dist: float = global_position.distance_to(node.global_position)
+		if dist < best_dist:
+			best_dist = dist
+			best = node
+	return best
+
+## Rebuilds the cached rideable list after anything entered or left the tree.
+func _refresh_rideables() -> void:
+	if not _rideables_dirty:
+		return
+	_rideables_dirty = false
+	_rideables.clear()
+	for node in get_tree().get_nodes_in_group(&"rideable"):
+		if node is Node3D and is_instance_valid(node):
+			_rideables.append(node as Node3D)
+
+## Keeps the rider glued to the vehicle's ride marker while on board.
+func _follow_ride_marker() -> void:
+	var vehicle := riding_vehicle
+	if vehicle == null or not is_instance_valid(vehicle):
+		exit_vehicle()
+		return
+	if not vehicle.has_method("get_ride_marker"):
+		return
+	var marker: Marker3D = vehicle.call("get_ride_marker")
+	if marker != null and is_instance_valid(marker):
+		global_position = marker.global_position
 
 # Shows the carried power-up or weapon (if any) on the HUD Action button.
 # `duration` tells the HUD how long the held pickup's effect would run, so it can
