@@ -219,7 +219,15 @@ func _update_active_power_up() -> void:
 		_active = _cached_local_player.get_active_power_up()
 
 	var was_active := _ring_active
-	if not _active.is_empty():
+	if _context_caption != "":
+		# The Action button is showing a vehicle prompt (RIDE / EXIT), so the
+		# power-up ring has nothing to say here. It comes back when the prompt
+		# clears.
+		_ring_remaining = 0.0
+		_ring_duration = 0.0
+		_ring_active = false
+		_ring_held_ready = false
+	elif not _active.is_empty():
 		# A timed effect is running: its countdown takes priority over held.
 		_ring_remaining = float(_active.get("remaining", 0.0))
 		_ring_duration = maxf(float(_active.get("duration", 0.0)), 0.0001)
