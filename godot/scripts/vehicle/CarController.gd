@@ -33,6 +33,10 @@ class_name CarController
 @export var tire_stiffness: float = 6000.0
 ## Friction coefficient. Caps lateral force at tire_friction * suspension load.
 @export var tire_friction: float = 1.1
+## Rolling resistance per wheel as a fraction of its load. Real tyres resist
+## rolling, which is what keeps a parked van from creeping downhill. 0.08 also
+## gives a gentle coast-down.
+@export var rolling_friction: float = 0.08
 
 @export_group("Vehicle")
 ## Applied to RigidBody3D.mass on ready. The van model is ~4.3 m long.
@@ -116,6 +120,7 @@ func _physics_process(delta: float) -> void:
 
 	_apply_drive_and_brakes(throttle, handbrake, forward)
 	_apply_lateral_grip(handbrake, forward)
+	_apply_rolling_resistance(forward)
 	_apply_air_drag()
 
 
@@ -292,6 +297,36 @@ func _apply_lateral_grip(handbrake: bool, forward: Vector3) -> void:
 			continue
 
 		apply_force(right * lateral_force, wheel.get_contact_offset())
+
+
+## Rolling resistance along the wheel's rolling direction. The lateral tyre
+## model only stops sideways slip, so without this the van would roll away
+## downhill whenever it is parked on a slope.
+func _apply_rolling_resistance(forward: Vector3) -> void:
+	for wheel: CarSuspensionWheel in _wheels:
+		if not wheel.is_grounded:
+			continue
+
+		var normal: Vector3 = wheel.contact_normal
+		var ground_forward: Vector3 = _flatten(forward, normal)
+		if ground_forward == Vector3.ZERO:
+			continue
+
+		var velocity: Vector3 = wheel.get_point_velocity()
+		var roll_speed: float = (velocity - normal * velocity.dot(normal)).dot(ground_forward)
+		if is_zero_approx(roll_speed):
+			continue
+
+		# Fade the force out around zero speed so a parked van does not jitter,
+		# then push back against the rolling direction, capped by the tyre load.
+		var direction: float = signf(roll_speed)
+		var fade: float = clampf(absf(roll_speed) / 0.3, 0.0, 1.0)
+		var load: float = wheel.get_normal_load()
+		var force: float = -direction * rolling_friction * load * fade
+		if is_zero_approx(force):
+			continue
+
+		apply_force(ground_forward * force, wheel.get_contact_offset())
 
 
 func _apply_air_drag() -> void:

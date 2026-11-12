@@ -2894,252 +2894,319 @@ mesh = SubResource("ArrayMesh_r6uc8")
 [node name="exustPP" type="Node3D" parent="body" unique_id=1089445376]
 
 [node name="exustpipe3" type="MeshInstance3D" parent="body/exustPP" unique_id=251912203]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_5h1k8")
 
 [node name="exustpipe2" type="MeshInstance3D" parent="body/exustPP" unique_id=389266014]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_oxr3g")
 
 [node name="exustpipe" type="MeshInstance3D" parent="body/exustPP" unique_id=1095582327]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_0omxh")
 
 [node name="shft" type="Node3D" parent="body" unique_id=1695319878]
 
 [node name="shaft" type="MeshInstance3D" parent="body/shft" unique_id=1470264987]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_xbnc4")
 
 [node name="shft" type="MeshInstance3D" parent="body/shft" unique_id=1898153898]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_w1op0")
 
 [node name="props" type="Node3D" parent="body" unique_id=2147224163]
 
 [node name="defaultMaterial6" type="MeshInstance3D" parent="body/props" unique_id=421433207]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_l8hg0")
 
 [node name="mirror" type="MeshInstance3D" parent="body/props" unique_id=2107352191]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_rfb2u")
 
 [node name="mirrior" type="MeshInstance3D" parent="body/props" unique_id=1184017407]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_xj1eq")
 
 [node name="defaultMaterial2" type="MeshInstance3D" parent="body/props" unique_id=687068595]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_iy4j7")
 
 [node name="defaultMaterial3" type="MeshInstance3D" parent="body/props" unique_id=1019042829]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_7xthf")
 
 [node name="defaultMaterial5" type="MeshInstance3D" parent="body/props" unique_id=2076969103]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_whlev")
 
 [node name="windshield" type="MeshInstance3D" parent="body/props" unique_id=1363287282]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_po5v6")
 
 [node name="defaultMaterial9" type="MeshInstance3D" parent="body/props" unique_id=775683180]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_kd80q")
 
 [node name="defaultMaterial10" type="MeshInstance3D" parent="body/props" unique_id=903376509]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_v353y")
 
 [node name="defaultMaterial11" type="MeshInstance3D" parent="body/props" unique_id=1743693486]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_qwqve")
 
 [node name="defaultMaterial12" type="MeshInstance3D" parent="body/props" unique_id=1194067553]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_ugskl")
 
 [node name="defaultMaterial13" type="MeshInstance3D" parent="body/props" unique_id=548090253]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_8fqhh")
 
 [node name="defaultMaterial14" type="MeshInstance3D" parent="body/props" unique_id=90398893]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_wrs2f")
 
 [node name="defaultMaterial15" type="MeshInstance3D" parent="body/props" unique_id=1726738426]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_02ops")
 
 [node name="defaultMaterial16" type="MeshInstance3D" parent="body/props" unique_id=1455363920]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_ms6i5")
 
 [node name="defaultMaterial17" type="MeshInstance3D" parent="body/props" unique_id=169798129]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_blod5")
 
 [node name="windowfrme" type="MeshInstance3D" parent="body/props" unique_id=173887287]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_wcuov")
 
 [node name="windowfrme2" type="MeshInstance3D" parent="body/props" unique_id=1200132101]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_6cdxe")
 
 [node name="defaultMaterial20" type="MeshInstance3D" parent="body/props" unique_id=1602202528]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_oyn6q")
 
 [node name="defaultMaterial21" type="MeshInstance3D" parent="body/props" unique_id=89372973]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_iu6kb")
 
 [node name="defaultMaterial22" type="MeshInstance3D" parent="body/props" unique_id=601563668]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_husyg")
 
 [node name="defaultMaterial23" type="MeshInstance3D" parent="body/props" unique_id=2033205152]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_k5kd3")
 
 [node name="defaultMaterial24" type="MeshInstance3D" parent="body/props" unique_id=440959890]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_unghd")
 
 [node name="defaultMaterial25" type="MeshInstance3D" parent="body/props" unique_id=180108091]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_pdl13")
 
 [node name="defaultMaterial26" type="MeshInstance3D" parent="body/props" unique_id=1403906469]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_7w8ey")
 
 [node name="defaultMaterial27" type="MeshInstance3D" parent="body/props" unique_id=413275902]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_fxrd7")
 
 [node name="defaultMaterial28" type="MeshInstance3D" parent="body/props" unique_id=794187036]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_kb6ur")
 
 [node name="window" type="MeshInstance3D" parent="body/props" unique_id=1713998419]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_58cvd")
 
 [node name="window2" type="MeshInstance3D" parent="body/props" unique_id=2044943176]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_jiapq")
 
 [node name="window3" type="MeshInstance3D" parent="body/props" unique_id=496370588]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_nvt8c")
 
 [node name="defaultMaterial33" type="MeshInstance3D" parent="body/props" unique_id=1635020873]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_i7p2c")
 
 [node name="defaultMaterial34" type="MeshInstance3D" parent="body/props" unique_id=1762754678]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_beuqu")
 
 [node name="defaultMaterial35" type="MeshInstance3D" parent="body/props" unique_id=46786882]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_76ca8")
 
 [node name="defaultMaterial36" type="MeshInstance3D" parent="body/props" unique_id=1809377864]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_8004n")
 
 [node name="defaultMaterial37" type="MeshInstance3D" parent="body/props" unique_id=719162724]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_mcv8n")
 
 [node name="defaultMaterial42" type="MeshInstance3D" parent="body/props" unique_id=412945353]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_bslde")
 
 [node name="defaultMaterial38" type="MeshInstance3D" parent="body/props" unique_id=1994350589]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_q0627")
 
 [node name="defaultMaterial43" type="MeshInstance3D" parent="body/props" unique_id=1757874579]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_g8b6y")
 
 [node name="defaultMaterial44" type="MeshInstance3D" parent="body/props" unique_id=1967680286]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_0qm87")
 
 [node name="g52" type="Node3D" parent="body/props" unique_id=401830791]
 
 [node name="defaultMaterial52" type="MeshInstance3D" parent="body/props/g52" unique_id=1453738985]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_k3t56")
 
 [node name="g53" type="Node3D" parent="body/props" unique_id=1350045682]
 
 [node name="defaultMaterial53" type="MeshInstance3D" parent="body/props/g53" unique_id=857444119]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_uiu3l")
 
 [node name="g54" type="Node3D" parent="body/props" unique_id=1552169058]
 
 [node name="defaultMaterial54" type="MeshInstance3D" parent="body/props/g54" unique_id=75007131]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_waah7")
 
 [node name="g55" type="Node3D" parent="body/props" unique_id=1596044243]
 
 [node name="defaultMaterial55" type="MeshInstance3D" parent="body/props/g55" unique_id=1207968727]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_1bwri")
 
 [node name="g56" type="Node3D" parent="body/props" unique_id=348245403]
 
 [node name="defaultMaterial56" type="MeshInstance3D" parent="body/props/g56" unique_id=798306800]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_uqsjo")
 
 [node name="g57" type="Node3D" parent="body/props" unique_id=1759064668]
 
 [node name="defaultMaterial57" type="MeshInstance3D" parent="body/props/g57" unique_id=1015675687]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_kotco")
 
 [node name="g58" type="Node3D" parent="body/props" unique_id=654600003]
 
 [node name="defaultMaterial58" type="MeshInstance3D" parent="body/props/g58" unique_id=843038100]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_ju1u7")
 
 [node name="g59" type="Node3D" parent="body/props" unique_id=2071069722]
 
 [node name="defaultMaterial59" type="MeshInstance3D" parent="body/props/g59" unique_id=1184430408]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_kdndx")
 
 [node name="g60" type="Node3D" parent="body/props" unique_id=595706757]
 
 [node name="defaultMaterial60" type="MeshInstance3D" parent="body/props/g60" unique_id=1819061747]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_eaet1")
 
 [node name="g61" type="Node3D" parent="body/props" unique_id=1479594527]
 
 [node name="defaultMaterial61" type="MeshInstance3D" parent="body/props/g61" unique_id=539042199]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_wf2je")
 
 [node name="g62" type="Node3D" parent="body/props" unique_id=1667439188]
 
 [node name="defaultMaterial62" type="MeshInstance3D" parent="body/props/g62" unique_id=980749069]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_08rkm")
 
 [node name="g63" type="Node3D" parent="body/props" unique_id=1122151136]
 
 [node name="defaultMaterial63" type="MeshInstance3D" parent="body/props/g63" unique_id=127012142]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_uyryj")
 
 [node name="g64" type="Node3D" parent="body/props" unique_id=1613850975]
 
 [node name="defaultMaterial64" type="MeshInstance3D" parent="body/props/g64" unique_id=306241906]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_2xir5")
 
 [node name="g65" type="Node3D" parent="body/props" unique_id=507718777]
 
 [node name="defaultMaterial65" type="MeshInstance3D" parent="body/props/g65" unique_id=1595860667]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_36mxy")
 
 [node name="g66" type="Node3D" parent="body/props" unique_id=1067595486]
 
 [node name="defaultMaterial66" type="MeshInstance3D" parent="body/props/g66" unique_id=1666798280]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_ywta3")
 
 [node name="g67" type="Node3D" parent="body/props" unique_id=1734666470]
 
 [node name="defaultMaterial67" type="MeshInstance3D" parent="body/props/g67" unique_id=514678630]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_kyfhd")
 
 [node name="g68" type="Node3D" parent="body/props" unique_id=328478836]
 
 [node name="defaultMaterial68" type="MeshInstance3D" parent="body/props/g68" unique_id=292274971]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_ic1bh")
 
 [node name="g69" type="Node3D" parent="body/props" unique_id=787045275]
 
 [node name="defaultMaterial69" type="MeshInstance3D" parent="body/props/g69" unique_id=1189452544]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_u71rm")
 
 [node name="g70" type="Node3D" parent="body/props" unique_id=1296486720]
 
 [node name="defaultMaterial70" type="MeshInstance3D" parent="body/props/g70" unique_id=801173641]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_2rpb0")
 
 [node name="g71" type="Node3D" parent="body/props" unique_id=41148583]
 
 [node name="defaultMaterial71" type="MeshInstance3D" parent="body/props/g71" unique_id=1041767871]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_vd0ix")
 
 [node name="g72" type="Node3D" parent="body/props" unique_id=964717131]
 
 [node name="defaultMaterial72" type="MeshInstance3D" parent="body/props/g72" unique_id=1229362297]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_grvif")
 
 [node name="g73" type="Node3D" parent="body/props" unique_id=1113578917]
 
 [node name="defaultMaterial73" type="MeshInstance3D" parent="body/props/g73" unique_id=1148058651]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_ighd0")
 
 [node name="defaultMaterial8" type="MeshInstance3D" parent="body/props" unique_id=218292357]
+cast_shadow = 0
 mesh = SubResource("ArrayMesh_tuq8i")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=48789605]
