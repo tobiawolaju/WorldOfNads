@@ -39,6 +39,9 @@ const CAPTION_IDLE_ALPHA := 0.5
 ## GRAB/power-up feedback: yellow makes action states intuitive.
 const CAPTION_GRAB_COLOR := Color(1.0, 0.9, 0.2, 1.0)
 const CAPTION_POWER_COLOR := Color(1.0, 0.9, 0.2, 1.0)
+## Context caption that means "step out of the vehicle" - kept white so it
+## reads as leaving rather than grabbing.
+const EXIT_CAPTION := "EXIT"
 ## How often the "is anything in reach?" check runs. It walks the pickup group and
 ## the player's grab area, so it is polled instead of run every frame.
 const PICKABLE_POLL_SECONDS := 0.1
@@ -113,16 +116,17 @@ func show_power_up(
 # timed power-up, otherwise the authored default (GRAB).
 func _refresh_action_caption() -> void:
 	# A context caption (RIDE / EXIT) wins over everything else: it is what the
-	# Action button is going to do right now. It uses the same yellow as the
-	# GRAB prompt, because it is an actionable prompt too.
+	# Action button is going to do right now. RIDE uses the same yellow as the
+	# GRAB prompt, EXIT stays white so it reads as "step out" and not "grab".
 	if _context_caption != "":
 		if _context_caption != _stacked_source_label:
 			_stacked_source_label = _context_caption
 			_stacked_cache_text = _stack_vertically(_context_caption)
 		var stacked_context := _stacked_cache_text
-		if stacked_context == _last_caption_text and CAPTION_GRAB_COLOR == _last_caption_color:
+		var context_color: Color = CAPTION_COLOR if _context_caption == EXIT_CAPTION else CAPTION_GRAB_COLOR
+		if stacked_context == _last_caption_text and context_color == _last_caption_color:
 			return
-		_set_action_caption(stacked_context, CAPTION_GRAB_COLOR)
+		_set_action_caption(stacked_context, context_color)
 		return
 	var label := _held_label
 	if label == "" and not _active.is_empty():
