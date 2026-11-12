@@ -172,6 +172,18 @@ The same Godot project in `godot/` also exports as a standalone Android client.
 
 ---
 
+## Vehicle Prototype (local only)
+
+A custom raycast vehicle for `res://scenes/props/van.tscn`. No `VehicleBody3D`, no wheel bodies: the van's root `RigidBody3D` is the only physics body and the four existing `RayCast3D` corners drive it.
+
+- **`godot/scripts/vehicle/CarSuspensionWheel.gd`** - one suspension corner: spring/damper, clamped force (`[0, max_suspension_force]`, it can push but never pull), airborne handling, and its own travel state. The force is applied at the contact offset, so pitch and roll come out of the physics.
+- **`godot/scripts/vehicle/CarController.gd`** - engine, reverse, brakes, handbrake, steered front tyres for lateral grip, tyre rolling resistance and the speed cap. It also owns the ride logic: `ride` / `exit_ride` / `can_ride` plus the `ride` and `exit` markers.
+- **Controls:** `W` accelerate, `S` reverse/brake, `A`/`D` steer, `Space` handbrake. The input actions are created on ready when missing and existing bindings are never touched.
+- **Riding (local, offline):** stand next to the van and the Action button reads `RIDE`; press it and the local player is parked on the `ride` marker inside the cab. The caption then reads `EXIT`, and pressing it puts the player back on the `exit` marker beside the van. The vehicle keeps its own WASD handling, so the van drives while you are on board.
+- **Tuning:** every value is an Inspector export - `spring_strength`, `damping`, `rest_length`, `min_length`, `max_length`, `wheel_radius`, `max_suspension_force` per wheel, and `engine_force`, `reverse_force`, `max_speed`, `steering_strength`, `max_steering_angle`, `brake_strength`, `handbrake_strength`, `tire_stiffness`, `tire_friction`, `rolling_friction`, `vehicle_mass`, `center_of_mass_offset` on the chassis.
+
+---
+
 ## Building & Releasing
 
 Godot export presets live in `godot/export_presets.cfg` (local only, git-ignored).

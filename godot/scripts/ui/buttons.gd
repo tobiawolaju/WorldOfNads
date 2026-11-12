@@ -45,6 +45,9 @@ const PICKABLE_POLL_SECONDS := 0.1
 
 ## The stacked form of IDLE_CAPTION, built once in _ready.
 var _idle_caption_stacked: String = ""
+## Caption pushed by the context (a vehicle to ride, for now). It wins over the
+## power-up captions while it is set, and the button press does the same thing.
+var _context_caption: String = ""
 ## Whether the local player has anything to grab. Drives PUMP vs GRAB. Starts true
 ## so the caption reads as it always has until a player exists.
 var _pickable_in_range: bool = true
@@ -109,6 +112,17 @@ func show_power_up(
 # The caption reflects the held power-up if there is one, otherwise the running
 # timed power-up, otherwise the authored default (GRAB).
 func _refresh_action_caption() -> void:
+	# A context caption (RIDE / EXIT) wins over everything else: it is what the
+	# Action button is going to do right now.
+	if _context_caption != "":
+		if _context_caption != _stacked_source_label:
+			_stacked_source_label = _context_caption
+			_stacked_cache_text = _stack_vertically(_context_caption)
+		var stacked_context := _stacked_cache_text
+		if stacked_context == _last_caption_text and CAPTION_COLOR == _last_caption_color:
+			return
+		_set_action_caption(stacked_context, CAPTION_COLOR)
+		return
 	var label := _held_label
 	if label == "" and not _active.is_empty():
 		label = str(_active.get("label", ""))
@@ -137,6 +151,11 @@ func _refresh_action_caption() -> void:
 	# Pulsing state changes every frame, so never cache-skip it.
 	if not held_powerup_ready and text == _last_caption_text and tint == _last_caption_color:
 		return
+	_set_action_caption(text, tint)
+
+
+## Writes a caption onto the Action button (or its label child).
+func _set_action_caption(text: String, tint: Color) -> void:
 	_last_caption_text = text
 	_last_caption_color = tint
 	if _action_caption != null and is_instance_valid(_action_caption):
@@ -497,6 +516,7 @@ func _process(delta: float) -> void:
 	if _cached_local_player == null or not is_instance_valid(_cached_local_player):
 		_cached_local_player = get_tree().get_first_node_in_group("local_player")
 	_update_chog_visibility()
+	_poll_context_caption()
 
 	var target_alpha := 0.5
 	if _cached_local_player != null \
@@ -512,6 +532,26 @@ func _process(delta: float) -> void:
 	_update_active_power_up()
 	_poll_pickable(delta)
 	_refresh_action_caption()
+
+
+## Sets the context caption (RIDE / EXIT). It overrides the power-up captions
+## while it is set, and the Action button does the matching thing. An empty
+## string clears it.
+func set_context_caption(text: String) -> void:
+	if text == _context_caption:
+		return
+	_context_caption = text
+	_refresh_action_caption()
+
+## Pulls the context caption from the local player (a vehicle to ride, for now).
+func _poll_context_caption() -> void:
+	var caption := ""
+	if _cached_local_player != null \
+	and is_instance_valid(_cached_local_player) \
+	and _cached_local_player.has_method("get_action_context_caption"):
+		caption = str(_cached_local_player.call("get_action_context_caption"))
+	if caption != _context_caption:
+		set_context_caption(caption)
 
 
 ## Refreshes whether anything is within grab range, at PICKABLE_POLL_SECONDS rather
