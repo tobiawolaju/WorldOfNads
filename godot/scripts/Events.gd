@@ -685,9 +685,11 @@ func _try_set_username_from_web_query() -> void:
 
 
 func _try_set_username_from_auth() -> void:
-	# Native builds sign in via the device-link flow; the authenticated WON
-	# username must be used for join/display instead of the server's fallback.
-	if OS.has_feature("web"):
+	# The authenticated WON username must be used for join/display instead of the
+	# server's fallback. On web the entry URL wins when it carried a name, because
+	# that is what the room socket itself sends; the account is the fallback when
+	# the URL did not carry one.
+	if _username_locked:
 		return
 	if not is_instance_valid(AuthManager) or not AuthManager.is_authenticated():
 		return
