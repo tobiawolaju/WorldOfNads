@@ -3251,7 +3251,7 @@ wheel_radius = 0.34
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.373518, 1.1541753, 1.0706998)
 
 [node name="exit" type="Marker3D" parent="." unique_id=1617149601]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.011732578, 1.6173556, -0.78827345)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2301002, 1.6173556, -0.78827345)
 
 [node name="visulwheels" type="Node3D" parent="." unique_id=1975164458]
 
