@@ -109,6 +109,7 @@ The game includes a dedicated events stream for lightweight activity logs.
 - **HTTP snapshot endpoint:** same host as the Node server, `GET /events`
 - **History size:** last `100` events (server-side ring buffer)
 - **No local fallback:** the client only connects to the live endpoints above. `ws://localhost:8080` is gone, so a local server must be added back explicitly if it is ever needed again.
+- **Game socket is remote-only too:** the room socket has no local branch either. A failed connection retries the remote room server (`wss://wons-room-server.onrender.com`) instead of silently joining an offline local room, so a beta tester can never end up alone in a room that only exists on their machine.
 
 ### Payloads
 

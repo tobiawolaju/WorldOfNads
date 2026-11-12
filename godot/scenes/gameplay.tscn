@@ -117,9 +117,6 @@ transform = Transform3D(1, 0, 0, 0, -3.7252903e-08, -0.99999946, 0, 0.99999946, 
 material_override = SubResource("StandardMaterial3D_5orqu")
 mesh = SubResource("PlaneMesh_4r1bg")
 
-[node name="FallbackTimer" type="Timer" parent="PlayerManager" unique_id=1950382029]
-one_shot = true
-
 [node name="Bus" parent="." unique_id=1811375150 instance=ExtResource("5_w01lk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 60, 0)
 

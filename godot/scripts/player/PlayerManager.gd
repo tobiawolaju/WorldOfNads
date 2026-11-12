@@ -10,7 +10,8 @@ const LIVE_URL: String = "wss://worldofnads.onrender.com"
 # server (Render) so the migration can be tested against production clients.
 # Set this back to LIVE_URL to talk to the Node room server instead.
 const ROOM_URL: String = "wss://wons-room-server.onrender.com"
-const LOCAL_URL: String = "ws://localhost:8080"
+## There is no local server any more: the beta runs against the remote servers
+## only, so the client never silently drops into an offline room.
 const DEFAULT_SKIN_NAME: String = "s-default"
 const SKIN_SCENE_PATH: String = "res://scenes/skin.tscn"
 
@@ -244,10 +245,11 @@ var victory_target_seconds: int = 60
 var _countdown_holder_id: String = ""
 var _countdown_seconds: int = -1
 
-# --- FALLBACK LOGIC ---
-var is_connecting_to_live: bool = true
+# --- CONNECTION ---
+## The client only talks to the remote room server now: there is no local
+## fallback, so a failed connection retries the remote server instead of
+## quietly joining an offline room.
 var connection_attempted: bool = false
-@onready var fallback_timer: Timer = $FallbackTimer
 
 var _ui_update_timer: float = 0.0
 const UI_UPDATE_INTERVAL: float = 0.2
@@ -273,7 +275,6 @@ func _ready():
 	_fetch_skin_data()
 	_fetch_skin_index()
 	_init_player_pool()
-	fallback_timer.timeout.connect(_on_fallback_timer_timeout)
 	_attempt_connection()
 	_cache_chicken_node()
 	_resolve_events_bridge()
@@ -362,19 +363,18 @@ func _reapply_skins() -> void:
 		_update_debug_skin()
 
 func _attempt_connection():
-	var base_url = ROOM_URL if is_connecting_to_live else LOCAL_URL
+	var base_url = ROOM_URL
 	var url_to_try = _build_ws_url_with_username(base_url)
-	var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
 
-	print("[Net] Attempting to connect to %s server: %s" % [server_type, url_to_try])
+	print("[Net] Attempting to connect to room server: %s" % url_to_try)
 	_reset_ws_peer()
-	var tls = _tls_client_options() if (is_connecting_to_live and (base_url.begins_with("wss://") or base_url.begins_with("https://"))) else null
+	var tls = _tls_client_options() if (base_url.begins_with("wss://") or base_url.begins_with("https://")) else null
 	var err = ws.connect_to_url(url_to_try, tls) if tls != null else ws.connect_to_url(url_to_try)
 
 	if err != OK:
 		push_error("Failed to initiate connection: %s url=%s" % [err, url_to_try])
-		if is_connecting_to_live:
-			_trigger_fallback()
+		# No local server to fall back to: retry the remote room server.
+		_start_reconnection()
 	else:
 		connection_attempted = true
 
@@ -487,7 +487,7 @@ func _process(_delta: float):
 
 	if state == WebSocketPeer.STATE_OPEN and not connected:
 		_on_reconnect_success()
-		var server_type = "LIVE" if is_connecting_to_live else "LOCAL"
+		var server_type := "ROOM"
 		print("✅ Connected to %s server!" % server_type)
 
 	elif state == WebSocketPeer.STATE_CLOSED:
@@ -505,7 +505,7 @@ func _process(_delta: float):
 		elif _reconnecting and connection_attempted:
 			print("[Net] Reconnection attempt failed. close_code=%d reason=%s" % [ws.get_close_code(), ws.get_close_reason()])
 			connection_attempted = false
-		elif not _reconnecting and is_connecting_to_live:
+		elif not _reconnecting:
 			print("[Net] Live server connection failed. close_code=%d reason=%s" % [ws.get_close_code(), ws.get_close_reason()])
 			_start_reconnection()
 
@@ -540,15 +540,6 @@ func _force_reconnect_now() -> void:
 	_last_rx_ms = 0.0
 	_start_reconnection()
 
-func _trigger_fallback():
-	is_connecting_to_live = false
-	connection_attempted = false
-	print("⏳ Starting fallback to local server in 1 second...")
-	fallback_timer.start(1.0)
-
-func _on_fallback_timer_timeout():
-	_attempt_connection()
-
 # --- RECONNECTION ---
 func _start_reconnection(round_over: bool = false):
 	if _reconnecting:
@@ -561,7 +552,7 @@ func _start_reconnection(round_over: bool = false):
 	_reconnect_dots = 0
 	_reconnect_dot_timer = 0.0
 	_reconnect_countdown = 0
-	_reconnect_target_url = ROOM_URL if is_connecting_to_live else LOCAL_URL
+	_reconnect_target_url = ROOM_URL
 	_resolve_subtitle_label()
 	if round_over:
 		_update_subtitle_text("Round over! Connecting to the next round...")
@@ -621,7 +612,7 @@ func _attempt_reconnection():
 	if cur_state == WebSocketPeer.STATE_OPEN or cur_state == WebSocketPeer.STATE_CONNECTING:
 		return
 	if _reconnect_target_url == "":
-		_reconnect_target_url = ROOM_URL if is_connecting_to_live else LOCAL_URL
+		_reconnect_target_url = ROOM_URL
 	# After a few failures, try without resume id; later try unsafe TLS (debug fallback).
 	if not _use_unsafe_tls and _reconnect_attempts >= 5:
 		_use_unsafe_tls = true

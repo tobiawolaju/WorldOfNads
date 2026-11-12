@@ -82,7 +82,7 @@ var _name_colors: Dictionary = {}
 var _color_owners: Dictionary = {}
 
 ## Set by the owner. Kept as a setter so the loader can be reused if the client
-## switches between the live backend and localhost (the events bridge does).
+## ever points at a different backend.
 func configure(base_url: String) -> void:
 	var trimmed := base_url.strip_edges().trim_suffix("/")
 	if trimmed.is_empty():

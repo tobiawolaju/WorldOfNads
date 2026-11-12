@@ -1,21 +1,16 @@
 extends Control
 
 ## Simple WebSocket connectivity tester for native editor / exports.
-## Tests a sequence of ws:// and wss:// endpoints and logs results to Output.
+## Tests a sequence of wss:// endpoints and logs results to Output.
 ##
 ## Usage:
-## 1. (Optional) Start local room server: `cd backend-rust && cargo run`
-##    - serves plain WS at ws://127.0.0.1:8080 (no WSS by default)
-## 2. Open/run this scene in the native editor.
-## 3. Watch [WS_TEST] logs for URL, state transitions, and close code/reason.
+## 1. Open/run this scene in the native editor.
+## 2. Watch [WS_TEST] logs for URL, state transitions, and close code/reason.
 
 @export var test_urls: PackedStringArray = PackedStringArray([
-	"ws://127.0.0.1:8080/?skin=s-default",
 	"wss://wons-room-server.onrender.com/?skin=s-default",
 	"wss://wons-room-server.onrender.com/events",
 	"wss://worldofnads.onrender.com/?skin=s-default",
-	# Local WSS requires a TLS terminator/proxy in front of backend-rust (not provided by default).
-	# Example: "wss://localhost:8443/?skin=s-default"
 ])
 @export var per_test_timeout_sec: float = 12.0
 @export var unsafe_tls_for_wss: bool = false
