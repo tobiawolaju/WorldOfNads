@@ -127,20 +127,47 @@ offset_right = -2.0
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("9_07nfq")]
 
 [node name="Pickup1" parent="." unique_id=348478555 instance=ExtResource("11_yad6j")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.095271, 1.4365964, 0)
+transform = Transform3D(-0.63403213, 0, -0.77330667, 0, 1, 0, 0.77330667, 0, -0.63403213, 33.60403, 1.4365964, -32.97365)
 power_up_mode = 1
 
 [node name="Pickup2" parent="." unique_id=47207438 instance=ExtResource("11_yad6j")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.095271, 1.4365964, -1)
+transform = Transform3D(-0.63403213, 0, -0.77330667, 0, 1, 0, 0.77330667, 0, -0.63403213, 33.743305, 1.4365964, -31.566313)
 power_up_mode = 2
 
 [node name="Pickup3" parent="." unique_id=542460695 instance=ExtResource("11_yad6j")]
-transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.647236, 1.4365964, -0.26766753)
+transform = Transform3D(0.3085968, 0, -0.9511929, 0, 1, 0, 0.9511929, 0, 0.3085968, 33.461056, 1.4365964, -32.377106)
 power_up_mode = 3
 
 [node name="Pickup5" parent="." unique_id=408056980 instance=ExtResource("11_yad6j")]
-transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 13.345413, 1.4365964, -2.2704427)
+transform = Transform3D(0.3085968, 0, -0.9511929, 0, 1, 0, 0.9511929, 0, 0.3085968, 35.201183, 1.4365964, -31.340683)
 power_up_mode = 4
+
+[node name="Pickup" parent="." unique_id=2002177915 instance=ExtResource("12_m1sns")]
+transform = Transform3D(-0.63403213, 0, -0.77330667, 0, 1, 0, 0.77330667, 0, -0.63403213, 31.069487, 1.2619171, -37.854492)
+weapon_kind = 2
+
+[node name="Pickup6" parent="." unique_id=1868968525 instance=ExtResource("12_m1sns")]
+transform = Transform3D(-0.63403213, 0, -0.77330667, 0, 1, 0, 0.77330667, 0, -0.63403213, 30.351961, 1.2619171, -36.505116)
+
+[node name="Pickup7" parent="." unique_id=1363473025 instance=ExtResource("12_m1sns")]
+transform = Transform3D(-0.63403213, 0, -0.77330667, 0, 1, 0, 0.77330667, 0, -0.63403213, 31.803926, 1.2619171, -36.385056)
+weapon_kind = 3
+
+[node name="Pickup8" parent="." unique_id=293667661 instance=ExtResource("12_m1sns")]
+transform = Transform3D(-0.63403213, 0, -0.77330667, 0, 1, 0, 0.77330667, 0, -0.63403213, 29.131355, 1.2619171, -35.2667)
+weapon_kind = 4
+
+[node name="Pickup9" parent="." unique_id=855484493 instance=ExtResource("12_m1sns")]
+transform = Transform3D(-0.63403213, 0, -0.77330667, 0, 1, 0, 0.77330667, 0, -0.63403213, 29.195843, 1.2619171, -37.74665)
+weapon_kind = 5
+
+[node name="Chicken" parent="." unique_id=1548322364 instance=ExtResource("11_yad6j")]
+transform = Transform3D(0.3085968, 0, -0.9511929, 0, 1, 0, 0.9511929, 0, 0.3085968, 34.57085, 1.637059, -36.59113)
+power_up_mode = 5
+
+[node name="LootBox" parent="." unique_id=531383377 instance=ExtResource("11_yad6j")]
+transform = Transform3D(0.3085968, 0, -0.9511929, 0, 1, 0, 0.9511929, 0, 0.3085968, 35.05118, 1.637059, -36.197308)
+power_up_mode = 6
 
 [node name="Bus" parent="." unique_id=1811375150 instance=ExtResource("11_m1sns")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 60, 0)
@@ -154,34 +181,7 @@ cast_shadow = 0
 [node name="Object_2" parent="Bus" index="4" unique_id=1403144337]
 cast_shadow = 0
 
-[node name="Pickup" parent="." unique_id=2002177915 instance=ExtResource("12_m1sns")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.927867, 1.2619171, 5.0545917)
-weapon_kind = 2
-
-[node name="Pickup6" parent="." unique_id=1868968525 instance=ExtResource("12_m1sns")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.426284, 1.2619171, 4.753911)
-
-[node name="Pickup7" parent="." unique_id=1363473025 instance=ExtResource("12_m1sns")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.598536, 1.2619171, 3.554974)
-weapon_kind = 3
-
-[node name="Pickup8" parent="." unique_id=293667661 instance=ExtResource("12_m1sns")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.157862, 1.2619171, 4.912618)
-weapon_kind = 4
-
-[node name="Pickup9" parent="." unique_id=855484493 instance=ExtResource("12_m1sns")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.199215, 1.2619171, 6.4351153)
-weapon_kind = 5
-
-[node name="Chicken" parent="." unique_id=1548322364 instance=ExtResource("11_yad6j")]
-transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 9.684858, 1.637059, 1.5459518)
-power_up_mode = 5
-
-[node name="LootBox" parent="." unique_id=531383377 instance=ExtResource("11_yad6j")]
-transform = Transform3D(0.5399036, 0, 0.84172684, 0, 1, 0, -0.84172684, 0, 0.5399036, 9.684858, 1.637059, 0.9248071)
-power_up_mode = 6
-
 [node name="Van" parent="." unique_id=1389412019 instance=ExtResource("13_dyhay")]
-transform = Transform3D(0.6295066, 0, 0.7769952, 0, 1, 0, -0.7769952, 0, 0.6295066, 9.427859, 1.45, 9.932429)
+transform = Transform3D(-0.69963145, 0, 0.71450394, 0, 1, 0, -0.71450394, 0, -0.69963145, -0.013461351, 6.463808, 0.58030057)
 
 [editable path="Bus"]
