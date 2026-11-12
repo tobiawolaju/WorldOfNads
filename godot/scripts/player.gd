@@ -382,6 +382,12 @@ var _critical_fall_timer: float = 0.0
 @export var bus_camera_look_target: Vector2 = Vector2(0.0, 0.0) # xz point the camera self-adjusts toward while riding the bus
 @export var bus_camera_recenter_speed: float = 1.4 # higher = pulls back to the look target faster, 0 = disabled
 @export var bus_camera_height_offset: float = 0.5 # lifts the camera while riding the bus
+## Height of the orbit pivot above the vehicle while riding it. The van's
+## origin sits on the ground, so this puts the pivot around the cab.
+@export var ride_camera_height: float = 1.3
+## Orbit distance while riding a vehicle. The van is 4.3 m long, so the camera
+## sits further back than the on-foot distance.
+@export var ride_camera_distance: float = 6.0
 @export_range(0.0, 40.0, 0.5) var dive_ramp_low: float = 15.0 # below this altitude (y) the dive camera blend is fully off
 @export_range(0.0, 200.0, 0.5) var dive_ramp_high: float = 55.0 # at/above this altitude (y) the dive camera blend is full while falling
 @export_range(0.5, 20.0, 0.5) var dive_ramp_speed: float = 5.0 # how quickly the dive blend eases to its target (higher = snappier)
@@ -1136,6 +1142,10 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 		velocity_y = 0.0
 		_follow_ride_marker()
+		# The orbit pivot follows the vehicle, so it has to be refreshed here:
+		# the normal path that updates it sits below this early return.
+		_camera_base_target_prev = _camera_base_target_curr
+		_camera_base_target_curr = _camera_base_target()
 		return
 
 	if movement_allowed:
@@ -3474,6 +3484,10 @@ func _zoom_cap_base() -> float:
 	return bus_zoom if _zoom_cap_override >= 0.0 else max_zoom
 
 func _camera_base_target() -> Vector3:
+	# Riding a vehicle: orbit the vehicle, not the seat inside it. The pivot
+	# follows the van as it drives, so the camera keeps working normally.
+	if riding_vehicle != null and is_instance_valid(riding_vehicle):
+		return riding_vehicle.global_position + Vector3(0, ride_camera_height, 0)
 	var height: float = 1.5 + (bus_camera_height_offset if _is_riding_bus else 0.0)
 	return global_transform.origin + Vector3(0, height, 0)
 
@@ -3541,6 +3555,10 @@ func _update_camera_zoom(delta: float) -> void:
 	var target_distance: float = clamp(state_zoom + camera_distance_bias, min_zoom, zoom_ceiling)
 	if _is_riding_bus:
 		target_distance = bus_zoom
+	if riding_vehicle != null and is_instance_valid(riding_vehicle):
+		# Pull the camera back so the whole vehicle is in frame instead of the
+		# inside of its body.
+		target_distance = ride_camera_distance
 	var distance_result := _spring_float(camera_distance_current, _camera_distance_velocity, target_distance, camera_smoothness, delta)
 	camera_distance_current = distance_result[0]
 	_camera_distance_velocity = distance_result[1]
@@ -3571,14 +3589,18 @@ func _update_camera_collision_logic(delta: float) -> void:
 		if not _camera_ray_layer_set:
 			_camera_ray_query.collision_mask = 1
 			_camera_ray_layer_set = true
-		if _camera_ray_exclude.is_empty():
-			_camera_ray_exclude.append(get_rid())
+		# Rebuild the exclusion list: this player, the carried chicken and the
+		# vehicle being ridden. The vehicle's own body must not pull the camera
+		# inside it while the player sits in the cab.
+		_camera_ray_exclude.clear()
+		_camera_ray_exclude.append(get_rid())
 		if holding_chicken:
 			var chicken_node: RigidBody3D = _get_cached_chicken_node()
-			if chicken_node and _camera_ray_exclude.size() == 1:
+			if chicken_node != null:
 				_camera_ray_exclude.append(chicken_node.get_rid())
-		elif _camera_ray_exclude.size() > 1:
-			_camera_ray_exclude.resize(1)
+		if riding_vehicle != null and is_instance_valid(riding_vehicle) \
+		and riding_vehicle is CollisionObject3D:
+			_camera_ray_exclude.append((riding_vehicle as CollisionObject3D).get_rid())
 		_camera_ray_query.exclude = _camera_ray_exclude
 		var hit: Dictionary = space_state.intersect_ray(_camera_ray_query)
 		var target_collision_distance := _effective_camera_distance
