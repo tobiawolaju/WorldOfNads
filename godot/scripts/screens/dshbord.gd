@@ -2172,9 +2172,20 @@ func _begin_match() -> void:
 		# The web build can be reloaded at any point, and both the lobby and
 		# gameplay read ?match=/?skin= off window.location, so keep the address bar
 		# in step with what is handed over below.
+		#
+		# Every other parameter is kept intact. This used to rewrite the query to
+		# `?match=...&skin=...`, which threw away ?username= - and with it the
+		# session token that rides in front of it. The game then joined with no
+		# name at all and the room server displayed its `player-<id>` fallback
+		# instead of the signed-in username.
+		var js_match := selected_match_id.replace("\\", "\\\\").replace("'", "\\'")
+		var js_skin := skin_id.replace("\\", "\\\\").replace("'", "\\'")
 		JavaScriptBridge.eval(
-			"window.history.replaceState({}, '', window.location.pathname + '?match=%s&skin=%s');"
-			% [selected_match_id.uri_encode(), skin_id.uri_encode()]
+			(
+				"(() => { const p = new URLSearchParams(window.location.search);"
+				+ " p.set('match', '%s'); p.set('skin', '%s');"
+				+ " window.history.replaceState({}, '', window.location.pathname + '?' + p.toString()); })();"
+			) % [js_match, js_skin]
 		)
 
 	# The lobby takes the match that was queued and the nad that is equipped as

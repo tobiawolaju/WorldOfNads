@@ -6,6 +6,8 @@ extends Node
 const NATIVE_LOGIN_REQUIRED := true
 
 const LOGIN_SCENE := "res://scenes/login.tscn"
+const DASHBOARD_SCENE := "res://scenes/dshbord.tscn"
+const LOBBY_SCENE := "res://scenes/lobby.tscn"
 
 @onready var progress_bar: ProgressBar = $"CanvasLayer/BoxContainer/Node/ProgressBar"
 
@@ -30,8 +32,40 @@ func _ready() -> void:
 	if progress_bar:
 		progress_bar.value = 100
 
+	# The dashboard scene belongs to the native build: it is the match browser and
+	# skin picker for an app that has no website around it. On web the React site
+	# already is that dashboard and hands the chosen match/skin over in the frame
+	# URL, so the build goes straight into the lobby instead of showing a second,
+	# in-engine dashboard on top of it.
+	if OS.has_feature("web"):
+		print("Loading complete. Entering lobby.")
+		Game.transition_layer.change_scene(LOBBY_SCENE, _web_handoff())
+		return
+
 	print("Loading complete. Entering dashboard.")
-	Game.transition_layer.change_scene("res://scenes/dshbord.tscn")
+	Game.transition_layer.change_scene(DASHBOARD_SCENE)
+
+## Match/skin handed over by the page that embeds the build (?match=...&skin=...).
+## Anything missing is left off the dictionary so the lobby keeps its own default
+## instead of being overwritten with an empty string.
+func _web_handoff() -> Dictionary:
+	var handoff: Dictionary = {}
+	var match_id := _web_query("match")
+	if match_id != "" and match_id != "default":
+		handoff["selected_match_id"] = match_id
+	var skin_id := _web_query("skin")
+	if skin_id != "":
+		handoff["selected_skin_id"] = skin_id
+	return handoff
+
+
+func _web_query(key: String) -> String:
+	if not OS.has_feature("web"):
+		return ""
+	var raw = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('%s') || ''" % key)
+	if typeof(raw) != TYPE_STRING:
+		return ""
+	return str(raw).strip_edges()
 
 ## The web build signs in through the legacy /auth/request-token username
 ## handshake rather than the device-linking flow, so it must not be redirected.

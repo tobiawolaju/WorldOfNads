@@ -2001,14 +2001,18 @@ func _get_player_display_name(id: String) -> String:
 	return _format_player_short_name(id)
 
 func _resolve_local_username() -> void:
-	if not OS.has_feature("web"):
-		if is_instance_valid(AuthManager) and AuthManager.is_authenticated():
-			local_username = AuthManager.get_username().strip_edges()
-		return
-	var raw_username = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('username') || ''")
-	if typeof(raw_username) != TYPE_STRING:
-		return
-	local_username = str(raw_username).strip_edges()
+	# The entry URL is the hand-off channel on web: play.html forwards
+	# ?username=<name> (or <token>:<name>) into the frame, which is what the room
+	# socket sends. If that is missing - a bare build, a reload landing on a URL
+	# without the parameter, or a screen that rewrote the address bar - fall back
+	# to the signed-in account instead of joining as the server's `player-<id>`
+	# placeholder.
+	if OS.has_feature("web"):
+		var raw_username = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('username') || ''")
+		if typeof(raw_username) == TYPE_STRING:
+			local_username = str(raw_username).strip_edges()
+	if local_username == "" and is_instance_valid(AuthManager) and AuthManager.is_authenticated():
+		local_username = AuthManager.get_username().strip_edges()
 
 func _resolve_local_skin_name() -> void:
 	if selected_skin_id.strip_edges() != "":
