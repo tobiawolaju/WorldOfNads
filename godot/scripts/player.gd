@@ -610,6 +610,15 @@ var _cached_lootbox_node: RigidBody3D = null
 ## rebuilding the list only when a node enters or leaves the tree costs ~3 us.
 var _local_pickup_nodes: Array[RigidBody3D] = []
 var _local_pickup_nodes_dirty: bool = true
+## Experimental: outline the pickup the Action button would GRAB, so the player
+## can see what the prompt is about to take. Cleared the moment grab is pressed.
+const GRAB_OUTLINE_SHADER: Shader = preload("res://assets/shaders/outline.gdshader")
+const GRAB_OUTLINE_COLOR: Color = Color(1.0, 0.9, 0.2, 1.0)
+const GRAB_OUTLINE_SIZE: float = 1.05
+const GRAB_HIGHLIGHT_POLL: float = 0.1
+var _grab_highlight_target: Node = null
+var _grab_highlight_nodes: Array[Node] = []
+var _grab_highlight_timer: float = 0.0
 ## How long to wait before re-scanning the "bus" group after a miss (see
 ## _apply_bus_riding): one immediate lookup, then at most once a second.
 const BUS_LOOKUP_RETRY_MSEC: int = 1000
@@ -877,6 +886,7 @@ func _process(delta: float) -> void:
 	if not is_local:
 		return
 	_update_camera_visual(delta)
+	_update_grab_highlight(delta)
 	if _kill_streak_timer > 0.0:
 		_kill_streak_timer = maxf(0.0, _kill_streak_timer - delta)
 		if _kill_streak_timer <= 0.0:
@@ -966,6 +976,9 @@ func _perform_pickup_request() -> void:
 	if _is_local_holding_chicken() or _is_local_holding_lootbox():
 		_drop_object()
 		return
+	# The grab prompt is about to act on the highlighted item: drop the outline
+	# immediately so the click feels responsive.
+	_clear_grab_highlight()
 	if _try_pickup_local():
 		return
 	if _try_pickup_weapon():
@@ -1979,6 +1992,8 @@ func _try_pickup():
 					fallback_dist = dist
 					best_target = entity
 	if best_target and root and root.ws and root.ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		# Server-authoritative grab: the outline comes off with the press.
+		_clear_grab_highlight()
 		root.ws.send(MsgPack.pack({
 			"type": "pickup_request",
 			"item_id": best_target.name
@@ -2876,6 +2891,121 @@ func has_pickable_in_range() -> bool:
 				and global_position.distance_to(entity.global_position) < ITEM_PICKUP_RADIUS:
 			return true
 	return false
+
+
+func _update_grab_highlight(delta: float) -> void:
+	if not is_local:
+		return
+	_grab_highlight_timer -= delta
+	if _grab_highlight_timer > 0.0:
+		return
+	_grab_highlight_timer = GRAB_HIGHLIGHT_POLL
+	_set_grab_highlight(_get_grab_highlight_target())
+
+
+func _get_grab_highlight_target() -> Node3D:
+	# Highlight only what the Action button would actually GRAB on press. Anything
+	# that makes the press do something else (ride/exit, use a running or held
+	# power, spend a weapon, drop what you carry) means the prompt is not GRAB.
+	if not _is_movement_allowed():
+		return null
+	if get_action_context_caption() != "":
+		return null
+	if _is_mega_leap_active() or _is_smoke_active():
+		return null
+	if held_weapon_kind != LocalPickup2.WeaponKind.NONE:
+		return null
+	if _is_local_holding_pickup() or held_power_up_mode != LocalPickup.PowerUpMode.NONE:
+		return null
+	if _is_local_holding_chicken() or _is_local_holding_lootbox():
+		return null
+	# A running timed effect owns the Action button caption, so it is not a GRAB.
+	if _active_power_up_remaining > 0.0 and _active_power_up_mode != LocalPickup.PowerUpMode.NONE:
+		return null
+
+	var local_target := _find_nearest_local_pickup()
+	if local_target != null:
+		return local_target
+	var weapon_target := _find_nearest_weapon_pickup()
+	if weapon_target != null:
+		return weapon_target
+	return _find_nearest_objective_pickup()
+
+
+func _find_nearest_objective_pickup() -> RigidBody3D:
+	# Mirrors _try_pickup(): bodies inside the grab area first, then a direct
+	# distance fallback for the chicken / lootbox (server-authoritative items).
+	var best_target: RigidBody3D = null
+	var shortest_dist: float = INF
+	if pickup_area != null:
+		for body in pickup_area.get_overlapping_bodies():
+			if body is RigidBody3D and body != self and body.is_in_group("pickup_items"):
+				var dist: float = global_position.distance_to(body.global_position)
+				if dist < shortest_dist:
+					shortest_dist = dist
+					best_target = body
+	if best_target == null:
+		var fallback_dist: float = ITEM_PICKUP_RADIUS
+		for entity in [_get_cached_chicken_node(), _get_cached_lootbox_node()]:
+			if entity != null and is_instance_valid(entity) and entity.is_in_group("pickup_items"):
+				var dist: float = global_position.distance_to(entity.global_position)
+				if dist < fallback_dist:
+					fallback_dist = dist
+					best_target = entity
+	return best_target
+
+
+func _set_grab_highlight(target: Node) -> void:
+	if target == _grab_highlight_target:
+		# Same item: keep the outline in place. If it vanished, drop it.
+		if target != null and not is_instance_valid(target):
+			_clear_grab_highlight()
+		return
+	_clear_grab_highlight()
+	if target == null or not is_instance_valid(target) or not is_instance_valid(self):
+		return
+	_grab_highlight_target = target
+	_apply_grab_outline(target)
+
+
+func _clear_grab_highlight() -> void:
+	for node in _grab_highlight_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_grab_highlight_nodes.clear()
+	_grab_highlight_target = null
+
+
+func _apply_grab_outline(target: Node) -> void:
+	if GRAB_OUTLINE_SHADER == null:
+		return
+	var mat := ShaderMaterial.new()
+	mat.shader = GRAB_OUTLINE_SHADER
+	mat.set_shader_parameter("color", GRAB_OUTLINE_COLOR)
+	mat.set_shader_parameter("size", GRAB_OUTLINE_SIZE)
+	for mesh_instance in _collect_visible_meshes(target):
+		if not is_instance_valid(mesh_instance) or mesh_instance.mesh == null:
+			continue
+		var outline := MeshInstance3D.new()
+		outline.name = "GrabOutline"
+		outline.mesh = mesh_instance.mesh
+		outline.material_override = mat
+		outline.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mesh_instance.add_child(outline)
+		_grab_highlight_nodes.append(outline)
+
+
+func _collect_visible_meshes(node: Node) -> Array[MeshInstance3D]:
+	var result: Array[MeshInstance3D] = []
+	if node == null or not is_instance_valid(node):
+		return result
+	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
+		if mi.visible and mi.is_visible_in_tree() and mi.mesh != null and mi.name != "GrabOutline":
+			result.append(mi)
+	for child in node.get_children():
+		result.append_array(_collect_visible_meshes(child))
+	return result
 
 # --- RIDING (local play only) ------------------------------------------------
 ## HUD API: the caption the Action button shows for a vehicle. "RIDE" when a
