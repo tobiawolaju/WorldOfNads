@@ -11,6 +11,8 @@ import {
     buildPayouts,
     LOOTBOX_STEAL_COST_MON,
     parsePrizeMon,
+    PRACTICE_MARKER_LIMIT,
+    practiceMarkersToPrune,
     reconcileLootBox,
     rewardIdFor,
     round6,
@@ -274,6 +276,36 @@ test('a room without a match record still credits XP, but no money', async () =>
     assert.equal(state.users.get('alice').xp, 400);
     assert.equal(state.users.get('alice').wonMon, 0);
     assert.equal(state.users.get('alice').won, 0);
+});
+
+test('practice markers are a ring, so a profile cannot grow without bound', () => {
+    const settled = {
+        'match-42': { win: 1, wonMon: 2, xp: 10 },
+        'practice-default-1700000000000': { win: 0, wonMon: 0, xp: 10 },
+        'practice-default-1700000060000': { win: 0, wonMon: 0, xp: 20 },
+        'practice-default-1700000120000': { win: 0, wonMon: 0, xp: 30 }
+    };
+
+    // Three practice rounds, room for two: the new one plus one old one survive,
+    // so the two oldest go. The real match marker is never touched.
+    assert.deepEqual(practiceMarkersToPrune(settled, 2), [
+        'practice-default-1700000000000',
+        'practice-default-1700000060000'
+    ]);
+    // Nothing to prune while there is room.
+    assert.deepEqual(practiceMarkersToPrune(settled, 5), []);
+    assert.deepEqual(practiceMarkersToPrune({}, 5), []);
+    assert.deepEqual(practiceMarkersToPrune(null, 5), []);
+    // Against the real limit the ring keeps exactly that many.
+    const many = {};
+    for (let i = 0; i < 25; i += 1) {
+        many[`practice-default-${1700000000000 + i * 1000}`] = { xp: i };
+    }
+    const dropped = practiceMarkersToPrune(many);
+    assert.equal(dropped.length, 6);
+    assert.equal(dropped[0], 'practice-default-1700000000000');
+    // The survivors plus the marker this round is about to write are the ring.
+    assert.equal(Object.keys(many).length - dropped.length + 1, PRACTICE_MARKER_LIMIT);
 });
 
 test('a practice round is idempotent per round, not per room', async () => {

@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, update, set } from "firebase/database";
 import * as dotenv from 'dotenv';
+import { practiceMarkersToPrune } from './settlement.js';
 dotenv.config();
 
 const firebaseConfig = {
@@ -162,6 +163,14 @@ export async function creditPlayerResult(username, { matchId, win = 0, wonMon = 
         wonMon: round6(wonMon),
         xp: Math.round(Number(xp || 0))
     };
+    // Practice rounds pay XP every round, so their markers are a ring: keep the
+    // newest few and delete the rest in the same atomic update. Real match markers
+    // are never pruned.
+    if (matchId.startsWith('practice-')) {
+        for (const stale of practiceMarkersToPrune(settled)) {
+            patch[`users/${username}/settledMatches/${stale}`] = null;
+        }
+    }
     patch[`users/${username}/lastSettledAt`] = new Date().toISOString();
 
     await update(ref(db), patch);

@@ -409,6 +409,29 @@ export function rewardIdFor(matchId, username, kind = 'prize') {
 }
 
 /**
+ * How many practice rounds a profile keeps a credit marker for.
+ *
+ * A practice room pays XP every round, and `creditPlayerResult` needs a marker
+ * per round to stay idempotent. Without a cap those markers would grow forever
+ * inside `users/<name>` — the node every profile read and every settlement reads
+ * whole. Twenty rounds is far more than any retry window can reach.
+ */
+export const PRACTICE_MARKER_LIMIT = 20;
+
+/**
+ * Which practice markers to drop so a profile keeps only its newest `limit`.
+ *
+ * Practice ids end in the round's `endedAt` (13-digit milliseconds), so plain
+ * string order is time order. Markers for real matches are never returned.
+ */
+export function practiceMarkersToPrune(settled, limit = PRACTICE_MARKER_LIMIT) {
+    const keys = Object.keys(settled || {}).filter((key) => key.startsWith('practice-'));
+    if (keys.length < limit) return [];
+    keys.sort();
+    return keys.slice(0, keys.length - limit + 1);
+}
+
+/**
  * A practice round's id, stable across the room server's retries.
  *
  * `creditPlayerResult` is idempotent per match id, so the id has to change once
