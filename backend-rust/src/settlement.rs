@@ -350,8 +350,9 @@ pub async fn post_once(
     }
 
     // Every other 4xx is a request we made wrong: the payload or the secret.
-    // Retrying it would only repeat the mistake.
-    if status.is_client_error() {
+    // Retrying it would only repeat the mistake - except for the throttling
+    // statuses, which mean "come back later" and nothing about the request.
+    if status.is_client_error() && !is_transient_client_error(status) {
         return Err(ReportError::permanent(message));
     }
 
@@ -359,6 +360,17 @@ pub async fn post_once(
         message,
         retryable: true,
     })
+}
+
+/// Client-error statuses that mean "try again later", not "your request is wrong".
+///
+/// A 429 is what the proxy in front of the control plane answers when it throttles
+/// the room server's egress IP (Render and Cloudflare both do this under load); a
+/// 408 is a request that timed out and a 425 is one sent too early. Treating those
+/// as permanent used to throw real round results away: the payload was written to
+/// `/debug/logs` for a manual re-post, but the players' rewards never landed.
+fn is_transient_client_error(status: reqwest::StatusCode) -> bool {
+    matches!(status.as_u16(), 408 | 425 | 429)
 }
 
 #[cfg(test)]
@@ -629,6 +641,52 @@ mod tests {
 
         assert!(!err.retryable, "a 403 is a configuration error, not a wobble");
         assert_eq!(seen.load(Ordering::SeqCst), 1, "a permanent rejection is final");
+    }
+
+    #[tokio::test]
+    async fn a_throttled_report_is_retried_not_dropped() {
+        // A proxy between the two services answers 429 when it throttles the room
+        // server's egress IP. That is a "slow down", so the report must survive it.
+        let (base, seen) =
+            spawn_counting_server(1, axum::http::StatusCode::TOO_MANY_REQUESTS).await;
+        let client = reqwest::Client::new();
+
+        let outcome = deliver(
+            &sample_report(),
+            &client,
+            &format!("{base}/internal/matches/match-42/result"),
+            "s3cret",
+            Duration::from_millis(5),
+            4,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(outcome, ReportOutcome::Settled);
+        assert_eq!(
+            seen.load(Ordering::SeqCst),
+            2,
+            "the throttled post is retried once and then accepted"
+        );
+    }
+
+    #[test]
+    fn throttling_statuses_are_retryable_but_a_wrong_secret_is_not() {
+        use reqwest::StatusCode;
+        for status in [
+            StatusCode::REQUEST_TIMEOUT,
+            StatusCode::TOO_EARLY,
+            StatusCode::TOO_MANY_REQUESTS,
+        ] {
+            assert!(is_transient_client_error(status), "{status} is transient");
+        }
+        for status in [
+            StatusCode::BAD_REQUEST,
+            StatusCode::FORBIDDEN,
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ] {
+            assert!(!is_transient_client_error(status), "{status} is final");
+        }
     }
 
     #[test]
