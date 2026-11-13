@@ -182,6 +182,6 @@ cast_shadow = 0
 cast_shadow = 0
 
 [node name="Van" parent="." unique_id=1389412019 instance=ExtResource("13_dyhay")]
-transform = Transform3D(-0.69963145, 0, 0.71450394, 0, 1, 0, -0.71450394, 0, -0.69963145, 9.906999, 6.463808, 12.604136)
+transform = Transform3D(-0.7813516, 0, -0.6240911, 0, 1, 0, 0.6240911, 0, -0.7813516, 9.906999, 6.463808, -10.010187)
 
 [editable path="Bus"]
