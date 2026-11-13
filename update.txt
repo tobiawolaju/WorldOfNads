@@ -1,4 +1,4 @@
-Nov 11, 2026
+Nov 13, 2026
 ## World of Nads — Development Update
 
 ### Completed
@@ -12,6 +12,8 @@ Nov 11, 2026
 * Mobile controls: quicker joystick placement, auto-hide on release, and touch scrolling in the dashboard.
 * Weapon feel pass: per-weapon muzzle FX, tracers, shake and phone haptics.
 * Networking cleanup: the client talks to the live servers only (local fallback removed).
+* Reward flow hardened: XP credits in all rooms (including practice, settled off-chain), the dashboard Rewards tab and gameover show committed reward/MON state (no false prize promises), and settlement retries handle throttled responses.
+* Experimental grab feedback: when the Action button would show GRAB, the nearest grabbable pickup is outlined in yellow (with its `line`/`box`/`MeshInstance3D` marker meshes tinted yellow) and the highlight clears on grab.
 
 ### Current Focus
 
@@ -19,14 +21,14 @@ Nov 11, 2026
 
 * Camera and collision behaviour on elevated parts of the map.
 * HUD and joystick tuning on real devices.
-* Performance on lower-end Android phones.
+* Performance on lower-end Android phones (lobby profiling/optimization pending).
 
 ### Next Steps
 
 1. Run the public test on the live servers.
 2. Keep shipping new Android builds from tester feedback.
 3. Finish verifying the native skin store + mint flow.
-4. Keep tightening game feel: movement, shooting, camera.
+4. Keep tightening game feel: movement, shooting, camera, and pickup feedback.
 5. Continue testing multiplayer load and match pacing.
 
 ### Current Status
@@ -36,6 +38,7 @@ Nov 11, 2026
 **Lobby:** 🟢 Working
 **Gameplay:** 🟢 Working
 **Cross-platform login:** 🟢 Working
+**Rewards/settlement:** 🟡 Improved, needs sponsored-match validation
 **Client optimisation:** 🟡 In progress
 **Public test:** 🔜 Starting soon
 
