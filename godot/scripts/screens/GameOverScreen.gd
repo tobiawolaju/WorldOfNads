@@ -10,6 +10,10 @@ const WIN_COLOR := Color(0.43137255, 0.32941177, 1.0, 1.0)
 const WIN_COLOR_ALT := Color(0.34509805, 0.23137255, 0.83137256, 1.0)
 const LOSE_COLOR := Color(0.9411765, 0.22352941, 0.45490196, 1.0)
 const LOSE_COLOR_ALT := Color(0.75686276, 0.14509805, 0.36078432, 1.0)
+## The card's gold, used for money the round actually earned.
+const MON_COLOR := Color(1.0, 0.84313726, 0.0, 1.0)
+## Used when there is no money to show: muted, so a zero never reads as a loss.
+const MON_MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.55)
 
 
 @onready var color_bg: ColorRect = get_node_or_null("ColorBG") as ColorRect
@@ -18,6 +22,9 @@ const LOSE_COLOR_ALT := Color(0.75686276, 0.14509805, 0.36078432, 1.0)
 @onready var result_title: Label = get_node_or_null("ColorBG/Result/BoxContainer/Title") as Label
 @onready var result_subtitle: Label = get_node_or_null("ColorBG/Result/BoxContainer2/Subtitle") as Label
 @onready var result_details: Label = get_node_or_null("ColorBG/Result/BoxContainer3/Details") as Label
+## The round's money, under the result line. Hidden until a value is known, so a
+## result screen with no player manager never shows a bare "+0.0000 MON".
+@onready var mon_earned_label: Label = get_node_or_null("ColorBG/Result/BoxContainer6/MonEarned") as Label
 @onready var result_card: Panel = get_node_or_null("ColorBG/Result/BoxContainer4/Control/ResultCard") as Panel
 @onready var progress_bar: ProgressBar = get_node_or_null("ColorBG/Result/BoxContainer4/Control/ResultCard/ProgressBar") as ProgressBar
 @onready var level_label: Label = get_node_or_null("ColorBG/Result/BoxContainer4/Control/ResultCard/Level") as Label
@@ -128,6 +135,8 @@ func _apply_result(did_win: bool, victory_type: String = "legacy", split_info: D
 		result_details.text = details_text
 		result_details.add_theme_color_override("font_color", Color.WHITE)
 
+	var mon_values := _session_mon()
+	_apply_mon_line(mon_values.x, mon_values.y)
 
 	if progress_bar != null:
 		progress_bar.visible = false
@@ -153,6 +162,43 @@ func _apply_result(did_win: bool, victory_type: String = "legacy", split_info: D
 
 	if skip_button != null:
 		skip_button.visible = false
+
+
+func _session_mon() -> Vector2:
+	# The player manager is the only node that saw the server's reward ticks. It
+	# is absent in tests and in a result screen opened from the dashboard, which
+	# reads as "nothing earned" instead of erroring.
+	var earned := 0.0
+	var pool := 0.0
+	var pm_node := get_tree().get_first_node_in_group("player_manager")
+	if pm_node != null:
+		var earned_value: Variant = pm_node.get("session_earned_mon")
+		if typeof(earned_value) == TYPE_FLOAT or typeof(earned_value) == TYPE_INT:
+			earned = float(earned_value)
+		var pool_value: Variant = pm_node.get("session_pool_mon")
+		if typeof(pool_value) == TYPE_FLOAT or typeof(pool_value) == TYPE_INT:
+			pool = float(pool_value)
+	return Vector2(earned, pool)
+
+
+## Shows the round's money, or says plainly why there is none.
+##
+## A room with no escrow behind it (the shared practice lobby) can never pay MON,
+## so it says so instead of showing a zero that reads like a loss. That is also
+## why the HUD hides the MON stream there: nothing is on its way.
+func _apply_mon_line(earned: float, pool: float) -> void:
+	if mon_earned_label == null:
+		return
+	if earned > 0.0:
+		mon_earned_label.text = "+ %.4f MON" % earned
+		mon_earned_label.add_theme_color_override("font_color", MON_COLOR)
+	elif pool <= 0.0:
+		mon_earned_label.text = "No prize pool in this room"
+		mon_earned_label.add_theme_color_override("font_color", MON_MUTED_COLOR)
+	else:
+		mon_earned_label.text = "No MON this round"
+		mon_earned_label.add_theme_color_override("font_color", MON_MUTED_COLOR)
+	mon_earned_label.visible = true
 
 
 func _play_sequence() -> void:

@@ -197,6 +197,27 @@ export async function patchReward(rewardId, patch) {
     await update(ref(db, `rewards/${rewardId}`), patch);
 }
 
+/**
+ * Every reward row written for one player, newest first.
+ *
+ * The rewards node is small (settlement writes a handful of rows per round), so
+ * filtering it here is cheaper than maintaining a per-user index that older rows
+ * would be missing from. The name compare is case-insensitive because the room
+ * server takes the name from the socket's `?username=` while the dashboard takes
+ * it from the login.
+ */
+export async function getRewardsForUser(username, { limit = 100 } = {}) {
+    const wanted = String(username || '').trim().toLowerCase();
+    if (!wanted) return [];
+    const snapshot = await get(ref(db, 'rewards'));
+    if (!snapshot.exists()) return [];
+    const rows = Object.values(snapshot.val() || {}).filter(
+        (row) => row && String(row.username || '').trim().toLowerCase() === wanted
+    );
+    rows.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    return rows.slice(0, Math.max(1, limit));
+}
+
 export async function getPlayerProfile(username) {
     if (!username) return null;
     const userRef = ref(db, `users/${username}`);

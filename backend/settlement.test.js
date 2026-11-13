@@ -257,13 +257,55 @@ test('reward ids are deterministic so a retry overwrites instead of duplicating'
 
 // -- settlement flow ------------------------------------------------------
 
-test('an unknown match is a 404 and writes nothing', async () => {
+test('a room without a match record still credits XP, but no money', async () => {
     const { deps, state } = makeDeps({ match: null });
-    const result = await settleRound({ matchId: 'nope', report: SINGLE_REPORT, deps });
+    const result = await settleRound({
+        matchId: 'default',
+        report: { ...SINGLE_REPORT, endedAt: 1_700_000_000_000 },
+        deps
+    });
 
-    assert.equal(result.httpStatus, 404);
-    assert.equal(result.status, 'unknown_match');
+    // XP is off-chain, so every room earns it; MON is not, so nothing is written.
+    assert.equal(result.httpStatus, 200);
+    assert.equal(result.status, 'practice');
     assert.equal(state.rewards.size, 0);
+    assert.equal(state.chainCalls.length, 0);
+    assert.equal(state.splitChainCalls.length, 0);
+    assert.equal(state.users.get('alice').xp, 400);
+    assert.equal(state.users.get('alice').wonMon, 0);
+    assert.equal(state.users.get('alice').won, 0);
+});
+
+test('a practice round is idempotent per round, not per room', async () => {
+    const { deps, state } = makeDeps({ match: null });
+    const report = { ...SINGLE_REPORT, endedAt: 1_700_000_000_000 };
+
+    await settleRound({ matchId: 'default', report, deps });
+    await settleRound({ matchId: 'default', report, deps });
+    assert.equal(state.users.get('alice').xp, 400, 'a retry must not double the XP');
+
+    // The same room plays another round a minute later: that one pays out.
+    await settleRound({ matchId: 'default', report: { ...report, endedAt: 1_700_000_060_000 }, deps });
+    assert.equal(state.users.get('alice').xp, 800);
+});
+
+test('practice XP ignores a negative or unreadable amount', async () => {
+    const { deps } = makeDeps({ match: null });
+    const result = await settleRound({
+        matchId: 'default',
+        report: {
+            ...SINGLE_REPORT,
+            endedAt: 1_700_000_000_000,
+            players: [
+                { playerId: 'p1', playerName: 'alice', possessionSeconds: 0, xp: -50, mon: 0 },
+                { playerId: 'p2', playerName: 'bob', possessionSeconds: 0, xp: 'nonsense', mon: 0 }
+            ]
+        },
+        deps
+    });
+
+    assert.equal(result.xp, 0);
+    assert.equal(result.credited, 0);
 });
 
 test('an invalid report is a 422 and writes nothing', async () => {
