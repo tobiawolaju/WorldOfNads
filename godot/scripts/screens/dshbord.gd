@@ -183,6 +183,7 @@ const VARIANT_BORDER_WIDTH: int = 2
 @onready var _match_scroll: ScrollContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Column/Content/MatchScroll") as ScrollContainer
 @onready var _match_cards: HBoxContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Column/Content/MatchScroll/MatchMargin/MatchCards") as HBoxContainer
 @onready var _reward_scroll: ScrollContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Column/Content/RewardScroll") as ScrollContainer
+@onready var _reward_list: VBoxContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Column/Content/RewardScroll/RewardMargin/RewardList") as VBoxContainer
 @onready var _reward_empty: Control = get_node_or_null("CanvasLayer/RightPanel/Margin/Column/Content/RewardScroll/RewardMargin/RewardList/RewardEmpty") as Control
 @onready var _store_scroll: ScrollContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Column/Content/StoreScroll") as ScrollContainer
 @onready var _store_grid: GridContainer = get_node_or_null("CanvasLayer/RightPanel/Margin/Column/Content/StoreScroll/StoreMargin/StoreGrid") as GridContainer
@@ -1426,8 +1427,241 @@ func _center_selected_card_deferred() -> void:
 func _refresh_rewards() -> void:
 	if _reward_scroll != null:
 		_reward_scroll.visible = tab == TAB_REWARDS
+	if _reward_list == null:
+		return
+	if tab == TAB_REWARDS:
+		_fetch_rewards()
+	_render_rewards()
+
+
+# --- rewards tab ---------------------------------------------------------------
+# The list is the ledger settlement wrote (`rewards/<id>`, read through
+# /api/rewards), never a client estimate: a row exists only once the control plane
+# has committed that money to this player. Rows are newest first, exactly like
+# Dashboard.tsx's Rewards tab.
+
+const REWARD_MAX_ROWS: int = 40
+const REWARD_MONTHS: Array[String] = [
+	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+]
+const REWARD_GOLD: Color = Color(1.0, 0.92156863, 0.23137255, 1.0)
+
+var _rewards: Array[Dictionary] = []
+var _rewards_for: String = ""
+var _rewards_error: String = ""
+var _rewards_loading: bool = false
+
+
+func _fetch_rewards() -> void:
+	# One fetch per player per session: the ledger only changes when a round
+	# settles, and the list is refetched on the next dashboard open.
+	var username := AuthManager.get_username().strip_edges()
+	if username == "" or _rewards_loading or _rewards_for == username:
+		return
+	_rewards_loading = true
+	var http := HTTPRequest.new()
+	http.timeout = 15.0
+	add_child(http)
+	http.request_completed.connect(_on_rewards_fetched.bind(http, username))
+	var err := http.request("%s/api/rewards?username=%s" % [API_BASE, username.uri_encode()])
+	if err != OK:
+		http.queue_free()
+		_rewards_loading = false
+		_rewards_error = "Couldn't load rewards. Check your connection."
+		_render_rewards()
+
+
+func _on_rewards_fetched(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest, username: String) -> void:
+	if http != null and is_instance_valid(http):
+		http.queue_free()
+	_rewards_loading = false
+
+	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		_rewards_error = "Couldn't load rewards. Check your connection."
+		print("Dshbord: rewards fetch failed (%d %d)." % [result, response_code])
+		_render_rewards()
+		return
+
+	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
+	if not (parsed is Dictionary) or parsed.get("ok") != true:
+		_rewards_error = "Couldn't load rewards. Check your connection."
+		_render_rewards()
+		return
+
+	var rows: Array[Dictionary] = []
+	var raw: Variant = parsed.get("rewards")
+	if raw is Array:
+		for entry in raw:
+			# The API already sorts and caps; this only defends against a shape
+			# change, so a bad row can never take the whole tab down.
+			if entry is Dictionary:
+				rows.append(entry)
+			if rows.size() >= REWARD_MAX_ROWS:
+				break
+
+	_rewards = rows
+	_rewards_error = ""
+	_rewards_for = username
+	_render_rewards()
+
+
+func _render_rewards() -> void:
+	if _reward_list == null:
+		return
+	for child in _reward_list.get_children():
+		if child == _reward_empty:
+			continue
+		_reward_list.remove_child(child)
+		child.queue_free()
+
 	if _reward_empty != null:
-		_reward_empty.visible = true
+		var empty_text := "No rewards yet. Join a match to win some."
+		if _rewards_error != "":
+			empty_text = _rewards_error
+		elif _rewards.is_empty() and AuthManager.get_username().strip_edges() == "":
+			empty_text = "Sign in to see your rewards."
+		_reward_empty.visible = _rewards.is_empty()
+		var text_node := _reward_empty.get_node_or_null("Text") as Label
+		if text_node != null:
+			text_node.text = empty_text
+
+	if _rewards.is_empty():
+		return
+	_reward_list.add_child(_build_reward_summary())
+	for row in _rewards:
+		_reward_list.add_child(_build_reward_card(row))
+
+
+func _build_reward_summary() -> Control:
+	var total := 0.0
+	var pending := 0.0
+	for row in _rewards:
+		var amount := float(row.get("amountMon", 0.0))
+		total += amount
+		if bool(row.get("pending", false)):
+			pending += amount
+
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _reward_style(true))
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 0)
+	panel.add_child(column)
+	column.add_child(_reward_label("%.2f MON" % total, 11, REWARD_GOLD))
+	column.add_child(_reward_label(
+		"across %d %s" % [_rewards.size(), "reward" if _rewards.size() == 1 else "rewards"],
+		5,
+		Color(1, 1, 1, 0.7)
+	))
+	if pending > 0.0:
+		column.add_child(_reward_label("%.2f MON awaiting payout" % pending, 5, Color(1, 1, 1, 0.85)))
+	return panel
+
+
+func _build_reward_card(row: Dictionary) -> Control:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _reward_style(false))
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 0)
+	panel.add_child(column)
+
+	column.add_child(_reward_label(_reward_title(row), 7, Color(1, 1, 1, 1)))
+
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 3)
+	column.add_child(line)
+	line.add_child(_reward_label(_reward_amount(row), 9, REWARD_GOLD))
+	var source := _reward_label(
+		"from %s" % str(row.get("source", "WorldOfNads")),
+		5,
+		Color(1, 1, 1, 0.6)
+	)
+	source.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	source.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	source.clip_text = true
+	line.add_child(source)
+
+	var meta := _reward_meta(row)
+	if meta != "":
+		var meta_label := _reward_label(meta, 5, Color(1, 1, 1, 0.45))
+		meta_label.clip_text = true
+		column.add_child(meta_label)
+	return panel
+
+
+# Which pot the row came out of, in the same words as the web dashboard.
+func _reward_title(row: Dictionary) -> String:
+	var kind := str(row.get("kind", ""))
+	if kind == "lootbox" or str(row.get("category", "")) == "lootbox":
+		return "Lootbox pool"
+	if kind == "stream":
+		return "Lootbox stream"
+	return "Match prize"
+
+
+func _reward_amount(row: Dictionary) -> String:
+	# Newer rows carry the formatted string; older ones only the number.
+	var text := str(row.get("amount", "")).strip_edges()
+	if text != "":
+		return text
+	return "%.4f MON" % float(row.get("amountMon", 0.0))
+
+
+func _reward_meta(row: Dictionary) -> String:
+	var parts: Array[String] = []
+	var date := _reward_date(str(row.get("createdAt", "")))
+	if date != "":
+		parts.append(date)
+	var match_id := str(row.get("matchId", "")).strip_edges()
+	if match_id != "":
+		parts.append(match_id)
+	if bool(row.get("pending", false)):
+		parts.append("pending")
+	elif str(row.get("txHash", "")).strip_edges() != "":
+		parts.append("paid")
+	return " · ".join(parts)
+
+
+# ISO timestamp -> "13 Nov 2026". Deliberately string-only: the rows mix ISO
+# strings with legacy `date` values, and the day is all the tab shows.
+func _reward_date(value: String) -> String:
+	var date_part := value.substr(0, 10)
+	var pieces := date_part.split("-")
+	if pieces.size() != 3 or pieces[0].length() != 4 or pieces[2].length() != 2:
+		return ""
+	var month := int(pieces[1])
+	if month < 1 or month > 12:
+		return ""
+	return "%d %s %s" % [int(pieces[2]), REWARD_MONTHS[month - 1], pieces[0]]
+
+
+func _reward_label(text: String, size: int, color: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_color", color)
+	_apply_font(label, FONT_UI)
+	return label
+
+
+func _reward_style(summary: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	if summary:
+		# `.reward-summary`: the accent plate that totals the list.
+		style.bg_color = Color(REWARD_GOLD.r, REWARD_GOLD.g, REWARD_GOLD.b, 0.14)
+		style.border_color = Color(REWARD_GOLD.r, REWARD_GOLD.g, REWARD_GOLD.b, 0.45)
+	else:
+		# `.reward-item`: a translucent card on the panel.
+		style.bg_color = Color(1, 1, 1, 0.08)
+		style.border_color = Color(1, 1, 1, 0.16)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(5)
+	style.content_margin_left = 5.0
+	style.content_margin_top = 4.0
+	style.content_margin_right = 5.0
+	style.content_margin_bottom = 4.0
+	return style
 
 
 func _refresh_store() -> void:

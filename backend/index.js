@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
-import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward } from './firebaseClient.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward, getRewardsForUser } from './firebaseClient.js';
 import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, lootBoxSteal, getLootBoxPoolOnchain, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain, getContractStatus, getSkinBalance } from './contractClient.js';
 import { settleRound, parsePrizeMon, round6, LOOTBOX_POOL_SHARE } from './settlement.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents, getMatchPlayerCounts } from './analyticsService.js';
@@ -1090,6 +1090,25 @@ const server = createServer(async (req, res) => {
     }
     const skin = await getPlayerSkin(username);
     sendJson(res, 200, { ok: true, username, skin: skin || 's-default' });
+    return;
+  }
+
+  // The dashboard's Rewards tab. Reads what settlement wrote, so a row is only
+  // ever the money the ledger already committed - no estimates, no pending MON
+  // invented on the client.
+  if (req.method === 'GET' && reqUrl.pathname === '/api/rewards') {
+    const username = (reqUrl.searchParams.get('username') || '').trim();
+    if (!username) {
+      sendJson(res, 400, { ok: false, error: 'username required' });
+      return;
+    }
+    try {
+      const rewards = await getRewardsForUser(username);
+      sendJson(res, 200, { ok: true, username, rewards });
+    } catch (error) {
+      console.error('[Rewards] fetch failed:', error);
+      sendJson(res, 500, { ok: false, error: 'rewards_unavailable' });
+    }
     return;
   }
 

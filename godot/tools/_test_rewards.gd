@@ -13,6 +13,8 @@ func _initialize() -> void:
 	await _test_hud_counters()
 	await _test_event_feed_countdown()
 	await _test_gameover_split()
+	await _test_gameover_mon()
+	await _test_dashboard_rewards()
 	await _test_wire_contract()
 
 	print("")
@@ -168,7 +170,155 @@ func _test_gameover_split() -> void:
 			remove_meta(key)
 
 
-# --- 4. Wire contract: the fields the server sends are the ones read ----------
+# --- 4. The money line on the result screen -----------------------------------
+
+func _test_gameover_mon() -> void:
+	set_meta("match_result_won", true)
+	set_meta("match_result_victory_type", "buzzer")
+	set_meta("match_result_split_info", {})
+	var screen := await _spawn_gameover()
+	if screen == null:
+		return
+
+	var label: Label = screen.mon_earned_label
+	_check("result screen has the MON line", label != null)
+	if label != null:
+		# A room with no escrow must not imply that money is coming.
+		screen._apply_mon_line(0.0, 0.0)
+		_check("no-pool room says so on the result screen", label.text == "No prize pool in this room")
+		_check("the no-money line is visible", label.visible)
+		_check("the no-money line is muted", label.get_theme_color("font_color").a < 0.9)
+
+		screen._apply_mon_line(1.23456, 12.0)
+		_check("earned MON is shown with 4 decimals", label.text == "+ 1.2346 MON")
+		_check("earned MON is gold", label.get_theme_color("font_color").is_equal_approx(screen.MON_COLOR))
+
+		screen._apply_mon_line(0.0, 12.0)
+		_check("a funded room with nothing earned says so", label.text == "No MON this round")
+
+		# The real path: read the session values the player manager recorded.
+		var values: Vector2 = screen._session_mon()
+		_check("no player manager reads as nothing earned", values == Vector2.ZERO)
+
+	screen.queue_free()
+	await process_frame
+
+	for key in ["match_result_won", "match_result_victory_type", "match_result_split_info"]:
+		if has_meta(key):
+			remove_meta(key)
+
+
+# --- 5. The dashboard's rewards tab -------------------------------------------
+
+func _test_dashboard_rewards() -> void:
+	var script: GDScript = load("res://scripts/screens/dshbord.gd")
+	_check("dashboard script loads", script != null)
+	if script == null:
+		return
+	var dashboard: Node = script.new()
+
+	var rows: Array[Dictionary] = [
+		{
+			"id": "settlement-match-42-alice-prize",
+			"username": "alice",
+			"matchId": "match-42",
+			"source": "Acme",
+			"category": "earned",
+			"kind": "prize",
+			"amount": "7.2000 MON",
+			"amountMon": 7.2,
+			"pending": false,
+			"txHash": "0xabc",
+			"createdAt": "2026-11-13T10:20:30.000Z",
+		},
+		{
+			"id": "settlement-match-42-alice-lootbox",
+			"username": "alice",
+			"matchId": "match-42",
+			"source": "Acme",
+			"category": "lootbox",
+			"kind": "lootbox",
+			"amount": "1.0500 MON",
+			"amountMon": 1.05,
+			"pending": true,
+			"createdAt": "2026-11-12T08:00:00.000Z",
+		},
+	]
+
+	# Formatting helpers.
+	_check("ISO dates render as a day", dashboard._reward_date("2026-11-13T10:20:30.000Z") == "13 Nov 2026")
+	_check("a missing date renders as nothing", dashboard._reward_date("") == "")
+	_check("a broken date renders as nothing", dashboard._reward_date("not-a-date") == "")
+	_check("legacy rows without a formatted amount still show one", dashboard._reward_amount({"amountMon": 3.5}) == "3.5000 MON")
+	_check("a formatted amount is shown as written", dashboard._reward_amount(rows[0]) == "7.2000 MON")
+	_check("a stream row is named", dashboard._reward_title({"kind": "stream"}) == "Lootbox stream")
+	_check("a lootbox row is named", dashboard._reward_title(rows[1]) == "Lootbox pool")
+	_check("a prize row is named", dashboard._reward_title(rows[0]) == "Match prize")
+	_check("paid rows say paid", dashboard._reward_meta(rows[0]) == "13 Nov 2026 · match-42 · paid")
+	_check("pending rows say pending", dashboard._reward_meta(rows[1]) == "12 Nov 2026 · match-42 · pending")
+
+	# The summary totals what the ledger paid, and calls out what is still owed.
+	dashboard._rewards = rows
+	var summary: Control = dashboard._build_reward_summary()
+	var summary_text := "\n".join(_label_texts(summary))
+	_check("the summary totals the rows", summary_text.contains("8.25 MON"))
+	_check("the summary counts the rows", summary_text.contains("across 2 rewards"))
+	_check("the summary names the pending MON", summary_text.contains("1.05 MON awaiting payout"))
+
+	# A row shows the pot, the amount, the sponsor and its date.
+	var card_text := "\n".join(_label_texts(dashboard._build_reward_card(rows[0])))
+	_check("the card names the pot", card_text.contains("Match prize"))
+	_check("the card shows the amount", card_text.contains("7.2000 MON"))
+	_check("the card names the sponsor", card_text.contains("from Acme"))
+	_check("the card shows the date and the match", card_text.contains("13 Nov 2026 · match-42"))
+
+	# One reward is not "rewards".
+	dashboard._rewards = [rows[0]] as Array[Dictionary]
+	var single_text := "\n".join(_label_texts(dashboard._build_reward_summary()))
+	_check("a single reward is counted in the singular", single_text.contains("across 1 reward"))
+	_check("a paid row shows no pending line", not single_text.contains("awaiting payout"))
+
+	# The renderer swaps the empty card for the rows. It only needs the list and
+	# the empty card, so the test builds those instead of mounting the whole
+	# dashboard (which would hit the network and build the 3D preview).
+	var list := VBoxContainer.new()
+	var empty := PanelContainer.new()
+	var empty_text := Label.new()
+	empty_text.name = "Text"
+	empty.add_child(empty_text)
+	list.add_child(empty)
+	dashboard._reward_list = list
+	dashboard._reward_empty = empty
+	dashboard._rewards = rows
+	dashboard._rewards_error = ""
+	dashboard._render_rewards()
+	_check("the empty card hides once rows exist", not empty.visible)
+	_check("the list holds the summary and one card per reward", list.get_child_count() == 4)
+
+	var none: Array[Dictionary] = []
+	dashboard._rewards = none
+	dashboard._rewards_error = "Couldn't load rewards. Check your connection."
+	dashboard._render_rewards()
+	_check("an error drops the rows", list.get_child_count() == 1)
+	_check("the error replaces the empty copy", empty_text.text == "Couldn't load rewards. Check your connection.")
+
+	dashboard._rewards_error = ""
+	dashboard._render_rewards()
+	# Signed out (the headless case) the tab asks for a sign-in; signed in it
+	# invites the player to win something. Looked up through the tree because the
+	# AuthManager autoload name is not resolvable from this entry script.
+	var auth: Node = root.get_node_or_null("/root/AuthManager")
+	var signed_in := auth != null and str(auth.call("get_username")).strip_edges() != ""
+	var expected_empty := "Sign in to see your rewards." if not signed_in else "No rewards yet. Join a match to win some."
+	_check("no rows falls back to the empty copy", empty_text.text == expected_empty)
+	_check("the empty card is visible again", empty.visible)
+
+	list.free()
+	dashboard.free()
+
+
+
+# --- 6. Wire contract: the fields the server sends are the ones read ----------
 
 func _test_wire_contract() -> void:
 	var pm := _read("res://scripts/player/PlayerManager.gd")
@@ -189,6 +339,15 @@ func _test_wire_contract() -> void:
 
 
 # --- helpers -----------------------------------------------------------------
+
+func _label_texts(node: Node) -> PackedStringArray:
+	var texts := PackedStringArray()
+	if node is Label:
+		texts.append((node as Label).text)
+	for child in node.get_children():
+		texts.append_array(_label_texts(child))
+	return texts
+
 
 func _spawn_hud() -> Node:
 	var packed := load("res://scenes/hud.tscn") as PackedScene

@@ -409,6 +409,53 @@ export function rewardIdFor(matchId, username, kind = 'prize') {
 }
 
 /**
+ * A practice round's id, stable across the room server's retries.
+ *
+ * `creditPlayerResult` is idempotent per match id, so the id has to change once
+ * per round (the shared room plays many) while staying identical for a retry of
+ * the same round. `endedAt` is the only per-round stamp the report carries.
+ */
+export function practiceRoundIdFor(matchId, endedAt) {
+    const safeMatch = String(matchId || 'room').replace(/[.#$\[\]/]/g, '_');
+    const stamp = Math.round(Number(endedAt) || 0);
+    return `practice-${safeMatch}-${stamp}`;
+}
+
+/**
+ * Credits XP for a round that has no match record.
+ *
+ * Deliberately narrow: no reward rows, no win, no MON and no chain call, because
+ * there is no escrow behind the room to pay out of. XP is an off-chain
+ * progression counter, so every room earns it.
+ */
+export async function settlePractice({ matchId, report, deps, log = () => {} }) {
+    const roundId = practiceRoundIdFor(matchId, report.endedAt);
+    const players = Array.isArray(report.players) ? report.players : [];
+    let credited = 0;
+    let xp = 0;
+
+    for (const player of players) {
+        // Clamp here: a malformed number must not deflate a profile, and a
+        // negative "earned" XP is never a thing the room server can mean.
+        const amount = Math.max(0, Math.round(Number(player.xp) || 0));
+        if (!amount) continue;
+        const result = await deps.creditPlayerResult(player.playerName, {
+            matchId: roundId,
+            win: 0,
+            wonMon: 0,
+            xp: amount
+        });
+        if (result && result.credited) {
+            credited += 1;
+            xp += amount;
+        }
+    }
+
+    log('practice round: xp credited', { matchId, roundId, credited, xp });
+    return { httpStatus: 200, status: 'practice', matchId, roundId, credited, xp };
+}
+
+/**
  * Runs the settlement.
  *
  * Returns `{ httpStatus, status, ... }`. The HTTP status is part of the result
@@ -427,7 +474,12 @@ export async function settleRound({ matchId, report, deps }) {
 
     const match = await deps.getMatch(matchId);
     if (!match) {
-        return { httpStatus: 404, status: 'unknown_match', matchId };
+        // A room with no match record (the shared practice lobby, or a room the
+        // registry handed out without a sponsor) still played a round. XP is an
+        // off-chain progression counter, not prize money, so it is paid here too;
+        // the MON ledger and the chain are not touched because there is no escrow
+        // behind the room to pay out of.
+        return settlePractice({ matchId, report, deps, log });
     }
 
     // Idempotency: the room server retries, and a retry must not pay twice.

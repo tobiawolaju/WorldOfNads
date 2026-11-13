@@ -232,6 +232,11 @@ static var session_earned_xp: float = 0.0
 # only displays what the server sends, so there is no local accrual to
 # double-count.
 var session_earned_mon: float = 0.0
+## What the room's prize pool held the last time the server reported it. Zero is
+## the honest answer for a room with no escrow behind it (the shared practice
+## lobby), which is what lets the result screen say so instead of implying that
+## MON is on its way.
+var session_pool_mon: float = 0.0
 
 # --- POSSESSION TRACKING (HUD) ---
 # Server-authoritative possession time per player. The local player's comes from
@@ -811,6 +816,8 @@ func _receive_messages():
 				_update_debug_skin()
 				local_base_xp = int(data.get("xp", 0))
 				session_earned_xp = 0.0
+				session_earned_mon = 0.0
+				session_pool_mon = 0.0
 				
 				player_display_names[player_id] = local_display_name
 				player_skin_names[player_id] = local_skin_name
@@ -886,6 +893,7 @@ func _receive_messages():
 				var victory_target := int(data.get("victoryTarget", 60))
 				session_earned_xp = float(earned_xp)
 				session_earned_mon = earned_mon
+				session_pool_mon = pool_total
 				local_possession_time = float(possession_time)
 				victory_target_seconds = victory_target
 				var events_node = events_bridge
