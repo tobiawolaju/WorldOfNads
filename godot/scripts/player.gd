@@ -614,10 +614,13 @@ var _local_pickup_nodes_dirty: bool = true
 ## can see what the prompt is about to take. Cleared the moment grab is pressed.
 const GRAB_OUTLINE_SHADER: Shader = preload("res://assets/shaders/outline.gdshader")
 const GRAB_OUTLINE_COLOR: Color = Color(1.0, 0.9, 0.2, 1.0)
-const GRAB_OUTLINE_SIZE: float = 1.05
+const GRAB_OUTLINE_SIZE: float = 1.1
 const GRAB_HIGHLIGHT_POLL: float = 0.1
+## Pickup marker meshes that turn yellow while the grab outline is shown.
+const GRAB_MARKER_NAMES: Array[StringName] = [&"line", &"box", &"MeshInstance3D"]
 var _grab_highlight_target: Node = null
 var _grab_highlight_nodes: Array[Node] = []
+var _grab_highlight_tints: Array[Dictionary] = []
 var _grab_highlight_timer: float = 0.0
 ## How long to wait before re-scanning the "bus" group after a miss (see
 ## _apply_bus_riding): one immediate lookup, then at most once a second.
@@ -2973,6 +2976,11 @@ func _clear_grab_highlight() -> void:
 		if is_instance_valid(node):
 			node.queue_free()
 	_grab_highlight_nodes.clear()
+	for tint in _grab_highlight_tints:
+		var mesh_node: Variant = tint.get("node", null)
+		if mesh_node is MeshInstance3D and is_instance_valid(mesh_node):
+			(mesh_node as MeshInstance3D).material_override = tint.get("material_override", null)
+	_grab_highlight_tints.clear()
 	_grab_highlight_target = null
 
 
@@ -2983,6 +2991,9 @@ func _apply_grab_outline(target: Node) -> void:
 	mat.shader = GRAB_OUTLINE_SHADER
 	mat.set_shader_parameter("color", GRAB_OUTLINE_COLOR)
 	mat.set_shader_parameter("size", GRAB_OUTLINE_SIZE)
+	var yellow_mat := StandardMaterial3D.new()
+	yellow_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	yellow_mat.albedo_color = GRAB_OUTLINE_COLOR
 	for mesh_instance in _collect_visible_meshes(target):
 		if not is_instance_valid(mesh_instance) or mesh_instance.mesh == null:
 			continue
@@ -2993,6 +3004,22 @@ func _apply_grab_outline(target: Node) -> void:
 		outline.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mesh_instance.add_child(outline)
 		_grab_highlight_nodes.append(outline)
+	_tint_grab_markers(target, yellow_mat)
+
+
+func _tint_grab_markers(node: Node, yellow_mat: Material) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
+		if mi.name in GRAB_MARKER_NAMES and mi.name != &"GrabOutline":
+			_grab_highlight_tints.append({
+				"node": mi,
+				"material_override": mi.material_override,
+			})
+			mi.material_override = yellow_mat
+	for child in node.get_children():
+		_tint_grab_markers(child, yellow_mat)
 
 
 func _collect_visible_meshes(node: Node) -> Array[MeshInstance3D]:
