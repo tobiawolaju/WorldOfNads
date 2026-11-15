@@ -116,8 +116,8 @@ const ARM_CHAINS := [
 @export var attack_speed: float = 1.6
 ## How far the striking arm reaches, in degrees.
 @export var attack_amplitude: float = 60.0
-## Leg splay used for the wide attack stance, in degrees. Negative values push the knees wider apart for this rig.
-@export var attack_stance_degrees: float = -26.0
+## Leg splay used for the wide attack stance, in degrees.
+@export var attack_stance_degrees: float = 26.0
 
 @export_group("Debug")
 ## Preview poses/walk/attack in the editor. The rest pose is auto-restored on save,
@@ -362,17 +362,18 @@ func _apply_attack_cycle(t: float) -> void:
 
 	# --- Very wide, balanced stance (knees wide apart, feet planted) ---
 	# Both thighs take the same local Z/X: LeftLeg_5 has a 180-degree-Y rest basis, so
-	# the same local angles splay outward in world space on both sides. Bending the knees
-	# (shin joints) lowers the body; minimal shin counter-splay keeps the knees pushed wide.
+	# the same local angles splay outward in world space on both sides. Positive splay
+	# pushes the knees/legs wide apart on this rig. Bending the knees (shin joints) lowers
+	# the body; minimal shin counter-splay keeps the knees pushed wide.
 	var splay := attack_stance_degrees
 	var crouch := 20.0 + 6.0 * striking
-	_apply_rotation_offset(get_limb_node("RiteLeg_2"), Vector3(crouch * 0.5, 0.0, splay))
-	_apply_rotation_offset(get_limb_node("LeftLeg_5"), Vector3(crouch * 0.5, 0.0, splay))
-	_apply_rotation_offset(get_limb_node("shin_r"), Vector3(-crouch, 0.0, -splay * 0.05))
-	_apply_rotation_offset(get_limb_node("shin_l"), Vector3(-crouch, 0.0, -splay * 0.05))
+	_apply_rotation_offset(get_limb_node("RiteLeg_2"), Vector3(crouch * 0.5, 0.0, -splay))
+	_apply_rotation_offset(get_limb_node("LeftLeg_5"), Vector3(crouch * 0.5, 0.0, -splay))
+	_apply_rotation_offset(get_limb_node("shin_r"), Vector3(-crouch, 0.0, splay * 0.05))
+	_apply_rotation_offset(get_limb_node("shin_l"), Vector3(-crouch, 0.0, splay * 0.05))
 	# Counter the knee bend and a bit of splay so the soles stay closer to flat on the ground.
-	_apply_rotation_offset(get_limb_node("foot_r"), Vector3(crouch * 0.5, 0.0, -splay * 0.55))
-	_apply_rotation_offset(get_limb_node("foot_l"), Vector3(crouch * 0.5, 0.0, -splay * 0.55))
+	_apply_rotation_offset(get_limb_node("foot_r"), Vector3(crouch * 0.5, 0.0, splay * 0.55))
+	_apply_rotation_offset(get_limb_node("foot_l"), Vector3(crouch * 0.5, 0.0, splay * 0.55))
 
 	# --- Torso pitches into the slash; head and arms are carried along ---
 	var lean_degrees := 7.0 * raising - 12.0 * striking
