@@ -54,4 +54,3 @@ func _process(delta: float) -> void:
 		basis = basis.slerp(target_basis, clampf(turn_speed * delta, 0.0, 1.0))
 	else:
 		basis = basis.slerp(_home_basis, clampf(turn_speed * delta * 0.3, 0.0, 1.0))
-
