@@ -116,8 +116,8 @@ const ARM_CHAINS := [
 @export var attack_speed: float = 1.6
 ## How far the striking arm reaches, in degrees.
 @export var attack_amplitude: float = 60.0
-## Leg splay used for the wide attack stance, in degrees.
-@export var attack_stance_degrees: float = 26.0
+## Leg splay used for the wide attack stance, in degrees. Negative values push the knees wider apart for this rig.
+@export var attack_stance_degrees: float = -26.0
 
 @export_group("Debug")
 ## Preview poses/walk/attack in the editor. The rest pose is auto-restored on save,
