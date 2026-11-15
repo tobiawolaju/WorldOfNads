@@ -2871,7 +2871,9 @@ blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_t83g1")
 
 [node name="Van" type="RigidBody3D" unique_id=33487359]
-mass = 1400.0
+collision_layer = 16
+collision_mask = 1
+mass = 2800.0
 can_sleep = false
 continuous_cd = true
 script = ExtResource("10_vanctl")
