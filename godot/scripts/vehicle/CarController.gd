@@ -118,7 +118,17 @@ func _ready() -> void:
 	if not ride_group.is_empty():
 		add_to_group(ride_group)
 
+	_ignore_pickups()
 	_collect_wheels()
+
+
+func _ignore_pickups() -> void:
+	for group in [&"local_pickups", &"local_weapon_pickups", &"local_pickup_items", &"pickup_items"]:
+		if not get_tree().has_group(group):
+			continue
+		for node in get_tree().get_nodes_in_group(group):
+			if node is CollisionObject3D and node != self:
+				add_collision_exception_with(node)
 
 
 func _physics_process(delta: float) -> void:
