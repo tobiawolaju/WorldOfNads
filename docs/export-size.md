@@ -50,6 +50,34 @@ Expected after reimport + re-export: **~90 MB pck** (Web) and **~100 MB APK**.
 - `Godot` may offer "Recovery Mode" after an unclean shutdown; it only disables
   tool scripts for that session, it does not revert any files.
 
+## Regression found after the first trimmed export (2026-11-17)
+
+Reproduced by running the exported pck headless:
+
+```
+Godot_v4.8-beta1_win64_console.exe --headless --main-pack frontend/public/godot/index.pck res://scenes/lobby.tscn
+```
+
+Three kinds of resource are referenced from *inside* imported binaries and were
+invisible to a `res://` text search, so the first exclude list removed them:
+
+1. **glTF sibling textures.** `busyland.tscn` uses
+   `assets/models/props/low_poly_barrel_21.glb`, whose imported `.scn` loads
+   `low_poly_barrel_21_{0,1,2}.png` as external resources. With those excluded,
+   `busyland.tscn` → `lobby.tscn` and `gameplay.tscn` all failed to load (the
+   Play button bounced back to the home screen). Restored + capped at 512.
+2. **`assets/img/lobbybg/`** is loaded by name at runtime in `dshbord.gd`
+   (`"/lobbybg/lobby (1).jpg"` → `res://assets/img/lobbybg/%s`,
+   `_lobby_bg_texture()` / `_card_texture()`). Excluding it made every match card
+   fall back to `MATCH_SRC`, i.e. all card images looked identical. Restored.
+3. **`assets/img/skins/`** is `SKIN_DIR + base + ".png"` in `dshbord.gd`.
+   Restored.
+
+Rule: a model's sibling textures are part of the model. Before excluding an
+image, check whether a `.glb`/`.fbx` with the same stem is still exported, and
+whether any script builds the path from a directory constant or a
+`"/lobbybg/..."`-style record field.
+
 ## Rules for new art
 
 - Do not drop a second `.glb` copy of a model into `scenes/props/`; reference
