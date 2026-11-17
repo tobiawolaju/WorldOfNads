@@ -37,6 +37,19 @@ Baseline before the 2026-11 audit:
 
 Expected after reimport + re-export: **~90 MB pck** (Web) and **~100 MB APK**.
 
+## Status (2026-11-17)
+
+- Commit `b16c2c3` — exclude list + 31 × `size_limit=512` + this doc.
+- Godot editor reopened and **reimported the capped textures**: `.godot/imported`
+  went from 148.1 MB to 104.1 MB (S3TC 53.8 → 31.8 MB, ETC2 53.8 → 31.8 MB).
+  Spot check: `trash_can_2.png` is now 0.33 MB per format instead of 1.34 MB.
+- Preset exclude filter verified byte-identical to `godot/export-exclude.txt`.
+- **Pending:** re-export Web + Android, then check the new `index.pck` size.
+  Estimated ~90 MB Web / ~100 MB APK. Under 100 MB means the pck can finally be
+  committed and the web deploy fixed.
+- `Godot` may offer "Recovery Mode" after an unclean shutdown; it only disables
+  tool scripts for that session, it does not revert any files.
+
 ## Rules for new art
 
 - Do not drop a second `.glb` copy of a model into `scenes/props/`; reference
