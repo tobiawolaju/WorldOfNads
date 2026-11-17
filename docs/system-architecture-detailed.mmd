@@ -1,0 +1,119 @@
+---
+title: "World of Nads - Detailed Runtime, Match, and Settlement Flow"
+---
+flowchart LR
+    %% Detailed view: client/runtime, authoritative room loop, control-plane settlement, and chain/data paths
+
+    subgraph Frontend["Frontend / Client Runtime"]
+        direction TB
+        subgraph Web["Web (React/Vite on Vercel)"]
+            UI["UI Routes\nHome, Dashboard, Play, Admin"]
+            Auth["Auth & Session\nPrivy / WON account / URL params"]
+            PlayEmbed["Play Embed\nGodot WASM + bridge params"]
+        end
+
+        subgraph Godot["Godot Client (Web & Native)"]
+            Input["Input / Camera / HUD"]
+            PM["PlayerManager.gd\nnetwork client, interpolation,\nreward_update handling"]
+            EventsBridge["Events bridge / HUD feed"]
+            Scenes["Scenes\nhome/lobby/gameplay/gameover"]
+        end
+
+        UI --> Auth --> PlayEmbed --> PM
+        Input --> PM
+        PM --> Scenes
+        PM --> EventsBridge
+    end
+
+    subgraph Rust["Rust Room Server (Render: wons-room-server)"]
+        direction TB
+        WSGame["Game WebSocket endpoint\n'/' (room via ?room=...)"]
+        WSEvents["Events WebSocket endpoint\n/events"]
+        ConnMgr["Connection/session handling\nrate limits, heartbeat, reconnect grace"]
+        Registry["Match registry mirror\nwarm + refresh from control plane"]
+        RoomMgr["Lazy room manager\none room = one sim + tick task"]
+
+        subgraph Sim["Authoritative Room Simulation (20 Hz)"]
+            State["World state\nplayers, chicken/lootbox/items,\npositions, timers, storm"]
+            Rules["Rules & validation\nmovement clamp, pickup/use/drop,\nhold/steal logic"]
+            AOI["Replication\nAOI grid + distance-banded rates\nstate_full/state_delta"]
+            RewardsTick["Reward tick\nXP/MON accrual, possession/victory"]
+            Round["Round lifecycle\ncountdown -> active -> winner/end\nbatch reset / round_finished"]
+        end
+
+        SettlementOutbox["Settlement outbox/retry\nPOST round result to control plane"]
+        Health["GET /health"]
+
+        WSGame --> ConnMgr --> RoomMgr
+        Registry --> RoomMgr
+        RoomMgr --> Sim
+        State --> Rules --> AOI
+        State --> RewardsTick
+        State --> Round
+        Round --> SettlementOutbox
+        Sim --> WSEvents
+    end
+
+    subgraph Node["Node Control Plane (Render: worldofnads.onrender.com)"]
+        direction TB
+        HTTP["HTTP API & app services"]
+        InternalMatches["GET /internal/matches\nallocated/public match registry"]
+        InternalResult["POST /internal/matches/:id/result\ninternal settlement intake"]
+        RewardsRead["GET /api/rewards\ncommitted reward rows"]
+        Analytics["Analytics endpoints\nPOST/GET /analytics/*, /events snapshot"]
+        Admin["Admin/auth helpers\nverify-access, role updates, etc."]
+        Settlement["Settlement logic (Node)\nsettleRound / settlePractice"]
+        PracticeXP["Practice settle\nXP-only, idempotent markers"]
+        ChainClient["Contract client (ethers)\non-chain settle/mint/lootbox ops"]
+        FBClient["Firebase client\nmatches/users/rewards/skins"]
+    end
+
+    subgraph Storage["Data Stores"]
+        Firebase[("Firebase RTDB\nmatches, users, rewards,\nskins/profile/roles")]
+        Postgres[("PostgreSQL\nanalytics_events")]
+    end
+
+    subgraph Chain["Monad Testnet Contracts (EVM)"]
+        ME["WONsMatchEngine"]
+        LB["WONsLootBox"]
+        XP["WONsXP"]
+        SK["WONsSkins"]
+    end
+
+    %% Client <-> Rust realtime protocol
+    PM <-->|"connect / state_full / state_delta / reward_update"| WSGame
+    PM -->|"update_state / pickup_request / use_request / drop_request / request_full_state"| WSGame
+    EventsBridge <-->|"events WS subscription"| WSEvents
+
+    %% Control-plane interactions
+    Registry <-->|"Match allocation snapshot\n(x-internal-secret)"| InternalMatches
+    SettlementOutbox -->|"Round result payload\n(room, winner, players, pool/rewards meta)\nretry on 408/425/429/transient"| InternalResult
+
+    InternalResult --> Settlement
+    Settlement -->|"Sponsored/escrowed match"| ChainClient
+    Settlement -->|"No pool / practice room\ncredit XP only"| PracticeXP
+    Settlement --> FBClient
+    PracticeXP --> FBClient
+
+    ChainClient --> ME
+    ChainClient --> LB
+    ChainClient --> XP
+    ChainClient -. "skin/market ops as implemented" .-> SK
+
+    FBClient <--> Firebase
+    RewardsRead <--> FBClient
+    HTTP --> RewardsRead
+    HTTP --> Analytics
+    HTTP --> Admin
+    Analytics <--> Postgres
+
+    %% Frontend API/data usage
+    UI <-->|"HTTP: rewards, analytics, admin, skins/profile APIs"| HTTP
+    UI <-.->|"Firebase SDK (selected app data flows)"| Firebase
+    UI -.->|"Optional wallet/chain actions\n(sponsor/skin flows where enabled)"| ChainClient
+
+    %% Game result visibility back to clients
+    Settlement -->|"Committed reward rows / match state updates"| Firebase
+    Firebase -->|"Dashboard Rewards tab fetch via API"| RewardsRead
+    RewardsTick -->|"Live HUD/session XP/MON/pool updates"| PM
+    Round -->|"Winner/result events"| EventsBridge

@@ -1,0 +1,96 @@
+---
+title: "World of Nads - System Architecture (High Level)"
+---
+flowchart TB
+    %% High-level view of current codebase/runtime architecture
+
+    subgraph Clients["Client Layer"]
+        WebUser["Web Player\n(Browser)"]
+        AndroidUser["Android Player\n(Native APK)"]
+
+        subgraph WebClient["Frontend Web App (React/Vite, Vercel)"]
+            ReactUI["React UI\nHome / Dashboard / Play / Admin"]
+            Privy["Privy Auth + Wallet UX"]
+            GodotWeb["Embedded Godot Web Client\n(WASM export in frontend/public/godot)"]
+            ReactUI --> Privy
+            ReactUI --> GodotWeb
+        end
+
+        subgraph NativeClient["Godot Native Client (Android)"]
+            GodotNative["Godot Android Build\nLogin / Dashboard / Gameplay"]
+        end
+
+        WebUser --> ReactUI
+        AndroidUser --> GodotNative
+    end
+
+    subgraph Realtime["Realtime Game Infrastructure (Render)"]
+        RustRoom["Rust Room Server\nwons-room-server\n(Axum + Tokio + WebSockets)"]
+        RustSim["Per-room authoritative simulation\n20 Hz tick, AOI replication,\nitem/storm/reward logic"]
+        RustEvents["Realtime events feed\nWS /events + in-room event publish"]
+        RustHealth["Health endpoint\nGET /health"]
+        RustRoom --> RustSim
+        RustRoom --> RustEvents
+        RustRoom --> RustHealth
+    end
+
+    subgraph ControlPlane["Node Control Plane & Services (Render: worldofnads.onrender.com)"]
+        NodeHTTP["Node HTTP API\n(Express-style handlers)"]
+        NodeInternal["Internal endpoints\n/internal/matches, /internal/matches/:id/result\n(x-internal-secret)"]
+        AnalyticsAPI["Analytics API\n/events snapshot, /analytics/*, admin verify/roles"]
+        RewardsAPI["Rewards & profile APIs\n/api/rewards, skin/user endpoints"]
+        SettlementSvc["Settlement orchestration\n(practice XP settle + on-chain settlement helpers)"]
+        NodeHTTP --> AnalyticsAPI
+        NodeHTTP --> RewardsAPI
+        NodeHTTP --> NodeInternal
+        NodeHTTP --> SettlementSvc
+    end
+
+    subgraph Data["Data & Persistence"]
+        Firebase["Firebase RTDB\nusers, matches, rewards, roles, skin/profile data"]
+        Postgres["PostgreSQL\nanalytics_events"]
+    end
+
+    subgraph Blockchain["Blockchain (Monad Testnet, EVM)"]
+        RPC["Monad RPC\nhttps://testnet-rpc.monad.xyz"]
+        MatchEngine["WONsMatchEngine\n(match create/settle/cancel, NFTs)"]
+        LootBox["WONsLootBox\n(prize pool / stream / steal / settle remainder)"]
+        XPToken["WONsXP\n(soulbound XP minting)"]
+        Skins["WONsSkins\n(skin marketplace / ownership)"]
+        RPC --> MatchEngine
+        RPC --> LootBox
+        RPC --> XPToken
+        RPC --> Skins
+    end
+
+    subgraph ExternalOps["Deployment / Operations"]
+        Vercel["Vercel\nFrontend hosting + Godot web assets"]
+        Render["Render\nNode control plane, Rust room server, bot-runner"]
+    end
+
+    %% Client realtime connections
+    GodotWeb <-->|"Game WS (MsgPack)\nstate_full/state_delta/reward_update\nupdate_state/pickup/use/drop"| RustRoom
+    GodotWeb <-->|"Events WS /events\nevent stream"| RustRoom
+    GodotNative <-->|"Game WS (MsgPack)\nremote room server only"| RustRoom
+    GodotNative <-->|"Events WS /events"| RustRoom
+
+    %% Web app / API interactions
+    ReactUI <-->|"HTTP APIs\nanalytics, rewards, admin, skins/profile"| NodeHTTP
+    ReactUI <-->|"Firebase SDK reads/writes\n(matches/users as implemented)"| Firebase
+    Privy -.->|"Auth/session handoff\n(web identity flow)"| ReactUI
+
+    %% Control plane integrations
+    RustRoom -->|"GET /internal/matches\n(match registry, auth header)"| NodeInternal
+    RustRoom -->|"POST /internal/matches/:id/result\n(round result, retries/backoff)"| NodeInternal
+    SettlementSvc <-->|"Read/write match, user, reward state"| Firebase
+    SettlementSvc -->|"On-chain settlement / XP / lootbox ops\n(via contract client, sponsored matches)"| RPC
+    AnalyticsAPI <-->|"Store/query analytics events"| Postgres
+    NodeHTTP <-->|"General app data access"| Firebase
+
+    %% Notes on optional wallet/chain usage from client side
+    ReactUI -.->|"Optional wallet tx flows\n(sponsor/skin actions when enabled)"| RPC
+
+    %% Deployment relations
+    Vercel -. hosts .-> WebClient
+    Render -. hosts .-> RustRoom
+    Render -. hosts .-> ControlPlane
