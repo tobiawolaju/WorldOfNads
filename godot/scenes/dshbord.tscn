@@ -209,6 +209,7 @@ environment = ExtResource("3_u8sr6")
 
 [node name="KeyLight" type="DirectionalLight3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=2128399815]
 transform = Transform3D(0.7071068, 0, -0.7071068, -0.4082483, 0.8164966, -0.4082483, 0.5773503, 0.5773503, 0.5773503, 10, 10, 10)
+light_color = Color(0.43137255, 0.32941177, 1, 1)
 light_energy = 2.5
 
 [node name="FillLight" type="DirectionalLight3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=962142359]
@@ -218,6 +219,7 @@ light_energy = 0.4
 
 [node name="RimLight" type="OmniLight3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=538117877]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, -10)
+light_color = Color(1, 1, 0, 1)
 light_energy = 0.4
 omni_range = 25.0
 

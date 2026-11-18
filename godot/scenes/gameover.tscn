@@ -152,12 +152,12 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="BoxContainer6" type="BoxContainer" parent="ColorBG/Result"]
+[node name="BoxContainer6" type="BoxContainer" parent="ColorBG/Result" unique_id=128446228]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="MonEarned" type="Label" parent="ColorBG/Result/BoxContainer6"]
+[node name="MonEarned" type="Label" parent="ColorBG/Result/BoxContainer6" unique_id=1639038816]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.84313726, 0, 1)
