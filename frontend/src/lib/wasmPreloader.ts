@@ -199,10 +199,10 @@ export async function preloadGodotWasm(options: PreloadOptions = {}): Promise<Pr
       }
 
       // 2. Select target files:
-      // index.js (370 KB) and index.wasm (33 MB)
+      // index.js (0.3 MB) and index.wasm (31 MiB)
       const filesToLoad = ["/godot/index.js", "/godot/index.wasm"];
 
-      // Only attempt 69MB index.pck if specifically requested, on high tier, unmetered
+      // Only attempt the 81 MiB index.pck if specifically requested, on high tier, unmetered
       const profile = getDeviceProfile();
       if (includePck && profile.tier === "high" && !isLowEndDevice()) {
         filesToLoad.push("/godot/index.pck");
