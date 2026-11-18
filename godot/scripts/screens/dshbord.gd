@@ -1625,7 +1625,7 @@ func _reward_meta(row: Dictionary) -> String:
 		parts.append("pending")
 	elif str(row.get("txHash", "")).strip_edges() != "":
 		parts.append("paid")
-	return " ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ".join(parts)
+	return " ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ".join(parts)
 
 
 # ISO timestamp -> "13 Nov 2026". Deliberately string-only: the rows mix ISO
@@ -2580,7 +2580,7 @@ func _open_wallet_link_dialog(skin_id: String) -> void:
 
 	_wallet_link_input = LineEdit.new()
 	_wallet_link_input.secret = true
-	_wallet_link_input.placeholder_text = "0xÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ private key"
+	_wallet_link_input.placeholder_text = "0xÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ private key"
 	_wallet_link_input.text_changed.connect(func(_text: String) -> void:
 		if _wallet_link_status != null:
 			_wallet_link_status.text = "")
@@ -2658,7 +2658,7 @@ func _wallet_link_error_text(code: String) -> String:
 		"no_wallet_on_account":
 			return "This account has no wallet yet. Log in on the web first."
 		"mint_cooldown":
-			return "One moment ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â a mint just started."
+			return "One moment ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â a mint just started."
 		_:
 			return "Linking failed. Try again."
 
@@ -2849,7 +2849,17 @@ func _update_lobby_bg() -> void:
 	if _bg_tween != null and _bg_tween.is_valid():
 		_bg_tween.kill()
 
-	var width := maxf(_lobby_bg.size.x, 1.0)
+	var vp_w := float(ProjectSettings.get_setting("display/window/size/viewport_width", 500))
+	if is_inside_tree():
+		var vp := get_viewport()
+		if vp != null and vp.get_visible_rect().size.x >= 50.0:
+			vp_w = vp.get_visible_rect().size.x
+	var width := _lobby_bg.get_rect().size.x
+	if width < 50.0:
+		width = _lobby_bg.size.x
+	if width < 50.0:
+		width = vp_w * 0.65
+	width = maxf(width, 1.0)
 	var enter_from := width * LOBBY_BG_SLIDE_OFFSET if direction == "right" else -width * LOBBY_BG_SLIDE_OFFSET
 	var exit_to := -width * LOBBY_BG_SLIDE_OFFSET if direction == "right" else width * LOBBY_BG_SLIDE_OFFSET
 
