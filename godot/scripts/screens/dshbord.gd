@@ -125,6 +125,7 @@ const C_PIP_OFF: Color = Color(0.72, 0.72, 0.72, 0.2)
 const TAB_EVENTS: String = "events"
 const TAB_REWARDS: String = "rewards"
 const TAB_STORE: String = "store"
+const TAB_ORDER := [TAB_EVENTS, TAB_REWARDS, TAB_STORE]
 
 const EVENT_STATUSES := ["upcoming", "live", "completed"]
 const STORE_TIERS := ["all", "common", "rare", "epic", "legendary"]
@@ -150,6 +151,8 @@ const VARIANT_BORDER_WIDTH: int = 2
 @onready var _preview_viewport: SubViewport = get_node_or_null("CanvasLayer/PreviewView/SubViewport") as SubViewport
 @onready var _preview_camera: Camera3D = get_node_or_null("CanvasLayer/PreviewView/SubViewport/Camera3D") as Camera3D
 @onready var _lobby_bg: Control = get_node_or_null("CanvasLayer/LobbyBg") as Control
+@onready var _lobby_bg_current: TextureRect = get_node_or_null("CanvasLayer/LobbyBg/Current") as TextureRect
+@onready var _lobby_bg_prev: TextureRect = get_node_or_null("CanvasLayer/LobbyBg/Prev") as TextureRect
 @onready var _stat_rail: Control = get_node_or_null("CanvasLayer/StatRail") as Control
 @onready var _energy_pips: HBoxContainer = get_node_or_null("CanvasLayer/StatRail/EnergyPill/EnergyPips") as HBoxContainer
 @onready var _mon_pill: Control = get_node_or_null("CanvasLayer/StatRail/MonPill") as Control
@@ -230,6 +233,12 @@ var _preview_pinch_last: float = -1.0
 var _tab_buttons: Dictionary = {}
 var _filter_buttons: Dictionary = {}
 var _texture_cache: Dictionary = {}
+
+# Sliding lobby backdrop (Dashboard.tsx: prev/current layers + directional slide).
+var _bg_current_key: String = ""
+var _bg_prev_tab: String = TAB_EVENTS
+var _bg_prev_match_id: String = ""
+var _bg_tween: Tween = null
 var _plate_gradient: GradientTexture2D = null
 var _plate_gradient_gray: GradientTexture2D = null
 
@@ -801,15 +810,12 @@ const LOBBY_BG_ASPECT: float = 1216.0 / 523.0
 func _layout_lobby_bg() -> void:
 	if _lobby_bg == null:
 		return
-	var rect := _lobby_bg as TextureRect
-	if rect == null:
-		return
 	var preview_width := get_viewport().get_visible_rect().size.x * 0.65
 	if _preview_view != null and _preview_view.size.x > 0.0:
 		preview_width = _preview_view.size.x
 	var height := preview_width / LOBBY_BG_ASPECT
-	rect.offset_top = -height * 0.5
-	rect.offset_bottom = height * 0.5
+	_lobby_bg.offset_top = -height * 0.5
+	_lobby_bg.offset_bottom = height * 0.5
 
 
 func _apply_preview_skin(skin_id: String) -> void:
@@ -1619,7 +1625,7 @@ func _reward_meta(row: Dictionary) -> String:
 		parts.append("pending")
 	elif str(row.get("txHash", "")).strip_edges() != "":
 		parts.append("paid")
-	return " · ".join(parts)
+	return " ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ".join(parts)
 
 
 # ISO timestamp -> "13 Nov 2026". Deliberately string-only: the rows mix ISO
@@ -2116,15 +2122,11 @@ func _refresh_skin_preview() -> void:
 	var visible := tab == TAB_STORE and selected_store_id != ""
 	if _skin_preview != null:
 		_skin_preview.visible = visible
-	# `{tab !== "store" && <div className="lobby-bg">}` - the backdrop only shows
-	# while the preview pane is showing the gallery background.
+	# Dashboard.tsx always renders the lobby backdrop: store/rewards use fixed art,
+	# events follows the selected match. Transitions slide like the frontend.
 	if _lobby_bg != null:
-		_lobby_bg.visible = tab != TAB_STORE
-		# The big backdrop follows the selected match's chosen artwork, the same
-		# way Dashboard.tsx does.
-		var rect := _lobby_bg as TextureRect
-		if rect != null:
-			rect.texture = _lobby_bg_texture(_selected_match())
+		_lobby_bg.visible = true
+	_update_lobby_bg()
 	_build_skin_variants()
 	if not visible:
 		return
@@ -2578,7 +2580,7 @@ func _open_wallet_link_dialog(skin_id: String) -> void:
 
 	_wallet_link_input = LineEdit.new()
 	_wallet_link_input.secret = true
-	_wallet_link_input.placeholder_text = "0x… private key"
+	_wallet_link_input.placeholder_text = "0xÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ private key"
 	_wallet_link_input.text_changed.connect(func(_text: String) -> void:
 		if _wallet_link_status != null:
 			_wallet_link_status.text = "")
@@ -2656,7 +2658,7 @@ func _wallet_link_error_text(code: String) -> String:
 		"no_wallet_on_account":
 			return "This account has no wallet yet. Log in on the web first."
 		"mint_cooldown":
-			return "One moment — a mint just started."
+			return "One moment ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â a mint just started."
 		_:
 			return "Linking failed. Try again."
 
@@ -2743,6 +2745,10 @@ func _load_texture(path: String) -> Texture2D:
 # falls back to the same stable hash the web dashboard uses
 # (frontend/src/data/lobbyBackgrounds.js) - never a random image.
 const LOBBY_BG_COUNT := 9
+const STORE_BG_PATH: String = "res://assets/img/lobbybg/storebg.jpg"
+const REWARDS_BG_PATH: String = "res://assets/img/lobbybg/rewrdsbg.jpg"
+const LOBBY_BG_SLIDE_DURATION: float = 0.45
+const LOBBY_BG_SLIDE_OFFSET: float = 0.3
 
 func _stable_lobby_bg(match_id: String) -> String:
 	if match_id.is_empty() or LOBBY_BG_COUNT <= 0:
@@ -2753,12 +2759,145 @@ func _stable_lobby_bg(match_id: String) -> String:
 	return "lobby (%d).jpg" % ((h % LOBBY_BG_COUNT) + 1)
 
 
+const LOBBY_BG_BASE_ALPHA := 0.5
+
+
 func _lobby_bg_texture(match: Dictionary) -> Texture2D:
 	var bg := str(match.get("lobby_bg", ""))
 	if bg.is_empty():
 		bg = _stable_lobby_bg(str(match.get("match_id", "")))
 	var texture := _load_texture("res://assets/img/lobbybg/%s" % bg.get_file())
 	return texture if texture != null else MATCH_SRC
+
+
+# The active backdrop, mirroring Dashboard.tsx: store/rewards use fixed art,
+# events follows the selected match (its chosen `lobby_bg`, or a stable hash).
+func _active_lobby_bg() -> Dictionary:
+	if tab == TAB_STORE:
+		return {"key": "tab:store", "texture": _load_texture(STORE_BG_PATH)}
+	if tab == TAB_REWARDS:
+		return {"key": "tab:rewards", "texture": _load_texture(REWARDS_BG_PATH)}
+	var match := _selected_match()
+	var match_id := str(match.get("match_id", selected_match_id))
+	var bg_name := str(match.get("lobby_bg", ""))
+	if bg_name.is_empty():
+		bg_name = _stable_lobby_bg(match_id)
+	return {
+		"key": "match:%s:%s" % [match_id, bg_name.get_file()],
+		"texture": _lobby_bg_texture(match),
+	}
+
+
+func _tab_index(t: String) -> int:
+	return TAB_ORDER.find(t)
+
+
+func _match_index(match_id: String) -> int:
+	for i in matches.size():
+		if str(matches[i].get("match_id", "")) == match_id:
+			return i
+	return -1
+
+
+# Slide the lobby backdrop when the active image changes (tab switch or selected
+# match), matching the frontend's 0.45s directional enter/exit transition.
+func _update_lobby_bg() -> void:
+	if _lobby_bg_current == null or _lobby_bg == null:
+		return
+	var target: Dictionary = _active_lobby_bg()
+	var next_key := str(target.get("key", ""))
+	var next_tex: Texture2D = target.get("texture", null)
+	if next_tex == null:
+		next_tex = MATCH_SRC
+
+	# First paint: show the image without a transition, like Dashboard.tsx's
+	# initial currentBgSrc.
+	if _bg_current_key == "":
+		_bg_current_key = next_key
+		_bg_prev_tab = tab
+		_bg_prev_match_id = selected_match_id
+		_apply_bg_layer(_lobby_bg_current, next_tex, 0.0, LOBBY_BG_BASE_ALPHA)
+		_apply_bg_layer(_lobby_bg_prev, null, 0.0, 0.0)
+		if _lobby_bg_prev != null:
+			_lobby_bg_prev.visible = false
+		return
+
+	if next_key == _bg_current_key:
+		# State (e.g. the selected match's metadata) may have refreshed without
+		# changing the image; keep the texture in sync but do not re-animate.
+		_lobby_bg_current.texture = next_tex
+		_bg_prev_tab = tab
+		_bg_prev_match_id = selected_match_id
+		return
+
+	var direction := "right"
+	if _bg_prev_tab != tab:
+		direction = "right" if _tab_index(tab) >= _tab_index(_bg_prev_tab) else "left"
+	elif tab == TAB_EVENTS and _bg_prev_match_id != selected_match_id:
+		var prev_idx := _match_index(_bg_prev_match_id)
+		var next_idx := _match_index(selected_match_id)
+		if prev_idx != -1 and next_idx != -1:
+			direction = "right" if next_idx >= prev_idx else "left"
+	_bg_prev_tab = tab
+	_bg_prev_match_id = selected_match_id
+
+	var old_tex: Texture2D = _lobby_bg_current.texture
+	var old_offset := _lobby_bg_current.position.x
+	var old_alpha := _lobby_bg_current.modulate.a
+	_bg_current_key = next_key
+
+	if _bg_tween != null and _bg_tween.is_valid():
+		_bg_tween.kill()
+
+	var width := maxf(_lobby_bg.size.x, 1.0)
+	var enter_from := width * LOBBY_BG_SLIDE_OFFSET if direction == "right" else -width * LOBBY_BG_SLIDE_OFFSET
+	var exit_to := -width * LOBBY_BG_SLIDE_OFFSET if direction == "right" else width * LOBBY_BG_SLIDE_OFFSET
+
+	# Previous layer exits opposite the movement; current layer enters from it.
+	if _lobby_bg_prev != null:
+		_lobby_bg_prev.visible = true
+		_lobby_bg_prev.texture = old_tex
+		_lobby_bg_prev.position.x = old_offset
+		_lobby_bg_prev.modulate.a = old_alpha
+
+	_lobby_bg_current.texture = next_tex
+	_lobby_bg_current.position.x = enter_from
+	_lobby_bg_current.modulate.a = 0.0
+	_lobby_bg_current.visible = true
+
+	_bg_tween = create_tween()
+	_bg_tween.set_parallel(true)
+	_bg_tween.set_trans(Tween.TRANS_CUBIC)
+	_bg_tween.set_ease(Tween.EASE_OUT)
+	_bg_tween.tween_property(_lobby_bg_current, "position:x", 0.0, LOBBY_BG_SLIDE_DURATION)
+	_bg_tween.tween_property(_lobby_bg_current, "modulate:a", LOBBY_BG_BASE_ALPHA, LOBBY_BG_SLIDE_DURATION)
+	if _lobby_bg_prev != null:
+		_bg_tween.tween_property(_lobby_bg_prev, "position:x", exit_to, LOBBY_BG_SLIDE_DURATION)
+		_bg_tween.tween_property(_lobby_bg_prev, "modulate:a", 0.0, LOBBY_BG_SLIDE_DURATION)
+	_bg_tween.set_parallel(false)
+	_bg_tween.tween_callback(_finish_lobby_bg_transition)
+
+
+func _apply_bg_layer(layer: TextureRect, texture: Texture2D, offset_x: float, alpha: float) -> void:
+	if layer == null:
+		return
+	layer.texture = texture
+	layer.position.x = offset_x
+	var c := layer.modulate
+	c.a = alpha
+	layer.modulate = c
+	layer.visible = texture != null and alpha > 0.0
+
+
+func _finish_lobby_bg_transition() -> void:
+	if _lobby_bg_current != null:
+		_lobby_bg_current.position.x = 0.0
+		_lobby_bg_current.modulate.a = LOBBY_BG_BASE_ALPHA
+	if _lobby_bg_prev != null:
+		_lobby_bg_prev.position.x = 0.0
+		_lobby_bg_prev.modulate.a = 0.0
+		_lobby_bg_prev.texture = null
+		_lobby_bg_prev.visible = false
 
 
 # The match-card shader's artwork. It is the record's `image` when it has one
