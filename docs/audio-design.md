@@ -292,6 +292,9 @@ godot/scripts/audio/audio.gd          # autoload "Audio"
 godot/scripts/audio/sound_library.gd  # id -> SoundDef dictionary
 godot/scripts/audio/audio_emitter.gd  # follows a Node3D (engine, bee, chicken)
 godot/scripts/audio/audio_settings.gd # user://audio.cfg
+godot/scenes/fx3d.tscn                # per-world particle/effect host
+godot/scripts/fx/fx3d.gd              # FX3D.ensure() / spawn() / sound()
+godot/scripts/fx/fx_library.gd        # effect id -> PackedScene + caps
 godot/default_bus_layout.tres         # Master / Music / Ambience / SFX / UI / World
 ```
 
@@ -398,6 +401,79 @@ panel; Ambience follows SFX if there is no fourth slider.
   it on unlock.
 - Keep BGM at OGG; the web build streams it, so RAM stays flat.
 
+### 5.8 World FX host (`FX3D`) and effect replication
+
+**Where 3D sound lives.** Not in `busyland.tscn`. A 3D emitter is just a node at a
+world position in whatever scene is current; the listener is that scene's camera.
+So the lobby and gameplay each get their own set of 3D voices at runtime and the
+map stays pure geometry. `gameplay.tscn` and `lobby.tscn` both instance
+`busyland.tscn`, which is why the map is the one place *not* to attach audio.
+
+**Two owners, one API.**
+
+| Layer | Owns | Must not own |
+| --- | --- | --- |
+| `Audio` (autoload) | buses, settings, music, 2D SFX, **all** voice budgeting/culling | particles |
+| `FX3D` (per world) | particle pools, effect recipes, replication entry point | audio streams / players |
+
+One voice budget matters: two systems would double-count and clip, and the
+100-bot lobby needs a single global cap. So `FX3D.sound()` is a thin facade over
+`Audio.play_at()`.
+
+**Where `FX3D` is created.** `FX3D.ensure(get_tree().current_scene)` from
+`lobby.gd::_ready()` and `PlayerManager._ready()`; it checks the `fx3d` group and
+returns the existing node, so it is idempotent. The alternative — adding it to
+`busyland.tscn` — costs zero code and is automatic in both scenes, but puts
+gameplay logic in the 52 MB map asset. Use `ensure()`.
+
+**What it holds.**
+
+- pooled `GPUParticles3D` per effect id: `smoke`, `explosion`, `dirt_hit`,
+  `blood_hit`, `confetti`, `death_dissolve`
+- `FX3D.spawn(id, position, opts)` / `spawn_on(id, node3d, opts)`
+- `FX3D.sound(id, position, opts)` → `Audio.play_at`
+- `FX3D.attach(id, node3d)` → `Audio.play_on` for engine / bee / chicken loops
+- hard caps per id, oldest recycled (smoke already does this with
+  `MAX_SMOKE_CLOUDS = 6`)
+
+**Why the audio players are not in the FX scene.** The pool has to be global to
+enforce caps, node-following loops must die with their node, and scene changes
+must not kill music. `Audio` parents its pooled 3D players to
+`get_tree().current_scene` at runtime and re-creates them on `scene_changed`.
+Positions are world-correct, cleanup is automatic, the budget stays global.
+
+**Replication: the server never triggers a node.** It broadcasts an event and
+every client calls `FX3D`. The Rust room already relays `client_event` to the
+room `/events` socket with `meta` (flat string/number/bool, keys ≤ 40 chars), so
+`{x, y, z, seed, lifetime}` fits, and `sanitize_meta` keeps it small.
+
+Two constraints found in the current code:
+
+1. `publish_event()` also appends to `event_history`, and
+   `Events.gd::_render_event()` renders every non-empty `message` into the feed
+   (5 rows). A smoke cloud every 0.6 s per player would spam the feed and push
+   real chat out of the snapshot history.
+2. `client_event` is only published when `message` is non-empty.
+
+So effects need a **non-persisted FX path**, not the chat feed:
+
+- Rust: `publish_fx(...)` → `pending_fx` → `TickOutput.fx` → broadcast on the
+  same events sockets, no `event_history` entry (or `publish_event(..., persist:
+  false)`).
+- Godot: `Events.gd` routes `eventType == "fx"` to `FX3D` and returns before
+  `_push_event_line`.
+- Sender: `PlayerManager.send_client_event("fx", "smoke", {x, y, z, seed, radius})`.
+
+Sender echo: broadcast reaches the sender too. Spawn locally on the same frame
+(zero latency), then ignore the echo where `playerId` is the local player.
+
+**Smoke specifically.** `player.gd::_spawn_smoke_cloud()` is already documented
+as the network seam and the cloud is deterministic (`setup(radius, seed)`), so
+replication is small: local spawn + one `fx` event; receivers call
+`FX3D.spawn("smoke", pos, {seed, radius})`. Smoke blocks vision, so today's
+local-only behaviour is also a fairness gap — the owner sees a cloud nobody else
+can see. Rate limit: 1 per 0.4 s per player, global 12/s, drop the rest.
+
 ---
 
 ## 6. Hook map (implementation checklist)
@@ -428,6 +504,10 @@ panel; Ambience follows SFX if there is no fourth slider.
 | `scripts/player/PlayerManager.gd` | `_handle_chicken_state_event`, `_handle_lootbox_state_event` | `objective_steal`, `chicken_*` |
 | `scripts/player/PlayerManager.gd` | `_emit_player_event`, `_show_local_event` | `player_join`, `player_leave`, `ui_toast` |
 | `scripts/player/PlayerManager.gd` | `_on_reconnect_success`, `_give_up_reconnection` | `reconnect_ok`, `reconnect_fail` |
+| `scripts/player.gd` | `_spawn_smoke_cloud` | `power_smoke_pop` + `FX3D.spawn("smoke")` + `fx` event |
+| `scripts/player.gd` | `_spawn_twin_decoy`, `_despawn_twin_decoy` | `power_twin`, `power_twin_pop` |
+| `scripts/Events.gd` | `_render_event` | route `eventType == "fx"` to `FX3D`, skip feed |
+| `scripts/fx/fx3d.gd` | `spawn` / `sound` / `attach` | all 3D world ids |
 | `scenes/props/monster.gd` | attack / idle | `monster_*` |
 | `scenes/bee.gd` | hover | `bee_loop` |
 | `scripts/ui/buttons.gd` | `_ready` connections | `ui_click` (global default) |
@@ -449,8 +529,10 @@ Footsteps, jump/land, slide, climb, stamina, weapons, hit marker, hurt/death,
 respawn. Local player 2D only. This is where the game starts feeling real.
 
 **Phase 3 — world**
-3D pool + culling, remote players, impacts, pickups, chicken/lootbox, storm,
-monster, bee, vehicles.
+3D pool + culling, `FX3D` host + particle pooling, remote players, impacts,
+pickups, chicken/lootbox, storm, monster, bee, vehicles. Includes the
+non-persisted `fx` event path so smoke and explosions are identical on every
+client.
 
 **Phase 4 — mix**
 Ducking, low-health filter, concurrency tuning on the 100-bot lobby, pause
@@ -487,3 +569,7 @@ Announcer VO if wanted, destructible props, extra ambience, final-loop layer.
    sourcing list by ~8 recordings.
 4. Any reference game for the mix (e.g. Fall Guys bright and cartoonish vs.
    Stumble Guys arcade-loud)?
+5. Effects replication touches `backend-rust`: OK to add a non-persisted `fx`
+   broadcast next to the existing event channel? Without it, smoke has to ride
+   the chat feed (spams the 5-row feed and the history snapshot) or stay
+   local-only (unfair, since it blocks vision).
