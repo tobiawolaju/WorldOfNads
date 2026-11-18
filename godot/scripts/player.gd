@@ -2,6 +2,8 @@ extends CharacterBody3D
 
 
 # -- CONSTANTS ---
+const FX3D_SCRIPT: GDScript = preload("res://scripts/fx/fx3d.gd")
+const FX3D_SCENE: PackedScene = preload("res://scenes/fx3d.tscn")
 const GRAVITY: float = 18
 const JUMP_VELOCITY: float = 6
 const SPEED: float = 4.00
@@ -53,10 +55,10 @@ const SMOKE_DURATION: float = 8.0
 const SMOKE_CLOUD_RADIUS: float = 7.0
 ## Minimum seconds between drops while the SMOG window is running.
 const SMOKE_DROP_COOLDOWN: float = 0.6
-## Hard cap on simultaneous clouds; the oldest is recycled beyond this.
-const MAX_SMOKE_CLOUDS: int = 6
-## The standalone cloud prefab. Spawned under the scene root (not the player) so
-## it stays put, and so multiplayer can replicate it by position + seed.
+## The standalone cloud prefab. Kept for the warm-up path only; real drops go
+## through FX3D, which owns the per-world instance cap.
+## Spawned under the scene root (not the player) so it stays put, and so
+## multiplayer can replicate it by position + seed.
 const SMOKE_CLOUD_SCENE := preload("res://scenes/smoke_cloud.tscn")
 ## Shared empty result from get_active_power_up(), so the idle case allocates nothing.
 const NO_ACTIVE_POWER_UP := {}
@@ -348,8 +350,6 @@ var _twin_decoy_mesh: Node3D = null
 var _twin_world_offset: Vector3 = Vector3.ZERO
 ## Seconds until the next SMOG cloud may be dropped.
 var _smoke_drop_cooldown: float = 0.0
-## Live smog clouds this player spawned, for the concurrent-cloud cap.
-var _smoke_clouds: Array = []
 ## Set once the SMOG effect's sprite + shader have been warmed up, so respawns and
 ## later matches in the same process don't pay to build them again.
 static var _smoke_prewarmed: bool = false
@@ -2663,38 +2663,18 @@ func _try_drop_smoke_cloud() -> void:
 	_spawn_smoke_cloud(drop_position, rng.randi())
 
 
-# Network seam: today this just spawns the cloud locally. The multiplayer version
-# replaces the body with an RPC that broadcasts the same position + seed, so every
-# client builds an identical cloud without touching the cloud itself.
+# Network seam: the cloud is spawned through FX3D, the single world-effect host.
+# The multiplayer version forwards the same position + seed as an `fx` event;
+# every client calls FX3D.spawn_from_event() and rebuilds an identical cloud
+# without touching the cloud itself.
 func _spawn_smoke_cloud(world_position: Vector3, spawn_seed: int) -> void:
-	var cloud := SMOKE_CLOUD_SCENE.instantiate() as Node3D
-	if cloud == null:
+	var fx = FX3D_SCRIPT.ensure(null, FX3D_SCENE)
+	if fx == null:
 		return
-	cloud.call("setup", SMOKE_CLOUD_RADIUS, spawn_seed)
-	var parent := get_tree().current_scene
-	if parent == null:
-		parent = get_parent()
-	if parent == null:
-		cloud.queue_free()
-		return
-	parent.add_child(cloud)
-	cloud.global_position = world_position
-	_track_smoke_cloud(cloud)
-
-
-# Keeps at most MAX_SMOKE_CLOUDS alive by recycling the oldest when full. Clouds
-# free themselves after their own lifetime, so this only hears about the extras.
-func _track_smoke_cloud(cloud: Node3D) -> void:
-	var alive: Array = []
-	for existing in _smoke_clouds:
-		if is_instance_valid(existing) and not existing.is_queued_for_deletion():
-			alive.append(existing)
-	_smoke_clouds = alive
-	while _smoke_clouds.size() >= MAX_SMOKE_CLOUDS:
-		var oldest = _smoke_clouds.pop_front()
-		if is_instance_valid(oldest):
-			oldest.queue_free()
-	_smoke_clouds.append(cloud)
+	fx.spawn("smoke", world_position, {
+		"seed": spawn_seed,
+		"radius": SMOKE_CLOUD_RADIUS,
+	})
 
 
 # Starts (or replaces) the single timed power-up the HUD draws a ring for.

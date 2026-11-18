@@ -14,6 +14,8 @@ const ROOM_URL: String = "wss://wons-room-server.onrender.com"
 ## only, so the client never silently drops into an offline room.
 const DEFAULT_SKIN_NAME: String = "s-default"
 const SKIN_SCENE_PATH: String = "res://scenes/skin.tscn"
+const FX3D_SCRIPT: GDScript = preload("res://scripts/fx/fx3d.gd")
+const FX3D_SCENE: PackedScene = preload("res://scenes/fx3d.tscn")
 
 static var _skin_applier: SkinApplier = SkinApplier.new()
 const SKIN_NAME_ALIASES: Dictionary = {
@@ -272,6 +274,7 @@ const API_BASE: String = "https://worldofnads.onrender.com"
 func _ready():
 	instance = self
 	add_to_group("player_manager")
+	FX3D_SCRIPT.ensure(null, FX3D_SCENE)
 	_resolve_local_username()
 	_resolve_local_skin_name()
 	_resolve_local_match_id()

@@ -420,11 +420,41 @@ One voice budget matters: two systems would double-count and clip, and the
 100-bot lobby needs a single global cap. So `FX3D.sound()` is a thin facade over
 `Audio.play_at()`.
 
-**Where `FX3D` is created.** `FX3D.ensure(get_tree().current_scene)` from
-`lobby.gd::_ready()` and `PlayerManager._ready()`; it checks the `fx3d` group and
-returns the existing node, so it is idempotent. The alternative — adding it to
-`busyland.tscn` — costs zero code and is automatic in both scenes, but puts
-gameplay logic in the 52 MB map asset. Use `ensure()`.
+**Where `FX3D` is created.** `ensure()` from `lobby.gd::_ready()`,
+`PlayerManager._ready()` and `player.gd::_spawn_smoke_cloud()`:
+
+```gdscript
+const FX3D_SCRIPT: GDScript = preload("res://scripts/fx/fx3d.gd")
+const FX3D_SCENE: PackedScene = preload("res://scenes/fx3d.tscn")
+...
+FX3D_SCRIPT.ensure(self, FX3D_SCENE)   # lobby root
+FX3D_SCRIPT.ensure(null, FX3D_SCENE)   # current scene
+```
+
+Two details that are load-bearing:
+
+1. **The preload is not optional.** Godot's exporter only follows real resource
+   dependencies, so a `load("res://scenes/fx3d.tscn")` string would be dropped
+   from the pck (the same trap as `assets/img/lobbybg`). `FXLibrary` therefore
+   holds `PackedScene` preloads, not paths.
+2. **The add is deferred while a scene root is setting up children.** Calling
+   `add_child()` from another node's `_ready()` fails with "Parent node is busy
+   setting up children", so `ensure()` defers it and stamps the host on the scene
+   root's metadata, which also makes repeat calls idempotent. Effects spawned in
+   that window park their world position in metadata and get it applied when the
+   host enters the tree.
+
+The alternative — adding it to `busyland.tscn` — costs zero code and is automatic
+in both scenes, but puts gameplay logic in the 52 MB map asset. Use `ensure()`.
+
+Headless regression check:
+
+```
+godot --headless --path godot --script res://tools/fx3d_check.gd
+```
+
+Covers idempotent `ensure()`, `spawn()`, the per-id cap, `spawn_from_event()` and
+unknown ids failing soft.
 
 **What it holds.**
 
@@ -554,6 +584,8 @@ Announcer VO if wanted, destructible props, extra ambience, final-loop layer.
 - Volume sliders persist across restarts and apply before music starts.
 - Every registry id resolves to a file; missing ids log once with the id.
 - No `AudioStreamPlayer` nodes left in gameplay scenes (grep check).
+- `godot --headless --path godot --script res://tools/fx3d_check.gd` prints
+  `FX3D check: OK`.
 - pck growth ≤ 12 MB.
 
 ---
