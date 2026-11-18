@@ -485,24 +485,32 @@ Two constraints found in the current code:
    real chat out of the snapshot history.
 2. `client_event` is only published when `message` is non-empty.
 
-So effects need a **non-persisted FX path**, not the chat feed:
+So effects can ride the existing channel without touching Rust — the two
+constraints are handled on the client:
 
-- Rust: `publish_fx(...)` → `pending_fx` → `TickOutput.fx` → broadcast on the
-  same events sockets, no `event_history` entry (or `publish_event(..., persist:
-  false)`).
-- Godot: `Events.gd` routes `eventType == "fx"` to `FX3D` and returns before
-  `_push_event_line`.
-- Sender: `PlayerManager.send_client_event("fx", "smoke", {x, y, z, seed, radius})`.
+- `Events.gd::_render_event()` intercepts `eventType == "fx"` **before** the
+  `message` check, so a "smoke" row never reaches the 5-row feed.
+- To keep `event_history` clean for real chat, the same intercept ignores `fx`
+  entries that arrive in an `events_snapshot` (`can_navigate == false`), so a
+  rejoin cannot spawn stale clouds. Live events (`can_navigate == true`) spawn.
+- Sender: `player.gd::_broadcast_fx()` calls
+  `send_client_event("fx", "smoke", {fx, x, y, z, seed, radius})` straight after
+  the local spawn. `sanitize_meta` already keeps those keys.
+
+Residual cost: each drop is still appended to `event_history` (bounded by
+`MAX_EVENT_HISTORY`) even though nobody renders it. Adding
+`publish_event(..., persist: false)` later would remove that; it is not required
+for correctness.
 
 Sender echo: broadcast reaches the sender too. Spawn locally on the same frame
 (zero latency), then ignore the echo where `playerId` is the local player.
 
-**Smoke specifically.** `player.gd::_spawn_smoke_cloud()` is already documented
-as the network seam and the cloud is deterministic (`setup(radius, seed)`), so
-replication is small: local spawn + one `fx` event; receivers call
-`FX3D.spawn("smoke", pos, {seed, radius})`. Smoke blocks vision, so today's
-local-only behaviour is also a fairness gap — the owner sees a cloud nobody else
-can see. Rate limit: 1 per 0.4 s per player, global 12/s, drop the rest.
+**Smoke specifically.** `player.gd::_try_drop_smoke_cloud()` spawns locally and
+then calls `_broadcast_fx("smoke", …)`; receivers call
+`FX3D.spawn_from_event()` → `spawn("smoke", pos, {seed, radius})`. The cloud is
+deterministic (`setup(radius, seed)`), so position + seed is all that travels.
+The existing `SMOKE_DROP_COOLDOWN` (0.6 s) is the per-player rate limit; there is
+no global cap yet, but `FX3D`'s per-world instance cap (8) bounds the damage.
 
 ---
 
@@ -534,7 +542,7 @@ can see. Rate limit: 1 per 0.4 s per player, global 12/s, drop the rest.
 | `scripts/player/PlayerManager.gd` | `_handle_chicken_state_event`, `_handle_lootbox_state_event` | `objective_steal`, `chicken_*` |
 | `scripts/player/PlayerManager.gd` | `_emit_player_event`, `_show_local_event` | `player_join`, `player_leave`, `ui_toast` |
 | `scripts/player/PlayerManager.gd` | `_on_reconnect_success`, `_give_up_reconnection` | `reconnect_ok`, `reconnect_fail` |
-| `scripts/player.gd` | `_spawn_smoke_cloud` | `power_smoke_pop` + `FX3D.spawn("smoke")` + `fx` event |
+| `scripts/player.gd` | `_try_drop_smoke_cloud` | `power_smoke_pop` + `FX3D.spawn("smoke")` + `_broadcast_fx("smoke", ...)` |
 | `scripts/player.gd` | `_spawn_twin_decoy`, `_despawn_twin_decoy` | `power_twin`, `power_twin_pop` |
 | `scripts/Events.gd` | `_render_event` | route `eventType == "fx"` to `FX3D`, skip feed |
 | `scripts/fx/fx3d.gd` | `spawn` / `sound` / `attach` | all 3D world ids |
@@ -601,7 +609,7 @@ Announcer VO if wanted, destructible props, extra ambience, final-loop layer.
    sourcing list by ~8 recordings.
 4. Any reference game for the mix (e.g. Fall Guys bright and cartoonish vs.
    Stumble Guys arcade-loud)?
-5. Effects replication touches `backend-rust`: OK to add a non-persisted `fx`
-   broadcast next to the existing event channel? Without it, smoke has to ride
-   the chat feed (spams the 5-row feed and the history snapshot) or stay
-   local-only (unfair, since it blocks vision).
+5. ~~Effects replication touches `backend-rust`~~ — resolved without a server
+   change: `fx` rides the existing `client_event` feed and is filtered in
+   `Events.gd`. A server-side `persist: false` is optional cleanup, not a
+   blocker.
