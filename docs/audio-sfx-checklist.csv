@@ -1,0 +1,133 @@
+id,category,tier,space,loop,length_s,variations,trigger,notes
+ui_click,UI / UX,1,2D,no,0.08,2,any button press,"soft click, never harsh"
+ui_back,UI / UX,1,2D,no,0.10,1,back / close button,lower pitch than click
+ui_tab,UI / UX,1,2D,no,0.12,1,dashboard tab change,short whoosh + tick
+ui_hover,UI / UX,2,2D,no,0.05,1,card / tab hover,"default off, web only"
+ui_open,UI / UX,1,2D,no,0.18,1,panel / modal in,airy swell
+ui_close,UI / UX,1,2D,no,0.15,1,panel / modal out,reverse of open
+ui_locked,UI / UX,1,2D,no,0.20,1,locked skin / not owned,dull thud + rattle
+ui_error,UI / UX,1,2D,no,0.25,1,failed action / invalid,two-note descend
+ui_confirm,UI / UX,1,2D,no,0.30,1,generic success,bright two-note rise
+ui_purchase,UI / UX,1,2D,no,0.60,1,buy / mint confirm,coin/cash sparkle
+ui_purchase_fail,UI / UX,1,2D,no,0.35,1,buy / mint rejected,buzz + error
+ui_equip,UI / UX,1,2D,no,0.35,1,equip skin,cloth flap + snap
+ui_mint_start,UI / UX,1,2D,no,1.2,1,mint submitted,"rising charge, can loop"
+ui_mint_done,UI / UX,1,2D,no,0.9,1,mint confirmed on chain,chime + chain confirm
+ui_mint_fail,UI / UX,1,2D,no,0.6,1,mint reverted / timeout,error + power down
+ui_toast,UI / UX,1,2D,no,0.10,1,event feed row appears,"quiet, fires a lot"
+ui_chat,UI / UX,2,2D,no,0.08,1,chat message,quieter than toast
+ui_count_tick,UI / UX,1,2D,no,0.16,1,3 / 2 / 1,pitch up per tick in code
+ui_count_go,UI / UX,1,2D,no,0.7,1,match start,"horn / riser, no VO needed"
+ui_match_found,UI / UX,1,2D,no,1.4,1,queue accepted,"big, this is the hook"
+ui_queue_join,UI / UX,2,2D,no,0.3,1,joined queue,
+ui_queue_cancel,UI / UX,2,2D,no,0.25,1,left queue,
+ui_card_select,UI / UX,1,2D,no,0.15,1,match card selected,
+ui_card_hover,UI / UX,2,2D,no,0.06,1,match card hover,
+ui_coin_tick,UI / UX,2,2D,no,0.05,1,MON / XP counter rolls,throttled to ~12/s
+ui_level_up,UI / UX,1,2D,no,1.6,1,level up flash,"fanfare, ducks music"
+ui_reconnect,UI / UX,1,2D,no,0.6,1,"connection dropped, retrying",
+ui_offline,UI / UX,1,2D,no,0.9,1,gave up / offline,
+mus_menu,Music and ambience,1,2D,yes,2–3 min,1,dashboard (reuse lobbysong.mp3),"already exists, keep as-is"
+mus_game,Music and ambience,1,2D,yes,90–120 s,1,lobby → gameplay,"tense, percussive, leaves room for SFX"
+mus_final,Music and ambience,2,2D,yes,30–45 s,1,last 30 s / final chicken push,or a layer over mus_game
+mus_win,Music and ambience,1,2D,no,4–6 s,1,round won,"stinger, then silence"
+mus_lose,Music and ambience,1,2D,no,4–6 s,1,round lost,"stinger, subdued"
+amb_day,Music and ambience,1,2D,yes,45–60 s,1,map bed,"wind, distant traffic, birds"
+amb_storm,Music and ambience,1,2D,yes,30 s,1,player outside the zone,"muffled roar, crossfade 1.5 s"
+amb_wall,Music and ambience,1,3D,yes,15–20 s,1,near storm wall,"electrical hum, per-wall emitter"
+amb_lobby,Music and ambience,2,2D,yes,30 s,1,lobby crowd,"very quiet, ducks under UI"
+amb_gust,Music and ambience,2,2D,no,3–5 s,1,random wind gust,randomised every 20–40 s
+amb_thunder,Music and ambience,2,2D,no,2–4 s,1,"random, storm only",
+ft_soft_01..04,Player movement,1,3D+2D,no,0.15,4,"footstep, grass/dirt",stride-locked in code
+ft_hard_01..04,Player movement,1,3D+2D,no,0.18,4,"footstep, concrete/metal",surface chosen by raycast material
+ft_water_01..02,Player movement,2,3D+2D,no,0.2,2,puddle,
+land_soft,Player movement,1,3D+2D,no,0.2,2,"landing, small fall",
+land_hard,Player movement,1,3D+2D,no,0.35,2,"landing, big fall",dust/impact
+jump,Player movement,1,3D+2D,no,0.25,2,"""Jump"" action",cloth + effort breath
+slide_start,Player movement,1,3D+2D,no,0.25,1,"""Attack"" while sprinting",gravel scuff
+slide_loop,Player movement,1,3D+2D,yes,1.0,1,while sliding,pitch follows speed
+slide_end,Player movement,1,3D+2D,no,0.2,1,slide stops,
+climb_start,Player movement,1,3D+2D,no,0.2,1,begin climb,grab + grunt
+climb_loop,Player movement,1,3D+2D,yes,1.0,1,while climbing,effort breathing
+climb_end,Player movement,1,3D+2D,no,0.2,1,climb ends,
+breath_exhausted,Player movement,1,2D,no,0.9,1,stamina hits 0,"local only, heavy pant"
+breath_recovered,Player movement,2,2D,no,0.6,1,stamina refilled,local only
+leap_whoosh,Player movement,1,3D+2D,no,0.6,1,using LEAP,
+leap_land,Player movement,1,3D,no,0.9,1,LEAP landing,impact + shockwave
+sword_swing_01..03,Weapons and combat,1,3D+2D,no,0.3,3,SWORD action,whoosh
+sword_hit_flesh,Weapons and combat,1,3D,no,0.25,2,SWORD connects,
+sword_hit_world,Weapons and combat,1,3D,no,0.25,2,SWORD hits prop,metal clang
+knife_swing_01..03,Weapons and combat,1,3D+2D,no,0.22,3,KNIFE action,"shorter, snappier"
+knife_hit_flesh,Weapons and combat,1,3D,no,0.2,2,KNIFE connects,
+knife_hit_world,Weapons and combat,1,3D,no,0.2,2,KNIFE hits prop,
+gun_pistol_01..02,Weapons and combat,1,3D+2D,no,0.5,2,GLOCK fire,tail cut under 0.6 s
+gun_pistol_dry,Weapons and combat,1,2D,no,0.1,1,GLOCK out of charges,click
+gun_ak_01..02,Weapons and combat,1,3D+2D,no,0.45,2,AK47 fire,"one per bullet, pitch jitter"
+gun_ak_dry,Weapons and combat,1,2D,no,0.1,1,AK47 empty,
+rpg_fire,Weapons and combat,1,3D+2D,no,0.9,1,RPG fire,launch + backblast
+rocket_loop,Weapons and combat,1,3D,yes,0.8,1,rocket in flight,
+rocket_boom,Weapons and combat,1,3D,no,2.2,2,rocket impact,the one sound that can be huge
+boom_debris,Weapons and combat,2,3D,no,1.5,2,after a big explosion,
+bullet_whiz_01..03,Weapons and combat,1,3D,no,0.3,3,bullet passes near you,only when within 2–3 m
+impact_concrete,Weapons and combat,1,3D,no,0.2,3,bullet hits world,
+impact_metal,Weapons and combat,1,3D,no,0.25,2,bullet hits metal,
+impact_wood,Weapons and combat,1,3D,no,0.2,2,bullet hits wood,
+impact_flesh,Weapons and combat,1,3D,no,0.2,2,bullet hits a player,
+hitmarker,Weapons and combat,1,2D,no,0.08,1,your shot connected,"tiny, high, never annoying"
+kill_confirm,Weapons and combat,1,2D,no,0.5,1,you eliminated someone,"satisfying, plays once"
+weapon_pickup_melee,Weapons and combat,1,2D,no,0.3,1,grab sword/knife,
+weapon_pickup_gun,Weapons and combat,1,2D,no,0.3,1,grab glock/ak,mag slap
+weapon_pickup_heavy,Weapons and combat,1,2D,no,0.4,1,grab RPG,heavy clunk
+weapon_stow,Weapons and combat,2,2D,no,0.2,1,weapon back to back slot,
+weapon_spawn,Weapons and combat,2,3D,no,0.6,1,pickup respawns,"shimmer, quiet"
+power_pickup,Power-ups and objectives,1,2D,no,0.4,1,grab any power-up,
+power_rush,Power-ups and objectives,1,2D,no,0.9,1,RUSH activated,rising whoosh + heartbeat
+power_twin,Power-ups and objectives,1,2D,no,0.7,1,TWIN activated,digital clone blip
+power_twin_pop,Power-ups and objectives,1,3D,no,0.3,1,decoy disappears,
+power_smoke_pop,Power-ups and objectives,1,3D,no,0.5,1,SMOG thrown,canister pop
+power_smoke_loop,Power-ups and objectives,1,3D,yes,2.0,1,smoke cloud active,"hiss, cull > 25 m"
+power_leap_ready,Power-ups and objectives,1,2D,no,0.6,1,LEAP granted,
+power_expire,Power-ups and objectives,2,2D,no,0.3,1,timed power-up ends,soft down-blip
+chicken_pickup,Power-ups and objectives,1,3D+2D,no,0.6,2,grab the chicken,comedic squawk
+chicken_drop,Power-ups and objectives,1,3D,no,0.4,1,drop / knocked out,
+chicken_held,Power-ups and objectives,1,2D,yes,2.0,1,while you carry it,"panicked clucking, low"
+chicken_tick,Power-ups and objectives,1,2D,no,0.12,1,last 10 s of the 60 s,"once per second, pitch rises"
+chicken_win,Power-ups and objectives,1,2D,no,3.0,1,60 s reached,fanfare + cluck
+lootbox_pickup,Power-ups and objectives,1,3D+2D,no,0.5,1,grab lootbox,coin rattle
+lootbox_drop,Power-ups and objectives,1,3D,no,0.4,1,drop lootbox,
+lootbox_held,Power-ups and objectives,2,2D,yes,2.0,1,carrying lootbox,quiet rattle
+objective_steal,Power-ups and objectives,1,2D,no,0.6,1,someone takes the objective from you,alert sting
+hurt_light,"Damage, death, respawn, storm",1,2D,no,0.35,2,damage < 25,grunt + thud
+hurt_heavy,"Damage, death, respawn, storm",1,2D,no,0.5,2,damage ≥ 25,"bigger, adds a ring"
+death,"Damage, death, respawn, storm",1,2D,no,1.2,1,local player dies,dissolve whoosh
+death_remote,"Damage, death, respawn, storm",2,3D,no,1.0,1,another player dies nearby,
+respawn,"Damage, death, respawn, storm",1,2D,no,0.8,1,respawn / spawn-in,shimmer + intake
+health_low,"Damage, death, respawn, storm",1,2D,yes,1.5,1,HP < 25,"heartbeat, stops on heal/death"
+storm_hurt,"Damage, death, respawn, storm",1,2D,no,0.3,2,storm damage tick,throttled to 1/s
+heal,"Damage, death, respawn, storm",2,2D,no,0.5,1,health pickup,
+car_start,Vehicles,1,3D,no,0.6,1,CarController.ride(),ignition
+car_engine,Vehicles,1,3D,yes,2–3 s,1,while driving,pitch_scale 0.8→1.5 by speed
+car_stop,Vehicles,1,3D,no,0.4,1,exit_ride(),
+car_skid,Vehicles,1,3D,yes,1.5,1,drifting / handbrake,volume by lateral slip
+car_impact_soft,Vehicles,1,3D,no,0.3,3,low-speed bump,
+car_impact_hard,Vehicles,1,3D,no,0.6,2,high-speed hit,
+car_crash,Vehicles,1,3D,no,0.9,1,player hit by vehicle,metal + body
+car_horn,Vehicles,2,3D,no,0.6,1,horn input (if added),
+car_bump,Vehicles,2,3D,no,0.15,2,suspension bottom-out,
+car_enter,Vehicles,1,2D,no,0.3,1,enter vehicle,door
+car_exit,Vehicles,1,2D,no,0.3,1,leave vehicle,door
+monster_roar,"World, NPCs, props",1,3D,no,2.5,2,"monster idle, every 20–35 s",cull > 60 m
+monster_step,"World, NPCs, props",1,3D,no,0.4,2,monster walk cycle,"heavy, low"
+monster_attack,"World, NPCs, props",1,3D,no,0.8,1,monster swipe,
+monster_death,"World, NPCs, props",2,3D,no,1.5,1,monster dies (if killable),
+bee_loop,"World, NPCs, props",1,3D,yes,2.0,1,bee/prop hive proximity,"cull > 12 m, volume by distance"
+prop_break_wood,"World, NPCs, props",2,3D,no,0.6,3,destructible prop,
+prop_break_glass,"World, NPCs, props",2,3D,no,0.8,2,destructible prop,
+prop_break_metal,"World, NPCs, props",2,3D,no,0.7,2,destructible prop,
+pickup_shimmer,"World, NPCs, props",2,3D,no,0.8,1,power-up idles near you,"throttled, > 8 m skip"
+fire_loop,"World, NPCs, props",2,3D,yes,2.0,1,burning prop,
+player_join,Network / social,1,2D,no,0.4,1,someone joins the room,pairs with the feed toast
+player_leave,Network / social,1,2D,no,0.35,1,someone leaves,
+reconnect_ok,Network / social,1,2D,no,0.6,1,socket restored,
+reconnect_fail,Network / social,1,2D,no,0.9,1,giving up,
+emote_battlecry,Network / social,2,3D,no,1.2,3,battlecry emote,character shout
