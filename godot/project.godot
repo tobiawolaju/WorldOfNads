@@ -24,6 +24,7 @@ Game="*uid://cyhybl6vr827y"
 GameManager="*uid://ypqfq50ulbig"
 AuthManager="*res://auth/AuthManager.gd"
 FxWarmup="*res://autoload/FxWarmup.gd"
+DeviceOptimizer="*res://autoload/DeviceOptimizer.gd"
 
 [display]
 
