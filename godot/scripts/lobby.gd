@@ -1,5 +1,10 @@
 extends Node3D
 
+const FX3D_SCRIPT: GDScript = preload("res://scripts/fx/fx3d.gd")
+# Preloaded so the exporter keeps scenes/fx3d.tscn in the pck; FX3D only loads
+# it by path as a fallback for tools.
+const FX3D_SCENE: PackedScene = preload("res://scenes/fx3d.tscn")
+
 # === PLAYER & NPC EXPORTS ===
 @export var local_player_scene: PackedScene
 @export var camera_node: NodePath
@@ -135,6 +140,9 @@ func _cycle_skin() -> void:
 		_skin_applier.apply_skin(local_player, chosen)
 
 func _ready():
+	# World FX host (3D particles + world sounds). Idempotent, so a second call
+	# from a spawn path can never create a duplicate.
+	FX3D_SCRIPT.ensure(self, FX3D_SCENE)
 	_stress_rng.randomize()
 	_pre_seed_from_session_storage()
 	_fetch_skin_data()
