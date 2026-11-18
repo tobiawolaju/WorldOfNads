@@ -7,6 +7,8 @@ const LIVE_EVENTS_URL := "wss://worldofnads.onrender.com/events"
 # while chat/event toasts still come from Node, and nothing lines up.
 const ROOM_EVENTS_URL := "wss://wons-room-server.onrender.com/events"
 const GAMEOVER_SCENE := preload("res://scenes/gameover.tscn")
+const FX3D_SCRIPT: GDScript = preload("res://scripts/fx/fx3d.gd")
+const FX3D_SCENE: PackedScene = preload("res://scenes/fx3d.tscn")
 
 ## Rows kept in the feed. Enough to follow what the room is doing, few enough to
 ## stay readable over gameplay.
@@ -270,6 +272,14 @@ func _render_snapshot(events: Array) -> void:
 			_render_event(item, false)
 
 func _render_event(event_data: Dictionary, can_navigate: bool) -> void:
+	var event_type := str(event_data.get("eventType", ""))
+	if event_type == "fx":
+		# World effects are rebuilt, never printed: a "smoke" feed row would be
+		# noise. Snapshot entries are ignored so a late joiner does not spawn a
+		# cloud that already expired; `can_navigate` is true only for live events.
+		if can_navigate:
+			_spawn_fx_event(event_data)
+		return
 	var message = str(event_data.get("message", ""))
 	if message.strip_edges() == "":
 		return
@@ -279,6 +289,19 @@ func _render_event(event_data: Dictionary, can_navigate: bool) -> void:
 
 	if can_navigate and str(event_data.get("eventType", "")) == "match_winner":
 		_handle_match_winner_event(event_data)
+
+
+# Rebuilds an effect another player triggered. The thrower already spawned it
+# locally and its own event comes back on this feed, so drop the echo by
+# playerId or it would get two overlapping clouds.
+func _spawn_fx_event(event_data: Dictionary) -> void:
+	if str(event_data.get("playerId", "")).strip_edges() == _local_player_id:
+		return
+	var fx = FX3D_SCRIPT.ensure(null, FX3D_SCENE)
+	if fx == null:
+		return
+	fx.spawn_from_event(event_data)
+
 
 func _handle_match_winner_event(event_data: Dictionary) -> void:
 	if _navigated_to_gameover:

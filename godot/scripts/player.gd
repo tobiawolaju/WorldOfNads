@@ -2660,7 +2660,27 @@ func _try_drop_smoke_cloud() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	var drop_position := global_position + Vector3(0.0, SMOKE_CLOUD_RADIUS * 0.3, 0.0)
-	_spawn_smoke_cloud(drop_position, rng.randi())
+	var spawn_seed := rng.randi()
+	_spawn_smoke_cloud(drop_position, spawn_seed)
+	_broadcast_fx("smoke", drop_position, spawn_seed, SMOKE_CLOUD_RADIUS)
+
+
+# Tells the room about a world effect so every other client rebuilds it from the
+# same position + seed. Uses the existing client_event -> /events feed (the room
+# server republishes any client_event with a non-empty message), so no server
+# change is needed. Events.gd routes `fx` to FX3D and drops the sender's echo,
+# because the thrower already spawned the cloud locally.
+func _broadcast_fx(id: String, world_position: Vector3, spawn_seed: int, radius: float) -> void:
+	if root == null or not root.has_method("send_client_event"):
+		return
+	root.call("send_client_event", "fx", id, {
+		"fx": id,
+		"x": world_position.x,
+		"y": world_position.y,
+		"z": world_position.z,
+		"seed": spawn_seed,
+		"radius": radius,
+	})
 
 
 # Network seam: the cloud is spawned through FX3D, the single world-effect host.
