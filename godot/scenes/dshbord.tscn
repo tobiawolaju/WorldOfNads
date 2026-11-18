@@ -172,15 +172,37 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.39607844, 0.3254902, 0.78039217, 1)
 
-[node name="LobbyBg" type="TextureRect" parent="CanvasLayer" unique_id=688726421]
-modulate = Color(1, 1, 1, 0.5)
-material = SubResource("ShaderMaterial_lobbyfade")
-anchors_preset = -1
+[node name="LobbyBg" type="Control" parent="CanvasLayer" unique_id=688726421]
+clip_contents = true
+layout_mode = 3
 anchor_top = 0.5
 anchor_right = 0.65
 anchor_bottom = 0.5
 offset_top = -73.0
 offset_bottom = 73.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Prev" type="TextureRect" parent="CanvasLayer/LobbyBg" unique_id=688726422]
+visible = false
+modulate = Color(1, 1, 1, 0.5)
+material = SubResource("ShaderMaterial_lobbyfade")
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Current" type="TextureRect" parent="CanvasLayer/LobbyBg" unique_id=688726423]
+modulate = Color(1, 1, 1, 0.5)
+material = SubResource("ShaderMaterial_lobbyfade")
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -595,11 +617,12 @@ text = "No rewards yet. Join a match to win some."
 autowrap_mode = 2
 
 [node name="StoreScroll" type="ScrollContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content" unique_id=124325066]
-visible = false
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = -1
 anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_bottom = 1.113
+offset_right = 3.0
+offset_bottom = 0.05999756
 grow_horizontal = 2
 grow_vertical = 2
 horizontal_scroll_mode = 3
@@ -608,10 +631,6 @@ horizontal_scroll_mode = 3
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 4
 
 [node name="StoreGrid" type="GridContainer" parent="CanvasLayer/RightPanel/Margin/Column/Content/StoreScroll/StoreMargin" unique_id=1130064395]
 layout_mode = 2
@@ -623,8 +642,9 @@ columns = 3
 [node name="FadeLeft" type="TextureRect" parent="CanvasLayer/RightPanel/Margin/Column/Content" unique_id=1990006098]
 layout_mode = 1
 anchors_preset = -1
-anchor_bottom = 1.0
-offset_right = 23.0
+anchor_bottom = 1.11
+offset_right = 22.0
+offset_bottom = 0.19998169
 grow_vertical = 2
 mouse_filter = 2
 texture = SubResource("GT_fade_l")
@@ -635,8 +655,9 @@ layout_mode = 1
 anchors_preset = -1
 anchor_left = 1.0
 anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_bottom = 1.1090001
 offset_left = -23.0
+offset_bottom = 0.57995605
 grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
