@@ -94,6 +94,15 @@ const ORBIT_ZOOM_MAX: float = 1.0
 # pixels one unit covers before the value is fed to the orbit.
 const ORBIT_PAN_UNITS_TO_PIXELS: float = 12.0
 
+# Random full-body flourishes for the 3D preview. Every clip ships in
+# resources/PlayerAnimations.tres; the dashboard plays one through
+# player.gd::play_emote(), waits for the clip to end plus a breathing gap, then
+# picks a different one. That keeps the passive nad from reading as a mannequin.
+const PREVIEW_EMOTES: Array[String] = ["battlecry", "emote", "emote2", "emote3", "hook"]
+const PREVIEW_EMOTE_FIRST_DELAY: float = 1.5
+const PREVIEW_EMOTE_GAP_MIN: float = 3.0
+const PREVIEW_EMOTE_GAP_MAX: float = 7.0
+
 # Which stream owns the preview gesture currently in flight.
 const PREVIEW_GESTURE_NONE: int = 0
 const PREVIEW_GESTURE_MOUSE: int = 1
@@ -200,6 +209,10 @@ const VARIANT_BORDER_WIDTH: int = 2
 @onready var _equip_button: Button = get_node_or_null("CanvasLayer/FooterButtons/EquipButton") as Button
 
 var _preview_player: Node3D = null
+# Countdown to the preview's next random emote. It starts short so the first
+# flourish lands before the user has finished reading the dashboard.
+var _preview_emote_timer: float = PREVIEW_EMOTE_FIRST_DELAY
+var _preview_emote_last: String = ""
 var _skin_applier: SkinApplier = SkinApplier.new()
 # Hold this key to show the preview nad's skin parts that sit outside the
 # regular look (the shirt, the wig and the glove). Toggled by the "chog"
@@ -475,6 +488,7 @@ func _on_filter_pressed(next_filter: String) -> void:
 
 func _process(delta: float) -> void:
 	_update_preview_camera(delta)
+	_tick_preview_emote(delta)
 
 	if _is_counting:
 		_elapsed = minf(_elapsed + delta, PLAY_COUNTDOWN_SECONDS)
@@ -510,6 +524,37 @@ func _spawn_preview_player() -> void:
 
 	_apply_preview_skin(equipped_skin_id)
 	_frame_preview_camera()
+
+
+# The preview has no gameplay input to drive its rig, so it would idle forever.
+# Fire a full-body flourish every few seconds instead, and wait for the clip to
+# finish (play_emote returns its length) before picking the next one. A new clip
+# can only start after the old one ended, so two emotes never stack.
+func _tick_preview_emote(delta: float) -> void:
+	if _navigating or _preview_player == null or not is_instance_valid(_preview_player):
+		return
+	_preview_emote_timer -= delta
+	if _preview_emote_timer > 0.0:
+		return
+	_play_preview_emote()
+
+
+func _play_preview_emote() -> void:
+	if not _preview_player.has_method("play_emote"):
+		_preview_emote_timer = PREVIEW_EMOTE_GAP_MAX
+		return
+	var choices: Array = PREVIEW_EMOTES.duplicate()
+	# Avoid the same flourish twice in a row; with five clips that reads as
+	# random rather than as a loop.
+	if choices.size() > 1 and _preview_emote_last != "":
+		choices.erase(_preview_emote_last)
+	var clip := String(choices.pick_random())
+	var length := float(_preview_player.call("play_emote", clip))
+	if length <= 0.0:
+		# Missing clip: still retry later instead of hammering every frame.
+		length = 2.0
+	_preview_emote_last = clip
+	_preview_emote_timer = length + randf_range(PREVIEW_EMOTE_GAP_MIN, PREVIEW_EMOTE_GAP_MAX)
 
 
 # The nad's real bounds are needed to frame it: skinned meshes follow the Skeleton3D's
@@ -700,14 +745,15 @@ func _preview_pane_height() -> float:
 
 
 # Queue a drag the way handleMouseMoveRotate does. Directions match OrbitControls:
-# drag right swings the camera left (the model follows the finger). Vertical orbit
-# is enabled but kept subtle so the nad stays readable.
+# drag right swings the camera left (the model follows the finger), and drag down
+# raises the camera (rotateUp lowers phi), which tilts the view down at the nad.
+# Vertical orbit is enabled but kept subtle so the nad stays readable.
 func _orbit_preview(relative: Vector2) -> void:
 	if relative == Vector2.ZERO:
 		return
 	var per_pixel := TAU * ORBIT_ROTATE_SPEED / _preview_pane_height()
 	_preview_delta_yaw -= relative.x * per_pixel
-	_preview_delta_pitch -= relative.y * per_pixel * 0.35
+	_preview_delta_pitch += relative.y * per_pixel * 0.35
 
 
 # Queue a zoom step. `factor` above 1 moves in; the wheel, pinch and magnify all

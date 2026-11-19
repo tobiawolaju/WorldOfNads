@@ -5,32 +5,34 @@
 [ext_resource type="FontFile" uid="uid://bkrsehe3e3foh" path="res://assets/fonts/font1.ttf" id="4_font1"]
 [ext_resource type="Shader" uid="uid://cvsro6e0qyqwk" path="res://scenes/glasshud.gdshader" id="5_glass"]
 
-[sub_resource type="ShaderMaterial" id="SM_glass"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ptr5m"]
 shader = ExtResource("5_glass")
-shader_parameter/brightness = 0.15
-shader_parameter/chromatic_shift_amount = 0.08
-shader_parameter/bend_amount = 0.12
-shader_parameter/blur_amount = 3.0
-shader_parameter/grain_amount = 0.03
+shader_parameter/brightness = 0.1
+shader_parameter/chromatic_shift_amount = 0.2
+shader_parameter/bend_amount = 0.4
+shader_parameter/blur_amount = 2.0
+shader_parameter/grain_amount = 0.05
 shader_parameter/curve_light_blend = 0.5
-shader_parameter/rim_light_blend = 0.35
+shader_parameter/rim_light_blend = 0.8
 shader_parameter/shadow_color = Color(0, 0, 0, 1)
 
+[sub_resource type="ShaderMaterial" id="SM_glass"]
+
 [sub_resource type="StyleBoxFlat" id="SB_card"]
-bg_color = Color(1, 1, 1, 1)
+bg_color = Color(0.6, 0.6, 0.6, 0)
 skew = Vector2(0.14, 0)
 
 [sub_resource type="StyleBoxFlat" id="SB_bar_bg"]
-bg_color = Color(0.3019608, 0.23921569, 0.6392157, 0.6)
+bg_color = Color(1, 1, 1, 0.20784314)
 skew = Vector2(0.12, 0)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1, 1, 1, 0.2)
+border_color = Color(1, 1, 1, 0.8666667)
 
 [sub_resource type="StyleBoxFlat" id="SB_bar_fill"]
-bg_color = Color(1, 0.84313726, 0, 1)
+bg_color = Color(1, 1, 1, 1)
 skew = Vector2(0.12, 0)
 border_width_left = 2
 border_width_top = 2
@@ -56,23 +58,24 @@ skew = Vector2(0.24, 0)
 script = ExtResource("1_oy7qx")
 
 [node name="LeftBG" type="ColorRect" parent="." unique_id=987938774]
+material = SubResource("ShaderMaterial_ptr5m")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 0.61960787)
+color = Color(1, 1, 1, 0.078431375)
 
 [node name="ColorBG2" type="ColorRect" parent="." unique_id=737243886]
 anchors_preset = -1
 anchor_left = 0.5
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -97.47377
-offset_top = -4.2857924
-offset_right = -185.30667
-offset_bottom = 0.032196045
+offset_left = -76.19495
+offset_top = -12.302445
+offset_right = -184.17105
+offset_bottom = 22.123474
 grow_horizontal = 2
 grow_vertical = 2
 rotation = 0.12217305
@@ -189,7 +192,6 @@ size_flags_horizontal = 3
 mouse_filter = 2
 
 [node name="ResultCard" type="Panel" parent="ColorBG/Result/BoxContainer4/Control" unique_id=1731812901]
-modulate = Color(1, 1, 1, 0.8)
 material = SubResource("SM_glass")
 layout_mode = 1
 anchors_preset = 8

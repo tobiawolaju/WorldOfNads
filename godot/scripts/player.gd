@@ -459,6 +459,10 @@ var _action_playback: AnimationNodeStateMachinePlayback = null
 ## Weapon-action one-shot layer, kept so its Hips track can be taken out of the
 ## upper-body filter while climbing (see _set_action_hips_filter).
 var _action_oneshot: AnimationNodeOneShot = null
+## Full-body emote one-shot layer. The dashboard preview fires this on a timer
+## so the passive nad feels alive; gameplay can reuse it for an emote wheel.
+var _emote_anim: AnimationNodeAnimation = null
+var _emote_oneshot: AnimationNodeOneShot = null
 var camera_distance_current: float = 0.0
 var camera_distance_bias: float = 0.0
 var camera_is_airborne: bool = false
@@ -801,13 +805,28 @@ func _setup_anim_tree() -> void:
 	oneshot.fadeout_time = 0.1
 	_action_oneshot = oneshot
 
-	# -- wire BlendTree: movement → OneShot(in) ← actions, OneShot → output --
+	# -- emote one-shot: full-body flourish on top of everything. The dashboard
+	#    preview fires it on a timer (see dshbord.gd); the node is full-body so
+	#    it cleanly overrides idle and hands the pose back when the clip ends.
+	var emote_anim := AnimationNodeAnimation.new()
+	emote_anim.animation = "emote"
+	var emote_shot := AnimationNodeOneShot.new()
+	emote_shot.fadein_time = 0.12
+	emote_shot.fadeout_time = 0.18
+	_emote_anim = emote_anim
+	_emote_oneshot = emote_shot
+
+	# -- wire BlendTree: movement -> OneShot(in) -> actions -> emote -> output --
 	blend_tree.add_node("movement", movement_machine)
 	blend_tree.add_node("actions", action_machine)
 	blend_tree.add_node("action_shot", oneshot)
+	blend_tree.add_node("emote", emote_anim)
+	blend_tree.add_node("emote_shot", emote_shot)
 	blend_tree.connect_node("action_shot", 0, "movement")
 	blend_tree.connect_node("action_shot", 1, "actions")
-	blend_tree.connect_node("output", 0, "action_shot")
+	blend_tree.connect_node("emote_shot", 0, "action_shot")
+	blend_tree.connect_node("emote_shot", 1, "emote")
+	blend_tree.connect_node("output", 0, "emote_shot")
 
 	anim_tree.tree_root = blend_tree
 	anim_tree.active = true
@@ -4049,6 +4068,20 @@ func _set_anim(anim_name: String) -> void:
 func _play_anim(anim_name: String) -> void:
 	if anim_state_machine:
 		anim_state_machine.travel(anim_name)
+
+## Plays a full-body emote/flourish on top of the movement and weapon layers.
+## The dashboard preview fires this on a randomized timer so the passive nad
+## feels alive; gameplay can reuse it for an emote wheel later. Returns the clip
+## length in seconds, or 0 when the clip is missing.
+func play_emote(emote_name: String) -> float:
+	if _emote_anim == null or _emote_oneshot == null or anim_tree == null:
+		return 0.0
+	var anim := anim_player.get_animation(emote_name)
+	if anim == null:
+		return 0.0
+	_emote_anim.animation = emote_name
+	anim_tree.set("parameters/emote_shot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
+	return anim.length
 
 func _start_slide(move_direction: Vector3, slide_from_touch: bool = false) -> void:
 	_is_sliding = true
