@@ -116,6 +116,11 @@ func _build_particles() -> void:
 	var particles := CPUParticles3D.new()
 	particles.mesh = quad
 	particles.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# Keep particles in the cloud's local space. FX3D parents the cloud first and
+	# sets its global_position afterwards, and the preprocess below runs in
+	# _ready() before that. With global coords the pre-warmed puffs would stay at
+	# the old position (the world origin on a deferred remote spawn).
+	particles.local_coords = true
 
 	particles.amount = PARTICLE_AMOUNT
 	particles.lifetime = PARTICLE_LIFETIME

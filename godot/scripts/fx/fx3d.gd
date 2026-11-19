@@ -31,6 +31,10 @@ const META_KEY: StringName = &"fx3d_host"
 ## World position parked on an effect that was spawned before the host entered
 ## the tree (ensure() defers add_child while a scene root is still setting up).
 const POS_META: StringName = &"fx3d_world_pos"
+## Positions in event meta travel as centimetre ints (qx/qy/qz), matching
+## player.gd's POS_SCALE. Godot 4.8 packs float64s little-endian while the room
+## server decodes big-endian, so raw floats must not be trusted on the wire.
+const WIRE_POS_SCALE: float = 100.0
 # Preloaded rather than referenced by class name so this script parses even
 # before the editor has refreshed its global class cache.
 const FX_LIBRARY := preload("res://scripts/fx/fx_library.gd")
@@ -203,14 +207,28 @@ func spawn_from_event(event: Dictionary) -> Node3D:
 	var id := String(meta.get("fx", event.get("fx", "")))
 	if id == "" or id == "fx":
 		return null
-	var position := Vector3(
+	var position := _meta_position(meta)
+	var opts := {"seed": int(meta.get("seed", 0))}
+	if meta.has("qradius"):
+		opts["radius"] = float(meta["qradius"]) / WIRE_POS_SCALE
+	elif meta.has("radius"):
+		opts["radius"] = float(meta["radius"])
+	return spawn(id, position, opts)
+
+
+## Reads the effect's world position out of event meta. New senders use the
+## quantised qx/qy/qz ints (see player.gd::_broadcast_fx); older clients and bots
+## may still send raw x/y/z floats, so accept both.
+static func _meta_position(meta: Dictionary) -> Vector3:
+	if meta.has("qx") or meta.has("qy") or meta.has("qz"):
+		return Vector3(
+			float(meta.get("qx", 0)) / WIRE_POS_SCALE,
+			float(meta.get("qy", 0)) / WIRE_POS_SCALE,
+			float(meta.get("qz", 0)) / WIRE_POS_SCALE)
+	return Vector3(
 		float(meta.get("x", 0.0)),
 		float(meta.get("y", 0.0)),
 		float(meta.get("z", 0.0)))
-	var opts := {"seed": int(meta.get("seed", 0))}
-	if meta.has("radius"):
-		opts["radius"] = float(meta["radius"])
-	return spawn(id, position, opts)
 
 
 func _scene_for(id: String, def: Dictionary) -> PackedScene:
