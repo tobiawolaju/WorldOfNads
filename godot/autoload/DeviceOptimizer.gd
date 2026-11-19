@@ -38,9 +38,24 @@ var layer: int = Layer.FULL
 # Snapshot of environment values so we can restore/adjust idempotently.
 var _env_base: Dictionary = {}
 
+# Runtime adaptive quality (FPS-driven). The detected layer is the floor we
+# return to when performance recovers; we only ever step more aggressive when
+# the device struggles.
+var base_layer: int = Layer.FULL
+var _adaptive_enabled: bool = true
+var _adapt_warmup: float = 4.0
+var _low_fps_time: float = 0.0
+var _high_fps_time: float = 0.0
+const ADAPT_LOW_FPS := 28.0
+const ADAPT_HIGH_FPS := 55.0
+const ADAPT_DOWNGRADE_AFTER := 3.0
+const ADAPT_UPGRADE_AFTER := 8.0
+
 
 func _ready() -> void:
 	_detect_and_score()
+	base_layer = layer
+	#layer = Layer.MINIMAL   
 	_apply_layer()
 	get_tree().node_added.connect(_on_node_added)
 	get_tree().scene_changed.connect(_on_scene_changed)
@@ -352,6 +367,42 @@ func _apply_environment(world_env: WorldEnvironment) -> void:
 		env.glow_enabled = false
 
 
+# --- Runtime adaptation ------------------------------------------------------
+
+func _process(delta: float) -> void:
+	if not _adaptive_enabled:
+		return
+	if _adapt_warmup > 0.0:
+		_adapt_warmup -= delta
+		return
+	var fps := float(Engine.get_frames_per_second())
+	# Ignore bogus readings (e.g. 0 during stalls/load).
+	if fps <= 0.0:
+		return
+	if fps < ADAPT_LOW_FPS:
+		_low_fps_time += delta
+		_high_fps_time = 0.0
+	elif fps > ADAPT_HIGH_FPS:
+		_high_fps_time += delta
+		_low_fps_time = 0.0
+	else:
+		_low_fps_time = maxf(_low_fps_time - delta * 0.5, 0.0)
+		_high_fps_time = maxf(_high_fps_time - delta * 0.5, 0.0)
+
+	if _low_fps_time >= ADAPT_DOWNGRADE_AFTER and layer < Layer.MINIMAL:
+		_low_fps_time = 0.0
+		_high_fps_time = 0.0
+		layer += 1
+		print("[DeviceOptimizer] adaptive: fps=%.1f -> stepping up to layer %d (%s)" % [fps, layer, get_layer_name()])
+		_apply_layer()
+	elif _high_fps_time >= ADAPT_UPGRADE_AFTER and layer > base_layer:
+		_high_fps_time = 0.0
+		_low_fps_time = 0.0
+		layer -= 1
+		print("[DeviceOptimizer] adaptive: fps=%.1f -> relaxing to layer %d (%s)" % [fps, layer, get_layer_name()])
+		_apply_layer()
+
+
 # --- Public helpers ----------------------------------------------------------
 
 func get_layer() -> int:
@@ -378,3 +429,7 @@ func is_glass_disabled() -> bool:
 
 func is_shadows_reduced() -> bool:
 	return layer >= Layer.LIGHT
+
+
+func set_adaptive_enabled(enabled: bool) -> void:
+	_adaptive_enabled = enabled
