@@ -2694,11 +2694,16 @@ func _broadcast_fx(id: String, world_position: Vector3, spawn_seed: int, radius:
 		return
 	root.call("send_client_event", "fx", id, {
 		"fx": id,
-		"x": world_position.x,
-		"y": world_position.y,
-		"z": world_position.z,
+		# Godot's MsgPack.pack writes float64s little-endian, but the Rust room
+		# server (rmp-serde) decodes MessagePack's big-endian floats. Raw x/y/z
+		# therefore arrive byte-swapped and collapse to ~0, which put every
+		# remote cloud at the world origin. Send centimetre ints like
+		# update_state's qx/qy/qz so the values survive the wire unchanged.
+		"qx": _quantize_pos(world_position.x),
+		"qy": _quantize_pos(world_position.y),
+		"qz": _quantize_pos(world_position.z),
 		"seed": spawn_seed,
-		"radius": radius,
+		"qradius": int(round(radius * POS_SCALE)),
 	})
 
 
