@@ -1154,6 +1154,7 @@ func _physics_process(delta: float) -> void:
 			_active_power_up_duration = 0.0
 			# Put the original materials back now that usage time is over.
 			apply_powerup_visual(false)
+			_broadcast_powerup(LocalPickup.PowerUpMode.NONE, false)
 			if is_local and _hidden_extras_revealed:
 				_set_hidden_extras_revealed(false)
 		else:
@@ -2707,6 +2708,19 @@ func _broadcast_fx(id: String, world_position: Vector3, spawn_seed: int, radius:
 	})
 
 
+# Tells the room when a timed power-up starts or ends so other clients can draw
+# the same aura and, for TWIN, a decoy. Ints only: Godot's MsgPack float64s are
+# little-endian while the room server decodes big-endian (see _broadcast_fx).
+func _broadcast_powerup(mode: int, active: bool, duration: float = 0.0) -> void:
+	if root == null or not root.has_method("send_client_event"):
+		return
+	root.call("send_client_event", "powerup", "aura", {
+		"mode": int(mode),
+		"on": 1 if active else 0,
+		"dur": int(round(duration * 1000.0)),
+	})
+
+
 # Network seam: the cloud is spawned through FX3D, the single world-effect host.
 # The multiplayer version forwards the same position + seed as an `fx` event;
 # every client calls FX3D.spawn_from_event() and rebuilds an identical cloud
@@ -2732,6 +2746,11 @@ func _start_timed_power_up(mode: int, duration: float) -> void:
 	# Wrap the player in the power-up aura for the whole usage window
 	# (idempotent: a replacement effect just keeps the aura on).
 	apply_powerup_visual(true)
+	if _powerup_material != null:
+		_powerup_material.set_shader_parameter(
+			"tint", LocalPickup.POWER_UP_COLORS.get(mode, POWERUP_TINT))
+	# Remote clients draw the same aura and, for TWIN, the decoy.
+	_broadcast_powerup(mode, true, duration)
 
 
 # --- POWER-UP VISUAL (aura) ---
