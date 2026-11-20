@@ -280,6 +280,13 @@ func _render_event(event_data: Dictionary, can_navigate: bool) -> void:
 		if can_navigate:
 			_spawn_fx_event(event_data)
 		return
+	if event_type == "powerup":
+		# Aura/decoy state is rebuilt from the sender's event, like fx. Snapshot
+		# entries are ignored: a timed aura from the history has already expired
+		# (or is about to), so a late joiner must not inherit a stale one.
+		if can_navigate:
+			_apply_powerup_event(event_data)
+		return
 	var message = str(event_data.get("message", ""))
 	if message.strip_edges() == "":
 		return
@@ -301,6 +308,34 @@ func _spawn_fx_event(event_data: Dictionary) -> void:
 	if fx == null:
 		return
 	fx.spawn_from_event(event_data)
+
+
+# Rebuilds another player's timed power-up aura (and TWIN decoy) on their remote
+# avatar. The sender already shows its own aura locally, so drop the echo.
+func _apply_powerup_event(event_data: Dictionary) -> void:
+	var owner_id := str(event_data.get("playerId", "")).strip_edges()
+	if owner_id == "" or owner_id == _local_player_id:
+		return
+	if typeof(event_data.get("meta", null)) != TYPE_DICTIONARY:
+		return
+	var meta: Dictionary = event_data["meta"]
+	var pm = get_tree().get_first_node_in_group("player_manager")
+	if pm == null:
+		return
+	var roster = pm.get("players")
+	if typeof(roster) != TYPE_DICTIONARY:
+		return
+	var node = roster.get(owner_id)
+	if node == null or not is_instance_valid(node):
+		return
+	if not node.has_method("apply_remote_powerup"):
+		return
+	var duration := float(int(meta.get("dur", 0))) / 1000.0
+	node.call(
+		"apply_remote_powerup",
+		int(meta.get("mode", 0)),
+		duration,
+		int(meta.get("on", 0)) == 1)
 
 
 func _handle_match_winner_event(event_data: Dictionary) -> void:

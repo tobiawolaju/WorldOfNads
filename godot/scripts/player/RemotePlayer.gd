@@ -101,6 +101,8 @@ func _ready() -> void:
 	if fx != null:
 		fx.emitting = false
 		fx.one_shot = true
+	# Power-up auras/decoy only tick while a power-up event is running.
+	set_process(false)
 
 
 ## Shows the weapon this remote player is carrying, from the server's item state.
@@ -346,6 +348,8 @@ func _apply_mesh_lod() -> void:
 	var skeleton := get_node_or_null("Skeleton3D") as Node3D
 	if skeleton:
 		skeleton.visible = mesh_lod_enabled
+	if _aura != null and is_instance_valid(_aura):
+		_aura.visible = mesh_lod_enabled and _remote_powerup_remaining > 0.0
 
 # Re-applies the current LOD state to a freshly swapped-in Skeleton3D, since a
 # skin change replaces the node and resets its visibility. The same swap brings
@@ -597,4 +601,204 @@ func _apply_blood_hit_look(fx: GPUParticles3D) -> void:
 	var draw = fx.get_meta("hit_draw") if fx.has_meta("hit_draw") else (fx.draw_pass_1.material if fx.draw_pass_1 is QuadMesh else null)
 	if draw is StandardMaterial3D:
 		(draw as StandardMaterial3D).albedo_color = fx_color
+
+
+# ---------------------------------------------------------------------------
+# Remote power-up visuals (aura + TWIN decoy)
+# ---------------------------------------------------------------------------
+#
+# player.gd broadcasts a `powerup` event when a timed effect starts/ends.
+# Events.gd routes it to the owning RemotePlayer, which rebuilds the same aura
+# the local player shows and, for TWIN, a decoy that mirrors this avatar. Both
+# are cosmetic: the server still owns movement, so the decoy needs no packets.
+
+const POWERUP_SHADER := preload("res://assets/shaders/powerup.gdshader")
+const AURA_SIZE := Vector2(2.0, 2.0)
+const AURA_HEIGHT: float = 0.25
+const AURA_PROGRESS: float = 1.0
+## Decoy placement, kept in step with player.gd's TWIN constants.
+const DECOY_DISTANCE_MIN: float = 1.2
+const DECOY_DISTANCE_MAX: float = 1.8
+const DECOY_BEARING_JITTER_DEG: float = 30.0
+
+var _remote_powerup_mode: int = LocalPickup.PowerUpMode.NONE
+var _remote_powerup_remaining: float = 0.0
+var _aura: MeshInstance3D = null
+var _aura_material: ShaderMaterial = null
+var _aura_aim_tick: int = 0
+var _decoy: Node3D = null
+var _decoy_skeleton: Node3D = null
+var _decoy_offset: Vector3 = Vector3.ZERO
+
+
+## Starts, refreshes or clears this avatar's power-up visual from an event.
+func apply_remote_powerup(mode: int, duration: float, active: bool) -> void:
+	if not active or duration <= 0.0 or mode == LocalPickup.PowerUpMode.NONE:
+		_end_remote_powerup()
+		return
+	_remote_powerup_mode = mode
+	_remote_powerup_remaining = duration
+	_ensure_aura()
+	if _aura != null:
+		if _aura_material != null:
+			_aura_material.set_shader_parameter(
+				"tint", LocalPickup.POWER_UP_COLORS.get(mode, Color.WHITE))
+		_aura.visible = mesh_lod_enabled
+	if mode == LocalPickup.PowerUpMode.TWIN:
+		_spawn_twin_decoy()
+	else:
+		_despawn_twin_decoy()
+	set_process(true)
+
+
+func _end_remote_powerup() -> void:
+	_remote_powerup_mode = LocalPickup.PowerUpMode.NONE
+	_remote_powerup_remaining = 0.0
+	_despawn_twin_decoy()
+	if _aura != null and is_instance_valid(_aura):
+		_aura.visible = false
+	set_process(false)
+
+
+func _process(delta: float) -> void:
+	if _remote_powerup_remaining > 0.0:
+		_remote_powerup_remaining = maxf(0.0, _remote_powerup_remaining - delta)
+		if _remote_powerup_remaining <= 0.0:
+			_end_remote_powerup()
+		else:
+			_aim_aura()
+	if _decoy != null:
+		if is_instance_valid(_decoy):
+			_mirror_twin_decoy()
+		else:
+			_decoy = null
+			_decoy_skeleton = null
+
+
+func _ensure_aura() -> void:
+	if _aura != null and is_instance_valid(_aura):
+		return
+	var shader := POWERUP_SHADER as Shader
+	if shader == null:
+		return
+	if _aura_material == null:
+		_aura_material = ShaderMaterial.new()
+		_aura_material.shader = shader
+		_aura_material.set_shader_parameter("AuraProgres", AURA_PROGRESS)
+	var quad := QuadMesh.new()
+	quad.size = AURA_SIZE
+	var aura := MeshInstance3D.new()
+	aura.name = "RemotePowerupAura"
+	aura.mesh = quad
+	aura.material_override = _aura_material
+	aura.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	aura.position = Vector3(0.0, AURA_HEIGHT, 0.0)
+	aura.visible = false
+	add_child(aura)
+	_aura = aura
+
+
+## Faces the billboarded quad at the camera; throttle matches player.gd so a
+# room full of auras does not add per-frame look_at() calls.
+func _aim_aura() -> void:
+	if _aura == null or not is_instance_valid(_aura) or not _aura.visible:
+		return
+	_aura_aim_tick = (_aura_aim_tick + 1) % 3
+	if _aura_aim_tick != 0:
+		return
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	var aura_pos := _aura.global_position
+	var to_camera := camera.global_position - aura_pos
+	if to_camera.length_squared() < 0.000001:
+		return
+	_aura.look_at(aura_pos - to_camera, Vector3.UP)
+
+
+## Builds a cosmetic clone of this avatar. duplicate() shares meshes, textures
+## and animation resources, so the only cost is the node tree.
+func _spawn_twin_decoy() -> void:
+	_despawn_twin_decoy()
+	if not mesh_lod_enabled or not is_inside_tree():
+		return
+	var decoy := duplicate() as Node3D
+	if decoy == null:
+		return
+	decoy.name = "TwinDecoy_%s" % player_id
+	# No second name tag, no network identity, no mid-action pose inherited.
+	decoy.set("player_id", "")
+	decoy.set("display_name", "")
+	decoy.set("root", null)
+	decoy.set("is_local", false)
+	decoy.set("_action_active", false)
+	decoy.set("_action_generation", 0)
+	# Do not inherit node references or a running timer from this avatar.
+	decoy.set("_aura", null)
+	decoy.set("_aura_material", null)
+	decoy.set("_remote_powerup_remaining", 0.0)
+	decoy.set("_remote_powerup_mode", LocalPickup.PowerUpMode.NONE)
+	decoy.set("_decoy", null)
+	decoy.set("_decoy_skeleton", null)
+	# Empty state forces set_animation_state() below to apply the current clip.
+	decoy.set("current_animation", "")
+	var parent := get_tree().current_scene
+	if parent == null:
+		parent = get_parent()
+	if parent == null:
+		decoy.queue_free()
+		return
+	parent.add_child(decoy)
+	decoy.set_process(false)
+	_roll_twin_offset()
+	_decoy = decoy
+	_decoy_skeleton = decoy.get_node_or_null("Skeleton3D") as Node3D
+	_mirror_twin_decoy()
+	if decoy.has_method("set_animation_state"):
+		decoy.call("set_animation_state", current_animation)
+
+
+func _despawn_twin_decoy() -> void:
+	if _decoy != null and is_instance_valid(_decoy):
+		_decoy.queue_free()
+	_decoy = null
+	_decoy_skeleton = null
+
+
+## World-space offset frozen at spawn, like player.gd's local decoy: the clone
+## keeps its distance instead of swinging around this avatar.
+func _roll_twin_offset() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var distance := rng.randf_range(DECOY_DISTANCE_MIN, DECOY_DISTANCE_MAX)
+	var bearing := deg_to_rad(rng.randf_range(-DECOY_BEARING_JITTER_DEG, DECOY_BEARING_JITTER_DEG))
+	var local_offset := Vector3(cos(bearing) * distance, 0.0, sin(bearing) * distance)
+	var skeleton := get_node_or_null("Skeleton3D") as Node3D
+	if skeleton != null:
+		_decoy_offset = skeleton.global_transform.basis.orthonormalized() * local_offset
+	else:
+		_decoy_offset = local_offset
+
+
+func _mirror_twin_decoy() -> void:
+	if _decoy == null or not is_instance_valid(_decoy):
+		_decoy = null
+		_decoy_skeleton = null
+		return
+	if _decoy_skeleton == null or not is_instance_valid(_decoy_skeleton):
+		_decoy_skeleton = _decoy.get_node_or_null("Skeleton3D") as Node3D
+		if _decoy_skeleton == null:
+			return
+	var src_skeleton := get_node_or_null("Skeleton3D") as Node3D
+	if src_skeleton == null:
+		return
+	var src := src_skeleton.global_transform
+	_decoy_skeleton.global_transform = Transform3D(src.basis, src.origin + _decoy_offset)
+	_decoy.visible = visible and mesh_lod_enabled
+	if _decoy.has_method("set_animation_state"):
+		_decoy.call("set_animation_state", current_animation)
+
+
+func _exit_tree() -> void:
+	_despawn_twin_decoy()
 
