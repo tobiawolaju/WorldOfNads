@@ -3933,6 +3933,7 @@ func _send_state_to_server(_force_send := false) -> void:
 		return
 	if root.ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		root._last_server_position = global_transform.origin
+		root._has_last_server_position = true
 		var qx := _quantize_pos(global_transform.origin.x)
 		var qy := _quantize_pos(global_transform.origin.y)
 		var qz := _quantize_pos(global_transform.origin.z)

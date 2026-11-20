@@ -410,6 +410,12 @@ var _subtitle_bg: ColorRect = null
 var _subtitle_hide_timer: SceneTreeTimer = null
 var _reconnect_target_url: String = ""
 var _last_server_position: Vector3 = Vector3.ZERO
+## True once _last_server_position holds a real spot from this session, so a
+## reconnect never mistakes the default (0,0,0) for "where I was".
+var _has_last_server_position: bool = false
+## Whether the reconnect in flight follows a finished round. A mid-match
+## reconnect keeps the player where they were; a new round starts on the bus.
+var _reconnect_after_round: bool = false
 const RECONNECT_DOT_INTERVAL: float = 0.5
 const RECONNECT_MAX_DELAY: float = 8.0
 const RECONNECT_INITIAL_DELAY: float = 1.0
@@ -553,6 +559,7 @@ func _start_reconnection(round_over: bool = false):
 	if _reconnecting:
 		return
 	_reconnecting = true
+	_reconnect_after_round = round_over
 	_reconnect_phase = "grace"
 	_reconnect_attempts = 0
 	_reconnect_delay = RECONNECT_INITIAL_DELAY
@@ -681,6 +688,7 @@ func _clear_players_for_reconnect():
 			_preserved_local_node = p
 			_preserved_local_id = id
 			_last_server_position = p.global_position
+			_has_last_server_position = true
 			p.visible = true
 		else:
 			_return_player_to_pool(p)
@@ -736,9 +744,21 @@ func _resync_after_reconnect():
 	var local_node: Node3D = _get_local_player_node()
 	if local_node == null:
 		return
-	var bus_node = get_tree().get_first_node_in_group("bus")
-	if bus_node:
-		local_node.global_position = bus_node.global_position + Vector3(0, 2, 0)
+	# A network blip must not throw away the spot the player held through the
+	# outage: the preserved local node (and its camera) stayed alive the whole
+	# time. Only a reconnect that follows a finished round starts back on the
+	# bus; otherwise put the player at their last reported position, which also
+	# covers the case where the node had to be respawned.
+	var starts_new_round := _reconnect_after_round
+	_reconnect_after_round = false
+	if starts_new_round:
+		var bus_node = get_tree().get_first_node_in_group("bus")
+		if bus_node:
+			local_node.global_position = bus_node.global_position + Vector3(0, 2, 0)
+		else:
+			local_node.global_position = get_local_spawn_position()
+	elif _has_last_server_position:
+		local_node.global_position = _last_server_position
 	else:
 		local_node.global_position = get_local_spawn_position()
 	local_node.visible = true
@@ -751,7 +771,7 @@ func _resync_after_reconnect():
 	}
 	ws.send(MsgPack.pack(payload))
 	ws.send(MsgPack.pack({"type": "request_full_state"}))
-	_update_subtitle_text("Back on the bus!")
+	_update_subtitle_text("Back on the bus!" if starts_new_round else "Reconnected!")
 	await get_tree().create_timer(2.0).timeout
 	_set_subtitle_visible(false)
 
