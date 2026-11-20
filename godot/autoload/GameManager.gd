@@ -3,8 +3,8 @@ extends Node
 ## GameManager Autoload
 ## Provides global access to game-wide settings and controls.
 
-const PIXEL_BUDGET_DESKTOP := 100_000
-const PIXEL_BUDGET_MOBILE := 95_000
+const PIXEL_BUDGET_DESKTOP := 90_000
+const PIXEL_BUDGET_MOBILE := 90_000
 const PIXEL_BUDGET_WEB := 90_000 # low-end mobile browser: aggressive dynamic res for FPS
 const SCALE_STEPS: Array[float] = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25]
 const RESIZE_DEBOUNCE_SEC := 0.3
