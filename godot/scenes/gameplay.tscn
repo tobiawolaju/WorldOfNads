@@ -20,7 +20,7 @@ albedo_color = Color(0.92156863, 0.47058824, 0.9647059, 1)
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ctvyo"]
 render_priority = 0
 shader = ExtResource("13_i18v2")
-shader_parameter/_color = Color(0, 0, 0, 1)
+shader_parameter/_color = Color(0.30980393, 0.10980392, 0.49411765, 1)
 shader_parameter/sphere_size = 2.5
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_qixtg"]
@@ -141,7 +141,7 @@ weapon_kind = 4
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.4, 1.4365964, -1.9)
 weapon_kind = 5
 
-[node name="env" type="Node3D" parent="." unique_id=1325422754 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
+[node name="env" type="Node3D" parent="." unique_id=661218536 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
 script = ExtResource("8_ctvyo")
 world_env = NodePath("WorldEnvironment")
 light_normal = NodePath("day")
@@ -154,10 +154,10 @@ storm_env = ExtResource("10_nt65e")
 cylinder_radius = 25.0
 damage_per_second = 2.5
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=1158782665]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=1122569826]
 environment = ExtResource("9_qixtg")
 
-[node name="day" type="DirectionalLight3D" parent="env" unique_id=1070673742]
+[node name="day" type="DirectionalLight3D" parent="env" unique_id=467824310]
 transform = Transform3D(0.84941316, -2.3067738e-08, 0.5277283, -0.5277284, -3.7129027e-08, 0.8494131, 0, -0.99999994, -4.3711385e-08, 0, 34.18702, 0)
 light_color = Color(0.98039216, 1, 0.5882353, 1)
 light_indirect_energy = 16.0
@@ -166,7 +166,7 @@ directional_shadow_mode = 0
 directional_shadow_max_distance = 20.0
 directional_shadow_pancake_size = 5.0
 
-[node name="night" type="DirectionalLight3D" parent="env" unique_id=985958310]
+[node name="night" type="DirectionalLight3D" parent="env" unique_id=341662558]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.8649163, 0)
 visible = false
 light_color = Color(0.85490197, 0, 0.78431374, 1)
@@ -174,19 +174,19 @@ light_energy = 0.2
 shadow_enabled = true
 sky_mode = 1
 
-[node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=747340835]
+[node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=2107449832]
 transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_ctvyo")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_qixtg")
 
-[node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=486284679]
-transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
+[node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1841625008]
+transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, -0.012081623, 1.1158777, -0.03631258)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_nt65e")
 surface_material_override/0 = SubResource("StandardMaterial3D_bhmdk")
 
-[node name="Cylinder3" type="MeshInstance3D" parent="env/Cylinder" unique_id=1353178881]
+[node name="Cylinder3" type="MeshInstance3D" parent="env/Cylinder" unique_id=1250477164]
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_nt65e")
 surface_material_override/0 = SubResource("StandardMaterial3D_s5y6v")
