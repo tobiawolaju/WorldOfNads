@@ -16,6 +16,7 @@ type PartyMember = {
   username: string;
   ready: boolean;
   skin?: string;
+  pfp?: string;
 };
 
 type Party = {
@@ -27,7 +28,7 @@ type Party = {
   countdownMs: number;
   maxMembers: number;
   members: PartyMember[];
-  pending?: { to: string; expiresAt: number }[];
+  pending?: { to: string; pfp?: string; expiresAt: number }[];
   serverNow: number;
 };
 
@@ -35,6 +36,7 @@ type PartyInvite = {
   id: string;
   from: string;
   matchId: string;
+  pfp?: string;
   expiresAt: number;
 };
 
@@ -99,6 +101,7 @@ const PartyBar = ({
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [pfpByName, setPfpByName] = useState<Record<string, string>>({});
 
   const aliveRef = useRef(true);
   const launchedRef = useRef("");
@@ -112,8 +115,24 @@ const PartyBar = ({
 
   const applyState = useCallback((data: any) => {
     const nextParty: Party | null = data?.party || null;
+    const nextInvites = Array.isArray(data?.invites) ? data.invites : [];
     setParty(nextParty);
-    setInvites(Array.isArray(data?.invites) ? data.invites : []);
+    setInvites(nextInvites);
+    setPfpByName((prev) => {
+      let next = prev;
+      const add = (name: string, pfp?: string) => {
+        const n = String(name || "").trim();
+        const p = String(pfp || "").trim();
+        if (n && p && prev[n] !== p) {
+          if (next === prev) next = { ...prev };
+          next[n] = p;
+        }
+      };
+      for (const m of nextParty?.members || []) add(m.username, m.pfp);
+      for (const p of nextParty?.pending || []) add(p.to, p.pfp);
+      for (const inv of nextInvites) add(inv.from, inv.pfp);
+      return next;
+    });
     const offset = Number(data?.serverNow || Date.now()) - Date.now();
     clockOffsetRef.current = offset;
   }, []);
@@ -224,7 +243,18 @@ const PartyBar = ({
     const timer = setTimeout(() => {
       searchPartyUsers(q)
         .then((users) => {
-          if (aliveRef.current) setResults(users);
+          if (!aliveRef.current) return;
+          setResults(users);
+          setPfpByName((prev) => {
+            let next = prev;
+            for (const u of users) {
+              if (u.profilePictureUrl && prev[u.username] !== u.profilePictureUrl) {
+                if (next === prev) next = { ...prev };
+                next[u.username] = u.profilePictureUrl;
+              }
+            }
+            return next;
+          });
         })
         .catch(() => {
           if (aliveRef.current) setResults([]);
@@ -377,29 +407,39 @@ const PartyBar = ({
     index: number,
     position: "left" | "right" | "far"
   ) => {
+    const name = member?.username || invited?.to || "";
+    const pfp = name ? pfpByName[name] : "";
+
     if (member) {
       return (
         <div
-          className={`party-scene-slot is-filled ${member.ready ? "is-ready" : ""}`}
+          className={`party-scene-slot is-person ${member.ready ? "is-ready" : ""}`}
           data-pos={position}
           key={`member-${member.username}`}
           title={member.username}
         >
-          <span className="party-scene-slot-avatar">{initials(member.username)}</span>
-          <span className="party-scene-slot-name">{member.username}</span>
+          <span className="party-scene-person-avatar">
+            {pfp ? <img src={pfp} alt="" /> : initials(member.username)}
+          </span>
+          <span className="party-scene-person-name">{member.username}</span>
         </div>
       );
     }
     if (invited) {
       return (
         <div
-          className="party-scene-slot is-pending"
+          className="party-scene-slot is-person is-pending"
           data-pos={position}
           key={`pending-${invited.to}`}
-          title={`${invited.to} (invited)`}
+          title={`${invited.to} (pending)`}
         >
-          <span className="party-scene-slot-plus">…</span>
-          <span className="party-scene-slot-name">{invited.to}</span>
+          <span className="party-scene-person-avatar">
+            {pfp ? <img src={pfp} alt="" /> : initials(invited.to)}
+          </span>
+          <span className="party-scene-person-name">
+            {invited.to}
+            <span className="party-terminal-dots" aria-hidden="true" />
+          </span>
         </div>
       );
     }
@@ -519,14 +559,17 @@ const PartyBar = ({
       <div className="party-scene-overlay" aria-label="Party invites">
         {renderInviteSlot(slotMembers[0], slotPending[0], 0, "left")}
         {party && (
-          <div
-            className={`party-scene-slot is-me ${me?.ready ? "is-ready" : ""}`}
+          <button
+            type="button"
+            className="party-scene-slot is-me is-leave"
             data-pos="center"
-            title={username}
+            title="Leave party"
+            aria-label="Leave party"
+            onClick={() => void quitParty()}
+            disabled={busy}
           >
-            <span className="party-scene-slot-avatar is-me">{initials(username)}</span>
-            <span className="party-scene-slot-name">{username}</span>
-          </div>
+            <span className="material-symbols-rounded" aria-hidden="true">logout</span>
+          </button>
         )}
         {renderInviteSlot(slotMembers[1], slotPending[1], 1, "right")}
         {renderInviteSlot(slotMembers[2], slotPending[2], 2, "far")}

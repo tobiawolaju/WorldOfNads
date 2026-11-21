@@ -1428,16 +1428,6 @@ export default function Dashboard() {
           const playCounting = !inParty && playButtonState === "counting";
           return (
             <div className="play-cluster">
-              {inParty && (
-                <button
-                  type="button"
-                  className="party-leave-play"
-                  onClick={() => partyControls?.leave()}
-                  disabled={partyControls?.busy}
-                >
-                  Leave
-                </button>
-              )}
               <button
                 className={`play-fixed ${!playDisabled ? "active" : "disabled"} ${playCounting ? "counting" : ""}`}
                 onClick={!playDisabled ? handlePlayClick : undefined}
