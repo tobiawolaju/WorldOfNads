@@ -693,7 +693,7 @@ function partyPendingFor(partyId, nowMs) {
   const rows = [];
   for (const invite of partyInvites.values()) {
     if (invite.partyId === partyId && invite.expiresAt > nowMs) {
-      rows.push({ to: invite.to, expiresAt: invite.expiresAt });
+      rows.push({ to: invite.to, pfp: invite.pfp || '', expiresAt: invite.expiresAt });
     }
   }
   return rows;
@@ -713,6 +713,7 @@ function partyView(party, nowMs) {
       username: member.username,
       ready: !!member.ready,
       skin: member.skin || 's-default',
+      pfp: member.pfp || '',
       joinedAt: member.joinedAt
     })),
     pending: partyPendingFor(party.id, nowMs),
@@ -803,7 +804,7 @@ function touchParty(party, nowMs) {
 }
 
 /** Opens the host's party, or returns the one they already own. */
-function openPartyFor(host, matchId, skin, nowMs) {
+function openPartyFor(host, matchId, skin, nowMs, hostPfp = '') {
   const existing = partyForUser(host);
   if (existing) {
     if (existing.host !== host) return { error: 'already_in_party' };
@@ -819,7 +820,7 @@ function openPartyFor(host, matchId, skin, nowMs) {
     matchId,
     status: 'open',
     countdownEnd: null,
-    members: [{ username: host, ready: false, skin: skin || 's-default', joinedAt: nowMs }],
+    members: [{ username: host, ready: false, skin: skin || 's-default', pfp: hostPfp || '', joinedAt: nowMs }],
     createdAt: nowMs,
     updatedAt: nowMs
   };
@@ -1142,12 +1143,14 @@ const server = createServer(async (req, res) => {
       partyError(res, 400, 'cannot_invite_self', now, from);
       return;
     }
+    let targetPfp = '';
     try {
       const target = await getPlayerProfile(to);
       if (!target) {
         partyError(res, 404, 'unknown_user', now, from);
         return;
       }
+      targetPfp = String(target.profilePictureUrl || target.profileImage || target.pfp || target.avatar || '');
     } catch (error) {
       console.error('[Party] invite profile lookup failed:', error);
       partyError(res, 500, 'lookup_failed', now, from);
@@ -1180,6 +1183,7 @@ const server = createServer(async (req, res) => {
         partyId: party.id,
         from,
         to,
+        pfp: targetPfp,
         matchId,
         createdAt: now,
         expiresAt: now + PARTY_INVITE_TTL_MS
@@ -1235,10 +1239,18 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (!party.members.some((member) => member.username === username)) {
+      let memberPfp = String(invite.pfp || '');
+      if (!memberPfp) {
+        try {
+          const profile = await getPlayerProfile(username);
+          memberPfp = String(profile?.profilePictureUrl || profile?.profileImage || profile?.pfp || profile?.avatar || '');
+        } catch {}
+      }
       party.members.push({
         username,
         ready: false,
         skin: cleanPartyName(body.skin) || 's-default',
+        pfp: memberPfp,
         joinedAt: now
       });
       partyMembership.set(username, party.id);

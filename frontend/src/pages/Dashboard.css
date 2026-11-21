@@ -738,45 +738,6 @@ html.is-fullscreen.desktop-mode .right-info-zoom {
   white-space: nowrap;
 }
 
-.party-leave-play {
-  height: 42px;
-  padding: 0 18px;
-  margin: 10px 0;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(0, 0, 0, 0.72);
-  color: #fff;
-  font-family: font1, sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  cursor: pointer;
-  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
-  white-space: nowrap;
-}
-
-.party-leave-play:hover {
-  background: rgba(20, 20, 20, 0.9);
-  border-color: rgba(255, 255, 255, 0.55);
-}
-
-.party-leave-play:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-@media (max-width: 768px) {
-  .play-cluster {
-    gap: 8px;
-  }
-
-  .party-leave-play {
-    height: 38px;
-    padding: 0 14px;
-    font-size: 12px;
-    margin: 10px 0;
-  }
-}
-
 /* 6️⃣ Fixed Buttons */
 .footer-buttons {
   position: fixed;
