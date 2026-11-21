@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   describePartyError,
   fetchPartyState,
@@ -421,24 +422,8 @@ const PartyBar = ({
 
   const incoming = invites[0] || null;
 
-  return (
+  const modals = (
     <>
-      <div className="party-scene-overlay" aria-label="Party invites">
-        {renderInviteSlot(slotMembers[0], slotPending[0], 0, "left")}
-        {party && (
-          <div
-            className={`party-scene-slot is-me ${me?.ready ? "is-ready" : ""}`}
-            data-pos="center"
-            title={username}
-          >
-            <span className="party-scene-slot-avatar is-me">{initials(username)}</span>
-            <span className="party-scene-slot-name">{username}</span>
-          </div>
-        )}
-        {renderInviteSlot(slotMembers[1], slotPending[1], 1, "right")}
-        {renderInviteSlot(slotMembers[2], slotPending[2], 2, "far")}
-      </div>
-
       {modalOpen && (
         <div className="party-modal-backdrop" onClick={() => setModalOpen(false)}>
           <div className="party-modal" onClick={(event) => event.stopPropagation()}>
@@ -526,6 +511,27 @@ const PartyBar = ({
           </div>
         </div>
       )}
+    </>
+  );
+
+  return (
+    <>
+      <div className="party-scene-overlay" aria-label="Party invites">
+        {renderInviteSlot(slotMembers[0], slotPending[0], 0, "left")}
+        {party && (
+          <div
+            className={`party-scene-slot is-me ${me?.ready ? "is-ready" : ""}`}
+            data-pos="center"
+            title={username}
+          >
+            <span className="party-scene-slot-avatar is-me">{initials(username)}</span>
+            <span className="party-scene-slot-name">{username}</span>
+          </div>
+        )}
+        {renderInviteSlot(slotMembers[1], slotPending[1], 1, "right")}
+        {renderInviteSlot(slotMembers[2], slotPending[2], 2, "far")}
+      </div>
+      {createPortal(modals, document.body)}
     </>
   );
 };
