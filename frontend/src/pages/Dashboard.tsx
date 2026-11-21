@@ -362,6 +362,7 @@ export default function Dashboard() {
   const [rewardsError, setRewardsError] = useState("");
   const [playButtonState, setPlayButtonState] = useState<"idle" | "counting">("idle");
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [partyControls, setPartyControls] = useState<PartyControls | null>(null);
   const [nowMs, setNowMs] = useState(Date.now());
   const [showLoader, setShowLoader] = useState(true);
   // Room name -> players inside right now (room server) and match id -> distinct
