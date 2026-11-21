@@ -313,14 +313,14 @@ var _party_invites: Array = []
 var _party_server_offset_ms: int = 0
 var _party_launched_id: String = ""
 var _party_last_invite: String = ""
-var _party_bar: PanelContainer = null
-var _party_title: Label = null
+var _party_overlay: Control = null
 var _party_leave: Button = null
-var _party_ready: Button = null
-var _party_hint: Label = null
 var _party_slots: Array = []
-var _party_slot_style: StyleBoxFlat = null
-var _party_you_style: StyleBoxFlat = null
+var _party_me_badge: PanelContainer = null
+var _party_me_label: Label = null
+var _party_slot_plus_style: StyleBoxFlat = null
+var _party_slot_plus_hover: StyleBoxFlat = null
+var _party_slot_filled_style: StyleBoxFlat = null
 var _party_dialog: Control = null
 var _party_dialog_status: Label = null
 var _party_search: LineEdit = null
@@ -534,7 +534,7 @@ func _process(delta: float) -> void:
 	_tick_preview_emote(delta)
 	_party_tick(delta)
 
-	if _is_counting:
+	if _is_counting and _party_state.is_empty():
 		_elapsed = minf(_elapsed + delta, PLAY_COUNTDOWN_SECONDS)
 		if _play_button != null:
 			_play_button.text = "%.1fs Cancel" % _elapsed
@@ -2429,17 +2429,41 @@ func _reroll_store_variants() -> void:
 
 func _refresh_play_button() -> void:
 	var show_button := tab == TAB_EVENTS and selected_match_id != ""
+	var in_party := not _party_state.is_empty()
 	if _play_button != null:
 		_play_button.visible = show_button
-		_play_button.disabled = not _can_play()
+		if in_party:
+			var party_countdown := str(_party_state.get("status", "")) == "countdown"
+			_play_button.disabled = (not _can_play()) or party_countdown or _party_busy
+		else:
+			_play_button.disabled = not _can_play()
 		# .play-fixed.disabled dims the whole button to 0.5 on top of its white ring.
 		_play_button.modulate = Color(1, 1, 1, 0.5) if _play_button.disabled else Color(1, 1, 1, 1)
 	_update_play_button_text()
+	if _party_leave != null:
+		_party_leave.visible = in_party and show_button
 
 
 func _update_play_button_text() -> void:
 	if _play_button == null:
 		return
+
+	if not _party_state.is_empty():
+		if str(_party_state.get("status", "")) == "countdown":
+			var end := int(_party_state.get("countdownEnd", 0))
+			_play_button.text = "%.1fs" % maxf(0.0, float(end - _party_now_ms()) / 1000.0)
+			return
+		var username := _party_username()
+		var me_ready := false
+		var members_value: Variant = _party_state.get("members", [])
+		if typeof(members_value) == TYPE_ARRAY:
+			for member in members_value:
+				if typeof(member) == TYPE_DICTIONARY and str(member.get("username", "")) == username:
+					me_ready = bool(member.get("ready", false))
+					break
+		_play_button.text = "CANCEL" if me_ready else "READY!"
+		return
+
 	if _is_counting:
 		_play_button.text = "%.1fs Cancel" % _elapsed
 		return
@@ -2475,6 +2499,12 @@ func _can_play() -> bool:
 
 
 func _on_play_pressed() -> void:
+	if not _party_state.is_empty():
+		if str(_party_state.get("status", "")) == "countdown":
+			return
+		_on_party_ready_pressed()
+		return
+
 	if _is_counting:
 		_is_counting = false
 		_elapsed = 0.0
@@ -3486,19 +3516,22 @@ func _party_match_label(match_id: String) -> String:
 
 
 func _update_party_countdown_text() -> void:
-	if _party_ready == null or _party_state.is_empty():
+	if _party_state.is_empty():
 		return
 	if str(_party_state.get("status", "")) != "countdown":
 		return
-	var end := int(_party_state.get("countdownEnd", 0))
-	if end <= 0:
-		return
-	_party_ready.text = "%.1fs" % maxf(0.0, float(end - _party_now_ms()) / 1000.0)
+	_update_play_button_text()
 
 
 func _refresh_party_ui() -> void:
-	if _party_bar == null:
+	if _party_slots.is_empty():
 		return
+
+	# A party in progress owns the launch flow; cancel any solo local countdown.
+	if not _party_state.is_empty():
+		_is_counting = false
+		_elapsed = 0.0
+
 	var username := _party_username()
 	var has_party := not _party_state.is_empty()
 	var me_ready := false
@@ -3533,78 +3566,90 @@ func _refresh_party_ui() -> void:
 						"name": invited_name,
 						"ready": false
 					})
+
 	while others.size() < 3:
 		others.append({})
 
-	_party_title.text = (
-		"SQUAD · %s" % _party_match_label(str(_party_state.get("matchId", "")))
-		if has_party
-		else "PLAY WITH FRIENDS"
-	)
-	_party_leave.visible = has_party
-	_party_ready.visible = has_party
-
-	var slot_rows := [others[0], others[1], others[2]]
 	for index in range(_party_slots.size()):
 		var slot: Button = _party_slots[index]
-		if index == 1:
-			slot.text = "YOU\n%s%s" % [
-				username if username != "" else "—",
-				"\nREADY" if me_ready else ""
-			]
-			slot.set_meta("slot_kind", "self")
-			slot.modulate = Color(1, 1, 1, 1)
-			continue
-		var row: Dictionary = slot_rows[0] if index == 0 else slot_rows[index - 1]
+		var row: Dictionary = others[index]
 		if row.is_empty():
-			slot.text = "+\nInvite"
+			slot.text = "+"
 			slot.set_meta("slot_kind", "empty")
 			slot.modulate = Color(1, 1, 1, 1)
+			slot.tooltip_text = "Invite a friend"
+			slot.offset_left = -22.0
+			slot.offset_top = -22.0
+			slot.offset_right = 22.0
+			slot.offset_bottom = 22.0
+			if _party_slot_plus_style != null:
+				for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
+					slot.add_theme_stylebox_override(
+						state_name,
+						_party_slot_plus_hover if state_name == "hover" and _party_slot_plus_hover != null else _party_slot_plus_style
+					)
+			slot.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+			slot.add_theme_color_override("font_hover_color", Color(1, 1, 1, 1))
+			slot.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+			slot.add_theme_font_size_override("font_size", 22)
 		elif str(row.get("kind", "")) == "pending":
-			slot.text = "%s\nINVITED" % str(row.get("name", ""))
+			slot.text = str(row.get("name", ""))
 			slot.set_meta("slot_kind", "pending")
-			slot.modulate = Color(1, 1, 1, 0.55)
+			slot.modulate = Color(1, 1, 1, 0.72)
+			slot.tooltip_text = "%s (invited)" % str(row.get("name", ""))
+			slot.offset_left = -38.0
+			slot.offset_top = -18.0
+			slot.offset_right = 38.0
+			slot.offset_bottom = 18.0
+			if _party_slot_filled_style != null:
+				for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
+					slot.add_theme_stylebox_override(state_name, _party_slot_filled_style)
+			slot.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+			slot.add_theme_color_override("font_hover_color", Color(1, 1, 1, 0.85))
+			slot.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 0.85))
+			slot.add_theme_font_size_override("font_size", 8)
 		else:
-			slot.text = "%s\n%s" % [
-				str(row.get("name", "")),
-				"READY" if bool(row.get("ready", false)) else "…"
-			]
+			var member_name := str(row.get("name", ""))
+			var ready := bool(row.get("ready", false))
+			slot.text = "%s\n%s" % [member_name, "READY" if ready else "…"]
 			slot.set_meta("slot_kind", "member")
 			slot.modulate = Color(1, 1, 1, 1)
+			slot.tooltip_text = member_name
+			slot.offset_left = -40.0
+			slot.offset_top = -22.0
+			slot.offset_right = 40.0
+			slot.offset_bottom = 22.0
+			var member_style := _party_slot_filled_style
+			if ready and _party_slot_filled_style != null:
+				var ready_style := _party_slot_filled_style.duplicate() as StyleBoxFlat
+				if ready_style != null:
+					ready_style.border_color = PARTY_ACCENT
+					member_style = ready_style
+			if member_style != null:
+				for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
+					slot.add_theme_stylebox_override(state_name, member_style)
+			var member_color := PARTY_ACCENT if ready else Color(1, 1, 1, 0.95)
+			slot.add_theme_color_override("font_color", member_color)
+			slot.add_theme_color_override("font_hover_color", member_color)
+			slot.add_theme_color_override("font_pressed_color", member_color)
+			slot.add_theme_font_size_override("font_size", 8)
 
-	if not has_party:
-		_party_ready.disabled = false
-		_party_hint.text = "Invite up to 3 friends."
-		return
+	if _party_me_badge != null:
+		_party_me_badge.visible = has_party
+		if has_party and _party_me_label != null:
+			_party_me_label.text = "%s\n%s" % [username, "READY" if me_ready else "YOU"]
+			var me_style := _party_slot_filled_style
+			if me_style != null:
+				var highlight := me_style.duplicate() as StyleBoxFlat
+				if highlight != null:
+					highlight.border_color = PARTY_ACCENT if me_ready else Color(1.0, 0.84, 0.0, 0.45)
+					_party_me_badge.add_theme_stylebox_override("panel", highlight)
+			if me_ready:
+				_party_me_label.add_theme_color_override("font_color", PARTY_ACCENT)
+			else:
+				_party_me_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
 
-	if str(_party_state.get("status", "")) == "countdown":
-		_party_ready.disabled = true
-		_party_ready.text = "%.1fs" % maxf(
-			0.0, float(int(_party_state.get("countdownEnd", 0)) - _party_now_ms()) / 1000.0
-		)
-		_party_hint.text = "Match is starting…"
-		return
-
-	_party_ready.disabled = false
-	_party_ready.text = "CANCEL READY" if me_ready else "READY"
-	var waiting: Array = []
-	for row in others:
-		if row.is_empty():
-			continue
-		if str(row.get("kind", "")) == "member" and not bool(row.get("ready", false)):
-			waiting.append(str(row.get("name", "")))
-	var members_count := 0
-	var members_check: Variant = _party_state.get("members", [])
-	if typeof(members_check) == TYPE_ARRAY:
-		members_count = members_check.size()
-	if not waiting.is_empty():
-		_party_hint.text = "Waiting for %s" % ", ".join(waiting)
-	elif members_count > 1:
-		_party_hint.text = "All ready — starting…"
-	elif me_ready:
-		_party_hint.text = "Waiting for others…"
-	else:
-		_party_hint.text = "Ready up to start."
+	_refresh_play_button()
 
 
 func _refresh_party_invite_popup() -> void:
@@ -3653,8 +3698,6 @@ func _party_show_error(code: String) -> void:
 			text = "Party service unreachable. Check your connection."
 	if _party_dialog != null and _party_dialog.visible:
 		_show_party_dialog_status(text, true)
-	elif _party_hint != null:
-		_party_hint.text = text
 
 
 # --------------------------------------------------------- party UI construction
@@ -3690,94 +3733,130 @@ func _build_party_ui() -> void:
 	if layer == null:
 		return
 
-	_party_slot_style = _party_button_style(Color(1, 1, 1, 0.06), Color(1, 1, 1, 0.18))
-	_party_you_style = _party_button_style(Color(1.0, 0.84, 0.0, 0.10), Color(1.0, 0.84, 0.0, 0.55))
+	# Plus buttons: white "+" on a black rounded background, floating over the 3D preview.
+	_party_slot_plus_style = StyleBoxFlat.new()
+	_party_slot_plus_style.bg_color = Color(0, 0, 0, 1)
+	_party_slot_plus_style.set_corner_radius_all(14)
+	_party_slot_plus_style.set_border_width_all(0)
 
-	_party_bar = PanelContainer.new()
-	_party_bar.name = "PartyBar"
-	_party_bar.anchor_left = 1.0
-	_party_bar.anchor_top = 1.0
-	_party_bar.anchor_right = 1.0
-	_party_bar.anchor_bottom = 1.0
-	_party_bar.offset_left = -370.0
-	_party_bar.offset_top = -206.0
-	_party_bar.offset_right = -30.0
-	_party_bar.offset_bottom = -88.0
-	_party_bar.add_theme_stylebox_override("panel", _party_panel_style())
-	layer.add_child(_party_bar)
+	_party_slot_plus_hover = _party_slot_plus_style.duplicate() as StyleBoxFlat
+	if _party_slot_plus_hover != null:
+		_party_slot_plus_hover.bg_color = Color(0.12, 0.12, 0.12, 1)
 
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 4)
-	_party_bar.add_child(column)
+	_party_slot_filled_style = StyleBoxFlat.new()
+	_party_slot_filled_style.bg_color = Color(0, 0, 0, 0.78)
+	_party_slot_filled_style.set_corner_radius_all(14)
+	_party_slot_filled_style.set_border_width_all(1)
+	_party_slot_filled_style.border_color = Color(1, 1, 1, 0.14)
+	_party_slot_filled_style.content_margin_left = 6
+	_party_slot_filled_style.content_margin_right = 6
+	_party_slot_filled_style.content_margin_top = 4
+	_party_slot_filled_style.content_margin_bottom = 4
 
-	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 4)
-	column.add_child(head)
-
-	_party_title = Label.new()
-	_party_title.text = "PLAY WITH FRIENDS"
-	_party_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_party_title.add_theme_font_override("font", FONT_UI)
-	_party_title.add_theme_font_size_override("font_size", 9)
-	_party_title.add_theme_color_override("font_color", Color(1, 1, 1, 0.72))
-	head.add_child(_party_title)
-
-	_party_leave = Button.new()
-	_party_leave.text = "Leave"
-	_party_leave.flat = true
-	_party_leave.visible = false
-	_party_leave.add_theme_font_override("font", FONT_UI)
-	_party_leave.add_theme_font_size_override("font_size", 8)
-	_party_leave.add_theme_color_override("font_color", Color(1, 1, 1, 0.55))
-	_party_leave.pressed.connect(_on_party_leave_pressed)
-	head.add_child(_party_leave)
-
-	var slots := HBoxContainer.new()
-	slots.add_theme_constant_override("separation", 4)
-	column.add_child(slots)
+	_party_overlay = Control.new()
+	_party_overlay.name = "PartyOverlay"
+	_party_overlay.anchor_left = 0.0
+	_party_overlay.anchor_top = 0.0
+	_party_overlay.anchor_right = 0.65
+	_party_overlay.anchor_bottom = 1.0
+	_party_overlay.offset_left = 0.0
+	_party_overlay.offset_top = 0.0
+	_party_overlay.offset_right = 0.0
+	_party_overlay.offset_bottom = 0.0
+	# Ignore so the 3D preview drag still works everywhere except on the slot buttons.
+	_party_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(_party_overlay)
 
 	_party_slots.clear()
-	for index in range(4):
+	var slot_positions := [Vector2(0.22, 0.42), Vector2(0.72, 0.42), Vector2(0.86, 0.38)]
+	for index in range(slot_positions.size()):
+		var pos: Vector2 = slot_positions[index]
 		var slot := Button.new()
-		slot.custom_minimum_size = Vector2(0, 48)
-		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		slot.anchor_left = pos.x
+		slot.anchor_top = pos.y
+		slot.anchor_right = pos.x
+		slot.anchor_bottom = pos.y
+		slot.offset_left = -22.0
+		slot.offset_top = -22.0
+		slot.offset_right = 22.0
+		slot.offset_bottom = 22.0
+		slot.custom_minimum_size = Vector2(44, 44)
+		slot.text = "+"
+		slot.set_meta("slot_kind", "empty")
 		slot.add_theme_font_override("font", FONT_UI)
-		slot.add_theme_font_size_override("font_size", 8)
-		slot.add_theme_color_override("font_color", Color(1, 1, 1, 0.92))
-		slot.add_theme_color_override("font_hover_color", Color(1, 1, 1, 0.92))
-		slot.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 0.92))
-		var style := _party_you_style if index == 1 else _party_slot_style
-		for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
-			slot.add_theme_stylebox_override(state_name, style)
+		slot.add_theme_font_size_override("font_size", 22)
+		slot.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+		slot.add_theme_color_override("font_hover_color", Color(1, 1, 1, 1))
+		slot.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+		if _party_slot_plus_style != null:
+			for state_name in ["normal", "pressed", "disabled", "focus"]:
+				slot.add_theme_stylebox_override(state_name, _party_slot_plus_style)
+		if _party_slot_plus_hover != null:
+			slot.add_theme_stylebox_override("hover", _party_slot_plus_hover)
 		slot.pressed.connect(_on_party_slot_pressed.bind(index))
-		slots.add_child(slot)
+		_party_overlay.add_child(slot)
 		_party_slots.append(slot)
 
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 6)
-	column.add_child(actions)
+	_party_me_badge = PanelContainer.new()
+	_party_me_badge.anchor_left = 0.5
+	_party_me_badge.anchor_top = 0.32
+	_party_me_badge.anchor_right = 0.5
+	_party_me_badge.anchor_bottom = 0.32
+	_party_me_badge.offset_left = -34.0
+	_party_me_badge.offset_top = -20.0
+	_party_me_badge.offset_right = 34.0
+	_party_me_badge.offset_bottom = 20.0
+	_party_me_badge.visible = false
+	_party_me_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _party_slot_filled_style != null:
+		_party_me_badge.add_theme_stylebox_override("panel", _party_slot_filled_style)
+	_party_overlay.add_child(_party_me_badge)
 
-	_party_ready = Button.new()
-	_party_ready.text = "READY"
-	_party_ready.custom_minimum_size = Vector2(110, 26)
-	_party_ready.visible = false
-	_party_ready.add_theme_font_override("font", FONT_UI)
-	_party_ready.add_theme_font_size_override("font_size", 9)
-	_party_ready.add_theme_color_override("font_color", Color(0.07, 0.05, 0.12, 1))
-	for state_name in ["normal", "hover", "pressed", "disabled"]:
-		_party_ready.add_theme_stylebox_override(
-			state_name, _party_button_style(PARTY_ACCENT, PARTY_ACCENT)
-		)
-	_party_ready.pressed.connect(_on_party_ready_pressed)
-	actions.add_child(_party_ready)
+	_party_me_label = Label.new()
+	_party_me_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_party_me_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_party_me_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_party_me_label.clip_text = true
+	_party_me_label.add_theme_font_override("font", FONT_UI)
+	_party_me_label.add_theme_font_size_override("font_size", 8)
+	_party_me_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
+	_party_me_badge.add_child(_party_me_label)
 
-	_party_hint = Label.new()
-	_party_hint.text = "Invite up to 3 friends."
-	_party_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_party_hint.add_theme_font_override("font", FONT_UI)
-	_party_hint.add_theme_font_size_override("font_size", 8)
-	_party_hint.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
-	actions.add_child(_party_hint)
+	# Leave button next to the main READY button (pops up only while in a party).
+	_party_leave = Button.new()
+	_party_leave.name = "PartyLeaveButton"
+	_party_leave.text = "Leave"
+	_party_leave.visible = false
+	_party_leave.anchor_left = 1.0
+	_party_leave.anchor_top = 1.0
+	_party_leave.anchor_right = 1.0
+	_party_leave.anchor_bottom = 1.0
+	var play_left := -150.0
+	var play_top := -80.0
+	var play_bottom := -30.0
+	if _play_button != null:
+		play_left = _play_button.offset_left
+		play_top = _play_button.offset_top
+		play_bottom = _play_button.offset_bottom
+	_party_leave.offset_left = play_left - 100.0
+	_party_leave.offset_top = play_top + 5.0
+	_party_leave.offset_right = play_left - 10.0
+	_party_leave.offset_bottom = play_bottom - 5.0
+	_party_leave.add_theme_font_override("font", FONT_UI)
+	_party_leave.add_theme_font_size_override("font_size", 14)
+	_party_leave.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	_party_leave.add_theme_color_override("font_hover_color", Color(1, 1, 1, 1))
+	_party_leave.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+	var leave_style := StyleBoxFlat.new()
+	leave_style.bg_color = Color(0, 0, 0, 0.72)
+	leave_style.border_color = Color(1, 1, 1, 0.35)
+	leave_style.set_border_width_all(1)
+	leave_style.set_corner_radius_all(8)
+	leave_style.skew = Vector2(0.24, 0)
+	for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
+		_party_leave.add_theme_stylebox_override(state_name, leave_style)
+	_party_leave.pressed.connect(_on_party_leave_pressed)
+	layer.add_child(_party_leave)
 
 	_refresh_party_ui()
 
@@ -3795,7 +3874,7 @@ func _build_party_dialogs() -> void:
 	layer.add_child(_party_dialog)
 
 	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.65)
+	dim.color = Color(0.02, 0.01, 0.05, 0.72)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_party_dialog.add_child(dim)
 
@@ -3803,19 +3882,28 @@ func _build_party_dialogs() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_party_dialog.add_child(center)
 
+	var dialog_panel_style := _party_panel_style()
+	dialog_panel_style.bg_color = Color(0.075, 0.05, 0.15, 0.98)
+	dialog_panel_style.set_corner_radius_all(0)
+	dialog_panel_style.content_margin_left = 14
+	dialog_panel_style.content_margin_right = 14
+	dialog_panel_style.content_margin_top = 12
+	dialog_panel_style.content_margin_bottom = 12
+
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(330, 0)
-	panel.add_theme_stylebox_override("panel", _party_panel_style())
+	panel.custom_minimum_size = Vector2(340, 0)
+	panel.add_theme_stylebox_override("panel", dialog_panel_style)
 	center.add_child(panel)
 
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 6)
+	column.add_theme_constant_override("separation", 8)
 	panel.add_child(column)
 
 	var title := Label.new()
 	title.text = "INVITE A FRIEND"
 	title.add_theme_font_override("font", FONT_UI)
-	title.add_theme_font_size_override("font_size", 12)
+	title.add_theme_font_size_override("font_size", 14)
+	title.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	column.add_child(title)
 
 	var subtitle := Label.new()
@@ -3823,14 +3911,23 @@ func _build_party_dialogs() -> void:
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	subtitle.add_theme_font_override("font", FONT_UI)
 	subtitle.add_theme_font_size_override("font_size", 8)
-	subtitle.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	subtitle.add_theme_color_override("font_color", Color(1, 1, 1, 0.68))
 	column.add_child(subtitle)
+
+	var search_style := StyleBoxFlat.new()
+	search_style.bg_color = Color(1, 1, 1, 0.06)
+	search_style.border_color = Color(1, 1, 1, 0.18)
+	search_style.set_border_width_all(1)
+	search_style.content_margin_left = 8
+	search_style.content_margin_right = 8
 
 	_party_search = LineEdit.new()
 	_party_search.placeholder_text = "Enter a username"
 	_party_search.custom_minimum_size = Vector2(0, 30)
 	_party_search.add_theme_font_override("font", FONT_UI)
 	_party_search.add_theme_font_size_override("font_size", 9)
+	_party_search.add_theme_stylebox_override("normal", search_style)
+	_party_search.add_theme_stylebox_override("focus", search_style)
 	_party_search.text_changed.connect(_on_party_query_changed)
 	_party_search.text_submitted.connect(_on_party_search_submitted)
 	column.add_child(_party_search)
@@ -3842,7 +3939,7 @@ func _build_party_dialogs() -> void:
 
 	_party_results = VBoxContainer.new()
 	_party_results.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_party_results.add_theme_constant_override("separation", 2)
+	_party_results.add_theme_constant_override("separation", 3)
 	scroll.add_child(_party_results)
 
 	_party_dialog_status = Label.new()
@@ -3854,9 +3951,14 @@ func _build_party_dialogs() -> void:
 
 	var close := Button.new()
 	close.text = "CLOSE"
-	close.custom_minimum_size = Vector2(0, 28)
+	close.custom_minimum_size = Vector2(0, 30)
 	close.add_theme_font_override("font", FONT_UI)
 	close.add_theme_font_size_override("font_size", 9)
+	close.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
+	var close_style := _party_button_style(Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.22))
+	close_style.set_corner_radius_all(0)
+	for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
+		close.add_theme_stylebox_override(state_name, close_style)
 	close.pressed.connect(_close_party_dialog)
 	column.add_child(close)
 
@@ -3869,7 +3971,7 @@ func _build_party_dialogs() -> void:
 	layer.add_child(_party_invite_popup)
 
 	var popup_dim := ColorRect.new()
-	popup_dim.color = Color(0, 0, 0, 0.65)
+	popup_dim.color = Color(0.02, 0.01, 0.05, 0.72)
 	popup_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_party_invite_popup.add_child(popup_dim)
 
@@ -3877,9 +3979,17 @@ func _build_party_dialogs() -> void:
 	popup_center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_party_invite_popup.add_child(popup_center)
 
+	var popup_panel_style := _party_panel_style()
+	popup_panel_style.bg_color = Color(0.075, 0.05, 0.15, 0.98)
+	popup_panel_style.set_corner_radius_all(0)
+	popup_panel_style.content_margin_left = 14
+	popup_panel_style.content_margin_right = 14
+	popup_panel_style.content_margin_top = 12
+	popup_panel_style.content_margin_bottom = 12
+
 	var popup_panel := PanelContainer.new()
-	popup_panel.custom_minimum_size = Vector2(310, 0)
-	popup_panel.add_theme_stylebox_override("panel", _party_panel_style())
+	popup_panel.custom_minimum_size = Vector2(320, 0)
+	popup_panel.add_theme_stylebox_override("panel", popup_panel_style)
 	popup_center.add_child(popup_panel)
 
 	var popup_column := VBoxContainer.new()
@@ -3889,14 +3999,15 @@ func _build_party_dialogs() -> void:
 	var popup_title := Label.new()
 	popup_title.text = "PARTY INVITE"
 	popup_title.add_theme_font_override("font", FONT_UI)
-	popup_title.add_theme_font_size_override("font_size", 12)
+	popup_title.add_theme_font_size_override("font_size", 14)
+	popup_title.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	popup_column.add_child(popup_title)
 
 	_party_invite_label = Label.new()
 	_party_invite_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_party_invite_label.add_theme_font_override("font", FONT_UI)
 	_party_invite_label.add_theme_font_size_override("font_size", 9)
-	_party_invite_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
+	_party_invite_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.78))
 	popup_column.add_child(_party_invite_label)
 
 	var popup_actions := HBoxContainer.new()
@@ -3908,12 +4019,15 @@ func _build_party_dialogs() -> void:
 	accept.custom_minimum_size = Vector2(0, 32)
 	accept.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	accept.add_theme_font_override("font", FONT_UI)
-	accept.add_theme_font_size_override("font_size", 9)
-	accept.add_theme_color_override("font_color", Color(0.07, 0.05, 0.12, 1))
-	for state_name in ["normal", "hover", "pressed"]:
-		accept.add_theme_stylebox_override(
-			state_name, _party_button_style(PARTY_ACCENT, PARTY_ACCENT)
-		)
+	accept.add_theme_font_size_override("font_size", 10)
+	accept.add_theme_color_override("font_color", Color(0, 0, 0, 1))
+	accept.add_theme_color_override("font_hover_color", Color(0, 0, 0, 1))
+	accept.add_theme_color_override("font_pressed_color", Color(0, 0, 0, 1))
+	var accept_style := _party_button_style(PARTY_ACCENT, PARTY_ACCENT)
+	accept_style.set_corner_radius_all(0)
+	accept_style.skew = Vector2(0.24, 0)
+	for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
+		accept.add_theme_stylebox_override(state_name, accept_style)
 	accept.pressed.connect(_on_party_invite_accept)
 	popup_actions.add_child(accept)
 
@@ -3922,7 +4036,12 @@ func _build_party_dialogs() -> void:
 	reject.custom_minimum_size = Vector2(0, 32)
 	reject.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	reject.add_theme_font_override("font", FONT_UI)
-	reject.add_theme_font_size_override("font_size", 9)
+	reject.add_theme_font_size_override("font_size", 10)
+	reject.add_theme_color_override("font_color", Color(1, 1, 1, 0.92))
+	var reject_style := _party_button_style(Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.22))
+	reject_style.set_corner_radius_all(0)
+	for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
+		reject.add_theme_stylebox_override(state_name, reject_style)
 	reject.pressed.connect(_on_party_invite_reject)
 	popup_actions.add_child(reject)
 
@@ -3935,7 +4054,7 @@ func _open_party_dialog() -> void:
 	if not _party_state.is_empty():
 		var members_value: Variant = _party_state.get("members", [])
 		if typeof(members_value) == TYPE_ARRAY and members_value.size() >= PARTY_MAX_MEMBERS:
-			_party_hint.text = "Your party is full (4 players max)."
+			_show_party_dialog_status("Your party is full (4 players max).", true)
 			return
 	_party_dialog.visible = true
 	_show_party_dialog_status("", false)
@@ -4001,9 +4120,16 @@ func _show_party_search_results(users: Variant) -> void:
 		var button := Button.new()
 		button.text = invited_name
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.custom_minimum_size = Vector2(0, 26)
+		button.custom_minimum_size = Vector2(0, 28)
 		button.add_theme_font_override("font", FONT_UI)
 		button.add_theme_font_size_override("font_size", 9)
+		button.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
+		button.add_theme_color_override("font_hover_color", PARTY_ACCENT)
+		button.add_theme_color_override("font_pressed_color", PARTY_ACCENT)
+		var row_style := _party_button_style(Color(1, 1, 1, 0.04), Color(1, 1, 1, 0.1))
+		row_style.set_corner_radius_all(0)
+		for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
+			button.add_theme_stylebox_override(state_name, row_style)
 		button.pressed.connect(_on_party_invite_result.bind(invited_name))
 		_party_results.add_child(button)
 		count += 1
@@ -4038,7 +4164,7 @@ func _on_party_invite_result(invited_name: String) -> void:
 
 
 func _on_party_slot_pressed(index: int) -> void:
-	if index != 1 and _party_slots.size() > index:
+	if index >= 0 and index < _party_slots.size():
 		var slot: Button = _party_slots[index]
 		if str(slot.get_meta("slot_kind", "")) == "empty":
 			_open_party_dialog()

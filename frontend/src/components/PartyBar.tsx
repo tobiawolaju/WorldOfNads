@@ -42,6 +42,17 @@ type SearchUser = {
   profilePictureUrl?: string;
 };
 
+export type PartyControls = {
+  inParty: boolean;
+  countingDown: boolean;
+  remainingMs: number;
+  meReady: boolean;
+  waitingText: string;
+  busy: boolean;
+  toggleReady: () => void;
+  leave: () => void;
+};
+
 type PartyBarProps = {
   username: string;
   selectedMatch: string | null;
@@ -49,6 +60,7 @@ type PartyBarProps = {
   matches: { matchId: string; sponsor?: string }[];
   onLaunch: (matchId: string) => void;
   onJoinMatch: (matchId: string) => void;
+  onControlsChange?: (controls: PartyControls | null) => void;
 };
 
 const POLL_MS = 1500;
@@ -73,7 +85,8 @@ const PartyBar = ({
   skinName,
   matches,
   onLaunch,
-  onJoinMatch
+  onJoinMatch,
+  onControlsChange
 }: PartyBarProps) => {
   const [party, setParty] = useState<Party | null>(null);
   const [invites, setInvites] = useState<PartyInvite[]>([]);
@@ -91,6 +104,8 @@ const PartyBar = ({
   const staleRef = useRef("");
   const joinedRef = useRef("");
   const clockOffsetRef = useRef(0);
+  const partyRef = useRef<Party | null>(null);
+  const busyRef = useRef(false);
 
   const canParty = Boolean(username && username !== "Anon");
 
@@ -101,6 +116,14 @@ const PartyBar = ({
     const offset = Number(data?.serverNow || Date.now()) - Date.now();
     clockOffsetRef.current = offset;
   }, []);
+
+  useEffect(() => {
+    partyRef.current = party;
+  }, [party]);
+
+  useEffect(() => {
+    busyRef.current = busy;
+  }, [busy]);
 
   const refresh = useCallback(async () => {
     if (!canParty) return;
@@ -217,9 +240,17 @@ const PartyBar = ({
   const pending = party?.pending || [];
   const slotMembers = [others[0] || null, others[1] || null, others[2] || null];
   const slotPending = [pending[0] || null, pending[1] || null, pending[2] || null];
-  const allReady = Boolean(party?.members.length) && party!.members.every((member) => member.ready);
-  const waitingFor = party ? party.members.filter((member) => !member.ready).map((member) => member.username) : [];
+  const waitingFor = party
+    ? party.members.filter((member) => !member.ready).map((member) => member.username)
+    : [];
   const countingDown = party?.status === "countdown" && remainingMs > 0;
+  const waitingText = countingDown
+    ? "Match is starting…"
+    : waitingFor.length
+      ? `Waiting for ${waitingFor.join(", ")}`
+      : party && me?.ready
+        ? "Ready"
+        : "";
 
   const openInvite = () => {
     if (party && party.members.length >= party.maxMembers) {
@@ -281,65 +312,107 @@ const PartyBar = ({
     }
   };
 
-  const toggleReady = async () => {
-    if (!party || !me) return;
+  const toggleReady = useCallback(async () => {
+    const currentParty = partyRef.current;
+    if (!currentParty || busyRef.current) return;
+    const currentMe = currentParty.members.find((member) => member.username === username) || null;
+    if (!currentMe) return;
     setBusy(true);
     setError("");
     try {
-      const data = await setPartyReady({ username, ready: !me.ready });
-      applyState(data);
+      const data = await setPartyReady({ username, ready: !currentMe.ready });
+      if (aliveRef.current) applyState(data);
     } catch (failure: any) {
-      setError(describePartyError(failure?.code));
+      if (aliveRef.current) setError(describePartyError(failure?.code));
     } finally {
-      setBusy(false);
+      if (aliveRef.current) setBusy(false);
     }
-  };
+  }, [username, applyState]);
 
-  const quitParty = async () => {
+  const quitParty = useCallback(async () => {
+    if (busyRef.current) return;
     setBusy(true);
     try {
       await leaveParty({ username });
     } catch {
       // Leaving locally is still the right outcome if the request failed.
     }
-    setParty(null);
-    setInvites([]);
-    launchedRef.current = "";
-    joinedRef.current = "";
-    setBusy(false);
-  };
+    if (aliveRef.current) {
+      setParty(null);
+      setInvites([]);
+      launchedRef.current = "";
+      joinedRef.current = "";
+      setBusy(false);
+    }
+  }, [username]);
 
-  const renderSlot = (member: PartyMember | null, invited: { to: string } | null, index: number) => {
+  useEffect(() => {
+    if (!onControlsChange) return;
+    if (!party) {
+      onControlsChange(null);
+      return;
+    }
+    onControlsChange({
+      inParty: true,
+      countingDown,
+      remainingMs,
+      meReady: Boolean(me?.ready),
+      waitingText,
+      busy,
+      toggleReady,
+      leave: quitParty
+    });
+  }, [party, countingDown, remainingMs, me?.ready, waitingText, busy, toggleReady, quitParty, onControlsChange]);
+
+  useEffect(() => {
+    return () => {
+      onControlsChange?.(null);
+    };
+  }, [onControlsChange]);
+
+  const renderInviteSlot = (
+    member: PartyMember | null,
+    invited: { to: string } | null,
+    index: number,
+    position: "left" | "right" | "far"
+  ) => {
     if (member) {
       return (
-        <div className="party-slot is-filled" key={`member-${member.username}`}>
-          <span className="party-slot-avatar">{initials(member.username)}</span>
-          <span className="party-slot-name">{member.username}</span>
-          <span className={`party-slot-ready ${member.ready ? "is-ready" : ""}`}>
-            {member.ready ? "READY" : "…"}
-          </span>
+        <div
+          className={`party-scene-slot is-filled ${member.ready ? "is-ready" : ""}`}
+          data-pos={position}
+          key={`member-${member.username}`}
+          title={member.username}
+        >
+          <span className="party-scene-slot-avatar">{initials(member.username)}</span>
+          <span className="party-scene-slot-name">{member.username}</span>
         </div>
       );
     }
     if (invited) {
       return (
-        <div className="party-slot is-pending" key={`pending-${invited.to}`}>
-          <span className="party-slot-avatar">?</span>
-          <span className="party-slot-name">{invited.to}</span>
-          <span className="party-slot-ready">INVITED</span>
+        <div
+          className="party-scene-slot is-pending"
+          data-pos={position}
+          key={`pending-${invited.to}`}
+          title={`${invited.to} (invited)`}
+        >
+          <span className="party-scene-slot-plus">…</span>
+          <span className="party-scene-slot-name">{invited.to}</span>
         </div>
       );
     }
     return (
       <button
         type="button"
-        className="party-slot is-empty"
+        className="party-scene-slot is-empty"
+        data-pos={position}
         key={`empty-${index}`}
         onClick={openInvite}
         title="Invite a friend"
+        aria-label="Invite a friend"
       >
-        <span className="party-slot-plus">+</span>
-        <span className="party-slot-label">Invite</span>
+        <span className="party-scene-slot-plus">+</span>
       </button>
     );
   };
@@ -350,66 +423,31 @@ const PartyBar = ({
 
   return (
     <>
-      <div className={`party-bar ${party ? "has-party" : ""}`}>
-        <div className="party-bar-head">
-          <span className="party-bar-title">
-            {party ? "SQUAD" : "PLAY WITH FRIENDS"}
-            {party ? ` · ${matchLabel(party.matchId, matches)}` : ""}
-          </span>
-          {party && (
-            <button type="button" className="party-leave" onClick={quitParty} disabled={busy}>
-              Leave
-            </button>
-          )}
-        </div>
-
-        <div className="party-slots">
-          {renderSlot(slotMembers[0], slotPending[0], 0)}
-          <div className={`party-slot is-you ${me?.ready ? "is-ready" : ""}`}>
-            <span className="party-slot-avatar">{initials(username)}</span>
-            <span className="party-slot-name">{username}</span>
-            <span className="party-slot-ready">{me?.ready ? "READY" : "YOU"}</span>
-          </div>
-          {renderSlot(slotMembers[1], slotPending[1], 1)}
-          {renderSlot(slotMembers[2], slotPending[2], 2)}
-        </div>
-
-        {error && <div className="party-error">{error}</div>}
-
+      <div className="party-scene-overlay" aria-label="Party invites">
+        {renderInviteSlot(slotMembers[0], slotPending[0], 0, "left")}
         {party && (
-          <div className="party-actions">
-            <button
-              type="button"
-              className={`party-ready ${me?.ready ? "is-on" : ""} ${countingDown ? "is-counting" : ""}`}
-              onClick={toggleReady}
-              disabled={busy || countingDown}
-            >
-              {countingDown
-                ? `${(remainingMs / 1000).toFixed(1)}s`
-                : me?.ready
-                  ? "CANCEL READY"
-                  : "READY"}
-            </button>
-            <span className="party-hint">
-              {countingDown
-                ? "Match is starting…"
-                : allReady
-                  ? "Starting countdown…"
-                  : waitingFor.length
-                    ? `Waiting for ${waitingFor.join(", ")}`
-                    : ""}
-            </span>
+          <div
+            className={`party-scene-slot is-me ${me?.ready ? "is-ready" : ""}`}
+            data-pos="center"
+            title={username}
+          >
+            <span className="party-scene-slot-avatar is-me">{initials(username)}</span>
+            <span className="party-scene-slot-name">{username}</span>
           </div>
         )}
+        {renderInviteSlot(slotMembers[1], slotPending[1], 1, "right")}
+        {renderInviteSlot(slotMembers[2], slotPending[2], 2, "far")}
       </div>
 
       {modalOpen && (
         <div className="party-modal-backdrop" onClick={() => setModalOpen(false)}>
           <div className="party-modal" onClick={(event) => event.stopPropagation()}>
-            <h3>Invite a friend</h3>
-            <p className="party-modal-sub">
-              Up to 4 players. Everyone readies up and launches together.
-            </p>
+            <div className="party-modal-head">
+              <h3>INVITE A FRIEND</h3>
+              <p className="party-modal-sub">
+                Up to 4 players. Everyone readies up and launches together.
+              </p>
+            </div>
             <input
               autoFocus
               className="party-input"
@@ -447,9 +485,11 @@ const PartyBar = ({
             </div>
             {notice && <div className="party-notice">{notice}</div>}
             {error && <div className="party-error">{error}</div>}
-            <button type="button" className="party-close" onClick={() => setModalOpen(false)}>
-              Close
-            </button>
+            <div className="party-modal-actions">
+              <button type="button" className="party-btn party-btn--secondary" onClick={() => setModalOpen(false)}>
+                CLOSE
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -457,15 +497,17 @@ const PartyBar = ({
       {incoming && !party && (
         <div className="party-modal-backdrop">
           <div className="party-modal party-invite">
-            <h3>Party invite</h3>
-            <p className="party-modal-sub">
-              <b>{incoming.from}</b> invited you to join{" "}
-              <b>{matchLabel(incoming.matchId, matches)}</b>.
-            </p>
+            <div className="party-modal-head">
+              <h3>PARTY INVITE</h3>
+              <p className="party-modal-sub">
+                <b>{incoming.from}</b> invited you to{" "}
+                <b>{matchLabel(incoming.matchId, matches)}</b>.
+              </p>
+            </div>
             <div className="party-invite-actions">
               <button
                 type="button"
-                className="party-accept"
+                className="party-btn party-btn--primary"
                 disabled={busy}
                 onClick={() => respond(incoming, true)}
               >
@@ -473,7 +515,7 @@ const PartyBar = ({
               </button>
               <button
                 type="button"
-                className="party-reject"
+                className="party-btn party-btn--secondary"
                 disabled={busy}
                 onClick={() => respond(incoming, false)}
               >
