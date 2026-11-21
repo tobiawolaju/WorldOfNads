@@ -66,6 +66,18 @@ const DEFAULT_SKIN_ID: String = "s-default"
 const DEFAULT_ENERGY: int = 4
 const PLAY_COUNTDOWN_SECONDS: float = 4.0
 
+# --- Party / friend invites -------------------------------------------------
+# Both dashboards poll the Node backend, which owns the short-lived squad state:
+# up to four players, one shared match, an accept/reject popup, per-member ready
+# and a synchronised 5s launch countdown. The match itself is unchanged.
+const PARTY_POLL_SECONDS: float = 1.5
+const PARTY_SEARCH_DELAY: float = 0.3
+const PARTY_MAX_MEMBERS: int = 4
+const PARTY_UI_BG := Color(0.075, 0.05, 0.16, 0.94)
+const PARTY_UI_BORDER := Color(1.0, 1.0, 1.0, 0.16)
+const PARTY_ACCENT := Color(1.0, 0.84, 0.0, 1.0)
+const PARTY_STALE_LAUNCH_MS: int = 15000
+
 # Preview orbit, ported from three's OrbitControls. ThreeScene.tsx mounts drei's
 # <OrbitControls> with every default except `target`, `enablePan={false}`, the
 # button map and the zoom-distance clamp, and drei forces enableDamping, so these
@@ -289,6 +301,34 @@ var _elapsed: float = 0.0
 var _navigating: bool = false
 var _font_oversampling: float = -1.0
 
+# Party state polled from the Node backend. `_party_state` is the caller's party
+# (or empty) and `_party_invites` holds pending invites addressed to them.
+var _party_http: HTTPRequest = null
+var _party_busy: bool = false
+var _party_request_kind: String = ""
+var _party_queue: Array = []
+var _party_poll_accum: float = 0.0
+var _party_state: Dictionary = {}
+var _party_invites: Array = []
+var _party_server_offset_ms: int = 0
+var _party_launched_id: String = ""
+var _party_last_invite: String = ""
+var _party_bar: PanelContainer = null
+var _party_title: Label = null
+var _party_leave: Button = null
+var _party_ready: Button = null
+var _party_hint: Label = null
+var _party_slots: Array = []
+var _party_slot_style: StyleBoxFlat = null
+var _party_you_style: StyleBoxFlat = null
+var _party_dialog: Control = null
+var _party_dialog_status: Label = null
+var _party_search: LineEdit = null
+var _party_results: VBoxContainer = null
+var _party_search_timer: Timer = null
+var _party_invite_popup: Control = null
+var _party_invite_label: Label = null
+
 
 func _ready() -> void:
 	owned_ids.assign(DEFAULT_OWNED_IDS)
@@ -319,6 +359,7 @@ func _ready() -> void:
 	_layout_panel_zoom()
 
 	_ensure_level_icon()
+	_setup_party()
 
 
 # Dashboard.tsx builds its lobby loop as `new Audio("/lobbysong.mp3")` with
@@ -470,6 +511,7 @@ func _on_tab_pressed(next_tab: String) -> void:
 		selected_match_id = previous_match if _match_exists(previous_match) else _fallback_match_id()
 
 	_refresh_all()
+	_sync_party_match()
 
 
 func _on_filter_pressed(next_filter: String) -> void:
@@ -482,6 +524,7 @@ func _on_filter_pressed(next_filter: String) -> void:
 		var jump_target := _first_match_id_with_status(next_filter)
 		selected_match_id = jump_target if jump_target != "" else _fallback_match_id()
 	_refresh_all()
+	_sync_party_match()
 
 
 # ------------------------------------------------------------------ frame loop
@@ -489,6 +532,7 @@ func _on_filter_pressed(next_filter: String) -> void:
 func _process(delta: float) -> void:
 	_update_preview_camera(delta)
 	_tick_preview_emote(delta)
+	_party_tick(delta)
 
 	if _is_counting:
 		_elapsed = minf(_elapsed + delta, PLAY_COUNTDOWN_SECONDS)
@@ -1418,6 +1462,7 @@ func _on_match_card_input(event: InputEvent, match_id: String) -> void:
 			selected_match_id = match_id
 			filter = str(_selected_match().get("status", filter))
 			_refresh_all()
+			_sync_party_match()
 
 
 func _on_match_card_enter(card: Control) -> void:
@@ -3211,3 +3256,844 @@ func _store_card_style(selected: bool) -> StyleBoxFlat:
 		style.border_color = Color(1, 1, 1, 0)
 		style.set_border_width_all(2)
 	return style
+
+
+# ------------------------------------------------------- party / friend invites
+#
+# The native dashboard is the only place the Android build can invite friends
+# before a match, so the squad strip lives here rather than in the game HUD.
+# It polls the Node backend (the web dashboard writes the same party state) and
+# mirrors the React component: one slot left of the player, two right, an
+# accept/reject popup for incoming invites, per-member ready and a 5s launch
+# countdown shared by every client.
+
+func _setup_party() -> void:
+	_party_http = HTTPRequest.new()
+	_party_http.timeout = 8.0
+	_party_http.request_completed.connect(_on_party_http_completed)
+	add_child(_party_http)
+
+	_party_search_timer = Timer.new()
+	_party_search_timer.one_shot = true
+	_party_search_timer.wait_time = PARTY_SEARCH_DELAY
+	_party_search_timer.timeout.connect(_on_party_search_timeout)
+	add_child(_party_search_timer)
+
+	_build_party_ui()
+	_build_party_dialogs()
+	_fetch_party_state()
+
+
+func _party_username() -> String:
+	var name := ""
+	if AuthManager != null and AuthManager.is_authenticated():
+		name = str(AuthManager.get_username()).strip_edges()
+	if name == "" and OS.has_feature("web"):
+		var raw: Variant = JavaScriptBridge.eval(
+			"new URLSearchParams(window.location.search).get('username') || ''"
+		)
+		if typeof(raw) == TYPE_STRING:
+			name = str(raw).strip_edges()
+			# The legacy web session rides in front of the name as `<token>:<name>`.
+			var colon := name.find(":")
+			if colon >= 0:
+				name = name.substr(colon + 1).strip_edges()
+	return name
+
+
+func _party_now_ms() -> int:
+	return int(Time.get_unix_time_from_system() * 1000.0) + _party_server_offset_ms
+
+
+func _party_tick(delta: float) -> void:
+	_party_poll_accum += delta
+	if _party_poll_accum >= PARTY_POLL_SECONDS:
+		_party_poll_accum = 0.0
+		if not _party_busy:
+			_fetch_party_state()
+	_update_party_countdown_text()
+	_maybe_launch_party()
+
+
+func _fetch_party_state() -> void:
+	var username := _party_username()
+	if username == "":
+		return
+	_party_request(
+		"state",
+		"/api/party/state?username=%s" % username.uri_encode(),
+		HTTPClient.METHOD_GET
+	)
+
+
+func _party_request(kind: String, path: String, method: int, body: Dictionary = {}) -> void:
+	if _party_busy:
+		# Polls are disposable, user actions are not: keep the action for the end
+		# of the in-flight request instead of dropping the tap.
+		if kind != "state" and _party_queue.size() < 8:
+			_party_queue.append([kind, path, method, body])
+		return
+	_party_start_request(kind, path, method, body)
+
+
+func _party_start_request(kind: String, path: String, method: int, body: Dictionary) -> void:
+	if _party_http == null:
+		return
+	var payload := ""
+	var headers := PackedStringArray()
+	if method == HTTPClient.METHOD_POST:
+		payload = JSON.stringify(body)
+		headers.append("Content-Type: application/json")
+	_party_busy = true
+	_party_request_kind = kind
+	var err := _party_http.request(API_BASE + path, headers, method, payload)
+	if err != OK:
+		_party_busy = false
+		_party_request_kind = ""
+
+
+func _on_party_http_completed(
+	result: int,
+	response_code: int,
+	_headers: PackedStringArray,
+	body: PackedByteArray
+) -> void:
+	var kind := _party_request_kind
+	_party_busy = false
+	_party_request_kind = ""
+
+	var parsed: Variant = null
+	if result == HTTPRequest.RESULT_SUCCESS and response_code >= 200 and response_code < 300:
+		parsed = JSON.parse_string(body.get_string_from_utf8())
+
+	if typeof(parsed) == TYPE_DICTIONARY and bool(parsed.get("ok", false)):
+		if kind == "search":
+			_show_party_search_results(parsed.get("users", []))
+		else:
+			_apply_party_payload(parsed)
+			if kind == "invite":
+				_show_party_dialog_status(
+					"Invite sent to %s." % _party_last_invite, false
+				)
+				if _party_search != null:
+					_party_search.text = ""
+				_clear_party_results()
+			elif kind == "respond":
+				if _party_invite_popup != null:
+					_party_invite_popup.visible = false
+	elif typeof(parsed) == TYPE_DICTIONARY:
+		_party_show_error(str(parsed.get("error", "")))
+	elif kind != "state":
+		_party_show_error("offline")
+
+	if not _party_queue.is_empty():
+		var next: Array = _party_queue.pop_front()
+		_party_start_request(str(next[0]), str(next[1]), int(next[2]), next[3])
+
+
+func _apply_party_payload(data: Dictionary) -> void:
+	var party_value: Variant = data.get("party", null)
+	_party_state = party_value if typeof(party_value) == TYPE_DICTIONARY else {}
+	var invites_value: Variant = data.get("invites", [])
+	_party_invites = invites_value if typeof(invites_value) == TYPE_ARRAY else []
+
+	var now_ms := int(Time.get_unix_time_from_system() * 1000.0)
+	var server_now := int(data.get("serverNow", now_ms))
+	_party_server_offset_ms = server_now - now_ms
+
+	_adopt_party_match()
+	_refresh_party_ui()
+	_refresh_party_invite_popup()
+
+
+# Guests follow the party's match (the host picked it when inviting). On the
+# host the two already agree; if a stale poll arrives mid-selection it settles
+# when the POST /api/party/match response lands.
+func _adopt_party_match() -> void:
+	var match_id := str(_party_state.get("matchId", ""))
+	if match_id == "" or match_id == selected_match_id:
+		return
+	# The host's card selection drives the party (see _sync_party_match), so only
+	# guests snap to the stored match.
+	if str(_party_state.get("host", "")) == _party_username():
+		return
+	if not _match_exists(match_id):
+		return
+	selected_match_id = match_id
+	filter = str(_selected_match().get("status", filter))
+	_refresh_all()
+
+
+func _sync_party_match() -> void:
+	if _party_state.is_empty():
+		return
+	var username := _party_username()
+	if username == "" or str(_party_state.get("host", "")) != username:
+		return
+	var match_id := selected_match_id
+	if match_id == "" or match_id == str(_party_state.get("matchId", "")):
+		return
+	_party_request(
+		"match",
+		"/api/party/match",
+		HTTPClient.METHOD_POST,
+		{"username": username, "matchId": match_id}
+	)
+
+
+func _maybe_launch_party() -> void:
+	if _party_state.is_empty() or _navigating:
+		return
+	if str(_party_state.get("status", "")) != "countdown":
+		return
+	var end := int(_party_state.get("countdownEnd", 0))
+	if end <= 0:
+		return
+	var now := _party_now_ms()
+	if now < end:
+		return
+	var party_id := str(_party_state.get("id", ""))
+	if party_id == "" or _party_launched_id == party_id:
+		return
+	# A dashboard opened long after the launch must not yank the player into a
+	# match everyone else already left. Drop the dead squad instead of showing a
+	# 0.0s countdown until the server prunes it.
+	if now - end > PARTY_STALE_LAUNCH_MS:
+		_party_launched_id = party_id
+		_party_state = {}
+		_party_invites = []
+		_refresh_party_ui()
+		_party_request(
+			"leave",
+			"/api/party/leave",
+			HTTPClient.METHOD_POST,
+			{"username": _party_username()}
+		)
+		return
+	var match_id := str(_party_state.get("matchId", ""))
+	if match_id == "":
+		return
+	_party_launched_id = party_id
+	selected_match_id = match_id
+	_begin_match()
+
+
+func _party_match_label(match_id: String) -> String:
+	var match_data := _selected_match_of(match_id)
+	if match_data.is_empty():
+		return match_id
+	return str(match_data.get("sponsor", match_id))
+
+
+func _update_party_countdown_text() -> void:
+	if _party_ready == null or _party_state.is_empty():
+		return
+	if str(_party_state.get("status", "")) != "countdown":
+		return
+	var end := int(_party_state.get("countdownEnd", 0))
+	if end <= 0:
+		return
+	_party_ready.text = "%.1fs" % maxf(0.0, float(end - _party_now_ms()) / 1000.0)
+
+
+func _refresh_party_ui() -> void:
+	if _party_bar == null:
+		return
+	var username := _party_username()
+	var has_party := not _party_state.is_empty()
+	var me_ready := false
+	var others: Array = []
+
+	if has_party:
+		var members_value: Variant = _party_state.get("members", [])
+		if typeof(members_value) == TYPE_ARRAY:
+			for member in members_value:
+				if typeof(member) != TYPE_DICTIONARY:
+					continue
+				var member_name := str(member.get("username", ""))
+				if member_name == "":
+					continue
+				if member_name == username:
+					me_ready = bool(member.get("ready", false))
+				else:
+					others.append({
+						"kind": "member",
+						"name": member_name,
+						"ready": bool(member.get("ready", false))
+					})
+		var pending_value: Variant = _party_state.get("pending", [])
+		if typeof(pending_value) == TYPE_ARRAY:
+			for pending in pending_value:
+				if typeof(pending) != TYPE_DICTIONARY:
+					continue
+				var invited_name := str(pending.get("to", ""))
+				if invited_name != "":
+					others.append({
+						"kind": "pending",
+						"name": invited_name,
+						"ready": false
+					})
+	while others.size() < 3:
+		others.append({})
+
+	_party_title.text = (
+		"SQUAD · %s" % _party_match_label(str(_party_state.get("matchId", "")))
+		if has_party
+		else "PLAY WITH FRIENDS"
+	)
+	_party_leave.visible = has_party
+	_party_ready.visible = has_party
+
+	var slot_rows := [others[0], others[1], others[2]]
+	for index in range(_party_slots.size()):
+		var slot: Button = _party_slots[index]
+		if index == 1:
+			slot.text = "YOU\n%s%s" % [
+				username if username != "" else "—",
+				"\nREADY" if me_ready else ""
+			]
+			slot.set_meta("slot_kind", "self")
+			slot.modulate = Color(1, 1, 1, 1)
+			continue
+		var row: Dictionary = slot_rows[0] if index == 0 else slot_rows[index - 1]
+		if row.is_empty():
+			slot.text = "+\nInvite"
+			slot.set_meta("slot_kind", "empty")
+			slot.modulate = Color(1, 1, 1, 1)
+		elif str(row.get("kind", "")) == "pending":
+			slot.text = "%s\nINVITED" % str(row.get("name", ""))
+			slot.set_meta("slot_kind", "pending")
+			slot.modulate = Color(1, 1, 1, 0.55)
+		else:
+			slot.text = "%s\n%s" % [
+				str(row.get("name", "")),
+				"READY" if bool(row.get("ready", false)) else "…"
+			]
+			slot.set_meta("slot_kind", "member")
+			slot.modulate = Color(1, 1, 1, 1)
+
+	if not has_party:
+		_party_ready.disabled = false
+		_party_hint.text = "Invite up to 3 friends."
+		return
+
+	if str(_party_state.get("status", "")) == "countdown":
+		_party_ready.disabled = true
+		_party_ready.text = "%.1fs" % maxf(
+			0.0, float(int(_party_state.get("countdownEnd", 0)) - _party_now_ms()) / 1000.0
+		)
+		_party_hint.text = "Match is starting…"
+		return
+
+	_party_ready.disabled = false
+	_party_ready.text = "CANCEL READY" if me_ready else "READY"
+	var waiting: Array = []
+	for row in others:
+		if row.is_empty():
+			continue
+		if str(row.get("kind", "")) == "member" and not bool(row.get("ready", false)):
+			waiting.append(str(row.get("name", "")))
+	var members_count := 0
+	var members_check: Variant = _party_state.get("members", [])
+	if typeof(members_check) == TYPE_ARRAY:
+		members_count = members_check.size()
+	if not waiting.is_empty():
+		_party_hint.text = "Waiting for %s" % ", ".join(waiting)
+	elif members_count > 1:
+		_party_hint.text = "All ready — starting…"
+	elif me_ready:
+		_party_hint.text = "Waiting for others…"
+	else:
+		_party_hint.text = "Ready up to start."
+
+
+func _refresh_party_invite_popup() -> void:
+	if _party_invite_popup == null or _party_invite_label == null:
+		return
+	if not _party_state.is_empty() or _party_invites.is_empty():
+		_party_invite_popup.visible = false
+		return
+	var invite: Variant = _party_invites[0]
+	if typeof(invite) != TYPE_DICTIONARY:
+		_party_invite_popup.visible = false
+		return
+	_party_invite_label.text = "%s invited you to %s." % [
+		str(invite.get("from", "")),
+		_party_match_label(str(invite.get("matchId", "")))
+	]
+	_party_invite_popup.visible = true
+
+
+func _show_party_dialog_status(text: String, is_error: bool) -> void:
+	if _party_dialog_status == null:
+		return
+	_party_dialog_status.text = text
+	_party_dialog_status.add_theme_color_override(
+		"font_color",
+		Color(1.0, 0.52, 0.52) if is_error else Color(0.52, 0.95, 0.7)
+	)
+
+
+func _party_show_error(code: String) -> void:
+	var text := "Something went wrong. Try again."
+	match code:
+		"unknown_user":
+			text = "No player with that username."
+		"already_in_party":
+			text = "That player is already in a party."
+		"party_full":
+			text = "That party is full (4 players max)."
+		"already_member":
+			text = "They are already in your party."
+		"cannot_invite_self":
+			text = "You cannot invite yourself."
+		"invite_expired":
+			text = "That invite has expired."
+		"offline":
+			text = "Party service unreachable. Check your connection."
+	if _party_dialog != null and _party_dialog.visible:
+		_show_party_dialog_status(text, true)
+	elif _party_hint != null:
+		_party_hint.text = text
+
+
+# --------------------------------------------------------- party UI construction
+
+func _party_panel_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = PARTY_UI_BG
+	style.border_color = PARTY_UI_BORDER
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 6
+	style.content_margin_bottom = 6
+	return style
+
+
+func _party_button_style(bg: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 3
+	style.content_margin_bottom = 3
+	return style
+
+
+func _build_party_ui() -> void:
+	var layer := get_node_or_null("CanvasLayer") as CanvasLayer
+	if layer == null:
+		return
+
+	_party_slot_style = _party_button_style(Color(1, 1, 1, 0.06), Color(1, 1, 1, 0.18))
+	_party_you_style = _party_button_style(Color(1.0, 0.84, 0.0, 0.10), Color(1.0, 0.84, 0.0, 0.55))
+
+	_party_bar = PanelContainer.new()
+	_party_bar.name = "PartyBar"
+	_party_bar.anchor_left = 1.0
+	_party_bar.anchor_top = 1.0
+	_party_bar.anchor_right = 1.0
+	_party_bar.anchor_bottom = 1.0
+	_party_bar.offset_left = -370.0
+	_party_bar.offset_top = -206.0
+	_party_bar.offset_right = -30.0
+	_party_bar.offset_bottom = -88.0
+	_party_bar.add_theme_stylebox_override("panel", _party_panel_style())
+	layer.add_child(_party_bar)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 4)
+	_party_bar.add_child(column)
+
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 4)
+	column.add_child(head)
+
+	_party_title = Label.new()
+	_party_title.text = "PLAY WITH FRIENDS"
+	_party_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_party_title.add_theme_font_override("font", FONT_UI)
+	_party_title.add_theme_font_size_override("font_size", 9)
+	_party_title.add_theme_color_override("font_color", Color(1, 1, 1, 0.72))
+	head.add_child(_party_title)
+
+	_party_leave = Button.new()
+	_party_leave.text = "Leave"
+	_party_leave.flat = true
+	_party_leave.visible = false
+	_party_leave.add_theme_font_override("font", FONT_UI)
+	_party_leave.add_theme_font_size_override("font_size", 8)
+	_party_leave.add_theme_color_override("font_color", Color(1, 1, 1, 0.55))
+	_party_leave.pressed.connect(_on_party_leave_pressed)
+	head.add_child(_party_leave)
+
+	var slots := HBoxContainer.new()
+	slots.add_theme_constant_override("separation", 4)
+	column.add_child(slots)
+
+	_party_slots.clear()
+	for index in range(4):
+		var slot := Button.new()
+		slot.custom_minimum_size = Vector2(0, 48)
+		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		slot.add_theme_font_override("font", FONT_UI)
+		slot.add_theme_font_size_override("font_size", 8)
+		slot.add_theme_color_override("font_color", Color(1, 1, 1, 0.92))
+		slot.add_theme_color_override("font_hover_color", Color(1, 1, 1, 0.92))
+		slot.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 0.92))
+		var style := _party_you_style if index == 1 else _party_slot_style
+		for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
+			slot.add_theme_stylebox_override(state_name, style)
+		slot.pressed.connect(_on_party_slot_pressed.bind(index))
+		slots.add_child(slot)
+		_party_slots.append(slot)
+
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 6)
+	column.add_child(actions)
+
+	_party_ready = Button.new()
+	_party_ready.text = "READY"
+	_party_ready.custom_minimum_size = Vector2(110, 26)
+	_party_ready.visible = false
+	_party_ready.add_theme_font_override("font", FONT_UI)
+	_party_ready.add_theme_font_size_override("font_size", 9)
+	_party_ready.add_theme_color_override("font_color", Color(0.07, 0.05, 0.12, 1))
+	for state_name in ["normal", "hover", "pressed", "disabled"]:
+		_party_ready.add_theme_stylebox_override(
+			state_name, _party_button_style(PARTY_ACCENT, PARTY_ACCENT)
+		)
+	_party_ready.pressed.connect(_on_party_ready_pressed)
+	actions.add_child(_party_ready)
+
+	_party_hint = Label.new()
+	_party_hint.text = "Invite up to 3 friends."
+	_party_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_party_hint.add_theme_font_override("font", FONT_UI)
+	_party_hint.add_theme_font_size_override("font_size", 8)
+	_party_hint.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	actions.add_child(_party_hint)
+
+	_refresh_party_ui()
+
+
+func _build_party_dialogs() -> void:
+	var layer := get_node_or_null("CanvasLayer") as CanvasLayer
+	if layer == null:
+		return
+
+	# Invite dialog: username search -> tap a result to send the invite.
+	_party_dialog = Control.new()
+	_party_dialog.name = "PartyInviteDialog"
+	_party_dialog.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_party_dialog.visible = false
+	layer.add_child(_party_dialog)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.65)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_party_dialog.add_child(dim)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_party_dialog.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(330, 0)
+	panel.add_theme_stylebox_override("panel", _party_panel_style())
+	center.add_child(panel)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 6)
+	panel.add_child(column)
+
+	var title := Label.new()
+	title.text = "INVITE A FRIEND"
+	title.add_theme_font_override("font", FONT_UI)
+	title.add_theme_font_size_override("font_size", 12)
+	column.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "Up to 4 players. Everyone readies up and launches together."
+	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	subtitle.add_theme_font_override("font", FONT_UI)
+	subtitle.add_theme_font_size_override("font_size", 8)
+	subtitle.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	column.add_child(subtitle)
+
+	_party_search = LineEdit.new()
+	_party_search.placeholder_text = "Enter a username"
+	_party_search.custom_minimum_size = Vector2(0, 30)
+	_party_search.add_theme_font_override("font", FONT_UI)
+	_party_search.add_theme_font_size_override("font_size", 9)
+	_party_search.text_changed.connect(_on_party_query_changed)
+	_party_search.text_submitted.connect(_on_party_search_submitted)
+	column.add_child(_party_search)
+
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 140)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	column.add_child(scroll)
+
+	_party_results = VBoxContainer.new()
+	_party_results.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_party_results.add_theme_constant_override("separation", 2)
+	scroll.add_child(_party_results)
+
+	_party_dialog_status = Label.new()
+	_party_dialog_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_party_dialog_status.add_theme_font_override("font", FONT_UI)
+	_party_dialog_status.add_theme_font_size_override("font_size", 8)
+	_party_dialog_status.add_theme_color_override("font_color", Color(0.52, 0.95, 0.7))
+	column.add_child(_party_dialog_status)
+
+	var close := Button.new()
+	close.text = "CLOSE"
+	close.custom_minimum_size = Vector2(0, 28)
+	close.add_theme_font_override("font", FONT_UI)
+	close.add_theme_font_size_override("font_size", 9)
+	close.pressed.connect(_close_party_dialog)
+	column.add_child(close)
+
+	# Incoming invite popup. Added after the dialog so it sits on top if both
+	# happen to be visible.
+	_party_invite_popup = Control.new()
+	_party_invite_popup.name = "PartyInvitePopup"
+	_party_invite_popup.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_party_invite_popup.visible = false
+	layer.add_child(_party_invite_popup)
+
+	var popup_dim := ColorRect.new()
+	popup_dim.color = Color(0, 0, 0, 0.65)
+	popup_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_party_invite_popup.add_child(popup_dim)
+
+	var popup_center := CenterContainer.new()
+	popup_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_party_invite_popup.add_child(popup_center)
+
+	var popup_panel := PanelContainer.new()
+	popup_panel.custom_minimum_size = Vector2(310, 0)
+	popup_panel.add_theme_stylebox_override("panel", _party_panel_style())
+	popup_center.add_child(popup_panel)
+
+	var popup_column := VBoxContainer.new()
+	popup_column.add_theme_constant_override("separation", 8)
+	popup_panel.add_child(popup_column)
+
+	var popup_title := Label.new()
+	popup_title.text = "PARTY INVITE"
+	popup_title.add_theme_font_override("font", FONT_UI)
+	popup_title.add_theme_font_size_override("font_size", 12)
+	popup_column.add_child(popup_title)
+
+	_party_invite_label = Label.new()
+	_party_invite_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_party_invite_label.add_theme_font_override("font", FONT_UI)
+	_party_invite_label.add_theme_font_size_override("font_size", 9)
+	_party_invite_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
+	popup_column.add_child(_party_invite_label)
+
+	var popup_actions := HBoxContainer.new()
+	popup_actions.add_theme_constant_override("separation", 8)
+	popup_column.add_child(popup_actions)
+
+	var accept := Button.new()
+	accept.text = "ACCEPT"
+	accept.custom_minimum_size = Vector2(0, 32)
+	accept.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	accept.add_theme_font_override("font", FONT_UI)
+	accept.add_theme_font_size_override("font_size", 9)
+	accept.add_theme_color_override("font_color", Color(0.07, 0.05, 0.12, 1))
+	for state_name in ["normal", "hover", "pressed"]:
+		accept.add_theme_stylebox_override(
+			state_name, _party_button_style(PARTY_ACCENT, PARTY_ACCENT)
+		)
+	accept.pressed.connect(_on_party_invite_accept)
+	popup_actions.add_child(accept)
+
+	var reject := Button.new()
+	reject.text = "REJECT"
+	reject.custom_minimum_size = Vector2(0, 32)
+	reject.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reject.add_theme_font_override("font", FONT_UI)
+	reject.add_theme_font_size_override("font_size", 9)
+	reject.pressed.connect(_on_party_invite_reject)
+	popup_actions.add_child(reject)
+
+
+# ------------------------------------------------------------ party UI handlers
+
+func _open_party_dialog() -> void:
+	if _party_dialog == null:
+		return
+	if not _party_state.is_empty():
+		var members_value: Variant = _party_state.get("members", [])
+		if typeof(members_value) == TYPE_ARRAY and members_value.size() >= PARTY_MAX_MEMBERS:
+			_party_hint.text = "Your party is full (4 players max)."
+			return
+	_party_dialog.visible = true
+	_show_party_dialog_status("", false)
+	_clear_party_results()
+	if _party_search != null:
+		_party_search.text = ""
+		_party_search.grab_focus()
+
+
+func _close_party_dialog() -> void:
+	if _party_dialog != null:
+		_party_dialog.visible = false
+	if _party_search_timer != null:
+		_party_search_timer.stop()
+
+
+func _clear_party_results() -> void:
+	if _party_results == null:
+		return
+	for child in _party_results.get_children():
+		child.queue_free()
+
+
+func _on_party_query_changed(text: String) -> void:
+	_show_party_dialog_status("", false)
+	if text.strip_edges().length() < 2:
+		_clear_party_results()
+		if _party_search_timer != null:
+			_party_search_timer.stop()
+		return
+	if _party_search_timer != null:
+		_party_search_timer.start()
+
+
+func _on_party_search_submitted(_text: String) -> void:
+	_on_party_search_timeout()
+
+
+func _on_party_search_timeout() -> void:
+	if _party_dialog == null or not _party_dialog.visible or _party_search == null:
+		return
+	var query := _party_search.text.strip_edges()
+	if query.length() < 2:
+		return
+	_party_request(
+		"search",
+		"/api/party/search?q=%s" % query.uri_encode(),
+		HTTPClient.METHOD_GET
+	)
+
+
+func _show_party_search_results(users: Variant) -> void:
+	_clear_party_results()
+	if _party_results == null or typeof(users) != TYPE_ARRAY:
+		return
+	var count := 0
+	for user in users:
+		if typeof(user) != TYPE_DICTIONARY:
+			continue
+		var invited_name := str(user.get("username", ""))
+		if invited_name == "":
+			continue
+		var button := Button.new()
+		button.text = invited_name
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.custom_minimum_size = Vector2(0, 26)
+		button.add_theme_font_override("font", FONT_UI)
+		button.add_theme_font_size_override("font_size", 9)
+		button.pressed.connect(_on_party_invite_result.bind(invited_name))
+		_party_results.add_child(button)
+		count += 1
+	if count == 0:
+		var empty := Label.new()
+		empty.text = "No players found."
+		empty.add_theme_font_override("font", FONT_UI)
+		empty.add_theme_font_size_override("font_size", 8)
+		empty.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
+		_party_results.add_child(empty)
+
+
+func _on_party_invite_result(invited_name: String) -> void:
+	if selected_match_id == "":
+		_show_party_dialog_status("Pick a match first.", true)
+		return
+	_party_last_invite = invited_name
+	var match_id := str(_party_state.get("matchId", selected_match_id))
+	if match_id == "":
+		match_id = selected_match_id
+	_party_request(
+		"invite",
+		"/api/party/invite",
+		HTTPClient.METHOD_POST,
+		{
+			"from": _party_username(),
+			"to": invited_name,
+			"matchId": match_id,
+			"skin": _displayed_skin_id()
+		}
+	)
+
+
+func _on_party_slot_pressed(index: int) -> void:
+	if index != 1 and _party_slots.size() > index:
+		var slot: Button = _party_slots[index]
+		if str(slot.get_meta("slot_kind", "")) == "empty":
+			_open_party_dialog()
+
+
+func _on_party_ready_pressed() -> void:
+	if _party_state.is_empty():
+		return
+	var username := _party_username()
+	var ready := false
+	var members_value: Variant = _party_state.get("members", [])
+	if typeof(members_value) == TYPE_ARRAY:
+		for member in members_value:
+			if typeof(member) == TYPE_DICTIONARY and str(member.get("username", "")) == username:
+				ready = bool(member.get("ready", false))
+				break
+	_party_request(
+		"ready",
+		"/api/party/ready",
+		HTTPClient.METHOD_POST,
+		{"username": username, "ready": not ready}
+	)
+
+
+func _on_party_leave_pressed() -> void:
+	_party_request(
+		"leave",
+		"/api/party/leave",
+		HTTPClient.METHOD_POST,
+		{"username": _party_username()}
+	)
+
+
+func _on_party_invite_accept() -> void:
+	_respond_party(true)
+
+
+func _on_party_invite_reject() -> void:
+	_respond_party(false)
+
+
+func _respond_party(accept: bool) -> void:
+	if _party_invites.is_empty():
+		return
+	var invite: Variant = _party_invites[0]
+	if typeof(invite) != TYPE_DICTIONARY:
+		return
+	_party_request(
+		"respond",
+		"/api/party/respond",
+		HTTPClient.METHOD_POST,
+		{
+			"username": _party_username(),
+			"inviteId": str(invite.get("id", "")),
+			"accept": accept,
+			"skin": _displayed_skin_id()
+		}
+	)

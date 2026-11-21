@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { FullScreenLoader } from "../components/ui/fullscreen-loader";
 import { ThreeScene } from "../components/ThreeScene";
+import PartyBar from "../components/PartyBar";
 import "./Dashboard.css";
 import {
   fetchMatchesFromFirebase,
@@ -738,6 +739,50 @@ export default function Dashboard() {
     return () => cancelIdle();
   }, []);
 
+  const beginPlayForMatch = useCallback((matchId: string) => {
+    if (!matchId || !user) return;
+    if (requireInstall()) return;
+
+    const currentSkinId = displayedSkin?.id || equippedSkin?.id || "s-default";
+    const currentSkinName = resolveGameSkinName(currentSkinId);
+    if (lobbyAudioRef.current) {
+      lobbyAudioRef.current.pause();
+    }
+
+    const match = matches.find((item) => item.matchId === matchId);
+    if (match) {
+      void (async () => {
+        try {
+          const username = getUsernameFromPrivy(user);
+          await Promise.allSettled([
+            updateUserProjects(username, match.sponsor),
+            recordSponsorDailyUniquePlayer({ sponsor: match.sponsor, username })
+          ]);
+          trackMatchJoined({
+            userId: user.id,
+            matchId: match.matchId,
+            sponsorId: match.sponsor,
+            metadata: { username, skinId: currentSkinId, skinName: currentSkinName }
+          });
+        } catch (error) {
+          console.error("Failed to start play session", error);
+          showErrorToast("Failed to save play session data.");
+        }
+      })();
+    }
+
+    const playParams = new URLSearchParams({
+      match: matchId,
+      skin: currentSkinName
+    });
+    navigate(`/play?${playParams.toString()}`);
+  }, [user, displayedSkin, equippedSkin, matches, navigate]);
+
+  const handlePartyJoinMatch = useCallback((matchId: string) => {
+    setSelectedMatch(matchId);
+    setTab("events");
+  }, []);
+
   const handlePlayClick = useCallback(() => {
     if (!selectedMatch || !user) return;
     if (requireInstall()) return;
@@ -754,46 +799,13 @@ export default function Dashboard() {
       navigationTimeoutRef.current = setTimeout(() => {
         clearPlayTimers();
         setPlayButtonState("idle");
-        const currentSkinId = displayedSkin?.id || equippedSkin?.id || "s-default";
-        const currentSkinName = resolveGameSkinName(currentSkinId);
-        if (lobbyAudioRef.current) {
-          lobbyAudioRef.current.pause();
-        }
-        const playParams = new URLSearchParams({
-          match: selectedMatch,
-          skin: currentSkinName
-        });
-        navigate(`/play?${playParams.toString()}`);
+        beginPlayForMatch(selectedMatch);
       }, 4000);
-
-      void (async () => {
-        const match = matches.find((item) => item.matchId === selectedMatch);
-        if (!match) return;
-
-        try {
-          const username = getUsernameFromPrivy(user);
-          const skinId = displayedSkin?.id || equippedSkin?.id || "s-default";
-          const skinName = resolveGameSkinName(skinId);
-          await Promise.allSettled([
-            updateUserProjects(username, match.sponsor),
-            recordSponsorDailyUniquePlayer({ sponsor: match.sponsor, username })
-          ]);
-          trackMatchJoined({
-            userId: user.id,
-            matchId: match.matchId,
-            sponsorId: match.sponsor,
-            metadata: { username, skinId, skinName }
-          });
-        } catch (error) {
-          console.error("Failed to start play session", error);
-          showErrorToast("Failed to save play session data.");
-        }
-      })();
     } else {
       clearPlayTimers();
       setPlayButtonState("idle");
     }
-  }, [selectedMatch, user, playButtonState, displayedSkin, equippedSkin, matches, navigate]);
+  }, [selectedMatch, user, playButtonState, beginPlayForMatch]);
 
   const formatCountdown = (timestamp: number | undefined) => {
     if (!timestamp) return null;
@@ -1380,6 +1392,17 @@ export default function Dashboard() {
 
         </div>
       </div>
+
+      {user && (
+        <PartyBar
+          username={getUsernameFromPrivy(user)}
+          selectedMatch={selectedMatch}
+          skinName={resolveGameSkinName(displayedSkin?.id || equippedSkin?.id || "s-default")}
+          matches={matches}
+          onLaunch={beginPlayForMatch}
+          onJoinMatch={handlePartyJoinMatch}
+        />
+      )}
 
       {tab === "events" && selectedMatch && (
         <button
