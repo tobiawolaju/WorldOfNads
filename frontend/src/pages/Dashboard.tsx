@@ -6,6 +6,7 @@ import { ethers } from "ethers";
 import { FullScreenLoader } from "../components/ui/fullscreen-loader";
 import { ThreeScene } from "../components/ThreeScene";
 import PartyBar from "../components/PartyBar";
+import type { PartyControls } from "../components/PartyBar";
 import "./Dashboard.css";
 import {
   fetchMatchesFromFirebase,
@@ -783,9 +784,22 @@ export default function Dashboard() {
     setTab("events");
   }, []);
 
+  useEffect(() => {
+    if (partyControls?.inParty && playButtonState === "counting") {
+      clearPlayTimers();
+      setPlayButtonState("idle");
+    }
+  }, [partyControls?.inParty, playButtonState]);
+
   const handlePlayClick = useCallback(() => {
     if (!selectedMatch || !user) return;
     if (requireInstall()) return;
+
+    if (partyControls?.inParty) {
+      if (partyControls.countingDown) return;
+      partyControls.toggleReady();
+      return;
+    }
 
     if (playButtonState === "idle") {
       void preloadGodotWasm({ userIntent: true });
@@ -805,7 +819,7 @@ export default function Dashboard() {
       clearPlayTimers();
       setPlayButtonState("idle");
     }
-  }, [selectedMatch, user, playButtonState, beginPlayForMatch]);
+  }, [selectedMatch, user, partyControls, playButtonState, beginPlayForMatch]);
 
   const formatCountdown = (timestamp: number | undefined) => {
     if (!timestamp) return null;
@@ -1119,6 +1133,18 @@ export default function Dashboard() {
         />
         {equipFlash && <div className="equip-flash" />}
 
+        {user && (
+          <PartyBar
+            username={getUsernameFromPrivy(user)}
+            selectedMatch={selectedMatch}
+            skinName={resolveGameSkinName(displayedSkin?.id || equippedSkin?.id || "s-default")}
+            matches={matches}
+            onLaunch={beginPlayForMatch}
+            onJoinMatch={handlePartyJoinMatch}
+            onControlsChange={setPartyControls}
+          />
+        )}
+
         <div className="card-overlay">
           <div className="stat-rail">
             {monBalance !== null && (
@@ -1393,43 +1419,56 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {user && (
-        <PartyBar
-          username={getUsernameFromPrivy(user)}
-          selectedMatch={selectedMatch}
-          skinName={resolveGameSkinName(displayedSkin?.id || equippedSkin?.id || "s-default")}
-          matches={matches}
-          onLaunch={beginPlayForMatch}
-          onJoinMatch={handlePartyJoinMatch}
-        />
-      )}
-
       {tab === "events" && selectedMatch && (
-        <button
-          className={`play-fixed ${canPlay ? "active" : "disabled"} ${playButtonState === "counting" ? "counting" : ""}`}
-          onClick={canPlay ? handlePlayClick : undefined}
-          onMouseEnter={canPlay ? () => preloadGodotWasm({ userIntent: true }) : undefined}
-          onTouchStart={canPlay ? () => preloadGodotWasm({ userIntent: true }) : undefined}
-          disabled={!canPlay}
-          style={{
-            opacity: 1,
-            pointerEvents: canPlay ? "auto" : "none"
-          }}
-        >
-          {playButtonState === "counting" ? (
-            <span>{elapsedTime.toFixed(1)}s Cancel</span>
-          ) : (
-            <span>
-              {normalizedSelectedStatus === "cancelled"
-                ? "Cancelled"
-                : isInCountdown
-                  ? <><span className="countdown-label">Starts in: </span>{formatCountdown(selectedMatchData.startTime)}</>
-                  : isTrainingLobby || isLive || normalizedSelectedStatus === "upcoming"
-                    ? "READY!"
-                    : "Not Live"}
-            </span>
-          )}
-        </button>
+        (() => {
+          const inParty = Boolean(partyControls?.inParty);
+          const partyCounting = Boolean(inParty && partyControls?.countingDown);
+          const playDisabled = !canPlay || (inParty && (partyControls?.busy || partyCounting));
+          const playCounting = !inParty && playButtonState === "counting";
+          return (
+            <div className="play-cluster">
+              {inParty && (
+                <button
+                  type="button"
+                  className="party-leave-play"
+                  onClick={() => partyControls?.leave()}
+                  disabled={partyControls?.busy}
+                >
+                  Leave
+                </button>
+              )}
+              <button
+                className={`play-fixed ${!playDisabled ? "active" : "disabled"} ${playCounting ? "counting" : ""}`}
+                onClick={!playDisabled ? handlePlayClick : undefined}
+                onMouseEnter={canPlay ? () => preloadGodotWasm({ userIntent: true }) : undefined}
+                onTouchStart={canPlay ? () => preloadGodotWasm({ userIntent: true }) : undefined}
+                disabled={playDisabled}
+                style={{
+                  opacity: 1,
+                  pointerEvents: !playDisabled ? "auto" : "none"
+                }}
+              >
+                {partyCounting ? (
+                  <span>{((partyControls?.remainingMs || 0) / 1000).toFixed(1)}s</span>
+                ) : inParty ? (
+                  <span>{partyControls?.meReady ? "CANCEL" : "READY!"}</span>
+                ) : playCounting ? (
+                  <span>{elapsedTime.toFixed(1)}s Cancel</span>
+                ) : (
+                  <span>
+                    {normalizedSelectedStatus === "cancelled"
+                      ? "Cancelled"
+                      : isInCountdown
+                        ? <><span className="countdown-label">Starts in: </span>{formatCountdown(selectedMatchData.startTime)}</>
+                        : isTrainingLobby || isLive || normalizedSelectedStatus === "upcoming"
+                          ? "READY!"
+                          : "Not Live"}
+                  </span>
+                )}
+              </button>
+            </div>
+          );
+        })()
       )}
 
       {tab === "store" && selectedStore && (
