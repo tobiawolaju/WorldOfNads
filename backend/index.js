@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
-import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, saveSkin, getSkin, getAllSkins, getPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward, getRewardsForUser } from './firebaseClient.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, searchUsers, saveSkin, getSkin, getAllSkins, getPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward, getRewardsForUser } from './firebaseClient.js';
 import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, lootBoxSteal, getLootBoxPoolOnchain, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain, getContractStatus, getSkinBalance } from './contractClient.js';
 import { settleRound, parsePrizeMon, round6, LOOTBOX_POOL_SHARE } from './settlement.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents, getMatchPlayerCounts } from './analyticsService.js';
@@ -653,6 +653,202 @@ async function readJsonBody(req) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Party / friend invites
+// ---------------------------------------------------------------------------
+// A party is the "squad" behind the plus slots on the dashboards: up to four
+// players who launch the same match together. The match itself is unchanged -
+// it is still a free-for-all, one winner - so this only synchronises presence,
+// invites, ready state and the launch countdown.
+//
+// State is deliberately in-process: a party lives for minutes, both clients
+// poll it, and a Render restart simply drops stale squads. Nothing here touches
+// the game simulation or the settlement flow.
+
+const PARTY_MAX_MEMBERS = 4;
+const PARTY_COUNTDOWN_MS = 5000;
+const PARTY_INVITE_TTL_MS = 3 * 60 * 1000;
+const PARTY_IDLE_TTL_MS = 45 * 60 * 1000;
+
+const partyStore = new Map();
+const partyMembership = new Map();
+const partyInvites = new Map();
+
+/** Display names are database keys, so strip controls and cap the length. */
+function cleanPartyName(value) {
+  return String(value || '')
+    .replace(/[\u0000-\u001f\u007f]/g, '')
+    .trim()
+    .slice(0, 40);
+}
+
+/** Match ids are Firebase keys and URL path segments. */
+function cleanMatchId(value) {
+  return String(value || '')
+    .replace(/[^A-Za-z0-9_-]/g, '')
+    .slice(0, 64);
+}
+
+function partyPendingFor(partyId, nowMs) {
+  const rows = [];
+  for (const invite of partyInvites.values()) {
+    if (invite.partyId === partyId && invite.expiresAt > nowMs) {
+      rows.push({ to: invite.to, expiresAt: invite.expiresAt });
+    }
+  }
+  return rows;
+}
+
+function partyView(party, nowMs) {
+  if (!party) return null;
+  return {
+    id: party.id,
+    host: party.host,
+    matchId: party.matchId,
+    status: party.status,
+    countdownMs: PARTY_COUNTDOWN_MS,
+    countdownEnd: party.countdownEnd,
+    maxMembers: PARTY_MAX_MEMBERS,
+    members: party.members.map((member) => ({
+      username: member.username,
+      ready: !!member.ready,
+      skin: member.skin || 's-default',
+      joinedAt: member.joinedAt
+    })),
+    pending: partyPendingFor(party.id, nowMs),
+    serverNow: nowMs
+  };
+}
+
+function partyForUser(username) {
+  const partyId = partyMembership.get(username);
+  if (!partyId) return null;
+  const party = partyStore.get(partyId);
+  if (!party) {
+    partyMembership.delete(username);
+    return null;
+  }
+  return party;
+}
+
+function invitesForUser(username, nowMs) {
+  const rows = [];
+  for (const [inviteId, invite] of partyInvites.entries()) {
+    if (invite.to !== username) continue;
+    if (invite.expiresAt <= nowMs || !partyStore.has(invite.partyId)) {
+      partyInvites.delete(inviteId);
+      continue;
+    }
+    rows.push({ ...invite });
+  }
+  rows.sort((a, b) => b.createdAt - a.createdAt);
+  return rows;
+}
+
+function deleteParty(partyId) {
+  partyStore.delete(partyId);
+  for (const [username, id] of partyMembership.entries()) {
+    if (id === partyId) partyMembership.delete(username);
+  }
+  for (const [inviteId, invite] of partyInvites.entries()) {
+    if (invite.partyId === partyId) partyInvites.delete(inviteId);
+  }
+}
+
+function partyCleanup(nowMs) {
+  for (const [inviteId, invite] of partyInvites.entries()) {
+    if (invite.expiresAt <= nowMs) partyInvites.delete(inviteId);
+  }
+  for (const [partyId, party] of partyStore.entries()) {
+    if (nowMs - party.updatedAt > PARTY_IDLE_TTL_MS) {
+      deleteParty(partyId);
+      continue;
+    }
+    // A squad that finished its launch countdown is done. Clients launch within
+    // a few seconds; after a minute the party is stale and must not keep an old
+    // countdown on a dashboard that is opened later.
+    if (
+      party.status === 'countdown' &&
+      party.countdownEnd &&
+      nowMs > party.countdownEnd + 60_000
+    ) {
+      deleteParty(partyId);
+    }
+  }
+}
+
+function resetPartyReady(party) {
+  for (const member of party.members) member.ready = false;
+  party.status = 'open';
+  party.countdownEnd = null;
+}
+
+/** Recomputes the all-ready countdown after any membership/ready change. */
+function touchParty(party, nowMs) {
+  party.updatedAt = nowMs;
+  const allReady =
+    party.members.length > 0 &&
+    party.members.every((member) => member.ready);
+  if (allReady) {
+    if (party.status !== 'countdown' || party.countdownEnd === null) {
+      party.status = 'countdown';
+      party.countdownEnd = nowMs + PARTY_COUNTDOWN_MS;
+    }
+    return;
+  }
+  if (party.status === 'countdown') {
+    party.status = 'open';
+    party.countdownEnd = null;
+  }
+}
+
+/** Opens the host's party, or returns the one they already own. */
+function openPartyFor(host, matchId, skin, nowMs) {
+  const existing = partyForUser(host);
+  if (existing) {
+    if (existing.host !== host) return { error: 'already_in_party' };
+    if (matchId && matchId !== existing.matchId) {
+      existing.matchId = matchId;
+      resetPartyReady(existing);
+    }
+    return { party: existing };
+  }
+  const party = {
+    id: randomUUID(),
+    host,
+    matchId,
+    status: 'open',
+    countdownEnd: null,
+    members: [{ username: host, ready: false, skin: skin || 's-default', joinedAt: nowMs }],
+    createdAt: nowMs,
+    updatedAt: nowMs
+  };
+  partyStore.set(party.id, party);
+  partyMembership.set(host, party.id);
+  return { party };
+}
+
+/** Shared response for every action that leaves the caller in a party. */
+function sendPartyState(res, username, nowMs) {
+  const party = partyForUser(username);
+  sendJson(res, 200, {
+    ok: true,
+    party: partyView(party, nowMs),
+    invites: invitesForUser(username, nowMs),
+    serverNow: nowMs
+  });
+}
+
+function partyError(res, status, error, nowMs, username) {
+  sendJson(res, status, {
+    ok: false,
+    error,
+    party: username ? partyView(partyForUser(username), nowMs) : null,
+    invites: username ? invitesForUser(username, nowMs) : []
+  });
+}
+
+
 /**
  * Side effects the settlement flow needs. Kept in one object so the settlement
  * logic itself stays free of Firebase/ethers imports and is unit-testable.
@@ -893,6 +1089,255 @@ const server = createServer(async (req, res) => {
       console.error('[Matches] /matches failed:', error);
       sendJson(res, 500, { ok: false, error: 'failed to load matches' });
     }
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/api/party/search') {
+    const query = cleanPartyName(reqUrl.searchParams.get('q'));
+    if (query.length < 2) {
+      sendJson(res, 200, { ok: true, users: [] });
+      return;
+    }
+    try {
+      const users = await searchUsers(query, 8);
+      sendJson(res, 200, { ok: true, users });
+    } catch (error) {
+      console.error('[Party] search failed:', error);
+      sendJson(res, 500, { ok: false, error: 'search_failed' });
+    }
+    return;
+  }
+
+  if (req.method === 'GET' && reqUrl.pathname === '/api/party/state') {
+    const username = cleanPartyName(reqUrl.searchParams.get('username'));
+    const now = Date.now();
+    partyCleanup(now);
+    if (!username) {
+      sendJson(res, 400, { ok: false, error: 'username_required' });
+      return;
+    }
+    sendPartyState(res, username, now);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/api/party/invite') {
+    let body;
+    try {
+      body = await readJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: 'invalid_json' });
+      return;
+    }
+    const from = cleanPartyName(body.from);
+    const to = cleanPartyName(body.to);
+    const matchId = cleanMatchId(body.matchId);
+    const skin = cleanPartyName(body.skin) || 's-default';
+    const now = Date.now();
+    partyCleanup(now);
+    if (!from || !to || !matchId) {
+      partyError(res, 400, 'missing_fields', now, from);
+      return;
+    }
+    if (from === to) {
+      partyError(res, 400, 'cannot_invite_self', now, from);
+      return;
+    }
+    try {
+      const target = await getPlayerProfile(to);
+      if (!target) {
+        partyError(res, 404, 'unknown_user', now, from);
+        return;
+      }
+    } catch (error) {
+      console.error('[Party] invite profile lookup failed:', error);
+      partyError(res, 500, 'lookup_failed', now, from);
+      return;
+    }
+    if (partyForUser(to)) {
+      partyError(res, 409, 'already_in_party', now, from);
+      return;
+    }
+    const opened = openPartyFor(from, matchId, skin, now);
+    if (opened.error) {
+      partyError(res, 409, opened.error, now, from);
+      return;
+    }
+    const party = opened.party;
+    if (party.members.length >= PARTY_MAX_MEMBERS) {
+      partyError(res, 409, 'party_full', now, from);
+      return;
+    }
+    if (party.members.some((member) => member.username === to)) {
+      partyError(res, 409, 'already_member', now, from);
+      return;
+    }
+    const existing = [...partyInvites.values()].find(
+      (invite) => invite.partyId === party.id && invite.to === to && invite.expiresAt > now
+    );
+    if (!existing) {
+      const invite = {
+        id: randomUUID(),
+        partyId: party.id,
+        from,
+        to,
+        matchId,
+        createdAt: now,
+        expiresAt: now + PARTY_INVITE_TTL_MS
+      };
+      partyInvites.set(invite.id, invite);
+    }
+    party.updatedAt = now;
+    sendPartyState(res, from, now);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/api/party/respond') {
+    let body;
+    try {
+      body = await readJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: 'invalid_json' });
+      return;
+    }
+    const username = cleanPartyName(body.username);
+    const inviteId = String(body.inviteId || '').trim();
+    const accept = body.accept === true || body.accept === 1 || body.accept === 'accept';
+    const now = Date.now();
+    partyCleanup(now);
+    const invite = partyInvites.get(inviteId);
+    if (!invite || invite.to !== username) {
+      partyError(res, 404, 'invite_not_found', now, username);
+      return;
+    }
+    if (invite.expiresAt <= now) {
+      partyInvites.delete(inviteId);
+      partyError(res, 410, 'invite_expired', now, username);
+      return;
+    }
+    if (!accept) {
+      partyInvites.delete(inviteId);
+      sendPartyState(res, username, now);
+      return;
+    }
+    const party = partyStore.get(invite.partyId);
+    if (!party) {
+      partyInvites.delete(inviteId);
+      partyError(res, 404, 'party_closed', now, username);
+      return;
+    }
+    if (party.members.length >= PARTY_MAX_MEMBERS) {
+      partyError(res, 409, 'party_full', now, username);
+      return;
+    }
+    const other = partyForUser(username);
+    if (other && other.id !== party.id) {
+      partyError(res, 409, 'already_in_party', now, username);
+      return;
+    }
+    if (!party.members.some((member) => member.username === username)) {
+      party.members.push({
+        username,
+        ready: false,
+        skin: cleanPartyName(body.skin) || 's-default',
+        joinedAt: now
+      });
+      partyMembership.set(username, party.id);
+    }
+    // Accepting one invite clears the rest, so the player cannot end up in two
+    // squads by accepting a stale popup later.
+    for (const [id, pending] of partyInvites.entries()) {
+      if (pending.to === username) partyInvites.delete(id);
+    }
+    touchParty(party, now);
+    sendPartyState(res, username, now);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/api/party/ready') {
+    let body;
+    try {
+      body = await readJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: 'invalid_json' });
+      return;
+    }
+    const username = cleanPartyName(body.username);
+    const now = Date.now();
+    partyCleanup(now);
+    const party = partyForUser(username);
+    if (!party) {
+      partyError(res, 404, 'not_in_party', now, username);
+      return;
+    }
+    const member = party.members.find((row) => row.username === username);
+    if (!member) {
+      partyError(res, 404, 'not_in_party', now, username);
+      return;
+    }
+    member.ready = !!body.ready;
+    touchParty(party, now);
+    sendPartyState(res, username, now);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/api/party/match') {
+    let body;
+    try {
+      body = await readJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: 'invalid_json' });
+      return;
+    }
+    const username = cleanPartyName(body.username);
+    const matchId = cleanMatchId(body.matchId);
+    const now = Date.now();
+    partyCleanup(now);
+    const party = partyForUser(username);
+    if (!party) {
+      partyError(res, 404, 'not_in_party', now, username);
+      return;
+    }
+    if (party.host !== username) {
+      partyError(res, 403, 'host_only', now, username);
+      return;
+    }
+    if (!matchId) {
+      partyError(res, 400, 'missing_match', now, username);
+      return;
+    }
+    party.matchId = matchId;
+    resetPartyReady(party);
+    party.updatedAt = now;
+    sendPartyState(res, username, now);
+    return;
+  }
+
+  if (req.method === 'POST' && reqUrl.pathname === '/api/party/leave') {
+    let body;
+    try {
+      body = await readJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: 'invalid_json' });
+      return;
+    }
+    const username = cleanPartyName(body.username);
+    const now = Date.now();
+    partyCleanup(now);
+    const party = partyForUser(username);
+    if (!party) {
+      sendPartyState(res, username, now);
+      return;
+    }
+    party.members = party.members.filter((member) => member.username !== username);
+    partyMembership.delete(username);
+    if (party.members.length === 0) {
+      deleteParty(party.id);
+    } else {
+      if (party.host === username) party.host = party.members[0].username;
+      resetPartyReady(party);
+      party.updatedAt = now;
+    }
+    sendPartyState(res, username, now);
     return;
   }
 

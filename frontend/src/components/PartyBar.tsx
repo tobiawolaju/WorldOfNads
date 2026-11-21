@@ -1,0 +1,491 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  describePartyError,
+  fetchPartyState,
+  inviteToParty,
+  leaveParty,
+  respondToPartyInvite,
+  searchPartyUsers,
+  setPartyMatch,
+  setPartyReady
+} from "../lib/partyClient";
+import "./PartyBar.css";
+
+type PartyMember = {
+  username: string;
+  ready: boolean;
+  skin?: string;
+};
+
+type Party = {
+  id: string;
+  host: string;
+  matchId: string;
+  status: "open" | "countdown";
+  countdownEnd: number | null;
+  countdownMs: number;
+  maxMembers: number;
+  members: PartyMember[];
+  pending?: { to: string; expiresAt: number }[];
+  serverNow: number;
+};
+
+type PartyInvite = {
+  id: string;
+  from: string;
+  matchId: string;
+  expiresAt: number;
+};
+
+type SearchUser = {
+  username: string;
+  profilePictureUrl?: string;
+};
+
+type PartyBarProps = {
+  username: string;
+  selectedMatch: string | null;
+  skinName: string;
+  matches: { matchId: string; sponsor?: string }[];
+  onLaunch: (matchId: string) => void;
+  onJoinMatch: (matchId: string) => void;
+};
+
+const POLL_MS = 1500;
+const COUNTDOWN_TICK_MS = 100;
+// A countdown that is this far in the past is stale (the tab was closed and
+// reopened after the squad already launched), so it must not navigate again.
+const STALE_LAUNCH_MS = 15000;
+
+function matchLabel(matchId: string, matches: PartyBarProps["matches"]): string {
+  const match = matches.find((item) => item.matchId === matchId);
+  return match?.sponsor || matchId || "the selected match";
+}
+
+function initials(name: string): string {
+  const clean = String(name || "?").trim();
+  return clean.slice(0, 2).toUpperCase();
+}
+
+const PartyBar = ({
+  username,
+  selectedMatch,
+  skinName,
+  matches,
+  onLaunch,
+  onJoinMatch
+}: PartyBarProps) => {
+  const [party, setParty] = useState<Party | null>(null);
+  const [invites, setInvites] = useState<PartyInvite[]>([]);
+  const [remainingMs, setRemainingMs] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchUser[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+
+  const aliveRef = useRef(true);
+  const launchedRef = useRef("");
+  const staleRef = useRef("");
+  const joinedRef = useRef("");
+  const clockOffsetRef = useRef(0);
+
+  const canParty = Boolean(username && username !== "Anon");
+
+  const applyState = useCallback((data: any) => {
+    const nextParty: Party | null = data?.party || null;
+    setParty(nextParty);
+    setInvites(Array.isArray(data?.invites) ? data.invites : []);
+    const offset = Number(data?.serverNow || Date.now()) - Date.now();
+    clockOffsetRef.current = offset;
+  }, []);
+
+  const refresh = useCallback(async () => {
+    if (!canParty) return;
+    try {
+      const data = await fetchPartyState(username);
+      if (aliveRef.current) applyState(data);
+    } catch {
+      // Polling is best-effort; the next tick retries.
+    }
+  }, [canParty, username, applyState]);
+
+  useEffect(() => {
+    aliveRef.current = true;
+    if (!canParty) {
+      setParty(null);
+      setInvites([]);
+      return () => {
+        aliveRef.current = false;
+      };
+    }
+    refresh();
+    const timer = setInterval(refresh, POLL_MS);
+    return () => {
+      aliveRef.current = false;
+      clearInterval(timer);
+    };
+  }, [canParty, refresh]);
+
+  // The host's currently selected card is the party's match. Guests follow the
+  // party's match instead, so accepting an invite pulls them onto the right card.
+  useEffect(() => {
+    if (!party) return;
+    // The host's selection is authoritative: changing a card updates the party
+    // via /api/party/match, so only guests follow the stored match.
+    if (party.host === username) return;
+    if (party.matchId && party.matchId !== selectedMatch) {
+      if (joinedRef.current !== `${party.id}:${party.matchId}`) {
+        joinedRef.current = `${party.id}:${party.matchId}`;
+        onJoinMatch(party.matchId);
+      }
+    }
+  }, [party, selectedMatch, username, onJoinMatch]);
+
+  useEffect(() => {
+    if (!party || party.host !== username || !selectedMatch) return;
+    if (party.matchId === selectedMatch) return;
+    void setPartyMatch({ username, matchId: selectedMatch })
+      .then((data) => {
+        if (aliveRef.current) applyState(data);
+      })
+      .catch(() => {});
+  }, [party, username, selectedMatch, applyState]);
+
+  const countdownPartyId = party?.id || "";
+  const countdownMatchId = party?.matchId || "";
+  const countdownEnd = party?.countdownEnd || 0;
+  const countdownActive = party?.status === "countdown" && countdownEnd > 0;
+
+  useEffect(() => {
+    if (!countdownActive || !countdownEnd) {
+      setRemainingMs(0);
+      return;
+    }
+    const tick = () => {
+      const serverNow = Date.now() + clockOffsetRef.current;
+      const left = Math.max(0, countdownEnd - serverNow);
+      setRemainingMs(left);
+      if (left > 0 || launchedRef.current === countdownPartyId) return;
+      if (serverNow - countdownEnd > STALE_LAUNCH_MS) {
+        // The player came back after the squad already launched. Drop the dead
+        // party instead of leaving a 0.0s countdown on screen for a minute.
+        if (staleRef.current !== countdownPartyId) {
+          staleRef.current = countdownPartyId;
+          setParty(null);
+          setInvites([]);
+          void leaveParty({ username }).catch(() => {});
+        }
+        return;
+      }
+      launchedRef.current = countdownPartyId;
+      onLaunch(countdownMatchId);
+    };
+    tick();
+    const timer = setInterval(tick, COUNTDOWN_TICK_MS);
+    return () => clearInterval(timer);
+  }, [countdownActive, countdownEnd, countdownPartyId, countdownMatchId, onLaunch, username]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const q = query.trim();
+    if (q.length < 2) {
+      setResults([]);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    const timer = setTimeout(() => {
+      searchPartyUsers(q)
+        .then((users) => {
+          if (aliveRef.current) setResults(users);
+        })
+        .catch(() => {
+          if (aliveRef.current) setResults([]);
+        })
+        .finally(() => {
+          if (aliveRef.current) setSearching(false);
+        });
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query, modalOpen]);
+
+  const me = party?.members.find((member) => member.username === username) || null;
+  const others = party ? party.members.filter((member) => member.username !== username) : [];
+  const pending = party?.pending || [];
+  const slotMembers = [others[0] || null, others[1] || null, others[2] || null];
+  const slotPending = [pending[0] || null, pending[1] || null, pending[2] || null];
+  const allReady = Boolean(party?.members.length) && party!.members.every((member) => member.ready);
+  const waitingFor = party ? party.members.filter((member) => !member.ready).map((member) => member.username) : [];
+  const countingDown = party?.status === "countdown" && remainingMs > 0;
+
+  const openInvite = () => {
+    if (party && party.members.length >= party.maxMembers) {
+      setError("Your party is full (4 players max).");
+      return;
+    }
+    setError("");
+    setNotice("");
+    setQuery("");
+    setResults([]);
+    setModalOpen(true);
+  };
+
+  const sendInvite = async (to: string) => {
+    if (!selectedMatch) {
+      setError("Pick a match first.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const data = await inviteToParty({
+        from: username,
+        to,
+        matchId: party?.matchId || selectedMatch,
+        skin: skinName
+      });
+      applyState(data);
+      setNotice(`Invite sent to ${to}.`);
+      setQuery("");
+      setResults([]);
+    } catch (failure: any) {
+      setError(describePartyError(failure?.code));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const respond = async (invite: PartyInvite, accept: boolean) => {
+    setBusy(true);
+    setError("");
+    try {
+      const data = await respondToPartyInvite({
+        username,
+        inviteId: invite.id,
+        accept,
+        skin: skinName
+      });
+      applyState(data);
+      if (accept) {
+        joinedRef.current = `${data?.party?.id || ""}:${data?.party?.matchId || ""}`;
+        onJoinMatch(data?.party?.matchId || invite.matchId);
+      }
+    } catch (failure: any) {
+      setError(describePartyError(failure?.code));
+      setInvites((current) => current.filter((row) => row.id !== invite.id));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleReady = async () => {
+    if (!party || !me) return;
+    setBusy(true);
+    setError("");
+    try {
+      const data = await setPartyReady({ username, ready: !me.ready });
+      applyState(data);
+    } catch (failure: any) {
+      setError(describePartyError(failure?.code));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const quitParty = async () => {
+    setBusy(true);
+    try {
+      await leaveParty({ username });
+    } catch {
+      // Leaving locally is still the right outcome if the request failed.
+    }
+    setParty(null);
+    setInvites([]);
+    launchedRef.current = "";
+    joinedRef.current = "";
+    setBusy(false);
+  };
+
+  const renderSlot = (member: PartyMember | null, invited: { to: string } | null, index: number) => {
+    if (member) {
+      return (
+        <div className="party-slot is-filled" key={`member-${member.username}`}>
+          <span className="party-slot-avatar">{initials(member.username)}</span>
+          <span className="party-slot-name">{member.username}</span>
+          <span className={`party-slot-ready ${member.ready ? "is-ready" : ""}`}>
+            {member.ready ? "READY" : "…"}
+          </span>
+        </div>
+      );
+    }
+    if (invited) {
+      return (
+        <div className="party-slot is-pending" key={`pending-${invited.to}`}>
+          <span className="party-slot-avatar">?</span>
+          <span className="party-slot-name">{invited.to}</span>
+          <span className="party-slot-ready">INVITED</span>
+        </div>
+      );
+    }
+    return (
+      <button
+        type="button"
+        className="party-slot is-empty"
+        key={`empty-${index}`}
+        onClick={openInvite}
+        title="Invite a friend"
+      >
+        <span className="party-slot-plus">+</span>
+        <span className="party-slot-label">Invite</span>
+      </button>
+    );
+  };
+
+  if (!selectedMatch && !party) return null;
+
+  const incoming = invites[0] || null;
+
+  return (
+    <>
+      <div className={`party-bar ${party ? "has-party" : ""}`}>
+        <div className="party-bar-head">
+          <span className="party-bar-title">
+            {party ? "SQUAD" : "PLAY WITH FRIENDS"}
+            {party ? ` · ${matchLabel(party.matchId, matches)}` : ""}
+          </span>
+          {party && (
+            <button type="button" className="party-leave" onClick={quitParty} disabled={busy}>
+              Leave
+            </button>
+          )}
+        </div>
+
+        <div className="party-slots">
+          {renderSlot(slotMembers[0], slotPending[0], 0)}
+          <div className={`party-slot is-you ${me?.ready ? "is-ready" : ""}`}>
+            <span className="party-slot-avatar">{initials(username)}</span>
+            <span className="party-slot-name">{username}</span>
+            <span className="party-slot-ready">{me?.ready ? "READY" : "YOU"}</span>
+          </div>
+          {renderSlot(slotMembers[1], slotPending[1], 1)}
+          {renderSlot(slotMembers[2], slotPending[2], 2)}
+        </div>
+
+        {error && <div className="party-error">{error}</div>}
+
+        {party && (
+          <div className="party-actions">
+            <button
+              type="button"
+              className={`party-ready ${me?.ready ? "is-on" : ""} ${countingDown ? "is-counting" : ""}`}
+              onClick={toggleReady}
+              disabled={busy || countingDown}
+            >
+              {countingDown
+                ? `${(remainingMs / 1000).toFixed(1)}s`
+                : me?.ready
+                  ? "CANCEL READY"
+                  : "READY"}
+            </button>
+            <span className="party-hint">
+              {countingDown
+                ? "Match is starting…"
+                : allReady
+                  ? "Starting countdown…"
+                  : waitingFor.length
+                    ? `Waiting for ${waitingFor.join(", ")}`
+                    : ""}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {modalOpen && (
+        <div className="party-modal-backdrop" onClick={() => setModalOpen(false)}>
+          <div className="party-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>Invite a friend</h3>
+            <p className="party-modal-sub">
+              Up to 4 players. Everyone readies up and launches together.
+            </p>
+            <input
+              autoFocus
+              className="party-input"
+              placeholder="Enter a username"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setError("");
+              }}
+            />
+            <div className="party-results">
+              {searching && <div className="party-result-empty">Searching…</div>}
+              {!searching && query.trim().length >= 2 && results.length === 0 && (
+                <div className="party-result-empty">No players found.</div>
+              )}
+              {results.map((result) => (
+                <button
+                  type="button"
+                  className="party-result"
+                  key={result.username}
+                  disabled={busy}
+                  onClick={() => sendInvite(result.username)}
+                >
+                  <span className="party-result-avatar">
+                    {result.profilePictureUrl ? (
+                      <img src={result.profilePictureUrl} alt="" />
+                    ) : (
+                      initials(result.username)
+                    )}
+                  </span>
+                  <span className="party-result-name">{result.username}</span>
+                  <span className="party-result-action">INVITE</span>
+                </button>
+              ))}
+            </div>
+            {notice && <div className="party-notice">{notice}</div>}
+            {error && <div className="party-error">{error}</div>}
+            <button type="button" className="party-close" onClick={() => setModalOpen(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {incoming && !party && (
+        <div className="party-modal-backdrop">
+          <div className="party-modal party-invite">
+            <h3>Party invite</h3>
+            <p className="party-modal-sub">
+              <b>{incoming.from}</b> invited you to join{" "}
+              <b>{matchLabel(incoming.matchId, matches)}</b>.
+            </p>
+            <div className="party-invite-actions">
+              <button
+                type="button"
+                className="party-accept"
+                disabled={busy}
+                onClick={() => respond(incoming, true)}
+              >
+                ACCEPT
+              </button>
+              <button
+                type="button"
+                className="party-reject"
+                disabled={busy}
+                onClick={() => respond(incoming, false)}
+              >
+                REJECT
+              </button>
+            </div>
+            {error && <div className="party-error">{error}</div>}
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default PartyBar;

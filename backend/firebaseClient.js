@@ -237,6 +237,29 @@ export async function getPlayerProfile(username) {
     return null;
 }
 
+// The party invite dialog searches usernames. Realtime Database has no
+// substring query, so the (small) public user directory is cached briefly and
+// filtered in-process. Keys are usernames; the value only supplies display art.
+let userDirectoryCache = { at: 0, users: [] };
+
+export async function searchUsers(query, limit = 8) {
+    const needle = String(query || '').trim().toLowerCase();
+    if (needle.length < 2) return [];
+    const now = Date.now();
+    if (now - userDirectoryCache.at > 15_000) {
+        const snapshot = await get(ref(db, 'users'));
+        const rows = Object.entries(snapshot.val() || {}).map(([key, value]) => ({
+            username: String(value?.username || key),
+            profilePictureUrl: String(value?.profilePictureUrl || value?.pfp || '')
+        }));
+        userDirectoryCache = { at: now, users: rows };
+    }
+    const capped = Math.max(1, Math.min(20, Number(limit) || 8));
+    return userDirectoryCache.users
+        .filter((row) => row.username.toLowerCase().includes(needle))
+        .slice(0, capped);
+}
+
 export async function getPlayerSkin(username) {
     if (!username) return 's-default';
     const userRef = ref(db, `users/${username}`);
