@@ -551,7 +551,7 @@ func _process(delta: float) -> void:
 # --------------------------------------------------------------- 3D skin preview
 
 func _spawn_preview_chickens() -> void:
-	var parent := get_node_or_null("CanvasLayer/PreviewView/SubViewport") as Node3D
+	var parent := get_node_or_null("CanvasLayer/PreviewView/SubViewport")
 	if parent == null:
 		return
 	var chicken_mesh := load("res://assets/Chicken.obj") as Mesh
