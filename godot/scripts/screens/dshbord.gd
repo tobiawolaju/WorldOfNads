@@ -344,6 +344,7 @@ func _ready() -> void:
 	selected_match_id = _fallback_match_id()
 
 	_spawn_preview_player()
+	_spawn_preview_chickens()
 	_fetch_store_data()
 	_fetch_matches()
 
@@ -548,6 +549,46 @@ func _process(delta: float) -> void:
 
 
 # --------------------------------------------------------------- 3D skin preview
+
+func _spawn_preview_chickens() -> void:
+	var parent := get_node_or_null("CanvasLayer/PreviewView/SubViewport") as Node3D
+	if parent == null:
+		return
+	var chicken_mesh := load("res://assets/Chicken.obj") as Mesh
+	if chicken_mesh == null:
+		return
+	var shader := load("res://assets/shaders/glass_chicken.gdshader") as Shader
+	if shader == null:
+		return
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 12345
+	var radius := 2.6
+	var count := 6
+	for i in range(count):
+		var theta := rng.randf() * TAU
+		var phi := acos(2.0 * rng.randf() - 1.0)
+		var pos := Vector3(
+			radius * sin(phi) * cos(theta),
+			0.9 + radius * 0.35 * sin(phi) * sin(theta),
+			radius * cos(phi)
+		)
+		var mi := MeshInstance3D.new()
+		mi.mesh = chicken_mesh
+		mi.material_override = mat
+		mi.position = pos
+		mi.rotation = Vector3(
+			rng.randf() * TAU,
+			rng.randf() * TAU,
+			rng.randf() * TAU
+		)
+		var s := 0.45 + rng.randf() * 0.35
+		mi.scale = Vector3.ONE * s
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(mi)
+
 
 func _spawn_preview_player() -> void:
 	if _preview_root == null:
