@@ -1,10 +1,10 @@
-Nov 13, 2026
+Nov 22, 2026
 ## World of Nads — Development Update
 
 ### Completed
 
 * Native Android client boots, logs in and plays on device.
-* Cross-platform login: a WON account now persists on Android, so the same account works on web and phone.
+* Cross-platform login: a WON account persists on Android, so the same account works on web and phone.
 * First Android build is out: a signed APK you can install straight on your phone, no store needed.
 * In-match identity fixed: the name over your nad is your WON username, not a guest placeholder.
 * Native dashboard brought in line with the web: real owned/equipped skins, match cards, 3D preview and level pill.
@@ -14,22 +14,29 @@ Nov 13, 2026
 * Networking cleanup: the client talks to the live servers only (local fallback removed).
 * Reward flow hardened: XP credits in all rooms (including practice, settled off-chain), the dashboard Rewards tab and gameover show committed reward/MON state (no false prize promises), and settlement retries handle throttled responses.
 * Experimental grab feedback: when the Action button would show GRAB, the nearest grabbable pickup is outlined in yellow (with its `line`/`box`/`MeshInstance3D` marker meshes tinted yellow) and the highlight clears on grab.
+* **Friends/party (up to 4 players):** invite by username, accept/decline, ready-up, and a synchronized 5-second countdown that drops the whole party into the same match. Matches stay free-for-all; the party only groups players for launch.
+* **Party UI on web and native:** invite slots live in the 3D preview overlay — `+` to invite, profile picture with the username underneath once invited, terminal-style `...` while pending, and a pink skewed leave button on the player. Invite/search popups are full-screen and follow the dashboard purple/pink theme.
+* **Party state carries profile pictures:** members and pending invites now include the player's avatar so both clients render real pictures (initials fallback).
+* **Glass chickens on the native dashboard:** the 3D preview is now ringed by iridescent bubble chickens matching the web ThreeScene look (fixed for Godot 4's normal matrix, tuned against the transparent preview viewport, 3x size).
+* **Performance tuning:** low-processor mode, physics interpolation and Jolt tweaks shipped alongside the refreshed web export and Android APK.
 
 ### Current Focus
 
-**Native client polish and feel**
+**Party polish and multiplayer validation**
 
-* Camera and collision behaviour on elevated parts of the map.
-* HUD and joystick tuning on real devices.
-* Performance on lower-end Android phones (lobby profiling/optimization pending).
+* Two-client invite → accept → ready → countdown flow on real devices.
+* Avatar, pending and leave states on the 3D preview at phone sizes.
+* Native 3D preview visuals (glass chickens, lighting) against the web scene.
+* Performance on lower-end Android phones.
 
 ### Next Steps
 
 1. Run the public test on the live servers.
-2. Keep shipping new Android builds from tester feedback.
-3. Finish verifying the native skin store + mint flow.
-4. Keep tightening game feel: movement, shooting, camera, and pickup feedback.
-5. Continue testing multiplayer load and match pacing.
+2. Validate party launches with 3–4 real players across web and Android.
+3. Keep shipping new Android builds from tester feedback.
+4. Finish verifying the native skin store + mint flow.
+5. Keep tightening game feel: movement, shooting, camera, and pickup feedback.
+6. Continue testing multiplayer load and match pacing.
 
 ### Current Status
 
@@ -38,6 +45,7 @@ Nov 13, 2026
 **Lobby:** 🟢 Working
 **Gameplay:** 🟢 Working
 **Cross-platform login:** 🟢 Working
+**Friends/party:** 🟡 Shipped, validating on multiple devices
 **Rewards/settlement:** 🟡 Improved, needs sponsored-match validation
 **Client optimisation:** 🟡 In progress
 **Public test:** 🔜 Starting soon
