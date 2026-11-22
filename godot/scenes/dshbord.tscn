@@ -226,23 +226,6 @@ handle_input_locally = false
 size = Vector2i(325, 500)
 render_target_update_mode = 4
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="CanvasLayer/PreviewView/SubViewport" unique_id=933715166]
-environment = ExtResource("3_u8sr6")
-
-[node name="KeyLight" type="DirectionalLight3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=2128399815]
-transform = Transform3D(0.7071068, 0, -0.7071068, -0.4082483, 0.8164966, -0.4082483, 0.5773503, 0.5773503, 0.5773503, 10, 10, 10)
-light_color = Color(0.98039216, 1, 0.5882353, 1)
-light_indirect_energy = 16.0
-
-[node name="FillLight" type="DirectionalLight3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=962142359]
-transform = Transform3D(0.4472136, 0, 0.8944272, 0.3651484, 0.9128709, -0.1825742, -0.8164966, 0.4082483, 0.4082483, -10, 5, 5)
-light_energy = 0.4
-
-[node name="RimLight" type="OmniLight3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=538117877]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, -10)
-light_energy = 0.4
-omni_range = 25.0
-
 [node name="Camera3D" type="Camera3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=2018889912]
 transform = Transform3D(1, 0, 0, 0, 0.9986295, 0.052336, 0, -0.052336, 0.9986295, 0, 1, 2.5)
 near = 0.01
@@ -251,6 +234,18 @@ far = 80.0
 [node name="Pivot" type="Node3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=1099431624]
 
 [node name="PreviewRoot" type="Node3D" parent="CanvasLayer/PreviewView/SubViewport/Pivot" unique_id=1061188795]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="CanvasLayer/PreviewView/SubViewport" unique_id=291590357]
+environment = ExtResource("3_u8sr6")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="CanvasLayer/PreviewView/SubViewport" unique_id=436531642]
+transform = Transform3D(0.84941316, -2.3067738e-08, 0.5277283, -0.5277284, -3.7129027e-08, 0.8494131, 0, -0.99999994, -4.3711385e-08, 0, 34.18702, 0)
+light_color = Color(0.98039216, 1, 0.5882353, 1)
+light_indirect_energy = 16.0
+shadow_enabled = true
+directional_shadow_mode = 0
+directional_shadow_max_distance = 20.0
+directional_shadow_pancake_size = 5.0
 
 [node name="StatRail" type="HBoxContainer" parent="CanvasLayer" unique_id=844815919]
 anchors_preset = -1

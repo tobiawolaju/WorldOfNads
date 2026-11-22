@@ -6,7 +6,7 @@ const FX3D_SCRIPT: GDScript = preload("res://scripts/fx/fx3d.gd")
 const FX3D_SCENE: PackedScene = preload("res://scenes/fx3d.tscn")
 const GRAVITY: float = 18
 const JUMP_VELOCITY: float = 6
-const SPEED: float = 4.00
+const SPEED: float = 5.00
 const DEADZONE: float = 0.12
 const PICKUP_REQUEST_COOLDOWN_MS: int = 150
 ## How close the chicken/lootbox must be before a pickup_request is even sent.

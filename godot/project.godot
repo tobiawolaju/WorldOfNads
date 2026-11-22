@@ -14,6 +14,7 @@ config/name="wons"
 run/main_scene="uid://duy1hgxhwdptc"
 config/features=PackedStringArray("4.8", "GL Compatibility")
 run/max_fps=60
+run/low_processor_mode=true
 boot_splash/bg_color=Color(0.43137255, 0.32941177, 1, 1)
 boot_splash/image="uid://ct6moic2j0bbf"
 config/icon="uid://ct6moic2j0bbf"
@@ -207,13 +208,20 @@ chog={
 
 [input_devices]
 
+sensors/enable_device_orientation=true
 pointing/emulate_touch_from_mouse=true
+pointing/emulate_mouse_from_touch=false
 
 [physics]
 
 3d/run_on_separate_thread=true
-common/physics_ticks_per_second=30
+common/max_physics_steps_per_frame=4
+common/physics_jitter_fix=0.0
 3d/physics_engine="Jolt Physics"
+jolt_physics_3d/simulation/velocity_steps=2
+jolt_physics_3d/simulation/use_enhanced_internal_edge_removal=false
+jolt_physics_3d/motion_queries/recovery_iterations=2
+common/physics_interpolation=true
 
 [rendering]
 
