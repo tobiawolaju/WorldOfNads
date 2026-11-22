@@ -1,7 +1,8 @@
 shader_type spatial;
-// Glass bubble look for the decorative dashboard chickens. Alpha-blended (not
-// additive) so the shell still reads as glass over the bright lobby background.
-render_mode blend_mix, depth_draw_never, cull_disabled, unshaded;
+// Iridescent soap-bubble shell matching the frontend ThreeScene chickens.
+// Godot's add blend ignores ALPHA, so the falloff is premultiplied into ALBEDO:
+// a saturated rainbow film plus a much brighter rim and a crisp glass highlight.
+render_mode blend_add, depth_draw_never, cull_back, unshaded;
 
 varying vec3 v_view_normal;
 varying vec3 v_view_position;
@@ -14,20 +15,23 @@ void vertex() {
 }
 
 void fragment() {
-	vec3 view_dir = normalize(v_view_position);
 	vec3 normal = normalize(v_view_normal);
-	float facing = clamp(dot(view_dir, normal), 0.0, 1.0);
-	float fresnel = 1.0 - facing;
-	float rim = pow(fresnel, 2.2);
+	vec3 view_dir = normalize(v_view_position);
+	float fresnel = 1.0 - clamp(dot(view_dir, normal), 0.0, 1.0);
 
-	// Iridescent shell tint, strongest at grazing angles.
-	vec3 iridescence = vec3(
-		sin(fresnel * 5.0 - TIME * 0.5),
-		sin(fresnel * 5.0 - TIME * 0.5 + 2.094),
-		sin(fresnel * 5.0 - TIME * 0.5 + 4.188)
-	) * 0.5 + 0.5;
+	// Same animated rainbow ramp as the frontend bubble shader.
+	vec3 color;
+	color.r = sin(fresnel * 5.0 - TIME * 0.5) * 0.5 + 0.5;
+	color.g = sin(fresnel * 5.0 - TIME * 0.5 + 2.094) * 0.5 + 0.5;
+	color.b = sin(fresnel * 5.0 - TIME * 0.5 + 4.188) * 0.5 + 0.5;
 
-	vec3 glass_tint = vec3(0.52, 0.78, 1.0);
-	ALBEDO = mix(glass_tint, iridescence, rim);
-	ALPHA = clamp(0.14 + rim * 0.78, 0.0, 0.92);
+	// Fixed view-space key light for a curved glass reflection.
+	vec3 light_dir = normalize(vec3(-0.45, 0.65, 0.7));
+	vec3 half_dir = normalize(light_dir + view_dir);
+	float highlight = pow(max(dot(normal, half_dir), 0.0), 55.0);
+
+	// Saturated iridescent film, brighter toward the silhouette.
+	float rim = pow(fresnel, 1.5);
+	ALBEDO = color * (0.20 + rim * 1.35) + vec3(1.0) * highlight * 0.9;
+	ALPHA = 1.0;
 }

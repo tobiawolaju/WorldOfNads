@@ -565,15 +565,16 @@ func _spawn_preview_chickens() -> void:
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 12345
-	var radius := 3.0
 	var count := 6
 	for i in range(count):
-		var theta := rng.randf() * TAU
-		var phi := acos(2.0 * rng.randf() - 1.0)
+		# Ring around the player, kept in front of the preview camera so every
+		# chicken is on screen instead of half of them sitting behind the lens.
+		var theta := TAU * float(i) / float(count) + rng.randf_range(-0.18, 0.18)
+		var ring_radius := 2.15 + rng.randf_range(-0.15, 0.35)
 		var pos := Vector3(
-			radius * sin(phi) * cos(theta),
-			1.0 + radius * 0.35 * sin(phi) * sin(theta),
-			radius * cos(phi)
+			cos(theta) * ring_radius,
+			1.15 + sin(theta) * 0.95,
+			-1.75 + rng.randf_range(-0.35, 0.35)
 		)
 		var mi := MeshInstance3D.new()
 		mi.mesh = chicken_mesh
