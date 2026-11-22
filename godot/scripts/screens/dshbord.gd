@@ -565,14 +565,14 @@ func _spawn_preview_chickens() -> void:
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 12345
-	var radius := 2.6
+	var radius := 3.0
 	var count := 6
 	for i in range(count):
 		var theta := rng.randf() * TAU
 		var phi := acos(2.0 * rng.randf() - 1.0)
 		var pos := Vector3(
 			radius * sin(phi) * cos(theta),
-			0.9 + radius * 0.35 * sin(phi) * sin(theta),
+			1.0 + radius * 0.35 * sin(phi) * sin(theta),
 			radius * cos(phi)
 		)
 		var mi := MeshInstance3D.new()
@@ -584,7 +584,7 @@ func _spawn_preview_chickens() -> void:
 			rng.randf() * TAU,
 			rng.randf() * TAU
 		)
-		var s := 0.45 + rng.randf() * 0.35
+		var s := (0.45 + rng.randf() * 0.35) * 3.0
 		mi.scale = Vector3.ONE * s
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(mi)
