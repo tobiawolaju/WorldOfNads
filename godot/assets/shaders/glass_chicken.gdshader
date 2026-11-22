@@ -1,7 +1,11 @@
 shader_type spatial;
-// Iridescent soap-bubble shell matching the frontend ThreeScene chickens.
-// Godot's add blend ignores ALPHA, so the falloff is premultiplied into ALBEDO:
-// a saturated rainbow film plus a much brighter rim and a crisp glass highlight.
+// Iridescent glass bubble for the dashboard preview chickens, matching the
+// frontend ThreeScene look. The preview SubViewport is transparent, so
+// alpha-blended materials get darkened by the offscreen composite (they read as
+// black glass). Additive keeps the whole shell luminous instead.
+//
+// Godot's add blend ignores ALPHA, so the fresnel falloff is premultiplied into
+// ALBEDO, with a strong base term so the body never falls to black.
 render_mode blend_add, depth_draw_never, cull_back, unshaded;
 
 varying vec3 v_view_normal;
@@ -25,13 +29,14 @@ void fragment() {
 	color.g = sin(fresnel * 5.0 - TIME * 0.5 + 2.094) * 0.5 + 0.5;
 	color.b = sin(fresnel * 5.0 - TIME * 0.5 + 4.188) * 0.5 + 0.5;
 
-	// Fixed view-space key light for a curved glass reflection.
+	// Fixed view-space key light for a crisp curved glass reflection.
 	vec3 light_dir = normalize(vec3(-0.45, 0.65, 0.7));
 	vec3 half_dir = normalize(light_dir + view_dir);
-	float highlight = pow(max(dot(normal, half_dir), 0.0), 55.0);
+	float highlight = pow(max(dot(normal, half_dir), 0.0), 80.0);
 
-	// Saturated iridescent film, brighter toward the silhouette.
-	float rim = pow(fresnel, 1.5);
-	ALBEDO = color * (0.20 + rim * 1.35) + vec3(1.0) * highlight * 0.9;
+	// Pale iridescent film across the body, brighter toward the silhouette.
+	vec3 body = mix(color, vec3(1.0), 0.18);
+	float rim = pow(fresnel, 1.8);
+	ALBEDO = body * (0.55 + rim * 1.15) + vec3(1.0) * highlight * 0.9;
 	ALPHA = 1.0;
 }
