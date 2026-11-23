@@ -67,6 +67,12 @@ var _is_fullscreen: bool = false
 var _original_anchors: Vector4
 var _original_offsets: Vector4
 var _original_z_index: int
+var _original_clip_contents: bool = true
+# Storm overlay (fullscreen only): it normally fills the map square, but in
+# fullscreen it expands across the whole screen so the storm tint is not
+# limited to the square map area.
+var _storm_anchors: Vector4
+var _storm_offsets: Vector4
 
 ## Fullscreen "shade": the shde ColorRect in the HUD fades in behind the map
 ## while it is expanded, and fades back out when the map is closed.
@@ -85,6 +91,11 @@ func _ready() -> void:
 	_original_anchors = Vector4(minimap_container.anchor_left, minimap_container.anchor_top, minimap_container.anchor_right, minimap_container.anchor_bottom)
 	_original_offsets = Vector4(minimap_container.offset_left, minimap_container.offset_top, minimap_container.offset_right, minimap_container.offset_bottom)
 	_original_z_index = minimap_container.z_index
+	_original_clip_contents = minimap_container.clip_contents
+	
+	if storm_overlay:
+		_storm_anchors = Vector4(storm_overlay.anchor_left, storm_overlay.anchor_top, storm_overlay.anchor_right, storm_overlay.anchor_bottom)
+		_storm_offsets = Vector4(storm_overlay.offset_left, storm_overlay.offset_top, storm_overlay.offset_right, storm_overlay.offset_bottom)
 
 	# Center the pointer automatically
 	_setup_pointer(player_pointer)
@@ -108,6 +119,9 @@ func _toggle_fullscreen() -> void:
 	if _is_fullscreen:
 		minimap_container.z_index = 100 # Put on top
 		_update_fullscreen_layout()
+		# Let the storm overlay extend beyond the square map, across the screen.
+		minimap_container.clip_contents = false
+		_layout_fullscreen_storm_overlay()
 		# Reset background for full view
 		background_texture.position = Vector2.ZERO
 		background_texture.size = minimap_container.size
@@ -122,6 +136,8 @@ func _toggle_fullscreen() -> void:
 		minimap_container.offset_top = _original_offsets.y
 		minimap_container.offset_right = _original_offsets.z
 		minimap_container.offset_bottom = _original_offsets.w
+		minimap_container.clip_contents = _original_clip_contents
+		_restore_storm_overlay_layout()
 		_fade_shade(false)
 	_update_bus_path_overlay()
 
@@ -153,6 +169,47 @@ func _update_fullscreen_layout() -> void:
 	minimap_container.offset_top = -map_side * 0.5
 	minimap_container.offset_right = map_side * 0.5
 	minimap_container.offset_bottom = map_side * 0.5
+
+## Stretch the storm tint over the entire screen while the map is expanded.
+## The shader maps its UVs back onto the centred square map via `map_rect`,
+## so the storm eye circle keeps its position and size on the map.
+func _layout_fullscreen_storm_overlay() -> void:
+	if storm_overlay == null or not is_instance_valid(storm_overlay):
+		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return
+	var map_side := minf(viewport_size.x, viewport_size.y)
+	var map_offset := (viewport_size - Vector2(map_side, map_side)) * 0.5
+	storm_overlay.anchor_left = 0.0
+	storm_overlay.anchor_top = 0.0
+	storm_overlay.anchor_right = 0.0
+	storm_overlay.anchor_bottom = 0.0
+	storm_overlay.offset_left = -map_offset.x
+	storm_overlay.offset_top = -map_offset.y
+	storm_overlay.offset_right = -map_offset.x + viewport_size.x
+	storm_overlay.offset_bottom = -map_offset.y + viewport_size.y
+	if storm_overlay.material is ShaderMaterial:
+		storm_overlay.material.set_shader_parameter("map_rect", Vector4(
+			map_offset.x / viewport_size.x,
+			map_offset.y / viewport_size.y,
+			map_side / viewport_size.x,
+			map_side / viewport_size.y
+		))
+
+func _restore_storm_overlay_layout() -> void:
+	if storm_overlay == null or not is_instance_valid(storm_overlay):
+		return
+	storm_overlay.anchor_left = _storm_anchors.x
+	storm_overlay.anchor_top = _storm_anchors.y
+	storm_overlay.anchor_right = _storm_anchors.z
+	storm_overlay.anchor_bottom = _storm_anchors.w
+	storm_overlay.offset_left = _storm_offsets.x
+	storm_overlay.offset_top = _storm_offsets.y
+	storm_overlay.offset_right = _storm_offsets.z
+	storm_overlay.offset_bottom = _storm_offsets.w
+	if storm_overlay.material is ShaderMaterial:
+		storm_overlay.material.set_shader_parameter("map_rect", Vector4(0.0, 0.0, 1.0, 1.0))
 
 func _handle_fullscreen_input() -> void:
 	# Placeholder for any specific fullscreen input logic

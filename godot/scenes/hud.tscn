@@ -51,9 +51,14 @@ corner_radius_bottom_left = 70
 code = "shader_type canvas_item;
 uniform vec2 storm_center = vec2(0.5);
 uniform float storm_radius = 0.25;
+// Where the square map sits inside this overlay, in UV space. Identity when
+// the overlay is exactly the map; in fullscreen the overlay covers the whole
+// screen and the storm circle is mapped onto the centred map square.
+uniform vec4 map_rect = vec4(0.0, 0.0, 1.0, 1.0);
 
 void fragment() {
-	float dist = distance(UV, storm_center);
+	vec2 map_uv = (UV - map_rect.xy) / map_rect.zw;
+	float dist = distance(map_uv, storm_center);
 	if (dist < storm_radius) {
 		COLOR = vec4(0.0);
 	} else {
