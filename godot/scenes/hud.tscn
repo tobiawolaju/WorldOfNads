@@ -272,6 +272,7 @@ bus_path_width = 1.0
 shade_overlay = NodePath("../../../../shde")
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=123456789]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

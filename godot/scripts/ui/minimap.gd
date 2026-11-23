@@ -209,11 +209,19 @@ func _process(_delta: float) -> void:
 		
 		# Offset background to center player
 		var pixel_pos_on_scaled = player_uv * scaled_size
-		background_texture.position = (mm_size * 0.5) - pixel_pos_on_scaled
+		var target_pos = (mm_size * 0.5) - pixel_pos_on_scaled
+		# Near the map edge the snapshot used to slide past the control and
+		# expose the purple panel behind it. Clamp so the map always fills the
+		# minimap window instead of showing a coloured border.
+		target_pos.x = clampf(target_pos.x, mm_size.x - scaled_size.x, 0.0)
+		target_pos.y = clampf(target_pos.y, mm_size.y - scaled_size.y, 0.0)
+		background_texture.position = target_pos
 		
-		# Player pointer is fixed at center
+		# Player pointer sits on the player's actual pixel; that is the centre
+		# until the clamp above kicks in at the map edge.
 		if player_pointer:
-			player_pointer.position = (mm_size * 0.5) - (player_pointer.size * 0.5)
+			var player_px = target_pos + pixel_pos_on_scaled
+			player_pointer.position = player_px - (player_pointer.size * 0.5)
 
 	# Rotate player pointer
 	if player_pointer and rotate_pointer:
