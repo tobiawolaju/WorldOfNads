@@ -12,7 +12,6 @@
 [ext_resource type="PackedScene" uid="uid://dud0j72gp62nr" path="res://scenes/props/enviroment/bus.tscn" id="11_m1sns"]
 [ext_resource type="PackedScene" uid="uid://ds74a1sw044u4" path="res://scenes/pickup.tscn" id="11_yad6j"]
 [ext_resource type="PackedScene" uid="uid://cqgso836leaiu" path="res://scenes/pickup2.tscn" id="12_m1sns"]
-[ext_resource type="PackedScene" uid="uid://b455bcav0ersh" path="res://scenes/props/van.tscn" id="13_dyhay"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_dyhay"]
 render_priority = 0
@@ -135,10 +134,6 @@ cast_shadow = 0
 
 [node name="Object_2" parent="Bus" index="4" unique_id=1403144337]
 cast_shadow = 0
-
-[node name="Van" parent="." unique_id=1389412019 instance=ExtResource("13_dyhay")]
-transform = Transform3D(-0.67625827, 0, 0.73666465, 0, 1, 0, -0.73666465, 0, -0.67625827, 3.0882564, 3.942566, 19.11686)
-collision_layer = 1
 
 [node name="env" type="Node3D" parent="." unique_id=2112706647 node_paths=PackedStringArray("world_env", "light_normal", "light_storm", "camera", "cylinder_wall", "cylinder_border")]
 script = ExtResource("3_ncsg4")

@@ -48,12 +48,24 @@
   color: #fff;
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  opacity: 1;
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease;
 }
 
 .party-scene-slot.is-empty:hover {
   transform: translate(-50%, -50%) scale(1.06);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+
+.party-scene-slot.is-empty.is-store-hidden {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(1.35);
+  pointer-events: none;
+  box-shadow: none;
 }
 
 .party-scene-slot-plus {

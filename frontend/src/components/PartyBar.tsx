@@ -64,6 +64,8 @@ type PartyBarProps = {
   onLaunch: (matchId: string) => void;
   onJoinMatch: (matchId: string) => void;
   onControlsChange?: (controls: PartyControls | null) => void;
+  isStoreOpen?: boolean;
+  isRewardsOpen?: boolean;
 };
 
 const POLL_MS = 1500;
@@ -89,7 +91,9 @@ const PartyBar = ({
   matches,
   onLaunch,
   onJoinMatch,
-  onControlsChange
+  onControlsChange,
+  isStoreOpen = false,
+  isRewardsOpen = false
 }: PartyBarProps) => {
   const [party, setParty] = useState<Party | null>(null);
   const [invites, setInvites] = useState<PartyInvite[]>([]);
@@ -411,6 +415,7 @@ const PartyBar = ({
     const pfp = name ? pfpByName[name] : "";
 
     if (member) {
+      if (isRewardsOpen) return null;
       return (
         <div
           className={`party-scene-slot is-person ${member.ready ? "is-ready" : ""}`}
@@ -426,6 +431,7 @@ const PartyBar = ({
       );
     }
     if (invited) {
+      if (isRewardsOpen) return null;
       return (
         <div
           className="party-scene-slot is-person is-pending"
@@ -443,15 +449,18 @@ const PartyBar = ({
         </div>
       );
     }
+    const hideEmptySlot = isStoreOpen || isRewardsOpen;
     return (
       <button
         type="button"
-        className="party-scene-slot is-empty"
+        className={`party-scene-slot is-empty${hideEmptySlot ? " is-store-hidden" : ""}`}
         data-pos={position}
         key={`empty-${index}`}
         onClick={openInvite}
         title="Invite a friend"
         aria-label="Invite a friend"
+        aria-hidden={hideEmptySlot}
+        tabIndex={hideEmptySlot ? -1 : 0}
       >
         <span className="party-scene-slot-plus">+</span>
       </button>
@@ -558,7 +567,7 @@ const PartyBar = ({
     <>
       <div className="party-scene-overlay" aria-label="Party invites">
         {renderInviteSlot(slotMembers[0], slotPending[0], 0, "left")}
-        {party && (
+        {party && !isRewardsOpen && (
           <button
             type="button"
             className="party-scene-slot is-me is-leave"

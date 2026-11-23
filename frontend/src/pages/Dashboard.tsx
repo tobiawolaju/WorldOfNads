@@ -1112,7 +1112,10 @@ export default function Dashboard() {
         <div className={`left-3d-section ${equipFlash ? "shake" : ""}`}>
         {/* The backdrop stays mounted for the whole dashboard session, sliding and
             fading between lobby background images in the direction of the tab or card navigation. */}
-        <div className="lobby-bg">
+        <div
+          className="lobby-bg"
+          style={{ opacity: tab === "store" ? 0 : 1, transition: "opacity 0.18s ease" }}
+        >
           {prevBgSrc && (
             <div
               key={prevBgSrc}
@@ -1143,6 +1146,8 @@ export default function Dashboard() {
             onLaunch={beginPlayForMatch}
             onJoinMatch={handlePartyJoinMatch}
             onControlsChange={setPartyControls}
+            isStoreOpen={tab === "store"}
+            isRewardsOpen={tab === "rewards"}
           />
         )}
 

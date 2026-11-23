@@ -74,6 +74,7 @@ const vertexShader = `
 const fragmentShader = `
   precision mediump float;
   uniform float uTime;
+  uniform float uOpacity;
   varying vec3 vNormal;
   varying vec3 vViewPosition;
   void main() {
@@ -86,7 +87,7 @@ const fragmentShader = `
     color.g = sin(fresnel * 5.0 - uTime * 0.5 + 2.094) * 0.5 + 0.5;
     color.b = sin(fresnel * 5.0 - uTime * 0.5 + 4.188) * 0.5 + 0.5;
 
-    gl_FragColor = vec4(color, fresnel * 0.8);
+    gl_FragColor = vec4(color, fresnel * 0.8 * uOpacity);
   }
 `;
 
@@ -96,25 +97,47 @@ interface ChickenProps {
   position: [number, number, number];
   rotation: [number, number, number];
   scale?: number;
+  hidden?: boolean;
 }
 const Chicken: React.FC<ChickenProps> = ({
   position,
   rotation,
   scale = 6,
+  hidden = false,
 }) => {
   const obj = useLoader(OBJLoader, "/Chicken.obj");
   const model = useMemo(() => obj.clone(), [obj]);
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
+  const opacityRef = useRef(hidden ? 0 : 1);
+  const exitRef = useRef(hidden ? 1 : 0);
+  const basePos = useMemo(() => new THREE.Vector3(...position), [position]);
+  const exitDir = basePos.x < 0 ? -1 : 1;
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     if (shaderRef.current) {
       shaderRef.current.uniforms.uTime.value = clock.getElapsedTime();
+      const targetOpacity = hidden ? 0 : 1;
+      const targetExit = hidden ? 1 : 0;
+      const step = 1 - Math.exp(-delta * 14);
+      opacityRef.current += (targetOpacity - opacityRef.current) * step;
+      exitRef.current += (targetExit - exitRef.current) * step;
+      if (Math.abs(targetOpacity - opacityRef.current) < 0.01) {
+        opacityRef.current = targetOpacity;
+        exitRef.current = targetExit;
+      }
+      shaderRef.current.uniforms.uOpacity.value = opacityRef.current;
+      model.position.set(
+        basePos.x + exitDir * 12 * exitRef.current,
+        basePos.y,
+        basePos.z
+      );
+      model.visible = opacityRef.current > 0.01;
     }
   });
 
   useEffect(() => {
     const bubbleMaterial = new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 } },
+      uniforms: { uTime: { value: 0 }, uOpacity: { value: hidden ? 0 : 1 } },
       vertexShader,
       fragmentShader,
       transparent: true,
@@ -127,13 +150,19 @@ const Chicken: React.FC<ChickenProps> = ({
         child.material = bubbleMaterial;
       }
     });
+    model.position.set(
+      basePos.x + exitDir * 12 * (hidden ? 1 : 0),
+      basePos.y,
+      basePos.z
+    );
+    model.visible = !hidden;
     // Cleanup
     return () => {
       bubbleMaterial.dispose();
       // Note: We DO NOT dispose of child.geometry or child.material here
       // because they are shared assets from the FBX loader cache.
     };
-  }, [model]);
+  }, [model, basePos]);
 
   return (
     <primitive
@@ -1201,6 +1230,7 @@ const NadModel: React.FC<NadModelProps> = ({
 // --- Main Scene Component ---
 export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
   equippedSkin,
+  isStoreOpen,
 }) => {
   const controlsRef = useRef<any>(null);
   const glRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -1399,7 +1429,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = React.memo(({
 
 
         {chickens.map((data) => (
-          <Chicken key={data.key} {...data} />
+          <Chicken key={data.key} {...data} hidden={isStoreOpen} />
         ))}
       </Suspense>
 

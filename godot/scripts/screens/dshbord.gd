@@ -77,6 +77,9 @@ const PARTY_UI_BG := Color(0.075, 0.05, 0.16, 0.94)
 const PARTY_UI_BORDER := Color(1.0, 1.0, 1.0, 0.16)
 const PARTY_ACCENT := Color(1.0, 0.84, 0.0, 1.0)
 const PARTY_STALE_LAUNCH_MS: int = 15000
+# `.party-results { max-height: 230px; overflow-y: auto }` in PartyBar.css: the
+# list hugs its rows and only starts scrolling once it reaches the cap.
+const PARTY_RESULTS_MAX_HEIGHT: float = 230.0
 
 # Preview orbit, ported from three's OrbitControls. ThreeScene.tsx mounts drei's
 # <OrbitControls> with every default except `target`, `enablePan={false}`, the
@@ -221,6 +224,10 @@ const VARIANT_BORDER_WIDTH: int = 2
 @onready var _equip_button: Button = get_node_or_null("CanvasLayer/FooterButtons/EquipButton") as Button
 
 var _preview_player: Node3D = null
+var _preview_chickens: Array[MeshInstance3D] = []
+var _preview_chickens_mat: ShaderMaterial = null
+var _preview_chickens_tween: Tween = null
+var _preview_chickens_showing: bool = true
 # Countdown to the preview's next random emote. It starts short so the first
 # flourish lands before the user has finished reading the dashboard.
 var _preview_emote_timer: float = PREVIEW_EMOTE_FIRST_DELAY
@@ -326,6 +333,7 @@ var _party_dialog: Control = null
 var _party_dialog_status: Label = null
 var _party_search: LineEdit = null
 var _party_results: VBoxContainer = null
+var _party_results_scroll: ScrollContainer = null
 var _party_search_timer: Timer = null
 var _party_invite_popup: Control = null
 var _party_invite_label: Label = null
@@ -562,6 +570,8 @@ func _spawn_preview_chickens() -> void:
 		return
 	var mat := ShaderMaterial.new()
 	mat.shader = shader
+	mat.set_shader_parameter("opacity", 1.0)
+	_preview_chickens_mat = mat
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 12345
@@ -587,8 +597,76 @@ func _spawn_preview_chickens() -> void:
 		)
 		var s := (0.45 + rng.randf() * 0.35) * 3.0
 		mi.scale = Vector3.ONE * s
+		mi.set_meta("base_scale", s)
+		mi.set_meta("base_pos", pos)
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var show_chickens := tab != TAB_STORE
+		mi.visible = show_chickens
 		parent.add_child(mi)
+		_preview_chickens.append(mi)
+	_preview_chickens_showing = tab != TAB_STORE
+	if not _preview_chickens_showing:
+		mat.set_shader_parameter("opacity", 0.0)
+
+
+func _sync_preview_chickens_visibility() -> void:
+	var show_chickens := tab != TAB_STORE
+	if show_chickens == _preview_chickens_showing:
+		return
+	_preview_chickens_showing = show_chickens
+
+	if _preview_chickens_tween != null and _preview_chickens_tween.is_valid():
+		_preview_chickens_tween.kill()
+
+	# Slide chickens out of view: left-of-player chickens exit left, right-of-player
+	# chickens exit right, while fading.
+	var duration := 0.22
+	_preview_chickens_tween = create_tween()
+	_preview_chickens_tween.set_parallel(true)
+	_preview_chickens_tween.set_trans(Tween.TRANS_CUBIC)
+	_preview_chickens_tween.set_ease(Tween.EASE_IN if not show_chickens else Tween.EASE_OUT)
+
+	if _preview_chickens_mat != null:
+		var target_opacity := 1.0 if show_chickens else 0.0
+		_preview_chickens_tween.tween_method(
+			func(v: float) -> void: _preview_chickens_mat.set_shader_parameter("opacity", v),
+			float(_preview_chickens_mat.get_shader_parameter("opacity")),
+			target_opacity,
+			duration
+		)
+
+	for chicken in _preview_chickens:
+		if not is_instance_valid(chicken):
+			continue
+		var base_pos: Vector3 = chicken.get_meta("base_pos", chicken.position)
+		var side := -1.0 if base_pos.x < 0.0 else 1.0
+		var offscreen_pos := base_pos + Vector3(side * 10.0, 0.0, 0.0)
+		if show_chickens:
+			chicken.visible = true
+			chicken.position = offscreen_pos
+			_preview_chickens_tween.tween_property(chicken, "position", base_pos, duration)
+		else:
+			_preview_chickens_tween.tween_property(chicken, "position", offscreen_pos, duration)
+
+	if not show_chickens:
+		_preview_chickens_tween.chain().tween_callback(func() -> void:
+			if _preview_chickens_showing:
+				return
+			for chicken in _preview_chickens:
+				if is_instance_valid(chicken):
+					chicken.visible = false
+					var base_pos: Vector3 = chicken.get_meta("base_pos", chicken.position)
+					chicken.position = base_pos
+		)
+	else:
+		_preview_chickens_tween.chain().tween_callback(func() -> void:
+			if not _preview_chickens_showing:
+				return
+			for chicken in _preview_chickens:
+				if is_instance_valid(chicken):
+					var base_pos: Vector3 = chicken.get_meta("base_pos", chicken.position)
+					chicken.position = base_pos
+		)
 
 
 func _spawn_preview_player() -> void:
@@ -1239,6 +1317,8 @@ func _refresh_all() -> void:
 	_refresh_skin_preview()
 	_refresh_play_button()
 	_refresh_footer()
+	_sync_preview_chickens_visibility()
+	_refresh_party_ui()
 	_layout_lobby_bg()
 
 
@@ -1542,7 +1622,8 @@ func _center_selected_card_deferred() -> void:
 	if _match_scroll == null or _match_cards == null:
 		return
 
-	var target_x := -1
+	var found := false
+	var target_x := 0
 	for child in _match_cards.get_children():
 		var control := child as Control
 		if control == null:
@@ -1558,10 +1639,17 @@ func _center_selected_card_deferred() -> void:
 			var delta_global := card_rect.position.x - scroll_rect.position.x \
 				+ card_rect.size.x * 0.5 - scroll_rect.size.x * 0.5
 			target_x = int(_match_scroll.scroll_horizontal + delta_global / scale)
+			found = true
 			break
 
-	if target_x > 0:
-		_match_scroll.scroll_horizontal = target_x
+	if not found:
+		return
+	# Always apply the target, even when it is negative: that just means the card
+	# sits in the left half of the first viewport, so the carousel has to scroll
+	# back to its start. The ScrollContainer clamps the upper bound itself.
+	# Guarding on `target_x > 0` used to swallow every leftward scroll, so
+	# selecting a previous card never moved the carousel.
+	_match_scroll.scroll_horizontal = maxi(target_x, 0)
 
 
 func _refresh_rewards() -> void:
@@ -2926,6 +3014,10 @@ func _stable_lobby_bg(match_id: String) -> String:
 const LOBBY_BG_BASE_ALPHA := 0.5
 
 
+func _lobby_bg_target_alpha() -> float:
+	return 0.0 if tab == TAB_STORE else LOBBY_BG_BASE_ALPHA
+
+
 func _lobby_bg_texture(match: Dictionary) -> Texture2D:
 	var bg := str(match.get("lobby_bg", ""))
 	if bg.is_empty():
@@ -2980,7 +3072,7 @@ func _update_lobby_bg() -> void:
 		_bg_current_key = next_key
 		_bg_prev_tab = tab
 		_bg_prev_match_id = selected_match_id
-		_apply_bg_layer(_lobby_bg_current, next_tex, 0.0, LOBBY_BG_BASE_ALPHA)
+		_apply_bg_layer(_lobby_bg_current, next_tex, 0.0, _lobby_bg_target_alpha())
 		_apply_bg_layer(_lobby_bg_prev, null, 0.0, 0.0)
 		if _lobby_bg_prev != null:
 			_lobby_bg_prev.visible = false
@@ -3044,7 +3136,7 @@ func _update_lobby_bg() -> void:
 	_bg_tween.set_trans(Tween.TRANS_CUBIC)
 	_bg_tween.set_ease(Tween.EASE_OUT)
 	_bg_tween.tween_property(_lobby_bg_current, "position:x", 0.0, LOBBY_BG_SLIDE_DURATION)
-	_bg_tween.tween_property(_lobby_bg_current, "modulate:a", LOBBY_BG_BASE_ALPHA, LOBBY_BG_SLIDE_DURATION)
+	_bg_tween.tween_property(_lobby_bg_current, "modulate:a", _lobby_bg_target_alpha(), LOBBY_BG_SLIDE_DURATION)
 	if _lobby_bg_prev != null:
 		_bg_tween.tween_property(_lobby_bg_prev, "position:x", exit_to, LOBBY_BG_SLIDE_DURATION)
 		_bg_tween.tween_property(_lobby_bg_prev, "modulate:a", 0.0, LOBBY_BG_SLIDE_DURATION)
@@ -3064,9 +3156,11 @@ func _apply_bg_layer(layer: TextureRect, texture: Texture2D, offset_x: float, al
 
 
 func _finish_lobby_bg_transition() -> void:
+	var target_alpha := _lobby_bg_target_alpha()
 	if _lobby_bg_current != null:
 		_lobby_bg_current.position.x = 0.0
-		_lobby_bg_current.modulate.a = LOBBY_BG_BASE_ALPHA
+		_lobby_bg_current.modulate.a = target_alpha
+		_lobby_bg_current.visible = _lobby_bg_current.texture != null
 	if _lobby_bg_prev != null:
 		_lobby_bg_prev.position.x = 0.0
 		_lobby_bg_prev.modulate.a = 0.0
@@ -3624,6 +3718,9 @@ func _refresh_party_ui() -> void:
 		var name_label: Label = _party_slot_names[index] if index < _party_slot_names.size() else null
 		var row: Dictionary = others[index]
 		if row.is_empty():
+			# Store focuses on skin preview; Rewards hides party UI but keeps chickens.
+			var show_invite_slot := tab == TAB_EVENTS
+			slot.visible = show_invite_slot
 			slot.text = "+"
 			slot.set_meta("slot_kind", "empty")
 			slot.modulate = Color(1, 1, 1, 1)
@@ -3647,6 +3744,7 @@ func _refresh_party_ui() -> void:
 				name_label.text = ""
 		elif str(row.get("kind", "")) == "pending":
 			var invited_name := str(row.get("name", ""))
+			slot.visible = tab != TAB_REWARDS
 			slot.text = invited_name.substr(0, 2).to_upper()
 			slot.set_meta("slot_kind", "pending")
 			slot.set_meta("slot_name", invited_name)
@@ -3664,12 +3762,13 @@ func _refresh_party_ui() -> void:
 			slot.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 0.9))
 			slot.add_theme_font_size_override("font_size", 10)
 			if name_label != null:
-				name_label.visible = true
+				name_label.visible = tab != TAB_REWARDS
 				name_label.set_meta("pending", true)
 				name_label.set_meta("base_name", invited_name)
 		else:
 			var member_name := str(row.get("name", ""))
 			var ready := bool(row.get("ready", false))
+			slot.visible = tab != TAB_REWARDS
 			slot.text = member_name.substr(0, 2).to_upper()
 			slot.set_meta("slot_kind", "member")
 			slot.set_meta("slot_name", member_name)
@@ -3694,13 +3793,13 @@ func _refresh_party_ui() -> void:
 			slot.add_theme_color_override("font_pressed_color", member_color)
 			slot.add_theme_font_size_override("font_size", 10)
 			if name_label != null:
-				name_label.visible = true
+				name_label.visible = tab != TAB_REWARDS
 				name_label.set_meta("pending", false)
 				name_label.text = member_name
 				name_label.add_theme_color_override("font_color", PARTY_ACCENT if ready else Color(1, 1, 1, 0.9))
 
 	if _party_me_leave != null:
-		_party_me_leave.visible = has_party
+		_party_me_leave.visible = has_party and tab != TAB_REWARDS
 		_party_me_leave.disabled = _party_busy
 
 	_refresh_play_button()
@@ -3727,6 +3826,9 @@ func _show_party_dialog_status(text: String, is_error: bool) -> void:
 	if _party_dialog_status == null:
 		return
 	_party_dialog_status.text = text
+	# The frontend only renders the notice/error when there is one, so an empty
+	# status must not leave a blank line behind.
+	_party_dialog_status.visible = text != ""
 	_party_dialog_status.add_theme_color_override(
 		"font_color",
 		Color(1.0, 0.52, 0.52) if is_error else Color(0.52, 0.95, 0.7)
@@ -3994,17 +4096,21 @@ func _build_party_dialogs() -> void:
 	_party_search.text_submitted.connect(_on_party_search_submitted)
 	column.add_child(_party_search)
 
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 140)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	column.add_child(scroll)
+	# The results list is only as tall as its rows (an empty search keeps the
+	# dialog short) and starts scrolling past PARTY_RESULTS_MAX_HEIGHT, the same
+	# way `.party-results` does in PartyBar.css.
+	_party_results_scroll = ScrollContainer.new()
+	_party_results_scroll.custom_minimum_size = Vector2(0, 0)
+	_party_results_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	column.add_child(_party_results_scroll)
 
 	_party_results = VBoxContainer.new()
 	_party_results.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_party_results.add_theme_constant_override("separation", 3)
-	scroll.add_child(_party_results)
+	_party_results_scroll.add_child(_party_results)
 
 	_party_dialog_status = Label.new()
+	_party_dialog_status.visible = false
 	_party_dialog_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_party_dialog_status.add_theme_font_override("font", FONT_UI)
 	_party_dialog_status.add_theme_font_size_override("font_size", 8)
@@ -4143,8 +4249,22 @@ func _close_party_dialog() -> void:
 func _clear_party_results() -> void:
 	if _party_results == null:
 		return
+	# Remove right away (not just queue_free) so the height fit below measures
+	# only the rows that are actually still there.
 	for child in _party_results.get_children():
+		_party_results.remove_child(child)
 		child.queue_free()
+	_fit_party_results_height()
+
+
+# Keeps the results list as short as its rows, growing up to the CSS cap.
+func _fit_party_results_height() -> void:
+	if _party_results_scroll == null or _party_results == null:
+		return
+	var content_height := _party_results.get_combined_minimum_size().y
+	_party_results_scroll.custom_minimum_size = Vector2(
+		0, minf(content_height, PARTY_RESULTS_MAX_HEIGHT)
+	)
 
 
 func _on_party_query_changed(text: String) -> void:
@@ -4209,6 +4329,7 @@ func _show_party_search_results(users: Variant) -> void:
 		empty.add_theme_font_size_override("font_size", 8)
 		empty.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
 		_party_results.add_child(empty)
+	_fit_party_results_height()
 
 
 func _on_party_invite_result(invited_name: String) -> void:

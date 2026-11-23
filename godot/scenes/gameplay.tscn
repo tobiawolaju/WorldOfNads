@@ -59,7 +59,7 @@ script = ExtResource("1_hpwea")
 player_scene = ExtResource("2_w01lk")
 myplayerswpanpoint = NodePath("../Bus/myplayerswpanpoint")
 countdown_label_path = NodePath("../Hud/CanvasLayer/BoxContainer/Node2/BoxContainer/Countdown")
-world_environment_path = NodePath("")
+world_environment_path = NodePath("../env/WorldEnvironment")
 camera_block_path = NodePath("Camera3D/CAMERABlock")
 
 [node name="Camera3D" type="Camera3D" parent="PlayerManager" unique_id=411845509]

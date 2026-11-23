@@ -8,6 +8,8 @@ shader_type spatial;
 // ALBEDO, with a strong base term so the body never falls to black.
 render_mode blend_add, depth_draw_never, cull_back, unshaded;
 
+uniform float opacity : hint_range(0.0, 1.0) = 1.0;
+
 varying vec3 v_view_normal;
 varying vec3 v_view_position;
 
@@ -37,6 +39,6 @@ void fragment() {
 	// Pale iridescent film across the body, brighter toward the silhouette.
 	vec3 body = mix(color, vec3(1.0), 0.18);
 	float rim = pow(fresnel, 1.8);
-	ALBEDO = body * (0.55 + rim * 1.15) + vec3(1.0) * highlight * 0.9;
+	ALBEDO = (body * (0.55 + rim * 1.15) + vec3(1.0) * highlight * 0.9) * opacity;
 	ALPHA = 1.0;
 }
