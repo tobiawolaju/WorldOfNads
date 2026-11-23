@@ -629,9 +629,15 @@ var _grab_highlight_timer: float = 0.0
 ## How long to wait before re-scanning the "bus" group after a miss (see
 ## _apply_bus_riding): one immediate lookup, then at most once a second.
 const BUS_LOOKUP_RETRY_MSEC: int = 1000
+## The bus deck is only a few metres across. The old 35 m radius counted any
+## player inside the whole route as "on the bus", so riders were dragged along
+## with it long after jumping off and looked locked in the air.
+const BUS_RIDE_RADIUS: float = 5.0
+const BUS_RIDE_HEIGHT: float = 6.0
 
 var _bus_node: Node3D = null
 var _bus_last_pos: Vector3 = Vector3.ZERO
+var _bus_last_yaw: float = 0.0
 var _bus_lookup_retry_at_msec: int = 0
 var _is_riding_bus: bool = false
 
@@ -1507,7 +1513,7 @@ func _physics_process(delta: float) -> void:
 	_handle_camera_gamepad(delta)
 	_mirror_twin_decoy()
 
-	var net_active: bool = (move_direction.length_squared() > 0.0025) or _is_local_holding_chicken() or _is_local_holding_pickup() or (current_animation == "running")
+	var net_active: bool = (move_direction.length_squared() > 0.0025) or _is_local_holding_chicken() or _is_local_holding_pickup() or (current_animation == "running") or _is_riding_bus
 	if current_animation == "runningjump" or current_animation == "falling" or current_animation == "runningslide":
 		net_active = true
 
@@ -3677,22 +3683,30 @@ func _apply_bus_riding() -> void:
 		_bus_node = get_tree().get_first_node_in_group("bus")
 		if _bus_node:
 			_bus_last_pos = _bus_node.global_position
+			_bus_last_yaw = _bus_node.global_rotation.y
 	if _bus_node == null:
 		return
 	var bus_pos := _bus_node.global_position
-	var bus_delta := bus_pos - _bus_last_pos
-	_bus_last_pos = bus_pos
+	var bus_yaw := _bus_node.global_rotation.y
 	var to_bus := global_position - bus_pos
-	var on_bus: bool = abs(to_bus.y) < 10.0 and Vector2(to_bus.x, to_bus.z).length() < 35.0
-	if _is_riding_bus:
-		global_position += bus_delta
-		if not on_bus: 
-			_is_riding_bus = false
+	var on_bus: bool = (
+		absf(to_bus.y) < BUS_RIDE_HEIGHT
+		and Vector2(to_bus.x, to_bus.z).length_squared() < BUS_RIDE_RADIUS * BUS_RIDE_RADIUS
+	)
+	if _is_riding_bus or on_bus:
+		# Follow the bus's full transform delta, not just its translation: the
+		# deck yaws as the bus circles, so a rider that only copied the position
+		# would slowly rotate off the deck and end up hanging in the air.
+		var offset := global_position - _bus_last_pos
+		offset = offset.rotated(Vector3.UP, wrapf(bus_yaw - _bus_last_yaw, -PI, PI))
+		global_position = bus_pos + offset
+		_is_riding_bus = on_bus
+		if on_bus:
+			_zoom_cap_override = bus_zoom
+		else:
 			_zoom_cap_override = -1.0
-	elif on_bus:
-		_is_riding_bus = true
-		_zoom_cap_override = bus_zoom
-		global_position += bus_delta
+	_bus_last_pos = bus_pos
+	_bus_last_yaw = bus_yaw
 
 func _zoom_cap_base() -> float:
 	return bus_zoom if _zoom_cap_override >= 0.0 else max_zoom

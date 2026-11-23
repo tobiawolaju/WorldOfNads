@@ -1923,6 +1923,14 @@ func _update_match_state(match_state: Dictionary, quantized := false) -> void:
 func is_match_running() -> bool:
 	return match_is_running
 
+## Seconds since the current match started, interpolated between server
+## snapshots. Before the match it reads 0, which lets synced props (the bus)
+## wait at a common origin and then move on one clock for every client.
+func get_match_elapsed_seconds() -> float:
+	if not match_is_running:
+		return 0.0
+	return clampf(match_duration_seconds - match_time_left, 0.0, match_duration_seconds)
+
 func is_waiting_for_players() -> bool:
 	return not match_is_running
 
