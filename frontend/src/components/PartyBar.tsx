@@ -415,13 +415,13 @@ const PartyBar = ({
     const pfp = name ? pfpByName[name] : "";
 
     if (member) {
-      if (isRewardsOpen) return null;
       return (
         <div
-          className={`party-scene-slot is-person ${member.ready ? "is-ready" : ""}`}
+          className={`party-scene-slot is-person ${member.ready ? "is-ready" : ""}${isRewardsOpen ? " is-store-hidden" : ""}`}
           data-pos={position}
           key={`member-${member.username}`}
           title={member.username}
+          aria-hidden={isRewardsOpen}
         >
           <span className="party-scene-person-avatar">
             {pfp ? <img src={pfp} alt="" /> : initials(member.username)}
@@ -431,13 +431,13 @@ const PartyBar = ({
       );
     }
     if (invited) {
-      if (isRewardsOpen) return null;
       return (
         <div
           className="party-scene-slot is-person is-pending"
           data-pos={position}
           key={`pending-${invited.to}`}
           title={`${invited.to} (pending)`}
+          aria-hidden={isRewardsOpen}
         >
           <span className="party-scene-person-avatar">
             {pfp ? <img src={pfp} alt="" /> : initials(invited.to)}
@@ -567,15 +567,17 @@ const PartyBar = ({
     <>
       <div className="party-scene-overlay" aria-label="Party invites">
         {renderInviteSlot(slotMembers[0], slotPending[0], 0, "left")}
-        {party && !isRewardsOpen && (
+        {party && (
           <button
             type="button"
-            className="party-scene-slot is-me is-leave"
+            className={`party-scene-slot is-me is-leave${isRewardsOpen ? " is-store-hidden" : ""}`}
             data-pos="center"
             title="Leave party"
             aria-label="Leave party"
             onClick={() => void quitParty()}
-            disabled={busy}
+            disabled={busy || isRewardsOpen}
+            aria-hidden={isRewardsOpen}
+            tabIndex={isRewardsOpen ? -1 : 0}
           >
             <span className="material-symbols-rounded" aria-hidden="true">logout</span>
           </button>

@@ -53,7 +53,7 @@ content_margin_left = 5.0
 content_margin_top = 6.0
 content_margin_right = 5.0
 content_margin_bottom = 6.0
-bg_color = Color(1, 1, 1, 0.6)
+bg_color = Color(1, 1, 1, 0)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
@@ -253,23 +253,23 @@ anchor_right = 0.65
 offset_left = 12.0
 offset_top = 101.25
 offset_right = -12.0
-offset_bottom = 125.25
+offset_bottom = 149.25
 grow_horizontal = 2
 theme_override_constants/separation = 10
 
 [node name="MonPill" type="PanelContainer" parent="CanvasLayer/StatRail" unique_id=1595571179]
 visible = false
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("SB_pill")
 
 [node name="Row" type="HBoxContainer" parent="CanvasLayer/StatRail/MonPill" unique_id=2049786413]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 16
 
 [node name="GemIcon" type="TextureRect" parent="CanvasLayer/StatRail/MonPill/Row" unique_id=1846715846]
-custom_minimum_size = Vector2(16, 16)
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
@@ -281,11 +281,11 @@ stretch_mode = 5
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9098039, 0.4745098, 0.9764706, 1)
 theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 24
 text = "0.0000"
 
 [node name="LevelPill" type="PanelContainer" parent="CanvasLayer/StatRail" unique_id=1196645852]
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 4
@@ -293,20 +293,20 @@ theme_override_styles/panel = SubResource("SB_pill")
 
 [node name="Row" type="HBoxContainer" parent="CanvasLayer/StatRail/LevelPill" unique_id=1724028384]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 16
 
 [node name="LevelLabel" type="Label" parent="CanvasLayer/StatRail/LevelPill/Row" unique_id=1986001985]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8039216, 0.6784314, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 18
 text = "Level"
 
 [node name="LevelValue" type="Label" parent="CanvasLayer/StatRail/LevelPill/Row" unique_id=34465712]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 28
 text = "0"
 
 [node name="SkinPreview" type="VBoxContainer" parent="CanvasLayer" unique_id=1512166696]
@@ -349,6 +349,33 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 12
 text = "Owned"
+
+[node name="EventPreview" type="VBoxContainer" parent="CanvasLayer" unique_id=1917700101]
+visible = false
+anchors_preset = -1
+anchor_top = 1.0
+anchor_right = 0.65
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = -120.0
+offset_right = -10.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 2
+
+[node name="Desc" type="Label" parent="CanvasLayer/EventPreview" unique_id=1917700102]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
+theme_override_fonts/font = ExtResource("3_font2")
+theme_override_font_sizes/font_size = 13
+text_overrun_behavior = 3
+autowrap_mode = 3
+max_lines_visible = 3
+vertical_alignment = 2
 
 [node name="RightPanel" type="Panel" parent="CanvasLayer" unique_id=11607675]
 anchors_preset = -1

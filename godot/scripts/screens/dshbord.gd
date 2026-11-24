@@ -198,6 +198,8 @@ const VARIANT_BORDER_WIDTH: int = 2
 @onready var _skin_preview_variants: HBoxContainer = get_node_or_null("CanvasLayer/SkinPreview/VariantsMargin/Variants") as HBoxContainer
 @onready var _skin_preview_name: Label = get_node_or_null("CanvasLayer/SkinPreview/Name") as Label
 @onready var _skin_preview_meta: Label = get_node_or_null("CanvasLayer/SkinPreview/Meta") as Label
+@onready var _event_preview: Control = get_node_or_null("CanvasLayer/EventPreview") as Control
+@onready var _event_preview_desc: Label = get_node_or_null("CanvasLayer/EventPreview/Desc") as Label
 
 @onready var _right_panel: Control = get_node_or_null("CanvasLayer/RightPanel") as Control
 @onready var _panel_margin: Control = get_node_or_null("CanvasLayer/RightPanel/Margin") as Control
@@ -279,6 +281,7 @@ var filter: String = "live"
 var store_filter: String = "all"
 
 var matches: Array[Dictionary] = []
+var _match_join_totals: Dictionary = {}
 var store_items: Array[Dictionary] = []
 var owned_ids: Array[String] = []
 var equipped_skin_id: String = DEFAULT_SKIN_ID
@@ -355,6 +358,8 @@ func _ready() -> void:
 	_spawn_preview_chickens()
 	_fetch_store_data()
 	_fetch_matches()
+	_fetch_match_join_totals()
+	_start_match_join_totals_poll()
 
 	_refresh_all()
 	_setup_top_nav()
@@ -384,6 +389,7 @@ func _exit_tree() -> void:
 
 func _on_viewport_size_changed() -> void:
 	_layout_panel_zoom()
+	_layout_event_preview()
 
 
 func _on_preview_resized() -> void:
@@ -1272,6 +1278,44 @@ func _on_matches_fetched(result: int, response_code: int, _headers: PackedString
 	else:
 		selected_match_id = _fallback_match_id()
 	_refresh_all()
+	_fetch_match_join_totals()
+
+
+func _start_match_join_totals_poll() -> void:
+	var timer := Timer.new()
+	timer.wait_time = 30.0
+	timer.autostart = true
+	timer.timeout.connect(_fetch_match_join_totals)
+	add_child(timer)
+
+
+func _fetch_match_join_totals() -> void:
+	var http := HTTPRequest.new()
+	add_child(http)
+	http.request_completed.connect(_on_match_join_totals_fetched.bind(http))
+	http.request("%s/api/matches/players" % API_BASE)
+
+
+func _on_match_join_totals_fetched(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest) -> void:
+	if http != null and is_instance_valid(http):
+		http.queue_free()
+	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		return
+	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
+	if not (parsed is Dictionary):
+		return
+	var counts: Variant = parsed.get("counts")
+	if not (counts is Dictionary):
+		return
+	var next: Dictionary = {}
+	for key in counts.keys():
+		var value = counts[key]
+		var total := int(value)
+		if total < 0:
+			total = 0
+		next[str(key)] = total
+	_match_join_totals = next
+	_refresh_matches()
 
 
 func _match_exists(match_id: String) -> bool:
@@ -1315,6 +1359,7 @@ func _refresh_all() -> void:
 	_refresh_store()
 	_refresh_stat_rail()
 	_refresh_skin_preview()
+	_refresh_event_preview()
 	_refresh_play_button()
 	_refresh_footer()
 	_sync_preview_chickens_visibility()
@@ -2360,6 +2405,32 @@ func _refresh_skin_preview() -> void:
 		_skin_preview_meta.text = "Owned" if _is_owned(item) else str(item.get("price", ""))
 
 
+func _refresh_event_preview() -> void:
+	_layout_event_preview()
+	var match := _selected_match()
+	var desc := str(match.get("description", "")).strip_edges()
+	var show := tab == TAB_EVENTS and not match.is_empty() and desc != ""
+	if _event_preview != null:
+		_event_preview.visible = show
+	if not show:
+		return
+	if _event_preview_desc != null:
+		_event_preview_desc.text = desc
+
+
+# The web dashboard caps the description at `min(420px, 100% - 56px)` so it stays
+# a readable column on wide windows; anchors alone would let it grow with the
+# 65%-wide preview area.
+func _layout_event_preview() -> void:
+	if _event_preview == null:
+		return
+	var view_w := get_viewport().get_visible_rect().size.x
+	if view_w <= 0.0:
+		return
+	var max_width := minf(420.0, view_w * 0.65 - 38.0)
+	_event_preview.offset_right = 28.0 + max_width - view_w * 0.65
+
+
 # ------------------------------------------------------------- shaded/flat toggle
 
 # Builds the `.skin-preview__variants` row above the preview name: one square per
@@ -3268,11 +3339,19 @@ func _match_hash_seed(seed: String, salt: int) -> int:
 
 
 func _match_player_count(match: Dictionary) -> int:
-	# Prefer real values from the match payload; avoid fake/random placeholders.
+	# Prefer real backend values. /api/matches/players gives join totals keyed by
+	# match id, which is the same source the frontend uses for the people count.
+	var match_id := str(match.get("match_id", ""))
+	var total := 0
+	if match_id != "" and _match_join_totals.has(match_id):
+		total = maxi(total, int(_match_join_totals.get(match_id, 0)))
+	var alt_id := str(match.get("id", ""))
+	if alt_id != "" and _match_join_totals.has(alt_id):
+		total = maxi(total, int(_match_join_totals.get(alt_id, 0)))
 	for key in ["player_count", "players", "joined", "participant_count", "join_total", "sponsor_player_count"]:
 		if match.has(key):
-			return maxi(int(match.get(key, 0)), 0)
-	return 0
+			total = maxi(total, int(match.get(key, 0)))
+	return maxi(total, 0)
 
 
 func _format_player_count(count: int) -> String:
@@ -3666,6 +3745,60 @@ func _update_party_countdown_text() -> void:
 	_update_play_button_text()
 
 
+func _tween_party_ctrl(ctrl: Control, hidden: bool, dir: float, show_alpha: float = 1.0) -> void:
+	if ctrl == null:
+		return
+	var base_left := float(ctrl.get_meta("base_offset_left", ctrl.offset_left))
+	var base_right := float(ctrl.get_meta("base_offset_right", ctrl.offset_right))
+	var base_top := float(ctrl.get_meta("base_offset_top", ctrl.offset_top))
+	var base_bottom := float(ctrl.get_meta("base_offset_bottom", ctrl.offset_bottom))
+	var key := "rewards_hidden"
+	var already := ctrl.has_meta(key) and bool(ctrl.get_meta(key)) == hidden
+	if already:
+		var active: Variant = ctrl.get_meta("hide_tween", false)
+		if active is Tween and (active as Tween).is_valid():
+			return
+		if not hidden:
+			ctrl.visible = true
+			ctrl.modulate.a = show_alpha
+			ctrl.offset_left = base_left
+			ctrl.offset_right = base_right
+			ctrl.offset_top = base_top
+			ctrl.offset_bottom = base_bottom
+			return
+		ctrl.visible = false
+		ctrl.modulate.a = 0.0
+		return
+	ctrl.set_meta(key, hidden)
+	var existing: Variant = ctrl.get_meta("hide_tween", false)
+	if existing is Tween and (existing as Tween).is_valid():
+		(existing as Tween).kill()
+	var tween := create_tween()
+	ctrl.set_meta("hide_tween", tween)
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_CUBIC)
+	tween.set_ease(Tween.EASE_IN if hidden else Tween.EASE_OUT)
+	var slide := dir * 140.0
+	var target_left := base_left + (slide if hidden else 0.0)
+	var target_right := base_right + (slide if hidden else 0.0)
+	var target_alpha := 0.0 if hidden else show_alpha
+	if not hidden:
+		ctrl.visible = true
+		ctrl.modulate.a = 0.0
+		ctrl.offset_left = base_left + slide
+		ctrl.offset_right = base_right + slide
+		ctrl.offset_top = base_top
+		ctrl.offset_bottom = base_bottom
+	tween.tween_property(ctrl, "offset_left", target_left, 0.22)
+	tween.tween_property(ctrl, "offset_right", target_right, 0.22)
+	tween.tween_property(ctrl, "modulate:a", target_alpha, 0.22)
+	if hidden:
+		tween.chain().tween_callback(func() -> void:
+			if bool(ctrl.get_meta("rewards_hidden", false)):
+				ctrl.visible = false
+		)
+
+
 func _refresh_party_ui() -> void:
 	if _party_slots.is_empty():
 		return
@@ -3716,19 +3849,21 @@ func _refresh_party_ui() -> void:
 	for index in range(_party_slots.size()):
 		var slot: Button = _party_slots[index]
 		var name_label: Label = _party_slot_names[index] if index < _party_slot_names.size() else null
+		var dir := -1.0 if index == 0 else 1.0
 		var row: Dictionary = others[index]
 		if row.is_empty():
 			# Store focuses on skin preview; Rewards hides party UI but keeps chickens.
 			var show_invite_slot := tab == TAB_EVENTS
-			slot.visible = show_invite_slot
+			_tween_party_ctrl(slot, not show_invite_slot, dir)
+			if name_label != null:
+				_tween_party_ctrl(name_label, true, dir)
 			slot.text = "+"
 			slot.set_meta("slot_kind", "empty")
-			slot.modulate = Color(1, 1, 1, 1)
 			slot.tooltip_text = "Invite a friend"
-			slot.offset_left = -22.0
-			slot.offset_top = -22.0
-			slot.offset_right = 22.0
-			slot.offset_bottom = 22.0
+			slot.set_meta("base_offset_left", -22.0)
+			slot.set_meta("base_offset_right", 22.0)
+			slot.set_meta("base_offset_top", -22.0)
+			slot.set_meta("base_offset_bottom", 22.0)
 			if _party_slot_plus_style != null:
 				for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
 					slot.add_theme_stylebox_override(
@@ -3740,20 +3875,19 @@ func _refresh_party_ui() -> void:
 			slot.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
 			slot.add_theme_font_size_override("font_size", 22)
 			if name_label != null:
-				name_label.visible = false
 				name_label.text = ""
 		elif str(row.get("kind", "")) == "pending":
 			var invited_name := str(row.get("name", ""))
-			slot.visible = tab != TAB_REWARDS
+			var show_slot := tab != TAB_REWARDS
+			_tween_party_ctrl(slot, not show_slot, dir, 0.82)
 			slot.text = invited_name.substr(0, 2).to_upper()
 			slot.set_meta("slot_kind", "pending")
 			slot.set_meta("slot_name", invited_name)
-			slot.modulate = Color(1, 1, 1, 0.82)
 			slot.tooltip_text = "%s (pending)" % invited_name
-			slot.offset_left = -22.0
-			slot.offset_top = -22.0
-			slot.offset_right = 22.0
-			slot.offset_bottom = 22.0
+			slot.set_meta("base_offset_left", -22.0)
+			slot.set_meta("base_offset_right", 22.0)
+			slot.set_meta("base_offset_top", -22.0)
+			slot.set_meta("base_offset_bottom", 22.0)
 			if _party_slot_filled_style != null:
 				for state_name in ["normal", "hover", "pressed", "disabled", "focus"]:
 					slot.add_theme_stylebox_override(state_name, _party_slot_filled_style)
@@ -3762,22 +3896,22 @@ func _refresh_party_ui() -> void:
 			slot.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 0.9))
 			slot.add_theme_font_size_override("font_size", 10)
 			if name_label != null:
-				name_label.visible = tab != TAB_REWARDS
+				_tween_party_ctrl(name_label, not show_slot, dir)
 				name_label.set_meta("pending", true)
 				name_label.set_meta("base_name", invited_name)
 		else:
 			var member_name := str(row.get("name", ""))
 			var ready := bool(row.get("ready", false))
-			slot.visible = tab != TAB_REWARDS
+			var show_slot := tab != TAB_REWARDS
+			_tween_party_ctrl(slot, not show_slot, dir)
 			slot.text = member_name.substr(0, 2).to_upper()
 			slot.set_meta("slot_kind", "member")
 			slot.set_meta("slot_name", member_name)
-			slot.modulate = Color(1, 1, 1, 1)
 			slot.tooltip_text = member_name
-			slot.offset_left = -22.0
-			slot.offset_top = -22.0
-			slot.offset_right = 22.0
-			slot.offset_bottom = 22.0
+			slot.set_meta("base_offset_left", -22.0)
+			slot.set_meta("base_offset_right", 22.0)
+			slot.set_meta("base_offset_top", -22.0)
+			slot.set_meta("base_offset_bottom", 22.0)
 			var member_style := _party_slot_filled_style
 			if ready and _party_slot_filled_style != null:
 				var ready_style := _party_slot_filled_style.duplicate() as StyleBoxFlat
@@ -3793,13 +3927,13 @@ func _refresh_party_ui() -> void:
 			slot.add_theme_color_override("font_pressed_color", member_color)
 			slot.add_theme_font_size_override("font_size", 10)
 			if name_label != null:
-				name_label.visible = tab != TAB_REWARDS
+				_tween_party_ctrl(name_label, not show_slot, dir)
 				name_label.set_meta("pending", false)
 				name_label.text = member_name
 				name_label.add_theme_color_override("font_color", PARTY_ACCENT if ready else Color(1, 1, 1, 0.9))
 
 	if _party_me_leave != null:
-		_party_me_leave.visible = has_party and tab != TAB_REWARDS
+		_tween_party_ctrl(_party_me_leave, not (has_party and tab != TAB_REWARDS), -1.0)
 		_party_me_leave.disabled = _party_busy
 
 	_refresh_play_button()
@@ -3960,6 +4094,10 @@ func _build_party_ui() -> void:
 		slot.offset_top = -22.0
 		slot.offset_right = 22.0
 		slot.offset_bottom = 22.0
+		slot.set_meta("base_offset_left", slot.offset_left)
+		slot.set_meta("base_offset_right", slot.offset_right)
+		slot.set_meta("base_offset_top", slot.offset_top)
+		slot.set_meta("base_offset_bottom", slot.offset_bottom)
 		slot.custom_minimum_size = Vector2(44, 44)
 		slot.text = "+"
 		slot.set_meta("slot_kind", "empty")
@@ -3986,6 +4124,10 @@ func _build_party_ui() -> void:
 		name_label.offset_top = 24.0
 		name_label.offset_right = 40.0
 		name_label.offset_bottom = 38.0
+		name_label.set_meta("base_offset_left", name_label.offset_left)
+		name_label.set_meta("base_offset_right", name_label.offset_right)
+		name_label.set_meta("base_offset_top", name_label.offset_top)
+		name_label.set_meta("base_offset_bottom", name_label.offset_bottom)
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.clip_text = true
 		name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -4005,6 +4147,10 @@ func _build_party_ui() -> void:
 	_party_me_leave.offset_top = -22.0
 	_party_me_leave.offset_right = 22.0
 	_party_me_leave.offset_bottom = 22.0
+	_party_me_leave.set_meta("base_offset_left", _party_me_leave.offset_left)
+	_party_me_leave.set_meta("base_offset_right", _party_me_leave.offset_right)
+	_party_me_leave.set_meta("base_offset_top", _party_me_leave.offset_top)
+	_party_me_leave.set_meta("base_offset_bottom", _party_me_leave.offset_bottom)
 	_party_me_leave.visible = false
 	_party_me_leave.tooltip_text = "Leave party"
 	_party_me_leave.icon = _make_leave_icon()

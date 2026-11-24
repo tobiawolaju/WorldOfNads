@@ -20,7 +20,7 @@ func _initialize() -> void:
 
 	# 1. The scene ships the feed container where Events.gd expects it, and the
 	#    old two-label renderer is gone.
-	var node := hud.get_node_or_null("CanvasLayer/BoxContainer/Node2/EventFeed")
+	var node := hud.get_node_or_null("CanvasLayer/BoxContainer/Node2/EventFeedPanel/EventFeed")
 	_check("EventFeed node exists", node is VBoxContainer)
 	_check("old status label removed", hud.get_node_or_null("CanvasLayer/BoxContainer/Node2/BoxContainer3") == null)
 	if not (node is VBoxContainer):

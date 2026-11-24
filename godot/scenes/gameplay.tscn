@@ -96,6 +96,18 @@ rotate_pointer = null
 update_interval = null
 zoom_level = null
 
+[node name="EventFeed" parent="Hud/CanvasLayer/BoxContainer/Node2" parent_id_path=PackedInt32Array(861416889, 802481236) index="4" unique_id=1509763072]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -232.0
+offset_top = 76.0
+offset_right = -12.0
+offset_bottom = 196.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_constants/separation = 4
+
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("12_nt65e")]
 
 [node name="p1" parent="." unique_id=408056980 instance=ExtResource("13_nt65e")]

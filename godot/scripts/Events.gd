@@ -19,12 +19,34 @@ const FEED_NAME_ALPHA := 1.0
 const FEED_TEXT_ALPHA := 0.94
 const FEED_SYSTEM_ALPHA := 0.62
 
+## Inline emotes, Twitch-style: `:name:` tokens become small images sitting on the
+## text baseline. The built-ins reuse art the game already ships; any extra
+## PNG/WebP dropped into `res://assets/emotes/` becomes `:<file name>:` with no
+## code change, so custom emotes are an art drop, not a feature request.
+const EMOTES_DIR := "res://assets/emotes"
+const EMOTE_SIZE := 20
+## Chance a player event gets a random emote appended. Hype moments always do;
+## system notices and the chicken countdown never do.
+const RANDOM_EMOTE_CHANCE := 0.35
+const HYPE_PHRASES := ["picked the chicken", "won the round", "eliminated"]
+const BUILTIN_EMOTES := {
+	"chicken": "res://assets/img/chick.png",
+	"gem": "res://assets/img/gem.png",
+	"mon": "res://assets/img/mon.png",
+	"loot": "res://assets/img/loot.png",
+	"star": "res://assets/img/star.png",
+	"energy": "res://assets/img/energy.png",
+}
+
+var _emotes: Dictionary = {}
+var _emote_pattern: RegEx = RegEx.create_from_string(":([A-Za-z0-9_+\\-]+):")
+
 # The avatar directory lives on the Node backend: the Rust room server knows
 # nothing about Privy, so there is nothing to ask it. The beta talks to the
 # remote backend only, so there is no local endpoint to fall back to.
 const LIVE_API_URL := "https://worldofnads.onrender.com"
 
-@export var feed_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/EventFeed")
+@export var feed_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/EventFeedPanel/EventFeed")
 @export var username_label_path: NodePath = NodePath("CanvasLayer/BoxContainer/Node2/BoxContainer2/username")
 
 var ws := WebSocketPeer.new()
@@ -42,6 +64,12 @@ var _entries: Array[Dictionary] = []
 var _entry_seq := 0
 var _rows: Array[Dictionary] = []
 var _avatars: AvatarLoader = null
+## Chat panel around the rows: auto-sizes to the messages, hidden when the feed is
+## empty so the HUD does not carry an empty dark box.
+var _feed_panel: Control = null
+## Pinned holder/countdown row above the chat. It never enters the history, so a
+## long hold cannot scroll the round's messages away.
+var _countdown_row: Dictionary = {}
 ## Countdown state for chicken holder chat messages (progress bar removed).
 var _countdown_holder_name: String = ""
 var _countdown_last_seconds: int = -999
@@ -81,6 +109,7 @@ var _last_mon_shown: float = -1.0
 func _ready() -> void:
 	add_to_group("events_bridge")
 	_setup_avatar_loader()
+	_build_emotes()
 	_setup_debug_labels()
 	_cache_reward_colors()
 	_try_set_username_from_web_query()
@@ -192,20 +221,47 @@ func update_mon_display(earned_mon: float, pool_remaining: float) -> void:
 			# The pool is 0.18 x the prize, so it usually has cents: show them.
 			prize_pool_label.text = "%.2f MON pool" % pool_remaining
 
-## Chicken holder/countdown as chat feed lines (progress bar UI removed).
+## Chicken holder/countdown as a pinned chat row above the history (progress bar
+## UI removed). Keeping it out of `_entries` means the one-second tick cannot
+## flush the round's chat.
 func update_chicken_countdown(holder_name: String, seconds_left: int) -> void:
+	if _feed == null:
+		_feed = get_node_or_null(feed_path) as VBoxContainer
+	if _feed == null:
+		return
+
 	var display_name := holder_name.strip_edges()
 	if seconds_left < 0 or display_name == "":
 		_countdown_holder_name = ""
 		_countdown_last_seconds = -999
+		if not _countdown_row.is_empty():
+			(_countdown_row["root"] as Control).visible = false
+		_sync_feed_panel()
 		return
+
+	if _countdown_row.is_empty():
+		_countdown_row = _create_row(MAX_FEED_ROWS)
+		(_countdown_row["root"] as Control).name = "CountdownRow"
+		_feed.move_child(_countdown_row["root"], 0)
+	elif _feed.get_child(0) != _countdown_row["root"]:
+		_feed.move_child(_countdown_row["root"], 0)
+
 	if display_name != _countdown_holder_name:
 		_countdown_holder_name = display_name
 		_countdown_last_seconds = -999
-		_push_event_line(display_name, "is holding the chicken")
-	if seconds_left != _countdown_last_seconds:
-		_countdown_last_seconds = seconds_left
-		_push_event_line(display_name, "wins in %ds" % seconds_left)
+
+	var row_visible := (_countdown_row["root"] as Control).visible
+	if seconds_left == _countdown_last_seconds and row_visible:
+		return
+	_countdown_last_seconds = seconds_left
+	_countdown_row["seq"] = -1
+	_apply_row(_countdown_row, {
+		"actor": display_name,
+		"message": "wins in %ds" % seconds_left,
+		"seq": -1,
+	})
+	(_countdown_row["root"] as Control).visible = true
+	_sync_feed_panel()
 
 func update_possession_display(_possession_seconds: int, _victory_target: int) -> void:
 	# Progress bar UI intentionally removed; countdown is shown in the event feed.
@@ -397,13 +453,15 @@ func _show_gameover_overlay() -> void:
 func _show_local_status(text: String, actor: String = "system") -> void:
 	_push_event_line(actor, text)
 
-func _push_event_line(actor: String, message: String) -> void:
+func _push_event_line(actor: String, message: String, randomize_emote: bool = true) -> void:
 	var safe_actor := actor.strip_edges()
 	var safe_message := message.strip_edges()
 	if safe_message == "":
 		return
 	if safe_actor == "":
 		safe_actor = "system"
+	if randomize_emote and safe_actor != "system":
+		safe_message = _with_random_emote(safe_message)
 
 	_entry_seq += 1
 	_entries.append({
@@ -431,6 +489,45 @@ func _setup_avatar_loader() -> void:
 	_avatars.avatar_ready.connect(_on_avatar_ready)
 	_avatars.avatar_missing.connect(_on_avatar_missing)
 	add_child(_avatars)
+
+
+## Loads the emote palette once. Built-ins are art the game already ships; the
+## folder scan is what makes custom emotes a pure asset drop.
+func _build_emotes() -> void:
+	for key in BUILTIN_EMOTES:
+		var builtin := load(str(BUILTIN_EMOTES[key])) as Texture2D
+		if builtin != null:
+			_emotes[key] = builtin
+	var dir := DirAccess.open(EMOTES_DIR)
+	if dir == null:
+		return
+	for file in dir.get_files():
+		var ext := file.get_extension().to_lower()
+		if ext != "png" and ext != "webp":
+			continue
+		var texture := load(EMOTES_DIR.path_join(file)) as Texture2D
+		if texture != null:
+			_emotes[file.get_basename().to_lower()] = texture
+
+
+## Appends one random emote to a player line, so the chat reads like a room with
+## people reacting instead of a server log. Hype lines always get one.
+func _with_random_emote(message: String) -> String:
+	if _emotes.is_empty() or _emote_pattern.search(message) != null:
+		return message
+	var chance := 1.0 if _is_hype_message(message) else RANDOM_EMOTE_CHANCE
+	if randf() >= chance:
+		return message
+	var keys := _emotes.keys()
+	return "%s :%s:" % [message, str(keys[randi() % keys.size()])]
+
+
+func _is_hype_message(message: String) -> bool:
+	var lower := message.to_lower()
+	for phrase in HYPE_PHRASES:
+		if lower.contains(phrase):
+			return true
+	return false
 
 func _on_avatar_ready(_username: String, _texture: Texture2D) -> void:
 	# A picture landed for a name already on screen: repaint so every row showing
@@ -506,7 +603,8 @@ func _create_row(index: int) -> Dictionary:
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text.add_theme_font_size_override("normal_font_size", 12)
+	text.add_theme_font_size_override("normal_font_size", 13)
+	text.add_theme_constant_override("line_separation", 2)
 	text.add_theme_color_override("default_color", Color(1, 1, 1, FEED_TEXT_ALPHA))
 	text.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.75))
 	text.add_theme_constant_override("shadow_outline_size", 1)
@@ -536,6 +634,19 @@ func _render_feed() -> void:
 			continue
 		root.visible = true
 		_apply_row(row, _entries[index])
+	_sync_feed_panel()
+
+
+## The chat panel hugs its messages and disappears when there is nothing to say,
+## like a stream overlay that only exists while chat is moving.
+func _sync_feed_panel() -> void:
+	if _feed_panel == null and _feed != null:
+		_feed_panel = _feed.get_parent() as Control
+	if _feed_panel == null:
+		return
+	var countdown_visible := not _countdown_row.is_empty() \
+		and (_countdown_row["root"] as Control).visible
+	_feed_panel.visible = not _entries.is_empty() or countdown_visible
 
 func _apply_row(row: Dictionary, entry: Dictionary) -> void:
 	var actor := str(entry.get("actor", "system"))
@@ -556,25 +667,63 @@ func _apply_row(row: Dictionary, entry: Dictionary) -> void:
 	var text: RichTextLabel = row["text"]
 	text.clear()
 	if is_system:
-		text.push_color(Color(1, 1, 1, FEED_SYSTEM_ALPHA))
-		text.add_text(message)
-		text.pop()
+		_add_message_with_emotes(text, message, Color(1, 1, 1, FEED_SYSTEM_ALPHA))
 	else:
 		var color := _name_color(actor)
 		text.push_color(Color(color.r, color.g, color.b, FEED_NAME_ALPHA))
 		text.push_bold()
-		text.add_text(actor)
+		text.add_text(actor + ":")
 		text.pop()
 		text.pop()
-		text.push_color(Color(1, 1, 1, FEED_TEXT_ALPHA))
-		text.add_text(" " + message)
-		text.pop()
+		_add_message_with_emotes(text, " " + message, Color(1, 1, 1, FEED_TEXT_ALPHA))
 
 	if int(row["seq"]) != seq:
 		row["seq"] = seq
 		# Only the newest row animates in; the ones shifting up stay put.
 		if seq == _entry_seq:
 			_play_row_fade(row["root"])
+	_fit_row_height(row)
+
+
+## A RichTextLabel with autowrap reports a one-line minimum height until it has
+## been laid out at its final width, which would let wrapped chat lines spill out
+## of the panel. Feed the measured height back into the row so the panel hugs the
+## real content, Twitch-style.
+func _fit_row_height(row: Dictionary) -> void:
+	await get_tree().process_frame
+	var text := row.get("text") as RichTextLabel
+	var root := row.get("root") as Control
+	if text == null or root == null:
+		return
+	if not is_instance_valid(text) or not is_instance_valid(root):
+		return
+	if text.size.x <= 0.0:
+		await get_tree().process_frame
+		if not is_instance_valid(text) or not is_instance_valid(root):
+			return
+	var height := maxf(text.get_content_height(), AVATAR_SIZE)
+	if not is_equal_approx(root.custom_minimum_size.y, height):
+		root.custom_minimum_size.y = height
+
+
+## Writes `message` into the row, swapping `:token:` emotes for inline images.
+## Unknown tokens stay as typed text so a stray colon pair is never swallowed.
+func _add_message_with_emotes(text: RichTextLabel, message: String, color: Color) -> void:
+	text.push_color(color)
+	var cursor := 0
+	for found in _emote_pattern.search_all(message):
+		var start := found.get_start(0)
+		if start > cursor:
+			text.add_text(message.substr(cursor, start - cursor))
+		var texture := _emotes.get(found.get_string(1).to_lower()) as Texture2D
+		if texture != null:
+			text.add_image(texture, EMOTE_SIZE, EMOTE_SIZE)
+		else:
+			text.add_text(found.get_string(0))
+		cursor = found.get_end(0)
+	if cursor < message.length():
+		text.add_text(message.substr(cursor))
+	text.pop()
 
 func _clear_avatar(row: Dictionary) -> void:
 	var photo: TextureRect = row["photo"]
@@ -614,6 +763,15 @@ func _play_row_fade(control: Control) -> void:
 	control.modulate.a = 0.0
 	var tween := create_tween()
 	tween.tween_property(control, "modulate:a", 1.0, FEED_FADE_SEC) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if control.size.x <= 0.0:
+		return
+	# The container owns position/size, so a short scale from the right edge is
+	# what reads as a chat line sliding in.
+	control.pivot_offset = Vector2(control.size.x, control.size.y * 0.5)
+	control.scale = Vector2(0.97, 1.0)
+	var slide := create_tween()
+	slide.tween_property(control, "scale", Vector2.ONE, FEED_FADE_SEC) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 func _name_color(actor: String) -> Color:

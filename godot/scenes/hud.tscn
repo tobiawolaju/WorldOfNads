@@ -130,6 +130,17 @@ border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.29411766, 0, 0.69411767, 1)
 
+[sub_resource type="StyleBoxFlat" id="SB_chat"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0, 0, 0, 0)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
 [node name="Hud" type="Control" unique_id=861416889]
 layout_mode = 3
 anchors_preset = 15
@@ -431,17 +442,23 @@ theme_override_constants/shadow_outline_size = 0
 theme_override_font_sizes/font_size = 12
 text = "...."
 
-[node name="EventFeed" type="VBoxContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1509763072]
+[node name="EventFeedPanel" type="PanelContainer" parent="CanvasLayer/BoxContainer/Node2" unique_id=1509763071]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -232.0
+offset_left = -248.0
 offset_top = 76.0
 offset_right = -12.0
-offset_bottom = 196.0
+offset_bottom = 76.0
 grow_horizontal = 0
+grow_vertical = 1
 mouse_filter = 2
-theme_override_constants/separation = 4
+theme_override_styles/panel = SubResource("SB_chat")
+
+[node name="EventFeed" type="VBoxContainer" parent="CanvasLayer/BoxContainer/Node2/EventFeedPanel" unique_id=1509763072]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 5
 
 [node name="CompassBar" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2" unique_id=1476260550]
 modulate = Color(1, 1, 1, 0.6509804)
@@ -828,7 +845,7 @@ theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
 theme_override_constants/outline_size = 2
 theme_override_fonts/font = ExtResource("3_apjy4")
 theme_override_font_sizes/font_size = 100
-text = "Mata Beach"
+text = "World of Nads"
 horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("13_textfx")

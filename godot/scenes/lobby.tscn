@@ -8,9 +8,9 @@
 [ext_resource type="Environment" uid="uid://b1xdulwsbpnew" path="res://assets/resources/night.tres" id="5_07nfq"]
 [ext_resource type="Shader" uid="uid://dvinpfgvgliu6" path="res://scenes/proximityfade.gdshader" id="5_omrgh"]
 [ext_resource type="Script" uid="uid://dyx5kfl7l30wf" path="res://scripts/lobbymanager.gd" id="7_yad6j"]
-[ext_resource type="PackedScene" uid="uid://bj27lnrpsa1wt" path="res://scenes/busyland.tscn" id="9_07nfq"]
 [ext_resource type="PackedScene" uid="uid://dud0j72gp62nr" path="res://scenes/props/enviroment/bus.tscn" id="11_m1sns"]
 [ext_resource type="PackedScene" uid="uid://ds74a1sw044u4" path="res://scenes/pickup.tscn" id="11_yad6j"]
+[ext_resource type="PackedScene" uid="uid://bj27lnrpsa1wt" path="res://scenes/busyland.tscn" id="12_dyhay"]
 [ext_resource type="PackedScene" uid="uid://cqgso836leaiu" path="res://scenes/pickup2.tscn" id="12_m1sns"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_dyhay"]
@@ -77,8 +77,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4864397, 0)
 [node name="Hud" parent="." unique_id=861416889 instance=ExtResource("1_o1atq")]
 offset_left = -2.0
 offset_right = -2.0
-
-[node name="Level" parent="." unique_id=837639509 instance=ExtResource("9_07nfq")]
 
 [node name="Pickup1" parent="." unique_id=348478555 instance=ExtResource("11_yad6j")]
 transform = Transform3D(-0.63403213, 0, -0.77330667, 0, 1, 0, 0.77330667, 0, -0.63403213, 33.60403, 1.4365964, -32.97365)
@@ -184,5 +182,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_lqo1b")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_rgcd7")
 surface_material_override/0 = SubResource("StandardMaterial3D_0gjkf")
+
+[node name="Level" parent="." unique_id=837639509 instance=ExtResource("12_dyhay")]
 
 [editable path="Bus"]

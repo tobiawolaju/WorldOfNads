@@ -50,8 +50,8 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   opacity: 1;
   transition:
-    transform 0.18s ease,
-    opacity 0.18s ease,
+    transform 0.22s ease,
+    opacity 0.22s ease,
     box-shadow 0.12s ease,
     background 0.12s ease;
 }
@@ -61,11 +61,20 @@
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
 }
 
-.party-scene-slot.is-empty.is-store-hidden {
+.party-scene-slot.is-store-hidden {
   opacity: 0;
-  transform: translate(-50%, -50%) scale(1.35);
   pointer-events: none;
   box-shadow: none;
+}
+
+.party-scene-slot.is-store-hidden[data-pos="left"],
+.party-scene-slot.is-store-hidden[data-pos="center"] {
+  transform: translate(calc(-50% - 140px), -50%);
+}
+
+.party-scene-slot.is-store-hidden[data-pos="right"],
+.party-scene-slot.is-store-hidden[data-pos="far"] {
+  transform: translate(calc(-50% + 140px), -50%);
 }
 
 .party-scene-slot-plus {
@@ -79,6 +88,8 @@
 .party-scene-slot.is-person {
   gap: 4px;
   pointer-events: none;
+  opacity: 1;
+  transition: transform 0.22s ease, opacity 0.22s ease;
 }
 
 .party-scene-person-avatar {
@@ -153,9 +164,10 @@
   background: #ff2496;
   color: #fff;
   cursor: pointer;
+  opacity: 1;
   clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-  transition: transform 0.12s ease, background 0.12s ease;
+  transition: transform 0.22s ease, opacity 0.22s ease, background 0.12s ease;
 }
 
 .party-scene-slot.is-leave:hover {
