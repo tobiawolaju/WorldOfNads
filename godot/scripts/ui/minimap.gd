@@ -529,9 +529,11 @@ func _update_pickup_pointers() -> void:
 		var mm_pos: Vector2 = _world_to_minimap(node.global_position)
 		var mm_size: Vector2 = minimap_container.size
 		var half: Vector2 = ptr.size * 0.5
+		# Clamp the center to the map edge so half the marker can sit outside the
+		# minimap, making edge targets read as on top of the map border.
 		var clamped := Vector2(
-			clampf(mm_pos.x, half.x, mm_size.x - half.x),
-			clampf(mm_pos.y, half.y, mm_size.y - half.y)
+			clampf(mm_pos.x, 0.0, mm_size.x),
+			clampf(mm_pos.y, 0.0, mm_size.y)
 		)
 		ptr.visible = true
 		ptr.position = clamped - half
@@ -546,13 +548,11 @@ func _update_chicken_pointer() -> void:
 	var mm_size: Vector2 = minimap_container.size
 	
 	var half_pointer: Vector2 = chicken_pointer.size * 0.5
-	var min_pos: Vector2 = half_pointer
-	var max_pos: Vector2 = mm_size - half_pointer
-	
-	# Clamp to edges so it shows which direction the chicken is if off-map
+	# Clamp the center to the map edge so half the marker can sit outside the
+	# minimap, making edge targets read as on top of the map border.
 	var clamped_pos := Vector2(
-		clampf(mm_pos.x, min_pos.x, max_pos.x),
-		clampf(mm_pos.y, min_pos.y, max_pos.y)
+		clampf(mm_pos.x, 0.0, mm_size.x),
+		clampf(mm_pos.y, 0.0, mm_size.y)
 	)
 	
 	chicken_pointer.visible = true
@@ -569,12 +569,11 @@ func _update_lootbox_pointer() -> void:
 	var mm_size: Vector2 = minimap_container.size
 
 	var half_pointer: Vector2 = lootbox_pointer.size * 0.5
-	var min_pos: Vector2 = half_pointer
-	var max_pos: Vector2 = mm_size - half_pointer
-
+	# Clamp the center to the map edge so half the marker can sit outside the
+	# minimap, making edge targets read as on top of the map border.
 	var clamped_pos := Vector2(
-		clampf(mm_pos.x, min_pos.x, max_pos.x),
-		clampf(mm_pos.y, min_pos.y, max_pos.y)
+		clampf(mm_pos.x, 0.0, mm_size.x),
+		clampf(mm_pos.y, 0.0, mm_size.y)
 	)
 
 	lootbox_pointer.visible = true
