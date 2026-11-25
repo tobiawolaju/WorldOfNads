@@ -19,6 +19,10 @@ var _touch_indices: Dictionary = {}
 ## Active press/release tweens, one per button, so a new press can cancel a
 ## release that is still springing back.
 var _press_tweens: Dictionary = {}
+## Last held state pushed to each button's FX, so the poll only reacts to
+## edges and never fights the touch handler. Also lets keyboard/gamepad holds
+## drive the same press feedback as touch.
+var _fx_held: Dictionary = {}
 
 ## Press FX: the button sinks while a finger stays on it and only springs back
 ## on release. A quick tap reads as a knock; a hold stays visibly pressed for as
@@ -440,6 +444,7 @@ func _input(event: InputEvent) -> void:
 					_touch_indices[action_name] = touch.index
 
 					button.button_pressed = true
+					_fx_held[action_name] = true
 
 					_start_press_fx(button)
 
@@ -455,6 +460,7 @@ func _input(event: InputEvent) -> void:
 
 					if button != null:
 						button.button_pressed = false
+						_fx_held[action_name] = false
 						_end_press_fx(button)
 
 					_touch_indices.erase(action_name)
@@ -477,12 +483,38 @@ func _input(event: InputEvent) -> void:
 
 					if button != null:
 						button.button_pressed = false
+						_fx_held[action_name] = false
 						_end_press_fx(button)
 
 					_touch_indices.erase(action_name)
 					_fire_action(action_name, false)
 
 				return
+
+## Mirrors input action state onto the buttons so keyboard/gamepad users get the
+## same hold feedback as touch. Touch already drives FX in _input and updates
+## _fx_held, so this only reacts to edges it has not handled.
+func _sync_keyboard_holds() -> void:
+	for entry in [
+		[action_button, &"pickup"],
+		[chog_button, &"chog"],
+		[jump_button, &"jump"],
+		[slide_button, &"slide"],
+	]:
+		var button: Button = entry[0]
+		var action_name: StringName = entry[1]
+		if button == null:
+			continue
+		var held := Input.is_action_pressed(action_name)
+		if held == bool(_fx_held.get(action_name, false)):
+			continue
+		_fx_held[action_name] = held
+		button.button_pressed = held
+		if held and button.is_visible_in_tree():
+			_start_press_fx(button)
+		else:
+			_end_press_fx(button)
+
 
 ## Sinks a button under the finger. It stays down until _end_press_fx runs on
 ## release, which is what makes a hold visible, and a tap still reads as a knock.
@@ -529,10 +561,11 @@ func _kill_press_tween(button: Button) -> void:
 	_press_tweens.erase(button)
 
 
-## True while a finger is down on that action's button. Gameplay can poll this
-## to tell a tap from a hold without reading the touch bookkeeping.
+## True while an input source is holding that action (touch, keyboard, or
+## gamepad). Touch updates immediately via the synthetic action event; the action
+## state covers keyboard users so the HUD and gameplay share the same hold.
 func is_action_held(action_name: StringName) -> bool:
-	return _touch_indices.has(action_name)
+	return Input.is_action_pressed(action_name)
 
 
 ## Drops every held button and its input action, used when the HUD is hidden or
@@ -543,6 +576,7 @@ func _release_all_presses() -> void:
 		var button := _get_button(action_name)
 		if button != null:
 			button.button_pressed = false
+			_fx_held[action_name] = false
 			_end_press_fx(button)
 		_touch_indices.erase(action_name)
 		_fire_action(action_name, false)
@@ -580,6 +614,7 @@ func _fire_action(action_name: StringName, pressed: bool) -> void:
 func _process(delta: float) -> void:
 	if action_button == null:
 		return
+	_sync_keyboard_holds()
 	if _cached_local_player == null or not is_instance_valid(_cached_local_player):
 		_cached_local_player = get_tree().get_first_node_in_group("local_player")
 	_update_chog_visibility()

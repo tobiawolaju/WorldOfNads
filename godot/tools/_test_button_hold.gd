@@ -102,6 +102,20 @@ func _initialize() -> void:
 	if _held.size() > 0:
 		_check("the held signal names the action", StringName(_held[0]) == &"pickup")
 
+	# --- KEYBOARD / GAMEPAD PARITY ------------------------------------------
+	# The HUD mirrors the input action state, so a keyboard player holding the
+	# mapped key sees the same button hold FX and hold state as touch.
+	Input.action_press("pickup")
+	await create_timer(0.2).timeout
+	_check("a held key sinks the button", _approx(_action.scale.x, PRESS_SCALE))
+	_check("a held key reports held", _buttons.is_action_held(&"pickup"))
+	await create_timer(0.2).timeout
+	_check("a held key keeps the button sunk", _approx(_action.scale.x, PRESS_SCALE))
+	Input.action_release("pickup")
+	await create_timer(0.3).timeout
+	_check("releasing the key springs the button back", _approx(_action.scale.x, 1.0))
+	_check("releasing the key clears held", not _buttons.is_action_held(&"pickup"))
+
 	_finish()
 
 

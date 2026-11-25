@@ -30,6 +30,12 @@ const DOUBLE_JUMP_MIN_MULTIPLIER: float = 0.3
 ## SPEED_BURST (RUSH): multiply run speed for a few seconds when used.
 const SPEED_BURST_MULT: float = 2.0
 const SPEED_BURST_DURATION: float = 8.0
+## PUMP: holding the Action button while its prompt is the idle PUMP (nothing to
+## grab or use) pushes the pace - double speed, paid for with the same stamina
+## drain as carrying an item. The range check is throttled because it queries
+## physics.
+const PUMP_SPEED_MULT: float = 2.0
+const PUMP_PICKABLE_POLL: float = 0.1
 ## MEGA_LEAP (LEAP): super jumps at this multiple of the normal jump force for
 ## MEGA_LEAP_DURATION seconds.
 const MEGA_LEAP_MULT: float = 4.0
@@ -486,6 +492,12 @@ var _climb_push_timer: float = 0.0
 var _climb_reattach_cooldown: float = 0.0
 
 var _stamina: StaminaComponent = null
+## PUMP sprint: holding Action while the prompt is idle (PUMP) gives a short
+## speed burst, paid for with carry-style stamina drain, until released.
+var _pumping: bool = false
+var _pump_held_last: bool = false
+var _pump_pickable_in_range: bool = false
+var _pump_poll_timer: float = 0.0
 ## Compatibility proxy: the HUD reads `player.get("stamina")`, and older code
 ## assigns to it. The real pool lives in the component.
 var stamina: float:
@@ -1330,11 +1342,20 @@ func _physics_process(delta: float) -> void:
 	# The component owns the pool; this frame only reports the player's intent.
 	var is_moving_input := move_direction.length_squared() > 0.05
 	var is_holding := _is_local_holding_chicken() or _is_local_holding_lootbox() or _is_local_holding_pickup()
+	# PUMP sprint: hold the Action button while it shows the idle PUMP (nothing
+	# to grab/use) to run at 2x speed and burn stamina as if carrying something.
+	var pump_held := movement_allowed and Input.is_action_pressed("pickup")
+	if pump_held and not _pump_held_last:
+		_pump_poll_timer = 0.0
+	_pump_held_last = pump_held
+	_pumping = pump_held and _action_is_idle_for_pump(delta)
 	_stamina.moving = is_moving_input
-	_stamina.holding = is_holding
+	_stamina.holding = is_holding or _pumping
 	_stamina.effort = input_strength
 	Entity.tick(self, delta)
 	var speed_to_use := SPEED * _stamina.speed_multiplier()
+	if _pumping:
+		speed_to_use *= PUMP_SPEED_MULT
 	# RUSH: while the burst is active, run at a multiple of the normal speed.
 	if _active_power_up_mode == LocalPickup.PowerUpMode.SPEED_BURST and _active_power_up_remaining > 0.0:
 		speed_to_use *= SPEED_BURST_MULT
@@ -2878,6 +2899,35 @@ func get_active_power_up() -> Dictionary:
 		"remaining": _active_power_up_remaining,
 		"duration": _active_power_up_duration,
 	}
+
+
+## True while the Action button is held with nothing else to do (the HUD shows
+## PUMP): the player is sprint-pumping for 2x speed, draining stamina like carry.
+func is_pump_sprinting() -> bool:
+	return _pumping
+
+
+## The Action button has nothing else to do this frame, so holding it can pump.
+## Mirrors the PUMP caption gate; the pickable check is throttled because it
+## queries physics.
+func _action_is_idle_for_pump(delta: float) -> bool:
+	if get_action_context_caption() != "":
+		return false
+	if _is_mega_leap_active() or _is_smoke_active():
+		return false
+	if held_weapon_kind != LocalPickup2.WeaponKind.NONE:
+		return false
+	if _is_local_holding_pickup() or held_power_up_mode != LocalPickup.PowerUpMode.NONE:
+		return false
+	if _is_local_holding_chicken() or _is_local_holding_lootbox():
+		return false
+	if _active_power_up_remaining > 0.0 and _active_power_up_mode != LocalPickup.PowerUpMode.NONE:
+		return false
+	_pump_poll_timer -= delta
+	if _pump_poll_timer <= 0.0:
+		_pump_poll_timer = PUMP_PICKABLE_POLL
+		_pump_pickable_in_range = has_pickable_in_range()
+	return not _pump_pickable_in_range
 
 # HUD API: whether anything is close enough to grab right now -- power-ups and
 # weapons alike. Runs off the cached pickup list, so the HUD can ask ten times a
