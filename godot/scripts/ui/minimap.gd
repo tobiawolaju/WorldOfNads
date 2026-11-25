@@ -48,6 +48,9 @@ var _bus_circle_world_size := Vector2.ZERO # map config the uv cache was built f
 var _bus_circle_world_origin := Vector2.ZERO
 var _last_bus_fullscreen := false
 var _last_bus_offset := Vector2(INF, INF) # forces the very first upload
+# Inner clip for the panning background; pointers stay outside it so they can
+# overflow the minimap edge without being cut off.
+var _map_clip: Control = null
 
 var _last_real_minimap_ms: float = 0.0
 var _last_storm_center: Vector2 = Vector2.ZERO
@@ -97,6 +100,8 @@ func _ready() -> void:
 		_storm_anchors = Vector4(storm_overlay.anchor_left, storm_overlay.anchor_top, storm_overlay.anchor_right, storm_overlay.anchor_bottom)
 		_storm_offsets = Vector4(storm_overlay.offset_left, storm_overlay.offset_top, storm_overlay.offset_right, storm_overlay.offset_bottom)
 
+	_ensure_pointer_overflow()
+
 	# Center the pointer automatically
 	_setup_pointer(player_pointer)
 	_setup_pointer(chicken_pointer)
@@ -110,6 +115,25 @@ func _ready() -> void:
 	_apply_visibility()
 
 
+## The minimap background pans/zooms and must be clipped to the map, but edge
+## pointers should stay fully visible instead of being cut off. Wrap the clipped
+## map layers in an inner clip container and keep pointers as direct children of
+## the non-clipping minimap.
+func _ensure_pointer_overflow() -> void:
+	minimap_container.clip_contents = false
+	_map_clip = Control.new()
+	_map_clip.name = "MapClip"
+	_map_clip.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_map_clip.clip_contents = true
+	_map_clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	minimap_container.add_child(_map_clip)
+	minimap_container.move_child(_map_clip, 0)
+	for node_name in ["ColorRect", "MinimapBackground", "StormOverlay", "BusPath"]:
+		var n := minimap_container.get_node_or_null(NodePath(node_name))
+		if n != null and n != _map_clip:
+			n.reparent(_map_clip, false)
+
+
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		_toggle_fullscreen()
@@ -121,6 +145,8 @@ func _toggle_fullscreen() -> void:
 		_update_fullscreen_layout()
 		# Let the storm overlay extend beyond the square map, across the screen.
 		minimap_container.clip_contents = false
+		if _map_clip != null:
+			_map_clip.clip_contents = false
 		_layout_fullscreen_storm_overlay()
 		# Reset background for full view
 		background_texture.position = Vector2.ZERO
@@ -136,7 +162,9 @@ func _toggle_fullscreen() -> void:
 		minimap_container.offset_top = _original_offsets.y
 		minimap_container.offset_right = _original_offsets.z
 		minimap_container.offset_bottom = _original_offsets.w
-		minimap_container.clip_contents = _original_clip_contents
+		minimap_container.clip_contents = false
+		if _map_clip != null:
+			_map_clip.clip_contents = true
 		_restore_storm_overlay_layout()
 		_fade_shade(false)
 	_update_bus_path_overlay()
