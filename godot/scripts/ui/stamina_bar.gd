@@ -1,9 +1,9 @@
 extends ProgressBar
-## Stamina bar that only shows while the player is carrying something.
+## Stamina bar that only shows while the player is carrying something or pumping.
 ##
-## Stamina is only ever spent while holding an item, so the bar is hidden during normal
-## free movement and fades in as soon as something is picked up. Matches the same
-## holding test player.gd uses to decide whether to drain.
+## Stamina is spent while holding an item, or while holding the Action button in
+## the idle PUMP sprint. The bar stays hidden during normal free movement and
+## fades in while stamina is being used. Matches player.gd's stamina intent.
 
 ## How long the fade in and out take, in seconds.
 const FADE_TIME: float = 0.25
@@ -49,6 +49,8 @@ func _process(delta: float) -> void:
 		if _cached_player.has_method(method) and bool(_cached_player.call(method)):
 			holding = true
 			break
+	if not holding and _cached_player.has_method("is_pump_sprinting"):
+		holding = bool(_cached_player.call("is_pump_sprinting"))
 
 	var target_alpha := 1.0 if holding else 0.0
 	# Only the fade cares about state here, and the stamina compare was dead (the
