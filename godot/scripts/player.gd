@@ -908,7 +908,7 @@ func _register_local_kill(victim_name: String = "") -> void:
 		if killer == "":
 			killer = player_id.substr(0, 8)
 		var kill_line := "%s eliminated %s" % [killer, victim]
-		var connected := root != null and bool(root.get("connected"))
+		var connected: bool = root != null and root.get("connected") == true
 		if connected and root.has_method("send_client_event"):
 			root.call("send_client_event", "kill", kill_line, {})
 		var stream_live := events != null and events.has_method("is_stream_connected") and bool(events.call("is_stream_connected"))
@@ -3507,7 +3507,7 @@ func respawn_at_spawn_point() -> void:
 		if fallen == "":
 			fallen = player_id.substr(0, 8)
 		var death_line := "%s was eliminated" % fallen
-		var connected := bool(root.get("connected"))
+		var connected: bool = root.get("connected") == true
 		if connected:
 			root.call("send_client_event", "eliminated", death_line, {})
 		var bridge := get_tree().get_first_node_in_group("events_bridge") if get_tree() else null
