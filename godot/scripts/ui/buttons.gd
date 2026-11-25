@@ -9,8 +9,23 @@ const PORTRAIT_RATIO := 1.4
 @export var jump_button: Button
 @export var slide_button: Button
 
+## Emitted when a finger goes down on a touch button, and again when it is
+## released (including a drag off the button). `action_name` is the input action
+## the button drives (pickup/chog/jump/slide).
+signal action_held(action_name: StringName)
+signal action_released(action_name: StringName)
+
 var _touch_indices: Dictionary = {}
-var _animating_buttons: Dictionary = {}
+## Active press/release tweens, one per button, so a new press can cancel a
+## release that is still springing back.
+var _press_tweens: Dictionary = {}
+
+## Press FX: the button sinks while a finger stays on it and only springs back
+## on release. A quick tap reads as a knock; a hold stays visibly pressed for as
+## long as it is held.
+const PRESS_SCALE := Vector2(0.8, 0.8)
+const PRESS_IN_SECONDS := 0.08
+const PRESS_OUT_SECONDS := 0.12
 var _cached_local_player: Node = null
 
 # --- POWER-UP RING ---
@@ -416,17 +431,17 @@ func _input(event: InputEvent) -> void:
 				var button: Button = entry[0]
 				var action_name: StringName = entry[1]
 
-				if button == null:
+				if button == null or not button.is_visible_in_tree():
 					continue
 
 				if _touch_indices.get(action_name, -1) == -1 \
-				and button.get_global_rect().has_point(touch.position):
+				and _touch_rect(button).has_point(touch.position):
 
 					_touch_indices[action_name] = touch.index
 
 					button.button_pressed = true
 
-					_play_press_animation(button)
+					_start_press_fx(button)
 
 					_fire_action(action_name, true)
 
@@ -440,7 +455,7 @@ func _input(event: InputEvent) -> void:
 
 					if button != null:
 						button.button_pressed = false
-						button.scale = Vector2.ONE
+						_end_press_fx(button)
 
 					_touch_indices.erase(action_name)
 
@@ -458,51 +473,86 @@ func _input(event: InputEvent) -> void:
 				var button = _get_button(action_name)
 
 				if button == null \
-				or not button.get_global_rect().has_point(drag.position):
+				or not _touch_rect(button).has_point(drag.position):
 
 					if button != null:
 						button.button_pressed = false
-						button.scale = Vector2.ONE
+						_end_press_fx(button)
 
 					_touch_indices.erase(action_name)
 					_fire_action(action_name, false)
 
 				return
 
-func _play_press_animation(button: Button) -> void:
+## Sinks a button under the finger. It stays down until _end_press_fx runs on
+## release, which is what makes a hold visible, and a tap still reads as a knock.
+func _start_press_fx(button: Button) -> void:
 	if button == null:
 		return
 
-	# Prevent retriggering while already animating
-	if _animating_buttons.get(button, false):
+	_kill_press_tween(button)
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(button, "scale", PRESS_SCALE, PRESS_IN_SECONDS)
+	_press_tweens[button] = tween
+	tween.finished.connect(func():
+		if _press_tweens.get(button) == tween:
+			_press_tweens.erase(button)
+	)
+
+
+## Springs a held button back to full size. Only called on release, so holding
+## the button does not pop it back up mid-press.
+func _end_press_fx(button: Button) -> void:
+	if button == null:
 		return
 
-	_animating_buttons[button] = true
-
-	button.scale = Vector2.ONE
-
+	_kill_press_tween(button)
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_OUT)
-
-	tween.tween_property(
-		button,
-		"scale",
-		Vector2(0.8, 0.8),
-		0.08
-	)
-
-	tween.tween_property(
-		button,
-		"scale",
-		Vector2.ONE,
-		0.12
-	)
-
+	tween.tween_property(button, "scale", Vector2.ONE, PRESS_OUT_SECONDS)
+	_press_tweens[button] = tween
 	tween.finished.connect(func():
-		_animating_buttons.erase(button)
-		button.scale = Vector2.ONE
+		if _press_tweens.get(button) == tween:
+			_press_tweens.erase(button)
+			if is_instance_valid(button):
+				button.scale = Vector2.ONE
 	)
+
+
+func _kill_press_tween(button: Button) -> void:
+	var previous: Tween = _press_tweens.get(button) as Tween
+	if previous != null and previous.is_valid():
+		previous.kill()
+	_press_tweens.erase(button)
+
+
+## True while a finger is down on that action's button. Gameplay can poll this
+## to tell a tap from a hold without reading the touch bookkeeping.
+func is_action_held(action_name: StringName) -> bool:
+	return _touch_indices.has(action_name)
+
+
+## Drops every held button and its input action, used when the HUD is hidden or
+## the app loses focus mid-hold. Without this a held button could stay visually
+## pressed (and its action stuck down) forever.
+func _release_all_presses() -> void:
+	for action_name in _touch_indices.keys():
+		var button := _get_button(action_name)
+		if button != null:
+			button.button_pressed = false
+			_end_press_fx(button)
+		_touch_indices.erase(action_name)
+		_fire_action(action_name, false)
+
+## The button's touch target in global space, using unscaled size so the press FX
+## (which shrinks the button) cannot move the hit area out from under the finger
+## that is holding it.
+func _touch_rect(button: Button) -> Rect2:
+	return Rect2(button.global_position, button.size)
+
 
 func _get_button(action_name: StringName) -> Button:
 	match action_name:
@@ -522,6 +572,10 @@ func _fire_action(action_name: StringName, pressed: bool) -> void:
 	event.action = action_name
 	event.pressed = pressed
 	Input.parse_input_event(event)
+	if pressed:
+		action_held.emit(action_name)
+	else:
+		action_released.emit(action_name)
 
 func _process(delta: float) -> void:
 	if action_button == null:
@@ -613,6 +667,9 @@ func _reposition() -> void:
 	visible = not is_portrait
 
 	if is_portrait:
+		# A touch cannot follow the buttons offscreen; drop any hold rather than
+		# leave its action stuck down.
+		_release_all_presses()
 		return
 
 	var target: Control = self
@@ -627,3 +684,10 @@ func _reposition() -> void:
 		viewport_size.x - RIGHT_MARGIN,
 		viewport_size.y - BOTTOM_MARGIN
 	)
+
+
+## Holding a button and then backgrounding the app would otherwise never deliver
+## the touch release, leaving the action held down.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		_release_all_presses()
