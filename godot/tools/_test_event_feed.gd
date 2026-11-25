@@ -145,6 +145,28 @@ func _initialize() -> void:
 	_check("countdown switches holder", _row_text(countdown).contains("bob"))
 	_check("countdown at zero reads zero", _row_text(countdown).contains("wins in 0s"))
 
+	# 12. Kill/steal lines carry the actor at the front, so the feed colours the
+	#     name instead of printing the whole sentence as a system log.
+	var kill: Dictionary = hud._split_message_actor_and_text("tobi eliminated alice")
+	_check("kill line splits the actor", kill["actor"] == "tobi" and kill["message"] == "eliminated alice")
+	var steal: Dictionary = hud._split_message_actor_and_text("tobi stole the chicken from alice")
+	_check("steal line splits the actor", steal["actor"] == "tobi" and steal["message"] == "stole the chicken from alice")
+	var dead: Dictionary = hud._split_message_actor_and_text("alice was eliminated")
+	_check("death line splits the victim", dead["actor"] == "alice" and dead["message"] == "was eliminated")
+	var picked: Dictionary = hud._split_message_actor_and_text("tobi picked the chicken")
+	_check("pick line still splits", picked["actor"] == "tobi" and picked["message"] == "picked the chicken")
+
+	# 13. The kill callout is the skull + multiplier, not a sentence.
+	var callout := hud.get_node_or_null("TextFX2")
+	_check("callout is a RichTextLabel", callout is RichTextLabel)
+	if callout is RichTextLabel:
+		hud.show_kill_callout(2)
+		_check("double kill shows x2", callout.get_parsed_text().contains("x2"))
+		hud.show_kill_callout(3)
+		_check("triple kill shows x3", callout.get_parsed_text().contains("x3"))
+		hud.show_kill_callout(1)
+		_check("single kill is the skull alone", callout.get_parsed_text().strip_edges() == "")
+
 	print("event feed selftest: %d failure(s)" % failures)
 	quit(1 if failures > 0 else 0)
 

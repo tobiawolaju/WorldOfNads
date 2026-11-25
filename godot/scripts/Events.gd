@@ -28,7 +28,8 @@ const EMOTE_SIZE := 20
 ## Chance a player event gets a random emote appended. Hype moments always do;
 ## system notices and the chicken countdown never do.
 const RANDOM_EMOTE_CHANCE := 0.35
-const HYPE_PHRASES := ["picked the chicken", "won the round", "eliminated"]
+const HYPE_PHRASES := ["picked the chicken", "stole the chicken from", "won the round", "eliminated"]
+const SKULL_ICON_PATH := "res://assets/img/skull.png"
 const BUILTIN_EMOTES := {
 	"chicken": "res://assets/img/chick.png",
 	"gem": "res://assets/img/gem.png",
@@ -80,7 +81,8 @@ var _navigated_to_gameover := false
 
 @onready var _feed: VBoxContainer = get_node_or_null(feed_path)
 @onready var username_label: Label = get_node_or_null(username_label_path)
-@onready var _callout_fx2: Label = get_node_or_null("TextFX2")
+@onready var _callout_fx2: RichTextLabel = get_node_or_null("TextFX2")
+var _skull_texture: Texture2D = null
 
 @onready var xp_stream_label: Label = get_node_or_null("XPstream")
 @onready var mon_stream_label: Label = get_node_or_null("MONstream")
@@ -173,9 +175,36 @@ func show_game_callout(text: String, color: Color = Color(1.0, 0.9, 0.2, 1.0)) -
 		_callout_fx2 = get_node_or_null("TextFX2")
 	if _callout_fx2 == null:
 		return
-	_callout_fx2.text = text
-	if _callout_fx2 is Label:
-		(_callout_fx2 as Label).add_theme_color_override("font_color", color)
+	_callout_fx2.clear()
+	_callout_fx2.push_color(color)
+	_callout_fx2.add_text(text)
+	_callout_fx2.pop()
+	_play_callout()
+
+## Kill callout: a skull with the streak multiplier, not a sentence. One kill is
+## the skull alone; x2/x3 sit next to it in small type so the icon carries the
+## moment and the number only adds the streak.
+func show_kill_callout(count: int, color: Color = Color(1.0, 0.9, 0.2, 1.0)) -> void:
+	if _callout_fx2 == null:
+		_callout_fx2 = get_node_or_null("TextFX2")
+	if _callout_fx2 == null:
+		return
+	if _skull_texture == null:
+		_skull_texture = load(SKULL_ICON_PATH) as Texture2D
+	_callout_fx2.clear()
+	if _skull_texture != null:
+		_callout_fx2.add_image(_skull_texture, 46, 46, color)
+	if count > 1:
+		_callout_fx2.push_font_size(28)
+		_callout_fx2.push_color(color)
+		_callout_fx2.add_text(" x%d" % count)
+		_callout_fx2.pop()
+		_callout_fx2.pop()
+	_play_callout()
+
+func _play_callout() -> void:
+	if _callout_fx2 == null:
+		return
 	_callout_fx2.visible = true
 	if _callout_fx2.has_method("play"):
 		_callout_fx2.call("play")
@@ -299,6 +328,12 @@ func _apply_label_color(color: Color, label: Label) -> void:
 
 # Local events fallback removed for public/live testing: events come from the
 # live room server and the avatars from the live backend.
+
+## True while the room's event stream is open. Callers that also send a
+## client_event use this to skip their own local echo: the room republishes the
+## event to every stream, including the sender's.
+func is_stream_connected() -> bool:
+	return ws.get_ready_state() == WebSocketPeer.STATE_OPEN
 
 func _read_packets() -> void:
 	while ws.get_available_packet_count() > 0:
@@ -813,6 +848,28 @@ func _split_message_actor_and_text(message: String) -> Dictionary:
 	var safe_message := message.strip_edges()
 	if safe_message == "":
 		return {"actor": "system", "message": ""}
+
+	# Kill/steal lines are written by the player who did it, with their own name
+	# in front ("tobi eliminated alice", "tobi stole the chicken from alice").
+	# Split on the verb so the feed can colour the name and keep the sentence.
+	var verb_splits := [
+		" eliminated ",
+		" stole the chicken from ",
+		" stole the lootbox from ",
+	]
+	for sep in verb_splits:
+		var idx := safe_message.find(sep)
+		if idx > 0:
+			var verb_actor := safe_message.substr(0, idx).strip_edges()
+			var verb_rest := safe_message.substr(idx + 1).strip_edges()
+			if verb_actor != "" and verb_rest != "":
+				return {"actor": verb_actor, "message": verb_rest}
+
+	# A death notice is written by the victim: "tobi was eliminated".
+	if safe_message.ends_with(" was eliminated"):
+		var fallen := safe_message.trim_suffix(" was eliminated").strip_edges()
+		if fallen != "":
+			return {"actor": fallen, "message": "was eliminated"}
 
 	var split_patterns = [
 		" joined the game",

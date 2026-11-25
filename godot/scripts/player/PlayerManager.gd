@@ -2019,8 +2019,16 @@ func _show_local_event(message: String) -> void:
 		events_bridge.show_local_event(message)
 
 func _emit_player_event(event_type: String, message: String, meta: Dictionary = {}) -> void:
-	_show_local_event(message)
-	if ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
+	# The room republishes this event to every events stream, including ours.
+	# Only fall back to a local line when the game socket cannot send or the
+	# events stream is down, or the feed shows the same line twice.
+	var stream_live := false
+	if events_bridge != null and is_instance_valid(events_bridge) and events_bridge.has_method("is_stream_connected"):
+		stream_live = bool(events_bridge.call("is_stream_connected"))
+	var sending := ws.get_ready_state() == WebSocketPeer.STATE_OPEN
+	if not sending or not stream_live:
+		_show_local_event(message)
+	if sending:
 		ws.send(MsgPack.pack({
 			"type": "client_event",
 			"eventType": event_type,
@@ -2230,15 +2238,24 @@ func _resolve_server_username(data: Dictionary, fallback_id: String) -> String:
 	return _format_player_short_name(fallback_id)
 
 func _handle_chicken_state_event(current_is_held: bool, current_holder_id: String) -> void:
-	var holder_name = _get_player_display_name(current_holder_id)
 	var local_name = _get_player_display_name(player_id)
 
-	if not _last_chicken_is_held and current_is_held and current_holder_id == player_id:
-		_emit_player_event(
-			"chicken_picked",
-			"%s is holding the chicken" % holder_name,
-			{"item": "chicken", "action": "pick"}
-		)
+	if current_is_held and current_holder_id == player_id:
+		if _last_chicken_is_held and _last_chicken_holder_id != "" and _last_chicken_holder_id != player_id:
+			# Took it off another player: name who lost it, so the feed reads
+			# like a play call instead of a generic pickup.
+			var prev_name = _get_player_display_name(_last_chicken_holder_id)
+			_emit_player_event(
+				"chicken_stolen",
+				"%s stole the chicken from %s" % [local_name, prev_name],
+				{"item": "chicken", "action": "steal", "from": _last_chicken_holder_id}
+			)
+		elif not _last_chicken_is_held:
+			_emit_player_event(
+				"chicken_picked",
+				"%s picked the chicken" % local_name,
+				{"item": "chicken", "action": "pick"}
+			)
 
 	if _last_chicken_is_held and _last_chicken_holder_id == player_id and not current_is_held:
 		_emit_player_event(

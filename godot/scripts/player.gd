@@ -882,7 +882,7 @@ func configure_demo_agent(
 	_is_dead = false
 	_respawn_timer = 0.0
 
-func _register_local_kill() -> void:
+func _register_local_kill(victim_name: String = "") -> void:
 	if _kill_streak_timer <= 0.0:
 		_kill_streak_count = 0
 	_kill_streak_count += 1
@@ -904,10 +904,27 @@ func _register_local_kill() -> void:
 				text = "RAMPAGE!"
 				color = Color(0.85, 0.3, 1.0, 1.0)
 	var events := get_tree().get_first_node_in_group("events_bridge") if get_tree() else null
-	if events != null and events.has_method("show_game_callout"):
+	if events != null and events.has_method("show_kill_callout"):
+		# Skull + x2/x3, no sentence. The big callout stays readable without
+		# covering the fight.
+		events.call("show_kill_callout", _kill_streak_count, color)
+	elif events != null and events.has_method("show_game_callout"):
 		events.call("show_game_callout", text, color)
-	elif events != null and events.has_method("show_local_event") and _kill_streak_count >= 2:
-		events.call("show_local_event", text)
+	# Report the kill to the room feed: "tobi eliminated alice". The room stamps
+	# the sender's playerId on the event and echoes it over the events stream, so
+	# only draw it here when that stream is unavailable.
+	var victim := victim_name.strip_edges()
+	if victim != "":
+		var killer := display_name.strip_edges()
+		if killer == "":
+			killer = player_id.substr(0, 8)
+		var kill_line := "%s eliminated %s" % [killer, victim]
+		var connected := root != null and bool(root.get("connected"))
+		if connected and root.has_method("send_client_event"):
+			root.call("send_client_event", "kill", kill_line, {})
+		var stream_live := events != null and events.has_method("is_stream_connected") and bool(events.call("is_stream_connected"))
+		if events != null and events.has_method("show_local_event") and (not connected or not stream_live):
+			events.call("show_local_event", kill_line)
 
 
 func _process(delta: float) -> void:
@@ -3542,7 +3559,18 @@ func respawn_at_spawn_point() -> void:
 	
 	# Notify server of elimination (death) so it resets possession time.
 	if root and root.has_method("send_client_event"):
-		root.call("send_client_event", "eliminated", "Player eliminated", {})
+		var fallen := display_name.strip_edges()
+		if fallen == "":
+			fallen = player_id.substr(0, 8)
+		var death_line := "%s was eliminated" % fallen
+		var connected := bool(root.get("connected"))
+		if connected:
+			root.call("send_client_event", "eliminated", death_line, {})
+		var bridge := get_tree().get_first_node_in_group("events_bridge") if get_tree() else null
+		if bridge != null and bridge.has_method("show_local_event"):
+			var stream_live := bridge.has_method("is_stream_connected") and bool(bridge.call("is_stream_connected"))
+			if not connected or not stream_live:
+				bridge.call("show_local_event", death_line)
 	
 	# Reset health
 	health = MAX_HEALTH
@@ -4809,7 +4837,10 @@ func _process_pending_los_shots() -> void:
 			if not dead and los_hit.has_method("is_remote_player") == false and "health" in los_hit:
 				dead = float(los_hit.get("health")) <= 0.0
 			if dead:
-				_register_local_kill()
+				var victim := ""
+				if los_hit.get("display_name") != null:
+					victim = str(los_hit.get("display_name"))
+				_register_local_kill(victim)
 		if bool(shot.get("debug", false)):
 			print("[LOS-DBG] r=%.2f range=%.0f dmg=%.0f -> %s" % [
 				float(shot["aim_radius"]), float(shot["los_range"]), float(shot["damage"]),
