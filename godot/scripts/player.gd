@@ -131,27 +131,9 @@ const AUTO_ORBIT_DEADZONE: float = 0.25
 const AUTO_ORBIT_SHARPNESS_RAD: float = 1.57080  # deg_to_rad(90.0)
 const RETREAT_ZOOM_SMOOTHNESS: float = 4.0
 
-const STAMINA_MAX: float = 100.0
-## Drain per second at full analog input. Actual drain is this scaled by how far the
-## stick or key is pushed, so a light joystick touch costs far less than a full sprint.
-const STAMINA_DRAIN_RATE: float = STAMINA_MAX / 7.0
-## Drain multiplier applied at the very lightest movement. Without a floor, barely
-## nudging the stick would cost almost nothing and let a player creep forever.
-const STAMINA_DRAIN_MIN_MULT: float = 0.25
-const STAMINA_REGEN_DELAY: float = 1.0
-const STAMINA_REGEN_RATE: float = STAMINA_MAX / 8.0
-## Standing still regenerates at this multiple of the rate you get while still
-## moving, so stopping is always the faster way back to full stamina.
-const STAMINA_REGEN_IDLE_MULT: float = 2.0
-const STAMINA_HELD_PENALTY: float = 5.0
-## Running out of stamina throttles movement instead of stopping it, so the player
-## keeps moving under their own input, just very slowly.
-const STAMINA_EMPTY_SPEED_MULT: float = 0.4
-## The throttle stays on while the player keeps running, and only lifts once they
-## stop or refill past this fraction of the bar.
-const STAMINA_RECOVERY_FRACTION: float = 0.25
-## Jump strength while throttled, as a fraction of the normal jump velocity.
-const STAMINA_EMPTY_JUMP_MULT: float = 0.6
+# --- STAMINA ---
+# The pool, drain/regen rates and the empty throttle live in StaminaComponent
+# (scripts/player/components/stamina_component.gd), attached in _ready.
 
 # --- HEALTH ---
 const MAX_HEALTH: float = 100.0
@@ -503,13 +485,15 @@ var _climb_normal: Vector3 = Vector3.ZERO
 var _climb_push_timer: float = 0.0
 var _climb_reattach_cooldown: float = 0.0
 
-var stamina: float = STAMINA_MAX
-var _stamina_regen_timer: float = 0.0
-var _stamina_held_empty: bool = false
-var _stamina_empty_timer: float = 0.0
-## Latched once stamina bottoms out. Keeps the throttle on while the player keeps
-## running, so creeping does not silently restore full speed.
-var _stamina_throttled: bool = false
+var _stamina: StaminaComponent = null
+## Compatibility proxy: the HUD reads `player.get("stamina")`, and older code
+## assigns to it. The real pool lives in the component.
+var stamina: float:
+	get:
+		return _stamina.stamina if _stamina != null else 0.0
+	set(value):
+		if _stamina != null:
+			_stamina.stamina = value
 
 # --- HEALTH STATE ---
 var health: float = MAX_HEALTH
@@ -680,6 +664,11 @@ func _ready() -> void:
 	get_tree().node_added.connect(_on_tree_node_changed)
 	get_tree().node_removed.connect(_on_tree_node_changed)
 	
+	# The stamina pool is a component (ECS-lite layer, see scripts/ecs). Attached
+	# before the first physics frame, which is also when the HUD may read it.
+	_stamina = StaminaComponent.new()
+	Entity.attach(self, _stamina)
+
 	# Initialize health
 	health = MAX_HEALTH
 	_health_regen_timer = 0.0
@@ -1338,62 +1327,17 @@ func _physics_process(delta: float) -> void:
 					_ground_jump_count = 0
 
 	# --- STAMINA ---
+	# The component owns the pool; this frame only reports the player's intent.
 	var is_moving_input := move_direction.length_squared() > 0.05
-
-	# Break the held-penalty if player released input
-	if _stamina_held_empty and not is_moving_input:
-		_stamina_held_empty = false
-
-	# Throttle latches on hitting zero and only lifts when the player stops moving or
-	# refills past the recovery threshold. Creeping alone never restores full speed.
-	# Resolved before the drain below so the latch takes effect the same frame it is set.
-	var stamina_empty := stamina <= 0.0
-	if stamina_empty:
-		_stamina_throttled = true
-	elif not is_moving_input or stamina >= STAMINA_MAX * STAMINA_RECOVERY_FRACTION:
-		_stamina_throttled = false
-		# Recovery is done, so the re-drain lockout has served its purpose. Clearing it
-		# here is what lets drain resume the moment the throttle lifts, instead of the
-		# player sitting at the threshold doing nothing until the penalty times out.
-		_stamina_held_empty = false
-	var speed_to_use := SPEED * (STAMINA_EMPTY_SPEED_MULT if _stamina_throttled else 1.0)
+	var is_holding := _is_local_holding_chicken() or _is_local_holding_lootbox() or _is_local_holding_pickup()
+	_stamina.moving = is_moving_input
+	_stamina.holding = is_holding
+	_stamina.effort = input_strength
+	Entity.tick(self, delta)
+	var speed_to_use := SPEED * _stamina.speed_multiplier()
 	# RUSH: while the burst is active, run at a multiple of the normal speed.
 	if _active_power_up_mode == LocalPickup.PowerUpMode.SPEED_BURST and _active_power_up_remaining > 0.0:
 		speed_to_use *= SPEED_BURST_MULT
-
-	# Drain and regen are mutually exclusive: while the player is genuinely draining,
-	# stamina only falls. Any other situation regenerates instead, which is what lets a
-	# player who has dropped the item refill again while they keep running.
-	var is_holding := _is_local_holding_chicken() or _is_local_holding_lootbox() or _is_local_holding_pickup()
-	var is_draining := is_moving_input and is_holding and stamina > 0.0 and not _stamina_held_empty and not _stamina_throttled
-	if is_draining:
-		# Scale drain by how hard the player is actually pushing, so analog input has a
-		# cost gradient: full tilt drains fastest, a light touch drains at the floor rate.
-		# Keyboard and gamepad digital input reports strength 1.0 and are unaffected.
-		var effort := clampf(input_strength, STAMINA_DRAIN_MIN_MULT, 1.0)
-		stamina = maxf(0.0, stamina - STAMINA_DRAIN_RATE * effort * delta)
-		_stamina_regen_timer = STAMINA_REGEN_DELAY
-
-	# Just hit zero — check if input still held
-	if stamina <= 0.0 and is_moving_input and is_holding:
-		_stamina_held_empty = true
-		_stamina_empty_timer = STAMINA_HELD_PENALTY
-
-	# Held-penalty countdown (ignores movement for 5 sec)
-	if _stamina_held_empty:
-		_stamina_empty_timer = maxf(0.0, _stamina_empty_timer - delta)
-		if _stamina_empty_timer <= 0.0:
-			_stamina_held_empty = false
-
-	# Regen: runs whenever the player is not actively draining, whether they are moving
-	# or standing, so stamina can never get stuck at zero and the throttle can always be
-	# recovered from. Never stopping gets the slow rate; stopping doubles it, which makes
-	# standing still the faster way back to full.
-	if not is_draining:
-		_stamina_regen_timer = maxf(0.0, _stamina_regen_timer - delta)
-		if _stamina_regen_timer <= 0.0:
-			var regen_rate := STAMINA_REGEN_RATE * (1.0 if is_moving_input else STAMINA_REGEN_IDLE_MULT)
-			stamina = minf(STAMINA_MAX, stamina + regen_rate * delta)
 
 	# --- HEALTH REGEN ---
 	if not _is_dead:
@@ -3581,10 +3525,7 @@ func respawn_at_spawn_point() -> void:
 	DeathDissolve.restore(self)
 	
 	# Reset stamina
-	stamina = STAMINA_MAX
-	_stamina_regen_timer = 0.0
-	_stamina_throttled = false
-	_stamina_held_empty = false
+	_stamina.reset()
 	
 	# Reset movement state
 	velocity = Vector3.ZERO
@@ -4098,7 +4039,7 @@ func _is_movement_allowed() -> bool:
 ## tired player also jumps shorter. Read before the stamina block runs, so this uses
 ## last frame's throttle state, which is a one-frame lag and not worth reordering for.
 func _current_jump_velocity() -> float:
-	return JUMP_VELOCITY * (STAMINA_EMPTY_JUMP_MULT if _stamina_throttled else 1.0)
+	return JUMP_VELOCITY * _stamina.jump_multiplier()
 
 func _get_cached_chicken_node() -> RigidBody3D:
 	if _cached_chicken_node != null and is_instance_valid(_cached_chicken_node):
