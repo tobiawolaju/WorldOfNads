@@ -1354,7 +1354,9 @@ func _physics_process(delta: float) -> void:
 	_stamina.effort = input_strength
 	Entity.tick(self, delta)
 	var speed_to_use := SPEED * _stamina.speed_multiplier()
-	if _pumping:
+	# The pump burst only applies while stamina can still pay for it; once the
+	# carry-style throttle latches, slow down like a tired carrier until recovery.
+	if _pumping and not _stamina.is_throttled():
 		speed_to_use *= PUMP_SPEED_MULT
 	# RUSH: while the burst is active, run at a multiple of the normal speed.
 	if _active_power_up_mode == LocalPickup.PowerUpMode.SPEED_BURST and _active_power_up_remaining > 0.0:

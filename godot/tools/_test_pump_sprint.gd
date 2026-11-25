@@ -100,9 +100,37 @@ func _initialize() -> void:
 	_check("holding Action with a pickable in range does not pump", player.call("is_pump_sprinting") == false)
 	Input.action_release("pickup")
 
+	# Remove the probe so it does not block the next pump.
+	pickup.queue_free()
+	for _i in 4:
+		await physics_frame
+
+	# Exhaustion: pumping drains stamina to zero; the carry-style throttle should
+	# latch and slow the player until stamina recovers to the minimum amount.
+	player._stamina.stamina = 1.0
+	player._stamina._throttled = false
+	player._stamina._held_empty = false
+	player._stamina._regen_timer = 0.0
+	Input.action_press("pickup")
+	Input.action_press("move_forward")
+	for _i in 20:
+		await physics_frame
+	_check("pumping to empty latches the carry-style throttle", player._stamina.is_throttled())
+	_check("still pumping while throttled", player.call("is_pump_sprinting") == true)
+	# While throttled the pump boost must not apply, so speed stays at carry-slow.
+	var base_speed: float = player.SPEED * player._stamina.speed_multiplier()
+	var pump_speed: float = base_speed
+	if bool(player.call("is_pump_sprinting")) and not player._stamina.is_throttled():
+		pump_speed *= 2.0
+	_check("throttled pump speed is carry-slow (no 2x boost)", is_equal_approx(pump_speed, player.SPEED * 0.4))
+	Input.action_release("move_forward")
+	Input.action_release("pickup")
+
 	# Cleanup input state.
 	if Input.is_action_pressed("pickup"):
 		Input.action_release("pickup")
+	if Input.is_action_pressed("move_forward"):
+		Input.action_release("move_forward")
 
 	_finish()
 
