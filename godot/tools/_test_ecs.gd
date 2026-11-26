@@ -36,6 +36,21 @@ class CountSystem extends System:
 		seen += entities(tree).size()
 
 
+class StormHost extends Node3D:
+	var _is_dead := false
+	var storm_center := Vector2(0, 0)
+	var storm_radius := 5.0
+	var storm_damage_per_second := 10.0
+	var _storm_eye = null
+	var damage_taken := 0.0
+
+	func take_damage(amount, _source = null, _is_bullet = false):
+		damage_taken += float(amount)
+
+	func _refresh_storm_zone():
+		pass
+
+
 func _initialize() -> void:
 	var host := Node.new()
 	host.name = "EntityA"
@@ -136,6 +151,30 @@ func _initialize() -> void:
 	_check("empty health is depleted", crit.is_depleted())
 	crit.reset()
 	_check("reset refills health", is_equal_approx(crit.health, HealthComponent.MAX) and is_equal_approx(crit.regen_timer, 0.0) and not crit.dead)
+
+	# --- StormDamageComponent -------------------------------------------------
+	var storm_host := StormHost.new()
+	root.add_child(storm_host)
+	await process_frame
+	storm_host.global_position = Vector3(10, 0, 0)
+	var sc := StormDamageComponent.new()
+	Entity.attach(storm_host, sc)
+	for _i in 10:
+		sc.tick(0.1)
+	_check("storm damages outside radius", is_equal_approx(storm_host.damage_taken, 10.0))
+	storm_host.global_position = Vector3(1, 0, 0)
+	storm_host.damage_taken = 0.0
+	for _i in 10:
+		sc.tick(0.1)
+	_check("storm does not damage inside radius", is_equal_approx(storm_host.damage_taken, 0.0))
+	storm_host.global_position = Vector3(10, 0, 0)
+	storm_host._is_dead = true
+	storm_host.damage_taken = 0.0
+	for _i in 10:
+		sc.tick(0.1)
+	_check("storm does not damage when dead", is_equal_approx(storm_host.damage_taken, 0.0))
+	sc.reset()
+	_check("storm reset clears accumulator", sc._damage_accumulator == 0.0 and sc._check_timer == 0.0)
 
 	print("ecs selftest: %d failure(s)" % failures)
 	quit(1 if failures > 0 else 0)

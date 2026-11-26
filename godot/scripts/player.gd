@@ -112,9 +112,7 @@ const MUZZLE_FLASH_SCENE_PATH: String = "res://scenes/fx/muzzle_flash.tscn"
 @export var storm_center: Vector2 = Vector2(0, 0)
 @export var storm_radius: float = 10.0
 @export var storm_damage_per_second: float = 10.0
-var _storm_damage_accumulator: float = 0.0
-var _storm_check_timer: float = 0.0
-const STORM_CHECK_INTERVAL: float = 0.1
+var _storm_damage: StormDamageComponent = null
 var _storm_eye: Node = null
 
 # --- MOMENTUM CONSTANTS ---
@@ -695,6 +693,8 @@ func _ready() -> void:
 	Entity.attach(self, _stamina)
 	_health = HealthComponent.new()
 	Entity.attach(self, _health)
+	_storm_damage = StormDamageComponent.new()
+	Entity.attach(self, _storm_damage)
 
 	# Initialize health
 	health = MAX_HEALTH
@@ -1385,8 +1385,7 @@ func _physics_process(delta: float) -> void:
 		if _respawn_timer <= 0.0:
 			respawn_at_spawn_point()
 
-	# --- STORM DAMAGE (check every 0.1s) ---
-	_update_storm_damage(delta)
+	# Storm damage is handled by StormDamageComponent.tick via Entity.tick.
 
 	# --- DEATH DISSOLVE ---
 	# The burn follows health, so damage is visible on the body as it lands
@@ -1568,24 +1567,6 @@ func _frame_ticks(net_active: bool) -> void:
 ## hanging off a wall inside the storm does not make the player storm-proof.
 ## Skipped while dead: the dead body is about to respawn, and accumulating storm
 ## damage there would leave a leftover chunk that fires the instant they come back.
-func _update_storm_damage(delta: float) -> void:
-	if _is_dead:
-		return
-	_storm_check_timer += delta
-	if _storm_check_timer < STORM_CHECK_INTERVAL:
-		return
-	_storm_check_timer = 0.0
-	_refresh_storm_zone()
-	var player_pos_2d := Vector2(global_position.x, global_position.z)
-	var dist := player_pos_2d.distance_to(storm_center)
-	if dist > storm_radius:
-		_storm_damage_accumulator += storm_damage_per_second * STORM_CHECK_INTERVAL
-		if _storm_damage_accumulator >= 1.0:
-			var dmg := int(_storm_damage_accumulator)
-			_storm_damage_accumulator -= dmg
-			take_damage(dmg, self)
-	else:
-		_storm_damage_accumulator = 0.0
 
 # ---------------------------------------------------------------------------
 # Climb API (called by scripts/environment/ClimbableSurface.gd)
