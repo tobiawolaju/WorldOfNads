@@ -1688,7 +1688,8 @@ func _physics_process_climb(delta: float, input_dir: Vector2) -> void:
 	# slide, momentum and _handle_animations are all bypassed on purpose.
 	_apply_touch_orbit()
 	_handle_camera_gamepad(delta)
-	_update_storm_damage(delta)
+	if _storm_damage != null:
+		_storm_damage.tick(delta)
 	_slide_requested = false
 	_jump_buffer_timer = 0.0
 
