@@ -142,9 +142,9 @@ const RETREAT_ZOOM_SMOOTHNESS: float = 4.0
 # (scripts/player/components/stamina_component.gd), attached in _ready.
 
 # --- HEALTH ---
-const MAX_HEALTH: float = 100.0
-const HEALTH_REGEN_DELAY: float = 3.0
-const HEALTH_REGEN_RATE: float = 15.0
+const MAX_HEALTH: float = HealthComponent.MAX
+const HEALTH_REGEN_DELAY: float = HealthComponent.REGEN_DELAY
+const HEALTH_REGEN_RATE: float = HealthComponent.REGEN_RATE
 const RESPAWN_DELAY: float = 2.0
 
 const LANDING_BOB_DURATION: float = 0.14
@@ -231,7 +231,7 @@ var _dev_cheat_last_time: int = 0
 
 ## Health fraction (of MAX_HEALTH) at or below which the near-death fall animation
 ## plays once, right before the health bar empties.
-const HEALTH_CRITICAL_FRACTION: float = 0.05
+const HEALTH_CRITICAL_FRACTION: float = HealthComponent.CRITICAL_FRACTION
 ## Fallback length of the near-death fall animation, if the clip cannot be read.
 const CRITICAL_FALL_FALLBACK: float = 2.5
 
@@ -508,8 +508,21 @@ var stamina: float:
 			_stamina.stamina = value
 
 # --- HEALTH STATE ---
-var health: float = MAX_HEALTH
-var _health_regen_timer: float = 0.0
+var _health: HealthComponent = null
+## Compatibility proxy: HUD/older code read `health`, `get_health()`,
+## `get_max_health()`; the real pool lives in the component.
+var health: float:
+	get:
+		return _health.health if _health != null else 0.0
+	set(value):
+		if _health != null:
+			_health.health = value
+var _health_regen_timer: float:
+	get:
+		return _health.regen_timer if _health != null else 0.0
+	set(value):
+		if _health != null:
+			_health.regen_timer = value
 var _is_dead: bool = false
 var _respawn_timer: float = 0.0
 var _cached_health_bar: Node = null  # Cached once; avoid per-hit tree scans
@@ -680,6 +693,8 @@ func _ready() -> void:
 	# before the first physics frame, which is also when the HUD may read it.
 	_stamina = StaminaComponent.new()
 	Entity.attach(self, _stamina)
+	_health = HealthComponent.new()
+	Entity.attach(self, _health)
 
 	# Initialize health
 	health = MAX_HEALTH
@@ -1352,6 +1367,7 @@ func _physics_process(delta: float) -> void:
 	_stamina.moving = is_moving_input
 	_stamina.holding = is_holding or _pumping
 	_stamina.effort = input_strength
+	_health.dead = _is_dead
 	Entity.tick(self, delta)
 	var speed_to_use := SPEED * _stamina.speed_multiplier()
 	# The pump burst only applies while stamina can still pay for it; once the
@@ -1362,12 +1378,9 @@ func _physics_process(delta: float) -> void:
 	if _active_power_up_mode == LocalPickup.PowerUpMode.SPEED_BURST and _active_power_up_remaining > 0.0:
 		speed_to_use *= SPEED_BURST_MULT
 
-	# --- HEALTH REGEN ---
-	if not _is_dead:
-		_health_regen_timer = maxf(0.0, _health_regen_timer - delta)
-		if _health_regen_timer <= 0.0 and health < MAX_HEALTH:
-			health = minf(MAX_HEALTH, health + HEALTH_REGEN_RATE * delta)
-	elif _is_dead:
+	# --- HEALTH REGEN / RESPAWN ---
+	# Regen is handled by HealthComponent.tick; respawn stays here.
+	if _is_dead:
 		_respawn_timer = maxf(0.0, _respawn_timer - delta)
 		if _respawn_timer <= 0.0:
 			respawn_at_spawn_point()
@@ -3497,8 +3510,11 @@ func _refresh_storm_zone() -> void:
 func take_damage(amount: float, source: Node = null, is_bullet: bool = false) -> void:
 	if _is_dead:
 		return
-	health = maxf(0.0, health - amount)
-	_health_regen_timer = HEALTH_REGEN_DELAY
+	if _health != null:
+		_health.apply_damage(amount)
+	else:
+		health = maxf(0.0, health - amount)
+		_health_regen_timer = HEALTH_REGEN_DELAY
 
 	# Bullet hits pop a white confetti burst ("I got hit" / target-hit feedback).
 	if is_bullet:
@@ -3510,9 +3526,11 @@ func take_damage(amount: float, source: Node = null, is_bullet: bool = false) ->
 	if _cached_health_bar and _cached_health_bar.has_method("_on_damage_taken"):
 		_cached_health_bar._on_damage_taken()
 	
-	if health <= 0.0:
+	var depleted := _health.is_depleted() if _health != null else health <= 0.0
+	var critical := _health.is_critical() if _health != null else (health > 0.0 and health <= MAX_HEALTH * HEALTH_CRITICAL_FRACTION)
+	if depleted:
 		die()
-	elif health <= MAX_HEALTH * HEALTH_CRITICAL_FRACTION:
+	elif critical:
 		_start_critical_fall()
 
 func _find_health_bar() -> Node:

@@ -113,6 +113,30 @@ func _initialize() -> void:
 	_check("reset refills the pool", is_equal_approx(empty.stamina, StaminaComponent.MAX))
 	_check("reset clears the throttle", not empty.is_throttled() and empty.speed_multiplier() == 1.0)
 
+	# --- HealthComponent ------------------------------------------------------
+	var hp := HealthComponent.new()
+	_check("a fresh health pool is full", is_equal_approx(hp.health, HealthComponent.MAX))
+	_check("a fresh health pool is not critical", not hp.is_critical())
+	_check("a fresh health pool is not depleted", not hp.is_depleted())
+	hp.apply_damage(30.0)
+	_check("damage reduces health", is_equal_approx(hp.health, 70.0))
+	_check("damage resets regen delay", is_equal_approx(hp.regen_timer, HealthComponent.REGEN_DELAY))
+	_drive_health(hp, 3.1, false)
+	_check("health regenerates after delay", hp.health > 70.0)
+	var dead_hp := HealthComponent.new()
+	dead_hp.dead = true
+	dead_hp.health = 50.0
+	dead_hp.regen_timer = 0.0
+	_drive_health(dead_hp, 2.0, true)
+	_check("dead health does not regenerate", is_equal_approx(dead_hp.health, 50.0))
+	var crit := HealthComponent.new()
+	crit.apply_damage(96.0)
+	_check("low health is critical", crit.is_critical())
+	crit.apply_damage(10.0)
+	_check("empty health is depleted", crit.is_depleted())
+	crit.reset()
+	_check("reset refills health", is_equal_approx(crit.health, HealthComponent.MAX) and is_equal_approx(crit.regen_timer, 0.0) and not crit.dead)
+
 	print("ecs selftest: %d failure(s)" % failures)
 	quit(1 if failures > 0 else 0)
 
@@ -130,6 +154,14 @@ func _drive(stamina: StaminaComponent, seconds: float, moving: bool, holding: bo
 func _tick_once(host: Node) -> bool:
 	Entity.tick(host, 0.016)
 	return true
+
+
+## Ticks `seconds` of a 60 fps loop with the given dead intent.
+func _drive_health(hp: HealthComponent, seconds: float, dead: bool) -> void:
+	hp.dead = dead
+	var steps := int(round(seconds * 60.0))
+	for _i in steps:
+		hp.tick(1.0 / 60.0)
 
 
 func _check(what: String, condition: bool) -> void:
