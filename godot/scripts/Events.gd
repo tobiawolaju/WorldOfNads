@@ -25,10 +25,6 @@ const FEED_SYSTEM_ALPHA := 0.62
 ## code change, so custom emotes are an art drop, not a feature request.
 const EMOTES_DIR := "res://assets/emotes"
 const EMOTE_SIZE := 20
-## Chance a player event gets a random emote appended. Hype moments always do;
-## system notices and the chicken countdown never do.
-const RANDOM_EMOTE_CHANCE := 0.35
-const HYPE_PHRASES := ["picked the chicken", "stole the chicken from", "won the round", "eliminated"]
 const SKULL_ICON_PATH := "res://assets/img/skull.png"
 const BUILTIN_EMOTES := {
 	"chicken": "res://assets/img/chick.png",
@@ -39,8 +35,34 @@ const BUILTIN_EMOTES := {
 	"energy": "res://assets/img/energy.png",
 }
 
+# Contextual emote selection: pick an emote that fits the event, not a random
+# reaction. The 10 curated emotes live in assets/emotes/; we map by the token
+# (lowercased basename) so filename-based tokens keep working.
+const EMOTE_HYPERKEKW := "hyperkekw"
+const EMOTE_POGGERS := "poggers"
+const EMOTE_MONKAS := "monkas"
+const EMOTE_PEPELAUGH := "pepelaugh"
+const EMOTE_SADGE := "sadge"
+const EMOTE_GIGACHAD := "gigachad"
+const EMOTE_COPIUM := "copium"
+const EMOTE_HYPERCLAP := "hyperclap"
+const EMOTE_PEPEHANDS := "pepehands"
+const EMOTE_5HEAD := "5head"
+
+## Events that should never get an auto emote (system noise, countdown-like, etc.).
+const NO_EMOTE_PHRASES := [
+	"connecting events stream",
+	"events live",
+	"events disconnected",
+	"live events unavailable",
+	"wins in ",
+]
+
 var _emotes: Dictionary = {}
 var _emote_pattern: RegEx = RegEx.create_from_string(":([A-Za-z0-9_+\\-]+):")
+## Avoid repeating the same auto emote in consecutive event lines.
+var _recent_auto_emotes: Array[String] = []
+const RECENT_AUTO_EMOTE_LIMIT := 3
 
 # The avatar directory lives on the Node backend: the Rust room server knows
 # nothing about Privy, so there is nothing to ask it. The beta talks to the
@@ -383,7 +405,7 @@ func _render_event(event_data: Dictionary, can_navigate: bool) -> void:
 		return
 	var parsed = _split_message_actor_and_text(message)
 	var actor = _resolve_event_actor(event_data, parsed["actor"])
-	_push_event_line(actor, parsed["message"])
+	_push_event_line(actor, parsed["message"], true, event_type, event_data)
 
 	if can_navigate and str(event_data.get("eventType", "")) == "match_winner":
 		_handle_match_winner_event(event_data)
@@ -488,7 +510,7 @@ func _show_gameover_overlay() -> void:
 func _show_local_status(text: String, actor: String = "system") -> void:
 	_push_event_line(actor, text)
 
-func _push_event_line(actor: String, message: String, randomize_emote: bool = true) -> void:
+func _push_event_line(actor: String, message: String, randomize_emote: bool = true, event_type: String = "", event_data: Dictionary = {}) -> void:
 	var safe_actor := actor.strip_edges()
 	var safe_message := message.strip_edges()
 	if safe_message == "":
@@ -496,7 +518,7 @@ func _push_event_line(actor: String, message: String, randomize_emote: bool = tr
 	if safe_actor == "":
 		safe_actor = "system"
 	if randomize_emote and safe_actor != "system":
-		safe_message = _with_random_emote(safe_message)
+		safe_message = _with_contextual_emote(safe_message, event_type, safe_actor, event_data)
 
 	_entry_seq += 1
 	_entries.append({
@@ -545,24 +567,130 @@ func _build_emotes() -> void:
 			_emotes[file.get_basename().to_lower()] = texture
 
 
-## Appends one random emote to a player line, so the chat reads like a room with
-## people reacting instead of a server log. Hype lines always get one.
-func _with_random_emote(message: String) -> String:
+## Appends a contextual emote to a player line when the event clearly calls for
+## one. No random spam: the emote must match the event, and we avoid repeating the
+## same auto emote in consecutive lines. Manual :token: emotes are never overridden.
+func _with_contextual_emote(message: String, event_type: String = "", actor: String = "", event_data: Dictionary = {}) -> String:
 	if _emotes.is_empty() or _emote_pattern.search(message) != null:
 		return message
-	var chance := 1.0 if _is_hype_message(message) else RANDOM_EMOTE_CHANCE
-	if randf() >= chance:
+	if actor == "system":
 		return message
-	var keys := _emotes.keys()
-	return "%s :%s:" % [message, str(keys[randi() % keys.size()])]
-
-
-func _is_hype_message(message: String) -> bool:
 	var lower := message.to_lower()
-	for phrase in HYPE_PHRASES:
+	for phrase in NO_EMOTE_PHRASES:
 		if lower.contains(phrase):
+			return message
+	var emote := _pick_contextual_emote(lower, event_type, event_data)
+	if emote == "":
+		return message
+	if not _emotes.has(emote):
+		return message
+	_recent_auto_emotes.append(emote)
+	while _recent_auto_emotes.size() > RECENT_AUTO_EMOTE_LIMIT:
+		_recent_auto_emotes.pop_front()
+	return "%s :%s:" % [message, emote]
+
+
+func _pick_contextual_emote(lower: String, event_type: String, event_data: Dictionary) -> String:
+	# Explicit excuses/denial in the message itself: COPIUM only.
+	if _looks_like_excuse(lower):
+		return _choose_fresh([EMOTE_COPIUM])
+
+	# Match/round win.
+	if event_type == "match_winner" or lower.contains("won the round") or lower.contains("won the match"):
+		return _choose_fresh([EMOTE_HYPERCLAP, EMOTE_POGGERS])
+
+	# Join / presence.
+	if lower.contains("joined the party") or lower.contains("joined the game") or lower.contains("joined the match"):
+		return _choose_fresh([EMOTE_POGGERS])
+
+	# Chicken/loot steals and pickups.
+	if lower.contains("stole the chicken") or lower.contains("stole the lootbox"):
+		return _choose_fresh([EMOTE_PEPELAUGH, EMOTE_POGGERS])
+	if lower.contains("picked the chicken") or lower.contains("picked up the chicken") or lower.contains("picked the lootbox") or lower.contains("picked up the lootbox"):
+		return _choose_fresh([EMOTE_POGGERS])
+
+	# Drops/losses of objective items.
+	if lower.contains("dropped the chicken") or lower.contains("lost the chicken") \
+			or lower.contains("dropped the lootbox") or lower.contains("lost the lootbox"):
+		return _choose_fresh([EMOTE_PEPEHANDS, EMOTE_SADGE])
+
+	# Eliminations / deaths.
+	if lower.contains("was eliminated") or lower.contains(" eliminated "):
+		# Only use HYPERKEKW when the event/message clearly signals a goofy mistake.
+		if _looks_like_embarrassing_elimination(lower, event_data):
+			return _choose_fresh([EMOTE_HYPERKEKW])
+		return _choose_fresh([EMOTE_SADGE, EMOTE_PEPEHANDS])
+
+	# Last survivor / clutch tension - only when the event text actually says so.
+	if lower.contains("last survivor") or lower.contains("final survivor") or lower.contains("last one standing"):
+		return _choose_fresh([EMOTE_MONKAS, EMOTE_GIGACHAD])
+
+	# Survived with very little health - only when explicitly reported.
+	if _looks_like_low_hp_survival(lower, event_data):
+		return _choose_fresh([EMOTE_GIGACHAD])
+
+	# Clever escape/outplay - only when explicitly reported.
+	if _looks_like_clever_play(lower):
+		return _choose_fresh([EMOTE_5HEAD])
+
+	# Impressive play / outplayed - only when explicitly reported.
+	if lower.contains("impressive play") or lower.contains("insane play") or lower.contains("crazy play"):
+		return _choose_fresh([EMOTE_POGGERS])
+	if lower.contains("got outplayed") or lower.contains("outplayed by"):
+		return _choose_fresh([EMOTE_HYPERKEKW, EMOTE_SADGE])
+
+	return ""
+
+
+func _looks_like_excuse(lower: String) -> bool:
+	for token in ["lag", "lagged", "desync", "ping", "excuse", "copium", "blame", "cheater", "hacker", "rigged", "bugged"]:
+		if lower.contains(token):
 			return true
 	return false
+
+
+func _looks_like_embarrassing_elimination(lower: String, event_data: Dictionary) -> bool:
+	for token in ["fell off", "fell into", "missed", "oops", "accident", "clumsy", "embarrass", "own goal", "self"]:
+		if lower.contains(token):
+			return true
+	var reason := str(event_data.get("reason", "")).to_lower()
+	for token in ["fall", "void", "oops", "self"]:
+		if reason.contains(token):
+			return true
+	return false
+
+
+func _looks_like_low_hp_survival(lower: String, event_data: Dictionary) -> bool:
+	if lower.contains("1 hp") or lower.contains("low hp") or lower.contains("barely survived") \
+			or lower.contains("survived with"):
+		return true
+	var hp = event_data.get("hp", null)
+	if typeof(hp) == TYPE_INT or typeof(hp) == TYPE_FLOAT:
+		return float(hp) <= 1.0
+	return false
+
+
+func _looks_like_clever_play(lower: String) -> bool:
+	for token in ["clever escape", "clever outplay", "outsmart", "outplayed", "juked", "big brain", "5head"]:
+		if lower.contains(token):
+			# "got outplayed" is negative, handled above; positive cleverness only.
+			if lower.contains("got outplayed"):
+				return false
+			return true
+	return false
+
+
+## Picks the first candidate not used recently; if all were recent, allow the first.
+func _choose_fresh(candidates: Array[String]) -> String:
+	for c in candidates:
+		if not _emotes.has(c):
+			continue
+		if not _recent_auto_emotes.has(c):
+			return c
+	for c in candidates:
+		if _emotes.has(c):
+			return c
+	return ""
 
 func _on_avatar_ready(_username: String, _texture: Texture2D) -> void:
 	# A picture landed for a name already on screen: repaint so every row showing
