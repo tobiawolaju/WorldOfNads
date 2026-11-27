@@ -77,6 +77,22 @@ var _original_clip_contents: bool = true
 var _storm_anchors: Vector4
 var _storm_offsets: Vector4
 
+# --- FULLSCREEN CHROME ---
+## The event feed stays readable over the expanded map, so it is pushed above
+## the map's z-index instead of being hidden behind it.
+var _event_feed_panel: Control = null
+var _event_feed_z_index: int = 0
+## HUD nodes that would otherwise draw over the fullscreen map (the action
+## buttons live on a later CanvasLayer, so z_index alone cannot put the map
+## above them). CanvasLayer is not a CanvasItem, so store plain Nodes and use
+## their `visible` property.
+var _hide_controls: Array[Node] = []
+var _hide_controls_visible: Array[bool] = []
+## A tap opens the map on press; ignore presses for a moment afterwards so the
+## same gesture cannot immediately close it again.
+const CLOSE_GRACE_MS := 150
+var _opened_at_ms: int = 0
+
 ## Fullscreen "shade": the shde ColorRect in the HUD fades in behind the map
 ## while it is expanded, and fades back out when the map is closed.
 @export var shade_overlay: CanvasItem
@@ -101,6 +117,7 @@ func _ready() -> void:
 		_storm_offsets = Vector4(storm_overlay.offset_left, storm_overlay.offset_top, storm_overlay.offset_right, storm_overlay.offset_bottom)
 
 	_ensure_pointer_overflow()
+	_resolve_expanded_chrome()
 
 	# Center the pointer automatically
 	_setup_pointer(player_pointer)
@@ -135,12 +152,44 @@ func _ensure_pointer_overflow() -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
+	if _is_fullscreen:
+		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		_toggle_fullscreen()
+		_set_fullscreen(true)
+
+
+## While the map is expanded, any press on the screen closes it. Handling it in
+## _input (before GUI) means buttons under the tap cannot also fire, and a tap
+## on the map itself closes instead of being swallowed by the map control.
+func _input(event: InputEvent) -> void:
+	if not _is_fullscreen:
+		return
+	if Time.get_ticks_msec() - _opened_at_ms < CLOSE_GRACE_MS:
+		return
+	if not _is_close_press(event):
+		return
+	get_viewport().set_input_as_handled()
+	_set_fullscreen(false)
+
+
+func _is_close_press(event: InputEvent) -> bool:
+	if event is InputEventMouseButton:
+		return event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+	if event is InputEventScreenTouch:
+		return event.pressed
+	return false
+
 
 func _toggle_fullscreen() -> void:
-	_is_fullscreen = !_is_fullscreen
+	_set_fullscreen(not _is_fullscreen)
+
+
+func _set_fullscreen(expanded: bool) -> void:
+	if _is_fullscreen == expanded:
+		return
+	_is_fullscreen = expanded
 	if _is_fullscreen:
+		_opened_at_ms = Time.get_ticks_msec()
 		minimap_container.z_index = 100 # Put on top
 		_update_fullscreen_layout()
 		# Let the storm overlay extend beyond the square map, across the screen.
@@ -167,7 +216,47 @@ func _toggle_fullscreen() -> void:
 			_map_clip.clip_contents = true
 		_restore_storm_overlay_layout()
 		_fade_shade(false)
+	_apply_expanded_chrome(_is_fullscreen)
 	_update_bus_path_overlay()
+
+
+## Resolve the HUD pieces the fullscreen map has to cover/keep visible. The
+## event feed is a sibling of the map; the action buttons live on a later
+## CanvasLayer, which draws above the map regardless of z_index.
+func _resolve_expanded_chrome() -> void:
+	_event_feed_panel = get_node_or_null("../EventFeedPanel") as Control
+	if _event_feed_panel != null:
+		_event_feed_z_index = _event_feed_panel.z_index
+
+	_hide_controls.clear()
+	for path in [
+		# Whole action-button layer: hides Action/Jump/Slide, Chog and the ammo
+		# label even if buttons.gd toggles Chog's own visibility while open.
+		"../../../../Node3/CanvasLayer",
+	]:
+		var node := get_node_or_null(path)
+		if node != null:
+			_hide_controls.append(node)
+	_hide_controls_visible.resize(_hide_controls.size())
+	_hide_controls_visible.fill(true)
+
+
+func _apply_expanded_chrome(expanded: bool) -> void:
+	if _event_feed_panel != null and is_instance_valid(_event_feed_panel):
+		# The map's own pointers use z_index 10-11 relative to the map's 100, so
+		# sit well above map+1; go far enough to clear those children too.
+		_event_feed_panel.z_index = (
+			minimap_container.z_index + 100 if expanded else _event_feed_z_index
+		)
+	for index in _hide_controls.size():
+		var control := _hide_controls[index]
+		if control == null or not is_instance_valid(control):
+			continue
+		if expanded:
+			_hide_controls_visible[index] = bool(control.get("visible"))
+			control.set("visible", false)
+		else:
+			control.set("visible", _hide_controls_visible[index])
 
 func _fade_shade(should_show: bool) -> void:
 	if shade_overlay == null or not is_instance_valid(shade_overlay):
