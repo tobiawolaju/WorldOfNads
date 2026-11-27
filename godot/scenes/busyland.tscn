@@ -1,209 +1,88 @@
-[gd_scene format=4 uid="uid://bj27lnrpsa1wt"]
+[gd_scene format=3 uid="uid://bj27lnrpsa1wt"]
+
 [ext_resource type="Shader" uid="uid://duvvsy3gjg0hm" path="res://assets/shaders/terrain.gdshader" id="1_mx8sn"]
 [ext_resource type="Texture2D" uid="uid://dra68b33d7qk4" path="res://assets/img/map/ground.jpg" id="2_ppgk2"]
 [ext_resource type="Texture2D" uid="uid://c7d73vmini8ss" path="res://assets/img/map/grasspatch.jpg" id="3_2r41h"]
 [ext_resource type="Texture2D" uid="uid://cp58rvgp2x8jv" path="res://assets/models/lowpoly_grass_0.png" id="4_i8kgf"]
-[ext_resource type="Texture2D" uid="uid://bohdlvuyxhr1r" path="res://assets/models/lowpoly_grass_1.png" id="5_a6qdq"]
 [ext_resource type="Shader" uid="uid://cra5cti8f2j5j" path="res://assets/shaders/grass.gdshader" id="6_2atol"]
 [ext_resource type="Texture2D" uid="uid://2psdgthxiii3" path="res://assets/img/map/ground1.jpg" id="7_2atol"]
 [ext_resource type="Texture2D" uid="uid://q0n1sm00atqq" path="res://assets/img/map/ground2.jpg" id="8_k3pvx"]
 [ext_resource type="Material" uid="uid://cmaqetwybrgcn" path="res://resources/waterbody.tres" id="9_k3pvx"]
-[ext_resource type="Texture2D" uid="uid://c6epps30dmdmy" path="res://assets/models/sign_pole_6.jpg" id="10_nmwxw"]
-[ext_resource type="Texture2D" uid="uid://cd2803sbb7fq2" path="res://assets/models/sign_pole_7.png" id="11_1fxid"]
-[ext_resource type="Texture2D" uid="uid://dw8u3c6x65fko" path="res://assets/models/sign_pole_8.png" id="12_gamsl"]
-[ext_resource type="Texture2D" uid="uid://da700v4bifstn" path="res://assets/models/sign_pole_3.jpg" id="13_sd4kv"]
-[ext_resource type="Texture2D" uid="uid://btxrkoju3l65i" path="res://assets/models/sign_pole_4.png" id="14_gu38q"]
-[ext_resource type="Texture2D" uid="uid://bqjyd7gwodr7y" path="res://assets/models/sign_pole_5.png" id="15_02vpl"]
-[ext_resource type="Texture2D" uid="uid://c5y1q7a406mag" path="res://assets/models/sign_pole_0.jpg" id="16_mtcmy"]
-[ext_resource type="Texture2D" uid="uid://ddpplniw1hx2n" path="res://assets/models/sign_pole_1.png" id="17_daji7"]
-[ext_resource type="Texture2D" uid="uid://yibyntft0nr7" path="res://assets/models/sign_pole_2.png" id="18_62obg"]
-[ext_resource type="Texture2D" uid="uid://cd2r54kx4ynpy" path="res://assets/models/trash_bag_0.png" id="19_sd4kv"]
-[ext_resource type="Texture2D" uid="uid://smrqv73i3xlf" path="res://assets/models/trash_bag_1.png" id="20_gu38q"]
-[ext_resource type="Texture2D" uid="uid://bvqxywru8tq71" path="res://assets/models/trash_bag_2.png" id="21_02vpl"]
-[ext_resource type="Texture2D" uid="uid://dymwune885cdv" path="res://assets/models/house_Image_0.jpg" id="22_et18r"]
-[ext_resource type="Texture2D" uid="uid://bii8cupby671u" path="res://assets/models/chain_link_fence_0.png" id="23_daji7"]
-[ext_resource type="Texture2D" uid="uid://r3pjywbflaie" path="res://assets/models/chain_link_fence_1.png" id="24_62obg"]
-[ext_resource type="Texture2D" uid="uid://5qw0a8kvh0oi" path="res://assets/models/chain_link_fence_2.png" id="25_vq17p"]
-[ext_resource type="Texture2D" uid="uid://356j3x3f7lru" path="res://assets/models/skibidi_toilet_template_0.png" id="26_62obg"]
 [ext_resource type="Script" uid="uid://d4e6jq6lwbeoo" path="res://scripts/environment/ClimbableSurface.gd" id="26_dhman"]
-[ext_resource type="Texture2D" uid="uid://dx4eva6t66mwx" path="res://assets/models/set_of_cardboard_boxes (1)_0.png" id="28_dhman"]
-[ext_resource type="Texture2D" uid="uid://b08kjyaaxthle" path="res://assets/models/set_of_cardboard_boxes (1)_1.png" id="29_t4to0"]
-[ext_resource type="Texture2D" uid="uid://b6kkcxf6hnggb" path="res://assets/models/set_of_cardboard_boxes (1)_2.png" id="30_tlgt0"]
-[ext_resource type="Texture2D" uid="uid://bpumct6po5yx7" path="res://assets/models/props/japanese_dont_skate_sign_0.png" id="31_t4to0"]
-[ext_resource type="Texture2D" uid="uid://b6sb8vg2i4oho" path="res://assets/models/props/slum_modular_0.png" id="32_j3iog"]
-[ext_resource type="Texture2D" uid="uid://b840qr4aiy582" path="res://assets/models/props/slum_modular_1.png" id="33_252lq"]
-[ext_resource type="Texture2D" uid="uid://txu4b7nirlfl" path="res://assets/models/props/slum_modular_2.png" id="34_3afmc"]
-[ext_resource type="Texture2D" uid="uid://dokhbmivl33li" path="res://assets/models/props/slum_modular_3.png" id="35_kfr67"]
-[ext_resource type="Texture2D" uid="uid://b80cxhjb44hfr" path="res://assets/models/props/slum_modular_4.png" id="36_2tlr5"]
-[ext_resource type="Texture2D" uid="uid://cxnjx4svupnfv" path="res://assets/models/props/slum_modular_5.png" id="37_aukin"]
-[ext_resource type="Texture2D" uid="uid://dyikp7ga2j5s6" path="res://assets/models/props/slum_modular_6.png" id="38_8n5pt"]
-[ext_resource type="Texture2D" uid="uid://dkbk0hplidh0f" path="res://assets/models/props/broadcast_tower_game_ready (1)_0.jpg" id="40_eta50"]
-[ext_resource type="Texture2D" uid="uid://bmdsweix8bvqa" path="res://assets/models/props/broadcast_tower_game_ready (1)_1.png" id="41_7jga5"]
-[ext_resource type="Texture2D" uid="uid://cvroiov7j0rhs" path="res://assets/models/props/broadcast_tower_game_ready (1)_2.png" id="42_ivbyu"]
-[ext_resource type="Texture2D" uid="uid://dylm3v1pjpq0b" path="res://assets/models/props/broadcast_tower_game_ready (1)_3.png" id="43_ajwcu"]
-[ext_resource type="Texture2D" uid="uid://cbi42ropj4spe" path="res://assets/models/props/broadcast_tower_game_ready (1)_4.png" id="44_pfs0k"]
-[ext_resource type="Texture2D" uid="uid://6ueywpkdld5x" path="res://assets/models/props/broadcast_tower_game_ready (1)_5.png" id="45_yxgly"]
-[ext_resource type="Texture2D" uid="uid://bij0ngcu28xer" path="res://assets/models/props/big_plastic_water_tank_0.png" id="47_yxgly"]
-[ext_resource type="Texture2D" uid="uid://cwoft1xindf52" path="res://assets/models/props/big_plastic_water_tank_1.png" id="48_l6qws"]
 [ext_resource type="PackedScene" uid="uid://cl04rrl1kgkny" path="res://assets/models/props/low_poly_barrel_21.glb" id="50_yxgly"]
-[ext_resource type="Texture2D" uid="uid://dde06vrvgi7s3" path="res://assets/models/props/old_keg_0.png" id="51_ee1ru"]
-[ext_resource type="Texture2D" uid="uid://dlbrhie5obkgp" path="res://assets/models/props/old_keg_1.png" id="52_g3o1y"]
-[ext_resource type="Texture2D" uid="uid://c6d0s0aolgl5y" path="res://assets/models/props/old_keg_2.png" id="53_jjarv"]
-[ext_resource type="Texture2D" uid="uid://djdeix6twlo6j" path="res://assets/models/props/palete_game_ready_0.png" id="54_3jrh0"]
-[ext_resource type="Texture2D" uid="uid://c38n1clcq1svy" path="res://assets/models/props/palete_game_ready_1.png" id="55_g5o4y"]
-[ext_resource type="Texture2D" uid="uid://c4vbaen53m3dw" path="res://assets/models/props/palete_game_ready_2.png" id="56_p8sow"]
-[ext_resource type="Texture2D" uid="uid://chwjxgkcggy8v" path="res://assets/models/props/supermarket_potato_chips_shelf_asset_0.jpg" id="57_0lr6x"]
-[ext_resource type="Texture2D" uid="uid://m11qlpbxqpmt" path="res://assets/models/props/supermarket_potato_chips_shelf_asset_1.png" id="58_bfm0a"]
-[ext_resource type="Texture2D" uid="uid://b4kmmnohjmbs" path="res://assets/models/props/supermarket_potato_chips_shelf_asset_2.png" id="59_k68lb"]
-[ext_resource type="Texture2D" uid="uid://dx3rnpfoolsce" path="res://assets/models/props/trash_can_3.png" id="61_8q587"]
 [ext_resource type="PackedScene" uid="uid://cftilamupgbux" path="res://scenes/props/monster.tscn" id="61_hr4j4"]
-[ext_resource type="Texture2D" uid="uid://b6xu7lvtpunjx" path="res://assets/models/props/water_bottle_2.png" id="61_kdlkc"]
 [ext_resource type="Script" uid="uid://br6pnv5y40hfq" path="res://scenes/bee.gd" id="62_8q587"]
-[ext_resource type="Texture2D" uid="uid://ddgov2y3jkcto" path="res://assets/models/props/bee_minecraft_0.png" id="62_hr4j4"]
-[ext_resource type="Texture2D" uid="uid://ctjj0w1wtwadi" path="res://assets/models/props/water_bottle_5.png" id="62_j1018"]
-[ext_resource type="Texture2D" uid="uid://bg5vq3vqf571v" path="res://assets/models/props/trash_can_2.png" id="62_kdlkc"]
 [ext_resource type="PackedScene" uid="uid://b455bcav0ersh" path="res://scenes/props/van.tscn" id="64_kdlkc"]
-[ext_resource type="Texture2D" path="res://assets/img/busyland/trash_can_mat_albedo.webp" id="bz_tex_Image_fv2y4"]
-[ext_resource type="Texture2D" path="res://assets/img/busyland/trash_can_mat_roughness.webp" id="bz_tex_Image_nxk60"]
-[ext_resource type="Texture2D" path="res://assets/img/busyland/material_albedo.webp" id="bz_tex_Image_3fnoq"]
-[ext_resource type="Texture2D" path="res://assets/img/busyland/material_metallic.webp" id="bz_tex_Image_g4fug"]
-[ext_resource type="Texture2D" path="res://assets/img/busyland/material_1_albedo.webp" id="bz_tex_Image_mhss1"]
-[ext_resource type="Texture2D" path="res://assets/img/busyland/material_1_roughness.webp" id="bz_tex_Image_gsdkm"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_k3pvx.res" id="bz_mesh_ArrayMesh_k3pvx"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_icsd6.res" id="bz_mesh_ArrayMesh_icsd6"]
 [ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_1nemc.res" id="bz_mesh_ArrayMesh_1nemc"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_y8l0y.res" id="bz_mesh_ArrayMesh_y8l0y"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_yy3w1.res" id="bz_mesh_ArrayMesh_yy3w1"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_47080.res" id="bz_mesh_ArrayMesh_47080"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_7h7dh.res" id="bz_mesh_ArrayMesh_7h7dh"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_ciymv.res" id="bz_mesh_ArrayMesh_ciymv"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_kf1d1.res" id="bz_mesh_ArrayMesh_kf1d1"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_ymsh1.res" id="bz_mesh_ArrayMesh_ymsh1"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_u6siu.res" id="bz_mesh_ArrayMesh_u6siu"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_v5s5s.res" id="bz_mesh_ArrayMesh_v5s5s"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_xxugn.res" id="bz_mesh_ArrayMesh_xxugn"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_qdnof.res" id="bz_mesh_ArrayMesh_qdnof"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_6hn8e.res" id="bz_mesh_ArrayMesh_6hn8e"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_faukr.res" id="bz_mesh_ArrayMesh_faukr"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_ds5tn.res" id="bz_mesh_ArrayMesh_ds5tn"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_kqd13.res" id="bz_mesh_ArrayMesh_kqd13"]
 [ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_1vwax.res" id="bz_mesh_ArrayMesh_1vwax"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_uyd7c.res" id="bz_mesh_ArrayMesh_uyd7c"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_k5dqh.res" id="bz_mesh_ArrayMesh_k5dqh"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_28a3y.res" id="bz_mesh_ArrayMesh_28a3y"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_5q811.res" id="bz_mesh_ArrayMesh_5q811"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_huml8.res" id="bz_mesh_ArrayMesh_huml8"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_t087c.res" id="bz_mesh_ArrayMesh_t087c"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_bthfi.res" id="bz_mesh_ArrayMesh_bthfi"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_pe4ft.res" id="bz_mesh_ArrayMesh_pe4ft"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_nw5p3.res" id="bz_mesh_ArrayMesh_nw5p3"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_fxaat.res" id="bz_mesh_ArrayMesh_fxaat"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_7jjiv.res" id="bz_mesh_ArrayMesh_7jjiv"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_vkkry.res" id="bz_mesh_ArrayMesh_vkkry"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_m2oyc.res" id="bz_mesh_ArrayMesh_m2oyc"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_atatb.res" id="bz_mesh_ArrayMesh_atatb"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_w5qfb.res" id="bz_mesh_ArrayMesh_w5qfb"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_uhkf7.res" id="bz_mesh_ArrayMesh_uhkf7"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_strxw.res" id="bz_mesh_ArrayMesh_strxw"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_ngkti.res" id="bz_mesh_ArrayMesh_ngkti"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_gbp6l.res" id="bz_mesh_ArrayMesh_gbp6l"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_x1c6o.res" id="bz_mesh_ArrayMesh_x1c6o"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_fxe5n.res" id="bz_mesh_ArrayMesh_fxe5n"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_xxaor.res" id="bz_mesh_ArrayMesh_xxaor"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_g14vv.res" id="bz_mesh_ArrayMesh_g14vv"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_mnc8j.res" id="bz_mesh_ArrayMesh_mnc8j"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_a05wv.res" id="bz_mesh_ArrayMesh_a05wv"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_dix8s.res" id="bz_mesh_ArrayMesh_dix8s"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_pw5uu.res" id="bz_mesh_ArrayMesh_pw5uu"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_nis20.res" id="bz_mesh_ArrayMesh_nis20"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_004c5.res" id="bz_mesh_ArrayMesh_004c5"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_bnalp.res" id="bz_mesh_ArrayMesh_bnalp"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_cii0w.res" id="bz_mesh_ArrayMesh_cii0w"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_lkrrq.res" id="bz_mesh_ArrayMesh_lkrrq"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_uiryi.res" id="bz_mesh_ArrayMesh_uiryi"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_scq3m.res" id="bz_mesh_ArrayMesh_scq3m"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_iwm6y.res" id="bz_mesh_ArrayMesh_iwm6y"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_fv12h.res" id="bz_mesh_ArrayMesh_fv12h"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_uce2b.res" id="bz_mesh_ArrayMesh_uce2b"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_ycaq3.res" id="bz_mesh_ArrayMesh_ycaq3"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_bjfl6.res" id="bz_mesh_ArrayMesh_bjfl6"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_kbm1e.res" id="bz_mesh_ArrayMesh_kbm1e"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_qckpa.res" id="bz_mesh_ArrayMesh_qckpa"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_rddig.res" id="bz_mesh_ArrayMesh_rddig"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_3s1lf.res" id="bz_mesh_ArrayMesh_3s1lf"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_rfmd6.res" id="bz_mesh_ArrayMesh_rfmd6"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_57s3o.res" id="bz_mesh_ArrayMesh_57s3o"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_58t6l.res" id="bz_mesh_ArrayMesh_58t6l"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_q2vx4.res" id="bz_mesh_ArrayMesh_q2vx4"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_x7bcy.res" id="bz_mesh_ArrayMesh_x7bcy"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_rinfv.res" id="bz_mesh_ArrayMesh_rinfv"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_i1yae.res" id="bz_mesh_ArrayMesh_i1yae"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_4v812.res" id="bz_mesh_ArrayMesh_4v812"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_hw4a2.res" id="bz_mesh_ArrayMesh_hw4a2"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_hagrv.res" id="bz_mesh_ArrayMesh_hagrv"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_laoah.res" id="bz_mesh_ArrayMesh_laoah"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_36jf5.res" id="bz_mesh_ArrayMesh_36jf5"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_5ahas.res" id="bz_mesh_ArrayMesh_5ahas"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_8q587.res" id="bz_mesh_ArrayMesh_8q587"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_kdlkc.res" id="bz_mesh_ArrayMesh_kdlkc"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_j1018.res" id="bz_mesh_ArrayMesh_j1018"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_agao7.res" id="bz_mesh_ArrayMesh_agao7"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_kyhlt.res" id="bz_mesh_ArrayMesh_kyhlt"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_el3ub.res" id="bz_mesh_ArrayMesh_el3ub"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_pfktf.res" id="bz_mesh_ArrayMesh_pfktf"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_qrt00.res" id="bz_mesh_ArrayMesh_qrt00"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_jk2dj.res" id="bz_mesh_ArrayMesh_jk2dj"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_nh05t.res" id="bz_mesh_ArrayMesh_nh05t"]
 [ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_3s6s1.res" id="bz_mesh_ArrayMesh_3s6s1"]
 [ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_3sufo.res" id="bz_mesh_ArrayMesh_3sufo"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_jwdoe.res" id="bz_mesh_ArrayMesh_jwdoe"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_chtws.res" id="bz_mesh_ArrayMesh_chtws"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_tutd7.res" id="bz_mesh_ArrayMesh_tutd7"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_e4jte.res" id="bz_mesh_ArrayMesh_e4jte"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_j32x6.res" id="bz_mesh_ArrayMesh_j32x6"]
-[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_n3irq.res" id="bz_mesh_ArrayMesh_n3irq"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_4v812.res" id="bz_mesh_ArrayMesh_4v812"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_5ahas.res" id="bz_mesh_ArrayMesh_5ahas"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_6hn8e.res" id="bz_mesh_ArrayMesh_6hn8e"]
 [ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_6xlxc.res" id="bz_mesh_ArrayMesh_6xlxc"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_7ct7q.res" id="bz_shape_ConcavePolygonShape3D_7ct7q"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_eta50.res" id="bz_shape_ConcavePolygonShape3D_eta50"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_7jga5.res" id="bz_shape_ConcavePolygonShape3D_7jga5"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_ivbyu.res" id="bz_shape_ConcavePolygonShape3D_ivbyu"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_ajwcu.res" id="bz_shape_ConcavePolygonShape3D_ajwcu"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_kvvef.res" id="bz_shape_ConcavePolygonShape3D_kvvef"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_62obg.res" id="bz_shape_ConcavePolygonShape3D_62obg"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_vq17p.res" id="bz_shape_ConcavePolygonShape3D_vq17p"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_w52e2.res" id="bz_shape_ConcavePolygonShape3D_w52e2"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_et18r.res" id="bz_shape_ConcavePolygonShape3D_et18r"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_dhman.res" id="bz_shape_ConcavePolygonShape3D_dhman"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_t4to0.res" id="bz_shape_ConcavePolygonShape3D_t4to0"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_tlgt0.res" id="bz_shape_ConcavePolygonShape3D_tlgt0"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_df1qg.res" id="bz_shape_ConcavePolygonShape3D_df1qg"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_1cm27.res" id="bz_shape_ConcavePolygonShape3D_1cm27"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_j3iog.res" id="bz_shape_ConcavePolygonShape3D_j3iog"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_3afmc.res" id="bz_shape_ConcavePolygonShape3D_3afmc"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_kfr67.res" id="bz_shape_ConcavePolygonShape3D_kfr67"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_aukin.res" id="bz_shape_ConcavePolygonShape3D_aukin"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_8n5pt.res" id="bz_shape_ConcavePolygonShape3D_8n5pt"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_l6qws.res" id="bz_shape_ConcavePolygonShape3D_l6qws"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_cplxv.res" id="bz_shape_ConcavePolygonShape3D_cplxv"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_ee1ru.res" id="bz_shape_ConcavePolygonShape3D_ee1ru"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_g3o1y.res" id="bz_shape_ConcavePolygonShape3D_g3o1y"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_jjarv.res" id="bz_shape_ConcavePolygonShape3D_jjarv"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_3jrh0.res" id="bz_shape_ConcavePolygonShape3D_3jrh0"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_g5o4y.res" id="bz_shape_ConcavePolygonShape3D_g5o4y"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_252lq.res" id="bz_shape_ConcavePolygonShape3D_252lq"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_pfs0k.res" id="bz_shape_ConcavePolygonShape3D_pfs0k"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_yxgly.res" id="bz_shape_ConcavePolygonShape3D_yxgly"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_k68lb.res" id="bz_shape_ConcavePolygonShape3D_k68lb"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_hr4j4.res" id="bz_shape_ConcavePolygonShape3D_hr4j4"]
-[ext_resource type="ConcavePolygonShape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_8q587.res" id="bz_shape_ConcavePolygonShape3D_8q587"]
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4fq1n"]
-resource_name = "Grass_Material.006"
-transparency = 4
-cull_mode = 2
-albedo_texture = ExtResource("4_i8kgf")
-normal_enabled = true
-normal_texture = ExtResource("5_a6qdq")
-metadata/_gltf_primary_texture_coord = 0
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_7h7dh.res" id="bz_mesh_ArrayMesh_7h7dh"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_8q587.res" id="bz_mesh_ArrayMesh_8q587"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_36jf5.res" id="bz_mesh_ArrayMesh_36jf5"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_57s3o.res" id="bz_mesh_ArrayMesh_57s3o"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_47080.res" id="bz_mesh_ArrayMesh_47080"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_agao7.res" id="bz_mesh_ArrayMesh_agao7"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_chtws.res" id="bz_mesh_ArrayMesh_chtws"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_ciymv.res" id="bz_mesh_ArrayMesh_ciymv"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_ds5tn.res" id="bz_mesh_ArrayMesh_ds5tn"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_e4jte.res" id="bz_mesh_ArrayMesh_e4jte"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_el3ub.res" id="bz_mesh_ArrayMesh_el3ub"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_faukr.res" id="bz_mesh_ArrayMesh_faukr"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_hagrv.res" id="bz_mesh_ArrayMesh_hagrv"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_hw4a2.res" id="bz_mesh_ArrayMesh_hw4a2"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_icsd6.res" id="bz_mesh_ArrayMesh_icsd6"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_j32x6.res" id="bz_mesh_ArrayMesh_j32x6"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_j1018.res" id="bz_mesh_ArrayMesh_j1018"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_jk2dj.res" id="bz_mesh_ArrayMesh_jk2dj"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_jwdoe.res" id="bz_mesh_ArrayMesh_jwdoe"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_k3pvx.res" id="bz_mesh_ArrayMesh_k3pvx"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_kdlkc.res" id="bz_mesh_ArrayMesh_kdlkc"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_kf1d1.res" id="bz_mesh_ArrayMesh_kf1d1"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_kqd13.res" id="bz_mesh_ArrayMesh_kqd13"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_kyhlt.res" id="bz_mesh_ArrayMesh_kyhlt"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_laoah.res" id="bz_mesh_ArrayMesh_laoah"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_n3irq.res" id="bz_mesh_ArrayMesh_n3irq"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_nh05t.res" id="bz_mesh_ArrayMesh_nh05t"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_pfktf.res" id="bz_mesh_ArrayMesh_pfktf"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_qdnof.res" id="bz_mesh_ArrayMesh_qdnof"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_qrt00.res" id="bz_mesh_ArrayMesh_qrt00"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_rfmd6.res" id="bz_mesh_ArrayMesh_rfmd6"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_tutd7.res" id="bz_mesh_ArrayMesh_tutd7"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_u6siu.res" id="bz_mesh_ArrayMesh_u6siu"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_uyd7c.res" id="bz_mesh_ArrayMesh_uyd7c"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_v5s5s.res" id="bz_mesh_ArrayMesh_v5s5s"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_xxugn.res" id="bz_mesh_ArrayMesh_xxugn"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_y8l0y.res" id="bz_mesh_ArrayMesh_y8l0y"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_ymsh1.res" id="bz_mesh_ArrayMesh_ymsh1"]
+[ext_resource type="ArrayMesh" path="res://scenes/busyland/res/ArrayMesh_yy3w1.res" id="bz_mesh_ArrayMesh_yy3w1"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_1cm27.res" id="bz_shape_ConcavePolygonShape3D_1cm27"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_3afmc.res" id="bz_shape_ConcavePolygonShape3D_3afmc"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_7ct7q.res" id="bz_shape_ConcavePolygonShape3D_7ct7q"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_7jga5.res" id="bz_shape_ConcavePolygonShape3D_7jga5"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_8n5pt.res" id="bz_shape_ConcavePolygonShape3D_8n5pt"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_8q587.res" id="bz_shape_ConcavePolygonShape3D_8q587"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_62obg.res" id="bz_shape_ConcavePolygonShape3D_62obg"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_ajwcu.res" id="bz_shape_ConcavePolygonShape3D_ajwcu"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_aukin.res" id="bz_shape_ConcavePolygonShape3D_aukin"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_df1qg.res" id="bz_shape_ConcavePolygonShape3D_df1qg"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_dhman.res" id="bz_shape_ConcavePolygonShape3D_dhman"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_et18r.res" id="bz_shape_ConcavePolygonShape3D_et18r"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_eta50.res" id="bz_shape_ConcavePolygonShape3D_eta50"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_hr4j4.res" id="bz_shape_ConcavePolygonShape3D_hr4j4"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_ivbyu.res" id="bz_shape_ConcavePolygonShape3D_ivbyu"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_j3iog.res" id="bz_shape_ConcavePolygonShape3D_j3iog"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_k68lb.res" id="bz_shape_ConcavePolygonShape3D_k68lb"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_kfr67.res" id="bz_shape_ConcavePolygonShape3D_kfr67"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_kvvef.res" id="bz_shape_ConcavePolygonShape3D_kvvef"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_t4to0.res" id="bz_shape_ConcavePolygonShape3D_t4to0"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_tlgt0.res" id="bz_shape_ConcavePolygonShape3D_tlgt0"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_vq17p.res" id="bz_shape_ConcavePolygonShape3D_vq17p"]
+[ext_resource type="Shape3D" path="res://scenes/busyland/res/ConcavePolygonShape3D_w52e2.res" id="bz_shape_ConcavePolygonShape3D_w52e2"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_e6wls"]
 render_priority = 0
@@ -250,74 +129,8 @@ shader_parameter/grass_patch_scale = 100.0
 shader_parameter/cliff_start = 0.35
 shader_parameter/cliff_hardness = 8.0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ypg77"]
-
 [sub_resource type="PlaneMesh" id="PlaneMesh_l0bqs"]
 size = Vector2(10, 10)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f1mcs"]
-resource_name = "direction_sign"
-cull_mode = 2
-albedo_texture = ExtResource("10_nmwxw")
-metallic = 1.0
-metallic_texture = ExtResource("11_1fxid")
-metallic_texture_channel = 2
-roughness_texture = ExtResource("11_1fxid")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("12_gamsl")
-ao_enabled = true
-ao_texture = ExtResource("11_1fxid")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rqeqq"]
-resource_name = "pole_sign"
-cull_mode = 2
-albedo_texture = ExtResource("13_sd4kv")
-metallic = 1.0
-metallic_texture = ExtResource("14_gu38q")
-metallic_texture_channel = 2
-roughness_texture = ExtResource("14_gu38q")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("15_02vpl")
-ao_enabled = true
-ao_texture = ExtResource("14_gu38q")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_y1pwo"]
-resource_name = "striaght_pole"
-cull_mode = 2
-albedo_texture = ExtResource("16_mtcmy")
-metallic = 1.0
-metallic_texture = ExtResource("17_daji7")
-metallic_texture_channel = 2
-roughness_texture = ExtResource("17_daji7")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("18_62obg")
-ao_enabled = true
-ao_texture = ExtResource("17_daji7")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d2gnf"]
-resource_name = "Trash_Bag"
-cull_mode = 2
-albedo_texture = ExtResource("19_sd4kv")
-metallic_texture = ExtResource("20_gu38q")
-metallic_texture_channel = 2
-roughness_texture = ExtResource("20_gu38q")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("21_02vpl")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k31j2"]
-resource_name = "Loterica_Textura"
-cull_mode = 2
-albedo_texture = ExtResource("22_et18r")
-roughness = 0.82111454
-metadata/_gltf_primary_texture_coord = 0
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_et18r"]
 load_path = "res://.godot/imported/house_Image_0.jpg-30a8d20ae2a55c57cf52cdb261b7827c.s3tc.ctex"
@@ -333,300 +146,32 @@ metadata/_gltf_primary_texture_coord = 0
 [sub_resource type="PlaneMesh" id="PlaneMesh_et18r"]
 size = Vector2(1030, 470)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fs1uy"]
-resource_name = "final_mat"
-transparency = 4
-cull_mode = 2
-albedo_texture = ExtResource("23_daji7")
-metallic = 1.0
-metallic_texture = ExtResource("24_62obg")
-metallic_texture_channel = 2
-roughness_texture = ExtResource("24_62obg")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("25_vq17p")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qncb4"]
-resource_name = "Material"
-cull_mode = 2
-albedo_texture = ExtResource("26_62obg")
-roughness = 0.6
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_whyof"]
-resource_name = "Cardboard_Box_Mat"
-cull_mode = 2
-albedo_texture = ExtResource("28_dhman")
-metallic = 1.0
-metallic_texture = ExtResource("29_t4to0")
-metallic_texture_channel = 2
-roughness_texture = ExtResource("29_t4to0")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("30_tlgt0")
-metadata/_gltf_primary_texture_coord = 0
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_hr4j4"]
 size = Vector3(27.726563, 20, 16.022217)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_08767"]
-resource_name = "Material.016"
-cull_mode = 2
-albedo_color = Color(0.9063318, 0.9063318, 0.9063318, 1)
-metallic = 1.0
-roughness = 0.5
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lrdb5"]
-resource_name = "Metal_1"
-cull_mode = 2
-albedo_texture = ExtResource("32_j3iog")
-metallic = 0.4
-roughness = 0.5
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eqors"]
-resource_name = "Wood"
-cull_mode = 2
-albedo_texture = ExtResource("33_252lq")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ah306"]
-resource_name = "Metal3"
-cull_mode = 2
-albedo_texture = ExtResource("34_3afmc")
-metallic = 0.458333
-roughness = 0.5
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wv7rg"]
-resource_name = "Metal2"
-cull_mode = 2
-albedo_texture = ExtResource("35_kfr67")
-metallic = 0.458333
-roughness = 0.5
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l4ok4"]
-resource_name = "sheets"
-cull_mode = 2
-albedo_texture = ExtResource("36_2tlr5")
-roughness = 0.5
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0tvad"]
-resource_name = "Tyre"
-cull_mode = 2
-albedo_texture = ExtResource("37_aukin")
-roughness = 0.5
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2ea4i"]
-resource_name = "Dish"
-cull_mode = 2
-albedo_texture = ExtResource("38_8n5pt")
-roughness = 0.5
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x44mj"]
-resource_name = "tower_1"
-cull_mode = 2
-albedo_texture = ExtResource("40_eta50")
-metallic = 1.0
-metallic_texture = ExtResource("41_7jga5")
-metallic_texture_channel = 2
-roughness_texture = ExtResource("41_7jga5")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("42_ivbyu")
-ao_enabled = true
-ao_texture = ExtResource("41_7jga5")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_837ny"]
-resource_name = "tower_2"
-transparency = 4
-cull_mode = 2
-albedo_texture = ExtResource("43_ajwcu")
-metallic = 1.0
-metallic_texture = ExtResource("44_pfs0k")
-metallic_texture_channel = 2
-roughness_texture = ExtResource("44_pfs0k")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("45_yxgly")
-ao_enabled = true
-ao_texture = ExtResource("44_pfs0k")
-metadata/_gltf_primary_texture_coord = 0
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_8q587"]
 size = Vector3(0.40124512, 0.15386963, 13.336548)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_26l3o"]
-resource_name = "material"
-albedo_color = Color(0.6592673, 0.7812595, 0.8984325, 1)
-roughness = 0.6
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8klve"]
-resource_name = "edge_color165165165255"
-roughness = 0.6
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5hisa"]
-resource_name = "material_1"
-albedo_texture = ExtResource("47_yxgly")
-roughness = 0.6
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7vtqu"]
-resource_name = "edge_color767675255"
-roughness = 0.6
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jf307"]
-resource_name = "material_2"
-albedo_texture = ExtResource("48_l6qws")
-roughness = 0.6
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jqwb2"]
-resource_name = "palete"
-cull_mode = 2
-albedo_texture = ExtResource("54_3jrh0")
-metallic = 1.0
-metallic_texture = ExtResource("55_g5o4y")
-metallic_texture_channel = 2
-roughness_texture = ExtResource("55_g5o4y")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("56_p8sow")
-metadata/_gltf_primary_texture_coord = 0
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_kdlkc"]
 size = Vector3(2.0371094, 1.3468933, 0.32122803)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qnga1"]
-resource_name = "Supermarket_Chips_Shelf"
-cull_mode = 2
-albedo_texture = ExtResource("57_0lr6x")
-metallic_texture = ExtResource("58_bfm0a")
-metallic_texture_channel = 2
-roughness_texture = ExtResource("58_bfm0a")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("59_k68lb")
-metadata/_gltf_primary_texture_coord = 0
+[sub_resource type="PlaneMesh" id="PlaneMesh_nxk60"]
+size = Vector2(2, 0.8)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bxnxi"]
-resource_name = "Material.001"
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3fnoq"]
 cull_mode = 2
-albedo_texture = ExtResource("31_t4to0")
-roughness = 0.82111454
-metadata/_gltf_primary_texture_coord = 0
+shading_mode = 0
+albedo_color = Color(0.8, 1, 0, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_nxk60"]
+size = Vector3(2.734674, 0.5899353, 1.3252254)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_dyhay"]
 radius = 0.2759961
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8ktvf"]
-resource_name = "trash_can_mat"
-cull_mode = 2
-albedo_texture = ExtResource("bz_tex_Image_fv2y4")
-metallic = 1.0
-roughness_texture = ExtResource("bz_tex_Image_nxk60")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("62_kdlkc")
-ao_enabled = true
-ao_texture = ExtResource("61_8q587")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i6ajo"]
-resource_name = "material"
-transparency = 4
-cull_mode = 2
-albedo_color = Color(1, 1, 1, 0.31269056)
-albedo_texture = ExtResource("bz_tex_Image_3fnoq")
-metallic = 1.0
-metallic_texture = ExtResource("bz_tex_Image_g4fug")
-metallic_texture_channel = 2
-normal_enabled = true
-normal_texture = ExtResource("61_kdlkc")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cus4l"]
-resource_name = "material_1"
-cull_mode = 2
-albedo_texture = ExtResource("bz_tex_Image_mhss1")
-metallic = 1.0
-roughness_texture = ExtResource("bz_tex_Image_gsdkm")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("62_j1018")
-metadata/_gltf_primary_texture_coord = 0
-
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_dyhay"]
 radius = 0.2758789
 height = 0.9998169
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8nf0o"]
-resource_name = "Material.001"
-cull_mode = 2
-albedo_texture = ExtResource("62_hr4j4")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d2550"]
-resource_name = "Material.002"
-cull_mode = 2
-albedo_texture = ExtResource("62_hr4j4")
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xo4t8"]
-resource_name = "Material.003"
-cull_mode = 2
-albedo_color = Color(0, 0, 0, 1)
-roughness = 0.41295364
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ayd1r"]
-resource_name = "Material.004"
-cull_mode = 2
-albedo_texture = ExtResource("62_hr4j4")
-roughness = 0.1
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_axn0y"]
-resource_name = "Material.005"
-cull_mode = 2
-albedo_texture = ExtResource("62_hr4j4")
-roughness = 0.0
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pog3v"]
-resource_name = "Material.010"
-cull_mode = 2
-albedo_color = Color(0.17254917, 0.16470604, 0.16470604, 1)
-metallic = 1.0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nnbmw"]
-resource_name = "Material.013"
-cull_mode = 2
-albedo_texture = ExtResource("62_hr4j4")
-roughness = 0.5
-metadata/_gltf_primary_texture_coord = 0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_snufo"]
-resource_name = "Material.009"
-cull_mode = 2
-albedo_color = Color(0.18823518, 0.16862734, 0.21568637, 1)
-metallic = 0.933824
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h73ka"]
-resource_name = "Material.014"
-cull_mode = 2
-albedo_color = Color(0.37254846, 0.19607833, 0.14509794, 1)
-roughness = 0.5
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x313d"]
-resource_name = "Material.011"
-cull_mode = 2
-roughness = 0.169118
 
 [sub_resource type="Animation" id="Animation_d62q3"]
 resource_name = "Animation"
@@ -707,19 +252,6 @@ tracks/9/keys = PackedFloat32Array(0, 1, -0.93760866, 0, 0, 0.3476924, 0.0333333
 _data = {
 &"Animation": SubResource("Animation_d62q3")
 }
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p3fsa"]
-resource_name = "Scene_-_Root"
-cull_mode = 2
-albedo_texture = ExtResource("51_ee1ru")
-metallic = 0.98312634
-metallic_texture = ExtResource("52_g3o1y")
-metallic_texture_channel = 2
-roughness_texture = ExtResource("52_g3o1y")
-roughness_texture_channel = 1
-normal_enabled = true
-normal_texture = ExtResource("53_jjarv")
-metadata/_gltf_primary_texture_coord = 0
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8q587"]
 radius = 0.23632813
@@ -1114,302 +646,6 @@ visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = ExtResource("bz_mesh_ArrayMesh_uyd7c")
 
-[node name="GLTF_SceneRootNode" type="Node3D" parent="." unique_id=1405140873]
-transform = Transform3D(0.00019425989, -0.008183536, 1.9999834, -0.047461506, 1.9994199, 0.00818584, -1.999437, -0.047461912, 2.0746256e-09, -31.151611, 1.3522387, 0)
-visible = false
-
-[node name="House5_0" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1281700033]
-transform = Transform3D(-0.5623678, 1.0949705e-07, -1.09497044e-07, -1.0949705e-07, -4.740405e-08, 0.5623678, 1.09497044e-07, 0.5623678, 4.7404072e-08, 0, 0, 0)
-
-[node name="Object_4" type="MeshInstance3D" parent="GLTF_SceneRootNode/House5_0" unique_id=1374990555]
-mesh = ExtResource("bz_mesh_ArrayMesh_k5dqh")
-
-[node name="Object_5" type="MeshInstance3D" parent="GLTF_SceneRootNode/House5_0" unique_id=276091427]
-mesh = ExtResource("bz_mesh_ArrayMesh_28a3y")
-
-[node name="Object_6" type="MeshInstance3D" parent="GLTF_SceneRootNode/House5_0" unique_id=307482334]
-mesh = ExtResource("bz_mesh_ArrayMesh_5q811")
-
-[node name="Object_7" type="MeshInstance3D" parent="GLTF_SceneRootNode/House5_0" unique_id=1186050819]
-mesh = ExtResource("bz_mesh_ArrayMesh_huml8")
-
-[node name="Object_8" type="MeshInstance3D" parent="GLTF_SceneRootNode/House5_0" unique_id=511643178]
-mesh = ExtResource("bz_mesh_ArrayMesh_t087c")
-
-[node name="Object_9" type="MeshInstance3D" parent="GLTF_SceneRootNode/House5_0" unique_id=385186643]
-mesh = ExtResource("bz_mesh_ArrayMesh_bthfi")
-
-[node name="Object_10" type="MeshInstance3D" parent="GLTF_SceneRootNode/House5_0" unique_id=2083805811]
-mesh = ExtResource("bz_mesh_ArrayMesh_pe4ft")
-
-[node name="House4_1" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1629864672]
-transform = Transform3D(0.86419773, 0, 0, 0, 0.86419773, 0, 0, 0, 0.86419773, -5.448024, 0, 0)
-visible = false
-
-[node name="Object_12" type="MeshInstance3D" parent="GLTF_SceneRootNode/House4_1" unique_id=121902570]
-mesh = ExtResource("bz_mesh_ArrayMesh_nw5p3")
-
-[node name="Object_13" type="MeshInstance3D" parent="GLTF_SceneRootNode/House4_1" unique_id=1605233259]
-mesh = ExtResource("bz_mesh_ArrayMesh_fxaat")
-
-[node name="Object_14" type="MeshInstance3D" parent="GLTF_SceneRootNode/House4_1" unique_id=1835540035]
-mesh = ExtResource("bz_mesh_ArrayMesh_7jjiv")
-
-[node name="Object_15" type="MeshInstance3D" parent="GLTF_SceneRootNode/House4_1" unique_id=2036402495]
-mesh = ExtResource("bz_mesh_ArrayMesh_vkkry")
-
-[node name="Object_16" type="MeshInstance3D" parent="GLTF_SceneRootNode/House4_1" unique_id=1587779239]
-mesh = ExtResource("bz_mesh_ArrayMesh_m2oyc")
-
-[node name="Object_17" type="MeshInstance3D" parent="GLTF_SceneRootNode/House4_1" unique_id=1318453074]
-mesh = ExtResource("bz_mesh_ArrayMesh_atatb")
-
-[node name="House3_2" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1619123542]
-transform = Transform3D(-0.9444628, 2.989982e-08, 1.3186971e-06, -4.1341607e-08, 0.6823694, -0.030959675, -1.8233238e-06, -0.030959675, -0.6823694, -11.265113, 0, 0)
-
-[node name="Object_19" type="MeshInstance3D" parent="GLTF_SceneRootNode/House3_2" unique_id=712999315]
-mesh = ExtResource("bz_mesh_ArrayMesh_w5qfb")
-
-[node name="Object_20" type="MeshInstance3D" parent="GLTF_SceneRootNode/House3_2" unique_id=579140251]
-mesh = ExtResource("bz_mesh_ArrayMesh_uhkf7")
-
-[node name="Object_21" type="MeshInstance3D" parent="GLTF_SceneRootNode/House3_2" unique_id=538243810]
-mesh = ExtResource("bz_mesh_ArrayMesh_strxw")
-
-[node name="Object_22" type="MeshInstance3D" parent="GLTF_SceneRootNode/House3_2" unique_id=1844221056]
-mesh = ExtResource("bz_mesh_ArrayMesh_ngkti")
-
-[node name="Object_23" type="MeshInstance3D" parent="GLTF_SceneRootNode/House3_2" unique_id=394417604]
-mesh = ExtResource("bz_mesh_ArrayMesh_gbp6l")
-
-[node name="Object_24" type="MeshInstance3D" parent="GLTF_SceneRootNode/House3_2" unique_id=945745784]
-mesh = ExtResource("bz_mesh_ArrayMesh_x1c6o")
-
-[node name="House2_3" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1406545028]
-transform = Transform3D(0.9444628, 0, 0, 0, 0.6823694, -0.030959675, 0, 0.030959675, 0.6823694, -18.265427, 0, 0)
-
-[node name="Object_26" type="MeshInstance3D" parent="GLTF_SceneRootNode/House2_3" unique_id=2127009412]
-mesh = ExtResource("bz_mesh_ArrayMesh_fxe5n")
-
-[node name="Object_27" type="MeshInstance3D" parent="GLTF_SceneRootNode/House2_3" unique_id=879685063]
-mesh = ExtResource("bz_mesh_ArrayMesh_xxaor")
-
-[node name="Object_28" type="MeshInstance3D" parent="GLTF_SceneRootNode/House2_3" unique_id=848454002]
-mesh = ExtResource("bz_mesh_ArrayMesh_g14vv")
-
-[node name="Object_29" type="MeshInstance3D" parent="GLTF_SceneRootNode/House2_3" unique_id=2023839663]
-mesh = ExtResource("bz_mesh_ArrayMesh_mnc8j")
-
-[node name="Object_30" type="MeshInstance3D" parent="GLTF_SceneRootNode/House2_3" unique_id=1220544123]
-mesh = ExtResource("bz_mesh_ArrayMesh_a05wv")
-
-[node name="Object_31" type="MeshInstance3D" parent="GLTF_SceneRootNode/House2_3" unique_id=1603965079]
-mesh = ExtResource("bz_mesh_ArrayMesh_dix8s")
-
-[node name="House1_4" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1562625716]
-transform = Transform3D(0.9444628, 0, 0, 0, 0.6823694, -0.030959675, 0, 0.030959675, 0.6823694, -25.323662, 0, 0)
-
-[node name="Object_33" type="MeshInstance3D" parent="GLTF_SceneRootNode/House1_4" unique_id=1122777733]
-mesh = ExtResource("bz_mesh_ArrayMesh_pw5uu")
-
-[node name="Object_34" type="MeshInstance3D" parent="GLTF_SceneRootNode/House1_4" unique_id=875254014]
-mesh = ExtResource("bz_mesh_ArrayMesh_nis20")
-
-[node name="Object_35" type="MeshInstance3D" parent="GLTF_SceneRootNode/House1_4" unique_id=1870629040]
-mesh = ExtResource("bz_mesh_ArrayMesh_004c5")
-
-[node name="Object_36" type="MeshInstance3D" parent="GLTF_SceneRootNode/House1_4" unique_id=1809336214]
-mesh = ExtResource("bz_mesh_ArrayMesh_bnalp")
-
-[node name="Object_37" type="MeshInstance3D" parent="GLTF_SceneRootNode/House1_4" unique_id=1853910010]
-mesh = ExtResource("bz_mesh_ArrayMesh_cii0w")
-
-[node name="Object_38" type="MeshInstance3D" parent="GLTF_SceneRootNode/House1_4" unique_id=531284426]
-mesh = ExtResource("bz_mesh_ArrayMesh_lkrrq")
-
-[node name="Object_39" type="MeshInstance3D" parent="GLTF_SceneRootNode/House1_4" unique_id=1780416152]
-mesh = ExtResource("bz_mesh_ArrayMesh_uiryi")
-
-[node name="Metal1_5" type="Node3D" parent="GLTF_SceneRootNode" unique_id=740495070]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6260192, 0.007852132, -0.6849096)
-
-[node name="Object_41" type="MeshInstance3D" parent="GLTF_SceneRootNode/Metal1_5" unique_id=1612712815]
-mesh = ExtResource("bz_mesh_ArrayMesh_scq3m")
-
-[node name="Metal3_6" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1787722677]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.6866493, 0.0063173943, -0.7140552)
-
-[node name="Object_43" type="MeshInstance3D" parent="GLTF_SceneRootNode/Metal3_6" unique_id=1289250263]
-mesh = ExtResource("bz_mesh_ArrayMesh_iwm6y")
-
-[node name="Metal2_7" type="Node3D" parent="GLTF_SceneRootNode" unique_id=443348312]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.1495185, 0.005319652, -0.680699)
-
-[node name="Object_45" type="MeshInstance3D" parent="GLTF_SceneRootNode/Metal2_7" unique_id=1835209412]
-mesh = ExtResource("bz_mesh_ArrayMesh_fv12h")
-
-[node name="Wooden plank_8" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1067383438]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.7717457, 0, -0.95548916)
-
-[node name="Object_47" type="MeshInstance3D" parent="GLTF_SceneRootNode/Wooden plank_8" unique_id=1350266826]
-mesh = ExtResource("bz_mesh_ArrayMesh_uce2b")
-
-[node name="Blue sheet2_9" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1338502797]
-transform = Transform3D(1.4217304, 0, 0, 0, 1, 0, 0, 0, 1, 9.33499, -0.3192409, 0.3442663)
-
-[node name="Object_49" type="MeshInstance3D" parent="GLTF_SceneRootNode/Blue sheet2_9" unique_id=2057234409]
-mesh = ExtResource("bz_mesh_ArrayMesh_ycaq3")
-
-[node name="Blue sheet4_10" type="Node3D" parent="GLTF_SceneRootNode" unique_id=140451653]
-transform = Transform3D(1.077559, 0, 0, 0, 0.79946613, 0, 0, 0, 0.89720833, 3.9582133, -0.4275494, 0.74273944)
-
-[node name="Object_51" type="MeshInstance3D" parent="GLTF_SceneRootNode/Blue sheet4_10" unique_id=2116498523]
-mesh = ExtResource("bz_mesh_ArrayMesh_bjfl6")
-
-[node name="Blue sheet3_11" type="Node3D" parent="GLTF_SceneRootNode" unique_id=1298217531]
-transform = Transform3D(1.3826706, 0, 0, 0, 1, 0, 0, 0, 1, 6.614083, -0.31317988, 0.63359475)
-
-[node name="Object_53" type="MeshInstance3D" parent="GLTF_SceneRootNode/Blue sheet3_11" unique_id=1167213934]
-mesh = ExtResource("bz_mesh_ArrayMesh_kbm1e")
-
-[node name="Blue sheet1_12" type="Node3D" parent="GLTF_SceneRootNode" unique_id=918163204]
-transform = Transform3D(1.6588354, 0, 0, 0, 1.0691535, 1.0691534, 0, -1.0691528, 1.0691541, 12.011353, -0.5468594, 0.22618699)
-
-[node name="Object_55" type="MeshInstance3D" parent="GLTF_SceneRootNode/Blue sheet1_12" unique_id=1027306857]
-mesh = ExtResource("bz_mesh_ArrayMesh_qckpa")
-
-[node name="Dish_13" type="Node3D" parent="GLTF_SceneRootNode" unique_id=746794956]
-transform = Transform3D(0.0074492567, -0.043588612, 0, 0.020587988, 0.015771465, 0, 0, 0, 0.02189422, 9.357873, -0.13023919, -1.3687433)
-
-[node name="Object_57" type="MeshInstance3D" parent="GLTF_SceneRootNode/Dish_13" unique_id=846248016]
-mesh = ExtResource("bz_mesh_ArrayMesh_rddig")
-
-[node name="Tyre_14" type="Node3D" parent="GLTF_SceneRootNode" unique_id=895678756]
-transform = Transform3D(0.7878113, 0, 0, 0, 0.7878113, 0, 0, 0, 0.7878113, 8.250055, 0, -1.3552387)
-
-[node name="Object_59" type="MeshInstance3D" parent="GLTF_SceneRootNode/Tyre_14" unique_id=14502137]
-mesh = ExtResource("bz_mesh_ArrayMesh_3s1lf")
-
-[node name="House5_0" type="Node3D" parent="." unique_id=53825618]
-transform = Transform3D(-0.8734427, -0.21702023, -9.486257e-09, 0, -3.934025e-08, 0.9, -0.21702023, 0.8734427, 3.8179394e-08, -23.5168, 0.11903024, -33.777184)
-
-[node name="Object_4" type="MeshInstance3D" parent="House5_0" unique_id=250233951]
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_k5dqh")
-
-[node name="Object_5" type="MeshInstance3D" parent="House5_0" unique_id=24138125]
-cast_shadow = 0
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_28a3y")
-
-[node name="Object_6" type="MeshInstance3D" parent="House5_0" unique_id=1429184047]
-transform = Transform3D(0.99999875, -0.0016344651, -7.144464e-11, 0.0016344651, 0.99999875, -6.039613e-14, 7.144425e-11, -6.3948846e-14, 1, 0, 0, 0)
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_5q811")
-
-[node name="Object_7" type="MeshInstance3D" parent="House5_0" unique_id=887650449]
-cast_shadow = 0
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_huml8")
-
-[node name="Object_8" type="MeshInstance3D" parent="House5_0" unique_id=934963403]
-cast_shadow = 0
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_t087c")
-
-[node name="Object_9" type="MeshInstance3D" parent="House5_0" unique_id=1695678739]
-cast_shadow = 0
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_bthfi")
-
-[node name="StaticBody3D" type="StaticBody3D" parent="House5_0" unique_id=634401327]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="House5_0/StaticBody3D" unique_id=1221557042]
-transform = Transform3D(0.99999994, -1.4901161e-08, 8.881784e-16, 1.4901161e-08, 0.99999994, 3.5527137e-15, 0, 3.5527137e-15, 0.99999994, 0, 0, 0)
-shape = ExtResource("bz_shape_ConcavePolygonShape3D_l6qws")
-
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="House5_0/StaticBody3D" unique_id=528942689]
-transform = Transform3D(0.99999994, -1.4901161e-08, 8.881784e-16, 1.4901161e-08, 0.99999994, 3.5527137e-15, 0, 3.5527137e-15, 0.99999994, 0, 0, 0)
-shape = ExtResource("bz_shape_ConcavePolygonShape3D_cplxv")
-disabled = true
-
-[node name="CollisionShape3D3" type="CollisionShape3D" parent="House5_0/StaticBody3D" unique_id=2009530624]
-transform = Transform3D(0.9999987, -0.0016344637, -7.1443296e-11, 0.0016344637, 0.9999987, -6.039613e-14, 7.1444184e-11, -6.039613e-14, 0.99999994, 0, 0, 0)
-shape = ExtResource("bz_shape_ConcavePolygonShape3D_ee1ru")
-disabled = true
-
-[node name="CollisionShape3D4" type="CollisionShape3D" parent="House5_0/StaticBody3D" unique_id=1591558153]
-transform = Transform3D(0.99999994, -1.4901161e-08, 8.881784e-16, 1.4901161e-08, 0.99999994, 3.5527137e-15, 0, 3.5527137e-15, 0.99999994, 0, 0, 0)
-shape = ExtResource("bz_shape_ConcavePolygonShape3D_g3o1y")
-disabled = true
-
-[node name="CollisionShape3D5" type="CollisionShape3D" parent="House5_0/StaticBody3D" unique_id=1826362452]
-transform = Transform3D(0.99999994, -1.4901161e-08, 8.881784e-16, 1.4901161e-08, 0.99999994, 3.5527137e-15, 0, 3.5527137e-15, 0.99999994, 0, 0, 0)
-shape = ExtResource("bz_shape_ConcavePolygonShape3D_jjarv")
-disabled = true
-
-[node name="CollisionShape3D6" type="CollisionShape3D" parent="House5_0/StaticBody3D" unique_id=1466377397]
-transform = Transform3D(0.99999994, -1.4901161e-08, 8.881784e-16, 1.4901161e-08, 0.99999994, 3.5527137e-15, 0, 3.5527137e-15, 0.99999994, 0, 0, 0)
-shape = ExtResource("bz_shape_ConcavePolygonShape3D_3jrh0")
-
-[node name="CollisionShape3D7" type="CollisionShape3D" parent="House5_0/StaticBody3D" unique_id=340715229]
-transform = Transform3D(0.9999987, -0.0016344637, -7.1443296e-11, 0.0016344637, 0.9999987, -6.039613e-14, 7.1444184e-11, -6.039613e-14, 0.99999994, 0, 0, 0)
-shape = ExtResource("bz_shape_ConcavePolygonShape3D_g5o4y")
-
-[node name="House4_1" type="Node3D" parent="." unique_id=1571389101]
-transform = Transform3D(1.1811191, 0, 1.2226846, 0, 1.7, 0, -1.2226846, 0, 1.1811191, -34.129463, -0.0101361275, -31.805885)
-
-[node name="Object_12" type="MeshInstance3D" parent="House4_1" unique_id=751164757]
-cast_shadow = 0
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_nw5p3")
-
-[node name="Object_13" type="MeshInstance3D" parent="House4_1" unique_id=921618314]
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_fxaat")
-
-[node name="Object_14" type="MeshInstance3D" parent="House4_1" unique_id=203459465]
-transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 1, 0, 0, 0)
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_7jjiv")
-
-[node name="Object_15" type="MeshInstance3D" parent="House4_1" unique_id=649914816]
-transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 1, 0, 0, 0)
-cast_shadow = 0
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_vkkry")
-
-[node name="Object_16" type="MeshInstance3D" parent="House4_1" unique_id=2083910645]
-transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 1, 0, 0, 0)
-cast_shadow = 0
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_m2oyc")
-
-[node name="StaticBody3D" type="StaticBody3D" parent="House4_1" unique_id=329433816]
-
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="House4_1/StaticBody3D" unique_id=426112414]
-transform = Transform3D(0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0)
-shape = ExtResource("bz_shape_ConcavePolygonShape3D_252lq")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="House4_1/StaticBody3D" unique_id=2087069982]
-transform = Transform3D(0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0)
-shape = ExtResource("bz_shape_ConcavePolygonShape3D_pfs0k")
-
-[node name="CollisionShape3D3" type="CollisionShape3D" parent="House4_1/StaticBody3D" unique_id=1494723497]
-transform = Transform3D(0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0)
-shape = ExtResource("bz_shape_ConcavePolygonShape3D_yxgly")
-
 [node name="Tower" type="Node3D" parent="." unique_id=614169207]
 transform = Transform3D(-1.3832153, -1.4445466, -6.3143126e-08, 2.679571e-15, -8.742278e-08, 2, -1.4445466, 1.3832153, 6.046227e-08, -7.1954784, 0, -8.233911)
 
@@ -1442,34 +678,6 @@ trigger_padding = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 1.7763568e-15, 1, 0.011284828, 0.35957503, 7.572941)
 shape = SubResource("BoxShape3D_8q587")
 
-[node name="Collada visual scene group" type="Node3D" parent="." unique_id=1845477049]
-transform = Transform3D(0.025, 0, 0, 0, -1.0927848e-09, 0.024999999, 0, -0.025, -1.0927846e-09, -18.141031, -0.16010714, -35.037987)
-
-[node name="Material2" type="MeshInstance3D" parent="Collada visual scene group" unique_id=1088455085]
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_58t6l")
-
-[node name="Material4" type="MeshInstance3D" parent="Collada visual scene group" unique_id=848403427]
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_q2vx4")
-
-[node name="Material22" type="MeshInstance3D" parent="Collada visual scene group" unique_id=2122681477]
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_x7bcy")
-
-[node name="Material42" type="MeshInstance3D" parent="Collada visual scene group" unique_id=620156376]
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_rinfv")
-
-[node name="Material3" type="MeshInstance3D" parent="Collada visual scene group" unique_id=1986578114]
-visibility_range_end = 25.0
-visibility_range_fade_mode = 2
-mesh = ExtResource("bz_mesh_ArrayMesh_i1yae")
-
 [node name="Sketchfab_Scene3" parent="." unique_id=726871586 instance=ExtResource("50_yxgly")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.80347, 1.0856366, -26.168709)
 
@@ -1487,13 +695,22 @@ mesh = ExtResource("bz_mesh_ArrayMesh_4v812")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.01171875, 0.016647339, 0.69692993)
 shape = SubResource("BoxShape3D_kdlkc")
 
-[node name="Supermarket Chips Shelf" type="Node3D" parent="." unique_id=424606686]
+[node name="Supermarket Chips Shelf" type="StaticBody3D" parent="." unique_id=780943088]
 transform = Transform3D(-0.7079569, 0.70625585, 3.0871423e-08, 4.53372e-15, -4.371139e-08, 1, 0.70625585, 0.7079569, 3.0945774e-08, 1.9694121, 1.7014179, 1.6840942)
 
 [node name="Supermarket Chips Shelf_Supermarket Chips Shelf_0" type="MeshInstance3D" parent="Supermarket Chips Shelf" unique_id=206983714]
 visibility_range_end = 25.0
 visibility_range_fade_mode = 2
 mesh = ExtResource("bz_mesh_ArrayMesh_hw4a2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Supermarket Chips Shelf/Supermarket Chips Shelf_Supermarket Chips Shelf_0" unique_id=1188160593]
+transform = Transform3D(1, 0, 0, 0, 1, 1.7763568e-15, 1.2434498e-14, -1.7763568e-15, 1, 0.03945458, -1.150656, 0.79304254)
+mesh = SubResource("PlaneMesh_nxk60")
+surface_material_override/0 = SubResource("StandardMaterial3D_3fnoq")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Supermarket Chips Shelf" unique_id=464514411]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0066444874, -0.814044, 0.6585412)
+shape = SubResource("BoxShape3D_nxk60")
 
 [node name="RigidBody3D" type="RigidBody3D" parent="." unique_id=737520198]
 transform = Transform3D(-4.371151e-08, -1, 4.9588875e-15, 0.040902242, -1.7878938e-09, 0.99916315, -0.99916315, 4.367493e-08, 0.040902242, -5.7417555, 2.3935196, -4.663249)
@@ -1527,19 +744,19 @@ visibility_range_fade_mode = 2
 mesh = ExtResource("bz_mesh_ArrayMesh_laoah")
 
 [node name="RigidBody3D2" type="RigidBody3D" parent="." unique_id=24998899]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.10747528, 3.1180062, 0.48419726)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.380127, 3.1180062, 0.48419726)
 mass = 0.001
 
 [node name="Bottle_1_0" type="MeshInstance3D" parent="RigidBody3D2" unique_id=805006041]
-transform = Transform3D(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02, 0, -0.9079356, -0.7869619)
+transform = Transform3D(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02, -0.4351778, -0.9079356, -0.7869619)
 mesh = ExtResource("bz_mesh_ArrayMesh_36jf5")
 
 [node name="Object001_2_0" type="MeshInstance3D" parent="RigidBody3D2" unique_id=1946330359]
-transform = Transform3D(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02, 0, -0.9079356, -0.7869619)
+transform = Transform3D(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02, -0.4351778, -0.9079356, -0.7869619)
 mesh = ExtResource("bz_mesh_ArrayMesh_5ahas")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D2" unique_id=1025782537]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, -0.9079356, -0.16045475)
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -0.4351778, -0.9079356, -0.16045475)
 shape = SubResource("CapsuleShape3D_dyhay")
 
 [node name="bee" type="MeshInstance3D" parent="." unique_id=1418866737]

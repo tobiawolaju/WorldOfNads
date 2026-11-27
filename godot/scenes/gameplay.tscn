@@ -75,6 +75,7 @@ mesh = SubResource("PlaneMesh_4r1bg")
 
 [node name="Bus" parent="." unique_id=1811375150 instance=ExtResource("5_w01lk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 60, 0)
+radius = 35.0
 
 [node name="bus" parent="Bus" index="1" unique_id=1872449115]
 cast_shadow = 0
@@ -96,16 +97,7 @@ rotate_pointer = null
 update_interval = null
 zoom_level = null
 
-[node name="EventFeed" parent="Hud/CanvasLayer/BoxContainer/Node2" parent_id_path=PackedInt32Array(861416889, 802481236) index="4" unique_id=1509763072]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -232.0
-offset_top = 76.0
-offset_right = -12.0
-offset_bottom = 196.0
-grow_horizontal = 0
-mouse_filter = 2
+[node name="EventFeed" parent="Hud/CanvasLayer/BoxContainer/Node2/EventFeedPanel" parent_id_path=PackedInt32Array(861416889, 1509763071) index="0" unique_id=1509763072]
 theme_override_constants/separation = 4
 
 [node name="Level" parent="." unique_id=837639509 instance=ExtResource("12_nt65e")]
@@ -163,7 +155,7 @@ cylinder_wall = NodePath("Cylinder")
 cylinder_border = NodePath("Cylinder2")
 normal_env = ExtResource("9_qixtg")
 storm_env = ExtResource("10_nt65e")
-cylinder_radius = 25.0
+cylinder_radius = 30.0
 damage_per_second = 2.5
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=1122569826]
@@ -187,13 +179,13 @@ shadow_enabled = true
 sky_mode = 1
 
 [node name="Cylinder2" type="MeshInstance3D" parent="env" unique_id=2107449832]
-transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, 0, 0, 0)
+transform = Transform3D(30, 0, 0, 0, 200, 0, 0, 0, 30, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_ctvyo")
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_qixtg")
 
 [node name="Cylinder" type="MeshInstance3D" parent="env" unique_id=1841625008]
-transform = Transform3D(25, 0, 0, 0, 200, 0, 0, 0, 25, -0.012081623, 1.1158777, -0.03631258)
+transform = Transform3D(30, 0, 0, 0, 200, 0, 0, 0, 30, -0.012081623, 1.1158777, -0.03631258)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_nt65e")
 surface_material_override/0 = SubResource("StandardMaterial3D_bhmdk")

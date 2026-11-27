@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://txqqdi5bw3hx" path="res://scripts/ui/jump_bar.gd" id="6_jump_bar"]
 [ext_resource type="Script" uid="uid://7xw4k7bx7fmy" path="res://scripts/ui/stamina_bar.gd" id="6_stamina_bar"]
 [ext_resource type="Script" uid="uid://smygpuu7lbkh" path="res://scripts/ui/compassbar.gd" id="7_mphia"]
+[ext_resource type="Texture2D" uid="uid://hdhbnox5e2d0" path="res://assets/img/point.webp" id="8_gltyx"]
 [ext_resource type="Script" uid="uid://cty6onrl4lub0" path="res://scripts/ui/fps_label.gd" id="8_mphia"]
 [ext_resource type="Script" uid="uid://ck48kng5wgpmf" path="res://scripts/ui/joystick.gd" id="9_mphia"]
 [ext_resource type="Texture2D" uid="uid://dvgw48ivoojhm" path="res://assets/img/blank.png" id="9_qkknv"]
@@ -281,8 +282,8 @@ lootbox_pointer = NodePath("LootBoxPointer")
 pickup_pointer = NodePath("PickupsPointer")
 storm_overlay = NodePath("StormOverlay")
 bus_path_overlay = NodePath("BusPath")
-bus_path_color = Color(1, 0.1764706, 0.61960787, 1)
-bus_path_width = 1.0
+bus_path_color = Color(0.21695787, 0.00013081938, 0.6989159, 1)
+bus_path_width = 10.0
 shade_overlay = NodePath("../../../../shde")
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=123456789]
@@ -330,21 +331,30 @@ mouse_filter = 2
 script = ExtResource("16_bus_path")
 
 [node name="Pointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1253168890]
+modulate = Color(1, 1, 0, 1)
 z_index = 10
 custom_minimum_size = Vector2(20, 20)
-layout_mode = 0
-offset_left = 50.0
-offset_top = 65.0
-offset_right = 70.0
-offset_bottom = 85.0
-scale = Vector2(1, -1)
-texture = ExtResource("15_qpprf")
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 9.627655
+offset_top = -10.700989
+offset_right = 29.627655
+offset_bottom = 9.299011
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(-1, 1)
+texture = ExtResource("8_gltyx")
 expand_mode = 1
 stretch_mode = 4
 flip_v = true
 
 [node name="ChickenPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=1952187711]
 visible = false
+show_behind_parent = true
 z_index = 11
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 0

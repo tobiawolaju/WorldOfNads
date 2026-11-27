@@ -8,7 +8,7 @@ const PIXEL_BUDGET_MOBILE := 90_000
 const PIXEL_BUDGET_WEB := 90_000 # low-end mobile browser: aggressive dynamic res for FPS
 const SCALE_STEPS: Array[float] = [1.0, 0.8, 0.7, 0.65, 0.6, 0.5, 0.4, 0.35, 0.3, 0.25, 0.2]
 const RESIZE_DEBOUNCE_SEC := 0.3
-const LOW_END_WEB_MAX_FPS := 60
+const LOW_END_WEB_MAX_FPS := 120
 
 var _resize_debounce := 0.0
 

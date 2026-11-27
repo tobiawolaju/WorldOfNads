@@ -2872,7 +2872,6 @@ shadow_mesh = SubResource("ArrayMesh_t83g1")
 
 [node name="Van" type="RigidBody3D" unique_id=33487359]
 collision_layer = 16
-collision_mask = 1
 mass = 2800.0
 can_sleep = false
 continuous_cd = true
@@ -3381,7 +3380,7 @@ wheel_radius = 0.34
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.373518, 1.3171413, 1.0706998)
 
 [node name="exit" type="Marker3D" parent="." unique_id=1617149601]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1125615, 1.684823, 1.1684774)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3749255, 1.684823, -0.100479245)
 
 [node name="visulwheels" type="Node3D" parent="." unique_id=1975164458]
 
