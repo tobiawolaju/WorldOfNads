@@ -274,6 +274,17 @@ export async function getPlayerSkin(username) {
     return null; // null means "not stored in Firebase yet, fallback to URL param"
 }
 
+export async function setPlayerSkin(username, skinId) {
+    if (!username || !skinId) return false;
+    const userRef = ref(db, `users/${username}`);
+    await update(userRef, {
+        equippedSkinId: String(skinId),
+        skin: String(skinId),
+        lastUpdated: new Date().toISOString()
+    });
+    return true;
+}
+
 
 
 export async function updatePlayerXP(username, xp) {

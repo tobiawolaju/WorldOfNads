@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
-import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, searchUsers, saveSkin, getSkin, getAllSkins, getPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward, getRewardsForUser } from './firebaseClient.js';
+import { getPlayerWallet, findActiveMatch, markMatchSettled, getAllMatches, updateMatchStatus, saveReward, updateUserRoles, getPlayerProfile, searchUsers, saveSkin, getSkin, getAllSkins, getPlayerSkin, setPlayerSkin, getMatchRecord, updateMatchRecord, creditPlayerResult, patchReward, getRewardsForUser } from './firebaseClient.js';
 import { settleMatchOnchain, settleMatchSplitOnchain, batchStreamMON, lootBoxSteal, getLootBoxPoolOnchain, mintXP, contractWithdraw, createSkinOnchain, getNextSkinId, calcMonPerSec, getMatchOnchain, getContractStatus, getSkinBalance } from './contractClient.js';
 import { settleRound, parsePrizeMon, round6, LOOTBOX_POOL_SHARE } from './settlement.js';
 import { initAnalyticsDb, logAnalyticsEvent, getAnalyticsSummary, getAnalyticsTimeseries, exportAnalyticsEvents, getMatchPlayerCounts } from './analyticsService.js';
@@ -1497,7 +1497,31 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // ─── NATIVE WALLET LINK + MINT ───
+  // Equip a skin for the signed-in account (used by native Godot dashboard).
+  if (req.method === 'POST' && reqUrl.pathname === '/api/skins/equip') {
+    const auth = await getAuthenticatedSession({ authorizationHeader: req.headers.authorization });
+    if (!auth.ok) {
+      sendJson(res, auth.status, { ok: false, error: auth.error });
+      return;
+    }
+    const username = auth.payload?.user?.username || '';
+    try {
+      const payload = await readJsonBody(req);
+      const skinId = String(payload?.skin_id || payload?.equipped_skin_id || payload?.skinId || '').trim();
+      if (!skinId) {
+        sendJson(res, 400, { ok: false, error: 'missing_skin_id' });
+        return;
+      }
+      await setPlayerSkin(username, skinId);
+      sendJson(res, 200, { ok: true, equipped_skin_id: skinId });
+    } catch (error) {
+      console.error('[Skins] /api/skins/equip failed:', error);
+      sendJson(res, 500, { ok: false, error: 'equip_failed' });
+    }
+    return;
+  }
+
+  // NATIVE WALLET LINK + MINT
   // WONsSkins.mintSkin mints to msg.sender, so an in-app mint has to be signed
   // by the player's own key. The key is linked once (encrypted at rest, see
   // walletService.js); POST /api/skins/mint then signs and broadcasts with it.

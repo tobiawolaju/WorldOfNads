@@ -357,6 +357,7 @@ func _ready() -> void:
 	_spawn_preview_player()
 	_spawn_preview_chickens()
 	_fetch_store_data()
+	_fetch_inventory()
 	_fetch_matches()
 	_fetch_match_join_totals()
 	_start_match_join_totals_poll()
@@ -1074,8 +1075,12 @@ func _fetch_store_data() -> void:
 	http.request("%s/api/skins" % API_BASE)
 
 
-func _fetch_inventory() -> void:
+func _fetch_inventory(retry: bool = true) -> void:
 	if not is_instance_valid(AuthManager) or not AuthManager.is_authenticated():
+		if retry:
+			await get_tree().create_timer(1.0).timeout
+			if is_inside_tree():
+				_fetch_inventory(false)
 		return
 	var response: Dictionary = await AuthManager.request(HTTPClient.METHOD_GET, "/api/skins/inventory")
 	if int(response.get("__status", 0)) != 200 or not response.get("ok", false):
@@ -1175,6 +1180,7 @@ func _on_store_data_fetched(result: int, response_code: int, _headers: PackedStr
 		_apply_inventory_payload(_last_inventory_payload)
 		return
 
+	_fetch_inventory()
 	_apply_preview_skin(_displayed_skin_id())
 	_refresh_all()
 
@@ -3001,6 +3007,19 @@ func _equip_selected_skin() -> void:
 	selected_store_id = ""
 	_apply_preview_skin(item_id)
 	_refresh_all()
+	_save_equipped_skin(item_id)
+
+
+func _save_equipped_skin(skin_id: String) -> void:
+	if not is_instance_valid(AuthManager) or not AuthManager.is_authenticated():
+		return
+	var response: Dictionary = await AuthManager.request(
+		HTTPClient.METHOD_POST,
+		"/api/skins/equip",
+		{"skin_id": skin_id}
+	)
+	if int(response.get("__status", 0)) != 200 or not response.get("ok", false):
+		print("Dshbord: equip save failed (%s)" % str(response.get("error", response.get("__status", 0))))
 
 
 # ------------------------------------------------------------------- skin state
