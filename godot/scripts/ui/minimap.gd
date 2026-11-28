@@ -721,22 +721,22 @@ func _update_pointer_label(pointer: TextureRect, text: String) -> void:
 func _style_pointer_label(lbl: Label, pointer: TextureRect) -> void:
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 25)
+	lbl.add_theme_font_size_override("font_size", 10)
 	lbl.add_theme_color_override("font_color", Color(0, 0, 0, 1))
 	lbl.add_theme_constant_override("outline_size", 0)
 	var bg := StyleBoxFlat.new()
 	bg.bg_color = Color(1, 1, 1, 0.95)
-	bg.content_margin_left = 6.0
-	bg.content_margin_right = 6.0
-	bg.content_margin_top = 2.0
-	bg.content_margin_bottom = 2.0
-	bg.corner_radius_top_left = 4
-	bg.corner_radius_top_right = 4
-	bg.corner_radius_bottom_left = 4
-	bg.corner_radius_bottom_right = 4
+	bg.content_margin_left = 3.0
+	bg.content_margin_right = 3.0
+	bg.content_margin_top = 1.0
+	bg.content_margin_bottom = 1.0
+	bg.corner_radius_top_left = 2
+	bg.corner_radius_top_right = 2
+	bg.corner_radius_bottom_left = 2
+	bg.corner_radius_bottom_right = 2
 	lbl.add_theme_stylebox_override("normal", bg)
-	lbl.size = Vector2(160, 34)
-	lbl.position = Vector2((pointer.size.x - lbl.size.x) * 0.5, pointer.size.y + 2)
+	lbl.size = Vector2(64, 14)
+	lbl.position = Vector2((pointer.size.x - lbl.size.x) * 0.5, pointer.size.y + 1)
 
 
 func _pickup_display_name(node: Node) -> String:
