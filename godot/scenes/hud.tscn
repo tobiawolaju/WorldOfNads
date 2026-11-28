@@ -282,7 +282,7 @@ lootbox_pointer = NodePath("LootBoxPointer")
 pickup_pointer = NodePath("PickupsPointer")
 storm_overlay = NodePath("StormOverlay")
 bus_path_overlay = NodePath("BusPath")
-bus_path_color = Color(0.21695787, 0.00013081938, 0.6989159, 1)
+bus_path_color = Color(0.21568628, 0, 0.69803923, 1)
 bus_path_width = 10.0
 shade_overlay = NodePath("../../../../shde")
 
@@ -368,6 +368,11 @@ expand_mode = 1
 stretch_mode = 4
 flip_v = true
 
+[node name="Label" type="Label" parent="CanvasLayer/BoxContainer/Node2/Minimap/ChickenPointer" unique_id=538361186]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
 [node name="LootBoxPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=146359137]
 visible = false
 modulate = Color(0.9137255, 0.08235294, 1, 1)
@@ -383,6 +388,11 @@ texture = ExtResource("6_gltyx")
 expand_mode = 1
 stretch_mode = 4
 
+[node name="Label" type="Label" parent="CanvasLayer/BoxContainer/Node2/Minimap/LootBoxPointer" unique_id=1418948445]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
 [node name="PickupsPointer" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2/Minimap" unique_id=259660790]
 visible = false
 modulate = Color(1, 0.54509807, 0.7647059, 1)
@@ -397,6 +407,11 @@ scale = Vector2(1.2, 1.2)
 texture = ExtResource("6_gltyx")
 expand_mode = 1
 stretch_mode = 4
+
+[node name="Label" type="Label" parent="CanvasLayer/BoxContainer/Node2/Minimap/PickupsPointer" unique_id=664378197]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
 
 [node name="TextureRect" type="TextureRect" parent="CanvasLayer/BoxContainer/Node2" unique_id=248207393]
 modulate = Color(1, 1, 1, 0.29411766)

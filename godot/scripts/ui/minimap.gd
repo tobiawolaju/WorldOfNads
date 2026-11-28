@@ -257,6 +257,7 @@ func _apply_expanded_chrome(expanded: bool) -> void:
 			control.set("visible", false)
 		else:
 			control.set("visible", _hide_controls_visible[index])
+	_sync_pointer_labels()
 
 func _fade_shade(should_show: bool) -> void:
 	if shade_overlay == null or not is_instance_valid(shade_overlay):
@@ -562,6 +563,78 @@ func _setup_pointer(pointer: TextureRect) -> void:
 		return
 
 	pointer.pivot_offset = pointer.size * 0.5
+	_update_pointer_label(pointer, "")
+
+
+func _sync_pointer_labels() -> void:
+	_update_pointer_label(chicken_pointer, "Chicken")
+	_update_pointer_label(lootbox_pointer, "Lootbox")
+	for id in _pickup_pointers:
+		var ptr: TextureRect = _pickup_pointers.get(id)
+		if ptr != null and is_instance_valid(ptr):
+			var node: Node3D = _pickup_targets.get(id)
+			_update_pointer_label(ptr, _pickup_display_name(node))
+
+
+func _update_pointer_label(pointer: TextureRect, text: String) -> void:
+	if pointer == null:
+		return
+	var lbl := pointer.get_node_or_null("Label") as Label
+	if lbl == null:
+		return
+	if text != "":
+		lbl.text = text
+	lbl.visible = _is_fullscreen and pointer.visible and lbl.text != ""
+	if lbl.visible:
+		_style_pointer_label(lbl, pointer)
+
+
+func _style_pointer_label(lbl: Label, pointer: TextureRect) -> void:
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 10)
+	lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
+	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	lbl.add_theme_constant_override("outline_size", 3)
+	lbl.size = Vector2(90, 20)
+	lbl.position = Vector2((pointer.size.x - lbl.size.x) * 0.5, pointer.size.y - 2)
+
+
+func _pickup_display_name(node: Node) -> String:
+	if node == null or not is_instance_valid(node):
+		return "Item"
+	if node.has_method("power_up_label"):
+		var mode = int(node.get("power_up_mode"))
+		match mode:
+			LocalPickup.PowerUpMode.TWIN:
+				return "Twin"
+			LocalPickup.PowerUpMode.SPEED_BURST:
+				return "Rush"
+			LocalPickup.PowerUpMode.SMOKE_GRENADE:
+				return "Smog"
+			LocalPickup.PowerUpMode.MEGA_LEAP:
+				return "Leap"
+			LocalPickup.PowerUpMode.CHICKEN:
+				return "Chicken"
+			LocalPickup.PowerUpMode.LOOTBOX:
+				return "Lootbox"
+			_:
+				var lbl_text = str(node.call("power_up_label"))
+				return lbl_text.capitalize() if lbl_text != "" else "Item"
+	var weapon_kind = node.get("weapon_kind")
+	if weapon_kind != null:
+		match int(weapon_kind):
+			LocalPickup2.WeaponKind.SWORD:
+				return "Sword"
+			LocalPickup2.WeaponKind.AK47:
+				return "AK47"
+			LocalPickup2.WeaponKind.GLOCK:
+				return "Glock"
+			LocalPickup2.WeaponKind.KNIFE:
+				return "Knife"
+			LocalPickup2.WeaponKind.RPG:
+				return "RPG"
+		return "Weapon"
+	return "Item"
 
 func _refresh_pickup_targets() -> void:
 	# Rescanning the "local_pickup_items" group is a full scene-tree walk, so
@@ -627,10 +700,12 @@ func _update_pickup_pointers() -> void:
 		ptr.visible = true
 		ptr.position = clamped - half
 		ptr.rotation = 0.0
+		_update_pointer_label(ptr, _pickup_display_name(node))
 
 func _update_chicken_pointer() -> void:
 	if chicken_target == null or not is_instance_valid(chicken_target):
 		chicken_pointer.visible = false
+		_update_pointer_label(chicken_pointer, "Chicken")
 		return
 
 	var mm_pos: Vector2 = _world_to_minimap(chicken_target.global_position)
@@ -647,11 +722,13 @@ func _update_chicken_pointer() -> void:
 	chicken_pointer.visible = true
 	chicken_pointer.position = clamped_pos - half_pointer
 	chicken_pointer.rotation = 0.0
+	_update_pointer_label(chicken_pointer, "Chicken")
 
 
 func _update_lootbox_pointer() -> void:
 	if lootbox_target == null or not is_instance_valid(lootbox_target):
 		lootbox_pointer.visible = false
+		_update_pointer_label(lootbox_pointer, "Lootbox")
 		return
 
 	var mm_pos: Vector2 = _world_to_minimap(lootbox_target.global_position)
@@ -668,6 +745,7 @@ func _update_lootbox_pointer() -> void:
 	lootbox_pointer.visible = true
 	lootbox_pointer.position = clamped_pos - half_pointer
 	lootbox_pointer.rotation = 0.0
+	_update_pointer_label(lootbox_pointer, "Lootbox")
 
 func _update_storm_overlay() -> void:
 	if not _is_fullscreen:
