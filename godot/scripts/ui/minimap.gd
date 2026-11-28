@@ -95,11 +95,16 @@ var _opened_at_ms: int = 0
 const EXPANDED_ZOOM_MIN := 1.0
 const EXPANDED_ZOOM_MAX := 5.0
 var _expanded_zoom: float = 1.0
+var _expanded_pan: Vector2 = Vector2.ZERO
 var _touch_points: Dictionary = {}
 var _pinch_start_dist: float = 0.0
 var _pinch_start_zoom: float = 1.0
 var _pinch_active: bool = false
 var _pinch_gesture_used: bool = false
+var _single_touch_start: Vector2 = Vector2.ZERO
+var _single_touch_moved: bool = false
+var _mouse_dragging: bool = false
+var _mouse_drag_start: Vector2 = Vector2.ZERO
 
 ## Fullscreen "shade": the shde ColorRect in the HUD fades in behind the map
 ## while it is expanded, and fades back out when the map is closed.
@@ -183,6 +188,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			_touch_points[event.index] = event.position
+			if _touch_points.size() == 1:
+				_single_touch_start = event.position
+				_single_touch_moved = false
 			if _touch_points.size() >= 2:
 				_pinch_active = true
 				_pinch_gesture_used = true
@@ -191,14 +199,19 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		else:
+			var release_pos: Vector2 = event.position
 			_touch_points.erase(event.index)
 			if _touch_points.size() < 2:
 				_pinch_active = false
 			if _touch_points.is_empty():
 				var was_pinch := _pinch_gesture_used
+				var moved := _single_touch_moved
 				_pinch_gesture_used = false
+				_single_touch_moved = false
 				get_viewport().set_input_as_handled()
-				if not was_pinch:
+				# Close only when tapping outside the map (edges/shade). Inside the
+				# map is reserved for pinch-zoom and pan.
+				if not was_pinch and not moved and not _is_point_on_map(release_pos):
 					_set_fullscreen(false)
 				return
 			get_viewport().set_input_as_handled()
@@ -213,12 +226,45 @@ func _input(event: InputEvent) -> void:
 				_expanded_zoom = clampf(_pinch_start_zoom * (dist / _pinch_start_dist), EXPANDED_ZOOM_MIN, EXPANDED_ZOOM_MAX)
 			get_viewport().set_input_as_handled()
 			return
+		# Single-finger drag pans the expanded map.
+		if _touch_points.size() == 1:
+			_expanded_pan += event.relative
+			if event.position.distance_to(_single_touch_start) > 8.0:
+				_single_touch_moved = true
+			get_viewport().set_input_as_handled()
+			return
 
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
+			_expanded_zoom = clampf(_expanded_zoom * 1.1, EXPANDED_ZOOM_MIN, EXPANDED_ZOOM_MAX)
 			get_viewport().set_input_as_handled()
-			_set_fullscreen(false)
+			return
+		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
+			_expanded_zoom = clampf(_expanded_zoom / 1.1, EXPANDED_ZOOM_MIN, EXPANDED_ZOOM_MAX)
+			get_viewport().set_input_as_handled()
+			return
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				if not _is_point_on_map(event.position):
+					get_viewport().set_input_as_handled()
+					_set_fullscreen(false)
+				else:
+					_mouse_dragging = true
+					_mouse_drag_start = event.position
+					get_viewport().set_input_as_handled()
+			else:
+				_mouse_dragging = false
+				get_viewport().set_input_as_handled()
+			return
+
+	if event is InputEventMouseMotion and _mouse_dragging:
+		_expanded_pan += event.relative
+		get_viewport().set_input_as_handled()
 		return
+
+
+func _is_point_on_map(global_pos: Vector2) -> bool:
+	return minimap_container != null and is_instance_valid(minimap_container) and minimap_container.get_global_rect().has_point(global_pos)
 
 
 func _touch_points_distance() -> float:
@@ -267,9 +313,12 @@ func _set_fullscreen(expanded: bool) -> void:
 		_restore_storm_overlay_layout()
 		_fade_shade(false)
 		_expanded_zoom = 1.0
+		_expanded_pan = Vector2.ZERO
 		_touch_points.clear()
 		_pinch_active = false
 		_pinch_gesture_used = false
+		_single_touch_moved = false
+		_mouse_dragging = false
 	_apply_expanded_chrome(_is_fullscreen)
 	_update_bus_path_overlay()
 
@@ -432,8 +481,13 @@ func _process(_delta: float) -> void:
 	# Offset background to center player (clamped so the map fills the view).
 	var pixel_pos_on_scaled = player_uv * scaled_size
 	var target_pos = (mm_size * 0.5) - pixel_pos_on_scaled
+	if _is_fullscreen:
+		target_pos += _expanded_pan
 	target_pos.x = clampf(target_pos.x, mm_size.x - scaled_size.x, 0.0)
 	target_pos.y = clampf(target_pos.y, mm_size.y - scaled_size.y, 0.0)
+	if _is_fullscreen:
+		# Keep pan in sync with clamp so it doesn't accumulate past edges.
+		_expanded_pan = target_pos - ((mm_size * 0.5) - pixel_pos_on_scaled)
 	background_texture.position = target_pos
 
 	# Player pointer sits on the player's actual pixel.
