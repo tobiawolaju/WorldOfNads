@@ -1049,6 +1049,8 @@ func _perform_pickup_request() -> void:
 func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
+	if get_viewport().is_input_handled():
+		return
 
 	if event is InputEventKey and event.pressed and not event.echo:
 		var key := OS.get_keycode_string(event.keycode).to_upper()
