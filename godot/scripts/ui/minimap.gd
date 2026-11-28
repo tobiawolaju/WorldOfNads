@@ -48,6 +48,7 @@ var _bus_circle_world_size := Vector2.ZERO # map config the uv cache was built f
 var _bus_circle_world_origin := Vector2.ZERO
 var _last_bus_fullscreen := false
 var _last_bus_offset := Vector2(INF, INF) # forces the very first upload
+var _last_bus_size := Vector2(INF, INF)
 # Inner clip for the panning background; pointers stay outside it so they can
 # overflow the minimap edge without being cut off.
 var _map_clip: Control = null
@@ -418,6 +419,28 @@ func _layout_fullscreen_storm_overlay() -> void:
 			map_side / viewport_size.y
 		))
 
+
+func _update_fullscreen_storm_map_rect() -> void:
+	if storm_overlay == null or not is_instance_valid(storm_overlay):
+		return
+	if not (storm_overlay.material is ShaderMaterial):
+		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return
+	var map_side := minf(viewport_size.x, viewport_size.y)
+	var map_offset := (viewport_size - Vector2(map_side, map_side)) * 0.5
+	# Align storm shader to the actual zoomed/panned map texture.
+	var bg_pos := background_texture.position if background_texture != null else Vector2.ZERO
+	var bg_size := background_texture.size if background_texture != null else Vector2(map_side, map_side)
+	storm_overlay.material.set_shader_parameter("map_rect", Vector4(
+		(map_offset.x + bg_pos.x) / viewport_size.x,
+		(map_offset.y + bg_pos.y) / viewport_size.y,
+		bg_size.x / viewport_size.x,
+		bg_size.y / viewport_size.y
+	))
+
+
 func _restore_storm_overlay_layout() -> void:
 	if storm_overlay == null or not is_instance_valid(storm_overlay):
 		return
@@ -553,27 +576,24 @@ func _update_bus_path_overlay() -> void:
 			return
 
 	# The circle is static; skip the per-tick upload + redraw unless the
-	# projection actually moved (fullscreen flip, or the zoomed background
-	# tracked the player by more than a pixel).
+	# projection actually moved (zoom/pan/fullscreen/background tracking).
+	var bg_pos := background_texture.position
+	var bg_size := background_texture.size
 	if (
 		_is_fullscreen == _last_bus_fullscreen
-		and absf(background_texture.position.x - _last_bus_offset.x) < BUS_PATH_MIN_MOVE_PX
-		and absf(background_texture.position.y - _last_bus_offset.y) < BUS_PATH_MIN_MOVE_PX
+		and absf(bg_pos.x - _last_bus_offset.x) < BUS_PATH_MIN_MOVE_PX
+		and absf(bg_pos.y - _last_bus_offset.y) < BUS_PATH_MIN_MOVE_PX
+		and absf(bg_size.x - _last_bus_size.x) < BUS_PATH_MIN_MOVE_PX
+		and absf(bg_size.y - _last_bus_size.y) < BUS_PATH_MIN_MOVE_PX
 	):
 		return
 	_last_bus_fullscreen = _is_fullscreen
-	_last_bus_offset = background_texture.position
+	_last_bus_offset = bg_pos
+	_last_bus_size = bg_size
 
-	var mm := minimap_container.size
 	var pts := _bus_circle_points
-	if _is_fullscreen:
-		for i in BUS_PATH_STEPS:
-			pts[i] = _bus_circle_uvs[i] * mm
-	else:
-		var scaled := mm * zoom_level
-		var off := background_texture.position
-		for i in BUS_PATH_STEPS:
-			pts[i] = _bus_circle_uvs[i] * scaled + off
+	for i in BUS_PATH_STEPS:
+		pts[i] = bg_pos + _bus_circle_uvs[i] * bg_size
 	pts[BUS_PATH_STEPS] = pts[0] # close the loop
 	bus_path_overlay.set_path(pts, bus_path_color, bus_path_width)
 
@@ -846,6 +866,7 @@ func _update_storm_overlay() -> void:
 	if not _is_fullscreen:
 		storm_overlay.visible = false
 		return
+	_update_fullscreen_storm_map_rect()
 
 	if _storm_eye_node == null or not is_instance_valid(_storm_eye_node):
 		storm_overlay.visible = false
