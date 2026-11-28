@@ -154,6 +154,8 @@ func play_action(kind: int) -> void:
 	var clip := "hook" if kind == ACTION_HOOK else "shoot"
 	if anim_player == null or not anim_player.has_animation(clip):
 		return
+	if _decoy != null and is_instance_valid(_decoy) and _decoy.has_method("play_action"):
+		_decoy.call("play_action", kind)
 	_action_generation += 1
 	var generation := _action_generation
 	_action_active = true
@@ -327,6 +329,10 @@ func cache_animation_state(new_state: String) -> void:
 	current_animation = new_state
 
 func set_animation_lod_enabled(enabled: bool) -> void:
+	# Keep animating while a TWIN decoy is active: the decoy copies this
+	# avatar's pose, so parking the tree would freeze both.
+	if not enabled and _remote_powerup_mode == LocalPickup.PowerUpMode.TWIN:
+		enabled = true
 	if animation_lod_enabled == enabled:
 		return
 	animation_lod_enabled = enabled
@@ -645,6 +651,8 @@ func apply_remote_powerup(mode: int, duration: float, active: bool) -> void:
 				"tint", LocalPickup.POWER_UP_COLORS.get(mode, Color.WHITE))
 		_aura.visible = mesh_lod_enabled
 	if mode == LocalPickup.PowerUpMode.TWIN:
+		if not animation_lod_enabled:
+			set_animation_lod_enabled(true)
 		_spawn_twin_decoy()
 	else:
 		_despawn_twin_decoy()
@@ -754,6 +762,8 @@ func _spawn_twin_decoy() -> void:
 	_decoy = decoy
 	_decoy_skeleton = decoy.get_node_or_null("Skeleton3D") as Node3D
 	_mirror_twin_decoy()
+	if decoy.has_method("set_animation_lod_enabled"):
+		decoy.call("set_animation_lod_enabled", true)
 	if decoy.has_method("set_animation_state"):
 		decoy.call("set_animation_state", current_animation)
 

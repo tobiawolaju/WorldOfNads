@@ -1953,6 +1953,16 @@ function publishEvent(eventType, message, playerId = '', meta = {}) {
       client.send(payload);
     }
   });
+  // Visual replication also goes over the game socket so clients do not miss it
+  // when /events is disconnected or on a different room. Client dedupes by id.
+  if (eventType === 'fx' || eventType === 'powerup') {
+    const gamePayload = mpEncode({ type: 'event', event });
+    gameWss.clients.forEach((client) => {
+      if (client.readyState === 1 && client.bufferedAmount < MAX_CLIENT_BUFFERED_BYTES) {
+        client.send(gamePayload);
+      }
+    });
+  }
 }
 
 function getPlayerCount() {

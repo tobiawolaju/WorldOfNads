@@ -100,6 +100,11 @@ var _countdown_last_seconds: int = -999
 var _disc_styles: Dictionary = {}
 var _local_player_id := ""
 var _navigated_to_gameover := false
+## Dedupe for visual replication events (fx/powerup). The same event can arrive
+## over both the /events feed and the game socket; spawning it twice would create
+## duplicate smoke clouds or restart a decoy timer.
+var _seen_replicated_event_ids: Dictionary = {}
+const SEEN_REPLICATED_EVENT_MAX := 128
 
 @onready var _feed: VBoxContainer = get_node_or_null(feed_path)
 @onready var username_label: Label = get_node_or_null(username_label_path)
@@ -391,14 +396,14 @@ func _render_event(event_data: Dictionary, can_navigate: bool) -> void:
 		# noise. Snapshot entries are ignored so a late joiner does not spawn a
 		# cloud that already expired; `can_navigate` is true only for live events.
 		if can_navigate:
-			_spawn_fx_event(event_data)
+			handle_replicated_event(event_data)
 		return
 	if event_type == "powerup":
 		# Aura/decoy state is rebuilt from the sender's event, like fx. Snapshot
 		# entries are ignored: a timed aura from the history has already expired
 		# (or is about to), so a late joiner must not inherit a stale one.
 		if can_navigate:
-			_apply_powerup_event(event_data)
+			handle_replicated_event(event_data)
 		return
 	var message = str(event_data.get("message", ""))
 	if message.strip_edges() == "":
@@ -409,6 +414,24 @@ func _render_event(event_data: Dictionary, can_navigate: bool) -> void:
 
 	if can_navigate and str(event_data.get("eventType", "")) == "match_winner":
 		_handle_match_winner_event(event_data)
+
+
+## Handles a live fx/powerup replication event from either the /events feed or
+## the game socket. Dedupe by event id so dual delivery never spawns twice.
+func handle_replicated_event(event_data: Dictionary) -> void:
+	var event_id := str(event_data.get("id", ""))
+	if event_id != "":
+		if _seen_replicated_event_ids.has(event_id):
+			return
+		_seen_replicated_event_ids[event_id] = true
+		if _seen_replicated_event_ids.size() > SEEN_REPLICATED_EVENT_MAX:
+			_seen_replicated_event_ids.clear()
+			_seen_replicated_event_ids[event_id] = true
+	var event_type := str(event_data.get("eventType", ""))
+	if event_type == "fx":
+		_spawn_fx_event(event_data)
+	elif event_type == "powerup":
+		_apply_powerup_event(event_data)
 
 
 # Rebuilds an effect another player triggered. The thrower already spawned it

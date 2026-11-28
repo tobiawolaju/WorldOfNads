@@ -871,6 +871,19 @@ func _receive_messages():
 				_round_finished = true
 				print("🏁 Round finished; closing the game socket.")
 				ws.close()
+			"event":
+				# Live visual replication (fx/powerup) also arrives on the game
+				# socket so it is not lost when /events is disconnected or on a
+				# different room. Events.gd dedupes by event id.
+				if data.has("event") and typeof(data["event"]) == TYPE_DICTIONARY:
+					var ev: Dictionary = data["event"]
+					var ev_type := str(ev.get("eventType", ""))
+					if ev_type == "fx" or ev_type == "powerup":
+						var bridge = events_bridge
+						if bridge == null or not is_instance_valid(bridge):
+							bridge = get_tree().get_first_node_in_group("events_bridge")
+						if bridge != null and bridge.has_method("handle_replicated_event"):
+							bridge.call("handle_replicated_event", ev)
 			"state":
 				if data.has("players"):
 					_update_world_state(data["players"], true, false)

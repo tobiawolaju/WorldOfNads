@@ -127,6 +127,10 @@ pub struct TickOutput {
     pub messages: Vec<(String, Vec<u8>)>,
     /// Ready-to-send JSON strings for the `/events` feed.
     pub events: Vec<String>,
+    /// Msgpack event frames broadcast to every game socket. Used for live visual
+    /// replication (fx/powerup) so clients do not depend on the separate /events
+    /// WebSocket being connected to the same room.
+    pub game_events: Vec<Vec<u8>>,
     pub close_all: bool,
     /// The result of a round that ended during this tick, ready to be reported to
     /// the control plane. `None` on every other tick.
@@ -148,6 +152,8 @@ pub struct Room {
     pub event_history: Vec<Value>,
     pub event_sequence: i64,
     pub pending_events: Vec<String>,
+    /// Msgpack event frames for the game socket (fx/powerup replication).
+    pub pending_game_events: Vec<Vec<u8>>,
     pub pending_reward_msgs: Vec<(String, Vec<u8>)>,
     pub match_time_left: f64,
     pub match_running: bool,
@@ -206,6 +212,7 @@ impl Room {
             event_history: Vec::new(),
             event_sequence: 0,
             pending_events: Vec::new(),
+            pending_game_events: Vec::new(),
             pending_reward_msgs: Vec::new(),
             match_time_left: MATCH_DURATION_SECONDS,
             match_running: false,
@@ -809,6 +816,12 @@ impl Room {
             self.event_history.remove(0);
         }
         let wrapped = json!({ "type": "event", "event": event });
+        // Visual replication events also travel on the game socket so clients do
+        // not miss them when the /events WebSocket is disconnected or on a
+        // different room. The client dedupes by event id.
+        if matches!(event_type, "fx" | "powerup") {
+            self.pending_game_events.push(encode(&wrapped));
+        }
         self.pending_events.push(wrapped.to_string());
     }
 
@@ -1416,6 +1429,7 @@ impl Room {
 
         let mut out = TickOutput::default();
         out.events = std::mem::take(&mut self.pending_events);
+        out.game_events = std::mem::take(&mut self.pending_game_events);
         // Taken before the `pending_close_all` early return: a finished round sets
         // both flags on the same tick, and the result must still reach the caller.
         out.settlement = self.pending_settlement.take();

@@ -1284,6 +1284,9 @@ pub async fn run_room_tick(state: Arc<AppState>, handle: Arc<RoomHandle>) {
         if !output.events.is_empty() {
             broadcast_events(&handle, output.events).await;
         }
+        for bytes in &output.game_events {
+            broadcast_bytes(&handle, bytes).await;
+        }
         if let Some(result) = output.settlement {
             // Never await the report inside the tick: the result goes into the
             // outbox, which retries until the control plane accepts it (see
