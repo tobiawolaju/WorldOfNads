@@ -3,12 +3,12 @@ extends Node
 ## DeviceOptimizer
 ##
 ## Scores the current device (CPU cores, RAM, GPU, platform) and applies
-## layered performance optimizations: UI glass shaders, lights/shadows, and
-## environment effects. Layers are cumulative (higher = more aggressive):
+## layered performance optimizations. Lighting/shader-FX reductions were removed
+## because they regressed performance; only UI glass shader optimization remains.
 ##   0 Full    - no reductions
-##   1 Light   - cheaper shadows / lighter post effects
-##   2 Low     - UI glass shaders off, scene shadows off, fewer accent lights
-##   3 Minimal - aggressive reductions for very constrained devices
+##   1 Light   - no reductions
+##   2 Low     - UI glass shaders off
+##   3 Minimal - UI glass shaders off
 ##
 ## "Device setting" signals (best-effort, cross-platform):
 ##   - CPU: OS.get_processor_count() (+ navigator.hardwareConcurrency on web)
@@ -281,51 +281,19 @@ func _maybe_apply_glass(item: CanvasItem) -> void:
 
 
 # --- Lights ------------------------------------------------------------------
-# Layer LIGHT: keep lights but disable shadows on secondary/fill lights.
-# Layer LOW:   disable shadows on all lights; dim non-key accent lights.
-# Layer MINIMAL: disable shadows and strongly dim/disable accent lights.
+# Lighting reductions removed: they regressed performance.
 
 func _apply_light(light: Light3D) -> void:
-	# Record base values once so we can scale from originals.
 	if not light.has_meta("_opt_base_energy"):
 		light.set_meta("_opt_base_energy", light.light_energy)
 		light.set_meta("_opt_base_shadow", light.shadow_enabled)
-	var base_energy: float = light.get_meta("_opt_base_energy")
-	var base_shadow: bool = light.get_meta("_opt_base_shadow")
-
-	if layer <= Layer.FULL:
-		light.light_energy = base_energy
-		light.shadow_enabled = base_shadow
-		return
-
-	var lname := light.name.to_lower()
-	var is_accent := lname.find("fill") != -1 or lname.find("rim") != -1
-
-	if layer == Layer.LIGHT:
-		# Keep key lights intact; drop shadows from accent lights.
-		light.light_energy = base_energy
-		light.shadow_enabled = false if is_accent else base_shadow
-	elif layer == Layer.LOW:
-		light.shadow_enabled = false
-		light.light_energy = base_energy * (0.6 if is_accent else 1.0)
-	else: # MINIMAL
-		light.shadow_enabled = false
-		if is_accent:
-			light.visible = false
-			light.light_energy = base_energy
-		else:
-			light.visible = true
-			light.light_energy = base_energy * 0.85
-
-	if light is DirectionalLight3D and layer >= Layer.LOW:
-		(light as DirectionalLight3D).directional_shadow_max_distance = minf(
-			(light as DirectionalLight3D).directional_shadow_max_distance, 12.0
-		)
+	light.light_energy = light.get_meta("_opt_base_energy")
+	light.shadow_enabled = light.get_meta("_opt_base_shadow")
+	light.visible = true
 
 
 # --- Environment -------------------------------------------------------------
-# Layer LIGHT: reduce glow intensity.
-# Layer LOW+:  disable glow; keep fog (important for depth/gameplay cues).
+# Shader/lighting post-FX reductions removed: they regressed performance.
 
 func _apply_environment(world_env: WorldEnvironment) -> void:
 	var env := world_env.environment
@@ -339,17 +307,9 @@ func _apply_environment(world_env: WorldEnvironment) -> void:
 			"glow_bloom": env.glow_bloom,
 		}
 	var base: Dictionary = _env_base[id]
-
-	if layer <= Layer.FULL:
-		env.glow_enabled = base.get("glow_enabled", env.glow_enabled)
-		env.glow_intensity = base.get("glow_intensity", env.glow_intensity)
-		env.glow_bloom = base.get("glow_bloom", env.glow_bloom)
-	elif layer == Layer.LIGHT:
-		env.glow_enabled = base.get("glow_enabled", env.glow_enabled)
-		env.glow_intensity = float(base.get("glow_intensity", env.glow_intensity)) * 0.5
-		env.glow_bloom = float(base.get("glow_bloom", env.glow_bloom)) * 0.5
-	else:
-		env.glow_enabled = false
+	env.glow_enabled = base.get("glow_enabled", env.glow_enabled)
+	env.glow_intensity = float(base.get("glow_intensity", env.glow_intensity))
+	env.glow_bloom = float(base.get("glow_bloom", env.glow_bloom))
 
 
 # --- Public helpers ----------------------------------------------------------
@@ -377,4 +337,4 @@ func is_glass_disabled() -> bool:
 
 
 func is_shadows_reduced() -> bool:
-	return layer >= Layer.LIGHT
+	return false
