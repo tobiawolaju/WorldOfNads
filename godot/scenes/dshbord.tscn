@@ -186,7 +186,7 @@ mouse_filter = 2
 
 [node name="Prev" type="TextureRect" parent="CanvasLayer/LobbyBg" unique_id=688726422]
 visible = false
-modulate = Color(1, 1, 1, 0.5)
+modulate = Color(1, 1, 1, 1)
 material = SubResource("ShaderMaterial_lobbyfade")
 layout_mode = 0
 anchor_right = 1.0
@@ -198,7 +198,7 @@ expand_mode = 1
 stretch_mode = 6
 
 [node name="Current" type="TextureRect" parent="CanvasLayer/LobbyBg" unique_id=688726423]
-modulate = Color(1, 1, 1, 0.5)
+modulate = Color(1, 1, 1, 1)
 material = SubResource("ShaderMaterial_lobbyfade")
 layout_mode = 0
 anchor_right = 1.0
