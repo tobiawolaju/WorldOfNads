@@ -106,6 +106,7 @@ var _single_touch_start: Vector2 = Vector2.ZERO
 var _single_touch_moved: bool = false
 var _mouse_dragging: bool = false
 var _mouse_drag_start: Vector2 = Vector2.ZERO
+var _close_button: TextureButton = null
 
 ## Fullscreen "shade": the shde ColorRect in the HUD fades in behind the map
 ## while it is expanded, and fades back out when the map is closed.
@@ -143,6 +144,7 @@ func _ready() -> void:
 	_setup_pointer(pickup_pointer)
 	_refresh_targets()
 
+	_create_close_button()
 	_apply_visibility()
 
 
@@ -187,6 +189,10 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventScreenTouch:
+		if _is_point_on_close_button(event.position):
+			if not event.pressed:
+				_touch_points.erase(event.index)
+			return
 		if event.pressed:
 			_touch_points[event.index] = event.position
 			if _touch_points.size() == 1:
@@ -245,6 +251,8 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.button_index == MOUSE_BUTTON_LEFT:
+			if _is_point_on_close_button(event.position):
+				return
 			if event.pressed:
 				if not _is_point_on_map(event.position):
 					get_viewport().set_input_as_handled()
@@ -266,6 +274,10 @@ func _input(event: InputEvent) -> void:
 
 func _is_point_on_map(global_pos: Vector2) -> bool:
 	return minimap_container != null and is_instance_valid(minimap_container) and minimap_container.get_global_rect().has_point(global_pos)
+
+
+func _is_point_on_close_button(global_pos: Vector2) -> bool:
+	return _close_button != null and is_instance_valid(_close_button) and _close_button.visible and _close_button.get_global_rect().has_point(global_pos)
 
 
 func _touch_points_distance() -> float:
@@ -322,6 +334,8 @@ func _set_fullscreen(expanded: bool) -> void:
 		_mouse_dragging = false
 	_apply_expanded_chrome(_is_fullscreen)
 	_update_bus_path_overlay()
+	if _close_button != null and is_instance_valid(_close_button):
+		_close_button.visible = _is_fullscreen
 
 
 ## Resolve the HUD pieces the fullscreen map has to cover/keep visible. The
@@ -706,12 +720,23 @@ func _update_pointer_label(pointer: TextureRect, text: String) -> void:
 
 func _style_pointer_label(lbl: Label, pointer: TextureRect) -> void:
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 10)
-	lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
-	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-	lbl.add_theme_constant_override("outline_size", 3)
-	lbl.size = Vector2(90, 20)
-	lbl.position = Vector2((pointer.size.x - lbl.size.x) * 0.5, pointer.size.y - 2)
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 25)
+	lbl.add_theme_color_override("font_color", Color(0, 0, 0, 1))
+	lbl.add_theme_constant_override("outline_size", 0)
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(1, 1, 1, 0.95)
+	bg.content_margin_left = 6.0
+	bg.content_margin_right = 6.0
+	bg.content_margin_top = 2.0
+	bg.content_margin_bottom = 2.0
+	bg.corner_radius_top_left = 4
+	bg.corner_radius_top_right = 4
+	bg.corner_radius_bottom_left = 4
+	bg.corner_radius_bottom_right = 4
+	lbl.add_theme_stylebox_override("normal", bg)
+	lbl.size = Vector2(160, 34)
+	lbl.position = Vector2((pointer.size.x - lbl.size.x) * 0.5, pointer.size.y + 2)
 
 
 func _pickup_display_name(node: Node) -> String:
@@ -914,3 +939,55 @@ func _apply_visibility(force_visible: bool = true) -> void:
 
 	if minimap_container:
 		minimap_container.visible = should_show
+
+
+func _create_close_button() -> void:
+	if _close_button != null and is_instance_valid(_close_button):
+		return
+	var canvas_layer := _find_canvas_layer()
+	if canvas_layer == null:
+		return
+	_close_button = TextureButton.new()
+	_close_button.name = "MinimapCloseButton"
+	_close_button.texture_normal = _make_x_icon_texture(64, 8)
+	_close_button.ignore_texture_size = true
+	_close_button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	_close_button.custom_minimum_size = Vector2(44, 44)
+	_close_button.size = Vector2(44, 44)
+	_close_button.position = Vector2(16, 16)
+	_close_button.z_index = 300
+	_close_button.visible = false
+	_close_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	_close_button.pressed.connect(_on_close_button_pressed)
+	canvas_layer.add_child(_close_button)
+
+
+func _on_close_button_pressed() -> void:
+	if _is_fullscreen:
+		_set_fullscreen(false)
+
+
+func _find_canvas_layer() -> CanvasLayer:
+	var node: Node = self
+	while node != null:
+		if node is CanvasLayer:
+			return node as CanvasLayer
+		node = node.get_parent()
+	return null
+
+
+func _make_x_icon_texture(size_px: int, thickness: int) -> Texture2D:
+	var img := Image.create(size_px, size_px, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var margin := 12
+	var color := Color(1, 1, 1, 1)
+	for y in range(size_px):
+		for x in range(size_px):
+			var in_bounds := x >= margin and x < size_px - margin and y >= margin and y < size_px - margin
+			if not in_bounds:
+				continue
+			var on_diag1: bool = absi((x - margin) - (y - margin)) <= thickness
+			var on_diag2: bool = absi((x - margin) - ((size_px - margin - 1) - y)) <= thickness
+			if on_diag1 or on_diag2:
+				img.set_pixel(x, y, color)
+	return ImageTexture.create_from_image(img)
