@@ -329,9 +329,10 @@ func cache_animation_state(new_state: String) -> void:
 	current_animation = new_state
 
 func set_animation_lod_enabled(enabled: bool) -> void:
-	# Keep animating while a TWIN decoy is active: the decoy copies this
-	# avatar's pose, so parking the tree would freeze both.
-	if not enabled and _remote_powerup_mode == LocalPickup.PowerUpMode.TWIN:
+	# Keep animating while a TWIN decoy is active (decoy copies pose) or while
+	# climbing: the climb clip compensates a PI mesh-yaw offset, so parking to
+	# idle would face the avatar the wrong way.
+	if not enabled and (_remote_powerup_mode == LocalPickup.PowerUpMode.TWIN or current_animation == "climb"):
 		enabled = true
 	if animation_lod_enabled == enabled:
 		return

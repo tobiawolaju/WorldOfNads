@@ -583,11 +583,19 @@ func _build_emotes() -> void:
 		return
 	for file in dir.get_files():
 		var ext := file.get_extension().to_lower()
-		if ext != "png" and ext != "webp":
+		var resource_name := file
+		if ext == "import":
+			# In exports, packed resources show up as *.png.import / *.webp.import.
+			var base := file.get_basename()
+			var base_ext := base.get_extension().to_lower()
+			if base_ext != "png" and base_ext != "webp":
+				continue
+			resource_name = base
+		elif ext != "png" and ext != "webp":
 			continue
-		var texture := load(EMOTES_DIR.path_join(file)) as Texture2D
+		var texture := load(EMOTES_DIR.path_join(resource_name)) as Texture2D
 		if texture != null:
-			_emotes[file.get_basename().to_lower()] = texture
+			_emotes[resource_name.get_basename().to_lower()] = texture
 
 
 ## Appends a contextual emote to a player line when the event clearly calls for

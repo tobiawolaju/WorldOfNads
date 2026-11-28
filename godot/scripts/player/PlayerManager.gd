@@ -1850,7 +1850,11 @@ func _apply_remote_interpolation() -> void:
 
 		if do_lod_check:
 			var anim_state := str(snap.get("anim", "idle"))
-			var should_animate := dist_sq <= REMOTE_ANIMATION_LOD_DISTANCE_SQ
+			# Climbing needs its animation + facing offset to stay correct; parking
+			# it to idle leaves the climb PI offset applied and faces the remote the
+			# wrong way. Keep it animated regardless of distance.
+			var force_animate := anim_state == "climb"
+			var should_animate := force_animate or dist_sq <= REMOTE_ANIMATION_LOD_DISTANCE_SQ
 			var should_mesh := dist_sq <= REMOTE_MESH_LOD_DISTANCE_SQ
 			if node.has_method("set_animation_lod_enabled"):
 				node.set_animation_lod_enabled(should_animate)
@@ -1858,6 +1862,8 @@ func _apply_remote_interpolation() -> void:
 				node.set_mesh_lod_enabled(should_mesh)
 			if should_animate and node.has_method("set_animation_state"):
 				node.set_animation_state(anim_state)
+			elif node.has_method("cache_animation_state"):
+				node.cache_animation_state(anim_state)
 
 func _get_local_player_node() -> Node3D:
 	if _cached_local_player != null and is_instance_valid(_cached_local_player):
