@@ -92,6 +92,14 @@ var _hide_controls_visible: Array[bool] = []
 ## same gesture cannot immediately close it again.
 const CLOSE_GRACE_MS := 150
 var _opened_at_ms: int = 0
+const EXPANDED_ZOOM_MIN := 1.0
+const EXPANDED_ZOOM_MAX := 5.0
+var _expanded_zoom: float = 1.0
+var _touch_points: Dictionary = {}
+var _pinch_start_dist: float = 0.0
+var _pinch_start_zoom: float = 1.0
+var _pinch_active: bool = false
+var _pinch_gesture_used: bool = false
 
 ## Fullscreen "shade": the shde ColorRect in the HUD fades in behind the map
 ## while it is expanded, and fades back out when the map is closed.
@@ -166,18 +174,60 @@ func _input(event: InputEvent) -> void:
 		return
 	if Time.get_ticks_msec() - _opened_at_ms < CLOSE_GRACE_MS:
 		return
-	if not _is_close_press(event):
+
+	if event is InputEventMagnifyGesture:
+		_expanded_zoom = clampf(_expanded_zoom * event.factor, EXPANDED_ZOOM_MIN, EXPANDED_ZOOM_MAX)
+		get_viewport().set_input_as_handled()
 		return
-	get_viewport().set_input_as_handled()
-	_set_fullscreen(false)
 
-
-func _is_close_press(event: InputEvent) -> bool:
-	if event is InputEventMouseButton:
-		return event.button_index == MOUSE_BUTTON_LEFT and event.pressed
 	if event is InputEventScreenTouch:
-		return event.pressed
-	return false
+		if event.pressed:
+			_touch_points[event.index] = event.position
+			if _touch_points.size() >= 2:
+				_pinch_active = true
+				_pinch_gesture_used = true
+				_pinch_start_dist = _touch_points_distance()
+				_pinch_start_zoom = _expanded_zoom
+			get_viewport().set_input_as_handled()
+			return
+		else:
+			_touch_points.erase(event.index)
+			if _touch_points.size() < 2:
+				_pinch_active = false
+			if _touch_points.is_empty():
+				var was_pinch := _pinch_gesture_used
+				_pinch_gesture_used = false
+				get_viewport().set_input_as_handled()
+				if not was_pinch:
+					_set_fullscreen(false)
+				return
+			get_viewport().set_input_as_handled()
+			return
+
+	if event is InputEventScreenDrag:
+		if _touch_points.has(event.index):
+			_touch_points[event.index] = event.position
+		if _pinch_active and _touch_points.size() >= 2:
+			var dist := _touch_points_distance()
+			if _pinch_start_dist > 0.001:
+				_expanded_zoom = clampf(_pinch_start_zoom * (dist / _pinch_start_dist), EXPANDED_ZOOM_MIN, EXPANDED_ZOOM_MAX)
+			get_viewport().set_input_as_handled()
+			return
+
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			get_viewport().set_input_as_handled()
+			_set_fullscreen(false)
+		return
+
+
+func _touch_points_distance() -> float:
+	var keys := _touch_points.keys()
+	if keys.size() < 2:
+		return 0.0
+	var p1: Vector2 = _touch_points[keys[0]]
+	var p2: Vector2 = _touch_points[keys[1]]
+	return p1.distance_to(p2)
 
 
 func _toggle_fullscreen() -> void:
@@ -216,6 +266,10 @@ func _set_fullscreen(expanded: bool) -> void:
 			_map_clip.clip_contents = true
 		_restore_storm_overlay_layout()
 		_fade_shade(false)
+		_expanded_zoom = 1.0
+		_touch_points.clear()
+		_pinch_active = false
+		_pinch_gesture_used = false
 	_apply_expanded_chrome(_is_fullscreen)
 	_update_bus_path_overlay()
 
@@ -370,33 +424,22 @@ func _process(_delta: float) -> void:
 	var mm_size: Vector2 = minimap_container.size
 	var player_uv: Vector2 = _get_world_uv(local_player.global_position)
 
-	if _is_fullscreen:
-		# Static Full View: background covers the container, doesn't move.
-		background_texture.size = mm_size
-		background_texture.position = Vector2.ZERO
-		if player_pointer:
-			player_pointer.position = (player_uv * mm_size) - (player_pointer.size * 0.5)
-	else:
-		# Zoomed Following Logic: background is larger and centered on player.
-		var current_zoom = zoom_level
-		var scaled_size = mm_size * current_zoom
-		background_texture.size = scaled_size
-		
-		# Offset background to center player
-		var pixel_pos_on_scaled = player_uv * scaled_size
-		var target_pos = (mm_size * 0.5) - pixel_pos_on_scaled
-		# Near the map edge the snapshot used to slide past the control and
-		# expose the purple panel behind it. Clamp so the map always fills the
-		# minimap window instead of showing a coloured border.
-		target_pos.x = clampf(target_pos.x, mm_size.x - scaled_size.x, 0.0)
-		target_pos.y = clampf(target_pos.y, mm_size.y - scaled_size.y, 0.0)
-		background_texture.position = target_pos
-		
-		# Player pointer sits on the player's actual pixel; that is the centre
-		# until the clamp above kicks in at the map edge.
-		if player_pointer:
-			var player_px = target_pos + pixel_pos_on_scaled
-			player_pointer.position = player_px - (player_pointer.size * 0.5)
+	# Fullscreen supports pinch-zoom; at zoom 1 it behaves as a static full view.
+	var current_zoom = _expanded_zoom if _is_fullscreen else zoom_level
+	var scaled_size = mm_size * current_zoom
+	background_texture.size = scaled_size
+
+	# Offset background to center player (clamped so the map fills the view).
+	var pixel_pos_on_scaled = player_uv * scaled_size
+	var target_pos = (mm_size * 0.5) - pixel_pos_on_scaled
+	target_pos.x = clampf(target_pos.x, mm_size.x - scaled_size.x, 0.0)
+	target_pos.y = clampf(target_pos.y, mm_size.y - scaled_size.y, 0.0)
+	background_texture.position = target_pos
+
+	# Player pointer sits on the player's actual pixel.
+	if player_pointer:
+		var player_px = target_pos + pixel_pos_on_scaled
+		player_pointer.position = player_px - (player_pointer.size * 0.5)
 
 	# Rotate player pointer
 	if player_pointer and rotate_pointer:
@@ -497,14 +540,12 @@ func _build_bus_circle_uvs() -> void:
 
 func _world_to_minimap(world_pos: Vector3) -> Vector2:
 	var uv = _get_world_uv(world_pos)
-	
+	if background_texture != null and is_instance_valid(background_texture):
+		return background_texture.position + uv * background_texture.size
 	if _is_fullscreen:
 		return uv * minimap_container.size
-		
 	var current_zoom = zoom_level
-	# Return position relative to the minimap container, accounting for current zoom and background offset
-	var scaled_pos = uv * (minimap_container.size * current_zoom)
-	return background_texture.position + scaled_pos
+	return uv * (minimap_container.size * current_zoom)
 
 func _refresh_targets() -> void:
 	if local_player == null or not is_instance_valid(local_player):
